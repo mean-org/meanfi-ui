@@ -6,7 +6,7 @@ import {
   QrcodeOutlined,
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
+import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   cutNumber,
@@ -40,7 +40,7 @@ import {
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
@@ -60,6 +60,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { InfoIcon } from '../../components/InfoIcon';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { STREAMS_ROUTE_BASE_PATH } from '../Streams';
+import { environment } from '../../environments/environment';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -89,6 +90,7 @@ export const RepeatingPayment = (props: {
     previousWalletConnectState,
     setPaymentRateFrequency,
     setIsVerifiedRecipient,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
     setPaymentRateAmount,
     setTransactionStatus,
@@ -352,10 +354,15 @@ export const RepeatingPayment = (props: {
   const onCloseTokenSelector = useCallback(() => {
     hideDrawer();
     setTokenSelectorModalVisibility(false);
+    // Reset token on errors (decimals: -1 or -2)
+    if (selectedToken && selectedToken.decimals < 0) {
+      tokenChanged(undefined);
+      setSelectedToken(undefined);
+    }
     if (tokenFilter && !isValidAddress(tokenFilter)) {
       setTokenFilter('');
     }
-  }, [tokenFilter]);
+  }, [selectedToken, tokenChanged, tokenFilter]);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -1193,7 +1200,8 @@ export const RepeatingPayment = (props: {
             setSelectedToken(t);
 
             consoleOut("token selected:", t.symbol, 'blue');
-            setEffectiveRate(getTokenPriceBySymbol(t.symbol));
+            const price = getTokenPriceByAddress(t.address) || getTokenPriceBySymbol(t.symbol);
+            setEffectiveRate(price);
             onCloseTokenSelector();
           };
 
@@ -1202,7 +1210,7 @@ export const RepeatingPayment = (props: {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown'}
+                name={t.name || 'Unknown token'}
                 mintAddress={t.address}
                 token={t}
                 className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
@@ -1228,6 +1236,13 @@ export const RepeatingPayment = (props: {
           extraClass="mb-2"
           onInputClear={onInputCleared}
           placeholder={t('token-selector.search-input-placeholder')}
+          error={
+            tokenFilter && selectedToken && selectedToken.decimals === -1
+              ? 'Account not found'
+              : tokenFilter && selectedToken && selectedToken.decimals === -2
+                ? 'Account is not a token mint'
+                : ''
+          }
           onInputChange={onTokenSearchInputChange} />
       </div>
       <div className="token-list">
@@ -1235,21 +1250,47 @@ export const RepeatingPayment = (props: {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown"
+            name="Unknown token"
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-            onClick={() => {
+            onClick={async () => {
+              const address = tokenFilter;
+              let decimals = -1;
+              let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+              try {
+                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                consoleOut('accountInfo:', accountInfo, 'blue');
+              } catch (error) {
+                console.error(error);
+              }
+              if (accountInfo) {
+                if ((accountInfo as any).data["program"] &&
+                    (accountInfo as any).data["program"] === "spl-token" &&
+                    (accountInfo as any).data["parsed"] &&
+                    (accountInfo as any).data["parsed"]["type"] &&
+                    (accountInfo as any).data["parsed"]["type"] === "mint") {
+                  decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+                } else {
+                  decimals = -2;
+                }
+              }
               const uknwnToken: TokenInfo = {
-                address: tokenFilter,
-                name: 'Unknown',
-                chainId: 101,
-                decimals: 6,
-                symbol: '',
+                address,
+                name: 'Unknown token',
+                chainId: getNetworkIdByEnvironment(environment),
+                decimals,
+                symbol: `[${shortenAddress(address)}]`,
               };
+              tokenChanged(t);
               setSelectedToken(uknwnToken);
+              if (userBalances && userBalances[address]) {
+                setSelectedTokenBalance(userBalances[address]);
+              }
               consoleOut("token selected:", uknwnToken, 'blue');
-              setEffectiveRate(0);
-              onCloseTokenSelector();
+              // Do not close on errors (-1 or -2)
+              if (decimals >= 0) {
+                onCloseTokenSelector();
+              }
             }}
             balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
           />
@@ -1413,10 +1454,10 @@ export const RepeatingPayment = (props: {
                   disabledDate={disabledDate}
                   placeholder={t('transactions.send-date.placeholder')}
                   onChange={(value, date) => handleDateChange(date)}
-                  value={moment(
+                  defaultValue={moment(
                     paymentStartDate,
                     DATEPICKER_FORMAT
-                  ) as any}
+                  )}
                   format={DATEPICKER_FORMAT}
                 />
               </div>

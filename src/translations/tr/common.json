@@ -11,7 +11,7 @@
 		"money-streams": "Para Aktarımları",
 		"network-unknown": "Bilinmiyor",
 		"no-money-streams": "Para Aktarımı Yok",
-		"no-recent-events": "No recent events",
+		"no-recent-events": "",
 		"non-ata-label": "İlişiği Olmayan Token",
 		"non-ata-tooltip": "MeanFi bağlantısı olan tokenlarla çalışır, lütfen {{tokenSymbol}} ilişkilendirin.",
 		"refresh-tooltip": "Varlıkları güncellemek için tıklayın",
@@ -226,7 +226,7 @@
 		"address-share-disclaimer": "Bu adres yalnızca SOL ve SPL tokenlarını yatırmak için kullanılabilir.",
 		"back-to-deposit-options": "Yatırma seçeneklerine geri dön",
 		"ftx-cta-label-enabled": "FTX'den yatır",
-		"heading": "Deposit from your Card, Bank Account, or from another Blockchain directly into your Solana Wallet.",
+		"heading": "",
 		"modal-title": "Yatırma Seçenekleri",
 		"move-from-ethereum-cta-label": "Ethereum'dan varlık aktarın",
 		"move-from-polygon-cta-label": "Polygon'dan varlık aktarın",
@@ -247,7 +247,7 @@
 		"fund-cta": "Bana SOL ver",
 		"funding-amount": "Hesabınız ..... ile fonlanacak",
 		"not-connected": "Cüzdanınız bağlı değil, lütfen cüzdanınızı bağlayın",
-		"wrap-sol-cta": "WRAP",
+		"wrap-sol-cta": "",
 		"wrap-sol-cta-toggle": "Biraz SOL Wrapla",
 		"wrap-transaction-fee": "İşlem ücretini wrapla",
 		"wrapped-amount": "Wraplanmış miktar"
@@ -290,20 +290,20 @@
 	"invest": {
 		"panel-left": {
 			"invest-liquidity-tab-title": "MEAN likiditasyon havuzları",
-			"invest-stake-sol-tab-title": "Stake SOL",
+			"invest-stake-sol-tab-title": "",
 			"invest-stake-tab-title": "MEAN stake et",
 			"no-invest-options": "Uygun yatırım seçeneği yok",
 			"not-connected": "Seçeneklerinizi görmek için cüzdanınızı bağlayın",
-			"up-to-value-label": "Up to"
+			"up-to-value-label": ""
 		},
 		"panel-right": {
 			"first-text": "MEAN stake ödülleri, emisyon teşviklerini ve protokol gelirlerinin bir payını içerir ve kilitleme süreleri kullanılarak uzatılabilir. MEAN'inizi stake ettiğinizde, karşılığında sMEAN alırsınız.",
 			"liquidity-pool": {
 				"refresh-tooltip": "Likidite bilgsini güncelle",
-				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
-				"text-three": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
-				"text-two": "To invest in a liquidity pool, you need to supply both tokens that make up the pool. For example, when you join the Raydium MEAN/USDC pool both MEAN and USDC tokens are required. For more details, see the adding liquidity guides on",
-				"text-two-divider": "and",
+				"text-one": "",
+				"text-three": "",
+				"text-two": "",
+				"text-two-divider": "",
 				"title": "MEAN likidite havuzları"
 			},
 			"second-text": "MEAN zulanızı sürekli olarak büyütmek için tek yapmanız gereken sMEAN'inizi tutmaktır. MEAN stake ile ödülleri toplamanıza gerek yok. sMEAN'lerinizi stakeden çektiğinizde, yatırılan miktarın üzerine ek MEAN şeklinde kazanılan ödülleri alacaksınız.",
@@ -319,10 +319,10 @@
 				"withdraw-button": "Fonları Çek"
 			},
 			"staking-sol": {
-				"refresh-tooltip": "Refresh staking data",
-				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
-				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
-				"title": "Liquid SOL Staking"
+				"refresh-tooltip": "",
+				"text-one": "",
+				"text-two": "",
+				"title": ""
 			},
 			"stats": {
 				"staking-apy": "Staking APY",
@@ -331,25 +331,25 @@
 				"total-value-locked": "Toplam Kilitli Değer"
 			},
 			"table-data": {
-				"column-apr/apy": "APR/APY",
-				"column-invest": "Invest",
-				"column-liquidity": "Liquidity",
-				"column-lppair": "LP Pair",
-				"column-platform": "Platform",
-				"column-stake": "Stake",
-				"column-token": "Token",
-				"column-total-staked": "Total staked",
-				"column-volume": "Vol (24hrs)"
+				"column-apr/apy": "",
+				"column-invest": "",
+				"column-liquidity": "",
+				"column-lppair": "",
+				"column-platform": "",
+				"column-stake": "",
+				"column-token": "",
+				"column-total-staked": "",
+				"column-volume": ""
 			},
 			"tabset": {
 				"stake": {
 					"amount-label": "Stake edilecek miktar",
 					"days": "Günler",
-					"name": "Stake",
-					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
+					"name": "",
+					"notification-label": "",
 					"period-label": "Ne kadar süre boyunca stake etmek istiyorsunuz?",
-					"stake-button": "Stake",
-					"stake-button-busy": "Staking",
+					"stake-button": "",
+					"stake-button-busy": "",
 					"terms-and-conditions-tooltip": "Tokenlarınız seçilen süre boyunca kilitlenir ve stake dönemi sona ermeden geri alamazsınız. Mevcut kontrata ek tokenlar stake ettiğinizde, kilitli stake süresi TÃœM tokenlar için yeni bitiş tarihine kadar uzatılacaktır.",
 					"verified-label": "Şartları & Koşulları kabul ediyorum.",
 					"year": "yıl",
@@ -364,11 +364,11 @@
 					"send-amount": {
 						"label-right": "Stakeden çıkarılabilir"
 					},
+					"success-transaction-message": "",
 					"unstake-button-available": "Stakeden çıkar",
-					"unstake-button-busy": "Unstaking",
+					"unstake-button-busy": "",
 					"unstake-button-unavailable": "Uygun değil",
-					"verified-label": "Şartları & Koşulları kabul ediyorum.",
-					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
+					"verified-label": "Şartları & Koşulları kabul ediyorum."
 				}
 			},
 			"title": "MEAN ödüllleri kazanmak için MEAN stake edin"
@@ -387,16 +387,19 @@
 		"add-participant-cta": "Katılımcı ekle",
 		"back-to-multisig-accounts-cta": "Çoklu-imzalı hesaplara geri dön.",
 		"create-asset": {
+			"delete-multisig": "",
+			"edit-multisig": "",
 			"main-cta": "Yarat",
 			"main-cta-busy": "Kasa oluşturuluyor",
 			"modal-title": "Çoklu-İmza kasası oluştur",
 			"no-token": "Token seç",
 			"success-message": "Çoklu-İmza kasanız başarıyla oluşturuldu",
-			"token-label": "Select an asset",
-			"token-placeholder": "Mintlemek için bir token adresi girin"
+			"token-label": "Gönderen hesap",
+			"token-placeholder": "Mintlemek için bir token adresi girin",
+			"update-multisig": ""
 		},
 		"create-multisig": {
-			"fee-info-label": "The fee to create this multisig is",
+			"fee-info-label": "",
 			"main-cta": "Yarat",
 			"main-cta-busy": "Çoklu-İmza yaratılıyor",
 			"modal-title": "Çoklu-İmza yarat",
@@ -407,6 +410,7 @@
 			"multisig-label-placeholder": "Çoklu-İmza hesabınız için bir ad yazın",
 			"multisig-no-participants": "Şuana kadar katılımcı eklenmedi",
 			"multisig-participants": "({{maxParticipants}} katılımcıdan, {{numParticipants}} tanesi imzaladı)",
+			"multisig-participants-warning message": "",
 			"multisig-participants-warning-message": "Aynı sayıda üyenin imzasını gerektiren bir başka çoklu-imza oluşturmak tavsiye edilmez",
 			"multisig-threshold-input-empty": "Minimum yeterli imza sayısını girin",
 			"multisig-threshold-input-label": "Minimum yeterli imza",
@@ -416,7 +420,7 @@
 			"multisig-threshold-question-mark-tooltip": "En iyi uygulama için, her zaman gereken minimum imzalayan sayısından daha fazla çoklu-imza yetkilisine sahip olun. 2'de 3 çoklu-imza, 3 katılımcıdan 2'sinin bir işleme onay vermesi gereken en temel kurulumdur.",
 			"success-message": "Yeni Çoklu-İmza hesabınız başarıyla oluşturuldu."
 		},
-		"create-new-multisig-account-cta": "Create safe",
+		"create-new-multisig-account-cta": "Çoklu-İmza oluştur",
 		"crud-multisig": {
 			"delete-multisig": "Çoklu-İmza sil",
 			"edit-multisig": "Çoklu-İmza düzenle",
@@ -436,13 +440,13 @@
 			"token-address-placeholder": "Tokenların adresini girin"
 		},
 		"multisig-account-detail": {
-			"address": "Safe deposit address",
+			"address": "",
 			"authority": "Yetki",
 			"copy-id-title": "Çoklu-İmza ID",
 			"created-on": "Tarafından oluşturuldu",
 			"cta-assets": "({{itemCount}}) Kasalar",
 			"cta-create-asset": "Kasa oluştur.",
-			"cta-mint": "Mint",
+			"cta-mint": "",
 			"cta-mints": "Mintler ({{itemCount}})",
 			"cta-no-assets": "Kasalar",
 			"cta-no-mints": "Mintler",
@@ -480,7 +484,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "Bu talebi göndererek, işlemi imzalayacak ve Çoklu-İmza üyelerinden biri olarak onaylayacaksınız. Varlık silinmeden önce diğer Çoklu-İmza üyelerinin bunu onaylaması gerekir.",
 				"main-cta": "Silme talebi gönder",
-				"modal-title": "Bir çoklu-imza varlığını sil",
+				"modal-title": "Bir Çoklu-İmza varlığını sil",
 				"selected-asset-label": "Varlık seçildi",
 				"warning-message": "Sadece boş olan varlık hesapları silinebilir. Bir varlığı silmek için önce tüm bakiyeyi başka bir hesaba taşımalısınız"
 			},
@@ -540,63 +544,89 @@
 			"column-created-on": "da oluşturuldu",
 			"column-current-signatures": "İmza",
 			"column-my-status": "Durumum",
-			"column-operation": "Transaction",
-			"column-pending-signatures": "Status",
-			"column-program-id": "Program",
+			"column-operation": "",
+			"column-pending-signatures": "",
+			"column-program-id": "",
+			"execution": "",
 			"explain-failure": "Eğer belirliyse hata nedenlerini belirtin",
 			"initiator-transaction": "Bu işlem tarafından gönderildi",
-			"loading-transactions": "İşlem yükleniyor ...",
-			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
-			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
+			"loading-transactions": "İşlem yükleniyor",
+			"missing-signature": "",
+			"missing-signatures": "",
 			"modal-title": "İşlem özeti",
-			"no-transactions-multisig": "This multisig has no transactions",
-			"no-transactions-multisig-asset": "This multisig asset has no transactions",
-			"no-transactions-multisig-mint": "This multisig mint has no transactions",
-			"no-transactions-multisig-program": "This multisig program has no transactions",
-			"not-sign-tx": "You did NOT sign this transaction",
+			"no-transactions-multisig": "",
+			"no-transactions-multisig-asset": "",
+			"no-transactions-multisig-mint": "",
+			"no-transactions-multisig-program": "",
+			"not-sign-tx": "",
 			"not-signed": "İmzalanmadı",
-			"not-signed-tx": "You have NOT signed this transaction",
+			"not-signed-tx": "",
+			"proposal-completed": "",
+			"proposal-ready-to-be-executed": "",
 			"proposed-action": "Önerilen İşlem:",
-			"proposed-by": "Proposed by:",
+			"proposed-by": "",
 			"ready-for-execution": "Bu işlem gerçekleştirilmeye hazır. Lütfen işlemi başlatana, işlemi gerçekleştirebileceğini söyleyin",
-			"rejected": "Rejected",
-			"rejected-tx": "You have rejected this transaction",
+			"rejected": "",
+			"rejected-tx": "",
 			"signed": "İmzalandı",
 			"signed-so-far": "Şimdiye kadar imzalanmış olan",
-			"tx-signed": "signed",
-			"tx-pending": "pending",
 			"signers-to-approve": "gerçekleştirilmesi için imzacıların sırayla onaylamalı.",
 			"submitted-on": "Gönderildi:",
-			"transaction-awaiting": "A proposal for this multisig is pending",
-			"transaction-expiry-date": "Expiry date:",
+			"transaction-awaiting": "",
+			"transaction-expiry-date": "",
 			"transaction-has": "Bu işlemin",
+			"transaction-required": "",
 			"transaction-requires": "Bu işlem gerektiriyor",
 			"treasury-closed-warning": "Hazine kapatıldığında kalan tüm varlıklar kurucunun hesabına gider. Lütfen onaylamadan önce bunu kabul ettiğnizin farkında olun.",
-			"tx-operation-executed": "This transaction has already been executed",
-			"tx-operation-expired": "This transaction has already been expired",
+			"tx-completed": "",
+			"tx-operation-cancel": "",
+			"tx-operation-executed": "",
+			"tx-operation-expired": "",
 			"tx-operation-failure": "{{operation}} işlemi başarısız oldu",
 			"tx-operation-pending-one": "Bu çoklu-İmza'da gerçekleştirilmeye hazır bir işlem mevcut. Lütfen bu işlemi başlatana, haber verin.",
 			"tx-operation-pending-two": "Bu çoklu-İmza'da bir işlem hazır şunun için",
-			"tx-operation-rejected": "This transaction has been rejected.",
+			"tx-operation-rejected": "",
 			"tx-operation-success": "{{operation}} işlemi başarılı oldu",
-			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
-			"your-status": "Durumunuz:",
-			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
-			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
-			"your-execution": "your execution",
-			"execution": "execution",
-			"tx-pending-approval": "Pending Approval",
-			"tx-pending-execution": "Pending Execution",
-			"tx-completed": "Completed",
-			"tx-voided": "Voided",
-			"tx-rejected": "Rejected",
-			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
-			"proposal-completed": "This proposal has been executed and is now complete."
+			"tx-operation-voided": "",
+			"tx-pending": "",
+			"tx-pending-approval": "",
+			"tx-pending-execution": "",
+			"tx-rejected": "",
+			"tx-signed": "",
+			"tx-switch-hide-btn": "",
+			"tx-voided": "",
+			"your-execution": "",
+			"your-status": "Durumunuz:"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Hazinelere geri dön"
 		},
 		"pending-transactions": "süren işlem",
+		"proposal-modal": {
+			"description": "",
+			"description-placeholder": "",
+			"does-not-expire": "",
+			"expires-label": "Expires on",
+			"expires-tooltip": "",
+			"expiry-date": "",
+			"hint-message": "",
+			"instruction": "",
+			"instruction-account": "",
+			"instruction-data": "",
+			"instruction-program": "",
+			"summary-content-close-asset": "",
+			"summary-content-multisig-new-name": "",
+			"summary-content-multisig-new-owners": "",
+			"summary-content-multisig-new-threshold": "",
+			"summary-content-send-funds": "",
+			"summary-content-set-program-auth": "",
+			"summary-content-transfer-ownership": "",
+			"summary-content-upgrade-program": "",
+			"summary-label": "",
+			"title": "",
+			"title-label": "",
+			"title-placeholder": ""
+		},
 		"refresh-tooltip": "Çoklu-İmza hesaplarını güncellemek için tıklayın",
 		"screen-title": "Çoklu-İmza hesapları",
 		"set-program-authority": {
@@ -607,30 +637,30 @@
 			"new-authority-input-placeholder": "Program güncelleme yetkisinin yeni adresi"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
+			"asset-auth-destination-address-disclaimer": "Girilen veya seçilen yukarıdaki Yeni Yetkili Adresinin bir Çoklu-İmza Hesap adresi olduğunu ve normal bir cüzdan adresi OLMADIĞINI onaylıyorum. Çoklu-İmza olmayan bir adres vermemin, varlığın ve fonların kalıcı olarak kaybedilmesine neden olacağını kabul ediyorum.",
 			"main-cta": "Yetkileri ayarla",
 			"main-cta-busy": "Yetkiler ayarlanıyor",
-			"modal-title": "Change asset ownership",
+			"modal-title": "Sahipliği transfer et",
 			"multisig-already-owns-the-asset": "Seçilmiş olan çoklu-imza bu kasa için zaten yetkilendirilmiş",
-			"multisig-selector-label": "New owner account",
-			"multisig-selector-placeholder": "Select or enter the address of the new owner",
+			"multisig-selector-label": "Yeni yetki (çoklu-imza)",
+			"multisig-selector-placeholder": "Bir çoklu-imza hesabı gir ve ya seç",
 			"selected-asset-label": "Seçilmiş kasa",
 			"success-message": "Yeni kasa yetkisi başarıyla düzenlendi"
 		},
 		"transfer-tokens": {
 			"main-cta": "Talep etmeye başla",
 			"main-cta-busy": "Talep etmeye başlanıyor",
-			"modal-title": "Propose funds transfer",
+			"modal-title": "Çekme Talebine Başla",
 			"source-address-label": "Hesaptan transfer ediliyor",
 			"source-address-placeholder": "Kaynak hesabın adresini girin",
 			"success-message": "Tokenlar başarıyla transfer edildi",
-			"transfer-amount-label": "Amount to send",
+			"transfer-amount-label": "Miktar",
 			"transfer-amount-placeholder": "Transfer edilecek token miktarını girin",
 			"transfer-to-label": "ya transfer (Hedef Hesap)",
 			"transfer-to-placeholder": "Hedef hesabın adresini girin"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "When you edit a Multisig, all pending transactions will be VOIDED. Make sure there are no important transactions needing to be completed.",
+			"edit-not-allowed-message": "",
 			"main-cta": "Değişiklikleri kaydet",
 			"main-cta-busy": "Değişiklikler kaydediliyor",
 			"modal-title": "Çoklu-İmza'yı düzenle",
@@ -642,40 +672,16 @@
 			"main-cta": "Yükselt",
 			"main-cta-busy": "Program yükseltiliyor",
 			"modal-title": "Programı yükselt",
-			"program-address-label": "Program ID",
+			"program-address-label": "",
 			"program-address-placeholder": "Program adresini girin",
 			"success-message": "Program başarıyla yükseltildi"
-		},
-		"proposal-modal": {
-			"title": "Proposal title",
-			"title-placeholder": "Reason for submitting this proposal",
-			"expiry-date": "Expiry date",
-			"description": "Proposal description",
-			"description-placeholder": "Add a description",
-			"hint-message": "{{lettersLeft}} available characters",
-			"summary-label": "Proposal",
-			"summary-content-send-funds": "Send {{amount}} {{symbol}} to the following Solana address:",
-			"summary-content-transfer-ownership": "Transfer ownership to the following Solana address:",
-			"summary-content-close-asset": "Close the selected asset",
-			"summary-content-set-program-auth": "Set program auth",
-			"summary-content-upgrade-program": "Upgrade program",
-			"summary-content-multisig-new-name": "Change multisig name to {{multisigLabel}}",
-			"summary-content-multisig-new-threshold": "Change multisig threshold to {{multisigThreshold}}",
-			"summary-content-multisig-new-owners": "Include new owners",
-			"title-label": "Title",
-			"expires-label": "Expires on",
-			"expires-tooltip": "If the confirmation threshold is not passed by the expiry date, the transaction will be automatically cancelled and its status will be displayed as failed.",
-			"does-not-expire": "Does not expire",
-			"instruction": "Instruction",
-			"instruction-program": "Program",
-			"instruction-account": "Account",
-			"instruction-data": "Data"
 		}
 	},
 	"notifications": {
 		"account-address-copied-message": "Hesap adresi başarıyla kopyalandı",
 		"account-address-not-copied-message": "Hesap adresi kopyalanamıyor",
-		"check-transaction-in-explorer": "Check your transaction here",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction.",
+		"check-transaction-in-explorer": "",
 		"create-money-stream-completed": "Para-aktarımınız oluşturuldu",
 		"create-money-stream-completed-wait-for-confirm": "İşlem onaylandıktan sonra listede gözükecek",
 		"error-cannot-faucet-mainnet-message": "Musluk mainnetde çalışmıyor",
@@ -684,7 +690,7 @@
 		"error-ledger-title": "Ledger hatası",
 		"error-loading-streamid-message": "{{streamId}} ID'si ile aktarım bulunamadı ya da yüklenemedi",
 		"error-loading-treasuryid-message": "{{treasuryId}} ile hazine bulunamadı ya da açılamadı",
-		"error-sending-transaction": "Error submitting the transaction, please try again.",
+		"error-sending-transaction": "",
 		"error-title": "Hata",
 		"friend-referral-completed": "MeanFi'ye hoş geldiniz",
 		"invalid-publickey-message": "Geçersiz görünür anahtar. Lütfen yazdığınızı kontrol edin",
@@ -698,14 +704,13 @@
 		"success-account-funded-message": "Hesap fonlandı",
 		"success-loading-stream-message": "{{streamId}} bu ID'li aktarım adresi yüklendi",
 		"success-loading-treasury-message": "{{treasuryId}} bu ID'li hazine adresi yüklendi",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-not-confirmed": "",
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-proposal-created": "Your proposal has been created",
 		"wallet-connect-message": "{{address}} cüzdanına bağlanıldı",
 		"wallet-connection-event-title": "Cüzdan güncellendi",
-		"wallet-disconnect-message": "Cüzdandan çık",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
-		"tx-not-executed": "Your transaction has not been executed",
-		"tx-not-approved": "Your transaction has not been approved",
-		"tx-proposal-created": "Your proposal has been created",
-		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
+		"wallet-disconnect-message": "Cüzdandan çık"
 	},
 	"open-stream": {
 		"label-streamid-input": "Açmak için aktarım ID'si",
@@ -777,11 +782,11 @@
 		"add-funds": {
 			"amount-label": "Miktar",
 			"modal-title": "Fon ekler",
-			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
-			"treasury-money-stream-title": "Streaming Account Money Stream"
+			"treasury-money-stream-description": "Bu aktarım hazine tarafından fonlandığından eklenecek fonlar hazineden tahsis edilecek.",
+			"treasury-money-stream-title": "Hazineden Fonlanan Para Aktarımı"
 		},
 		"back-to-my-streams-cta": "Para Akışlarına Geri Dön",
-		"create-new-stream-cta": "Para akışı oluştur",
+		"create-new-stream-cta": "Yeni Transfer",
 		"create-new-stream-cta-busy": "Creating stream",
 		"edit-stream": {
 			"edit-stream-tooltip": "Para-aktarımını düzenle",
@@ -795,16 +800,16 @@
 			"name-input-placeholder": "Aktarım için bir isim giriniz",
 			"send-amount-input-label": "Gönderilecek miktar"
 		},
-		"locked-stream-message": "You cannot close or top up a stream from a locked streaming account",
+		"locked-stream-message": "Kilitli hazinedeki bir aktarımı kapatamaz ya da durduramazsınız",
 		"locked-stream-modal-title": "Kilitli Para-Aktarımı",
 		"locked-stream-tooltip": "Bu Aktarım kilitli",
 		"lookup-stream-cta-tooltip": "Akış Arama",
-		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
+		"pause-stream-confirmation": "Akışın duraklatılması hazineden ({{treasury}}) yararlanıcıya ({{beneficiary}}) para aktarımını durduracaktır.",
 		"pause-stream-cta": "Duraklat",
 		"pause-stream-modal-title": "Aktarımı duraklat",
 		"pause-stream-tooltip": "Aktarımı duraklat",
 		"refresh-tooltip": "Aktarımları yenilemek için tıkla",
-		"resume-stream-confirmation": "Resume money streaming from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
+		"resume-stream-confirmation": "Hazineden ({{treasury}}) yararlanıcıya ({{beneficiary}}) para aktarımını sürdürün.",
 		"resume-stream-cta": "Devam et",
 		"resume-stream-modal-title": "Aktarımı devam ettir",
 		"resume-stream-tooltip": "Aktarımı devam ettir",
@@ -833,8 +838,8 @@
 			"amount-funded-date": "fonlanan",
 			"cancel-scheduled-transfer": "Aktarımı iptal et",
 			"close-money-stream-menu-item": "Para aktarımını kapat",
-			"close-stream-cta": "Close Stream",
-			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
+			"close-stream-cta": "",
+			"close-stream-cta-tooltip": "",
 			"cta-disabled-closing": "Para aktarımı kapatılıyor...",
 			"cta-disabled-creating": "Aktarım oluşturma devam ediyor...",
 			"cta-disabled-funding": "Para ekleme işlemi devam ediyor...",
@@ -865,7 +870,6 @@
 			"transfer-money-stream-menu-item": "Sahipliği aktar",
 			"withdraw-funds-cta": "Para çekme"
 		},
-		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "Kullanılabilir aktarım yok",
 			"not-connected": "Para aktarımlarınızı görmek için lütfen cüzdanınızı bağlayın",
@@ -889,12 +893,13 @@
 			"title-sending-to": "Gönderiliyor"
 		},
 		"stream-stats-incoming": "Gelen",
-		"stream-stats-outgoing": "Giden"
+		"stream-stats-outgoing": "Giden",
+		"streaming-balance": ""
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange yalnızca şurada kullanılabilir:",
 		"frequency-label": "Sıklık",
-		"getting-routes": "Finding the best route and price",
+		"getting-routes": "",
 		"input-label-destination": "Değişim (tahmini)",
 		"input-label-source": "....dan alım-satım",
 		"insufficient-liquidity": "Bu ticaret için yetersiz likidite",
@@ -915,10 +920,10 @@
 	"token-selector": {
 		"exchange-search-input-placeholder": "İsim veya sembole göre token ara",
 		"looking-for-sol": "SOL'u mu arıyorsunuz? Buna ihtiyacın var",
+		"lookup-add-asset-input-placeholder": "Belirteç adı, sembol veya adres girin",
 		"modal-title": "Bir token seçin",
 		"no-matches": "Hiçbir sonuç bulunamadı",
 		"search-input-placeholder": "İsim, sembol veya adrese göre token arayın",
-		"lookup-add-asset-input-placeholder": "Belirteç adı, sembol veya adres girin",
 		"wrap-sol-first": "önce wSOL'a çevirin"
 	},
 	"transactions": {
@@ -927,11 +932,11 @@
 			"placeholder": "Bir not ekle"
 		},
 		"memo2": {
-			"label": "Aktarım adı",
+			"label": "Not / Konu",
 			"placeholder": "Bu ödeme ne için?"
 		},
 		"rate-and-frequency": {
-			"amount-label": "Ödeme oranı",
+			"amount-label": "Miktar",
 			"payment-rates": {
 				"per-day": "her gün",
 				"per-hour": "her saat",
@@ -952,7 +957,7 @@
 		"resume": "Özet",
 		"send-amount": {
 			"label": "Gönder",
-			"label-amount": "Amount to stream",
+			"label-amount": "Fon ekle",
 			"label-right": "Bakiye"
 		},
 		"send-date": {
@@ -960,8 +965,8 @@
 			"placeholder": "Lütfen bir tarih seçin"
 		},
 		"status": {
+			"cta-start-transfer-busy": "",
 			"cta-view-stream": "Aktarımı Görüntüle",
-			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "...ile fon kasası",
 			"ddca-add-funds-success": "Fonlar başarıyla eklendi",
 			"ddca-create-tx": "Planlanmış yinelenen alım-satım oluşturun",
@@ -1017,7 +1022,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Bir ödeme planı başlatmak için para eklemelisiniz",
-			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at\n{{rateInterval}}?",
+			"add-funds-repeating-payment-advice": "Tekrarlanan ödemeyi başlatmak için para eklemelisiniz",
 			"beneficiary-receives": "....Yararlanıcı alır",
 			"exchange-on": "... 'da Alım-Satım",
 			"hla-transaction-fee": "Toplayıcı ücreti",
@@ -1034,42 +1039,53 @@
 		},
 		"validation": {
 			"address-validation": "Geçerli bir adres biçimi değil",
-			"amount-high": "Amount exceeded",
-			"amount-low": "Low balance",
+			"amount-high": "",
+			"amount-low": "",
 			"amount-lt-fee": "Tutar işlem ücretinden fazla olmalıdır",
-			"amount-sol-low": "Insufficient SOL",
+			"amount-sol-low": "",
 			"amount-withdraw-high": "Tutar mevcut fonlardan daha fazla",
+			"asset-no-empty": "",
 			"cannot-use-own-account-as-treasury": "Hesabınızı hazine kimliği olarak kullanamazsınız",
+			"cliff-release-no-empty": "",
 			"exchange-unavailable": "Alım-Satım mevcut değil",
-			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "Değiştirmek için en az {{amount}} {{symbol}} gerekir",
-			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
+			"insufficient-balance-needed": "",
 			"invalid-account": "Hedef hesap olarak bir Çoklu-İmza adresi kullanılamaz",
 			"invalid-amount": "Geçersiz miktar",
 			"invalid-exchange": "Token seçin",
 			"invalid-solana-address": "Geçersiz solana adresi",
+			"lock-period-no-empty": "",
+			"memo-empty": "",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"minimum-repeating-buy-amount": "Bu tekrarlanan satın alma işlemini başlatmak için minimum {{fromTokenAmount}} gerekir",
 			"minimum-swap-amount": "{{mintAmount}} {{fromMint}} takası için gereken minimum miktar",
 			"multi-recipient-invalid-addresses": "Listenizde uygun bir formata sahip olmayan {{amountInvalidAddresses}} adres mevcut",
 			"multi-recipient-invalid-list": "Csv'nizde geçerli adresler mevcut değil",
 			"no-amount": "Miktarı girin",
 			"no-balance": "Bakiye yok",
+			"no-description": "",
 			"no-payment-rate": "Ödeme oranı ekle",
 			"no-recipient": "Alıcı yok",
+			"no-title": "",
 			"no-valid-date": "Geçerli bir tarih belirleyin",
-			"memo-empty": "Memo cannot be empty",
 			"not-connected": "Cüzdanını bağla",
 			"payment-rate-high": "Ödeme oranı bakiyenizi aşıyor",
 			"select-address-list": "Adres listesini seçin",
+			"select-auth-address": "",
+			"select-multisig-address": "",
 			"select-recipient": "Alıcı seçin",
 			"select-stream": "Bir aktarım seçin",
+			"select-valid-auth-address": "",
+			"select-valid-multisig-address": "",
+			"select-valid-recipient": "",
 			"valid-address-required": "Geçerli bir solana adresi gerekli",
 			"valid-approve": "Cüzdanınızda onaylayın",
 			"valid-continue": "Devam et",
 			"valid-ddca-review": "Gözden geçirmek",
 			"valid-start-funding": "Fonlamaya başlayın",
 			"valid-start-withdrawal": "Para çekme işlemini başlat",
-			"verified-recipient-unchecked": "Recipient Unchecked"
+			"valid-submit-proposal": "",
+			"verified-recipient-unchecked": ""
 		}
 	},
 	"transfer-stream": {
@@ -1079,20 +1095,20 @@
 		"modal-title": "Aktarımı transfer et",
 		"streamid-checkbox": "Alıcı adresin bir borsaya ait olmadığından eminim.",
 		"streamid-empty": "Eksik adres",
-		"streamid-open-cta": "Transfer",
+		"streamid-open-cta": "",
 		"streamid-placeholder": "Yeni yararlanıcı cüzdan adresi"
 	},
 	"transfers": {
+		"create-money-stream-modal-title": "Create money stream",
 		"screen-subtitle": "Dünyadaki herkese daha hızlı para gönderin",
 		"screen-title": "Transferler",
-		"verified-recipient-disclaimer": "Alıcı adresinin bir borsaya ait olmadığından eminim.",
 		"send-asset-modal-title": "Send Asset",
-		"create-money-stream-modal-title": "Create money stream"
+		"verified-recipient-disclaimer": "Alıcı adresinin bir borsaya ait olmadığından eminim."
 	},
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "Tahsis Etmek İstediğiniz Miktar Ne Kadar?",
-			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
+			"allocation-heading": "Bir aktarımı durdumak, fonlar tahsis edilen hazinenin mevcut bakiyesini eklenir.",
 			"allocation-label": "Bu fonları nasıl tahsis etmek istiyorsunuz?",
 			"allocation-option-evenly": "Tüm Para Aktarımlarına eşit olarak tahsis edin",
 			"allocation-option-none": "Tahsis etmeyin (Yedeklerde bırakın)",
@@ -1100,29 +1116,29 @@
 			"allocation-select-stream-label": "Fonlanacak aktarımı seçin",
 			"balance": "Bakiye",
 			"label": "Fon ekle",
-			"main-cta": "Fund account",
-			"main-cta-busy": "Funding account",
+			"main-cta": "",
+			"main-cta-busy": "",
 			"main-cta-fund-stream": "Para aktarımını fonla",
 			"main-cta-fund-stream-busy": "Aktarımı fonla",
-			"modal-title": "Add funds to the streaming account",
+			"modal-title": "",
 			"modal-title-fund-stream": "Para aktarımına fon ekle",
 			"money-stream-to-topup-label": "Para Aktarımını tamamla",
 			"search-streams-placeholder": "İsimle ve ya adresle aktarım arayın",
-			"success-message": "Your streaming account was funded successfully."
+			"success-message": ""
 		},
-		"back-to-treasuries-cta": "Back to Streaming Accounts",
+		"back-to-treasuries-cta": "",
 		"close-account": {
-			"modal-title": "Close account",
-			"close-treasury-confirmation": "Are you sure you want to close the account?",
-			"cta-close": "Close account",
-			"cta-close-busy": "Closing account"
+			"close-treasury-confirmation": "",
+			"cta-close": "",
+			"cta-close-busy": "",
+			"modal-title": ""
 		},
-		"create-new-treasury-cta": "Create streaming account",
+		"create-new-treasury-cta": "",
 		"create-treasury": {
 			"create-multisig-cta": "Hazineyi başlat",
 			"create-multisig-cta-busy": "Hazine başlatılıyor",
-			"create-multisig-treasury-success": "Çoklu-İmza onayı için gönderilen hazine talebini başlatın.",
 			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
+			"create-multisig-treasury-success": "Çoklu-İmza onayı için gönderilen hazine talebini başlatın.",
 			"lock-period": {
 				"days": "gün",
 				"hours": "saat",
@@ -1131,54 +1147,54 @@
 				"weeks": "hafta",
 				"years": "yıl"
 			},
-			"main-cta": "Create Streaming Account",
-			"main-cta-busy": "Creating account",
-			"modal-title": "Create Streaming Account",
+			"main-cta": "Oluştur",
+			"main-cta-busy": "Hazine oluşturuluyor",
+			"modal-title": "Hazine oluştur",
 			"multisig-selector-label": "Çoklu-İmza hesabı",
-			"multisig-treasury-created-info": "To complete the Streaming Account setup, the other Multisig signers need to approve it.",
-			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
+			"multisig-treasury-created-info": "Hazine kurulumunu tamamlamak için diğer Çoklu-İmza kullanıcılarının da onayı gerekiyor",
+			"multisig-treasury-created-instructions": "Bu hazine oluşturma işlemi için, lütfen, diğer kullanıcıların da imzalamasını isteyin.",
 			"multisig-treasury-switch-label": "Bu hazine bir  çoklu-imza hesabı için mi?",
-			"success-message": "Your new streaming account was created successfully.",
+			"success-message": "Yeni hazineniz başarıyla oluşturuldu.",
 			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
-			"treasury-name-input-empty": "Enter Account name",
-			"treasury-name-input-label": "Account name",
-			"treasury-name-placeholder": "Type a name for your streaming account",
-			"treasury-token-label": "Token to be streamed",
+			"treasury-name-input-empty": "Hazine ismini girin",
+			"treasury-name-input-label": "Hazine ismi",
+			"treasury-name-placeholder": "Hazineniz için bir isim yazın",
+			"treasury-token-label": "",
 			"treasury-type-options": {
-				"treasury-type-locked-description": "With a locked streaming account you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
-				"treasury-type-locked-name": "Locked money streaming account",
-				"treasury-type-open-description": "With an open streaming account, you can create money streams that run indefinitely. When the account runs out of money all streams stop, until it gets replenished.",
-				"treasury-type-open-name": "Open money streaming account"
+				"treasury-type-locked-description": "Kilitli bir hazine ile, yatırımcılar için gerekli olanlar gibi, ayrılmış tahsisler için hakediş sözleşmesi gibi davranan aktarımları oluşturabilirsiniz. Genellikle sabit bir bitiş tarihleri â€‹â€‹vardır.",
+				"treasury-type-locked-name": "Kilitli para aktarımı hazinesi",
+				"treasury-type-open-description": "Açık bir hazine ile süresiz olarak çalışan para aktarımları oluşturabilirsiniz. Hazinenin parası bittiğinde, yenilenene kadar tüm aktarımlar durur.",
+				"treasury-type-open-name": "Para aktarım hazinesi aç"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
+		"lookup-treasury-cta-tooltip": "",
 		"open-treasury": {
 			"main-cta": "Aç",
-			"modal-title": "Open Streaming Account",
-			"treasuryid-input-empty": "Enter account ID",
-			"treasuryid-input-label": "Streaming account id to open",
-			"treasuryid-open-cta": "Open account",
-			"treasuryid-placeholder": "Account ID created by Mean Finance"
+			"modal-title": "",
+			"treasuryid-input-empty": "",
+			"treasuryid-input-label": "",
+			"treasuryid-open-cta": "",
+			"treasuryid-placeholder": ""
 		},
-		"refresh-tooltip": "Click to refresh the list of streaming accounts",
-		"screen-title": "Streaming Accounts",
-		"summary-title": "Streaming Accounts",
+		"refresh-tooltip": "",
+		"screen-title": "",
+		"summary-title": "",
 		"treasury-detail": {
 			"associated-token": "İlişkili token",
 			"created-on": "... 'da oluşturuldu",
 			"cta-add-funds": "Fon ekle",
 			"cta-add-funds-busy": "Fon ekleme",
-			"cta-close": "Close account",
-			"cta-close-busy": "Closing account",
+			"cta-close": "",
+			"cta-close-busy": "",
 			"cta-withdraw-multisig-treasury": "Fonları çek",
 			"multisig-tx-headsup": "Bu Hazine İçin Onay Bekleyen ya da Devam Eden İşlemler",
-			"no-treasury-loaded": "Select a streaming account to view details",
-			"no-treasury-selected": "Select a streaming account to view details",
+			"no-treasury-loaded": "",
+			"no-treasury-selected": "",
 			"number-of-streams": "Aktarım sayısı",
-			"refreshing-account-balance": "Refreshing account balance",
-			"treasury-address-label": "Streaming account address",
+			"refreshing-account-balance": "",
+			"treasury-address-label": "",
 			"treasury-name-label": "Hazine adı",
-			"unallocated-treasury-balance": "Available streaming balance"
+			"unallocated-treasury-balance": ""
 		},
 		"treasury-detail-heading": "Hazine ayrıntıları",
 		"treasury-list": {
@@ -1186,11 +1202,11 @@
 			"multisig-treasury-heading": "Çoklu-İmza hazineleri - {{treasuryName}}",
 			"multisig-treasury-help": "Aşağıdaki listede Çoklu-İmzaya bağlı tüm hazineler mevcuttur.",
 			"multisig-treasury-label": "Çoklu-imza hazinesi",
-			"no-treasuries": "No streaming accounts available",
-			"not-connected": "Please connect your wallet to see your streaming accounts",
+			"no-treasuries": "",
+			"not-connected": "",
 			"total-streams-label": "aktarımlar"
 		},
-		"treasury-refresh-tooltip": "Refresh account data",
+		"treasury-refresh-tooltip": "",
 		"treasury-streams": {
 			"add-stream-locked": {
 				"modal-title": "Kilitli bir para aktarımı ekle",
@@ -1210,47 +1226,47 @@
 				"panel3-to-address": "Adrese:",
 				"panel3-warning-message": "ÖNEMLİ:Bu bir kilitli para aktarımıdır, bir kez başlattığınızda durduramaz, iptal edemez ya da detaylarını değiştiremezsiniz. Lütfen onaylamadan önce tüm bilgileri gözden geçirin."
 			},
-			"add-stream-modal-title": "Add stream to the account",
-			"allocate-funds-label": "Amount to stream",
+			"add-stream-modal-title": "Hazineye aktarım ekle",
+			"allocate-funds-label": "Fon tahsis et",
 			"allocation-reserved-label": "Bu tahsis tamamen AYRILMIŞTIR",
 			"available-unallocated-balance-label": "Kullanılabilir Ayrılmamış Bakiye",
 			"busy-pausing": "Aktarım durduruluyor",
 			"busy-resuming": "Aktarım devam ettiriliyor",
-			"close-stream-also-closes-treasury-label": "Also close the streaming account",
+			"close-stream-also-closes-treasury-label": "",
 			"column-activity": "Para aktarımları",
 			"column-description": "Açıklama",
 			"column-destination": "Hedef",
 			"column-funds-left": "Kalan para",
 			"column-rate": "Oran",
+			"create-multi-recipient-checkbox-label": "Aynı ayarlarla başka aktarımlar mı olurşturmak istiyorsunuz?",
 			"create-stream-main-cta": "Akım oluştur",
 			"create-stream-main-cta-busy": "Aktarım oluşturuluyor",
-			"create-multi-recipient-checkbox-label": "Aynı ayarlarla başka aktarımlar mı olurşturmak istiyorsunuz?",
 			"fee-payed-by-treasurer": "Bu aktarım için yararlanıcı yerine ücretleri ben ödemek istiyorum",
 			"loading-streams": "Aktarımlar yükleniyor",
 			"message-warning": "Alıcıların adresini gönderdiğiniz liste sizin kendi adresinizide içeriyor bu mümkün olmadığından listeden kaldırıldı.",
-			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an amount up to the unallocated balance in this streaming account.",
+			"minimum-allocation-advice": "Bu Para Akışı için Hazine'de bulunan tahsis edilmemiş bakiyeye kadar bir minimum tahsisat belirlemelisiniz.",
 			"multiple-address-list": "Adress listesini çoğalt",
 			"multiple-address-question-mark-tooltip": "Lütfen csc içeriğini her satırda bir adres olacak şekilde gönderin, bir örnek olarak:",
-			"no-streams": "This streaming account has no active streams",
+			"no-streams": "",
 			"option-close-stream": "Kapat",
 			"option-explorer-link": "Solana Explorer'da görüntüle",
 			"option-pause-stream": "Duraklat",
 			"option-resume-stream": "Devam et",
+			"screen-title": "Streaming Accounts - Streams",
 			"status-running": "Devam ediyor",
 			"status-scheduled": "Zamanlanmış",
-			"status-stopped": "Durduruldu",
-			"screen-title": "Streaming Accounts - Streams"
+			"status-stopped": "Durduruldu"
 		},
 		"withdraw-funds": {
-			"button-title": "Withdraw funds",
-			"label-available-amount": "Funds available to withdraw now",
-			"label-input-amount": "Enter amount to withdraw",
-			"label-input-right": "By percentual preset",
-			"main-cta": "Withdraw funds",
-			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
-			"selected-treasury-label": "From streaming account",
-			"modal-title": "Withdraw account funds"
-		}	
+			"button-title": "",
+			"label-available-amount": "",
+			"label-input-amount": "",
+			"label-input-right": "",
+			"main-cta": "",
+			"modal-title": "",
+			"selected-treasury-label": "",
+			"verified-label": ""
+		}
 	},
 	"ui-language": {
 		"en": "İngilizce",
@@ -1259,16 +1275,16 @@
 		"fr": "Fransızca",
 		"ko": "Korece",
 		"pt": "Portekizce",
-		"tr": "Türkçe",
+		"tr": "",
 		"vi": "Vietnam",
 		"zh": "Çince"
 	},
 	"ui-menus": {
 		"app-context-menu": {
-			"blog": "Blog",
+			"blog": "",
 			"code": "Kod",
 			"developers": "Geliştiriciler",
-			"discord": "Discord",
+			"discord": "",
 			"faucet": "Musluk(Faucet)",
 			"help-support": "Yardım Merkezi",
 			"how-to-use": "Dokümanlar",
@@ -1277,7 +1293,7 @@
 			"switch-theme": "...Geç",
 			"theme-dark": "Karanlık Mod",
 			"theme-light": "Aydınlık Mod",
-			"twitter": "Twitter"
+			"twitter": ""
 		},
 		"main-menu": {
 			"accounts": "Hesaplar",
@@ -1294,9 +1310,9 @@
 				"multisig": "Çoklu-imza",
 				"safes": "Multisig V2",
 				"submenu-title": "Hizmetler",
-				"unwrap": "Unwrap",
+				"unwrap": "",
 				"wallet-guide": "Cüzdan Rehberi",
-				"wrap": "Wrap"
+				"wrap": ""
 			},
 			"stats": "İstatistikler",
 			"swap": "Alım-Satım",
@@ -1305,10 +1321,10 @@
 	},
 	"unwrap": {
 		"current-wsol-balance": "Anlık Wrapped SOL bakiyesi",
-		"label-input-amount": "Enter amount to unwrap"
+		"label-input-amount": ""
 	},
 	"wallet-selector": {
-		"connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",
+		"connect-to-begin": "",
 		"more-options-collapsed": "Daha fazla seçenek göster",
 		"more-options-expanded": "Daha az seçenek göster",
 		"primary-action": "Cüzdanı Bağla"
@@ -1321,6 +1337,6 @@
 		"modal-title": "Fonları geri çek"
 	},
 	"wrap": {
-		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
+		"hint-message": ""
 	}
 }

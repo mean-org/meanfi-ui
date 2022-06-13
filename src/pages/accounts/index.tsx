@@ -49,10 +49,9 @@ import { AccountTokenParsedInfo } from '../../models/token';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { Streams } from '../../views';
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { initialSummary, StreamsSummary } from '../../models/streams';
 import { MSP, Stream, STREAM_STATUS, TransactionFees } from '@mean-dao/msp';
-import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming';
+import { StreamInfo, STREAM_STATE, MoneyStreaming } from '@mean-dao/money-streaming';
 import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
@@ -86,8 +85,8 @@ import { MultisigParticipant } from '../../models/multisig';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { useNativeAccount } from '../../contexts/accounts';
-import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
+import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
@@ -169,6 +168,7 @@ export const AccountsNewView = () => {
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
@@ -179,6 +179,7 @@ export const AccountsNewView = () => {
   const [wSolBalance, setWsolBalance] = useState(0);
   const [refreshingBalance, setRefreshingBalance] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("assets");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
   const [inspectedAccountType, setInspectedAccountType] = useState<InspectedAccountType>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
@@ -198,14 +199,14 @@ export const AccountsNewView = () => {
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
 
   // QR scan modal
-  const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
-  const showQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(true), []);
-  const closeQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(false), []);
-  const onAcceptQrScannerModal = (value: string) => {
-    setAccountAddressInput(value);
-    triggerWindowResize();
-    closeQrScannerModal();
-  };
+  // const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
+  // const showQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(true), []);
+  // const closeQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(false), []);
+  // const onAcceptQrScannerModal = (value: string) => {
+  //   setAccountAddressInput(value);
+  //   triggerWindowResize();
+  //   closeQrScannerModal();
+  // };
 
   const [nativeBalance, setNativeBalance] = useState(0);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
@@ -215,6 +216,7 @@ export const AccountsNewView = () => {
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
@@ -385,41 +387,41 @@ export const AccountsNewView = () => {
     hideUnwrapSolModal();
   }
 
-  const onAddAccountAddress = useCallback(() => {
-    navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressInput}/assets`);
-    setAccountAddressInput('');
-  }, [navigate, accountAddressInput]);
+  // const onAddAccountAddress = useCallback(() => {
+  //   navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressInput}/assets`);
+  //   setAccountAddressInput('');
+  // }, [navigate, accountAddressInput]);
 
   const handleScanAnotherAddressButtonClick = () => {
     setAddAccountPanelOpen(true);
   }
 
-  const handleBackToAccountDetailsButtonClick = () => {
-    setAddAccountPanelOpen(false);
-  }
+  // const handleBackToAccountDetailsButtonClick = () => {
+  //   setAddAccountPanelOpen(false);
+  // }
 
-  const triggerWindowResize = () => {
-    window.dispatchEvent(new Event('resize'));
-  }
+  // const triggerWindowResize = () => {
+  //   window.dispatchEvent(new Event('resize'));
+  // }
 
-  const handleAccountAddressInputChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    // Set the input value
-    const trimmedValue = inputValue.trim();
-    setAccountAddressInput(trimmedValue);
-  }
+  // const handleAccountAddressInputChange = (e: any) => {
+  //   const inputValue = e.target.value as string;
+  //   // Set the input value
+  //   const trimmedValue = inputValue.trim();
+  //   setAccountAddressInput(trimmedValue);
+  // }
 
-  const handleAccountAddressInputFocusIn = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 100);
-  }
+  // const handleAccountAddressInputFocusIn = () => {
+  //   setTimeout(() => {
+  //     triggerWindowResize();
+  //   }, 100);
+  // }
 
-  const handleAccountAddressInputFocusOut = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 100);
-  }
+  // const handleAccountAddressInputFocusOut = () => {
+  //   setTimeout(() => {
+  //     triggerWindowResize();
+  //   }, 100);
+  // }
 
   const isInspectedAccountTheConnectedWallet = useCallback(() => {
     return accountAddress && publicKey && publicKey.toBase58() === accountAddress
@@ -586,10 +588,10 @@ export const AccountsNewView = () => {
     return undefined;
   }, [searchParams]);
 
-  const getNativeAccountAsset = useCallback(() => {
-    if (!accountAddress || !accountTokens) { return undefined; }
-    return accountTokens.find(a => a.publicAddress === accountAddress);
-  }, [accountAddress, accountTokens]);
+  // const getNativeAccountAsset = useCallback(() => {
+  //   if (!accountAddress || !accountTokens) { return undefined; }
+  //   return accountTokens.find(a => a.publicAddress === accountAddress);
+  // }, [accountAddress, accountTokens]);
 
   const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
     /**
@@ -1179,18 +1181,18 @@ export const AccountsNewView = () => {
   const closeCreateAssetModal = useCallback((refresh = false) => {
     resetTransactionStatus();
     setIsCreateAssetModalVisible(false);
-    setShouldLoadTokens(true);
+    if (refresh) {
+      setShouldLoadTokens(true); 
+    }
   }, [resetTransactionStatus, setShouldLoadTokens]);
 
   const onAssetCreated = useCallback(() => {
-    resetTransactionStatus();
     openNotification({
       description: t('multisig.create-asset.success-message'),
       type: "success"
     });
   },[
-    t,
-    resetTransactionStatus
+    t
   ]);
 
   const onExecuteCreateAssetTx = useCallback(async (data: any) => {
@@ -1485,10 +1487,6 @@ export const AccountsNewView = () => {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateAsset);
             setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
             onAssetCreated();
             closeCreateAssetModal(true);
           } else { setIsBusy(false); }
@@ -1574,7 +1572,7 @@ export const AccountsNewView = () => {
         : new PublicKey(fromAccount.mint);
 
       let toAddress = new PublicKey(data.to);
-      let programId = MEAN_MULTISIG_PROGRAM;
+      // const programId = MEAN_MULTISIG_PROGRAM;
       //
       let transferIx = SystemProgram.transfer({
         fromPubkey: fromAddress,
@@ -1586,7 +1584,7 @@ export const AccountsNewView = () => {
 
       if (!fromMintAddress.equals(NATIVE_SOL_MINT)) {
 
-        programId = TOKEN_PROGRAM_ID;
+        // programId = TOKEN_PROGRAM_ID;
         const mintInfo = await connection.getAccountInfo(fromMintAddress);
 
         if (!mintInfo) { 
@@ -1641,7 +1639,7 @@ export const AccountsNewView = () => {
         "Propose funds transfer",
         "", // description
         new Date(expirationTime * 1_000),
-        OperationType.TransferTokens,
+        (fromMintAddress.equals(NATIVE_SOL_MINT) ? OperationType.Transfer : OperationType.TransferTokens),
         selectedMultisig.id,
         transferIx.programId,
         transferIx.keys,
@@ -2246,6 +2244,7 @@ export const AccountsNewView = () => {
     if (selectedAsset && (!multisigPendingTxs || multisigPendingTxs.length === 0)) {
       return true;
     }
+    
     const found = multisigPendingTxs.find(tx => tx.operation === OperationType.DeleteAsset && (isTxPendingApproval(tx) || isTxPendingExecution(tx)));
 
     return found ? false : true;
@@ -2982,75 +2981,97 @@ export const AccountsNewView = () => {
                   // Locate the token in intersectedList
                   const tokenIndex = intersectedList.findIndex(i => i.address === item.parsedInfo.mint);
                   if (tokenIndex !== -1) {
-                    const rate = getTokenPriceBySymbol(intersectedList[tokenIndex].symbol);
+                    const price = getTokenPriceByAddress(intersectedList[tokenIndex].address) || getTokenPriceBySymbol(intersectedList[tokenIndex].symbol);
+                    const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                    const valueInUSD = balance * price;
                     // If we didn't already filled info for this associated token address
                     if (!intersectedList[tokenIndex].publicAddress) {
                       // Add it
                       intersectedList[tokenIndex].publicAddress = item.pubkey.toBase58();
                       intersectedList[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      intersectedList[tokenIndex].valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
+                      intersectedList[tokenIndex].valueInUsd = valueInUSD;
                     } else if (intersectedList[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
                       // If we did and the publicAddress is different/new then duplicate this item with the new info
-                      const newItem = JSON.parse(JSON.stringify(intersectedList[tokenIndex])) as UserTokenAccount;
+                      const newItem = Object.assign({}, intersectedList[tokenIndex]) as UserTokenAccount;
                       newItem.publicAddress = item.pubkey.toBase58();
                       newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      newItem.valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
+                      newItem.valueInUsd = valueInUSD;
                       intersectedList.splice(tokenIndex + 1, 0, newItem);
                     }
                   }
                 });
 
-                const sortedList = intersectedList.sort((a, b) => {
-                  if ((a.valueInUsd || 0) < (b.valueInUsd || 0)) {
-                    return 1;
-                  } else if ((a.valueInUsd || 0) > (b.valueInUsd || 0)) {
-                    return -1;
-                  }
-                  return 0;
-                });
-
                 // Update displayIndex and isAta flag
-                sortedList.forEach(async (item: UserTokenAccount, index: number) => {
+                intersectedList.forEach(async (item: UserTokenAccount, index: number) => {
                   item.displayIndex = index;
                   item.isAta = await updateAtaFlag(item);
                 });
 
-                // Finally add all owned token accounts as custom tokens
+                // Sort by valueInUsd and then by token balance and then by token name
+                intersectedList.sort((a, b) => {
+                  if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
+                     return -1;
+                  } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
+                     return 1;
+                  } else {
+                    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
+                  }
+                });
+
+                const custom: UserTokenAccount[] = [];
+                // Build a list with all owned token accounts not already in intersectedList as custom tokens
                 accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
-                  if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
+                  if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
+                    const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                    const price = getTokenPriceByAddress(item.parsedInfo.mint);
+                    const valueInUsd = balance * price;
                     const customToken: UserTokenAccount = {
                       address: item.parsedInfo.mint,
-                      balance: item.parsedInfo.tokenAmount.uiAmount || 0,
+                      balance,
                       chainId: 0,
-                      displayIndex: sortedList.length + 1 + index,
+                      displayIndex: intersectedList.length + 1 + index,
                       decimals: item.parsedInfo.tokenAmount.decimals,
                       name: 'Custom account',
                       symbol: shortenAddress(item.parsedInfo.mint),
                       publicAddress: item.pubkey.toBase58(),
                       tags: undefined,
                       logoURI: undefined,
-                      valueInUsd: 0
+                      valueInUsd
                     };
-                    sortedList.push(customToken);
+                    custom.push(customToken);
                   }
                 });
 
+                // Sort by valueInUsd and then by token balance
+                custom.sort((a, b) => {
+                  if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
+                     return -1;
+                  } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
+                     return 1;
+                  } else {
+                    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
+                  }
+                });
+
+                // Finally add all owned token accounts as custom tokens
+                const finalList = intersectedList.concat(custom);
+
                 // Report in the console for debugging
                 const tokenTable: any[] = [];
-                sortedList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
+                finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
                     pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
                     mintAddress: shortenAddress(item.address),
                     symbol: item.symbol,
                     decimals: item.decimals,
                     balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
                     price: getTokenPriceBySymbol(item.symbol),
-                    valueInUSD: toUsCurrency(item.valueInUsd)
+                    valueInUSD: toUsCurrency(item.valueInUsd) || "$0.00"
                   })
                 );
                 console.table(tokenTable);
 
                 // Update the state
-                setAccountTokens(sortedList);
+                setAccountTokens(finalList);
                 setTokensLoaded(true);
 
                 // Preset the passed-in token via query params either
@@ -3058,9 +3079,9 @@ export const AccountsNewView = () => {
                 if (urlQueryAsset) {
                   let inferredAsset: UserTokenAccount | undefined = undefined;
                   if (isValidAddress(urlQueryAsset)) {
-                    inferredAsset = sortedList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
+                    inferredAsset = finalList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
                   } else {
-                    inferredAsset = sortedList.find(t => t.symbol === urlQueryAsset);
+                    inferredAsset = finalList.find(t => t.symbol === urlQueryAsset);
                   }
                   if (inferredAsset) {
                     selectAsset(inferredAsset);
@@ -3069,15 +3090,15 @@ export const AccountsNewView = () => {
                   consoleOut('No urlQueryAsset but selectedAsset', 'beware!!!', 'pink');
                   consoleOut('selectedAsset:', selectedAsset, 'orange');
                   // If no asset from route param but there is already one selected, keep selection
-                  const item = sortedList.find(m => m.publicAddress === selectedAsset.publicAddress);
+                  const item = finalList.find(m => m.publicAddress === selectedAsset.publicAddress);
                   if (item) {
                     selectAsset(item, true);
                   } else {
-                    selectAsset(sortedList[0]);
+                    selectAsset(finalList[0]);
                   }
                 } else {
                   consoleOut('Neither urlQueryAsset nor selectedAsset', 'beware!!!', 'red');
-                  selectAsset(sortedList[0]);
+                  selectAsset(finalList[0]);
                 }
 
                 consoleOut('category', selectedCategory, 'blue');
@@ -3122,6 +3143,7 @@ export const AccountsNewView = () => {
     accountAddress,
     shouldLoadTokens,
     selectedCategory,
+    getTokenPriceByAddress,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     setShouldLoadTokens,
@@ -4522,7 +4544,7 @@ export const AccountsNewView = () => {
                                   disabled={!accountAddress || inspectedAccountType !== "multisig"}
                                   onClick={onShowCreateAssetModal}>
                                   <IconAdd className="mean-svg-icons" />
-                                  <span className="ml-1">Add asset</span>
+                                  <span className="ml-1">Create an asset</span>
                                 </Button>
                               </Tooltip>
                             )}
@@ -4740,14 +4762,17 @@ export const AccountsNewView = () => {
         />
       )}
 
-      <MultisigCreateAssetModal
-        handleOk={onAcceptCreateVault}
-        handleClose={closeCreateAssetModal}
-        isVisible={isCreateAssetModalVisible}
-        nativeBalance={nativeBalance}
-        transactionFees={transactionAssetFees}
-        isBusy={isBusy}
-      />
+      {isCreateAssetModalVisible && (
+        <MultisigAddAssetModal
+          connection={connection}
+          handleOk={(item: TokenInfo) => onAcceptCreateVault(item)}
+          handleClose={closeCreateAssetModal}
+          isVisible={isCreateAssetModalVisible}
+          ownedTokenAccounts={userOwnedTokenAccounts}
+          isBusy={isBusy}
+          selectedMultisig={selectedMultisig}
+        />
+      )}
 
       <PreFooter />
     </>

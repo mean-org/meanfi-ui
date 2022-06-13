@@ -599,6 +599,33 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
             serumV3Usdc: "6oGsL2puUgySccKzn9XA9afqF217LfxP5ocq4B3LWsjy"
         }
     },
+    {
+        chainId: 101,
+        address: '7xuP2ubqhEzbxJMZvtPqGLKRVyq4KXRKh4UGJmJaJwZr',
+        symbol: 'MEAN-SOL',
+        name: 'Raydium MEAN-SOL LP Token',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 101,
+        address: '7meGAxvVvBsUrFobS4prWVz1dnMZNvRRE2tJoVjFGjFc',
+        symbol: 'MEAN-USDC',
+        name: 'Raydium MEAN-USDC LP Token',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 101,
+        address: 'H9wUyrxpAErmdNVPitpHSXgwoomoh91ggJKPWtQQoCn1',
+        symbol: 'MEAN-RAY',
+        name: 'Raydium MEAN-RAY LP Token',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    },
     // Testnet tokens
     {
         chainId: 102,
@@ -806,6 +833,15 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         name: 'USDC-Dev - USD Coin Dev',
         decimals: 6,
         logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
+        tags: [],
+    },
+    {
+        chainId: 101,
+        address: '8C3t7mmndSSZUukZHrVuU2mJ3bPtpVRo6tKNbLovGQEJ',
+        symbol: 'CRDX-LP',
+        name: 'Credix Marketplace LP Token',
+        decimals: 6,
+        logoURI: '',
         tags: [],
     },
     {

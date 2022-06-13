@@ -14,7 +14,7 @@ import { ResumeItem } from '../UI/ResumeItem';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 // import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
-import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx } from '../../../../models/multisig';
+import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { Idl } from '@project-serum/anchor';
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
@@ -55,10 +55,19 @@ export const ProposalDetailsView = (props: {
   } = props;
 
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedProposalIdl, setSelectedProposalIdl] = useState<Idl | undefined>();
   const [proposalIxInfo, setProposalIxInfo] = useState<MultisigTransactionInstructionInfo | null>(null);
   const [proposalActivity, setProposalActivity] = useState<MultisigTransactionActivityItem[]>([]);
   const [loadingActivity, setLoadingActivity] = useState<boolean>(true);
+
+  // useEffect(() => {
+
+  //   setSelectedProposal(proposalSelected);
+
+  // }, [
+  //   proposalSelected
+  // ]);
 
   useEffect(() => {
 
@@ -89,9 +98,14 @@ export const ProposalDetailsView = (props: {
             // console.log('ixInfo', ixInfo);
             setProposalIxInfo(ixInfo);
           });
+      } else if (proposalApp && proposalApp.id === SystemProgram.programId.toBase58()) {
+        const ixInfo = parseMultisigSystemProposalIx(proposalSelected);
+        setProposalIxInfo(ixInfo);
+        // console.log('ixInfo', ixInfo);
       } else {
         const ixInfo = parseMultisigProposalIx(proposalSelected);
         setProposalIxInfo(ixInfo);
+        // console.log('ixInfo', ixInfo);
       }
     });
     return () => clearTimeout(timeout);
@@ -229,11 +243,13 @@ export const ProposalDetailsView = (props: {
             proposalIxInfo.data.map((item: InstructionDataInfo, index: number) => {
               return (
                 <Row gutter={[8, 8]} className="mb-2" key={`more-items-${index}`}>
-                  <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
-                    <Tooltip placement="right" title={item.label || ""}>
-                      <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}</span>
-                    </Tooltip>
-                  </Col>
+                  { item.label && (
+                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
+                      <Tooltip placement="right" title={item.label || ""}>
+                        <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}</span>
+                      </Tooltip>
+                    </Col>
+                  )}
                   {
                     item.label === "Owners" ? (
                       <>
@@ -263,13 +279,15 @@ export const ProposalDetailsView = (props: {
                         })}
                       </>
                     ) : (
-                      <>
-                        <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3" key="loquejea">
-                          <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
-                            {item.value}
-                          </span>
-                        </Col>
-                      </>
+                      item.value && (
+                        <>
+                          <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3" key="loquejea">
+                            <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                              {item.value}
+                            </span>
+                          </Col>
+                        </>
+                      )
                     )
                   }
                 </Row>
@@ -277,7 +295,7 @@ export const ProposalDetailsView = (props: {
             })
           ) : (
             proposalIxInfo.data.map((item: InstructionDataInfo, index: number) => {
-              return (
+              return item.label && item.value && (
                 <Row gutter={[8, 8]} className="mb-2" key={`data-${index}`}>
                   <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
                     <Tooltip placement="right" title={item.label || ""}>

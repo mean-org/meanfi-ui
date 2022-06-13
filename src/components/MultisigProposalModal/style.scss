@@ -62,7 +62,7 @@
         line-height: 1.2;
         margin-top: 0.25em;
         font-size: 0.75rem !important;
-        color: inherit !important;
+        // color: inherit !important;
       }
       &:hover {
         @include select-app (grayscale(0%), 1, var(--color-white) !important);
