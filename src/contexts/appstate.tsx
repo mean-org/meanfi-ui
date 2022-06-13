@@ -25,7 +25,7 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./con
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices } from "../utils/api";
+import { getPrices, getRaydiumLiquidityPools, getRaydiumLpPairs } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
@@ -159,6 +159,7 @@ interface AppStateConfig {
   getTokenPriceByAddress: (address: string) => number;
   getTokenPriceBySymbol: (symbol: string) => number;
   getTokenByMintAddress: (address: string) => TokenInfo | undefined;
+  getUserTokenByMintAddress: (address: string) => TokenInfo | undefined;
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
   resetStreamsState: () => void;
@@ -259,8 +260,8 @@ const contextDefaultValues: AppStateConfig = {
   streamListv1: undefined,
   streamListv2: undefined,
   streamList: undefined,
-  programs: [],
-  multisigTxs: [],
+  programs: undefined,
+  multisigTxs: undefined,
   selectedStream: undefined,
   streamDetail: undefined,
   activeStream: undefined,
@@ -316,6 +317,7 @@ const contextDefaultValues: AppStateConfig = {
   getTokenPriceByAddress: () => 0,
   getTokenPriceBySymbol: () => 0,
   getTokenByMintAddress: () => undefined,
+  getUserTokenByMintAddress: () => undefined,
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
   resetStreamsState: () => {},
@@ -726,6 +728,16 @@ const AppStateProvider: React.FC = ({ children }) => {
     return undefined;
   }, [splTokenList]);
 
+  const getUserTokenByMintAddress = useCallback((address: string): TokenInfo | undefined => {
+    const tokenFromTokenList = splTokenList && isProd()
+      ? splTokenList.find(t => t.address === address)
+      : userTokens.find(t => t.address === address);
+    if (tokenFromTokenList) {
+      return tokenFromTokenList;
+    }
+    return undefined;
+  }, [splTokenList, userTokens]);
+
   const openStreamById = async (streamId: string, dock = false) => {
     try {
       const streamPublicKey = new PublicKey(streamId);
@@ -1080,14 +1092,17 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   /*
+  // Get Raydium LP token list
   useEffect(() => {
     if (!raydiumLps && shouldLoadRaydiumLps) {
-      getRaydiumLiquidityPools()
+      // getRaydiumLiquidityPools()
+      getRaydiumLpPairs()
       .then(result => {
-        consoleOut('Raydium official LPs:', result.official, 'blue');
+        // consoleOut('Raydium official LPs:', result.official, 'blue');
         // result.official
         // result.unOfficial
-        setRaydiumLps(result.official);
+        consoleOut('Raydium pairs:', result, 'blue');
+        setRaydiumLps(result);
       })
       .finally(() => setShouldLoadRaydiumLps(false));
     }
@@ -1326,6 +1341,10 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
+    if (!selectedToken || !(selectedToken as TokenInfo).address ) {
+      return;
+    }
+
     const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
       if (!address) return 0;
       try {
@@ -1342,10 +1361,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       }
     }
 
-    if (!selectedToken) return;
-
     let balance = 0;
-    const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, selectedToken.address.toPublicKey());
+    const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, new PublicKey(selectedToken.address));
     balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
     updateTokenBalance(balance);
 
@@ -1584,6 +1601,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         getTokenPriceByAddress,
         getTokenPriceBySymbol,
         getTokenByMintAddress,
+        getUserTokenByMintAddress,
         refreshTokenBalance,
         resetContractValues,
         resetStreamsState,
