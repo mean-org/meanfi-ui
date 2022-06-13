@@ -3007,13 +3007,24 @@ export const AccountsNewView = () => {
                   item.isAta = await updateAtaFlag(item);
                 });
 
-                // Finally add all owned token accounts as custom tokens
+                // Sort by valueInUsd and then by token balance and then by token name
+                intersectedList.sort((a, b) => {
+                  if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
+                     return -1;
+                  } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
+                     return 1;
+                  } else {
+                    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
+                  }
+                });
+
+                const custom: UserTokenAccount[] = [];
+                // Build a list with all owned token accounts not already in intersectedList as custom tokens
                 accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
                   if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
                     const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
                     const price = getTokenPriceByAddress(item.parsedInfo.mint);
                     const valueInUsd = balance * price;
-                    // TODO: It would be good to fill-in name and symbol from another data source
                     const customToken: UserTokenAccount = {
                       address: item.parsedInfo.mint,
                       balance,
@@ -3027,42 +3038,40 @@ export const AccountsNewView = () => {
                       logoURI: undefined,
                       valueInUsd
                     };
-                    intersectedList.push(customToken);
+                    custom.push(customToken);
                   }
                 });
 
-                // Sort by valueInUsd and then by token balance and then by token name
-                const sortedList = intersectedList.sort((a, b) => {
+                // Sort by valueInUsd and then by token balance
+                custom.sort((a, b) => {
                   if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
                      return -1;
                   } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
                      return 1;
                   } else {
-                    if ((b.balance || 0) < (a.balance || 0)) {
-                      return 1;
-                    } else if ((b.balance || 0) > (a.balance || 0)) {
-                      return -1;
-                    }
-                    return ('' + a.name).localeCompare(b.name);
+                    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
                   }
                 });
 
+                // Finally add all owned token accounts as custom tokens
+                const finalList = intersectedList.concat(custom);
+
                 // Report in the console for debugging
                 const tokenTable: any[] = [];
-                sortedList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
+                finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
                     pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
                     mintAddress: shortenAddress(item.address),
                     symbol: item.symbol,
                     decimals: item.decimals,
                     balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
                     price: getTokenPriceBySymbol(item.symbol),
-                    valueInUSD: toUsCurrency(item.valueInUsd)
+                    valueInUSD: toUsCurrency(item.valueInUsd) || "$0.00"
                   })
                 );
                 console.table(tokenTable);
 
                 // Update the state
-                setAccountTokens(sortedList);
+                setAccountTokens(finalList);
                 setTokensLoaded(true);
 
                 // Preset the passed-in token via query params either
@@ -3070,9 +3079,9 @@ export const AccountsNewView = () => {
                 if (urlQueryAsset) {
                   let inferredAsset: UserTokenAccount | undefined = undefined;
                   if (isValidAddress(urlQueryAsset)) {
-                    inferredAsset = sortedList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
+                    inferredAsset = finalList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
                   } else {
-                    inferredAsset = sortedList.find(t => t.symbol === urlQueryAsset);
+                    inferredAsset = finalList.find(t => t.symbol === urlQueryAsset);
                   }
                   if (inferredAsset) {
                     selectAsset(inferredAsset);
@@ -3081,15 +3090,15 @@ export const AccountsNewView = () => {
                   consoleOut('No urlQueryAsset but selectedAsset', 'beware!!!', 'pink');
                   consoleOut('selectedAsset:', selectedAsset, 'orange');
                   // If no asset from route param but there is already one selected, keep selection
-                  const item = sortedList.find(m => m.publicAddress === selectedAsset.publicAddress);
+                  const item = finalList.find(m => m.publicAddress === selectedAsset.publicAddress);
                   if (item) {
                     selectAsset(item, true);
                   } else {
-                    selectAsset(sortedList[0]);
+                    selectAsset(finalList[0]);
                   }
                 } else {
                   consoleOut('Neither urlQueryAsset nor selectedAsset', 'beware!!!', 'red');
-                  selectAsset(sortedList[0]);
+                  selectAsset(finalList[0]);
                 }
 
                 consoleOut('category', selectedCategory, 'blue');
