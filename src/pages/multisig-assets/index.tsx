@@ -16,7 +16,7 @@ import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs,
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { TransactionFees } from '@mean-dao/msp';
-import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
+// import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -3606,14 +3606,14 @@ export const MultisigAssetsView = () => {
 
       </div>
 
-      <MultisigCreateAssetModal
+      {/* <MultisigCreateAssetModal
         handleOk={onAcceptCreateVault}
         handleClose={() => setIsCreateAssetModalVisible(false)}
         isVisible={isCreateAssetModalVisible}
         nativeBalance={nativeBalance}
         transactionFees={transactionFees}
         isBusy={isBusy}
-      />
+      /> */}
 
       {/* {isTransferTokenModalVisible && (
         <MultisigTransferTokensModal

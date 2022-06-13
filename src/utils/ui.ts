@@ -1,4 +1,3 @@
-import { TokenInfo } from "@solana/spl-token-registry";
 import bs58 from "bs58";
 import moment from "moment";
 import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
@@ -32,7 +31,7 @@ export const isLocal = (): boolean => {
 }
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (isLocal() || isDev()) {
+    if (!isProd()) {
         if (msg) {
             if (value === 'NOT_SPECIFIED') {
                 console.log(`%c${msg}`, `color: ${color}`);
