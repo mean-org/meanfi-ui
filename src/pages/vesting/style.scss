@@ -43,30 +43,32 @@
                 }
             }
             .meanfi-two-panel-right {
-                .transaction-list-row {
-                    border-radius: unset;
-                    border: none;
-                    height: 50px;
-                    padding: 6px;
-                    &:not(.no-pointer) {
-                        cursor: auto;
-                    }
-                    .description-cell {
-                        .title {
-                            display: inline-block;
-                            font-size: 0.85rem;
-                            line-height: 1;
-                            color: var(--color-secondary-alpha-85);
-                            width: 100%;
+                .vesting-contract-streams {
+                    .transaction-list-row {
+                        border-radius: unset;
+                        border: none;
+                        height: 50px;
+                        padding: 6px;
+                        &:not(.no-pointer) {
+                            cursor: auto;
                         }
-                        .subtitle {
-                            font-size: 0.75rem;
-                            line-height: 1.2;
+                        .description-cell {
+                            .title {
+                                display: inline-block;
+                                font-size: 0.85rem;
+                                line-height: 1;
+                                color: var(--color-secondary-alpha-85);
+                                width: 100%;
+                            }
+                            .subtitle {
+                                font-size: 0.75rem;
+                                line-height: 1.2;
+                            }
                         }
-                    }
-                    .actions-cell {
-                        flex: 0 0 24px !important;
-                        padding-left: 4px;
+                        .actions-cell {
+                            flex: 0 0 24px !important;
+                            padding-left: 4px;
+                        }
                     }
                 }
             }

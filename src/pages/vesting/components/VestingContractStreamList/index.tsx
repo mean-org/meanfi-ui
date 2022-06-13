@@ -317,7 +317,7 @@ export const VestingContractStreamList = (props: {
     // };
 
     return (
-        <>
+        <div className="vesting-contract-streams">
             <Spin spinning={loadingTreasuryStreams}>
                 {(treasuryStreams && treasuryStreams.length > 0) ? (
                     treasuryStreams.map((item, index) => {
@@ -380,6 +380,6 @@ export const VestingContractStreamList = (props: {
                     </>
                 )}
             </Spin>
-        </>
+        </div>
     );
 };
