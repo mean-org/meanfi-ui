@@ -38,6 +38,7 @@ import { useAccountsContext } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { NO_FEES } from "../../constants";
 import { useLocation, useParams } from "react-router-dom";
+import { TreasuryOpenModal } from "../../components/TreasuryOpenModal";
 
 export const MoneyStreamsInfoView = (props: {
   onSendFromIncomingStreamInfo?: any;
@@ -486,6 +487,17 @@ export const MoneyStreamsInfoView = (props: {
     treasuryDetails
   ]);
 
+  // Open treasury modal
+  const [isOpenTreasuryModalVisible, setIsOpenTreasuryModalVisibility] = useState(false);
+  const showOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(true), []);
+  const closeOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(false), []);
+
+  const onAcceptOpenTreasury = (e: any) => {
+    closeOpenTreasuryModal();
+    consoleOut('treasury id:', e, 'blue');
+    openTreasuryById(e, true, true);
+  };
+
   // TODO: Here the multisig ID is returned
   const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
 
@@ -915,7 +927,7 @@ export const MoneyStreamsInfoView = (props: {
             shape="round"
             size="small"
             className="thin-stroke"
-            onClick={() => {}}>
+            onClick={showOpenTreasuryModal}>
               <div className="btn-content">
                 Find money stream
               </div>
@@ -951,6 +963,14 @@ export const MoneyStreamsInfoView = (props: {
           multisigClient={multisigClient}
           multisigAddress={getSelectedTreasuryMultisig()}
           userBalances={userBalances}
+        />
+      )}
+
+      {isOpenTreasuryModalVisible && (
+        <TreasuryOpenModal
+          isVisible={isOpenTreasuryModalVisible}
+          handleOk={onAcceptOpenTreasury}
+          handleClose={closeOpenTreasuryModal}
         />
       )}
     </>
