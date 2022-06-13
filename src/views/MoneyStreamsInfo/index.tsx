@@ -4,6 +4,7 @@ import { ResumeItem } from "../../components/ResumeItem";
 import { RightInfoDetails } from "../../components/RightInfoDetails";
 import { TabsMean } from "../../components/TabsMean";
 import { IconArrowForward, IconVerticalEllipsis } from "../../Icons";
+import PieChartComponent from "./PieChart";
 import "./style.scss";
 
 export const MoneyStreamsInfoView = (props: {
@@ -93,6 +94,7 @@ export const MoneyStreamsInfoView = (props: {
           </div>
         </Col>
       </Row>
+      <PieChartComponent />
     </>
   );
 
