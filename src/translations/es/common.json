@@ -1342,6 +1342,9 @@
 		},
 		"vesting-account-details": {
 			"panel-title": "Vesting Account Details"
+		},
+		"vesting-account-streams": {
+			"no-streams": "This vesting contract has no streams created yet."
 		}
 	},
 	"wallet-selector": {

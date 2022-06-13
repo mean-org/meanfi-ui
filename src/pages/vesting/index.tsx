@@ -481,17 +481,28 @@ export const VestingView = () => {
     }
   }, [accountAddress, accountDetailTab, navigate, publicKey, vestingContractAddress]);
 
-  // Reload Treasury streams whenever the selected treasury changes
+  // Reload streams whenever the selected vesting contract changes
   useEffect(() => {
     if (!publicKey) { return; }
 
-    if (selectedVestingContract && !loadingTreasuryStreams && signalRefreshTreasuryStreams && accountDetailTab === "streams") {
+    if (vestingContractAddress && selectedVestingContract &&
+        vestingContractAddress === selectedVestingContract.id &&
+        !loadingTreasuryStreams && signalRefreshTreasuryStreams &&
+        accountDetailTab === "streams") {
       setSignalRefreshTreasuryStreams(false);
       consoleOut('calling getTreasuryStreams...', '', 'blue');
       const treasuryPk = new PublicKey(selectedVestingContract.id as string);
       getTreasuryStreams(treasuryPk);
     }
-  }, [accountDetailTab, getTreasuryStreams, loadingTreasuryStreams, publicKey, selectedVestingContract, signalRefreshTreasuryStreams]);
+  }, [
+    publicKey,
+    accountDetailTab,
+    loadingTreasuryStreams,
+    vestingContractAddress,
+    selectedVestingContract,
+    signalRefreshTreasuryStreams,
+    getTreasuryStreams,
+  ]);
 
   // Log the list of deleted streams
   useEffect(() => {

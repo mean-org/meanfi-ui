@@ -1,8 +1,8 @@
 import React, { useCallback, useContext, useState } from 'react';
 import { Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
-import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from '../../../../utils/ui';
+import { copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -21,14 +21,9 @@ export const VestingContractStreamList = (props: {
 }) => {
     const { treasuryStreams, loadingTreasuryStreams, accountAddress, vestingContract } = props;
     const {
-        streamDetail,
         deletedStreams,
-        highLightableStreamId,
         setHighLightableStreamId,
         getTokenByMintAddress,
-        setDtailsPanelOpen,
-        setSelectedStream,
-        setDeletedStream,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
     const [highlightedStream, sethHighlightedStream] = useState<Stream | undefined>();
@@ -373,8 +368,7 @@ export const VestingContractStreamList = (props: {
                             <p>{t('treasuries.treasury-streams.loading-streams')}</p>
                         ) : (
                             <>
-                                <p>{t('treasuries.treasury-streams.no-streams')}</p>
-                                <p>{t('streams.stream-list.no-streams')}</p>
+                                <p>{t('vesting.vesting-account-streams.no-streams')}</p>
                             </>
                         )}
                     </>
