@@ -4668,7 +4668,7 @@ export const AccountsNewView = () => {
                               />
                             ) : isStreamIncomingDetails ? (
                               <MoneyStreamsIncomingView
-                                stream={selectedStream}
+                                // stream={selectedStream}
                                 onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                               />
                             ) : isStreamOutgoingDetails ? (

@@ -1,5 +1,5 @@
 import { Button, Col, Dropdown, Menu, Row } from "antd";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { customLogger } from "../..";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { MoneyStreamDetails } from "../../components/MoneyStreamDetails";
@@ -8,7 +8,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { IconEllipsisVertical } from "../../Icons";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getReadableDate, getShortDate, getTransactionStatusForLogs } from "../../utils/ui";
 import {
   TransactionFees,
   MSP_ACTIONS as MSP_ACTIONS_V2,
@@ -33,48 +33,31 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import moment from "moment";
 import BN from "bn.js";
 import ArrowDownOutlined from "@ant-design/icons/lib/icons/ArrowDownOutlined";
+import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 
 export const MoneyStreamsIncomingView = (props: {
-  stream?: any;
+  // stream: Stream | StreamInfo | undefined;
   onSendFromIncomingStreamDetails?: any;
 }) => {
   const {
-    theme,
-    tokenList,
-    tokenBalance,
-    splTokenList,
-    selectedToken,
-    treasuryOption,
-    detailsPanelOpen,
+    streamDetail,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
     getTokenByMintAddress,
-    previousWalletConnectState,
-    setStreamList,
-    setSelectedToken,
-    setEffectiveRate,
-    refreshStreamList,
-    setTreasuryOption,
-    setDtailsPanelOpen,
-    resetContractValues,
-    refreshTokenBalance,
     setTransactionStatus,
-    setHighLightableStreamId,
-    setHighLightableMultisigId,
+    setStreamDetail,
   } = useContext(AppStateContext);
   const {
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
-  const { stream, onSendFromIncomingStreamDetails } = props;
+  const { onSendFromIncomingStreamDetails } = props;
 
   const connectionConfig = useConnectionConfig();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, wallet } = useWallet();
   const { t } = useTranslation('common');
+  const { endpoint } = useConnectionConfig();
 
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -119,6 +102,17 @@ export const MoneyStreamsIncomingView = (props: {
     publicKey,
     connectionConfig.endpoint,
   ]);
+
+  // Create and cache Money Streaming Program instance
+  const ms = useMemo(() => new MoneyStreaming(
+    endpoint,
+    streamProgramAddress,
+    "confirmed"
+  ), [
+    endpoint,
+    streamProgramAddress
+  ]);
+  
 
   // Create and cache Money Streaming Program V2 instance
   const msp = useMemo(() => {
@@ -664,33 +658,62 @@ export const MoneyStreamsIncomingView = (props: {
 
   }, []);
 
-  const renderFundsToWithdraw = (
-    <>
-      <span className="info-data large mr-1">
-        {stream
-          ? getAmountWithSymbol(
-              stream.withdrawableAmount, 
-              stream.associatedToken as string,
-              false, splTokenList
-            )
-          : '--'
-        }
-      </span>
-      <span className="info-icon">
-        {(stream && getStreamStatus(stream) === "Running") ? (
-          <ArrowDownOutlined className="mean-svg-icons success bounce" />
-        ) : (
-          <ArrowDownOutlined className="mean-svg-icons success" />
-        )}
-      </span>
-    </>
-  );
+  useEffect(() => {
+    if (!ms || !msp || !streamDetail) {return;}
+
+    const timeout = setTimeout(() => {
+      if (msp && streamDetail && streamDetail.version >= 2) {
+        msp.refreshStream(streamDetail as Stream).then(detail => {
+          setStreamDetail(detail as Stream);
+        });
+      } else if (ms && streamDetail && streamDetail.version < 2) {
+        ms.refreshStream(streamDetail as StreamInfo).then(detail => {
+          setStreamDetail(detail as StreamInfo);
+        });
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [ms, msp, setStreamDetail, streamDetail]);
+
+  const v1 = streamDetail as StreamInfo;
+  const v2 = streamDetail as Stream;
+  const isNew = v2.version >= 2 ? true : false;
+
+  const renderFundsToWithdraw = () => {
+    if (!streamDetail) {return null;}
+
+    const token = getTokenByMintAddress(streamDetail.associatedToken as string);
+
+    return (
+      <>
+        <span className="info-data large mr-1">
+          {streamDetail
+            ? getTokenAmountAndSymbolByTokenAddress(isNew ?
+                toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6) : v1.escrowVestedAmount, 
+                streamDetail.associatedToken as string
+              )
+            : '--'
+          }
+        </span>
+        <span className="info-icon">
+          {(streamDetail && getStreamStatus(streamDetail) === "Running") ? (
+            <ArrowDownOutlined className="mean-svg-icons success bounce" />
+          ) : (
+            <ArrowDownOutlined className="mean-svg-icons success" />
+          )}
+        </span>
+      </>
+    )
+  }
 
   // Info Data
   const infoData = [
     {
       name: "Funds available to withdraw now",
-      value: renderFundsToWithdraw
+      value: renderFundsToWithdraw()
     },
   ];
 
@@ -749,55 +772,104 @@ export const MoneyStreamsIncomingView = (props: {
   );
 
   const incomingStream = {
-    title: stream ? getStreamTitle(stream) : "Unknown incoming stream",
-    subtitle: getStreamSubtitle(stream),
-    status: getStreamStatus(stream),
-    resume: getStreamResume(stream)
+    title: streamDetail ? getStreamTitle(streamDetail) : "Unknown incoming stream",
+    subtitle: streamDetail ? getStreamSubtitle(streamDetail) : "--",
+    status: streamDetail ? getStreamStatus(streamDetail) : "--",
+    resume: streamDetail ? getStreamResume(streamDetail) : "--"
   };
 
-  const receivingFrom =  <CopyExtLinkGroup
-    content={stream.treasurer}
-    number={8}
-    externalLink={true}
-  />
+  const renderReceivingFrom = () => {
+    if (!streamDetail) {return null;}
+
+    return (
+      <CopyExtLinkGroup
+        content={isNew ? v2.treasurer as string : v1.treasurerAddress as string}
+        number={8}
+        externalLink={true}
+      />
+    )
+  }
+
+  const renderPaymentRate = () => {
+    if (!streamDetail) {return null;}
+
+    const token = getTokenByMintAddress(streamDetail.associatedToken as string);
+
+    return (
+      <>
+        {streamDetail
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+              toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount, 
+              streamDetail.associatedToken as string
+            )}  ${getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true, t)}`
+          : '--'
+        }
+      </>
+    )
+  }
+
+  const renderReservedAllocation = () => {
+    if (!streamDetail) {return null;}
+
+    const token = getTokenByMintAddress(streamDetail.associatedToken as string);
+
+    return (
+      <>
+        {streamDetail
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+            toUiAmount(new BN(v2.remainingAllocationAmount), token?.decimals || 6) : (v1.allocationAssigned || v1.allocationLeft), 
+              streamDetail.associatedToken as string
+            )}`
+          : '--'
+        }
+      </>
+    )
+  }
+
+  const renderFundsLeftInAccount = () => {
+    if (!streamDetail) {return null;}
+
+    const token = getTokenByMintAddress(streamDetail.associatedToken as string);
+
+    return (
+      <>
+        {streamDetail
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+            toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
+              streamDetail.associatedToken as string
+            )}`
+          : '--'
+        }
+      </>
+    )
+  }
 
   // Tab details
   const detailsData = [
     {
       label: "Started on:",
-      value: moment(stream.startUtc).format("LLL").toLocaleString()
+      value: streamDetail ? moment(streamDetail.startUtc).format("LLL").toLocaleString() : "--"
     },
     {
       label: "Receiving from:",
-      value: receivingFrom ? receivingFrom : "--"
+      value: renderReceivingFrom() ? renderReceivingFrom() : "--"
     },
     {
       label: "Payment rate:",
-      value: `${getAmountWithSymbol(
-        stream.rateAmount,
-        stream.associatedToken as string)}
-        ${getIntervalFromSeconds(
-        stream?.rateIntervalInSeconds as number,
-        true,
-        t)}`
+      value: renderPaymentRate() ? renderPaymentRate() : "--"
     },
     {
       label: "Reserved allocation:",
-      value: `${getTokenAmountAndSymbolByTokenAddress(
-        stream.remainingAllocationAmount,
-        stream.associatedToken
-      )}`
+      value: renderReservedAllocation() ? renderReservedAllocation() : ""
     },
     {
       label: "Funds left in account:",
-      value: `${getAmountWithSymbol(
-        stream.fundsLeftInStream,
-        stream.associatedToken as string)}`
+      value: renderFundsLeftInAccount() ? renderFundsLeftInAccount() : "--"
     },
-    {
-      label: stream.remainingAllocationAmount === 0 && "Funds ran out on:",
-      value: stream.remainingAllocationAmount === 0 && "June 1, 2022 (6 days ago)"
-    },
+    // {
+    //   label: "Funds ran out on:",
+    //   value: "June 1, 2022 (6 days ago)"
+    // },
   ];
 
   return (
