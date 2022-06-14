@@ -3,9 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { cutNumber, fetchAccountTokens, getAmountWithSymbol, getTokenBySymbol, isValidNumber, slugify } from '../../../../utils/utils';
-import { useAccountsContext, useNativeAccount } from '../../../../contexts/accounts';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { cutNumber, getAmountWithSymbol, getTokenBySymbol, isValidNumber, slugify } from '../../../../utils/utils';
 import { consoleOut, disabledDate, getLockPeriodOptionLabel, isToday, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { confirmationEvents, TxConfirmationInfo } from '../../../../contexts/transaction-status';
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from '../../../../models/enums';
@@ -34,16 +32,25 @@ export const VestingLockCreateAccount = (props: {
     inModal: boolean;
     token?: TokenInfo;
     tokenChanged: any;
+    userBalances: any;
+    nativeBalance: number;
+    selectedList: TokenInfo[];
     vestingAccountCreated: any;
 }) => {
-    const { inModal, token, tokenChanged, vestingAccountCreated } = props;
+    const {
+        token,
+        inModal,
+        tokenChanged,
+        selectedList,
+        userBalances,
+        nativeBalance,
+        vestingAccountCreated,
+    } = props;
     const { t } = useTranslation('common');
     const connection = useConnection();
     const { connected, publicKey } = useWallet();
     const {
         tokenList,
-        userTokens,
-        splTokenList,
         loadingPrices,
         lockPeriodAmount,
         paymentStartDate,
@@ -57,16 +64,10 @@ export const VestingLockCreateAccount = (props: {
         setEffectiveRate,
         refreshPrices,
     } = useContext(AppStateContext);
-    const { account } = useNativeAccount();
-    const accounts = useAccountsContext();
     const { width } = useWindowSize();
     const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
-    const [userBalances, setUserBalances] = useState<any>();
-    const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-    const [nativeBalance, setNativeBalance] = useState(0);
     const [tokenFilter, setTokenFilter] = useState("");
     const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
-    const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
     const [canSubscribe, setCanSubscribe] = useState(true);
     const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
     const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
@@ -81,7 +82,7 @@ export const VestingLockCreateAccount = (props: {
     const [currentStep, setCurrentStep] = useState(0);
     const percentages = [5, 10, 15, 20];
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("")
-  
+
     const resetTransactionStatus = useCallback(() => {
 
         setTransactionStatus({
@@ -92,6 +93,10 @@ export const VestingLockCreateAccount = (props: {
     }, [
         setTransactionStatus
     ]);
+
+    const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
+        return await calculateActionFees(connection, action);
+    }, [connection]);
 
     const recordTxConfirmation = useCallback((signature: string, success = true) => {
         const event = success
@@ -259,121 +264,6 @@ export const VestingLockCreateAccount = (props: {
         }
     }, [connection, otpFees]);
 
-    // Keep account balance updated
-    useEffect(() => {
-
-        const getAccountBalance = (): number => {
-            return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-        }
-
-        if (account?.lamports !== previousBalance || !nativeBalance) {
-            setNativeBalance(getAccountBalance());
-            // Update previous balance
-            setPreviousBalance(account?.lamports);
-        }
-    }, [
-        account,
-        nativeBalance,
-        previousBalance,
-    ]);
-
-    // Automatically update all token balances and rebuild token list
-    useEffect(() => {
-
-        if (!connection) {
-            console.error('No connection');
-            return;
-        }
-
-        if (!publicKey || !userTokens || !tokenList || !accounts || !accounts.tokenAccounts) {
-            return;
-        }
-
-        const timeout = setTimeout(() => {
-
-            const balancesMap: any = {};
-
-            fetchAccountTokens(connection, publicKey)
-                .then(accTks => {
-                    if (accTks) {
-
-                        const meanTokensCopy = new Array<TokenInfo>();
-                        const intersectedList = new Array<TokenInfo>();
-                        const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
-
-                        // Build meanTokensCopy including the MeanFi pinned tokens
-                        userTokensCopy.forEach(item => {
-                            meanTokensCopy.push(item);
-                        });
-
-                        // Now add all other items but excluding those in userTokens
-                        splTokenList.forEach(item => {
-                            if (!userTokens.includes(item)) {
-                                meanTokensCopy.push(item);
-                            }
-                        });
-
-                        // Create a list containing tokens for the user owned token accounts
-                        accTks.forEach(item => {
-                            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
-                            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-                            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-                            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-                                intersectedList.push(tokenFromMeanTokensCopy);
-                            }
-                        });
-
-                        intersectedList.unshift(userTokensCopy[0]);
-                        balancesMap[userTokensCopy[0].address] = nativeBalance;
-                        intersectedList.sort((a, b) => {
-                            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
-                                return 1;
-                            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
-                                return -1;
-                            }
-                            return 0;
-                        });
-
-                        setSelectedList(intersectedList);
-                        consoleOut('intersectedList:', intersectedList, 'orange');
-                        if (!selectedToken) { setSelectedToken(intersectedList[0]); }
-
-                    } else {
-                        for (const t of tokenList) {
-                            balancesMap[t.address] = 0;
-                        }
-                        // set the list to the userTokens list
-                        setSelectedList(tokenList);
-                        if (!selectedToken) { setSelectedToken(tokenList[0]); }
-                    }
-                })
-                .catch(error => {
-                    console.error(error);
-                    for (const t of tokenList) {
-                        balancesMap[t.address] = 0;
-                    }
-                    setSelectedList(tokenList);
-                    if (!selectedToken) { setSelectedToken(tokenList[0]); }
-                })
-                .finally(() => setUserBalances(balancesMap));
-
-        });
-
-        return () => {
-            clearTimeout(timeout);
-        }
-
-    }, [
-        accounts,
-        publicKey,
-        tokenList,
-        userTokens,
-        connection,
-        splTokenList,
-        selectedToken,
-        nativeBalance,
-    ]);
-
     // Select one vesting category initially
     useEffect(() => {
         if (!vestingCategory) {
@@ -416,8 +306,6 @@ export const VestingLockCreateAccount = (props: {
                 consoleOut('User is connecting...', publicKey.toBase58(), 'green');
             } else if (previousWalletConnectState && !connected) {
                 consoleOut('User is disconnecting...', '', 'green');
-                setSelectedTokenBalance(0);
-                setUserBalances(undefined);
                 confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
                 consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
                 confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
@@ -436,7 +324,6 @@ export const VestingLockCreateAccount = (props: {
         connected,
         publicKey,
         previousWalletConnectState,
-        setSelectedTokenBalance,
         onTxConfirmed,
         onTxTimedout,
     ]);

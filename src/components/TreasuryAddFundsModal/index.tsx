@@ -51,7 +51,7 @@ export const TreasuryAddFundsModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   withdrawTransactionFees: TransactionFees;
-  streamStats: TreasuryStreamsBreakdown | undefined;
+  streamStats?: TreasuryStreamsBreakdown;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   treasuryStreams: (Stream | StreamInfo)[];
   associatedToken: string;

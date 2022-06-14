@@ -1,32 +1,49 @@
 import React, { useEffect, useState, useContext, useCallback, useMemo } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconExternalLink, IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { MSP, Stream, Treasury } from '@mean-dao/msp';
+import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  calculateActionFees,
+  MSP,
+  MSP_ACTIONS,
+  Stream,
+  TransactionFees,
+  Treasury,
+  Constants as MSPV2Constants
+} from '@mean-dao/msp';
 import "./style.scss";
+import { AnchorProvider, Program } from '@project-serum/anchor';
+import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, WarningFilled } from '@ant-design/icons';
-import { openLinkInNewTab, shortenAddress } from '../../utils/utils';
+import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, openLinkInNewTab, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { VestingLockAccountList } from './components/VestingLockAccountList';
 import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isMobile } from 'react-device-detect';
-import { MetaInfoCta } from '../../models/common-types';
-import { MetaInfoCtaAction, PaymentRateType } from '../../models/enums';
+import { MetaInfoCta, TreasuryTopupParams } from '../../models/common-types';
+import { MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from '../../components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
 import { VESTING_CATEGORIES } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
+import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
+import { TreasuryAddFundsModal } from '../../components/TreasuryAddFundsModal';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { customLogger } from '../..';
+import { InspectedAccountType } from '../accounts';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -35,20 +52,36 @@ let ds: string[] = [];
 
 export const VestingView = () => {
   const {
+    tokenList,
+    userTokens,
+    splTokenList,
     selectedToken,
     deletedStreams,
     detailsPanelOpen,
+    transactionStatus,
     streamV2ProgramAddress,
+    pendingMultisigTxCount,
+    setPendingMultisigTxCount,
+    getTokenByMintAddress,
+    setTransactionStatus,
+    refreshTokenBalance,
     setDtailsPanelOpen,
     setSelectedToken,
   } = useContext(AppStateContext);
+  const {
+    confirmationHistory,
+    enqueueTransactionConfirmation
+  } = useContext(TxConfirmationContext);
   const location = useLocation();
   const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
+  const [searchParams] = useSearchParams();
   const { address, vestingContract, activeTab } = useParams();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
-  const { publicKey } = useWallet();
+  const { publicKey, wallet } = useWallet();
+  const { account } = useNativeAccount();
+  const accounts = useAccountsContext();
   const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
   const [loadingTreasuries, setLoadingTreasuries] = useState(true);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
@@ -60,13 +93,38 @@ export const VestingView = () => {
   const [accountAddress, setAccountAddress] = useState('');
   const [vestingContractAddress, setVestingContractAddress] = useState<string>('');
   const [accountDetailTab, setAccountDetailTab] = useState<VestingAccountDetailTab>(undefined);
+  const [inspectedAccountType, setInspectedAccountType] = useState<InspectedAccountType>(undefined);
   // Selected vesting contract
   const [selectedVestingContract, setSelectedVestingContract] = useState<Treasury | undefined>(undefined);
-  // const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
+  // const [loadingselectedVestingContract, setLoadingselectedVestingContract] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [assetCtas, setAssetCtas] = useState<MetaInfoCta[]>([]);
-
+  // Source token list
+  const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
+  // Balances
+  const [nativeBalance, setNativeBalance] = useState(0);
+  const [userBalances, setUserBalances] = useState<any>();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  // Transactions
+  const [isBusy, setIsBusy] = useState(false);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
+  const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>({
+    multisigFee: 0,
+    networkFee: 0,
+    rentExempt: 0
+  } as MultisigTransactionFees);
+  const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+  });
+  const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+  const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
+  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
+  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
+  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
 
   /////////////////////////
   //  Setup & Init code  //
@@ -112,7 +170,19 @@ export const VestingView = () => {
       setAccountDetailTab(activeTab as VestingAccountDetailTab);
     }
 
-  }, [accountAddress, activeTab, address, isPageLoaded, publicKey, vestingContract]);
+    let accountTypeInQuery: string | null = null;
+    // Get the account-type if passed-in
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery && accountTypeInQuery === "multisig") {
+        consoleOut('account-type:', accountTypeInQuery, 'crimson');
+        setInspectedAccountType("multisig");
+      } else {
+        setInspectedAccountType(undefined);
+      }
+    }
+
+  }, [accountAddress, activeTab, address, isPageLoaded, publicKey, searchParams, vestingContract]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -120,6 +190,44 @@ export const VestingView = () => {
     disableRetryOnRateLimit: true
   }), [
     connectionConfig.endpoint
+  ]);
+
+  const multisigClient = useMemo(() => {
+
+    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
+
+    return new MeanMultisig(
+      connectionConfig.endpoint,
+      publicKey,
+      "confirmed"
+    );
+
+  }, [
+    connection,
+    publicKey,
+    connectionConfig.endpoint,
+  ]);
+
+  const multisigSerumClient = useMemo(() => {
+
+    const opts: ConfirmOptions = {
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
+      skipPreflight: true,
+      maxRetries: 3
+    };
+
+    const provider = new AnchorProvider(connection, wallet as any, opts);
+
+    return new Program(
+      SerumIDL,
+      "msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt",
+      provider
+    );
+
+  }, [
+    connection, 
+    wallet
   ]);
 
   // Create and cache Money Streaming Program V2 instance
@@ -144,71 +252,37 @@ export const VestingView = () => {
   //  Callbacks  //
   /////////////////
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const resetTransactionStatus = useCallback(() => {
+
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+
+  }, [
+    setTransactionStatus
+  ]);
+
+  const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
+    return await calculateActionFees(connection, action);
+  }, [connection]);
+
   const isInspectedAccountTheConnectedWallet = useCallback(() => {
     return accountAddress && publicKey && publicKey.toBase58() === accountAddress
       ? true
       : false
   }, [accountAddress, publicKey]);
-
-  // const setCustomToken = useCallback((address: string) => {
-
-  //   if (address && isValidAddress(address)) {
-  //     const unkToken: TokenInfo = {
-  //       address: address,
-  //       name: 'Unknown',
-  //       chainId: 101,
-  //       decimals: 6,
-  //       symbol: shortenAddress(address),
-  //     };
-  //     setSelectedToken(unkToken);
-  //     consoleOut("token selected:", unkToken, 'blue');
-  //     setEffectiveRate(0);
-  //   }
-  // }, [
-  //   setEffectiveRate,
-  //   setSelectedToken,
-  // ]);
-
-  // const openVestingContractById = useCallback((treasuryId: string, msp: MSP) => {
-
-  //   setLoadingTreasuryDetails(true);
-  //   const treasuryPk = new PublicKey(treasuryId);
-
-  //   return msp.getTreasury(treasuryPk)
-  //     .then((details: Treasury | undefined) => {
-  //       if (details) {
-  //         consoleOut('VestingContract details:', details, 'blue');
-  //         // const ata = details.associatedToken as string;
-  //         // const type = details.treasuryType;
-  //         // const token = getTokenByMintAddress(ata);
-  //         // consoleOut("treasury token:", token ? token.symbol : 'Custom', 'blue');
-  //         // if (token) {
-  //         //   if (!selectedToken || selectedToken.address !== token.address) {
-  //         //     setSelectedToken(token);
-  //         //   }
-  //         // } else if (!token && (!selectedToken || selectedToken.address !== ata)) {
-  //         //   setCustomToken(ata);
-  //         // }
-  //         // const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === type);
-  //         // if (tOption) {
-  //         //   setTreasuryOption(tOption);
-  //         // }
-  //         return details;
-  //       } else {
-  //         // setTreasuryDetails(undefined);
-  //         return undefined;
-  //       }
-  //     })
-  //     .catch((error: any) => {
-  //       console.error(error);
-  //       // setTreasuryDetails(undefined);
-  //       return undefined;
-  //     })
-  //     .finally(() => {
-  //       setLoadingTreasuryDetails(false);
-  //     });
-
-  // }, []);
 
   const getAllUserV2Accounts = useCallback(async () => {
 
@@ -300,9 +374,426 @@ export const VestingView = () => {
 
   },[t])
 
+  const isMultisigTreasury = useCallback((treasury?: any) => {
+
+    const treasuryInfo: any = treasury ?? selectedVestingContract;
+
+    if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
+      return false;
+    }
+
+    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
+
+    if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
+      return true;
+    }
+
+    return false;
+
+  }, [
+    multisigAccounts, 
+    publicKey, 
+    selectedVestingContract
+  ]);
+
+  const parseSerumMultisigAccount = useCallback((info: any) => {
+
+    return PublicKey
+      .findProgramAddress([info.publicKey.toBuffer()], new PublicKey("msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt"))
+      .then(k => {
+
+        const address = k[0];
+        const owners: MultisigParticipant[] = [];
+        const filteredOwners = info.account.owners.filter((o: any) => !o.equals(PublicKey.default));
+
+        for (let i = 0; i < filteredOwners.length; i ++) {
+          owners.push({
+            address: filteredOwners[i].toBase58(),
+            name: "owner " + (i + 1),
+          } as MultisigParticipant);
+        }
+
+        return {
+          id: info.publicKey,
+          version: 0,
+          label: "",
+          authority: address,
+          nounce: info.account.nonce,
+          ownerSetSeqno: info.account.ownerSetSeqno,
+          threshold: info.account.threshold.toNumber(),
+          pendingTxsAmount: 0,
+          createdOnUtc: new Date(),
+          owners: owners
+
+        } as MultisigInfo;
+      })
+      .catch(err => { 
+        consoleOut('error', err, 'red');
+        return undefined;
+      });
+  }, []);
+
+  //////////////
+  //  Modals  //
+  //////////////
+
+  // Create vesting contract modal
   const [isVestingContractCreateModalVisible, setIsVestingContractCreateModalVisibility] = useState(false);
   const showVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(true), []);
   const closeVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(false), []);
+
+  // Add funds modal
+  const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
+  const showAddFundsModal = useCallback(() => {
+    resetTransactionStatus();
+    if (vestingContract) {
+      getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
+        setTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
+      getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
+        setWithdrawTransactionFees(value);
+        consoleOut('withdrawTransactionFees:', value, 'orange');
+      });
+      setIsAddFundsModalVisibility(true);
+    }
+  }, [getTransactionFees, resetTransactionStatus, vestingContract]);
+
+  const onAcceptAddFunds = (params: TreasuryTopupParams) => {
+    consoleOut('AddFunds params:', params, 'blue');
+    onExecuteAddFundsTransaction(params);
+  };
+
+  const closeAddFundsModal = useCallback(() => {
+    setIsAddFundsModalVisibility(false);
+  }, []);
+
+  const onExecuteAddFundsTransaction = async (params: TreasuryTopupParams) => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    resetTransactionStatus();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryAddFunds);
+    setRetryOperationPayload(params);
+    setIsBusy(true);
+
+    const addFunds = async (data: any) => {
+
+      if (!msp) { return null; }
+
+      if (data.stream === '') {
+        return await msp.addFunds(
+          new PublicKey(data.payer),                    // payer
+          new PublicKey(data.contributor),              // contributor
+          new PublicKey(data.treasury),                 // treasury
+          new PublicKey(data.associatedToken),          // associatedToken
+          data.amount,                                  // amount
+        );
+      }
+
+      if (!isMultisigTreasury()) {
+        return await msp.allocate(
+          new PublicKey(data.payer),                   // payer
+          new PublicKey(data.contributor),             // treasurer
+          new PublicKey(data.treasury),                // treasury
+          new PublicKey(data.stream),                  // stream
+          data.amount,                                 // amount
+        );
+      }
+
+      if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      const treasury = selectedVestingContract as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      const allocateTx = await msp.allocate(
+        new PublicKey(data.payer),                   // payer
+        new PublicKey(multisig.authority),           // treasurer
+        new PublicKey(data.treasury),                // treasury
+        new PublicKey(data.stream),                  // stream
+        data.amount,                                 // amount
+      );
+
+      const ixData = Buffer.from(allocateTx.instructions[0].data);
+      const ixAccounts = allocateTx.instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Add Funds",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamAddFunds,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
+
+      return tx;
+    }
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (!publicKey || !selectedVestingContract || !params || !params.associatedToken || !msp) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut("Start transaction for treasury addFunds", '', 'blue');
+      consoleOut('Wallet address:', publicKey.toBase58());
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      const treasury = new PublicKey(selectedVestingContract.id);
+      const associatedToken = new PublicKey(params.associatedToken);
+      const amount = params.tokenAmount.toNumber();
+      const data = {
+        payer: publicKey.toBase58(),                              // payer
+        contributor: publicKey.toBase58(),                        // contributor
+        treasury: treasury.toBase58(),                            // treasury
+        associatedToken: associatedToken.toBase58(),              // associatedToken
+        stream: params.streamId ? params.streamId : '',
+        amount,                                                   // amount
+      }
+
+      consoleOut('data:', data);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < minRequired) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
+      // Create a transaction
+      const result = await addFunds(data)
+        .then((value: Transaction | null) => {
+          if (!value) { return false; }
+          consoleOut('addFunds returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('addFunds error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet && publicKey) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (publicKey && selectedVestingContract) {
+      const token = getTokenByMintAddress(params.associatedToken);
+      const created = await createTx();
+      consoleOut('created:', created, 'blue');
+      if (created && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryAddFunds,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `${params.streamId ? 'Fund stream with' : 'Fund vesting account with'} ${formatThousands(
+                parseFloat(params.amount),
+                token?.decimals
+              )} ${token?.symbol}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `${params.streamId ? 'Stream funded with' : 'Vesting account funded with'} ${formatThousands(
+                parseFloat(params.amount),
+                token?.decimals
+              )} ${token?.symbol}`,
+              extras: params.streamId
+            });
+            setIsBusy(false);
+            resetTransactionStatus();
+            setNeedReloadMultisig(true);
+            setOngoingOperation(undefined);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  };
+
 
   /////////////////////
   // Data management //
@@ -316,6 +807,116 @@ export const VestingView = () => {
       setIsXsDevice(false);
     }
   }, [width]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
+
+  // Automatically update all token balances and rebuild token list
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !userTokens || !tokenList || !splTokenList || accounts.tokenAccounts.length === 0) {
+      return;
+    }
+
+    const balancesMap: any = {};
+
+    fetchAccountTokens(connection, publicKey)
+      .then(accTks => {
+        if (accTks) {
+
+          const meanTokensCopy = new Array<TokenInfo>();
+          const intersectedList = new Array<TokenInfo>();
+          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+
+          // Build meanTokensCopy including the MeanFi pinned tokens
+          userTokensCopy.forEach(item => {
+            meanTokensCopy.push(item);
+          });
+
+          // Now add all other items but excluding those in userTokens
+          splTokenList.forEach(item => {
+            if (!userTokens.includes(item)) {
+              meanTokensCopy.push(item);
+            }
+          });
+
+          // Create a list containing tokens for the user owned token accounts
+          accTks.forEach(item => {
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromMeanTokensCopy);
+            }
+          });
+
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;
+          intersectedList.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          setSelectedList(intersectedList);
+          if (!selectedToken) { setSelectedToken(intersectedList[0]); }
+
+        } else {
+          for (const t of tokenList) {
+            balancesMap[t.address] = 0;
+          }
+          // set the list to the userTokens list
+          setSelectedList(tokenList);
+          if (!selectedToken) { setSelectedToken(tokenList[0]); }
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (const t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+        setSelectedList(tokenList);
+        if (!selectedToken) { setSelectedToken(tokenList[0]); }
+      })
+      .finally(() => setUserBalances(balancesMap));
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    publicKey,
+    tokenList,
+    connection,
+    userTokens,
+    splTokenList,
+    nativeBalance,
+    selectedToken,
+    accounts.tokenAccounts,
+  ]);
 
   // Build CTAs
   useEffect(() => {
@@ -340,7 +941,7 @@ export const VestingView = () => {
     // Bulk create
     actions.push({
       action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
-      isVisible: true,
+      isVisible: false,
       caption: 'Bulk create',
       disabled: !isInspectedAccountTheConnectedWallet(),
       uiComponentType: 'button',
@@ -359,7 +960,7 @@ export const VestingView = () => {
       disabled: false,
       uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractAddFunds}`,
       tooltip: '',
-      callBack: () => { }
+      callBack: showAddFundsModal
     });
     ctaItems++;   // Last increment. It seems all other items will go inside the vellipsis menu anyways
 
@@ -415,11 +1016,11 @@ export const VestingView = () => {
     });
     ctaItems++;
 
-    consoleOut('Asset actions:', actions, 'crimson');
     setAssetCtas(actions);
 
   }, [
     isXsDevice,
+    showAddFundsModal,
     isInspectedAccountTheConnectedWallet,
   ]);
 
@@ -504,15 +1105,109 @@ export const VestingView = () => {
     getTreasuryStreams,
   ]);
 
+  // Get a list of multisig accounts
+  useEffect(() => {
+
+    if (!publicKey ||
+        !multisigClient ||
+        !multisigSerumClient ||
+        !accountAddress ||
+        !loadingMultisigAccounts) {
+      return;
+    }
+
+    if (inspectedAccountType !== "multisig") {
+      setPendingMultisigTxCount(undefined);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      multisigSerumClient
+      .account
+      .multisig
+      .all()
+      .then((accs: any) => {
+        const filteredSerumAccs = accs.filter((a: any) => {
+          if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) {
+            return true;
+          }
+          return false;
+        });
+
+        const parsedSerumAccs: MultisigInfo[] = [];
+
+        for (const acc of filteredSerumAccs) {
+          parseSerumMultisigAccount(acc)
+            .then((parsed: any) => {
+              if (parsed) {
+                parsedSerumAccs.push(parsed);
+              }
+            })
+            .catch((err: any) => console.error(err));
+        }
+
+        multisigClient
+        .getMultisigs(publicKey)
+        .then((allInfo: MultisigInfo[]) => {
+          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+          const allAccounts = [...allInfo, ...parsedSerumAccs];
+          consoleOut('multisigAccounts:', allAccounts, 'crimson');
+          setMultisigAccounts(allAccounts);
+          const item = allInfo.find(m => m.authority.equals(new PublicKey(accountAddress)));
+          if (item) {
+            consoleOut('selectedMultisig:', item, 'crimson');
+            setSelectedMultisig(item);
+            setPendingMultisigTxCount(item.pendingTxsAmount);
+          } else {
+            setSelectedMultisig(undefined);
+            setPendingMultisigTxCount(undefined);
+          }
+        })
+        .catch((err: any) => {
+          console.error(err);
+          setPendingMultisigTxCount(undefined);
+        })
+        .finally(() => setLoadingMultisigAccounts(false));
+      })
+      .catch((err: any) => {
+        console.error(err);
+        setPendingMultisigTxCount(undefined);
+      })
+      .finally(() => setLoadingMultisigAccounts(false));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+      if (pendingMultisigTxCount) {
+        setPendingMultisigTxCount(undefined);
+      }
+    }
+
+  }, [
+    publicKey,
+    accountAddress,
+    multisigClient,
+    multisigSerumClient,
+    inspectedAccountType,
+    pendingMultisigTxCount,
+    loadingMultisigAccounts,
+    parseSerumMultisigAccount,
+    setPendingMultisigTxCount,
+  ]);
+
   // Log the list of deleted streams
   useEffect(() => {
     ds = deletedStreams;
     consoleOut('ds:', ds, 'blue');
   }, [deletedStreams]);
 
+
   ////////////////////////////
   //   Events and actions   //
   ////////////////////////////
+
+
 
   const onBackButtonClicked = () => {
     setDtailsPanelOpen(false);
@@ -625,6 +1320,8 @@ export const VestingView = () => {
             accountAddress={accountAddress}
             loadingTreasuryStreams={loadingTreasuryStreams}
             treasuryStreams={treasuryStreams}
+            nativeBalance={nativeBalance}
+            userBalances={userBalances}
           />
         </TabPane>
         <TabPane tab="Activity" key={"activity"}>
@@ -685,6 +1382,9 @@ export const VestingView = () => {
             <VestingLockCreateAccount
               inModal={false}
               token={selectedToken}
+              selectedList={selectedList}
+              userBalances={userBalances}
+              nativeBalance={nativeBalance}
               vestingAccountCreated={() => {}}
               tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
             />
@@ -694,10 +1394,10 @@ export const VestingView = () => {
       <PreFooter />
       </>
     );
-  }, [selectedToken, setSelectedToken, t]);
+  }, [nativeBalance, selectedList, selectedToken, setSelectedToken, t, userBalances]);
 
   // TODO: Add multisig to the condition when the moment comes
-  if (!publicKey || (publicKey && accountAddress && publicKey.toBase58() !== accountAddress)) {
+  if (!publicKey || (publicKey && accountAddress && getQueryAccountType() !== "multisig" && publicKey.toBase58() !== accountAddress)) {
     return (
       <>
         <div className="container main-container">
@@ -844,8 +1544,28 @@ export const VestingView = () => {
             isVisible={isVestingContractCreateModalVisible}
             handleClose={closeVestingContractCreateModal}
             selectedToken={selectedToken}
+            nativeBalance={nativeBalance}
+            userBalances={userBalances}
+            selectedList={selectedList}
           />
         )}
+
+        {isAddFundsModalVisible && (
+          <TreasuryAddFundsModal
+            handleOk={(params: TreasuryTopupParams) => onAcceptAddFunds(params)}
+            handleClose={closeAddFundsModal}
+            nativeBalance={nativeBalance}
+            transactionFees={transactionFees}
+            withdrawTransactionFees={withdrawTransactionFees}
+            treasuryDetails={selectedVestingContract}
+            isVisible={isAddFundsModalVisible}
+            userBalances={userBalances}
+            treasuryStreams={treasuryStreams}
+            associatedToken={selectedVestingContract ? selectedVestingContract.associatedToken as string : ''}
+            isBusy={isBusy}
+          />
+        )}
+
       </>
     );
   } else if (treasuriesLoaded && treasuryList.length === 0 && !loadingTreasuries) {

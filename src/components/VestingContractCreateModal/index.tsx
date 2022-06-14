@@ -8,8 +8,18 @@ export const VestingContractCreateModal = (props: {
   handleClose: any;
   isVisible: boolean;
   selectedToken: UserTokenAccount | undefined;
+  userBalances: any;
+  nativeBalance: number;
+  selectedList: TokenInfo[];
 }) => {
-  const { isVisible, handleClose, selectedToken } = props;
+  const {
+    isVisible,
+    handleClose,
+    userBalances,
+    selectedList,
+    selectedToken,
+    nativeBalance,
+  } = props;
   const [token, setToken] = useState<TokenInfo | undefined>(undefined);
 
   useEffect(() => {
@@ -32,6 +42,9 @@ export const VestingContractCreateModal = (props: {
           token={token}
           vestingAccountCreated={handleClose}
           tokenChanged={(t: TokenInfo) => setToken(t)}
+          userBalances={userBalances}
+          nativeBalance={nativeBalance}
+          selectedList={selectedList}
         />
 
     </Modal>

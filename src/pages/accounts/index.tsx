@@ -158,8 +158,7 @@ export const AccountsNewView = () => {
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
   const [isFirstLoad, setIsFirstLoad] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [accountAddressInput, setAccountAddressInput] = useState<string>('');
+  // const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
@@ -169,8 +168,7 @@ export const AccountsNewView = () => {
   const [wSolBalance, setWsolBalance] = useState(0);
   const [refreshingBalance, setRefreshingBalance] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("assets");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
+  const [selectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined); // Add the setter setSelectedOtherAssetsOption when needed
   const [inspectedAccountType, setInspectedAccountType] = useState<InspectedAccountType>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
@@ -382,9 +380,9 @@ export const AccountsNewView = () => {
   //   setAccountAddressInput('');
   // }, [navigate, accountAddressInput]);
 
-  const handleScanAnotherAddressButtonClick = () => {
-    setAddAccountPanelOpen(true);
-  }
+  // const handleScanAnotherAddressButtonClick = () => {
+  //   setAddAccountPanelOpen(true);
+  // }
 
   // const handleBackToAccountDetailsButtonClick = () => {
   //   setAddAccountPanelOpen(false);
@@ -3296,7 +3294,8 @@ export const AccountsNewView = () => {
 
   }, [treasuriesTvl, streamsSummary, getTokenPriceBySymbol, accountTokens]);
 
-  // Window resize listeners
+  // Window resize listeners (handle overflow-ellipsis-middle for accountAddressInput)
+  /*
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
@@ -3316,6 +3315,7 @@ export const AccountsNewView = () => {
         }
       }
     };
+
     // Call it a first time
     resizeListener();
 
@@ -3328,6 +3328,7 @@ export const AccountsNewView = () => {
       window.removeEventListener('resize', resizeListener);
     }
   }, [accountAddressInput]);
+  */
 
   // Setup event listeners
   useEffect(() => {

@@ -1,8 +1,8 @@
 import React, { useCallback, useContext, useState } from 'react';
-import { Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
-import { copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTimeToNow } from '../../../../utils/ui';
+import { calculateActionFees, MSP_ACTIONS, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTimeToNow } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -11,23 +11,65 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
 import { IconVerticalEllipsis } from '../../../../Icons';
-import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection } from '../../../../contexts/connection';
+import { TransactionStatus } from '../../../../models/enums';
+import { MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
+import { TreasuryAddFundsModal } from '../../../../components/TreasuryAddFundsModal';
+import { TreasuryTopupParams } from '../../../../models/common-types';
 
 export const VestingContractStreamList = (props: {
     accountAddress: string;
     vestingContract: Treasury | undefined;
     treasuryStreams: Stream[];
     loadingTreasuryStreams: boolean;
+    userBalances: any;
+    nativeBalance: number;
 }) => {
-    const { treasuryStreams, loadingTreasuryStreams, accountAddress, vestingContract } = props;
+    const {
+        accountAddress,
+        vestingContract,
+        treasuryStreams,
+        loadingTreasuryStreams,
+        userBalances,
+        nativeBalance,
+    } = props;
     const {
         theme,
         deletedStreams,
         setHighLightableStreamId,
         getTokenByMintAddress,
+        setTransactionStatus,
     } = useContext(AppStateContext);
+    const connection = useConnection();
     const { t } = useTranslation('common');
     const [highlightedStream, sethHighlightedStream] = useState<Stream | undefined>();
+    const [isBusy, setIsBusy] = useState(false);
+    const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
+    const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>({
+      multisigFee: 0,
+      networkFee: 0,
+      rentExempt: 0
+    } as MultisigTransactionFees);
+    const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
+      blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+    });
+    const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+    const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
+
+    const resetTransactionStatus = useCallback(() => {
+
+        setTransactionStatus({
+            lastOperation: TransactionStatus.Iddle,
+            currentOperation: TransactionStatus.Iddle
+        });
+
+    }, [
+        setTransactionStatus
+    ]);
+
+    const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
+        return await calculateActionFees(connection, action);
+    }, [connection]);
 
     const isInboundStream = useCallback((item: Stream): boolean => {
         return item && accountAddress && item.beneficiary === accountAddress ? true : false;
@@ -231,6 +273,46 @@ export const VestingContractStreamList = (props: {
         }
     }, [t]);
 
+    //////////////
+    //  Modals  //
+    //////////////
+
+    const [isVestingContractCreateModalVisible, setIsVestingContractCreateModalVisibility] = useState(false);
+    const showVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(true), []);
+    const closeVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(false), []);
+
+    // Add funds modal
+    const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
+    const showAddFundsModal = useCallback(() => {
+        resetTransactionStatus();
+        if (vestingContract) {
+            getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
+                setTransactionFees(value);
+                consoleOut('transactionFees:', value, 'orange');
+            });
+            getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
+                setWithdrawTransactionFees(value);
+                consoleOut('withdrawTransactionFees:', value, 'orange');
+            });
+            setIsAddFundsModalVisibility(true);
+        }
+    }, [getTransactionFees, resetTransactionStatus, vestingContract]);
+
+    const onAcceptAddFunds = (params: TreasuryTopupParams) => {
+        consoleOut('AddFunds params:', params, 'blue');
+        // onExecuteAddFundsTransaction(params);
+    };
+
+    const closeAddFundsModal = useCallback(() => {
+        setIsAddFundsModalVisibility(false);
+        setHighLightableStreamId(undefined);
+        sethHighlightedStream(undefined);
+    }, [setHighLightableStreamId]);
+
+    ///////////////
+    // Rendering //
+    ///////////////
+
     const renderStreamOptions = (item: Stream) => {
         if (!vestingContract) { return null; }
 
@@ -255,7 +337,7 @@ export const VestingContractStreamList = (props: {
                                 </Menu.Item>
                             ) : null
                         }
-                        <Menu.Item key="3" onClick={() => {}}> {/* showAddFundsModal */}
+                        <Menu.Item key="3" onClick={showAddFundsModal}>
                             <span className="menu-item-text">{t('streams.stream-detail.add-funds-cta')}</span>
                         </Menu.Item>
                     </>
@@ -330,68 +412,86 @@ export const VestingContractStreamList = (props: {
     // };
 
     return (
-        <div className="vesting-contract-streams">
-            <Spin spinning={loadingTreasuryStreams}>
-                {(treasuryStreams && treasuryStreams.length > 0) ? (
-                    treasuryStreams.map((item, index) => {
-                        // const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-                        // const onStreamClick = () => {
-                        //     setSelectedStream(item);
-                        //     setDtailsPanelOpen(true);
-                        //     consoleOut('list item selected:', item, 'blue');
-                        // };
+        <>
+            <div className="vesting-contract-streams">
+                <Spin spinning={loadingTreasuryStreams}>
+                    {(treasuryStreams && treasuryStreams.length > 0) ? (
+                        treasuryStreams.map((item, index) => {
+                            // const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+                            // const onStreamClick = () => {
+                            //     setSelectedStream(item);
+                            //     setDtailsPanelOpen(true);
+                            //     consoleOut('list item selected:', item, 'blue');
+                            // };
 
-                        return (
-                            <div key={`${index + 50}`} id={`${item.id}`}
-                                className={
-                                    `transaction-list-row stripped-rows ${isDeletedStream(item.id as string)
-                                        ? 'disabled blurry-1x'
-                                        : highlightedStream && highlightedStream.id === item.id
-                                            ? 'selected'
-                                            : ''}`
-                                }>
-                                {/* <div className="icon-cell">
-                                    {getStreamTypeIcon(item)}
-                                    <div className="token-icon">
-                                        {item.associatedToken ? (
-                                            <>
-                                                {token ? (
-                                                    <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-                                                ) : (
-                                                    <Identicon address={item.associatedToken} style={{ width: "30", display: "inline-flex" }} />
-                                                )}
-                                            </>
-                                        ) : (
-                                            <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
-                                        )}
+                            return (
+                                <div key={`${index + 50}`} id={`${item.id}`}
+                                    className={
+                                        `transaction-list-row stripped-rows ${isDeletedStream(item.id as string)
+                                            ? 'disabled blurry-1x'
+                                            : highlightedStream && highlightedStream.id === item.id
+                                                ? 'selected'
+                                                : ''}`
+                                    }>
+                                    {/* <div className="icon-cell">
+                                        {getStreamTypeIcon(item)}
+                                        <div className="token-icon">
+                                            {item.associatedToken ? (
+                                                <>
+                                                    {token ? (
+                                                        <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                                                    ) : (
+                                                        <Identicon address={item.associatedToken} style={{ width: "30", display: "inline-flex" }} />
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+                                            )}
+                                        </div>
+                                    </div> */}
+                                    <div className="description-cell no-padding">
+                                        <div className="title text-truncate">{getStreamDescription(item)}</div>
+                                        <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
                                     </div>
-                                </div> */}
-                                <div className="description-cell no-padding">
-                                    <div className="title text-truncate">{getStreamDescription(item)}</div>
-                                    <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
+                                    <div className="rate-cell">
+                                        <div className="rate-amount">{getStreamStatus(item)}</div>
+                                        <div className="interval">{getStreamStatusSubtitle(item)}</div>
+                                    </div>
+                                    <div className="actions-cell">
+                                        {renderStreamOptions(item)}
+                                    </div>
                                 </div>
-                                <div className="rate-cell">
-                                    <div className="rate-amount">{getStreamStatus(item)}</div>
-                                    <div className="interval">{getStreamStatusSubtitle(item)}</div>
-                                </div>
-                                <div className="actions-cell">
-                                    {renderStreamOptions(item)}
-                                </div>
-                            </div>
-                        );
-                    })
-                ) : (
-                    <>
-                        {loadingTreasuryStreams ? (
-                            <p>{t('treasuries.treasury-streams.loading-streams')}</p>
-                        ) : (
-                            <>
-                                <p>{t('vesting.vesting-account-streams.no-streams')}</p>
-                            </>
-                        )}
-                    </>
-                )}
-            </Spin>
-        </div>
+                            );
+                        })
+                    ) : (
+                        <>
+                            {loadingTreasuryStreams ? (
+                                <p>{t('treasuries.treasury-streams.loading-streams')}</p>
+                            ) : (
+                                <>
+                                    <p>{t('vesting.vesting-account-streams.no-streams')}</p>
+                                </>
+                            )}
+                        </>
+                    )}
+                </Spin>
+            </div>
+
+            {isAddFundsModalVisible && (
+                <TreasuryAddFundsModal
+                    handleOk={onAcceptAddFunds}
+                    handleClose={closeAddFundsModal}
+                    nativeBalance={nativeBalance}
+                    transactionFees={transactionFees}
+                    withdrawTransactionFees={withdrawTransactionFees}
+                    treasuryDetails={vestingContract}
+                    isVisible={isAddFundsModalVisible}
+                    userBalances={userBalances}
+                    treasuryStreams={treasuryStreams}
+                    associatedToken={vestingContract ? vestingContract.associatedToken as string : ''}
+                    isBusy={isBusy}
+                />
+            )}
+        </>
     );
 };
