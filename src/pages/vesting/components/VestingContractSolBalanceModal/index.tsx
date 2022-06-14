@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { QRCodeSVG } from 'qrcode.react';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { getAmountWithSymbol } from '../../../../utils/utils';
 
@@ -27,10 +27,10 @@ export const VestingContractSolBalanceModal = (props: {
       onOk={handleClose}
       onCancel={handleClose}
       width={360}>
-      <div className="buy-token-options">
+      <div className="buy-token-options shift-up-1">
         <div className="text-center">
-          <h4 className="mb-2">Your SOL contract balance:</h4>
-          <div className="font-bolder">
+          <h4 className="mb-0">Your SOL contract balance:</h4>
+          <div className="font-size-100 font-extrabold mb-2">
             {
               getAmountWithSymbol(
                 treasuryBalance,
@@ -38,8 +38,11 @@ export const VestingContractSolBalanceModal = (props: {
               )
             }
           </div>
+          {treasuryBalance < MIN_SOL_BALANCE_REQUIRED && (
+            <p className={`${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`}>You are running low on SOL needed<br/>to pay for vesting transaction fees.</p>
+          )}
 
-          <h3 className="mb-3">Scan the QR code to receive funds</h3>
+          <h3 className="mb-2">Scan the QR code to receive funds</h3>
 
           {address && (
             <>
@@ -60,8 +63,9 @@ export const VestingContractSolBalanceModal = (props: {
             </>
           )}
 
-          <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
-          <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div>
+          {/* <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
+          <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div> */}
+          <div className="font-light font-size-75 px-4">This address can only be used to receive SOL to pay for transactions fee on this vesting contract account</div>
         </div>
       </div>
     </Modal>
