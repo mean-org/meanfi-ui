@@ -1672,10 +1672,10 @@ export const TreasuryStreamCreateModal = (props: {
                             disabledDate={disabledDate}
                             placeholder={t('transactions.send-date.placeholder')}
                             onChange={(value: any, date: string) => handleDateChange(date)}
-                            value={moment(
+                            defaultValue={moment(
                               paymentStartDate,
                               DATEPICKER_FORMAT
-                            ) as any}
+                            )}
                             format={DATEPICKER_FORMAT}
                           />
                         }
@@ -2007,10 +2007,10 @@ export const TreasuryStreamCreateModal = (props: {
                             disabledDate={disabledDate}
                             placeholder={t('transactions.send-date.placeholder')}
                             onChange={(value: any, date: string) => handleDateChange(date)}
-                            value={moment(
+                            defaultValue={moment(
                               paymentStartDate,
                               DATEPICKER_FORMAT
-                            ) as any}
+                            )}
                             format={DATEPICKER_FORMAT}
                           />
                         }

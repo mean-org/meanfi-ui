@@ -6,6 +6,7 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { environment } from "../environments/environment";
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
 import dateFormat from "dateformat";
+import { TimeData } from "../models/common-types";
 
 export const isDev = (): boolean => {
     return environment === 'development';
@@ -30,7 +31,7 @@ export const isLocal = (): boolean => {
 }
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (isLocal() || isDev()) {
+    if (!isProd()) {
         if (msg) {
             if (value === 'NOT_SPECIFIED') {
                 console.log(`%c${msg}`, `color: ${color}`);
@@ -224,8 +225,24 @@ export function msToTime(ms: number) {
     else return days + " Days"
 }
 
-export function getTimeRemaining(endtime: string) {
+export function getTimeRemaining(endtime: string): TimeData {
     const total = Date.parse(endtime) - Date.now();
+    const seconds = Math.floor((total / 1000) % 60);
+    const minutes = Math.floor((total / 1000 / 60) % 60);
+    const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(total / (1000 * 60 * 60 * 24));
+
+    return {
+        total,
+        days,
+        hours,
+        minutes,
+        seconds
+    };
+}
+
+export function getTimeEllapsed(endtime: string): TimeData {
+    const total = Date.now() - Date.parse(endtime);
     const seconds = Math.floor((total / 1000) % 60);
     const minutes = Math.floor((total / 1000 / 60) % 60);
     const hours = Math.floor((total / (1000 * 60 * 60)) % 24);

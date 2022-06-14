@@ -48,3 +48,11 @@ export interface MetaInfoCta {
     tooltip: string;
     callBack?: any;
 }
+
+export type TimeData = {
+    total: number;
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+}

@@ -616,7 +616,7 @@ export const VestingView = () => {
             lockPeriodAmount={4}
             lockPeriodFrequency={PaymentRateType.PerMonth}
             vestingCategory={VESTING_CATEGORIES[6]}
-            streamsStartDate={'29 Dec 2022 13:00:00 GMT'}
+            streamsStartDate={'13 Jun 2022 23:30:00 GMT'}
           />
         </TabPane>
         <TabPane tab="Streams" key={"streams"}>

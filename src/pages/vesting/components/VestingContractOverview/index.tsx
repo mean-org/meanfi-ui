@@ -2,8 +2,9 @@ import { Treasury, TreasuryType } from '@mean-dao/msp';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../../../contexts/appstate';
+import { TimeData } from '../../../../models/common-types';
 import { PaymentRateType } from '../../../../models/enums';
-import { getLockPeriodOptionLabel, getReadableDate, getTimeRemaining } from '../../../../utils/ui';
+import { getLockPeriodOptionLabel, getReadableDate, getTimeEllapsed, getTimeRemaining } from '../../../../utils/ui';
 
 export const VestingContractOverview = (props: {
     vestingContract: Treasury | undefined;
@@ -31,21 +32,25 @@ export const VestingContractOverview = (props: {
 
     });
 
-    const isStartDatePast = useCallback((date: string): boolean => {
+    const isStartDateFuture = useCallback((date: string): boolean => {
         const parsedDate = Date.parse(date);
         const fromParsedDate = new Date(parsedDate);
-        return fromParsedDate.getDate() <= today.getDate() ? true : false;
+        return fromParsedDate.getDate() > today.getDate() ? true : false;
     }, [today]);
 
     useEffect(() => {
 
         if (streamsStartDate) {
-            if (isStartDatePast(streamsStartDate)) {
-                setStartRemainingTime('Immediately after created');
-                return;
-            }
+
+            let timedata: TimeData;
             const remainingTime: string[] = [];
-            const timedata = getTimeRemaining(streamsStartDate);
+
+            if (isStartDateFuture(streamsStartDate)) {
+                timedata = getTimeRemaining(streamsStartDate);
+            } else {
+                timedata = getTimeEllapsed(streamsStartDate);
+            }
+
             if (timedata.days > 0) {
                 remainingTime.push(`${timedata.days} ${timedata.days === 1 ? t('general.day') : t('general.days')}`);
             }
@@ -62,10 +67,16 @@ export const VestingContractOverview = (props: {
             if (timedata.seconds > 0) {
                 remainingTime.push(`${timedata.seconds} ${timedata.seconds === 1 ? t('general.second') : t('general.seconds')}`);
             }
-            setStartRemainingTime(`in ${remainingTime.join(', ')}`);
+
+            if (isStartDateFuture(streamsStartDate)) {
+                setStartRemainingTime(`in ${remainingTime.join(', ')}`);
+            } else {
+                setStartRemainingTime(`for ${remainingTime.join(', ')}`);
+            }
+
         }
 
-    }, [t, isStartDatePast, streamsStartDate]);
+    }, [t, streamsStartDate, isStartDateFuture]);
 
     return (
         <>
@@ -76,7 +87,7 @@ export const VestingContractOverview = (props: {
                         <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>{vestingCategory}</span>
                     </div>
                     <div className="font-size-100 font-extrabold text-uppercase mt-3 mb-2">Vesting Distribution</div>
-                    <div className="font-size-100">Streams start on {getReadableDate(streamsStartDate)}</div>
+                    <div className="font-size-100">{isStartDateFuture(streamsStartDate) ? 'Streams start on' : 'Streams started on'} {getReadableDate(streamsStartDate)}</div>
                     <div className="font-size-70 text-italic">{startRemainingTime}</div>
                     <div className="font-size-100 mt-3">{cliffRelease}% unlocked on commencement date</div>
                     <div className="font-size-100">{100 - cliffRelease}% of allocated funds streamed equally across {lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)}</div>

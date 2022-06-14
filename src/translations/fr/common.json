@@ -390,13 +390,16 @@
 		"add-participant-cta": "Ajouter un participant",
 		"back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
 		"create-asset": {
+			"delete-multisig": "",
+			"edit-multisig": "",
 			"main-cta": "Créer",
 			"main-cta-busy": "Création d'actif",
 			"modal-title": "Créer un actif multisig",
 			"no-token": "Sélectionnez le jeton",
 			"success-message": "Votre actif multisig a été créé avec succès",
 			"token-label": "Amount to send",
-			"token-placeholder": "Entrez l'adresse mint de jeton"
+			"token-placeholder": "Entrez l'adresse mint de jeton",
+			"update-multisig": ""
 		},
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
@@ -680,6 +683,7 @@
 	"notifications": {
 		"account-address-copied-message": "Adresse du compte copiée avec succès",
 		"account-address-not-copied-message": "Impossible de copier l'adresse du compte",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction.",
 		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "Votre flux d'argent est créé",
 		"create-money-stream-completed-wait-for-confirm": "Une fois la transaction confirmée, elle devrait apparaître dans la liste.",
@@ -703,14 +707,13 @@
 		"success-account-funded-message": "Compte financé",
 		"success-loading-stream-message": "Le flux avec l'ID {{streamId}} a été chargé",
 		"success-loading-treasury-message": "La trésorerie avec l'ID {{treasuryId}} a été chargée",
-		"wallet-connect-message": "Connecté au portefeuille {{address}}",
-		"wallet-connection-event-title": "Mise à jour du portefeuille",
-		"wallet-disconnect-message": "Déconnecté du portefeuille",
+		"tx-not-approved": "Your transaction has not been approved",
 		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
 		"tx-not-executed": "Your transaction has not been executed",
-		"tx-not-approved": "Your transaction has not been approved",
 		"tx-proposal-created": "Your proposal has been created",
-		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
+		"wallet-connect-message": "Connecté au portefeuille {{address}}",
+		"wallet-connection-event-title": "Mise à jour du portefeuille",
+		"wallet-disconnect-message": "Déconnecté du portefeuille"
 	},
 	"open-stream": {
 		"label-streamid-input": "ID de flux à ouvrir",
@@ -1048,7 +1051,6 @@
 			"cannot-use-own-account-as-treasury": "Impossible d'utiliser votre compte comme identifiant de trésorerie",
 			"cliff-release-no-empty": "",
 			"exchange-unavailable": "Échange indisponible",
-			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "Besoin d'au moins {{amount}} {{symbol}} pour échanger",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Impossible d'utiliser une adresse Multisig comme compte de destination",
@@ -1057,6 +1059,7 @@
 			"invalid-solana-address": "Adresse solana invalide",
 			"lock-period-no-empty": "",
 			"memo-empty": "Memo cannot be empty",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"minimum-repeating-buy-amount": "Vous avez besoin d'un minimum de {{fromTokenAmount}} pour commencer cet achat répété",
 			"minimum-swap-amount": "Montant minimum requis pour échanger {{mintAmount}} {{fromMint}}",
 			"multi-recipient-invalid-addresses": "{{amountInvalidAddresses}} éléments de votre liste n'ont pas de format d'adresse valide",
@@ -1099,11 +1102,11 @@
 		"streamid-placeholder": "Nouvelle adresse de portefeuille bénéficiaire"
 	},
 	"transfers": {
+		"create-money-stream-modal-title": "Create money stream",
 		"screen-subtitle": "Envoyez de l'argent à n'importe qui dans le monde plus rapidement",
 		"screen-title": "Transferts",
-		"verified-recipient-disclaimer": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange.",
 		"send-asset-modal-title": "Send Asset",
-		"create-money-stream-modal-title": "Create money stream"
+		"verified-recipient-disclaimer": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange."
 	},
 	"treasuries": {
 		"add-funds": {
@@ -1137,8 +1140,8 @@
 		"create-treasury": {
 			"create-multisig-cta": "Initier la trésorerie",
 			"create-multisig-cta-busy": "Trésorerie initiatique",
-			"create-multisig-treasury-success": "Vous avez signé avec succès la demande de trésorerie Initiate.",
 			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
+			"create-multisig-treasury-success": "Vous avez signé avec succès la demande de trésorerie Initiate.",
 			"lock-period": {
 				"days": "journées",
 				"hours": "les heures",
@@ -1252,10 +1255,10 @@
 			"option-explorer-link": "Voir sur Solana Explorer",
 			"option-pause-stream": "Pause",
 			"option-resume-stream": "Continuer",
+			"screen-title": "Streaming Accounts - Streams",
 			"status-running": "Fonctionnement",
 			"status-scheduled": "Programmé",
-			"status-stopped": "Arrêté",
-			"screen-title": "Streaming Accounts - Streams"
+			"status-stopped": "Arrêté"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

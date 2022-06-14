@@ -57,12 +57,9 @@ import { OperationType, TransactionStatus } from '../../models/enums';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { IconBank, IconClock, IconInfoCircle, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
-import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
 import { TreasuryTransferFundsModal } from '../../components/TreasuryTransferFundsModal';
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import dateFormat from 'dateformat';
-import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TreasuryAddFundsModal } from '../../components/TreasuryAddFundsModal';
@@ -78,7 +75,18 @@ import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.scss';
-import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
+import { 
+  Constants, 
+  refreshTreasuryBalanceInstruction,
+  MoneyStreaming, 
+  MSP_ACTIONS, 
+  StreamInfo, 
+  STREAM_STATE, 
+  TreasuryInfo, 
+  calculateActionFees
+
+} from '@mean-dao/money-streaming';
+
 import {
   TransactionFees,
   MSP_ACTIONS as MSP_ACTIONS_V2,
@@ -89,7 +97,9 @@ import {
   MSP,
   TreasuryType,
   Constants as MSPV2Constants
+  
 } from '@mean-dao/msp';
+
 import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -161,7 +171,7 @@ export const TreasuriesView = () => {
   const accounts = useAccountsContext();
   const navigate = useNavigate();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-  const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
+  const [treasuryList, setTreasuryList] = useState<any[]>([]);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
@@ -169,7 +179,7 @@ export const TreasuriesView = () => {
   const [treasuryStreams, setTreasuryStreams] = useState<(Stream | StreamInfo)[]>([]);
   const [streamStats, setStreamStats] = useState<TreasuryStreamsBreakdown | undefined>(undefined);
   const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
-  const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
+  const [treasuryDetails, setTreasuryDetails] = useState<any>(undefined);
   const [highlightedStream, sethHighlightedStream] = useState<Stream | StreamInfo | undefined>();
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
@@ -202,6 +212,9 @@ export const TreasuriesView = () => {
   });
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
   const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
+
+  const V1_TREASURER_ID = useMemo(() => { return new PublicKey("DcE1QfuxsV9eoMydXXF7hBadHBRA1vPFqCWvAUeP9ZGB") }, []);
+  const V1_TREASURY_ID = useMemo(() => { return new PublicKey("DVhWHsWSybDD8n5P6ep7rP4bg7yj55MoeZGQrbLGpQtQ"); }, []);
 
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
@@ -332,11 +345,11 @@ export const TreasuriesView = () => {
     } else {
       if (ms) {
         ms.listStreams({treasury: treasuryPk })
-          .then((streams) => {
+          .then((streams: any) => {
             consoleOut('treasuryStreams:', streams, 'blue');
             setTreasuryStreams(streams);
           })
-          .catch(err => {
+          .catch((err: any) => {
             console.error(err);
             setTreasuryStreams([]);
           })
@@ -380,7 +393,7 @@ export const TreasuriesView = () => {
     const treasuryPk = new PublicKey(treasuryId);
 
     mspInstance.getTreasury(treasuryPk)
-      .then((details: Treasury | TreasuryInfo | undefined) => {
+      .then((details: any) => {
         if (details) {
           consoleOut('treasuryDetails:', details, 'blue');
           setTreasuryDetails(details);
@@ -497,8 +510,8 @@ export const TreasuriesView = () => {
         clearTxConfirmationContext();
       });
 
-      const treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
-      let treasuriesv1: TreasuryInfo[] = [];
+      const treasuryAccumulator: any[] = [];
+      const treasuriesv1: any[] = [];
       getAllUserV2Treasuries()
         .then(async (treasuriesv2) => {
           treasuryAccumulator.push(...treasuriesv2);
@@ -506,7 +519,14 @@ export const TreasuriesView = () => {
 
           if (!selectedMultisig) {
             try {
-              treasuriesv1 = await ms.listTreasuries(publicKey);
+              const treasuries = await ms.listTreasuries(publicKey);
+              treasuriesv1.push(...treasuries);
+              if (publicKey.equals(V1_TREASURER_ID)) {
+                const treasury = await ms.getTreasury(V1_TREASURY_ID);
+                if (treasury) {
+                  treasuriesv1.push(treasury);
+                }
+              }
             } catch (error) {
               console.error(error);
             }
@@ -543,7 +563,7 @@ export const TreasuriesView = () => {
               }
             }
 
-            if (!item) {
+            if (!item && treasuryAccumulator[0]) {
               item = Object.assign({}, treasuryAccumulator[0]);
             }
 
@@ -576,7 +596,9 @@ export const TreasuriesView = () => {
     loadingTreasuries,
     clearTxConfirmationContext,
     openTreasuryById,
-    getAllUserV2Treasuries
+    getAllUserV2Treasuries,
+    V1_TREASURER_ID,
+    V1_TREASURY_ID
   ]);
 
   const numTreasuryStreams = useCallback(() => {
@@ -730,7 +752,7 @@ export const TreasuriesView = () => {
     if (treasuryDetails) {
       const decimals = selectedToken ? selectedToken.decimals : 6;
       const unallocated = treasuryDetails.balance - treasuryDetails.allocationAssigned;
-      const isNewTreasury = (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2 ? true : false;
+      const isNewTreasury = treasuryDetails.version >= 2 ? true : false;
       const ub = isNewTreasury
         ? makeDecimal(new BN(unallocated), decimals)
         : unallocated;
@@ -753,6 +775,15 @@ export const TreasuriesView = () => {
 
   const isAddingFunds = useCallback((): boolean => {
     return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.TreasuryAddFunds
+            ? true
+            : false;
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  const isClosingTreasuryV1 = useCallback((): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.TreasuryClose
             ? true
             : false;
   }, [
@@ -1100,12 +1131,12 @@ export const TreasuriesView = () => {
   const isTreasuryFunded = useCallback((): boolean => {
 
     if (treasuryDetails) {
-      const v1 = treasuryDetails as TreasuryInfo;
-      const v2 = treasuryDetails as Treasury;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      // const v1 = treasuryDetails as TreasuryInfo;
+      // const v2 = treasuryDetails as Treasury;
+      const isNewTreasury = treasuryDetails.version >= 2 ? true : false;
       return isNewTreasury
-        ? v2.associatedToken ? true : false
-        : v1.associatedTokenAddress ? true : false;
+        ? treasuryDetails.associatedToken ? true : false
+        : treasuryDetails.associatedTokenAddress ? true : false;
     }
     return false;
 
@@ -2543,7 +2574,7 @@ export const TreasuriesView = () => {
           amount,
           params.allocationType
         )
-        .then(value => {
+        .then((value: any) => {
           consoleOut('addFunds returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -2556,7 +2587,7 @@ export const TreasuriesView = () => {
           transaction = value;
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error('addFunds error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
@@ -3004,7 +3035,7 @@ export const TreasuriesView = () => {
           publicKey,                                  // treasurer
           treasury,                                   // treasury
         )
-        .then(value => {
+        .then((value: any) => {
           consoleOut('closeTreasury returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -3017,7 +3048,7 @@ export const TreasuriesView = () => {
           transaction = value;
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error('closeTreasury error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
@@ -3293,7 +3324,7 @@ export const TreasuriesView = () => {
 
     if (wallet && treasuryDetails) {
       let created: boolean;
-      if ((treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2) {
+      if (treasuryDetails.version && treasuryDetails.version >= 2) {
         created = await createTxV2();
       } else {
         created = await createTxV1();
@@ -3447,7 +3478,7 @@ export const TreasuriesView = () => {
           streamPublicKey,                                  // Stream ID
           closeTreasury                                     // closeTreasury
         )
-        .then(value => {
+        .then((value: any) => {
           consoleOut('closeStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -3460,7 +3491,7 @@ export const TreasuriesView = () => {
           transaction = value;
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error('closeStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
@@ -3877,7 +3908,7 @@ export const TreasuriesView = () => {
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
         )
-        .then(value => {
+        .then((value: any) => {
           consoleOut('pauseStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -3890,7 +3921,7 @@ export const TreasuriesView = () => {
           transaction = value;
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error('pauseStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
@@ -4024,7 +4055,7 @@ export const TreasuriesView = () => {
       consoleOut('Starting Stream Pause using MSP V2...', '', 'blue');
       // Create a transaction
       const result = await pauseStream(data)
-        .then(value => {
+        .then((value: any) => {
           if (!value) { return false; }
           consoleOut('pauseStream returned transaction:', value);
           setTransactionStatus({
@@ -4038,7 +4069,7 @@ export const TreasuriesView = () => {
           transaction = value;
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error('pauseStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
@@ -4305,7 +4336,7 @@ export const TreasuriesView = () => {
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
         )
-        .then(value => {
+        .then((value: any) => {
           consoleOut('resumeStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -4318,7 +4349,7 @@ export const TreasuriesView = () => {
           transaction = value;
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error('resumeStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
@@ -5172,15 +5203,15 @@ export const TreasuriesView = () => {
   ]);
 
   const renderTreasuryMeta = () => {
-    const v1 = treasuryDetails as TreasuryInfo;
-    const v2 = treasuryDetails as Treasury;
-    const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+    // const v1 = treasuryDetails as TreasuryInfo;
+    // const v2 = treasuryDetails as Treasury;
+    const isNewTreasury = treasuryDetails && treasuryDetails.version >= 2 ? true : false;
     let token = isNewTreasury
-      ? v2.associatedToken
-        ? getTokenByMintAddress(v2.associatedToken as string)
+      ? treasuryDetails && treasuryDetails.associatedToken
+        ? getTokenByMintAddress(treasuryDetails.associatedToken as string)
         : undefined
-      : v1.associatedTokenAddress
-        ? getTokenByMintAddress(v1.associatedTokenAddress as string)
+      : treasuryDetails && treasuryDetails.associatedTokenAddress
+        ? getTokenByMintAddress(treasuryDetails.associatedTokenAddress as string)
         : undefined;
     if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
       token = Object.assign({}, token, {
@@ -5247,11 +5278,11 @@ export const TreasuriesView = () => {
                         {token && token.logoURI ? (
                           <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} onError={imageOnErrorHandler} />
                         ) : (
-                          <Identicon address={(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "24", display: "inline-flex" }} />
+                          <Identicon address={(isNewTreasury && treasuryDetails ? treasuryDetails.associatedToken : treasuryDetails.associatedTokenAddress)} style={{ width: "24", display: "inline-flex" }} />
                         )}
                       </span>
                       <span className="info-data text-truncate">
-                        {token && token.symbol ? token.symbol : shortenAddress(isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string)}
+                        {token && token.symbol ? token.symbol : shortenAddress(isNewTreasury && treasuryDetails ? treasuryDetails.associatedToken as string : treasuryDetails.associatedTokenAddress as string)}
                       </span>
                     </div>
                   </Col>
@@ -5302,12 +5333,11 @@ export const TreasuriesView = () => {
 
   const renderCtaRow = () => {
     if (!treasuryDetails) { return null; }
-    const v2 = treasuryDetails as Treasury;
-    const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+    const isNewTreasury = treasuryDetails.version && treasuryDetails.version >= 2 ? true : false;
     return (
       <>
         <Space size="middle" wrap>
-          {isNewTreasury ? (
+          {isNewTreasury === true ? (
             <>
               <Button
                 type="default"
@@ -5336,7 +5366,7 @@ export const TreasuriesView = () => {
                   loadingTreasuries ||
                   loadingMultisigAccounts ||
                   loadingTreasuryDetails ||
-                  (!treasuryDetails || !isNewTreasury || v2.balance - v2.allocationAssigned <= 0)
+                  (!treasuryDetails || !isNewTreasury || treasuryDetails.balance - treasuryDetails.allocationAssigned <= 0)
                 }
                 onClick={(showCreateStreamModal)}>
                 {isCreatingStream() && (<LoadingOutlined />)}
@@ -5392,12 +5422,35 @@ export const TreasuriesView = () => {
               )}
             </>
           ) : (
-            <div className="flex-row align-items">
-              <span className="simplelink underline-on-hover">Start V2 Migration</span>
-              <InfoIcon content={<p>There is a new and improved version of the Treasuries feature. To continue using this treasury you must update it first.</p>} placement="leftBottom">
-                <InfoCircleOutlined />
-              </InfoIcon>
-            </div>
+            <>
+              {
+                (
+                  treasuryDetails.id === V1_TREASURY_ID.toBase58() &&
+                  publicKey &&
+                  publicKey.equals(V1_TREASURER_ID)
+                ) ? (
+                  <Button
+                    type="default"
+                    shape="round"
+                    size="small"
+                    className="thin-stroke"
+                    disabled={isTxInProgress() || loadingTreasuries || loadingMultisigAccounts}
+                    onClick={() => onExecuteCloseTreasuryTransaction()}>
+                    {isClosingTreasury() && (<LoadingOutlined />)}
+                    {isClosingTreasury()
+                      ? t('treasuries.treasury-detail.cta-add-funds-busy')
+                      : "Close Treasury"}
+                  </Button>
+                ) : (
+                  <div className="flex-row align-items">
+                    <span className="simplelink underline-on-hover">Start V2 Migration</span>
+                    <InfoIcon content={<p>There is a new and improved version of the Treasuries feature. To continue using this treasury you must update it first.</p>} placement="leftBottom">
+                      <InfoCircleOutlined />
+                    </InfoIcon>
+                  </div>
+                )
+              }
+            </>
           )}
           {isCreatingTreasury() ? (
             <div className="flex-row flex-center">
@@ -5444,16 +5497,16 @@ export const TreasuriesView = () => {
       </div>
     )} */}
     {treasuryList && treasuryList.length > 0 ? (
-      treasuryList.map((item, index) => {
-        const v1 = item as TreasuryInfo;
-        const v2 = item as Treasury;
-        const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      treasuryList.filter(item => item !== null && item !== undefined).map((item, index) => {
+        // const v1 = item as TreasuryInfo;
+        // const v2 = item as Treasury;
+        const isNewTreasury = item && item.version >= 2 ? true : false;
         const token = isNewTreasury
-          ? v2.associatedToken
-            ? getTokenByMintAddress(v2.associatedToken as string)
+          ? item && item.associatedToken
+            ? getTokenByMintAddress(item.associatedToken as string)
             : undefined
-          : v1.associatedTokenAddress
-            ? getTokenByMintAddress(v1.associatedTokenAddress as string)
+          : item && item.associatedTokenAddress
+            ? getTokenByMintAddress(item.associatedTokenAddress as string)
             : undefined;
         const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
           event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -5471,12 +5524,12 @@ export const TreasuriesView = () => {
             className={`transaction-list-row ${treasuryDetails && treasuryDetails.id === item.id ? 'selected' : ''}`}>
             <div className="icon-cell">
               <div className="token-icon">
-                {(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
+                {(isNewTreasury && item ? item.associatedToken : item.associatedTokenAddress) ? (
                   <>
                     {token ? (
                       <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
                     ) : (
-                      <Identicon address={(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "30", display: "inline-flex" }} />
+                      <Identicon address={(isNewTreasury && item ? item.associatedToken : item.associatedTokenAddress)} style={{ width: "30", display: "inline-flex" }} />
                     )}
                   </>
                 ) : (
@@ -5485,13 +5538,13 @@ export const TreasuriesView = () => {
               </div>
             </div>
             <div className="description-cell">
-              {(isNewTreasury ? v2.name : v1.label) ? (
+              {(isNewTreasury && item ? item.name : item.label) ? (
                 <div className="title text-truncate">
-                  {isNewTreasury ? v2.name : v1.label}
+                  {isNewTreasury && item ? item.name : item.label}
                   <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                    {isNewTreasury
-                      ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-                      : v1.type === TreasuryType.Open ? 'Open' : 'Locked'
+                    {isNewTreasury && item
+                      ? item.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+                      : item.type === TreasuryType.Open ? 'Open' : 'Locked'
                     }
                   </span>
                 </div>
@@ -5503,12 +5556,12 @@ export const TreasuriesView = () => {
               )}
             </div>
             <div className="rate-cell">
-              {!isNewTreasury && v1.upgradeRequired ? (
+              {!isNewTreasury && item && item.upgradeRequired ? (
                 <span>&nbsp;</span>
               ) : (
                 <>
                 <div className="rate-amount">
-                  {formatThousands(isNewTreasury ? v2.totalStreams : v1.streamsAmount)}
+                  {formatThousands(isNewTreasury && item ? item.totalStreams : item.streamsAmount)}
                 </div>
                 <div className="interval">streams</div>
                 </>
@@ -5677,7 +5730,8 @@ export const TreasuriesView = () => {
                     {treasuryDetails && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
-                          <Tooltip placement="bottom" title={t("treasuries.treasury-refresh-tooltip")}>
+                          {(treasuryDetails.id !== V1_TREASURY_ID.toBase58()) && (
+                            <Tooltip placement="bottom" title={t("treasuries.treasury-refresh-tooltip")}>
                             <Button
                               type="default"
                               shape="circle"
@@ -5691,8 +5745,9 @@ export const TreasuriesView = () => {
                               }
                             />
                           </Tooltip>
+                          )}
                           {/* TODO: Make this available back when we have the associated token not being a problem for deletion */}
-                          {isTreasuryFunded() && (
+                          {isTreasuryFunded() && (treasuryDetails.id !== V1_TREASURY_ID.toBase58()) && (
                             <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
                               <Button
                                 type="default"
@@ -5721,7 +5776,7 @@ export const TreasuriesView = () => {
                             )}
                             {renderTreasuryMeta()}
                             <Divider className="activity-divider" plain></Divider>
-                            {(!treasuryDetails.autoClose || (treasuryDetails.autoClose && getTreasuryTotalStreams(treasuryDetails) > 0 )) && (
+                            {(treasuryDetails.id === V1_TREASURY_ID.toBase58() || !treasuryDetails.autoClose || (treasuryDetails.autoClose && getTreasuryTotalStreams(treasuryDetails) > 0 )) && (
                               <>
                                 {renderCtaRow()}
                                 <Divider className="activity-divider" plain></Divider>

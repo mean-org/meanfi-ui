@@ -390,13 +390,16 @@
 		"add-participant-cta": "添加参与者",
 		"back-to-multisig-accounts-cta": "回到多重签名账户",
 		"create-asset": {
+			"delete-multisig": "",
+			"edit-multisig": "",
 			"main-cta": "Create",
 			"main-cta-busy": "Creating asset",
 			"modal-title": "Create a multisig asset",
 			"no-token": "Select token",
 			"success-message": "Your multisig asset was created successfully",
 			"token-label": "Select an asset",
-			"token-placeholder": "Enter the address of the token mint"
+			"token-placeholder": "Enter the address of the token mint",
+			"update-multisig": ""
 		},
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
@@ -680,6 +683,7 @@
 	"notifications": {
 		"account-address-copied-message": "已成功复制帐户地址",
 		"account-address-not-copied-message": "无法复制帐户地址",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction.",
 		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "你的资金流已被创建",
 		"create-money-stream-completed-wait-for-confirm": "交易确认后，它应该出现在列表中。",
@@ -703,14 +707,13 @@
 		"success-account-funded-message": "账户资金",
 		"success-loading-stream-message": "ID为{streamId}的流已加载",
 		"success-loading-treasury-message": "ID为{TreasureId}的国库已加载",
+		"tx-not-approved": "Your transaction has not been approved",
 		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-proposal-created": "Your proposal has been created",
 		"wallet-connect-message": "已连接到钱包{{address}",
 		"wallet-connection-event-title": "钱包更新",
-		"wallet-disconnect-message": "与钱包断开连接",
-		"tx-not-executed": "Your transaction has not been executed",
-		"tx-not-approved": "Your transaction has not been approved",
-		"tx-proposal-created": "Your proposal has been created",
-		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
+		"wallet-disconnect-message": "与钱包断开连接"
 	},
 	"open-stream": {
 		"label-streamid-input": "要打开的流id",
@@ -1048,7 +1051,6 @@
 			"cannot-use-own-account-as-treasury": "无法将您的帐户用作国库id",
 			"cliff-release-no-empty": "",
 			"exchange-unavailable": "兑换不可用",
-			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "至少需要{{amount}}{{symbol}}才能交换",
 			"insufficient-balance-needed": "至少需要{{余额}}SOL",
 			"invalid-account": "Cannot use a Multisig address as a destination account",
@@ -1057,6 +1059,7 @@
 			"invalid-solana-address": "无效的solana地址",
 			"lock-period-no-empty": "",
 			"memo-empty": "Memo cannot be empty",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"minimum-repeating-buy-amount": "您需要一个min{{fromTokenAmount}}来开始这个重复购买",
 			"minimum-swap-amount": "交换{{mintAmount}}{{fromMint}}所需的最小金额",
 			"multi-recipient-invalid-addresses": "{{amountInvalidAddresses}} elements in your list don't have a valid address format",
@@ -1099,11 +1102,11 @@
 		"streamid-placeholder": "新受益人钱包地址"
 	},
 	"transfers": {
+		"create-money-stream-modal-title": "Create money stream",
 		"screen-subtitle": "更快地向世界上任何人汇款",
 		"screen-title": "传送",
-		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange.",
 		"send-asset-modal-title": "Send Asset",
-		"create-money-stream-modal-title": "Create money stream"
+		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"treasuries": {
 		"add-funds": {
@@ -1137,8 +1140,8 @@
 		"create-treasury": {
 			"create-multisig-cta": "启动国库",
 			"create-multisig-cta-busy": "启动国库",
-			"create-multisig-treasury-success": "启动提交给多重签名批准的国库申请。",
 			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
+			"create-multisig-treasury-success": "启动提交给多重签名批准的国库申请。",
 			"lock-period": {
 				"days": "days",
 				"hours": "hours",
@@ -1252,10 +1255,10 @@
 			"option-explorer-link": "在Solana Explorer上查看",
 			"option-pause-stream": "暂停",
 			"option-resume-stream": "恢复",
+			"screen-title": "Streaming Accounts - Streams",
 			"status-running": "运行中",
 			"status-scheduled": "计划的",
-			"status-stopped": "已停止",
-			"screen-title": "Streaming Accounts - Streams"
+			"status-stopped": "已停止"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",
