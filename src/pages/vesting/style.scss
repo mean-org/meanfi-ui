@@ -65,6 +65,11 @@
                                 line-height: 1.2;
                             }
                         }
+                        .rate-cell {
+                            .interval {
+                                margin-top: 2px;
+                            }
+                        }
                         .actions-cell {
                             flex: 0 0 24px !important;
                             padding-left: 4px;

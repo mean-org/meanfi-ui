@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useState } from 'react';
 import { Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
-import { copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from '../../../../utils/ui';
+import { copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTimeToNow } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
@@ -21,6 +21,7 @@ export const VestingContractStreamList = (props: {
 }) => {
     const { treasuryStreams, loadingTreasuryStreams, accountAddress, vestingContract } = props;
     const {
+        theme,
         deletedStreams,
         setHighLightableStreamId,
         getTokenByMintAddress,
@@ -183,18 +184,36 @@ export const VestingContractStreamList = (props: {
 
     const getStreamStatus = useCallback((item: Stream) => {
 
+        let bgClass = '';
+        let content = '';
+
         if (item) {
             switch (item.status) {
                 case STREAM_STATUS.Schedule:
-                    return t('streams.status.status-scheduled');
+                    bgClass = 'bg-purple';
+                    content = t('streams.status.status-scheduled');
+                    break;
                 case STREAM_STATUS.Paused:
-                    return t('streams.status.status-stopped');
+                    if (item.isManuallyPaused) {
+                        bgClass = 'error';
+                        content = t('streams.status.status-stopped');
+                    } else {
+                        bgClass = 'error';
+                        content = t('streams.status.status-stopped');
+                    }
+                    break;
                 default:
-                    return t('streams.status.status-running');
+                    bgClass = 'bg-green';
+                    content = t('streams.status.status-running');
+                    break;
             }
         }
 
-    }, [t]);
+        return (
+            <span className={`badge small font-bold text-uppercase ${theme === 'light' ? 'fg-dark' : 'fg-white'} ${bgClass}`}>{content}</span>
+        );
+
+    }, [t, theme]);
 
     const getStreamStatusSubtitle = useCallback((item: Stream) => {
         if (item) {
@@ -205,12 +224,11 @@ export const VestingContractStreamList = (props: {
                     if (item.isManuallyPaused) {
                         return t('streams.status.stopped-manually');
                     }
-                    return t('streams.status.stopped');
+                    return t('vesting.vesting-account-streams.stream-status-complete');
                 default:
-                    return t('streams.status.streaming');
+                    return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate as string) });
             }
         }
-
     }, [t]);
 
     const renderStreamOptions = (item: Stream) => {
@@ -353,7 +371,7 @@ export const VestingContractStreamList = (props: {
                                     <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
                                 </div>
                                 <div className="rate-cell">
-                                    <div className="rate-amount text-uppercase">{getStreamStatus(item)}</div>
+                                    <div className="rate-amount">{getStreamStatus(item)}</div>
                                     <div className="interval">{getStreamStatusSubtitle(item)}</div>
                                 </div>
                                 <div className="actions-cell">

@@ -593,6 +593,10 @@ export function displayTimestamp(
     return `${dateString} at ${timeString}`;
 }
 
+export const getTimeToNow = (date: string): string => {
+    return moment(date).toNow(true);
+}
+
 export function addMinutes(date: Date, minutes: number) {
     return new Date(date.getTime() + minutes * 60000);
 }

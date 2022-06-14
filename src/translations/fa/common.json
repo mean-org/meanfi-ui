@@ -1334,7 +1334,9 @@
 			"panel-title": "Vesting Account Details"
 		},
 		"vesting-account-streams": {
-			"no-streams": "This vesting contract has no streams created yet."
+			"no-streams": "This vesting contract has no streams created yet.",
+			"stream-status-complete": "Finished vesting",
+			"stream-status-streaming": "{{timeLeft}} left"
 		}
 	},
 	"wallet-selector": {
