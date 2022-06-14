@@ -2,11 +2,6 @@ import "./style.css";
 import React, { useCallback, useState } from "react";
 import { PieChart, Pie, Sector } from "recharts";
 
-const data = [
-  { name: 'Incoming streams', value: 3 },
-  { name: 'Outgoing streams', value: 4 }
-];
-
 const renderActiveShape = (props: any) => {
   const RADIAN = Math.PI / 180;
   const {
@@ -70,7 +65,10 @@ const renderActiveShape = (props: any) => {
   );
 };
 
-export default function PieChartComponent() {
+export const PieChartComponent = ({
+  incomingAmount
+}: any) => {
+
   const [activeIndex, setActiveIndex] = useState(0);
   const onPieEnter = useCallback(
     (_, index) => {
@@ -79,6 +77,11 @@ export default function PieChartComponent() {
     [setActiveIndex]
   );
 
+  const data = [
+    { name: 'Incoming streams', value: incomingAmount },
+    { name: 'Outgoing streams', value: 3 }
+  ];
+  
   return (
     <PieChart width={400} height={400} className="pie-chart">
       <Pie

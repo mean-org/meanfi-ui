@@ -13,7 +13,7 @@ import { IconArrowForward, IconVerticalEllipsis } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { OperationType, TransactionStatus } from "../../models/enums";
-import PieChartComponent from "./PieChart";
+import { PieChartComponent } from "./PieChart";
 import "./style.scss";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import {
@@ -63,6 +63,7 @@ export const MoneyStreamsInfoView = (props: {
     resetContractValues,
     streamProgramAddress,
     getTokenByMintAddress,
+    getTokenPriceByAddress,
     streamV2ProgramAddress,
     setTransactionStatus,
     setTreasuryOption,
@@ -1179,6 +1180,14 @@ export const MoneyStreamsInfoView = (props: {
     }
   ];
 
+  const [incomingAmount, setIncomingAmount] = useState(0);
+
+  useEffect(() => {
+    if (streamList) {
+      setIncomingAmount(streamList.length);
+    }
+  }, [streamList]);
+
   const renderSummary = (
     <>
       <Row gutter={[8, 8]}>
@@ -1198,7 +1207,7 @@ export const MoneyStreamsInfoView = (props: {
                 Total streams
               </div>
               <div className="info-value">
-                3 streams
+                {incomingAmount} {incomingAmount > 1 ? "streams" : "stream"}
               </div>
             </div>
           </div>
@@ -1219,13 +1228,15 @@ export const MoneyStreamsInfoView = (props: {
                 Total streams
               </div>
               <div className="info-value">
-                4 streams
+                3 streams
               </div>
             </div>
           </div>
         </Col>
       </Row>
-      <PieChartComponent />
+      <PieChartComponent
+        incomingAmount={incomingAmount}
+      />
     </>
   );
 
@@ -1236,27 +1247,6 @@ export const MoneyStreamsInfoView = (props: {
       externalLink={true}
     />
   );
-    
-  // const incomingStreams = [
-  //   {
-  //     title: "Monthly Remittance from Jesse",
-  //     amount: "3.29805 USDC/hour",
-  //     resume: "out of funds on 01/02/2022",
-  //     status: 1
-  //   },
-  //   {
-  //     title: "Mean Salary for Pavelsan",
-  //     amount: "100 USDC/hour",
-  //     resume: "starts in 06:35:11",
-  //     status: 2
-  //   },
-  //   {
-  //     title: "Grape’s Research Distribution",
-  //     amount: "25,158 GRAPE/hour",
-  //     resume: "streaming since 01/05/2022",
-  //     status: 0
-  //   },
-  // ];
 
   const outgoingStreams = [
     {
@@ -1455,12 +1445,12 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       id: "incoming",
-      name: "Incoming (3)",
+      name: `Incoming (${incomingAmount > 0 && incomingAmount})`,
       render: renderListOfIncomingStreams
     },
     {
       id: "outgoing",
-      name: "Outgoing (4)",
+      name: "Outgoing (3)",
       render: renderListOfOutgoingStreams
     },
   ];

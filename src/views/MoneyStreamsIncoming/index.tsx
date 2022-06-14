@@ -40,7 +40,7 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } f
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MoneyStreamsIncomingView = (props: {
-  // stream: Stream | StreamInfo | undefined;
+  stream: Stream | StreamInfo | undefined;
   onSendFromIncomingStreamDetails?: any;
 }) => {
   const {
@@ -58,7 +58,7 @@ export const MoneyStreamsIncomingView = (props: {
   const {
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
-  const { onSendFromIncomingStreamDetails } = props;
+  const { stream, onSendFromIncomingStreamDetails } = props;
 
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
@@ -1052,15 +1052,15 @@ export const MoneyStreamsIncomingView = (props: {
   }, []);
 
   useEffect(() => {
-    if (!ms || !msp || !streamDetail) {return;}
+    if (!ms || !msp || !stream) {return;}
 
     const timeout = setTimeout(() => {
-      if (msp && streamDetail && streamDetail.version >= 2) {
-        msp.refreshStream(streamDetail as Stream).then(detail => {
+      if (msp && stream && stream.version >= 2) {
+        msp.refreshStream(stream as Stream).then(detail => {
           setStreamDetail(detail as Stream);
         });
-      } else if (ms && streamDetail && streamDetail.version < 2) {
-        ms.refreshStream(streamDetail as StreamInfo).then(detail => {
+      } else if (ms && stream && stream.version < 2) {
+        ms.refreshStream(stream as StreamInfo).then(detail => {
           setStreamDetail(detail as StreamInfo);
         });
       }
@@ -1069,30 +1069,30 @@ export const MoneyStreamsIncomingView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  }, [ms, msp, setStreamDetail, streamDetail]);
+  }, [ms, msp, setStreamDetail, stream]);
 
-  const v1 = streamDetail as StreamInfo;
-  const v2 = streamDetail as Stream;
+  const v1 = stream as StreamInfo;
+  const v2 = stream as Stream;
   const isNew = v2.version >= 2 ? true : false;
 
   const renderFundsToWithdraw = () => {
-    if (!streamDetail) {return null;}
+    if (!stream) {return null;}
 
-    const token = getTokenByMintAddress(streamDetail.associatedToken as string);
+    const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
         <span className="info-data large mr-1">
-          {streamDetail
+          {stream
             ? getTokenAmountAndSymbolByTokenAddress(isNew ?
                 toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6) : v1.escrowVestedAmount, 
-                streamDetail.associatedToken as string
+                stream.associatedToken as string
               )
             : '--'
           }
         </span>
         <span className="info-icon">
-          {(streamDetail && getStreamStatus(streamDetail) === "Running") ? (
+          {(stream && getStreamStatus(stream) === "Running") ? (
             <ArrowDownOutlined className="mean-svg-icons success bounce" />
           ) : (
             <ArrowDownOutlined className="mean-svg-icons success" />
@@ -1165,14 +1165,14 @@ export const MoneyStreamsIncomingView = (props: {
   );
 
   const incomingStream = {
-    title: streamDetail ? getStreamTitle(streamDetail) : "Unknown incoming stream",
-    subtitle: streamDetail ? getStreamSubtitle(streamDetail) : "--",
-    status: streamDetail ? getStreamStatus(streamDetail) : "--",
-    resume: streamDetail ? getStreamResume(streamDetail) : "--"
+    title: stream ? getStreamTitle(stream) : "Unknown incoming stream",
+    subtitle: stream ? getStreamSubtitle(stream) : "--",
+    status: stream ? getStreamStatus(stream) : "--",
+    resume: stream ? getStreamResume(stream) : "--"
   };
 
   const renderReceivingFrom = () => {
-    if (!streamDetail) {return null;}
+    if (!stream) {return null;}
 
     return (
       <CopyExtLinkGroup
@@ -1184,17 +1184,17 @@ export const MoneyStreamsIncomingView = (props: {
   }
 
   const renderPaymentRate = () => {
-    if (!streamDetail) {return null;}
+    if (!stream) {return null;}
 
-    const token = getTokenByMintAddress(streamDetail.associatedToken as string);
+    const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
-        {streamDetail
+        {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
               toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount, 
-              streamDetail.associatedToken as string
-            )}  ${getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true, t)}`
+              stream.associatedToken as string
+            )}  ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
           : '--'
         }
       </>
@@ -1202,16 +1202,16 @@ export const MoneyStreamsIncomingView = (props: {
   }
 
   const renderReservedAllocation = () => {
-    if (!streamDetail) {return null;}
+    if (!stream) {return null;}
 
-    const token = getTokenByMintAddress(streamDetail.associatedToken as string);
+    const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
-        {streamDetail
+        {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
             toUiAmount(new BN(v2.remainingAllocationAmount), token?.decimals || 6) : (v1.allocationAssigned || v1.allocationLeft), 
-              streamDetail.associatedToken as string
+              stream.associatedToken as string
             )}`
           : '--'
         }
@@ -1220,16 +1220,16 @@ export const MoneyStreamsIncomingView = (props: {
   }
 
   const renderFundsLeftInAccount = () => {
-    if (!streamDetail) {return null;}
+    if (!stream) {return null;}
 
-    const token = getTokenByMintAddress(streamDetail.associatedToken as string);
+    const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
-        {streamDetail
+        {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
             toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
-              streamDetail.associatedToken as string
+              stream.associatedToken as string
             )}`
           : '--'
         }
@@ -1241,7 +1241,7 @@ export const MoneyStreamsIncomingView = (props: {
   const detailsData = [
     {
       label: "Started on:",
-      value: streamDetail ? moment(streamDetail.startUtc).format("LLL").toLocaleString() : "--"
+      value: stream ? moment(stream.startUtc).format("LLL").toLocaleString() : "--"
     },
     {
       label: "Receiving from:",
@@ -1289,7 +1289,7 @@ export const MoneyStreamsIncomingView = (props: {
       {isTransferStreamModalVisible && (
         <StreamTransferOpenModal
           isVisible={isTransferStreamModalVisible}
-          streamDetail={streamDetail}
+          streamDetail={stream}
           handleOk={onAcceptTransferStream}
           handleClose={closeTransferStreamModal}
         />
