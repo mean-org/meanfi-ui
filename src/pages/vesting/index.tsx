@@ -44,6 +44,7 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { VestingContractSolBalanceModal } from './components/VestingContractSolBalanceModal';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -106,6 +107,7 @@ export const VestingView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [treasuryEffectiveBalance, setTreasuryEffectiveBalance] = useState(0);
   // Transactions
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -433,6 +435,7 @@ export const VestingView = () => {
       });
   }, []);
 
+
   //////////////
   //  Modals  //
   //////////////
@@ -441,6 +444,11 @@ export const VestingView = () => {
   const [isVestingContractCreateModalVisible, setIsVestingContractCreateModalVisibility] = useState(false);
   const showVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(true), []);
   const closeVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(false), []);
+
+  // Vesting contract SOL balance modal
+  const [isVestingContractSolBalanceModalOpen, setIsVestingContractSolBalanceModalOpen] = useState(false);
+  const hideVestingContractSolBalanceModal = useCallback(() => setIsVestingContractSolBalanceModalOpen(false), []);
+  const showVestingContractSolBalanceModal = useCallback(() => setIsVestingContractSolBalanceModalOpen(true), []);
 
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
@@ -973,7 +981,7 @@ export const VestingView = () => {
       disabled: !isInspectedAccountTheConnectedWallet(),
       uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
       tooltip: '',
-      callBack: () => { }
+      callBack: showVestingContractSolBalanceModal
     });
     ctaItems++;
 
@@ -1021,6 +1029,7 @@ export const VestingView = () => {
   }, [
     isXsDevice,
     showAddFundsModal,
+    showVestingContractSolBalanceModal,
     isInspectedAccountTheConnectedWallet,
   ]);
 
@@ -1104,6 +1113,36 @@ export const VestingView = () => {
     signalRefreshTreasuryStreams,
     getTreasuryStreams,
   ]);
+
+  // Get the effective balance of the treasury
+  useEffect(() => {
+    if (!connection || !publicKey) { return; }
+
+    if (vestingContractAddress && selectedVestingContract &&
+        vestingContractAddress === selectedVestingContract.id) {
+      let balance = 0;
+      connection.getBalance(new PublicKey(vestingContractAddress))
+      .then(solBalance => {
+        balance = solBalance / LAMPORTS_PER_SOL;
+        connection.getMinimumBalanceForRentExemption(300)
+        .then(value => {
+          const re = value / LAMPORTS_PER_SOL;
+          const eb = balance - re;
+          // consoleOut('treasuryRentExcemption:', re, 'blue');
+          // consoleOut('Treasury native balance:', balance, 'blue');
+          // consoleOut('Effective account balance:', eb, 'blue');
+          setTreasuryEffectiveBalance(eb);
+        })
+        .catch(error => {
+          console.error('Failure fetching minimum balance for rent exemption', error);
+        });
+      })
+      .catch(error => {
+        console.error('Failure fetching native account balance for Streaming Account', error);
+      });
+    }
+
+  }, [connection, publicKey, selectedVestingContract, vestingContractAddress]);
 
   // Get a list of multisig accounts
   useEffect(() => {
@@ -1206,8 +1245,6 @@ export const VestingView = () => {
   ////////////////////////////
   //   Events and actions   //
   ////////////////////////////
-
-
 
   const onBackButtonClicked = () => {
     setDtailsPanelOpen(false);
@@ -1566,6 +1603,14 @@ export const VestingView = () => {
           />
         )}
 
+        {isVestingContractSolBalanceModalOpen && vestingContractAddress && (
+          <VestingContractSolBalanceModal
+            address={vestingContractAddress || ''}
+            isVisible={isVestingContractSolBalanceModalOpen}
+            handleClose={hideVestingContractSolBalanceModal}
+            treasuryBalance={treasuryEffectiveBalance}
+          />
+        )}
       </>
     );
   } else if (treasuriesLoaded && treasuryList.length === 0 && !loadingTreasuries) {
