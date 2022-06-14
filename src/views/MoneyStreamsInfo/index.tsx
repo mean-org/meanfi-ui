@@ -24,31 +24,34 @@ import {
   Stream,
   MSP,
   Constants as MSPV2Constants,
-  TreasuryType
+  TreasuryType,
+  STREAM_STATUS
 } from '@mean-dao/msp';
-import { MSP_ACTIONS, StreamInfo, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
+import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, getTransactionStatusForLogs, isValidAddress } from "../../utils/ui";
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isValidAddress } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from "../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from "../../utils/utils";
 import { TREASURY_TYPE_OPTIONS } from "../../constants/treasury-type-options";
 import { openNotification } from "../../components/Notifications";
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { NO_FEES } from "../../constants";
+import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useLocation, useParams } from "react-router-dom";
 import { TreasuryOpenModal } from "../../components/TreasuryOpenModal";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { TreasuryCreateOptions } from "../../models/treasuries";
 import { customLogger } from "../..";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
+import BN from "bn.js";
 
 export const MoneyStreamsInfoView = (props: {
   onSendFromIncomingStreamInfo?: any;
   onSendFromOutgoingStreamInfo?: any;
   onSendFromStreamingAccountDetails?: any;
+  streamList?: Array<Stream | StreamInfo> | undefined;
 }) => {
   const {
     activeTab,
@@ -72,6 +75,7 @@ export const MoneyStreamsInfoView = (props: {
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
   const {
+    streamList,
     onSendFromIncomingStreamInfo,
     onSendFromOutgoingStreamInfo,
     onSendFromStreamingAccountDetails
@@ -976,6 +980,176 @@ export const MoneyStreamsInfoView = (props: {
     multisigAccounts,
   ]);
 
+  const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
+    if (item && publicKey) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
+      } else {
+        return v2.beneficiary === publicKey.toBase58() ? true : false;
+      }
+    }
+    return false;
+  }, [publicKey]);
+
+  const getStreamTitle = (item: Stream | StreamInfo): string => {
+    let title = '';
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+
+      if (v1.version < 2) {
+        if (v1.streamName) {
+          return `${v1.streamName}`;
+        }
+        
+        if (v1.isUpdatePending) {
+          title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else if (v1.state === STREAM_STATE.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else if (v1.state === STREAM_STATE.Paused) {
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        }
+      } else {
+        if (v2.name) {
+          return `${v2.name}`;
+        }
+
+        if (v2.status === STREAM_STATUS.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        } else if (v2.status === STREAM_STATUS.Paused) {
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        }
+      }
+    }
+
+    return title;
+  }
+
+  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+    if (item) {
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+    }
+    return value;
+  }, [getTokenByMintAddress]);
+
+  const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+
+    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+    }
+    return value;
+  }, [getTokenByMintAddress]);
+
+  const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
+    let subtitle = '';
+
+    if (item) {
+      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
+      if (item.rateAmount > 0) {
+        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
+      }
+
+      subtitle = rateAmount;
+    }
+
+    return subtitle;
+
+  }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
+
+  const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
+
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATE.Paused:
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
+        }
+      } else {
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATUS.Paused:
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
+        }
+      }
+    }
+
+  }, [t]);
+
+  const getStreamResume = useCallback((item: Stream | StreamInfo) => {
+    let title = '';
+
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+
+      if (v1.version < 2) {
+        if (v1.state === STREAM_STATE.Schedule) {
+          title = `starts in ${getShortDate(v1.startUtc as string)}`;
+        } else if (v1.state === STREAM_STATE.Paused) {
+          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
+        } else {
+          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
+        }
+      } else {
+        if (v2.status === STREAM_STATUS.Schedule) {
+          title = `starts in ${getShortDate(v1.startUtc as string)}`;
+        } else if (v1.state === STREAM_STATE.Paused) {
+          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
+        } else {
+          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
+        }
+      }
+    }
+
+    return title;
+
+  }, []);
+
   // Protocol
   const listOfBadges = ["MSP", "DEFI", "Money Streams"];
 
@@ -1063,27 +1237,26 @@ export const MoneyStreamsInfoView = (props: {
     />
   );
     
-
-  const incomingStreams = [
-    {
-      title: "Monthly Remittance from Jesse",
-      amount: "3.29805 USDC/hour",
-      resume: "out of funds on 01/02/2022",
-      status: 1
-    },
-    {
-      title: "Mean Salary for Pavelsan",
-      amount: "100 USDC/hour",
-      resume: "starts in 06:35:11",
-      status: 2
-    },
-    {
-      title: "Grape’s Research Distribution",
-      amount: "25,158 GRAPE/hour",
-      resume: "streaming since 01/05/2022",
-      status: 0
-    },
-  ];
+  // const incomingStreams = [
+  //   {
+  //     title: "Monthly Remittance from Jesse",
+  //     amount: "3.29805 USDC/hour",
+  //     resume: "out of funds on 01/02/2022",
+  //     status: 1
+  //   },
+  //   {
+  //     title: "Mean Salary for Pavelsan",
+  //     amount: "100 USDC/hour",
+  //     resume: "starts in 06:35:11",
+  //     status: 2
+  //   },
+  //   {
+  //     title: "Grape’s Research Distribution",
+  //     amount: "25,158 GRAPE/hour",
+  //     resume: "streaming since 01/05/2022",
+  //     status: 0
+  //   },
+  // ];
 
   const outgoingStreams = [
     {
@@ -1127,13 +1300,16 @@ export const MoneyStreamsInfoView = (props: {
   // Incoming streams list
   const renderListOfIncomingStreams = (
     <>
-      {incomingStreams.map((stream, index) => {
+      {streamList && streamList.map((stream, index) => {
         const onSelectStream = () => {
           // Sends outgoing stream value to the parent component "Accounts"
           onSendFromIncomingStreamInfo(stream);
         };
 
-        const title = stream.title ? stream.title : "Unknown incoming stream";
+        const title = stream ? getStreamTitle(stream) : "Unknown incoming stream";
+        const subtitle = getStreamSubtitle(stream);
+        const status = getStreamStatus(stream);
+        const resume = getStreamResume(stream);
 
         return (
           <div 
@@ -1144,12 +1320,13 @@ export const MoneyStreamsInfoView = (props: {
             <ResumeItem
               id={index}
               title={title}
-              subtitle={stream.amount}
-              resume={stream.resume}
-              status={stream.status}
+              subtitle={subtitle}
+              resume={resume}
+              status={status}
               hasRightIcon={true}
               rightIcon={<IconArrowForward className="mean-svg-icons" />}
               isLink={true}
+              isStream={true}
             />
           </div>
         )
@@ -1160,10 +1337,10 @@ export const MoneyStreamsInfoView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="0" onClick={() => {}}>
+      <Menu.Item key="00" onClick={showCreateStreamModal}>
         <span className="menu-item-text">Add outgoing stream</span>
       </Menu.Item>
-      <Menu.Item key="0" onClick={showCreateTreasuryModal}>
+      <Menu.Item key="01" onClick={showCreateTreasuryModal}>
         <span className="menu-item-text">Add streaming account</span>
       </Menu.Item>
     </Menu>

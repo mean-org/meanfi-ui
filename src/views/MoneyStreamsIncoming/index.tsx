@@ -8,7 +8,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { IconEllipsisVertical } from "../../Icons";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs } from "../../utils/ui";
 import {
   TransactionFees,
   MSP_ACTIONS as MSP_ACTIONS_V2,
@@ -24,25 +24,32 @@ import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { NO_FEES } from "../../constants";
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../utils/utils";
+import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
+import { StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
+import { useTranslation } from "react-i18next";
+import { TokenInfo } from "@solana/spl-token-registry";
+import moment from "moment";
+import BN from "bn.js";
+import ArrowDownOutlined from "@ant-design/icons/lib/icons/ArrowDownOutlined";
 
 export const MoneyStreamsIncomingView = (props: {
   stream?: any;
   onSendFromIncomingStreamDetails?: any;
-  // tabs?: Array<any>;
 }) => {
   const {
     theme,
     tokenList,
     tokenBalance,
+    splTokenList,
     selectedToken,
     treasuryOption,
     detailsPanelOpen,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
+    getTokenByMintAddress,
     previousWalletConnectState,
     setStreamList,
     setSelectedToken,
@@ -53,7 +60,6 @@ export const MoneyStreamsIncomingView = (props: {
     resetContractValues,
     refreshTokenBalance,
     setTransactionStatus,
-    getTokenByMintAddress,
     setHighLightableStreamId,
     setHighLightableMultisigId,
   } = useContext(AppStateContext);
@@ -68,6 +74,7 @@ export const MoneyStreamsIncomingView = (props: {
 
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
+  const { t } = useTranslation('common');
 
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -500,11 +507,190 @@ export const MoneyStreamsIncomingView = (props: {
     resetTransactionStatus();
   },[resetTransactionStatus]);
 
+  const getStreamTitle = (item: Stream | StreamInfo): string => {
+    let title = '';
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+
+      if (v1.version < 2) {
+        if (v1.streamName) {
+          return `${v1.streamName}`;
+        }
+        
+        if (v1.isUpdatePending) {
+          title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else if (v1.state === STREAM_STATE.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else if (v1.state === STREAM_STATE.Paused) {
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        }
+      } else {
+        if (v2.name) {
+          return `${v2.name}`;
+        }
+
+        if (v2.status === STREAM_STATUS.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        } else if (v2.status === STREAM_STATUS.Paused) {
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        }
+      }
+    }
+
+    return title;
+  }
+
+  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+    if (item) {
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+    }
+    return value;
+  }, [getTokenByMintAddress]);
+
+  const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+
+    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+    }
+    return value;
+  }, [getTokenByMintAddress]);
+
+  const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
+    let subtitle = '';
+
+    if (item) {
+      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
+      if (item.rateAmount > 0) {
+        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
+      }
+
+      subtitle = rateAmount;
+    }
+
+    return subtitle;
+
+  }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
+
+  const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
+
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATE.Paused:
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
+        }
+      } else {
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATUS.Paused:
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
+        }
+      }
+    }
+
+  }, [t]);
+
+  const getStreamResume = useCallback((item: Stream | StreamInfo) => {
+    let title = '';
+
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+
+      if (v1.version < 2) {
+        if (v1.state === STREAM_STATE.Schedule) {
+          title = `starts in ${getShortDate(v1.startUtc as string)}`;
+        } else if (v1.state === STREAM_STATE.Paused) {
+          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
+        } else {
+          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
+        }
+      } else {
+        if (v2.status === STREAM_STATUS.Schedule) {
+          title = `starts in ${getShortDate(v1.startUtc as string)}`;
+        } else if (v1.state === STREAM_STATE.Paused) {
+          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
+        } else {
+          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
+        }
+      }
+    }
+
+    return title;
+
+  }, []);
+
+  const renderFundsToWithdraw = (
+    <>
+      <span className="info-data large mr-1">
+        {stream
+          ? getAmountWithSymbol(
+              stream.withdrawableAmount, 
+              stream.associatedToken as string,
+              false, splTokenList
+            )
+          : '--'
+        }
+      </span>
+      <span className="info-icon">
+        {(stream && getStreamStatus(stream) === "Running") ? (
+          <ArrowDownOutlined className="mean-svg-icons success bounce" />
+        ) : (
+          <ArrowDownOutlined className="mean-svg-icons success" />
+        )}
+      </span>
+    </>
+  );
+
   // Info Data
   const infoData = [
     {
       name: "Funds available to withdraw now",
-      value: "22.15258 USDC"
+      value: renderFundsToWithdraw
     },
   ];
 
@@ -562,8 +748,15 @@ export const MoneyStreamsIncomingView = (props: {
     </Row>
   );
 
-  const sendingTo =  <CopyExtLinkGroup
-    content={"Gc88HJN4eNssQkp7LUTGfpo14Y3wE6zKFrEBtLrmiQpq"}
+  const incomingStream = {
+    title: stream ? getStreamTitle(stream) : "Unknown incoming stream",
+    subtitle: getStreamSubtitle(stream),
+    status: getStreamStatus(stream),
+    resume: getStreamResume(stream)
+  };
+
+  const receivingFrom =  <CopyExtLinkGroup
+    content={stream.treasurer}
     number={8}
     externalLink={true}
   />
@@ -572,34 +765,45 @@ export const MoneyStreamsIncomingView = (props: {
   const detailsData = [
     {
       label: "Started on:",
-      value: "March 3rd 2022"
+      value: moment(stream.startUtc).format("LLL").toLocaleString()
     },
     {
       label: "Receiving from:",
-      value: sendingTo ? sendingTo : "--"
+      value: receivingFrom ? receivingFrom : "--"
     },
     {
       label: "Payment rate:",
-      value: "3.29805 USDC / month"
+      value: `${getAmountWithSymbol(
+        stream.rateAmount,
+        stream.associatedToken as string)}
+        ${getIntervalFromSeconds(
+        stream?.rateIntervalInSeconds as number,
+        true,
+        t)}`
     },
     {
       label: "Reserved allocation:",
-      value: "100 USDC"
+      value: `${getTokenAmountAndSymbolByTokenAddress(
+        stream.remainingAllocationAmount,
+        stream.associatedToken
+      )}`
     },
     {
       label: "Funds left in account:",
-      value: "50.12569 USDC"
+      value: `${getAmountWithSymbol(
+        stream.fundsLeftInStream,
+        stream.associatedToken as string)}`
     },
     {
-      label: "Funds ran out on:",
-      value: "June 1, 2022 (6 days ago)"
+      label: stream.remainingAllocationAmount === 0 && "Funds ran out on:",
+      value: stream.remainingAllocationAmount === 0 && "June 1, 2022 (6 days ago)"
     },
   ];
 
   return (
     <>
       <MoneyStreamDetails
-        stream={stream}
+        stream={incomingStream}
         hideDetailsHandler={hideDetailsHandler}
         infoData={infoData}
         detailsData={detailsData}

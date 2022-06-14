@@ -59,10 +59,11 @@ export const MoneyStreamDetails = (props: {
           <ResumeItem
             title={stream.title}
             status={stream.status}
-            subtitle={stream.amount}
+            subtitle={stream.subtitle}
             resume={stream.resume}
             isDetailsPanel={true}
             isLink={false}
+            isStream={true}
           />
         )}
 

@@ -23,6 +23,7 @@ export const ResumeItem = (props: {
   status?: any;
   resume?: any;
   isDetailsPanel?: boolean;
+  isStream?: boolean;
   rightIcon?: any;
   hasRightIcon?: boolean;
   rightIconHasDropdown?: boolean;
@@ -50,6 +51,7 @@ export const ResumeItem = (props: {
     status,
     resume,
     isDetailsPanel,
+    isStream,
     rightIcon,
     hasRightIcon,
     rightIconHasDropdown,
@@ -194,9 +196,15 @@ export const ResumeItem = (props: {
                   </div>
                   )
                 )}
-                {status >= 0 && (
+                {(!isStream && status >= 0) ? (
                   <div className={`badge-container ${getTransactionStatusBackgroundColor(status)}`}>
                     <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
+                  </div>
+                ) : (
+                  <div className="badge-container">
+                    <span className="badge darken small text-uppercase">
+                      {status}
+                    </span>
                   </div>
                 )}
                 {amount && (
