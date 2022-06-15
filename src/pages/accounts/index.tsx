@@ -94,7 +94,7 @@ import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
-export type CategoryOption = "networth" | "assets" | "msigs" | "other-assets";
+export type CategoryOption = "networth" | "assets" | "streaming" | "other-assets";
 export type OtherAssetsOption = "msp-streams" | "msp-treasuries" | "orca" | "solend" | "friktion" | undefined;
 export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
 
@@ -113,7 +113,7 @@ export const AccountsNewView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { address, asset } = useParams();
+  const { address, asset, streamId } = useParams();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
@@ -191,6 +191,7 @@ export const AccountsNewView = () => {
   const [treasuriesTvl, setTreasuriesTvl] = useState(0);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [urlQueryAsset, setUrlQueryAsset] = useState('');
+  const [urlQueryStreamId, setUrlQueryStreamId] = useState('');
   const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
   const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
 
@@ -264,8 +265,9 @@ export const AccountsNewView = () => {
     if (!publicKey) { return; }
 
     consoleOut('pathname:', location.pathname, 'crimson');
-    if (location.pathname.endsWith('/streams')) {
+    if (location.pathname === "/accounts/streams") {
       return;
+      // Ensure path: /accounts/:address/assets if nothing provided
     } else if (!address && publicKey) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${publicKey.toBase58()}/assets`;
       consoleOut('No account address, redirecting to:', url, 'orange');
@@ -273,7 +275,8 @@ export const AccountsNewView = () => {
         setIsFirstLoad(true);
       }, 5);
       navigate(url, { replace: true });
-    } else if (address && location.pathname.indexOf('/assets') === -1) {
+      // Ensure path: /accounts/:address/assets if address provided but not /assets or /streaming
+    } else if (address && (location.pathname.indexOf('/assets') === -1 || location.pathname.indexOf('/streaming') === -1)) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/assets`;
       consoleOut('Address found, redirecting to:', url, 'orange');
       setTimeout(() => {
@@ -2781,14 +2784,22 @@ export const AccountsNewView = () => {
       setUrlQueryAsset(asset);
     }
 
+    if (streamId) {
+      consoleOut('Route param streamId:', streamId, 'crimson');
+      setUrlQueryStreamId(streamId);
+    }
+
     // The category is inferred from the route path
     if (location.pathname.indexOf('/assets') !== -1) {
       setSelectedCategory("assets");
       if (!asset) {
         setUrlQueryAsset('');
       }
-    } else if (location.pathname.indexOf('/msigs') !== -1) {
-      setSelectedCategory("msigs");
+    } else if (location.pathname.indexOf('/streaming') !== -1) {
+      setSelectedCategory("streaming");
+      if (!streamId) {
+        setUrlQueryStreamId('');
+      }
     } else {
       setSelectedCategory("other-assets");
     }
@@ -2817,6 +2828,7 @@ export const AccountsNewView = () => {
   }, [
     asset,
     address,
+    streamId,
     publicKey,
     isFirstLoad,
     searchParams,
@@ -3680,13 +3692,16 @@ export const AccountsNewView = () => {
         <div key="streams" onClick={() => {
           // if (publicKey && accountAddress && accountAddress === publicKey.toBase58()) {
           //   // setSelectedCategory("other-assets");
-          //   // setSelectedOtherAssetsOption("msp-streams");
           //   // setSelectedAsset(undefined);
           //   setTimeout(() => {
           //     navigate(STREAMS_ROUTE_BASE_PATH);
           //   }, 10);
           // }
-          setIsStreamingAccount(true);
+
+          const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming?v=summary`;
+          navigate(url);
+
+          // setIsStreamingAccount(true);
         }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
           <div className="icon-cell">
             {loadingStreams ? (
