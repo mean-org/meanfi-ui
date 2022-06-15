@@ -1310,6 +1310,9 @@
 		"label-input-amount": "Enter amount to unwrap"
 	},
 	"vesting": {
+		"add-funds": {
+			"modal-title": "Add funds to the vesting contract"
+		},
 		"screen-subtitle": "Welcome to the future of safe and secure token locks",
 		"screen-title": "Mean Vesting",
 		"screen-subtitle2": "Realize the power of no-code token locks on Solana.",

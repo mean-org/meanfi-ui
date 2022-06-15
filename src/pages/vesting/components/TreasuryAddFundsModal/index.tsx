@@ -687,7 +687,7 @@ export const VestingContractAddFundsModal = (props: {
         <div className="modal-title">
           {highLightableStreamId
             ? t('treasuries.add-funds.modal-title-fund-stream')
-            : t('treasuries.add-funds.modal-title')
+            : t('vesting.add-funds.modal-title')
           }
         </div>
       }
