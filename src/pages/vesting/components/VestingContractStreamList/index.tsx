@@ -3,7 +3,6 @@ import { calculateActionFees, MSP_ACTIONS, Stream, STREAM_STATUS, TransactionFee
 import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTimeToNow } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
-import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { cutNumber, makeDecimal, shortenAddress } from '../../../../utils/utils';
@@ -14,8 +13,8 @@ import { IconVerticalEllipsis } from '../../../../Icons';
 import { getSolanaExplorerClusterParam, useConnection } from '../../../../contexts/connection';
 import { TransactionStatus } from '../../../../models/enums';
 import { MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
-import { TreasuryAddFundsModal } from '../../../../components/TreasuryAddFundsModal';
 import { TreasuryTopupParams } from '../../../../models/common-types';
+import { VestingContractAddFundsModal } from '../TreasuryAddFundsModal';
 
 export const VestingContractStreamList = (props: {
     accountAddress: string;
@@ -53,8 +52,6 @@ export const VestingContractStreamList = (props: {
     const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
       blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
     });
-    const [minRequiredBalance, setMinRequiredBalance] = useState(0);
-    const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
 
     const resetTransactionStatus = useCallback(() => {
 
@@ -120,21 +117,21 @@ export const VestingContractStreamList = (props: {
         return value;
     }, [getTokenByMintAddress]);
 
-    const getStreamTypeIcon = useCallback((item: Stream) => {
-        if (isInboundStream(item)) {
-            return (
-                <span className="stream-type incoming">
-                    <ArrowDownOutlined />
-                </span>
-            );
-        } else {
-            return (
-                <span className="stream-type outgoing">
-                    <ArrowUpOutlined />
-                </span>
-            );
-        }
-    }, [isInboundStream]);
+    // const getStreamTypeIcon = useCallback((item: Stream) => {
+    //     if (isInboundStream(item)) {
+    //         return (
+    //             <span className="stream-type incoming">
+    //                 <ArrowDownOutlined />
+    //             </span>
+    //         );
+    //     } else {
+    //         return (
+    //             <span className="stream-type outgoing">
+    //                 <ArrowUpOutlined />
+    //             </span>
+    //         );
+    //     }
+    // }, [isInboundStream]);
 
     const getStreamDescription = (item: Stream): string => {
         let title = '';
@@ -276,10 +273,6 @@ export const VestingContractStreamList = (props: {
     //////////////
     //  Modals  //
     //////////////
-
-    const [isVestingContractCreateModalVisible, setIsVestingContractCreateModalVisibility] = useState(false);
-    const showVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(true), []);
-    const closeVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(false), []);
 
     // Add funds modal
     const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
@@ -478,7 +471,7 @@ export const VestingContractStreamList = (props: {
             </div>
 
             {isAddFundsModalVisible && (
-                <TreasuryAddFundsModal
+                <VestingContractAddFundsModal
                     handleOk={onAcceptAddFunds}
                     handleClose={closeAddFundsModal}
                     nativeBalance={nativeBalance}

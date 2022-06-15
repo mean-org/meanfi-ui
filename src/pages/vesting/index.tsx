@@ -39,12 +39,12 @@ import { VESTING_CATEGORIES } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
-import { TreasuryAddFundsModal } from '../../components/TreasuryAddFundsModal';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { VestingContractSolBalanceModal } from './components/VestingContractSolBalanceModal';
+import { VestingContractAddFundsModal } from './components/TreasuryAddFundsModal';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -1588,7 +1588,7 @@ export const VestingView = () => {
         )}
 
         {isAddFundsModalVisible && (
-          <TreasuryAddFundsModal
+          <VestingContractAddFundsModal
             handleOk={(params: TreasuryTopupParams) => onAcceptAddFunds(params)}
             handleClose={closeAddFundsModal}
             nativeBalance={nativeBalance}
