@@ -78,10 +78,10 @@ export const VestingLockCreateAccount = (props: {
     const [otpFees, setOtpFees] = useState<TransactionFees>({
         blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
     });
-    const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
     const [currentStep, setCurrentStep] = useState(0);
     const percentages = [5, 10, 15, 20];
-    const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("")
+    const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("");
+    const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption>(VESTING_ACCOUNT_TYPE_OPTIONS[0]);
 
     const resetTransactionStatus = useCallback(() => {
 
