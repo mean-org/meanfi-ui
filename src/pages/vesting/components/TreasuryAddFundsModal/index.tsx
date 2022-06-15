@@ -934,7 +934,7 @@ export const VestingContractAddFundsModal = (props: {
           </div>
         )}
 
-        {!props.isBusy && transactionStatus.currentOperation === TransactionStatus.Iddle && (
+        {!props.isBusy && !highLightableStreamId && transactionStatus.currentOperation === TransactionStatus.Iddle && (
           <div className={`buy-token-options text-center mt-4 mb-2`}>
             <p>You can also fund this contract by sending {selectedToken?.symbol} tokens to:</p>
 
