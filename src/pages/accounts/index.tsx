@@ -3678,14 +3678,15 @@ export const AccountsNewView = () => {
           ? "See your Money Streams"
           : "To see your Money Streams you need to connect your wallet"}>
         <div key="streams" onClick={() => {
-          if (publicKey && accountAddress && accountAddress === publicKey.toBase58()) {
-            // setSelectedCategory("other-assets");
-            // setSelectedOtherAssetsOption("msp-streams");
-            // setSelectedAsset(undefined);
-            setTimeout(() => {
-              navigate(STREAMS_ROUTE_BASE_PATH);
-            }, 10);
-          }
+          // if (publicKey && accountAddress && accountAddress === publicKey.toBase58()) {
+          //   // setSelectedCategory("other-assets");
+          //   // setSelectedOtherAssetsOption("msp-streams");
+          //   // setSelectedAsset(undefined);
+          //   setTimeout(() => {
+          //     navigate(STREAMS_ROUTE_BASE_PATH);
+          //   }, 10);
+          // }
+          setIsStreamingAccount(true);
         }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
           <div className="icon-cell">
             {loadingStreams ? (
@@ -4507,7 +4508,9 @@ export const AccountsNewView = () => {
                           </div>
                           <div className="asset-category">
                             {inspectedAccountType === undefined ? (
-                              <>
+                              <div onClick={() => {
+                                setIsStreamingAccount(true);
+                               }}>
                                 {renderMoneyStreamsSummary}
                                 <TreasuriesSummary
                                   address={accountAddress}
@@ -4515,7 +4518,8 @@ export const AccountsNewView = () => {
                                   ms={ms}
                                   msp={msp}
                                   title={t('treasuries.summary-title')}
-                                  enabled={isInspectedAccountTheConnectedWallet()}
+                                  // enabled={isInspectedAccountTheConnectedWallet()}
+                                  enabled={false}
                                   selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
                                   onNewValue={(value: number) => setTreasuriesTvl(value)}
                                   tooltipEnabled="See your Streaming Accounts"
@@ -4528,7 +4532,7 @@ export const AccountsNewView = () => {
                                     }
                                   }}
                                 />
-                              </>
+                              </div>
                             ) : inspectedAccountType === "multisig" ? (
                               <div onClick={() => {
                                 setIsStreamingAccount(true);

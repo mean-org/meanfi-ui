@@ -1470,13 +1470,13 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       id: "incoming",
-      name: `Incoming (${incomingAmount > 0 && incomingAmount})`,
-      render: renderListOfIncomingStreams
+      name: `Incoming ${incomingAmount > 0 ? `(${incomingAmount})` : ""}`,
+      render: incomingAmount > 0 ? renderListOfIncomingStreams : "You don't have any incoming stream"
     },
     {
       id: "outgoing",
-      name: "Outgoing (3)",
-      render: renderListOfOutgoingStreams
+      name: `Outgoing ${incomingAmount > 0 ? `(${incomingAmount})` : ""}`,
+      render: incomingAmount > 0 ? renderListOfOutgoingStreams : "You don't have any outgoing stream"
     },
   ];
 
