@@ -819,6 +819,7 @@
 			"status-running": "Corrida",
 			"status-scheduled": "Agendado",
 			"status-stopped": "Parado",
+			"status-paused": "Paused",
 			"stopped": "Ficou sem fundos",
 			"stopped-manually": "Parado manualmente",
 			"streaming": "Transmissão"
@@ -1255,7 +1256,8 @@
 			"screen-title": "Streaming Accounts - Streams",
 			"status-running": "Corrida",
 			"status-scheduled": "Agendado",
-			"status-stopped": "Parado"
+			"status-stopped": "Parado",
+			"status-paused": "Paused"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

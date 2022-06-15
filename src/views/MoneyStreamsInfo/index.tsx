@@ -1095,7 +1095,6 @@ export const MoneyStreamsInfoView = (props: {
   }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
 
   const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
-
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
@@ -1113,52 +1112,77 @@ export const MoneyStreamsInfoView = (props: {
           case STREAM_STATUS.Schedule:
             return t('streams.status.status-scheduled');
           case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return t('streams.status.status-paused');
+            }
             return t('streams.status.status-stopped');
           default:
             return t('streams.status.status-running');
         }
       }
     }
-
   }, [t]);
 
   const getStreamResume = useCallback((item: Stream | StreamInfo) => {
-    let title = '';
-
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
-
       if (v1.version < 2) {
-        if (v1.state === STREAM_STATE.Schedule) {
-          title = `starts in ${getShortDate(v1.startUtc as string)}`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
-        } else {
-          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.scheduled', {date: getShortDate(v1.startUtc as string)});
+          case STREAM_STATE.Paused:
+            return t('streams.status.stopped');
+          default:
+            return t('streams.status.streaming');
         }
       } else {
-        if (v2.status === STREAM_STATUS.Schedule) {
-          title = `starts in ${getShortDate(v1.startUtc as string)}`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
-        } else {
-          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return `starts on ${getShortDate(v2.startUtc as string)}`;
+          case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return `paused on ${getShortDate(v2.startUtc as string)}`;
+            }
+            return `out of funds on ${getShortDate(v2.startUtc as string)}`;
+          default:
+            return `streaming since ${getShortDate(v2.startUtc as string)}`;
         }
       }
     }
+  }, [t]);
 
-    return title;
+  const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
 
-  }, []);
+  const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
+
+  const [incomingAmount, setIncomingAmount] = useState(0);
+  const [outgoingAmount, setOutgoingAmount] = useState(0);
+
+  useEffect(() => {
+    if (!connection || !publicKey || !streamList) { return; }
+
+    setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)));
+
+    setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream)));
+
+  }, [connection, isInboundStream, publicKey, streamList]);
+
+  useEffect(() => {
+    if (!incomingStreamList || !outgoingStreamList) { return; }
+
+    setIncomingAmount(incomingStreamList.length);
+    setOutgoingAmount(outgoingStreamList.length);
+
+  }, [incomingStreamList, outgoingStreamList]);
 
   // Protocol
   const listOfBadges = ["MSP", "DEFI", "Money Streams"];
 
   const renderBadges = (
     <div className="badge-container">
-      {listOfBadges.map((badge) => (
-        <span className="badge darken small text-uppercase mr-1">{badge}</span>
+      {listOfBadges.map((badge, index) => (
+        <span key={`${badge}+${index}`} className="badge darken small text-uppercase mr-1">{badge}</span>
       ))}
       </div>
   );
@@ -1180,14 +1204,6 @@ export const MoneyStreamsInfoView = (props: {
       content: renderBalance
     }
   ];
-
-  const [incomingAmount, setIncomingAmount] = useState(0);
-
-  useEffect(() => {
-    if (streamList) {
-      setIncomingAmount(streamList.length);
-    }
-  }, [streamList]);
 
   const renderSummary = (
     <>
@@ -1230,7 +1246,7 @@ export const MoneyStreamsInfoView = (props: {
             <div className="d-flex align-items-center">
               <h3>Outgoing Streams</h3>
               <span className="info-icon">
-                {incomingAmount ? (
+                {outgoingAmount ? (
                   <ArrowUpOutlined className="mean-svg-icons outgoing bounce" />
                 ) : (
                   <ArrowUpOutlined className="mean-svg-icons outgoing" />
@@ -1253,15 +1269,19 @@ export const MoneyStreamsInfoView = (props: {
                 Total streams
               </div>
               <div className="info-value">
-                3 streams
+                {outgoingAmount} {outgoingAmount > 1 ? "streams" : "stream"}
               </div>
             </div>
           </div>
         </Col>
       </Row>
-      <PieChartComponent
-        incomingAmount={incomingAmount}
-      />
+
+      {(incomingAmount > 0 && outgoingAmount > 0) && (
+        <PieChartComponent
+          incomingAmount={incomingAmount}
+          outgoingAmount={outgoingAmount}
+        />
+      )}
     </>
   );
 
@@ -1272,15 +1292,6 @@ export const MoneyStreamsInfoView = (props: {
       externalLink={true}
     />
   );
-
-  const outgoingStreams = [
-    {
-      title: "Monthly remittance for Mom",
-      amount: "150 USDC/month",
-      resume: "streaming since 01/05/2022",
-      status: 1
-    }
-  ];
 
   const streamingAccounts = [
     {
@@ -1308,14 +1319,14 @@ export const MoneyStreamsInfoView = (props: {
       title: "Michel Comp",
       amount: "2,150.11 USDC/month",
       resume: "out of funds on 01/02/2022",
-      status: 0
+      status: 4
     }
   ];
 
   // Incoming streams list
   const renderListOfIncomingStreams = (
     <>
-      {streamList && streamList.map((stream, index) => {
+      {incomingStreamList && incomingStreamList.map((stream, index) => {
         const onSelectStream = () => {
           // Sends outgoing stream value to the parent component "Accounts"
           onSendFromIncomingStreamInfo(stream);
@@ -1349,7 +1360,7 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
-  // Dropdown (three dots button)
+  // Dropdown (three dots button) inside outgoing stream list
   const menu = (
     <Menu>
       <Menu.Item key="00" onClick={showCreateStreamModal}>
@@ -1368,7 +1379,7 @@ export const MoneyStreamsInfoView = (props: {
         title="Outflows"
         classNameTitle="text-uppercase"
         subtitle={subtitle}
-        amount={1}
+        amount={outgoingAmount}
         resume="outflow"
         className="account-category-title"
         hasRightIcon={true}
@@ -1377,13 +1388,16 @@ export const MoneyStreamsInfoView = (props: {
         dropdownMenu={menu}
         isLink={false}
       />
-      {outgoingStreams.map((stream, index) => {
+      {outgoingStreamList && outgoingStreamList.map((stream, index) => {
         const onSelectStream = () => {
           // Sends outgoing stream value to the parent component "Accounts"
           onSendFromOutgoingStreamInfo(stream);
         };
 
-        const title = stream.title ? stream.title : "Unknown outgoing stream";
+        const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+        const subtitle = getStreamSubtitle(stream);
+        const status = getStreamStatus(stream);
+        const resume = getStreamResume(stream);
 
         return (
           <div 
@@ -1394,12 +1408,13 @@ export const MoneyStreamsInfoView = (props: {
             <ResumeItem
               id={index}
               title={title}
-              status={stream.status}
-              subtitle={stream.amount}
-              resume={stream.resume}
+              subtitle={subtitle}
+              resume={resume}
+              status={status}
               hasRightIcon={true}
               rightIcon={<IconArrowForward className="mean-svg-icons" />}
               isLink={true}
+              isStream={true}
             />
           </div>
         )
@@ -1475,8 +1490,8 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       id: "outgoing",
-      name: `Outgoing ${incomingAmount > 0 ? `(${incomingAmount})` : ""}`,
-      render: incomingAmount > 0 ? renderListOfOutgoingStreams : "You don't have any outgoing stream"
+      name: `Outgoing ${outgoingAmount > 0 ? `(${outgoingAmount})` : ""}`,
+      render: outgoingAmount > 0 ? renderListOfOutgoingStreams : "You don't have any outgoing stream"
     },
   ];
 

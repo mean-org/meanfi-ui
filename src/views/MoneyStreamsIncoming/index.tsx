@@ -1,13 +1,12 @@
 import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { customLogger } from "../..";
-import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { MoneyStreamDetails } from "../../components/MoneyStreamDetails";
 import { AppStateContext } from "../../contexts/appstate";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { IconEllipsisVertical } from "../../Icons";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
   TransactionFees,
@@ -20,13 +19,11 @@ import {
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toTokenAmount, toUiAmount } from "../../utils/utils";
+import { NO_FEES } from "../../constants";
+import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toTokenAmount, toUiAmount } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
-import { TokenInfo } from "@solana/spl-token-registry";
-import moment from "moment";
 import BN from "bn.js";
 import ArrowDownOutlined from "@ant-design/icons/lib/icons/ArrowDownOutlined";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
@@ -894,107 +891,7 @@ export const MoneyStreamsIncomingView = (props: {
     refreshTokenBalance();
   };
 
-  const getStreamTitle = (item: Stream | StreamInfo): string => {
-    let title = '';
-    if (item) {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-
-      if (v1.version < 2) {
-        if (v1.streamName) {
-          return `${v1.streamName}`;
-        }
-        
-        if (v1.isUpdatePending) {
-          title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else if (v1.state === STREAM_STATE.Schedule) {
-          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else {
-          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        }
-      } else {
-        if (v2.name) {
-          return `${v2.name}`;
-        }
-
-        if (v2.status === STREAM_STATUS.Schedule) {
-          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        } else if (v2.status === STREAM_STATUS.Paused) {
-          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        } else {
-          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        }
-      }
-    }
-
-    return title;
-  }
-
-  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
-    let value = '';
-    if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-
-      if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
-      } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
-      }
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-    }
-    return value;
-  }, [getTokenByMintAddress]);
-
-  const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
-    let value = '';
-
-    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-
-      if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
-      } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
-      }
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-    }
-    return value;
-  }, [getTokenByMintAddress]);
-
-  const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
-    let subtitle = '';
-
-    if (item) {
-      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
-      if (item.rateAmount > 0) {
-        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
-      }
-
-      subtitle = rateAmount;
-    }
-
-    return subtitle;
-
-  }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
-
   const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
-
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
@@ -1012,44 +909,16 @@ export const MoneyStreamsIncomingView = (props: {
           case STREAM_STATUS.Schedule:
             return t('streams.status.status-scheduled');
           case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return t('streams.status.status-paused');
+            }
             return t('streams.status.status-stopped');
           default:
             return t('streams.status.status-running');
         }
       }
     }
-
   }, [t]);
-
-  const getStreamResume = useCallback((item: Stream | StreamInfo) => {
-    let title = '';
-
-    if (item) {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-
-      if (v1.version < 2) {
-        if (v1.state === STREAM_STATE.Schedule) {
-          title = `starts in ${getShortDate(v1.startUtc as string)}`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
-        } else {
-          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
-        }
-      } else {
-        if (v2.status === STREAM_STATUS.Schedule) {
-          title = `starts in ${getShortDate(v1.startUtc as string)}`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
-        } else {
-          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
-        }
-      }
-    }
-
-    return title;
-
-  }, []);
 
   useEffect(() => {
     if (!ms || !msp || !stream) {return;}
@@ -1093,9 +962,9 @@ export const MoneyStreamsIncomingView = (props: {
         </span>
         <span className="info-icon">
           {(stream && getStreamStatus(stream) === "Running") ? (
-            <ArrowDownOutlined className="mean-svg-icons success bounce" />
+            <ArrowDownOutlined className="mean-svg-icons incoming bounce" />
           ) : (
-            <ArrowDownOutlined className="mean-svg-icons success" />
+            <ArrowDownOutlined className="mean-svg-icons incoming" />
           )}
         </span>
       </>
@@ -1113,7 +982,7 @@ export const MoneyStreamsIncomingView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="ms-00" onClick={showTransferStreamModal}>
+      <Menu.Item key="msi-00" onClick={showTransferStreamModal}>
         <span className="menu-item-text">Transfer ownership</span>
       </Menu.Item>
     </Menu>
@@ -1164,114 +1033,13 @@ export const MoneyStreamsIncomingView = (props: {
     </Row>
   );
 
-  const incomingStream = {
-    title: stream ? getStreamTitle(stream) : "Unknown incoming stream",
-    subtitle: stream ? getStreamSubtitle(stream) : "--",
-    status: stream ? getStreamStatus(stream) : "--",
-    resume: stream ? getStreamResume(stream) : "--"
-  };
-
-  const renderReceivingFrom = () => {
-    if (!stream) {return null;}
-
-    return (
-      <CopyExtLinkGroup
-        content={isNew ? v2.treasurer as string : v1.treasurerAddress as string}
-        number={8}
-        externalLink={true}
-      />
-    )
-  }
-
-  const renderPaymentRate = () => {
-    if (!stream) {return null;}
-
-    const token = getTokenByMintAddress(stream.associatedToken as string);
-
-    return (
-      <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
-              toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount, 
-              stream.associatedToken as string
-            )}  ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
-          : '--'
-        }
-      </>
-    )
-  }
-
-  const renderReservedAllocation = () => {
-    if (!stream) {return null;}
-
-    const token = getTokenByMintAddress(stream.associatedToken as string);
-
-    return (
-      <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
-            toUiAmount(new BN(v2.remainingAllocationAmount), token?.decimals || 6) : (v1.allocationAssigned || v1.allocationLeft), 
-              stream.associatedToken as string
-            )}`
-          : '--'
-        }
-      </>
-    )
-  }
-
-  const renderFundsLeftInAccount = () => {
-    if (!stream) {return null;}
-
-    const token = getTokenByMintAddress(stream.associatedToken as string);
-
-    return (
-      <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
-            toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
-              stream.associatedToken as string
-            )}`
-          : '--'
-        }
-      </>
-    )
-  }
-
-  // Tab details
-  const detailsData = [
-    {
-      label: "Started on:",
-      value: stream ? moment(stream.startUtc).format("LLL").toLocaleString() : "--"
-    },
-    {
-      label: "Receiving from:",
-      value: renderReceivingFrom() ? renderReceivingFrom() : "--"
-    },
-    {
-      label: "Payment rate:",
-      value: renderPaymentRate() ? renderPaymentRate() : "--"
-    },
-    {
-      label: "Reserved allocation:",
-      value: renderReservedAllocation() ? renderReservedAllocation() : ""
-    },
-    {
-      label: "Funds left in account:",
-      value: renderFundsLeftInAccount() ? renderFundsLeftInAccount() : "--"
-    },
-    // {
-    //   label: "Funds ran out on:",
-    //   value: "June 1, 2022 (6 days ago)"
-    // },
-  ];
-
   return (
     <>
       <MoneyStreamDetails
-        stream={incomingStream}
+        stream={stream}
         hideDetailsHandler={hideDetailsHandler}
         infoData={infoData}
-        detailsData={detailsData}
+        isStreamIncoming={true}
         buttons={buttons}
       />
 

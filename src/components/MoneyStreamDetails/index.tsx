@@ -4,22 +4,340 @@ import { RightInfoDetails } from "../RightInfoDetails";
 import { TabsMean } from "../TabsMean";
 import { IconArrowBack } from "../../Icons";
 import "./style.scss";
+import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
+import { StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
+import { Stream, STREAM_STATUS } from "@mean-dao/msp";
+import moment from "moment";
+import { useCallback, useContext, useEffect } from "react";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
+import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from "../../utils/ui";
+import { AppStateContext } from "../../contexts/appstate";
+import BN from "bn.js";
+import { useTranslation } from "react-i18next";
+import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { TokenInfo } from "@solana/spl-token-registry";
 
 export const MoneyStreamDetails = (props: {
   stream?: any;
   hideDetailsHandler?: any;
   infoData?: any;
-  detailsData?: any;
+  isStreamIncoming?: boolean;
+  isStreamOutgoing?: boolean;
   buttons?: any;
 }) => {
+  const {
+    getTokenByMintAddress
+  } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
+  
+  const { stream, hideDetailsHandler, infoData, isStreamIncoming, isStreamOutgoing, buttons } = props;
 
-  const { stream, hideDetailsHandler, infoData, detailsData, buttons } = props;
+  const v1 = stream as StreamInfo;
+  const v2 = stream as Stream;
+  const isNew = v2.version >= 2 ? true : false;
+
+  const getStreamTitle = (item: Stream | StreamInfo): string => {
+    let title = '';
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+
+      if (v1.version < 2) {
+        if (v1.streamName) {
+          return `${v1.streamName}`;
+        }
+        
+        if (v1.isUpdatePending) {
+          title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else if (v1.state === STREAM_STATE.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else if (v1.state === STREAM_STATE.Paused) {
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        }
+      } else {
+        if (v2.name) {
+          return `${v2.name}`;
+        }
+
+        if (v2.status === STREAM_STATUS.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        } else if (v2.status === STREAM_STATUS.Paused) {
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        }
+      }
+    }
+
+    return title;
+  }
+
+  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+    if (item) {
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+    }
+    return value;
+  }, [getTokenByMintAddress]);
+
+  const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+
+    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+    }
+    return value;
+  }, [getTokenByMintAddress]);
+
+  const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
+    let subtitle = '';
+
+    if (item) {
+      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
+      if (item.rateAmount > 0) {
+        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
+      }
+
+      subtitle = rateAmount;
+    }
+
+    return subtitle;
+
+  }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
+
+  const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATE.Paused:
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
+        }
+      } else {
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return t('streams.status.status-paused');
+            }
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
+        }
+      }
+    }
+  }, [t]);
+
+  const getStreamResume = useCallback((item: Stream | StreamInfo) => {
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.scheduled', {date: getShortDate(v1.startUtc as string)});
+          case STREAM_STATE.Paused:
+            return t('streams.status.stopped');
+          default:
+            return t('streams.status.streaming');
+        }
+      } else {
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return `starts on ${getShortDate(v2.startUtc as string)}`;
+          case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return `paused on ${getShortDate(v2.startUtc as string)}`;
+            }
+            return `out of funds on ${getShortDate(v2.startUtc as string)}`;
+          default:
+            return `streaming since ${getShortDate(v2.startUtc as string)}`;
+        }
+      }
+    }
+  }, [t]);
+
+  const renderReceivingFrom = () => {
+    if (!stream) {return null;}
+
+    return (
+      <CopyExtLinkGroup
+        content={isNew ? v2.treasurer as string : v1.treasurerAddress as string}
+        number={8}
+        externalLink={true}
+      />
+    )
+  }
+
+  const renderSendingTo = () => {
+    if (!stream) {return null;}
+
+    return (
+      <CopyExtLinkGroup
+        content={isNew ? v2.beneficiary as string : v1.beneficiaryAddress as string}
+        number={8}
+        externalLink={true}
+      />
+    )
+  }
+
+  const renderPaymentRate = () => {
+    if (!stream) {return null;}
+
+    const token = getTokenByMintAddress(stream.associatedToken as string);
+
+    return (
+      <>
+        {stream
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+              toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount, 
+              stream.associatedToken as string
+            )}  ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
+          : '--'
+        }
+      </>
+    )
+  }
+
+  const renderReservedAllocation = () => {
+    if (!stream) {return null;}
+
+    const token = getTokenByMintAddress(stream.associatedToken as string);
+
+    return (
+      <>
+        {stream
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+            toUiAmount(new BN(v2.remainingAllocationAmount), token?.decimals || 6) : (v1.allocationAssigned || v1.allocationLeft), 
+              stream.associatedToken as string
+            )}`
+          : '--'
+        }
+      </>
+    )
+  }
+
+  const renderFundsLeftInAccount = () => {
+    if (!stream) {return null;}
+
+    const token = getTokenByMintAddress(stream.associatedToken as string);
+
+    return (
+      <>
+        {stream
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+            toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
+              stream.associatedToken as string
+            )}`
+          : '--'
+        }
+      </>
+    )
+  }
+
+  const renderFundsSendToRecipient = () => {
+    if (!stream) {return null;}
+
+    const token = getTokenByMintAddress(stream.associatedToken as string);
+
+    return (
+      <>
+        {stream
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+            toUiAmount(new BN(v2.fundsSentToBeneficiary), token?.decimals || 6) : (v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount), 
+              stream.associatedToken as string
+            )}`
+          : '--'
+        }
+      </>
+    )
+  }
+
+  useEffect(() => {
+    console.log("stream", stream);
+  }, [stream])
+
+  // Tab details
+  const detailsData = [
+    {
+      label: "Started on:",
+      value: stream ? moment(stream.startUtc).format("LLL").toLocaleString() : "--"
+    },
+    {
+      label: isStreamIncoming && "Receiving from:",
+      value: isStreamIncoming && renderReceivingFrom()
+    },
+    {
+      label: isStreamOutgoing && "Sending to:",
+      value: isStreamOutgoing && renderSendingTo()
+    },
+    {
+      label: "Payment rate:",
+      value: renderPaymentRate() ? renderPaymentRate() : "--"
+    },
+    {
+      label: "Reserved allocation:",
+      value: renderReservedAllocation() ? renderReservedAllocation() : ""
+    },
+    {
+      label: isStreamIncoming && "Funds left in account:",
+      value: isStreamIncoming && renderFundsLeftInAccount()
+    },
+    {
+      label: isStreamOutgoing && "Funds sent to recipient:",
+      value: isStreamOutgoing && renderFundsSendToRecipient()
+    },
+    {
+      label: (isStreamOutgoing && getStreamStatus(stream) === "Running") && "Funds will run out in:",
+      value: (isStreamOutgoing && getStreamStatus(stream) === "Running") && "12 days and 23 hours"
+    },
+    {
+      label: getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
+      value: getStreamStatus(stream) === "Stopped" && "June 1, 2022 (6 days ago)"
+    },
+  ];
 
   // Render details
   const renderDetails = (
     <>
       {detailsData.map((detail: any, index: number) => (
-        <Row gutter={[8, 8]} key={index} className="mb-1 pl-1">
+        <Row gutter={[8, 8]} key={index} className="pl-1 details-item">
           <Col span={8} className="pr-1">
             <span className="info-label">{detail.label}</span>
           </Col>
@@ -45,6 +363,11 @@ export const MoneyStreamDetails = (props: {
     }
   ];
 
+  const title = stream ? getStreamTitle(stream) : `Unknown ${isStreamIncoming ? "incoming" : "outgoing"} stream`;
+  const subtitle = stream ? getStreamSubtitle(stream) : "--";
+  const status = stream ? getStreamStatus(stream) : "--";
+  const resume = stream ? getStreamResume(stream) : "--";
+
   return (
     <>
       <div className="">
@@ -57,10 +380,10 @@ export const MoneyStreamDetails = (props: {
 
         {stream && (
           <ResumeItem
-            title={stream.title}
-            status={stream.status}
-            subtitle={stream.subtitle}
-            resume={stream.resume}
+            title={title}
+            status={status}
+            subtitle={subtitle}
+            resume={resume}
             isDetailsPanel={true}
             isLink={false}
             isStream={true}
