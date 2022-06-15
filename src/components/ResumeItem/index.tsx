@@ -6,6 +6,8 @@ import { MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-m
 import Countdown from 'react-countdown';
 import { IconThumbsUp, IconThumbsDown } from '../../Icons';
 import { AppStateContext } from '../../contexts/appstate';
+import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
+import { Stream } from '@mean-dao/msp';
 
 export const ResumeItem = (props: {
   id?: any;
@@ -115,6 +117,28 @@ export const ResumeItem = (props: {
 
   },[status, theme]);
 
+  const getStreamStatusBackgroundColor = useCallback((status: string) => {
+
+    if (status === "Scheduled") {
+      return "bg-purple";
+    } 
+    
+    if (status === "Running") {
+      return "bg-green";
+    }
+
+    if (status === "Paused") {
+      return theme === 'light' ? "bg-gray-light" : "bg-gray-dark";
+    }
+
+    if (status === "Stopped") {
+      return "bg-red";
+    }
+
+    return "";
+
+  },[theme]);
+
   // Random component
   const Completionist = () => <span>Expired on {expires.toDateString()}</span>;
 
@@ -202,7 +226,7 @@ export const ResumeItem = (props: {
                       <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
                     </div>
                   ) : (
-                    <div className="badge-container">
+                    <div className={`badge-container ${getStreamStatusBackgroundColor(status)}`}>
                       <span className="badge darken small text-uppercase">
                         {status}
                       </span>

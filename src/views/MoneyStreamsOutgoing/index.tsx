@@ -2,6 +2,11 @@ import { Button, Col, Dropdown, Menu, Row } from "antd";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { IconEllipsisVertical } from "../../Icons";
 import { MoneyStreamDetails } from "../../components/MoneyStreamDetails";
+import { useCallback } from "react";
+import { Stream, STREAM_STATUS } from "@mean-dao/msp";
+import { StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
+import { getShortDate } from "../../utils/ui";
+import { useTranslation } from "react-i18next";
 
 export const MoneyStreamsOutgoingView = (props: {
   stream?: any;
@@ -11,9 +16,69 @@ export const MoneyStreamsOutgoingView = (props: {
 
   const { stream, onSendFromOutgoingStreamDetails } = props;
 
+  const { t } = useTranslation('common');
+
   const hideDetailsHandler = () => {
     onSendFromOutgoingStreamDetails();
   }
+
+  const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATE.Paused:
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
+        }
+      } else {
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return t('streams.status.status-paused');
+            }
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
+        }
+      }
+    }
+  }, [t]);
+
+  const getStreamResume = useCallback((item: Stream | StreamInfo) => {
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.scheduled', {date: getShortDate(v1.startUtc as string)});
+          case STREAM_STATE.Paused:
+            return t('streams.status.stopped');
+          default:
+            return t('streams.status.streaming');
+        }
+      } else {
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return `starts on ${getShortDate(v2.startUtc as string)}`;
+          case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return `paused on ${getShortDate(v2.startUtc as string)}`;
+            }
+            return `out of funds on ${getShortDate(v2.startUtc as string)}`;
+          default:
+            return `streaming since ${getShortDate(v2.startUtc as string)}`;
+        }
+      }
+    }
+  }, [t]);
 
   // Info Data
   const infoData = [

@@ -994,7 +994,6 @@ export const MoneyStreamsIncomingView = (props: {
   }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
 
   const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
-
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
@@ -1012,44 +1011,45 @@ export const MoneyStreamsIncomingView = (props: {
           case STREAM_STATUS.Schedule:
             return t('streams.status.status-scheduled');
           case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return t('streams.status.status-paused');
+            }
             return t('streams.status.status-stopped');
           default:
             return t('streams.status.status-running');
         }
       }
     }
-
   }, [t]);
 
   const getStreamResume = useCallback((item: Stream | StreamInfo) => {
-    let title = '';
-
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
-
       if (v1.version < 2) {
-        if (v1.state === STREAM_STATE.Schedule) {
-          title = `starts in ${getShortDate(v1.startUtc as string)}`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
-        } else {
-          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.scheduled', {date: getShortDate(v1.startUtc as string)});
+          case STREAM_STATE.Paused:
+            return t('streams.status.stopped');
+          default:
+            return t('streams.status.streaming');
         }
       } else {
-        if (v2.status === STREAM_STATUS.Schedule) {
-          title = `starts in ${getShortDate(v1.startUtc as string)}`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
-        } else {
-          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return `starts on ${getShortDate(v2.startUtc as string)}`;
+          case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return `paused on ${getShortDate(v2.startUtc as string)}`;
+            }
+            return `out of funds on ${getShortDate(v2.startUtc as string)}`;
+          default:
+            return `streaming since ${getShortDate(v2.startUtc as string)}`;
         }
       }
     }
-
-    return title;
-
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!ms || !msp || !stream) {return;}

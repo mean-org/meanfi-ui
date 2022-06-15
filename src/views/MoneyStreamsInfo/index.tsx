@@ -1095,7 +1095,6 @@ export const MoneyStreamsInfoView = (props: {
   }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
 
   const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
-
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
@@ -1113,44 +1112,45 @@ export const MoneyStreamsInfoView = (props: {
           case STREAM_STATUS.Schedule:
             return t('streams.status.status-scheduled');
           case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return t('streams.status.status-paused');
+            }
             return t('streams.status.status-stopped');
           default:
             return t('streams.status.status-running');
         }
       }
     }
-
   }, [t]);
 
   const getStreamResume = useCallback((item: Stream | StreamInfo) => {
-    let title = '';
-
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
-
       if (v1.version < 2) {
-        if (v1.state === STREAM_STATE.Schedule) {
-          title = `starts in ${getShortDate(v1.startUtc as string)}`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
-        } else {
-          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.scheduled', {date: getShortDate(v1.startUtc as string)});
+          case STREAM_STATE.Paused:
+            return t('streams.status.stopped');
+          default:
+            return t('streams.status.streaming');
         }
       } else {
-        if (v2.status === STREAM_STATUS.Schedule) {
-          title = `starts in ${getShortDate(v1.startUtc as string)}`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `out of funds on ${getShortDate(v1.startUtc as string)}`;
-        } else {
-          title = `streaming since ${getShortDate(v1.startUtc as string)}`;
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return `starts on ${getShortDate(v2.startUtc as string)}`;
+          case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return `paused on ${getShortDate(v2.startUtc as string)}`;
+            }
+            return `out of funds on ${getShortDate(v2.startUtc as string)}`;
+          default:
+            return `streaming since ${getShortDate(v2.startUtc as string)}`;
         }
       }
     }
-
-    return title;
-
-  }, []);
+  }, [t]);
 
   const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
 
@@ -1293,15 +1293,6 @@ export const MoneyStreamsInfoView = (props: {
     />
   );
 
-  // const outgoingStreams = [
-  //   {
-  //     title: "Monthly remittance for Mom",
-  //     amount: "150 USDC/month",
-  //     resume: "streaming since 01/05/2022",
-  //     status: 1
-  //   }
-  // ];
-
   const streamingAccounts = [
     {
       title: "Coinbase team salary",
@@ -1328,7 +1319,7 @@ export const MoneyStreamsInfoView = (props: {
       title: "Michel Comp",
       amount: "2,150.11 USDC/month",
       resume: "out of funds on 01/02/2022",
-      status: 0
+      status: 4
     }
   ];
 
@@ -1369,7 +1360,7 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
-  // Dropdown (three dots button)
+  // Dropdown (three dots button) inside outgoing stream list
   const menu = (
     <Menu>
       <Menu.Item key="00" onClick={showCreateStreamModal}>
@@ -1388,7 +1379,7 @@ export const MoneyStreamsInfoView = (props: {
         title="Outflows"
         classNameTitle="text-uppercase"
         subtitle={subtitle}
-        amount={1}
+        amount={outgoingAmount}
         resume="outflow"
         className="account-category-title"
         hasRightIcon={true}
