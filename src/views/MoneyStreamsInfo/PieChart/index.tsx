@@ -66,7 +66,8 @@ const renderActiveShape = (props: any) => {
 };
 
 export const PieChartComponent = ({
-  incomingAmount
+  incomingAmount,
+  outgoingAmount
 }: any) => {
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -79,7 +80,7 @@ export const PieChartComponent = ({
 
   const data = [
     { name: 'Incoming streams', value: incomingAmount },
-    { name: 'Outgoing streams', value: 3 }
+    { name: 'Outgoing streams', value: outgoingAmount }
   ];
   
   return (

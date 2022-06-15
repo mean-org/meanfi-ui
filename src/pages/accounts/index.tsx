@@ -715,6 +715,9 @@ export const AccountsNewView = () => {
     const isMyWallet = isInspectedAccountTheConnectedWallet();
     const isAccountNative = isSelectedAssetNativeAccount(asset);
     let url = '';
+
+    setIsStreamingAccount(false);
+
     if (isMyWallet && isAccountNative) {
       url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/assets`;
     } else {

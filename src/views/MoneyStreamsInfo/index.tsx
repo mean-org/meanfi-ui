@@ -1152,13 +1152,37 @@ export const MoneyStreamsInfoView = (props: {
 
   }, []);
 
+  const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
+
+  const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
+
+  const [incomingAmount, setIncomingAmount] = useState(0);
+  const [outgoingAmount, setOutgoingAmount] = useState(0);
+
+  useEffect(() => {
+    if (!connection || !publicKey || !streamList) { return; }
+
+    setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)));
+
+    setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream)));
+
+  }, [connection, isInboundStream, publicKey, streamList]);
+
+  useEffect(() => {
+    if (!incomingStreamList || !outgoingStreamList) { return; }
+
+    setIncomingAmount(incomingStreamList.length);
+    setOutgoingAmount(outgoingStreamList.length);
+
+  }, [incomingStreamList, outgoingStreamList]);
+
   // Protocol
   const listOfBadges = ["MSP", "DEFI", "Money Streams"];
 
   const renderBadges = (
     <div className="badge-container">
-      {listOfBadges.map((badge) => (
-        <span className="badge darken small text-uppercase mr-1">{badge}</span>
+      {listOfBadges.map((badge, index) => (
+        <span key={`${badge}+${index}`} className="badge darken small text-uppercase mr-1">{badge}</span>
       ))}
       </div>
   );
@@ -1180,14 +1204,6 @@ export const MoneyStreamsInfoView = (props: {
       content: renderBalance
     }
   ];
-
-  const [incomingAmount, setIncomingAmount] = useState(0);
-
-  useEffect(() => {
-    if (streamList) {
-      setIncomingAmount(streamList.length);
-    }
-  }, [streamList]);
 
   const renderSummary = (
     <>
@@ -1230,7 +1246,7 @@ export const MoneyStreamsInfoView = (props: {
             <div className="d-flex align-items-center">
               <h3>Outgoing Streams</h3>
               <span className="info-icon">
-                {incomingAmount ? (
+                {outgoingAmount ? (
                   <ArrowUpOutlined className="mean-svg-icons outgoing bounce" />
                 ) : (
                   <ArrowUpOutlined className="mean-svg-icons outgoing" />
@@ -1253,15 +1269,19 @@ export const MoneyStreamsInfoView = (props: {
                 Total streams
               </div>
               <div className="info-value">
-                3 streams
+                {outgoingAmount} {outgoingAmount > 1 ? "streams" : "stream"}
               </div>
             </div>
           </div>
         </Col>
       </Row>
-      <PieChartComponent
-        incomingAmount={incomingAmount}
-      />
+
+      {(incomingAmount > 0 && outgoingAmount > 0) && (
+        <PieChartComponent
+          incomingAmount={incomingAmount}
+          outgoingAmount={outgoingAmount}
+        />
+      )}
     </>
   );
 
@@ -1273,14 +1293,14 @@ export const MoneyStreamsInfoView = (props: {
     />
   );
 
-  const outgoingStreams = [
-    {
-      title: "Monthly remittance for Mom",
-      amount: "150 USDC/month",
-      resume: "streaming since 01/05/2022",
-      status: 1
-    }
-  ];
+  // const outgoingStreams = [
+  //   {
+  //     title: "Monthly remittance for Mom",
+  //     amount: "150 USDC/month",
+  //     resume: "streaming since 01/05/2022",
+  //     status: 1
+  //   }
+  // ];
 
   const streamingAccounts = [
     {
@@ -1315,7 +1335,7 @@ export const MoneyStreamsInfoView = (props: {
   // Incoming streams list
   const renderListOfIncomingStreams = (
     <>
-      {streamList && streamList.map((stream, index) => {
+      {incomingStreamList && incomingStreamList.map((stream, index) => {
         const onSelectStream = () => {
           // Sends outgoing stream value to the parent component "Accounts"
           onSendFromIncomingStreamInfo(stream);
@@ -1377,13 +1397,16 @@ export const MoneyStreamsInfoView = (props: {
         dropdownMenu={menu}
         isLink={false}
       />
-      {outgoingStreams.map((stream, index) => {
+      {outgoingStreamList && outgoingStreamList.map((stream, index) => {
         const onSelectStream = () => {
           // Sends outgoing stream value to the parent component "Accounts"
           onSendFromOutgoingStreamInfo(stream);
         };
 
-        const title = stream.title ? stream.title : "Unknown outgoing stream";
+        const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+        const subtitle = getStreamSubtitle(stream);
+        const status = getStreamStatus(stream);
+        const resume = getStreamResume(stream);
 
         return (
           <div 
@@ -1394,12 +1417,13 @@ export const MoneyStreamsInfoView = (props: {
             <ResumeItem
               id={index}
               title={title}
-              status={stream.status}
-              subtitle={stream.amount}
-              resume={stream.resume}
+              subtitle={subtitle}
+              resume={resume}
+              status={status}
               hasRightIcon={true}
               rightIcon={<IconArrowForward className="mean-svg-icons" />}
               isLink={true}
+              isStream={true}
             />
           </div>
         )
@@ -1475,8 +1499,8 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       id: "outgoing",
-      name: `Outgoing ${incomingAmount > 0 ? `(${incomingAmount})` : ""}`,
-      render: incomingAmount > 0 ? renderListOfOutgoingStreams : "You don't have any outgoing stream"
+      name: `Outgoing ${outgoingAmount > 0 ? `(${outgoingAmount})` : ""}`,
+      render: outgoingAmount > 0 ? renderListOfOutgoingStreams : "You don't have any outgoing stream"
     },
   ];
 
