@@ -46,6 +46,7 @@ import { TreasuryCreateOptions } from "../../models/treasuries";
 import { customLogger } from "../..";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
+import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 
 export const MoneyStreamsInfoView = (props: {
   onSendFromIncomingStreamInfo?: any;
@@ -1192,7 +1193,19 @@ export const MoneyStreamsInfoView = (props: {
     <>
       <Row gutter={[8, 8]}>
         <Col xs={23} sm={11} md={23} lg={11} className="background-card">
-          <h3>Incoming Streams</h3>
+          <div className="incoming-stream-amount">
+            <div className="d-flex align-items-center">
+              <h3>Incoming Streams</h3>
+              <span className="info-icon">
+                {incomingAmount ? (
+                  <ArrowDownOutlined className="mean-svg-icons incoming bounce" />
+                ) : (
+                  <ArrowDownOutlined className="mean-svg-icons incoming" />
+                )}
+              </span>
+            </div>
+            <span className="incoming-amount">+$15.40/day</span>
+          </div>
           <div className="card-row">
             <div className="card-column">
               <div className="info-label">
@@ -1213,7 +1226,19 @@ export const MoneyStreamsInfoView = (props: {
           </div>
         </Col>
         <Col xs={23} sm={11} md={23} lg={11} className="background-card">
-          <h3>Outgoing Streams</h3>
+          <div className="outgoing-stream-amount">
+            <div className="d-flex align-items-center">
+              <h3>Outgoing Streams</h3>
+              <span className="info-icon">
+                {incomingAmount ? (
+                  <ArrowUpOutlined className="mean-svg-icons outgoing bounce" />
+                ) : (
+                  <ArrowUpOutlined className="mean-svg-icons outgoing" />
+                )}
+              </span>
+            </div>
+            <span className="outgoing-amount">-$4.00/day</span>
+          </div>
           <div className="card-row">
             <div className="card-column">
               <div className="info-label">

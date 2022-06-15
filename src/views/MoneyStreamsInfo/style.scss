@@ -11,3 +11,25 @@
     justify-content: space-between;
   }
 }
+.incoming-stream-amount,
+.outgoing-stream-amount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.incoming-stream-amount {
+  .incoming-amount {
+    margin-right: 0.5em;
+    margin-top: -0.5em;
+    font-size: 0.9em;
+    color: #49aa19;
+  }
+}
+.outgoing-stream-amount {
+  .outgoing-amount {
+    margin-right: 0.5em;
+    margin-top: -0.5em;
+    font-size: 0.9em;
+    color: #e02020;
+  }
+}
