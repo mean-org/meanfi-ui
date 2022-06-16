@@ -132,7 +132,6 @@ export const AccountsNewView = () => {
     isWhitelisted,
     selectedAsset,
     accountAddress,
-    selectedStream,
     loadingStreams,
     streamsSummary,
     lastTxSignature,
@@ -852,7 +851,7 @@ export const AccountsNewView = () => {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
-    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    consoleOut('onTxTimedout event executed:', item, 'crimson');
     if (item) {
       if (item.operationType === OperationType.Unwrap) {
         setIsUnwrapping(false);
@@ -1316,7 +1315,7 @@ export const AccountsNewView = () => {
     const createTx = async (): Promise<boolean> => {
 
       if (publicKey && data) {
-        consoleOut("Start transaction for create asset", '', 'blue');
+        consoleOut('Start transaction for create asset', '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
         setTransactionStatus({
@@ -3332,13 +3331,16 @@ export const AccountsNewView = () => {
 
   // Preset the selected stream from the list if provided in path param (streamId)
   useEffect(() => {
-    if (publicKey && streamList && streamList.length > 0 && pathParamStreamId) {
+    if (publicKey && streamList && streamList.length > 0 && pathParamStreamId && (!streamDetail || streamDetail.id !== pathParamStreamId)) {
       const item = streamList.find(s => s.id as string === pathParamStreamId);
+      consoleOut('streamList:', streamList, 'darkgreen');
+      consoleOut('item:', item, 'darkgreen');
       if (item) {
         setStreamDetail(item);
       }
     }
-  }, [pathParamStreamId, publicKey, setStreamDetail, streamList]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathParamStreamId, publicKey, streamDetail, streamList]);
 
   // Live data calculation
   useEffect(() => {
@@ -3485,7 +3487,7 @@ export const AccountsNewView = () => {
         )
           .then((value: Transaction | null) => {
             if (value !== null) {
-              consoleOut("closeTokenAccount returned transaction:", value);
+              consoleOut('closeTokenAccount returned transaction:', value);
               // Stage 1 completed - The transaction is created and returned
               setTransactionStatus({
                 lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -3535,11 +3537,11 @@ export const AccountsNewView = () => {
 
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
-        consoleOut("Signing transaction...");
+        consoleOut('Signing transaction...');
         return await wallet
           .signTransaction(transaction)
           .then((signed: Transaction) => {
-            consoleOut("signTransaction returned a signed transaction:", signed);
+            consoleOut('signTransaction returned a signed transaction:', signed);
             signedTransaction = signed;
             // Try signature verification by serializing the transaction
             try {
@@ -3601,7 +3603,7 @@ export const AccountsNewView = () => {
         return await connection
           .sendEncodedTransaction(encodedTx)
           .then((sig) => {
-            consoleOut("sendEncodedTransaction returned a signature:", sig);
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction,
@@ -3643,13 +3645,13 @@ export const AccountsNewView = () => {
     if (wallet) {
       setIsUnwrapping(true);
       const create = await createTx();
-      consoleOut("created:", create);
+      consoleOut('created:', create);
       if (create) {
         const sign = await signTx();
-        consoleOut("signed:", sign);
+        consoleOut('signed:', sign);
         if (sign) {
           const sent = await sendTx();
-          consoleOut("sent:", sent);
+          consoleOut('sent:', sent);
           if (sent) {
             enqueueTransactionConfirmation({
               signature: signature,
@@ -4755,12 +4757,12 @@ export const AccountsNewView = () => {
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                               <MoneyStreamsIncomingView
-                                stream={selectedStream}
+                                stream={streamDetail}
                                 onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
                               <MoneyStreamsOutgoingView
-                                stream={selectedStream}
+                                stream={streamDetail}
                                 onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
                               />
                             // ) : isStreamingAccountDetails ? (
