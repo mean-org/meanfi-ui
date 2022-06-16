@@ -3269,6 +3269,8 @@ export const SafeView = () => {
       }
     );
 
+    if (execDataAccounts.length === 0) { return []; }
+
     const programs: ProgramAccounts[] = [];
     const group = (size: number, data: any) => {
       const result = [];
