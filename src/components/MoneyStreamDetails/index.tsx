@@ -1,21 +1,24 @@
 import { Col, Row, Tabs } from "antd";
 import { ResumeItem } from "../ResumeItem";
 import { RightInfoDetails } from "../RightInfoDetails";
-import { IconArrowBack } from "../../Icons";
+import { IconArrowBack, IconExternalLink } from "../../Icons";
 import "./style.scss";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
-import { StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
+import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
 import moment from "moment";
 import { useCallback, useContext } from "react";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
+import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
 import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
-import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useSearchParams } from "react-router-dom";
+import { useWallet } from "../../contexts/wallet";
+import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 
 const { TabPane } = Tabs;
 
@@ -27,14 +30,18 @@ export const MoneyStreamDetails = (props: {
   isStreamOutgoing?: boolean;
   buttons?: any;
 }) => {
-  const {
-    getTokenByMintAddress
-  } = useContext(AppStateContext);
   const { stream, hideDetailsHandler, infoData, isStreamIncoming, isStreamOutgoing, buttons } = props;
+  const {
+    splTokenList,
+    streamActivity,
+    getTokenByMintAddress,
+  } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [searchParams, setSearchParams] = useSearchParams();
+  const { publicKey } = useWallet();
 
   const getQueryTabOption = useCallback(() => {
+
     let tabOptionInQuery: string | null = null;
     if (searchParams) {
       tabOptionInQuery = searchParams.get('v');
@@ -214,6 +221,121 @@ export const MoneyStreamDetails = (props: {
     }
   }, [t]);
 
+
+  const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
+    if (item && publicKey) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
+      } else {
+        return v2.beneficiary === publicKey.toBase58() ? true : false;
+      }
+    }
+    return false;
+  }, [publicKey]);
+
+  const getActivityIcon = (item: StreamActivity) => {
+    if (isInboundStream(stream as StreamInfo)) {
+      if (item.action === 'withdrew') {
+        return (
+          <ArrowUpOutlined className="mean-svg-icons outgoing" />
+          );
+        } else {
+        return (
+          <ArrowDownOutlined className="mean-svg-icons incoming" />
+          );
+      }
+    } else {
+      if (item.action === 'withdrew') {
+        return (
+          <ArrowDownOutlined className="mean-svg-icons incoming" />
+        );
+      } else {
+        return (
+          <ArrowUpOutlined className="mean-svg-icons outgoing" />
+        );
+      }
+    }
+  }
+
+  // const isAddressMyAccount = (addr: string): boolean => {
+  //   return wallet && addr && publicKey && addr === publicKey.toBase58()
+  //          ? true
+  //          : false;
+  // }
+
+  // const getActivityActor = (item: StreamActivity): string => {
+  //   return isAddressMyAccount(item.initializer) ? t('general.you') : shortenAddress(item.initializer);
+  // }
+
+  const getActivityAction = (item: StreamActivity): string => {
+    const actionText = item.action === 'deposited'
+      ? t('streams.stream-activity.action-deposit')
+      : t('streams.stream-activity.action-withdraw');
+    return actionText;
+  }
+
+  const getActivityAmount = (item: StreamActivity, streamVersion: number): number => {
+    const token = getTokenByMintAddress(item.mint as string);
+    if (streamVersion < 2) {
+      return item.amount;
+    } else {
+      return toUiAmount(new BN(item.amount), token?.decimals || 6);
+    }
+  }
+
+  const renderActivities = (streamVersion: number) => {
+    return (
+      <>
+        {streamActivity && streamActivity.length > 0 ? (
+          streamActivity.map((item, index) => {
+
+            const img = getActivityIcon(item);
+            const title = getActivityAction(item);
+            const subtitle = <CopyExtLinkGroup
+              content={item.signature}
+              number={8}
+              externalLink={false}
+            />
+
+            const amount = getAmountWithSymbol(
+              getActivityAmount(item, streamVersion),
+              item.mint,
+              false,
+              splTokenList
+            );
+
+            const resume = getShortDate(item.utcDate as string, true);
+
+            return (
+              <a
+                key={index}
+                target="_blank" 
+                rel="noopener noreferrer"
+                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`} 
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              >
+                <ResumeItem
+                  id={`${title} + ${index}`}
+                  img={img}
+                  title={title}
+                  subtitle={subtitle}
+                  amount={amount}
+                  resume={resume}
+                  hasRightIcon={true}
+                  rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
+                  isLink={true}
+                />
+              </a>
+          )})
+        ) : (
+          <span className="pl-1">This stream has no activity</span>
+        )}
+      </>
+    );
+  }
+
   const renderReceivingFrom = () => {
     if (!stream) { return null; }
 
@@ -390,7 +512,7 @@ export const MoneyStreamDetails = (props: {
     {
       id: "activity",
       name: "Activity",
-      render: ""
+      render: renderActivities(stream.version)
     }
   ];
 

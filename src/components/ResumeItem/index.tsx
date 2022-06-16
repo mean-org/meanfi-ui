@@ -6,8 +6,6 @@ import { MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-m
 import Countdown from 'react-countdown';
 import { IconThumbsUp, IconThumbsDown } from '../../Icons';
 import { AppStateContext } from '../../contexts/appstate';
-import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
-import { Stream } from '@mean-dao/msp';
 
 export const ResumeItem = (props: {
   id?: any;
