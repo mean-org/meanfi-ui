@@ -80,16 +80,24 @@ export const SafeMeanInfo = (props: {
   const { account } = useNativeAccount();
   const { connected } = useWallet();
   const [loadingAssets, setLoadingAssets] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction | undefined>();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isBusy, setIsBusy] = useState(false);
   const [nativeBalance, setNativeBalance] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigInfo)[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAddress, setMultisigAddress] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [assetsWithoutSol, setAssetsWithoutSol] = useState<MultisigVault[]>([]);
   // const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
 
