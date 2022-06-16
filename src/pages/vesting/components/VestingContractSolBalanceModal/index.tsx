@@ -21,7 +21,7 @@ export const VestingContractSolBalanceModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">SOL Balance</div>}
+      title={<div className="modal-title">{t('vesting.sol-balance.modal-title')}</div>}
       footer={null}
       visible={isVisible}
       onOk={handleClose}
@@ -29,7 +29,7 @@ export const VestingContractSolBalanceModal = (props: {
       width={360}>
       <div className="buy-token-options shift-up-1">
         <div className="text-center">
-          <h4 className="mb-0">Your SOL contract balance:</h4>
+          <h4 className="mb-0">{t('vesting.sol-balance.contract-balance-label')}:</h4>
           <div className="font-size-100 font-extrabold mb-2">
             {
               getAmountWithSymbol(
@@ -39,10 +39,10 @@ export const VestingContractSolBalanceModal = (props: {
             }
           </div>
           {treasuryBalance < MIN_SOL_BALANCE_REQUIRED && (
-            <p className={`${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`}>You are running low on SOL needed<br/>to pay for vesting transaction fees.</p>
+            <p className={`${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`}>{t('vesting.sol-balance.contract-balance-low-warning')}</p>
           )}
 
-          <h3 className="mb-2">Scan the QR code to receive funds</h3>
+          <h3 className="mb-2">{t('vesting.sol-balance.qrcode-scan-label')}</h3>
 
           {address && (
             <>
@@ -62,10 +62,7 @@ export const VestingContractSolBalanceModal = (props: {
               </div>
             </>
           )}
-
-          {/* <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
-          <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div> */}
-          <div className="font-light font-size-75 px-4">This address can only be used to receive SOL to pay for transactions fee on this vesting contract account</div>
+          <div className="font-light font-size-75 px-4">{t('vesting.sol-balance.deposit-address-disclaimer')}</div>
         </div>
       </div>
     </Modal>
