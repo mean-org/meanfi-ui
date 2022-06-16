@@ -37,7 +37,7 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } f
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MoneyStreamsIncomingView = (props: {
-  stream: Stream | StreamInfo | undefined;
+  streamSelected: Stream | StreamInfo | undefined;
   onSendFromIncomingStreamDetails?: any;
 }) => {
   const {
@@ -55,7 +55,7 @@ export const MoneyStreamsIncomingView = (props: {
   const {
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
-  const { stream, onSendFromIncomingStreamDetails } = props;
+  const { streamSelected, onSendFromIncomingStreamDetails } = props;
 
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
@@ -104,12 +104,12 @@ export const MoneyStreamsIncomingView = (props: {
   ]);
 
   const isNewStream = useCallback(() => {
-    if (stream) {
-      return stream.version >= 2 ? true : false;
+    if (streamSelected) {
+      return streamSelected.version >= 2 ? true : false;
     }
 
     return false;
-  }, [stream]);
+  }, [streamSelected]);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -929,15 +929,15 @@ export const MoneyStreamsIncomingView = (props: {
   }, [t]);
 
   useEffect(() => {
-    if (!ms || !msp || !stream) {return;}
+    if (!ms || !msp || !streamSelected) {return;}
 
     const timeout = setTimeout(() => {
-      if (msp && stream && stream.version >= 2) {
-        msp.refreshStream(stream as Stream).then(detail => {
+      if (msp && streamSelected && streamSelected.version >= 2) {
+        msp.refreshStream(streamSelected as Stream).then(detail => {
           setStreamDetail(detail as Stream);
         });
-      } else if (ms && stream && stream.version < 2) {
-        ms.refreshStream(stream as StreamInfo).then(detail => {
+      } else if (ms && streamSelected && streamSelected.version < 2) {
+        ms.refreshStream(streamSelected as StreamInfo).then(detail => {
           setStreamDetail(detail as StreamInfo);
         });
       }
@@ -946,30 +946,30 @@ export const MoneyStreamsIncomingView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  }, [ms, msp, setStreamDetail, stream]);
+  }, [ms, msp, setStreamDetail, streamSelected]);
 
   const renderFundsToWithdraw = () => {
-    if (!stream) { return null; }
+    if (!streamSelected) { return null; }
 
-    const v1 = stream as StreamInfo;
-    const v2 = stream as Stream;
-    const token = getTokenByMintAddress(stream.associatedToken as string);
+    const v1 = streamSelected as StreamInfo;
+    const v2 = streamSelected as Stream;
+    const token = getTokenByMintAddress(streamSelected.associatedToken as string);
 
     return (
       <>
         <span className="info-data large mr-1">
-          {stream
+          {streamSelected
             ? getTokenAmountAndSymbolByTokenAddress(
                 isNewStream()
                   ? toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6)
                   : v1.escrowVestedAmount,
-                stream.associatedToken as string
+                streamSelected.associatedToken as string
               )
             : '--'
           }
         </span>
         <span className="info-icon">
-          {(stream && getStreamStatus(stream) === "Running") ? (
+          {(streamSelected && getStreamStatus(streamSelected) === "Running") ? (
             <ArrowDownOutlined className="mean-svg-icons incoming bounce" />
           ) : (
             <ArrowDownOutlined className="mean-svg-icons incoming" />
@@ -1044,7 +1044,7 @@ export const MoneyStreamsIncomingView = (props: {
   return (
     <>
       <MoneyStreamDetails
-        stream={stream}
+        stream={streamSelected}
         hideDetailsHandler={hideDetailsHandler}
         infoData={infoData}
         isStreamIncoming={true}
@@ -1065,7 +1065,7 @@ export const MoneyStreamsIncomingView = (props: {
       {isTransferStreamModalVisible && (
         <StreamTransferOpenModal
           isVisible={isTransferStreamModalVisible}
-          streamDetail={stream}
+          streamDetail={streamSelected}
           handleOk={onAcceptTransferStream}
           handleClose={closeTransferStreamModal}
         />

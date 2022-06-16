@@ -4757,12 +4757,13 @@ export const AccountsNewView = () => {
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                               <MoneyStreamsIncomingView
-                                stream={streamDetail}
+                                streamSelected={streamDetail}
                                 onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
                               <MoneyStreamsOutgoingView
-                                stream={streamDetail}
+                                streamSelected={streamDetail}
+                                streamList={streamList}
                                 onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
                               />
                             // ) : isStreamingAccountDetails ? (

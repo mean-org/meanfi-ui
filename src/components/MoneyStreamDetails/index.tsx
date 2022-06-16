@@ -21,7 +21,7 @@ import { useWallet } from "../../contexts/wallet";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 
 export const MoneyStreamDetails = (props: {
-  stream?: any;
+  stream?: Stream | StreamInfo | undefined;
   hideDetailsHandler?: any;
   infoData?: any;
   isStreamIncoming?: boolean;
@@ -459,12 +459,12 @@ export const MoneyStreamDetails = (props: {
       value: isStreamOutgoing && renderFundsSendToRecipient()
     },
     {
-      label: (isStreamOutgoing && getStreamStatus(stream) === "Running") && "Funds will run out in:",
-      value: (isStreamOutgoing && getStreamStatus(stream) === "Running") && "12 days and 23 hours"
+      label: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && "Funds will run out in:",
+      value: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && "12 days and 23 hours"
     },
     {
-      label: getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
-      value: getStreamStatus(stream) === "Stopped" && "June 1, 2022 (6 days ago)"
+      label: stream && getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
+      value: stream && getStreamStatus(stream) === "Stopped" && "June 1, 2022 (6 days ago)"
     },
   ];
 
@@ -494,7 +494,7 @@ export const MoneyStreamDetails = (props: {
     {
       id: "activity",
       name: "Activity",
-      render: renderActivities(stream.version)
+      render: stream && renderActivities(stream.version)
     }
   ];
 
