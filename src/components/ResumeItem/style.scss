@@ -19,6 +19,10 @@
   .resume-left-container {
     display: flex;
     align-items: center;
+    .resume-title {
+      display: flex;
+      align-items: center;
+    }
     .img-container {
       margin-right: 0.5em;
       width: 30px;
@@ -35,6 +39,9 @@
       .info-label {
         margin-bottom: 0 !important;
       }
+    }
+    .external-icon {
+      width: 14px !important;
     }
   }
   // @media (max-width: 575px) {

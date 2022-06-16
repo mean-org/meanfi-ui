@@ -10,7 +10,6 @@ import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowForward, IconVerticalEllipsis } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { PieChartComponent } from "./PieChart";
 import "./style.scss";
@@ -26,18 +25,18 @@ import {
   TreasuryType,
   STREAM_STATUS
 } from '@mean-dao/msp';
-import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
+import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isValidAddress } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from "../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from "../../utils/utils";
 import { TREASURY_TYPE_OPTIONS } from "../../constants/treasury-type-options";
 import { openNotification } from "../../components/Notifications";
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { HALF_MINUTE_REFRESH_TIMEOUT, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { NO_FEES, ONE_MINUTE_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useLocation, useNavigate } from "react-router-dom";
 import { TreasuryOpenModal } from "../../components/TreasuryOpenModal";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
@@ -49,6 +48,11 @@ import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 
 const { TabPane } = Tabs;
+
+type CombinedStreamingAccounts = {
+  treasury: Treasury | Treasury;
+  streams: Array<Stream | StreamInfo> | undefined;
+};
 
 export const MoneyStreamsInfoView = (props: {
   onSendFromIncomingStreamInfo?: any;
@@ -102,7 +106,6 @@ export const MoneyStreamsInfoView = (props: {
   // Multisig related
   const [multisigAddress, setMultisigAddress] = useState('');
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
-  const [treasuryAddress, setTreasuryAddress] = useState('');
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
@@ -132,6 +135,8 @@ export const MoneyStreamsInfoView = (props: {
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
   const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
+
+  const [treasuryCombinedList, setTreasuryCombinedList] = useState<CombinedStreamingAccounts[]>();
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -323,52 +328,20 @@ export const MoneyStreamsInfoView = (props: {
     publicKey
   ]);
 
-  const getTreasuryStreams = useCallback((treasuryPk: PublicKey, isNewTreasury: boolean) => {
-    if (!publicKey || !ms || loadingTreasuryStreams) { return; }
-
-    setTimeout(() => {
-      setLoadingTreasuryStreams(true);
-    });
-
-    consoleOut('Executing getTreasuryStreams...', '', 'blue');
+  // Call only if you have control over every loop
+  const getStreamingAccountStreams = useCallback(async (treasuryPk: PublicKey, isNewTreasury: boolean) => {
+    if (!publicKey || !ms || !msp || !treasuryPk) { return undefined; }
 
     if (isNewTreasury) {
-      if (msp) {
-        msp.listStreams({treasury: treasuryPk })
-          .then((streams: any) => {
-            consoleOut('treasuryStreams:', streams, 'blue');
-            setTreasuryStreams(streams);
-          })
-          .catch((err: any) => {
-            console.error(err);
-            setTreasuryStreams([]);
-          })
-          .finally(() => {
-            setLoadingTreasuryStreams(false);
-          });
-      }
+      return await msp.listStreams({treasury: treasuryPk });
     } else {
-      if (ms) {
-        ms.listStreams({treasury: treasuryPk })
-          .then((streams: any) => {
-            consoleOut('treasuryStreams:', streams, 'blue');
-            setTreasuryStreams(streams);
-          })
-          .catch((err: any) => {
-            console.error(err);
-            setTreasuryStreams([]);
-          })
-          .finally(() => {
-            setLoadingTreasuryStreams(false);
-          });
-      }
+      return await ms.listStreams({treasury: treasuryPk });
     }
 
   }, [
     ms,
     msp,
-    publicKey,
-    loadingTreasuryStreams,
+    publicKey
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
@@ -401,47 +374,6 @@ export const MoneyStreamsInfoView = (props: {
 
           setTreasuryList(treasuryAccumulator);
           consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
-          let item: Treasury | TreasuryInfo | undefined = undefined;
-              
-          if (treasuryAccumulator.length) {
-            if (reset) {
-              if (treasuryAddress) {
-                // treasuryAddress was passed in as query param?
-                const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
-                item = itemFromServer || treasuryAccumulator[0];
-              } else {
-                item = treasuryAccumulator[0];
-              }
-            } else {
-              // Try to get current item by its id
-              if (treasuryAddress) {
-                // treasuryAddress was passed in as query param?
-                const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
-                item = itemFromServer || treasuryAccumulator[0];
-              } else if (treasuryDetails) {
-                // there was an item already selected
-                const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryDetails.id);
-                item = itemFromServer || treasuryAccumulator[0];
-              } else {
-                // then choose the first one
-                item = treasuryAccumulator[0];
-              }
-            }
-
-            if (!item) {
-              item = Object.assign({}, treasuryAccumulator[0]);
-            }
-
-            if (item) {
-              const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2 ? true : false;
-              openTreasuryById(item.id as string, isNewTreasury);
-            }
-
-          } else {
-            setTreasuryDetails(undefined);
-            setTreasuryDetails(undefined);
-            setTreasuryStreams([]);
-          }
         })
         .catch(error => {
           console.error(error);
@@ -454,20 +386,55 @@ export const MoneyStreamsInfoView = (props: {
     msp,
     publicKey,
     connection,
-    treasuryAddress,
-    treasuryDetails,
+    // treasuryAddress,
+    // treasuryDetails,
     selectedMultisig,
     fetchTxInfoStatus,
     loadingTreasuries,
     clearTxConfirmationContext,
-    openTreasuryById,
+    // openTreasuryById,
     getAllUserV2Treasuries
   ]);
 
   useEffect(() => {
-    refreshTreasuries(false);
-    setCustomStreamDocked(false);
-  }, [refreshTreasuries]);
+    const getFinalList = async (list: (Treasury | TreasuryInfo)[]) => {
+      const finalList: CombinedStreamingAccounts[] = [];
+      
+      for (const item of list) {
+        const treasuryPk = new PublicKey(item.id as string);
+        const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2
+          ? true
+          : false;
+  
+          
+        const streamList = await getStreamingAccountStreams(treasuryPk, isNewTreasury);
+        
+        const listItem: CombinedStreamingAccounts = {
+          streams: streamList,
+          treasury: item as any
+        };
+
+        consoleOut("streamList", streamList, "orange");
+  
+        finalList.push(listItem);
+      }
+
+      return finalList;
+    }
+
+    if (treasuryList) {
+      getFinalList(treasuryList)
+        .then(items => {
+          consoleOut("finalList", items, "blue");
+    
+          setTreasuryCombinedList(items);
+        });
+    }
+  }, [getStreamingAccountStreams, treasuryList]);
+
+  useEffect(() => {
+    consoleOut("treasuryCombinedList", treasuryCombinedList, "blue");
+  }, [treasuryCombinedList])
 
   const refreshUserBalances = useCallback(() => {
 
@@ -623,17 +590,6 @@ export const MoneyStreamsInfoView = (props: {
     closeCreateTreasuryModal,
     refreshTokenBalance,
     t,
-  ]);
-
-  const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
-    refreshTokenBalance();
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-  },[
-    refreshTokenBalance, 
-    setTransactionStatus
   ]);
 
   const onExecuteCreateTreasuryTx = async (createOptions: TreasuryCreateOptions) => {
@@ -1038,42 +994,26 @@ export const MoneyStreamsInfoView = (props: {
   useEffect(() => {
     let timer: any;
 
+    if (publicKey && !treasuriesLoaded && !loadingTreasuries) {
+      setTreasuriesLoaded(true);
+      consoleOut("Loading treasuries for the first time");
+      refreshTreasuries(true);
+    }
+
     if (publicKey && treasuriesLoaded && !customStreamDocked) {
       timer = setInterval(() => {
-        consoleOut(`Refreshing treasuries past ${HALF_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshTreasuries(false);
-      }, HALF_MINUTE_REFRESH_TIMEOUT);
+      }, ONE_MINUTE_REFRESH_TIMEOUT);
     }
 
     return () => clearInterval(timer);
   }, [
     publicKey,
     treasuriesLoaded,
+    loadingTreasuries,
     customStreamDocked,
     refreshTreasuries
-  ]);
-
-  // Reload Treasury streams whenever the selected treasury changes
-  useEffect(() => {
-    if (!publicKey) { return; }
-
-    if (treasuryDetails && !loadingTreasuryStreams && signalRefreshTreasuryStreams) {
-      setSignalRefreshTreasuryStreams(false);
-      consoleOut('calling getTreasuryStreams...', '', 'blue');
-      const treasuryPk = new PublicKey(treasuryDetails.id as string);
-      const isNewTreasury = (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
-        ? true
-        : false;
-      getTreasuryStreams(treasuryPk, isNewTreasury);
-    }
-  }, [
-    ms,
-    publicKey,
-    treasuryStreams,
-    treasuryDetails,
-    loadingTreasuryStreams,
-    signalRefreshTreasuryStreams,
-    getTreasuryStreams,
   ]);
 
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
@@ -1496,16 +1436,17 @@ export const MoneyStreamsInfoView = (props: {
         )
       })}
 
-      {treasuryList && treasuryList.length > 0 ? (
-        treasuryList.filter(item => item !== null && item !== undefined).map((item, index) => {
-          const v1 = item as TreasuryInfo;
-          const v2 = item as Treasury;
-          const isNewTreasury = item && item.version >= 2 ? true : false;
+      {treasuryCombinedList && treasuryCombinedList.length > 0 ? (
+        treasuryCombinedList.map((streaming, index) => {
+
+          const v1 = streaming.treasury as unknown as TreasuryInfo;
+          const v2 = streaming.treasury as Treasury;
+          const isNewTreasury = streaming.treasury && streaming.treasury.version >= 2 ? true : false;
 
           const onSelectedStreamingAccount = () => {
-            setTreasuryDetails(item);
+            // setTreasuryDetails(streaming);
             // Sends outgoing stream value to the parent component "Accounts"
-            onSendFromStreamingAccountDetails(item);
+            onSendFromStreamingAccountDetails(streaming.treasury);
           }
 
           const state = isNewTreasury
@@ -1515,7 +1456,7 @@ export const MoneyStreamsInfoView = (props: {
           const title = isNewTreasury ? v2.name : v1.label;
 
           const subtitle = <CopyExtLinkGroup
-            content={item.id as string}
+            content={streaming.treasury.id as string}
             number={8}
             externalLink={true}
           />;
@@ -1543,37 +1484,43 @@ export const MoneyStreamsInfoView = (props: {
                 isLink={true}
                 onClick={onSelectedStreamingAccount}
               />
+
+              {(streaming.streams && streaming.streams.length > 0) && (
+                streaming.streams.map((stream, index) => {
+                  const onSelectStream = () => {
+                    // Sends outgoing stream value to the parent component "Accounts"
+                    onSendFromOutgoingStreamInfo(stream);
+                  };
+
+                  const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+                  const subtitle = getStreamSubtitle(stream);
+                  const status = getStreamStatus(stream);
+                  const resume = getStreamResume(stream);
+
+                  return (
+                    <div 
+                      key={index}
+                      onClick={onSelectStream}
+                      className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                      >
+                        <ResumeItem
+                          id={index}
+                          title={title}
+                          status={status}
+                          subtitle={subtitle}
+                          resume={resume}
+                          hasRightIcon={true}
+                          rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                          isLink={true}
+                        />
+                    </div>
+                  )
+                })
+              )}
             </div>
           )
         })
       ) : null}
-      {/* {teamSalary.map((stream, index) => {
-        const onSelectStream = () => {
-          // Sends outgoing stream value to the parent component "Accounts"
-          onSendFromOutgoingStreamInfo(stream);
-        };
-
-        const title = stream.title ? stream.title : "Unknown salary";
-
-        return (
-          <div 
-            key={index}
-            onClick={onSelectStream}
-            className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-            >
-              <ResumeItem
-                id={index}
-                title={title}
-                status={stream.status}
-                subtitle={stream.amount}
-                resume={stream.resume}
-                hasRightIcon={true}
-                rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                isLink={true}
-              />
-          </div>
-        )
-      })} */}
     </>
   );
 
