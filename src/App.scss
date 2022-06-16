@@ -1595,6 +1595,19 @@ footer.ant-layout-footer {
   }
 }
 
+.ant-tabs {
+  &.neutral {
+    .ant-tabs-nav-list {
+      .ant-tabs-tab .ant-tabs-tab-btn {
+        text-transform: capitalize;
+      }
+      .ant-tabs-ink-bar {
+        background: var(--color-secondary-alpha-25);
+      }
+    }
+  }
+}
+
 .ant-menu:not(.ant-menu-horizontal) {
   &.ant-menu-submenu-popup > .ant-menu {
     background-color: var(--bg-color);
