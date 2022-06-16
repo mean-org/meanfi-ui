@@ -1209,10 +1209,22 @@ export const MoneyStreamsInfoView = (props: {
     }
   ];
 
+  const goToIncomingTabHandler = () => {
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
+
+    navigate(url);
+  }
+
+  const goToOutgoingTabHandler = () => {
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+
+    navigate(url);
+  }
+
   const renderSummary = (
     <>
       <Row gutter={[8, 8]}>
-        <Col xs={23} sm={11} md={23} lg={11} className="background-card">
+        <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink" onClick={goToIncomingTabHandler}>
           <div className="incoming-stream-amount">
             <div className="d-flex align-items-center">
               <h3>Incoming Streams</h3>
@@ -1245,7 +1257,7 @@ export const MoneyStreamsInfoView = (props: {
             </div>
           </div>
         </Col>
-        <Col xs={23} sm={11} md={23} lg={11} className="background-card">
+        <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink" onClick={goToOutgoingTabHandler}>
           <div className="outgoing-stream-amount">
             <div className="d-flex align-items-center">
               <h3>Outgoing Streams</h3>

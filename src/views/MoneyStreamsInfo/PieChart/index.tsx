@@ -1,4 +1,4 @@
-import "./style.css";
+import "./style.scss";
 import React, { useCallback, useState } from "react";
 import { PieChart, Pie, Sector } from "recharts";
 
@@ -90,7 +90,7 @@ export const PieChartComponent = ({
         activeShape={renderActiveShape}
         data={data}
         cx={200}
-        cy={200}
+        cy={100}
         innerRadius={60}
         outerRadius={80}
         fill="#323645"
