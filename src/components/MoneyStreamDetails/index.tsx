@@ -28,13 +28,16 @@ export const MoneyStreamDetails = (props: {
   const {
     getTokenByMintAddress
   } = useContext(AppStateContext);
-  const { t } = useTranslation('common');
-  
   const { stream, hideDetailsHandler, infoData, isStreamIncoming, isStreamOutgoing, buttons } = props;
+  const { t } = useTranslation('common');
 
-  const v1 = stream as StreamInfo;
-  const v2 = stream as Stream;
-  const isNew = v2.version >= 2 ? true : false;
+  const isNewStream = useCallback(() => {
+    if (stream) {
+      return stream.version >= 2 ? true : false;
+    }
+
+    return false;
+  }, [stream]);
 
   const getStreamTitle = (item: Stream | StreamInfo): string => {
     let title = '';
@@ -194,11 +197,14 @@ export const MoneyStreamDetails = (props: {
   }, [t]);
 
   const renderReceivingFrom = () => {
-    if (!stream) {return null;}
+    if (!stream) { return null; }
+
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
 
     return (
       <CopyExtLinkGroup
-        content={isNew ? v2.treasurer as string : v1.treasurerAddress as string}
+        content={isNewStream() ? v2.treasurer as string : v1.treasurerAddress as string}
         number={8}
         externalLink={true}
       />
@@ -206,11 +212,14 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderSendingTo = () => {
-    if (!stream) {return null;}
+    if (!stream) { return null; }
+
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
 
     return (
       <CopyExtLinkGroup
-        content={isNew ? v2.beneficiary as string : v1.beneficiaryAddress as string}
+        content={isNewStream() ? v2.beneficiary as string : v1.beneficiaryAddress as string}
         number={8}
         externalLink={true}
       />
@@ -218,14 +227,16 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderPaymentRate = () => {
-    if (!stream) {return null;}
+    if (!stream) { return null; }
 
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
     const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
         {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
               toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount, 
               stream.associatedToken as string
             )}  ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
@@ -236,14 +247,16 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderReservedAllocation = () => {
-    if (!stream) {return null;}
+    if (!stream) { return null; }
 
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
     const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
         {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
             toUiAmount(new BN(v2.remainingAllocationAmount), token?.decimals || 6) : (v1.allocationAssigned || v1.allocationLeft), 
               stream.associatedToken as string
             )}`
@@ -254,14 +267,16 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderFundsLeftInAccount = () => {
-    if (!stream) {return null;}
+    if (!stream) { return null; }
 
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
     const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
         {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
             toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
               stream.associatedToken as string
             )}`
@@ -272,14 +287,16 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderFundsSendToRecipient = () => {
-    if (!stream) {return null;}
+    if (!stream) { return null; }
 
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
     const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
         {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNew ?
+          ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
             toUiAmount(new BN(v2.fundsSentToBeneficiary), token?.decimals || 6) : (v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount), 
               stream.associatedToken as string
             )}`

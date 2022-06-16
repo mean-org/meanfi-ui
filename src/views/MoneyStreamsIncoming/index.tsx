@@ -103,6 +103,14 @@ export const MoneyStreamsIncomingView = (props: {
     streamV2ProgramAddress
   ]);
 
+  const isNewStream = useCallback(() => {
+    if (stream) {
+      return stream.version >= 2 ? true : false;
+    }
+
+    return false;
+  }, [stream]);
+
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
@@ -940,21 +948,21 @@ export const MoneyStreamsIncomingView = (props: {
     }
   }, [ms, msp, setStreamDetail, stream]);
 
-  const v1 = stream as StreamInfo;
-  const v2 = stream as Stream;
-  const isNew = v2.version >= 2 ? true : false;
-
   const renderFundsToWithdraw = () => {
-    if (!stream) {return null;}
+    if (!stream) { return null; }
 
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
     const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
         <span className="info-data large mr-1">
           {stream
-            ? getTokenAmountAndSymbolByTokenAddress(isNew ?
-                toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6) : v1.escrowVestedAmount, 
+            ? getTokenAmountAndSymbolByTokenAddress(
+                isNewStream()
+                  ? toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6)
+                  : v1.escrowVestedAmount,
                 stream.associatedToken as string
               )
             : '--'

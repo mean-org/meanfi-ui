@@ -1,10 +1,9 @@
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Menu, Row } from "antd";
+import { Button, Col, Menu, Row, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
 import { RightInfoDetails } from "../../components/RightInfoDetails";
-import { TabsMean } from "../../components/TabsMean";
 import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
 import { AppStateContext } from "../../contexts/appstate";
 import { useConnectionConfig } from "../../contexts/connection";
@@ -39,7 +38,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { TreasuryOpenModal } from "../../components/TreasuryOpenModal";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { TreasuryCreateOptions } from "../../models/treasuries";
@@ -47,26 +46,29 @@ import { customLogger } from "../..";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
+
+const { TabPane } = Tabs;
 
 export const MoneyStreamsInfoView = (props: {
   onSendFromIncomingStreamInfo?: any;
   onSendFromOutgoingStreamInfo?: any;
   onSendFromStreamingAccountDetails?: any;
   streamList?: Array<Stream | StreamInfo> | undefined;
+  accountAddress: string;
+  selectedTab: string;
 }) => {
   const {
-    activeTab,
     tokenList,
     selectedToken,
     treasuryOption,
     transactionStatus,
+    streamProgramAddress,
+    streamV2ProgramAddress,
+    getTokenByMintAddress,
+    setTransactionStatus,
     refreshTokenBalance,
     resetContractValues,
-    streamProgramAddress,
-    getTokenByMintAddress,
-    getTokenPriceByAddress,
-    streamV2ProgramAddress,
-    setTransactionStatus,
     setTreasuryOption,
     setEffectiveRate,
     setSelectedToken,
@@ -80,15 +82,17 @@ export const MoneyStreamsInfoView = (props: {
     streamList,
     onSendFromIncomingStreamInfo,
     onSendFromOutgoingStreamInfo,
-    onSendFromStreamingAccountDetails
+    onSendFromStreamingAccountDetails,
+    accountAddress,
+    selectedTab,
   } = props;
 
   const accounts = useAccountsContext();
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, wallet } = useWallet();
   const location = useLocation();
-  const { address } = useParams();
+  const navigate = useNavigate();
 
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
@@ -1285,9 +1289,9 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
-  const subtitle = address && (
+  const subtitle = accountAddress && (
     <CopyExtLinkGroup
-      content={address}
+      content={accountAddress}
       number={8}
       externalLink={true}
     />
@@ -1476,6 +1480,13 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
+  const onTabChange = useCallback((activeKey: string) => {
+    consoleOut('Selected tab option:', activeKey, 'blue');
+    // /accounts/:address/streaming/:streamingTab
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/${activeKey}`;
+    navigate(url);
+  }, [accountAddress, navigate]);
+
   // Tabs
   const tabs = [
     {
@@ -1495,13 +1506,27 @@ export const MoneyStreamsInfoView = (props: {
     },
   ];
 
+  const renderTabset = () => {
+    return (
+      <Tabs activeKey={selectedTab} onChange={onTabChange} className="neutral">
+        {tabs.map(item => {
+          return (
+            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
+              {item.render}
+            </TabPane>
+          );
+        })}
+      </Tabs>
+    );
+  }
+
   return (
     <>
       <RightInfoDetails
         infoData={infoData}
       />
 
-      {activeTab === "summary" && (
+      {selectedTab === "summary" && (
         <Row gutter={[8, 8]} className="safe-btns-container mb-1">
           <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
             <Button
@@ -1528,10 +1553,7 @@ export const MoneyStreamsInfoView = (props: {
         </Row>
       )}
 
-      <TabsMean
-        tabs={tabs}
-        defaultTab="summary"
-      />
+      {renderTabset()}
 
       {/* TODO: Here the multisig ID is used */}
       {multisigClient && isCreateStreamModalVisible && (

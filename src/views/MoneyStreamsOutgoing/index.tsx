@@ -21,8 +21,15 @@ export const MoneyStreamsOutgoingView = (props: {
   } = useContext(AppStateContext);
 
   const { stream, onSendFromOutgoingStreamDetails } = props;
-
   const { t } = useTranslation('common');
+
+  const isNewStream = useCallback(() => {
+    if (stream) {
+      return stream.version >= 2 ? true : false;
+    }
+
+    return false;
+  }, [stream]);
 
   const hideDetailsHandler = () => {
     onSendFromOutgoingStreamDetails();
@@ -57,21 +64,21 @@ export const MoneyStreamsOutgoingView = (props: {
     }
   }, [t]);
 
-  const v1 = stream as StreamInfo;
-  const v2 = stream as Stream;
-  const isNew = v2.version >= 2 ? true : false;
-
   const renderFundsLeftInAccount = () => {
     if (!stream) {return null;}
 
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
     const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
         <span className="info-data large mr-1">
           {stream
-            ? getTokenAmountAndSymbolByTokenAddress(isNew ?
-                toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
+            ? getTokenAmountAndSymbolByTokenAddress(
+                isNewStream()
+                  ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6)
+                  : v1.escrowUnvestedAmount,
                 stream.associatedToken as string
               )
             : '--'
