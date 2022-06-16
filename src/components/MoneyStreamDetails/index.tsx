@@ -1,7 +1,6 @@
-import { Col, Row } from "antd";
+import { Col, Row, Tabs } from "antd";
 import { ResumeItem } from "../ResumeItem";
 import { RightInfoDetails } from "../RightInfoDetails";
-import { TabsMean } from "../TabsMean";
 import { IconArrowBack, IconExternalLink } from "../../Icons";
 import "./style.scss";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
@@ -16,9 +15,12 @@ import BN from "bn.js";
 import { useTranslation } from "react-i18next";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { getSolanaExplorerClusterParam } from "../../contexts/connection";
+import { useSearchParams } from "react-router-dom";
 import { useWallet } from "../../contexts/wallet";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import { getSolanaExplorerClusterParam } from "../../contexts/connection";
+
+const { TabPane } = Tabs;
 
 export const MoneyStreamDetails = (props: {
   stream?: Stream | StreamInfo | undefined;
@@ -28,15 +30,31 @@ export const MoneyStreamDetails = (props: {
   isStreamOutgoing?: boolean;
   buttons?: any;
 }) => {
+  const { stream, hideDetailsHandler, infoData, isStreamIncoming, isStreamOutgoing, buttons } = props;
   const {
     splTokenList,
     streamActivity,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
+  const [searchParams, setSearchParams] = useSearchParams();
   const { publicKey } = useWallet();
-  
-  const { stream, hideDetailsHandler, infoData, isStreamIncoming, isStreamOutgoing, buttons } = props;
+
+  const getQueryTabOption = useCallback(() => {
+
+    let tabOptionInQuery: string | null = null;
+    if (searchParams) {
+      tabOptionInQuery = searchParams.get('v');
+      if (tabOptionInQuery) {
+        return tabOptionInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const navigateToTab = useCallback((tab: string) => {
+    setSearchParams({v: tab as string});
+  }, [setSearchParams]);
 
   const isNewStream = useCallback(() => {
     if (stream) {
@@ -498,6 +516,21 @@ export const MoneyStreamDetails = (props: {
     }
   ];
 
+  const renderTabset = () => {
+    const option = getQueryTabOption() || 'details'
+    return (
+      <Tabs activeKey={option} onChange={navigateToTab} className="neutral">
+        {tabs.map(item => {
+          return (
+            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
+              {item.render}
+            </TabPane>
+          );
+        })}
+      </Tabs>
+    );
+  }
+
   const title = stream ? getStreamTitle(stream) : `Unknown ${isStreamIncoming ? "incoming" : "outgoing"} stream`;
   const subtitle = stream ? getStreamSubtitle(stream) : "--";
   const status = stream ? getStreamStatus(stream) : "--";
@@ -533,12 +566,14 @@ export const MoneyStreamDetails = (props: {
 
         {buttons}
 
-        {tabs && (
+        {tabs && renderTabset()}
+
+        {/* {tabs && (
           <TabsMean
             tabs={tabs}
             defaultTab="details"
-          /> 
-        )}
+          />
+        )} */}
       </div>
     </>
   )
