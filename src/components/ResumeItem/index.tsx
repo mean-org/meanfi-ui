@@ -13,6 +13,7 @@ export const ResumeItem = (props: {
   src?: any;
   img?: any;
   title?: string;
+  extraTitle?: any;
   classNameTitle?: string;
   subtitle?: any;
   amount?: number | string;
@@ -41,6 +42,7 @@ export const ResumeItem = (props: {
     img,
     version,
     title,
+    extraTitle,
     classNameTitle,
     subtitle,
     amount,
@@ -169,7 +171,14 @@ export const ResumeItem = (props: {
             </div>
           )}
           <div className={`resume-left-text ${isDetailsPanel ? "pb-1" : ""}`}>
-            <div className={`resume-title ${isDetailsPanel ? "big-title" : ""} ${classNameTitle}`}>{title}</div>
+            <div className={`resume-title ${isDetailsPanel ? "big-title" : ""} ${classNameTitle}`}>
+              {title}
+              {extraTitle && (
+                <span className="ml-1 badge darken small text-uppercase">
+                  {extraTitle}
+                </span>
+              )}
+            </div>
 
             {version !== 0 && (
               subtitle ? (
