@@ -1,14 +1,13 @@
-import { Col, Row } from "antd";
+import { Col, Row, Tabs } from "antd";
 import { ResumeItem } from "../ResumeItem";
 import { RightInfoDetails } from "../RightInfoDetails";
-import { TabsMean } from "../TabsMean";
 import { IconArrowBack } from "../../Icons";
 import "./style.scss";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
 import moment from "moment";
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext } from "react";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
 import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
@@ -16,6 +15,9 @@ import BN from "bn.js";
 import { useTranslation } from "react-i18next";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { useSearchParams } from "react-router-dom";
+
+const { TabPane } = Tabs;
 
 export const MoneyStreamDetails = (props: {
   stream?: any;
@@ -30,6 +32,22 @@ export const MoneyStreamDetails = (props: {
   } = useContext(AppStateContext);
   const { stream, hideDetailsHandler, infoData, isStreamIncoming, isStreamOutgoing, buttons } = props;
   const { t } = useTranslation('common');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const getQueryTabOption = useCallback(() => {
+    let tabOptionInQuery: string | null = null;
+    if (searchParams) {
+      tabOptionInQuery = searchParams.get('v');
+      if (tabOptionInQuery) {
+        return tabOptionInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const navigateToTab = useCallback((tab: string) => {
+    setSearchParams({v: tab as string});
+  }, [setSearchParams]);
 
   const isNewStream = useCallback(() => {
     if (stream) {
@@ -376,6 +394,21 @@ export const MoneyStreamDetails = (props: {
     }
   ];
 
+  const renderTabset = () => {
+    const option = getQueryTabOption() || 'details'
+    return (
+      <Tabs activeKey={option} onChange={navigateToTab} className="neutral">
+        {tabs.map(item => {
+          return (
+            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
+              {item.render}
+            </TabPane>
+          );
+        })}
+      </Tabs>
+    );
+  }
+
   const title = stream ? getStreamTitle(stream) : `Unknown ${isStreamIncoming ? "incoming" : "outgoing"} stream`;
   const subtitle = stream ? getStreamSubtitle(stream) : "--";
   const status = stream ? getStreamStatus(stream) : "--";
@@ -411,12 +444,14 @@ export const MoneyStreamDetails = (props: {
 
         {buttons}
 
-        {tabs && (
+        {tabs && renderTabset()}
+
+        {/* {tabs && (
           <TabsMean
             tabs={tabs}
             defaultTab="details"
-          /> 
-        )}
+          />
+        )} */}
       </div>
     </>
   )
