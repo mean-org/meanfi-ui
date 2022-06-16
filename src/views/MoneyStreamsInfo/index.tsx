@@ -910,7 +910,7 @@ export const MoneyStreamsInfoView = (props: {
     treasuryDetails
   ])
 
-    // Get the Multisig accounts
+  // Get the Multisig accounts
   // TODO: Signal when it is loading
   useEffect(() => {
 

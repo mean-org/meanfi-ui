@@ -113,7 +113,7 @@ export const AccountsNewView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { address, asset, streamId } = useParams();
+  const { address, asset, streamingTab, streamId } = useParams();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
@@ -190,8 +190,9 @@ export const AccountsNewView = () => {
   const [netWorth, setNetWorth] = useState(0);
   const [treasuriesTvl, setTreasuriesTvl] = useState(0);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
-  const [urlQueryAsset, setUrlQueryAsset] = useState('');
-  const [urlQueryStreamId, setUrlQueryStreamId] = useState('');
+  const [pathParamAsset, setPathParamAsset] = useState('');
+  const [pathParamStreamId, setPathParamStreamId] = useState('');
+  const [pathParamStreamingTab, setPathParamStreamingTab] = useState('');
   const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
   const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
 
@@ -748,13 +749,11 @@ export const AccountsNewView = () => {
   }, [accountAddress, getQueryAccountType, isInspectedAccountTheConnectedWallet, isSelectedAssetNativeAccount, navigate])
 
   const navigateToStreaming = useCallback(() => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/summary`;
 
     const param = getQueryAccountType();
     if (param) {
-      url += `?account-type=${param}&v=summary`;
-    } else {
-      url += `?v=summary`;
+      url += `?account-type=${param}`;
     }
 
     navigate(url);
@@ -2809,12 +2808,17 @@ export const AccountsNewView = () => {
 
     if (asset) {
       consoleOut('Route param asset:', asset, 'crimson');
-      setUrlQueryAsset(asset);
+      setPathParamAsset(asset);
+    }
+
+    if (streamingTab) {
+      consoleOut('Route param streamingTab:', streamingTab, 'crimson');
+      setPathParamStreamingTab(streamingTab);
     }
 
     if (streamId) {
       consoleOut('Route param streamId:', streamId, 'crimson');
-      setUrlQueryStreamId(streamId);
+      setPathParamStreamId(streamId);
     }
 
     // The category is inferred from the route path
@@ -2822,13 +2826,13 @@ export const AccountsNewView = () => {
       consoleOut('Setting category:', 'assets', 'crimson');
       setSelectedCategory("assets");
       if (!asset) {
-        setUrlQueryAsset('');
+        setPathParamAsset('');
       }
     } else if (location.pathname.indexOf('/streaming') !== -1) {
       consoleOut('Setting category:', 'streaming', 'crimson');
       setSelectedCategory("streaming");
       if (!streamId) {
-        setUrlQueryStreamId('');
+        setPathParamStreamId('');
       }
     } else {
       setSelectedCategory("other-assets");
@@ -2861,6 +2865,7 @@ export const AccountsNewView = () => {
     streamId,
     publicKey,
     isFirstLoad,
+    streamingTab,
     searchParams,
     accountAddress,
     location.pathname,
@@ -3114,12 +3119,12 @@ export const AccountsNewView = () => {
 
                 // Preset the passed-in token via query params either
                 // as token account address or mint address or token symbol
-                if (urlQueryAsset) {
+                if (pathParamAsset) {
                   let inferredAsset: UserTokenAccount | undefined = undefined;
-                  if (isValidAddress(urlQueryAsset)) {
-                    inferredAsset = sortedList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
+                  if (isValidAddress(pathParamAsset)) {
+                    inferredAsset = sortedList.find(t => t.publicAddress === pathParamAsset || t.address === pathParamAsset);
                   } else {
-                    inferredAsset = sortedList.find(t => t.symbol === urlQueryAsset);
+                    inferredAsset = sortedList.find(t => t.symbol === pathParamAsset);
                   }
                   if (inferredAsset) {
                     selectAsset(inferredAsset);
@@ -3176,7 +3181,7 @@ export const AccountsNewView = () => {
     isFirstLoad,
     pinnedTokens,
     splTokenList,
-    urlQueryAsset,
+    pathParamAsset,
     selectedAsset,
     accountAddress,
     shouldLoadTokens,
@@ -4545,13 +4550,15 @@ export const AccountsNewView = () => {
                         <div className="item-block vertical-scroll">
 
                           <div className="asset-category-title flex-fixed-right">
-                            <div className="title">Streaming Assets (2)</div>
+                            <div className="title">Streaming Assets</div>
                             <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
                           </div>
                           <div className="asset-category">
-                            {inspectedAccountType === "wallet" ? (
+                            <>
+                              {renderMoneyStreamsSummary}
+                            </>
+                            {/* {inspectedAccountType === "wallet" ? (
                               <>
-                                {renderMoneyStreamsSummary}
                                 <TreasuriesSummary
                                   address={accountAddress}
                                   connection={connection}
@@ -4572,7 +4579,6 @@ export const AccountsNewView = () => {
                               </>
                             ) : inspectedAccountType === "multisig" ? (
                               <>
-                                {/* Money Streaming */}
                                 <TreasuriesSummary
                                   address={accountAddress}
                                   connection={connection}
@@ -4592,7 +4598,7 @@ export const AccountsNewView = () => {
                                   }}
                                 />
                               </>
-                            ) : null}
+                            ) : null} */}
                           </div>
 
                           <div className="asset-category-title flex-fixed-right">
