@@ -4,7 +4,7 @@ import { SafeInfo } from "../UI/SafeInfo";
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { consoleOut } from '../../../../utils/ui';
+import { consoleOut, isLocal } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { IconArrowForward } from '../../../../Icons';
@@ -158,42 +158,42 @@ export const SafeMeanInfo = (props: {
   // Get Multisig Vaults
   useEffect(() => {
 
-    if (!connection || !multisigClient || !selectedMultisig || !loadingAssets) { return; }
-  
+    if (!connection || !multisigClient || !address || !selectedMultisig || !loadingAssets) { return; }
+
     const timeout = setTimeout(() => {
+      if (address === selectedMultisig.authority.toBase58()) {
+        const solToken = getSolToken();
 
-      const solToken = getSolToken();
-
-      getMultisigVaults(connection, selectedMultisig.id)
-        .then(result => {
-          const modifiedResults = new Array<any>();
-          modifiedResults.push(solToken);  
-          result.forEach(item => {
-            modifiedResults.push(item);
-          });
-          setAssetsWithoutSol(result);
-          setMultisigVaults(modifiedResults);  
-          consoleOut("Multisig assets", modifiedResults, "blue");
-        })
-        .catch(err => {
-          console.error(err);
-          setMultisigVaults([solToken]);
-        })
-        .finally(() => setLoadingAssets(false));
+        getMultisigVaults(connection, selectedMultisig.id)
+          .then(result => {
+            const modifiedResults = new Array<any>();
+            modifiedResults.push(solToken);  
+            result.forEach(item => {
+              modifiedResults.push(item);
+            });
+            setAssetsWithoutSol(result);
+            setMultisigVaults(modifiedResults);  
+            consoleOut("Multisig assets", modifiedResults, "blue");
+          })
+          .catch(err => {
+            console.error(err);
+            setMultisigVaults([solToken]);
+          })
+          .finally(() => setLoadingAssets(false));
+      }
     });
-  
+
     return () => {
       clearTimeout(timeout);
     }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[
-    selectedMultisig, 
-    connection, 
+    address,
+    connection,
     loadingAssets,
-    multisigClient, 
-    getMultisigVaults,
-    setMultisigVaults,
-    getSolToken, 
+    multisigClient,
+    selectedMultisig,
   ]);
 
   // Keep account balance updated
@@ -354,21 +354,26 @@ export const SafeMeanInfo = (props: {
 
   useEffect(() => {
 
-    if (!connection || !selectedMultisig) { return; }
+    if (!connection || !address || !selectedMultisig) { return; }
 
-    const timeout = setTimeout(() => {
-      connection
-        .getBalance(selectedMultisig.authority)
-        .then(balance => setMultisigSolBalance(balance))
-        .catch(err => console.error(err));
+      const timeout = setTimeout(() => {
+        if (address === selectedMultisig.authority.toBase58()) {
+          connection.getBalance(selectedMultisig.authority)
+          .then(balance => {
+            consoleOut('multisigSolBalance', balance, 'orange');
+            setMultisigSolBalance(balance);
+          })
+          .catch(err => console.error(err));
+      }
     });
 
     return () => clearTimeout(timeout);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    address,
     connection,
     selectedMultisig,
-    setMultisigSolBalance
   ]);
 
   useEffect(() => {
