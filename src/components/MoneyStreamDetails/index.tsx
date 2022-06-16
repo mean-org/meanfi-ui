@@ -1,4 +1,4 @@
-import { Col, Row, Spin } from "antd";
+import { Col, Row } from "antd";
 import { ResumeItem } from "../ResumeItem";
 import { RightInfoDetails } from "../RightInfoDetails";
 import { TabsMean } from "../TabsMean";
@@ -8,7 +8,7 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
 import moment from "moment";
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext } from "react";
 import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
 import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
@@ -31,10 +31,7 @@ export const MoneyStreamDetails = (props: {
   const {
     splTokenList,
     streamActivity,
-    loadingStreamActivity,
-    hasMoreStreamActivity,
     getTokenByMintAddress,
-    getStreamActivity,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
@@ -497,7 +494,7 @@ export const MoneyStreamDetails = (props: {
     {
       id: "activity",
       name: "Activity",
-      render: ""
+      render: renderActivities(stream.version)
     }
   ];
 
