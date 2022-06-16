@@ -306,10 +306,6 @@ export const MoneyStreamDetails = (props: {
     )
   }
 
-  useEffect(() => {
-    console.log("stream", stream);
-  }, [stream])
-
   // Tab details
   const detailsData = [
     {
