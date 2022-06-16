@@ -218,18 +218,16 @@ export const ResumeItem = (props: {
                   </div>
                   )
                 )}
-                {status && (
-                  (!isStream && status >= 0) ? (
-                    <div className={`badge-container ${getTransactionStatusBackgroundColor(status)}`}>
-                      <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
-                    </div>
-                  ) : (
-                    <div className={`badge-container ${getStreamStatusBackgroundColor(status)}`}>
-                      <span className="badge darken small text-uppercase">
-                        {status}
-                      </span>
-                    </div>
-                  )
+                {(!isStream && status >= 0) ? (
+                  <div className={`badge-container ${getTransactionStatusBackgroundColor(status)}`}>
+                    <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
+                  </div>
+                ) : (
+                  <div className={`badge-container ${getStreamStatusBackgroundColor(status)}`}>
+                    <span className="badge darken small text-uppercase">
+                      {status}
+                    </span>
+                  </div>
                 )}
                 {amount && (
                   <div className="rate-amount">
