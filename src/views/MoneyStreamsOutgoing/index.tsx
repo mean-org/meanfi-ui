@@ -57,6 +57,7 @@ export const MoneyStreamsOutgoingView = (props: {
     refreshTokenBalance,
     setSelectedToken,
     setEffectiveRate,
+    setStreamDetail,
   } = useContext(AppStateContext);
   const {
     enqueueTransactionConfirmation
@@ -2238,6 +2239,26 @@ export const MoneyStreamsOutgoingView = (props: {
     activeStream,
     getTreasuryByTreasuryId
   ]);
+
+  useEffect(() => {
+    if (!ms || !msp || !streamSelected) {return;}
+
+    const timeout = setTimeout(() => {
+      if (msp && streamSelected && streamSelected.version >= 2) {
+        msp.refreshStream(streamSelected as Stream).then(detail => {
+          setStreamDetail(detail as Stream);
+        });
+      } else if (ms && streamSelected && streamSelected.version < 2) {
+        ms.refreshStream(streamSelected as StreamInfo).then(detail => {
+          setStreamDetail(detail as StreamInfo);
+        });
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [ms, msp, setStreamDetail, streamSelected]);
 
   const isNewStream = useCallback(() => {
     if (streamSelected) {
