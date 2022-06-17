@@ -2234,7 +2234,7 @@ export const VestingView = () => {
               selectedList={selectedList}
               userBalances={userBalances}
               nativeBalance={nativeBalance}
-              onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract}
+              onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
               transactionFees={createVestingContractTxFees}
               tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
             />
@@ -2244,7 +2244,17 @@ export const VestingView = () => {
       <PreFooter />
       </>
     );
-  }, [isBusy, nativeBalance, selectedList, selectedToken, setSelectedToken, t, createVestingContractTxFees, userBalances]);
+  }, [
+    isBusy,
+    selectedList,
+    userBalances,
+    nativeBalance,
+    selectedToken,
+    createVestingContractTxFees,
+    onAcceptCreateVestingContract,
+    setSelectedToken,
+    t,
+  ]);
 
   // Unauthorized access or disconnected access
   if (!publicKey || (publicKey && accountAddress && getQueryAccountType() !== "multisig" && publicKey.toBase58() !== accountAddress)) {
@@ -2395,7 +2405,7 @@ export const VestingView = () => {
           <VestingContractCreateModal
             isBusy={isBusy}
             isVisible={isVestingContractCreateModalVisible}
-            handleOk={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract}
+            handleOk={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
             transactionFees={createVestingContractTxFees}
             handleClose={closeVestingContractCreateModal}
             selectedToken={selectedToken}
