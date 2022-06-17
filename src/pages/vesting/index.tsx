@@ -557,19 +557,13 @@ export const VestingView = () => {
   const showVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(true), []);
   const closeVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(false), []);
 
-  const onAcceptCreateVestingContract = (data: VestingContractCreateOptions) => {
-    consoleOut('Create vesting contract options:', data, 'blue');
-    onExecuteCreateVestingContractTransaction(data);
-    setRetryOperationPayload(data);
-  };
-
   const onVestingContractCreated = useCallback(() => {
     closeVestingContractCreateModal();
     setOngoingOperation(undefined);
     refreshTokenBalance();
   }, [closeVestingContractCreateModal, refreshTokenBalance]);
 
-  const onExecuteCreateVestingContractTransaction = async (createOptions: VestingContractCreateOptions) => {
+  const onExecuteCreateVestingContractTransaction = useCallback(async (createOptions: VestingContractCreateOptions) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -588,7 +582,34 @@ export const VestingView = () => {
 
       const treasuryType = data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock;
 
+      /**
+       * payer: PublicKey
+       * treasurer: PublicKey
+       * label: string
+       * type: TreasuryType
+       * solFeePayedByTreasury: boolean
+       * treasuryAssociatedTokenMint: PublicKey
+       * rateAmount: number
+       * rateIntervalInSeconds: number
+       * startUtc?: Date | undefined
+       * cliffVestAmount?: number | undefined
+       * cliffVestPercent?: number | undefined
+       * feePayedByTreasurer?: boolean | undefined
+       */
+
+      const solFeePayedByTreasury = data.multisig ? true : false;
+
       if (!data.multisig) {
+        // return await msp.createVestingTreasury(
+        //   new PublicKey(data.treasurer),                        // treasurer
+        //   new PublicKey(data.treasurer),                        // treasurer
+        //   data.label,                                           // label
+        //   treasuryType,                                         // type
+        //   solFeePayedByTreasury,                                // solFeePayedByTreasury
+        //   new PublicKey(data.associatedTokenAddress),           // associatedToken
+
+        //   data.feePayedByTreasurer,                           // feePayedByTreasurer
+        // );
         return await msp.createTreasury(
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.treasurer),                    // treasurer
@@ -658,13 +679,14 @@ export const VestingView = () => {
       // Create a transaction
       const associatedToken = createOptions.token;
       const payload = {
-        treasurer: publicKey.toBase58(),                                                                  // treasurer
-        label: createOptions.vestingContractName,                                                         // label
-        type: createOptions.vestingContractType === TreasuryType.Open                                     // type
+        treasurer: publicKey.toBase58(),                                      // treasurer
+        label: createOptions.vestingContractName,                             // label
+        type: createOptions.vestingContractType === TreasuryType.Open         // type
           ? 'Open'
           : 'Lock',
-        multisig: multisigId,                                                                             // multisig
-        associatedTokenAddress: associatedToken.address
+        multisig: multisigId,                                                 // multisig
+        associatedTokenAddress: associatedToken.address,                      // Associated token address
+        feePayedByTreasurer: createOptions.feePayedByTreasurer                // feePayedByTreasurer
       };
 
       consoleOut('payload:', payload);
@@ -883,7 +905,33 @@ export const VestingView = () => {
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-  };
+  },[
+    msp,
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigClient,
+    multisigAccounts,
+    transactionCancelled,
+    multisigTxFees.networkFee,
+    multisigTxFees.rentExempt,
+    multisigTxFees.multisigFee,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    getMultisigIdFromContext,
+    onVestingContractCreated,
+    resetTransactionStatus,
+    setTransactionStatus,
+  ]);
+
+  const onAcceptCreateVestingContract = useCallback((data: VestingContractCreateOptions) => {
+    consoleOut('Create vesting contract options:', data, 'blue');
+    onExecuteCreateVestingContractTransaction(data);
+    setRetryOperationPayload(data);
+  }, [onExecuteCreateVestingContractTransaction]);
 
   // Vesting contract SOL balance modal
   const [isVestingContractSolBalanceModalOpen, setIsVestingContractSolBalanceModalOpen] = useState(false);

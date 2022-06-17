@@ -267,6 +267,7 @@
 		"create-account": {
 			"create-cta": "Create vesting contract",
 			"create-cta-busy": "Creating vesting contract",
+			"fee-paid-by-treasury": "Streaming fees will be paid from the vesting contract's funds",
 			"step-one-label": "Contract info",
 			"step-two-label": "Contract settings",
 			"tab-label-create-account": "Create new account",

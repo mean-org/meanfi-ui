@@ -18,4 +18,5 @@ export interface VestingContractCreateOptions {
     vestingContractCategory: string;
     amount: string;
     token: TokenInfo;
+    feePayedByTreasurer: boolean;
 }

@@ -11,7 +11,7 @@ import { TokenListItem } from '../../../../components/TokenListItem';
 import { TextInput } from '../../../../components/TextInput';
 import { useTranslation } from 'react-i18next';
 import moment from "moment";
-import { Button, DatePicker, Drawer, Dropdown, Menu, Modal } from 'antd';
+import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal } from 'antd';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { TransactionFees, TreasuryType } from '@mean-dao/msp';
 import { NATIVE_SOL } from '../../../../utils/tokens';
@@ -78,6 +78,7 @@ export const VestingLockCreateAccount = (props: {
     const [currentStep, setCurrentStep] = useState(0);
     const percentages = [5, 10, 15, 20];
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("");
+    const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
     const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption>(VESTING_ACCOUNT_TYPE_OPTIONS[0]);
 
     const getFeeAmount = useCallback(() => {
@@ -177,6 +178,10 @@ export const VestingLockCreateAccount = (props: {
         updateTokenListByFilter
     ]);
 
+    const onFeePayedByTreasurerChange = (e: any) => {
+        consoleOut('onFeePayedByTreasurerChange:', e.target.checked, 'blue');
+        setIsFeePaidByTreasurer(e.target.checked);
+    }
 
     /////////////////////
     // Data management //
@@ -295,7 +300,8 @@ export const VestingLockCreateAccount = (props: {
             vestingContractCategory: vestingCategory,
             vestingContractType: treasuryOption ? treasuryOption.type : TreasuryType.Lock,
             token: selectedToken as TokenInfo,
-            amount: vestingLockFundingAmount
+            amount: vestingLockFundingAmount,
+            feePayedByTreasurer: isFeePaidByTreasurer
         };
         onStartTransaction(options);
     }
@@ -843,6 +849,11 @@ export const VestingLockCreateAccount = (props: {
                                 <span className="suffix">%</span>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Streaming fees will be paid from the vesting contract's funds */}
+                    <div className="ml-1 mb-3">
+                        <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('vesting.create-account.fee-paid-by-treasury')}</Checkbox>
                     </div>
 
                     {/* CTAs */}
