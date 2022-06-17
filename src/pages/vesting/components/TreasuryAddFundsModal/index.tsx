@@ -55,7 +55,7 @@ export const VestingContractAddFundsModal = (props: {
   transactionFees: TransactionFees;
   withdrawTransactionFees: TransactionFees;
   streamStats?: TreasuryStreamsBreakdown;
-  treasuryDetails: Treasury | undefined;
+  vestingContract: Treasury | undefined;
   treasuryStreams: Stream[];
   associatedToken: string;
 }) => {
@@ -448,11 +448,11 @@ export const VestingContractAddFundsModal = (props: {
 
   // Set available balance in BN either from user's wallet or from treasury is a streams is being funded
   useEffect(() => {
-    if (props.isVisible && props.treasuryDetails && props.treasuryDetails && selectedToken) {
+    if (props.isVisible && props.vestingContract && props.vestingContract && selectedToken) {
       const decimals = selectedToken ? selectedToken.decimals : 6;
       if (highLightableStreamId) {
         // Take source balance from the treasury
-        const unallocated = props.treasuryDetails.balance - props.treasuryDetails.allocationAssigned;
+        const unallocated = props.vestingContract.balance - props.vestingContract.allocationAssigned;
         const ub = new BN(unallocated);
         consoleOut('Treasury unallocated balance:', ub.toNumber(), 'blue');
         setAvailableBalance(ub);
@@ -469,7 +469,7 @@ export const VestingContractAddFundsModal = (props: {
     tokenBalance,
     selectedToken,
     props.isVisible,
-    props.treasuryDetails,
+    props.vestingContract,
     highLightableStreamId,
     selectFromTokenBalance,
   ]);
@@ -498,15 +498,15 @@ export const VestingContractAddFundsModal = (props: {
 
   // When modal goes visible, update allocation type option
   useEffect(() => {
-    if (!props.treasuryDetails) { return; }
-    setTreasuryType(props.treasuryDetails.treasuryType);
+    if (!props.vestingContract) { return; }
+    setTreasuryType(props.vestingContract.treasuryType);
     if (highLightableStreamId) {
       setAllocationOption(AllocationType.Specific);
     } else {
       setAllocationOption(AllocationType.None);
     }
   }, [
-    props.treasuryDetails,
+    props.vestingContract,
     props.treasuryStreams,
     highLightableStreamId,
   ]);
@@ -938,24 +938,24 @@ export const VestingContractAddFundsModal = (props: {
           <div className={`buy-token-options text-center mt-4 mb-2`}>
             <p>You can also fund this contract by sending {selectedToken?.symbol} tokens to:</p>
 
-            {showQrCode && props.treasuryDetails && (
+            {showQrCode && props.vestingContract && (
               <>
                 <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
                   <QRCodeSVG
-                    value={props.treasuryDetails.id as string}
+                    value={props.vestingContract.id as string}
                     size={200}
                   />
                 </div>
               </>
             )}
 
-            {props.treasuryDetails && (
+            {props.vestingContract && (
               <div className="flex-center font-size-70 mb-2">
                 <AddressDisplay
-                  address={props.treasuryDetails.id as string}
+                  address={props.vestingContract.id as string}
                   showFullAddress={true}
                   iconStyles={{ width: "15", height: "15" }}
-                  newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${props.treasuryDetails.id as string}${getSolanaExplorerClusterParam()}`}
+                  newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${props.vestingContract.id as string}${getSolanaExplorerClusterParam()}`}
                 />
               </div>
             )}

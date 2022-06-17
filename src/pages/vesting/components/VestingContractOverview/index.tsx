@@ -71,7 +71,7 @@ export const VestingContractOverview = (props: {
             if (isStartDateFuture(streamsStartDate)) {
                 setStartRemainingTime(`in ${remainingTime.join(', ')}`);
             } else {
-                setStartRemainingTime(`for ${remainingTime.join(', ')}`);
+                setStartRemainingTime(`Streamin for ${remainingTime.join(', ')}`);
             }
 
         }

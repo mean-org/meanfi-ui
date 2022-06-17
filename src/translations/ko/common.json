@@ -288,6 +288,15 @@
 			"stream-status-complete": "Finished vesting",
 			"stream-status-streaming": "{{timeLeft}} left"
 		},
+		"close-account": {
+			"modal-title": "Close Contract",
+			"cannot-close-warn": "We're Sorry!",
+			"cannot-close-explanation": "There are still {{numItems}} streams that exist in this vesting contract. Please close all {{numItems}} streams and then you will be able to close this contract.",
+			"can-close-explanation": "Closing a vesting contract will remove it completely from the list of contracts. Upon closure, all funds left over in the account will be immediately sent back to the contract's treasurer.",
+			"funds-left-in-contract": "Funds left in the contract",
+			"close-cta": "Close contract",
+			"close-cta-busy": "Closing contract"
+		},
 		"sol-balance": {
 			"modal-title": "SOL Balance",
 			"contract-balance-label": "Your SOL contract balance",

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useContext, useCallback, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
@@ -30,7 +30,7 @@ import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isMobile } from 'react-device-detect';
 import { MetaInfoCta, TreasuryTopupParams } from '../../models/common-types';
-import { MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
+import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from '../../components/VestingContractCreateModal';
@@ -42,9 +42,12 @@ import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigPa
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { VestingContractSolBalanceModal } from './components/VestingContractSolBalanceModal';
 import { VestingContractAddFundsModal } from './components/TreasuryAddFundsModal';
+import { VestingContractCloseModal } from './components/VestingContractCloseModal';
+import { segmentAnalytics } from '../../App';
+import { AppUsageEvent } from '../../utils/segment-service';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -55,6 +58,7 @@ export const VestingView = () => {
   const {
     tokenList,
     userTokens,
+    tokenBalance,
     splTokenList,
     selectedToken,
     deletedStreams,
@@ -62,6 +66,7 @@ export const VestingView = () => {
     transactionStatus,
     streamV2ProgramAddress,
     pendingMultisigTxCount,
+    previousWalletConnectState,
     setPendingMultisigTxCount,
     getTokenByMintAddress,
     setTransactionStatus,
@@ -80,7 +85,7 @@ export const VestingView = () => {
   const { address, vestingContract, activeTab } = useParams();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
-  const { publicKey, wallet } = useWallet();
+  const { publicKey, wallet, connected } = useWallet();
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
@@ -111,6 +116,7 @@ export const VestingView = () => {
   // Transactions
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [canSubscribe, setCanSubscribe] = useState(true);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>({
     multisigFee: 0,
@@ -249,6 +255,11 @@ export const VestingView = () => {
     streamV2ProgramAddress
   ]);
 
+  const selectedVestingContractRef = useRef(selectedVestingContract);
+  useEffect(() => {
+    selectedVestingContractRef.current = selectedVestingContract;
+  }, [selectedVestingContract]);
+
 
   /////////////////
   //  Callbacks  //
@@ -279,6 +290,68 @@ export const VestingView = () => {
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return await calculateActionFees(connection, action);
   }, [connection]);
+
+  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
+    let event: any;
+    switch (operation) {
+      case OperationType.TreasuryClose:
+        event = success ? AppUsageEvent.VestingContractCloseCompleted : AppUsageEvent.VestingContractCloseFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.TreasuryAddFunds:
+        event = success ? AppUsageEvent.VestingContractTopupCompleted : AppUsageEvent.VestingContractTopupFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.TreasuryCreate:
+        event = success ? AppUsageEvent.VestingContractCreateCompleted : AppUsageEvent.VestingContractCreateFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+
+    const softReloadContracts = () => {
+      const contractsRefreshCta = document.getElementById("refresh-contracts-cta");
+      if (contractsRefreshCta) {
+        contractsRefreshCta.click();
+      }
+    };
+
+    consoleOut("onTxConfirmed event handled:", item, 'crimson');
+    recordTxConfirmation(item.signature, item.operationType, true);
+
+    softReloadContracts();
+
+    // switch (item.operationType) {
+    //   case OperationType.TreasuryClose:
+    //     break;
+    //   case OperationType.StreamClose:
+    //     break;
+    //   case OperationType.TreasuryAddFunds:
+    //     break;
+    //   case OperationType.TreasuryCreate:
+    //     break;
+    //   case OperationType.StreamAddFunds:
+    //     break;
+    //   default:
+    //     break;
+    // }
+
+  }, [recordTxConfirmation]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
+    if (item) {
+      consoleOut("onTxTimedout event executed:", item, 'crimson');
+      recordTxConfirmation(item.signature, item.operationType, false);
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
 
   const isInspectedAccountTheConnectedWallet = useCallback(() => {
     return accountAddress && publicKey && publicKey.toBase58() === accountAddress
@@ -449,6 +522,324 @@ export const VestingView = () => {
   const [isVestingContractSolBalanceModalOpen, setIsVestingContractSolBalanceModalOpen] = useState(false);
   const hideVestingContractSolBalanceModal = useCallback(() => setIsVestingContractSolBalanceModalOpen(false), []);
   const showVestingContractSolBalanceModal = useCallback(() => setIsVestingContractSolBalanceModalOpen(true), []);
+
+  // Vesting contract close modal
+  const [isVestingContractCloseModalOpen, setIsVestingContractCloseModalOpen] = useState(false);
+  const hideVestingContractCloseModal = useCallback(() => setIsVestingContractCloseModalOpen(false), []);
+  const showVestingContractCloseModal = useCallback(() => {
+    resetTransactionStatus();
+    getTransactionFees(MSP_ACTIONS.closeTreasury).then(value => {
+      setTransactionFees(value);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+    setIsVestingContractCloseModalOpen(true);
+  }, [getTransactionFees, resetTransactionStatus]);
+
+  const onAcceptCloseVestingContractModal = () => {
+    onExecuteCloseTreasuryTransaction();
+  };
+
+  const onCloseTreasuryTransactionFinished = () => {
+    hideVestingContractCloseModal();
+    refreshTokenBalance();
+    resetTransactionStatus();
+  };
+
+  const onExecuteCloseTreasuryTransaction = async () => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    resetTransactionStatus();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryClose);
+    setIsBusy(true);
+
+    const closeTreasury = async (data: any) => {
+
+      if (!msp) { return null; }
+
+      if (!isMultisigTreasury()) {
+        return await msp.closeTreasury(
+          new PublicKey(data.treasurer),              // treasurer
+          new PublicKey(data.treasurer),              // treasurer
+          new PublicKey(data.treasury),               // treasury
+          true                                        // TODO: Define if the user can determine this
+        );
+      }
+
+      if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      const treasury = selectedVestingContract as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      const closeTreasury = await msp.closeTreasury(
+        publicKey,                                  // payer
+        multisig.authority,                         // TODO: This should come from the UI        
+        new PublicKey(data.treasury),               // treasury
+        false
+      );
+
+      const ixData = Buffer.from(closeTreasury.instructions[0].data);
+      const ixAccounts = closeTreasury.instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Close Vesting Contract",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.TreasuryClose,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
+
+      return tx;
+    }
+
+    const createTx = async (): Promise<boolean> => {
+      if (!publicKey || !selectedVestingContract || !msp) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Close Vesting Contract transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      const treasury = new PublicKey(selectedVestingContract.id as string);
+      const data = {
+        treasurer: publicKey.toBase58(),                      // treasurer
+        treasury: treasury.toBase58()                         // treasury
+      }
+
+      consoleOut('data:', data);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < minRequired) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Close Vesting Contract transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Starting Close Vesting Contract using MSP V2...', '', 'blue');
+      // Create a transaction
+      const result = closeTreasury(data)
+        .then(value => {
+          if (!value) { return false; }
+          consoleOut('closeTreasury returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('closeTreasury error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Close Vesting Contract transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet && publicKey) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Close Vesting Contract transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Close Vesting Contract transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Close Vesting Contract transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Close Vesting Contract transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Close Vesting Contract transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet && selectedVestingContract) {
+      const created = await createTx();
+      consoleOut('created:', created, 'blue');
+      if (created && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryClose,
+              finality: "finalized",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Closing vesting contract: ${selectedVestingContract.name}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Vesting contract ${selectedVestingContract.name} successfully closed`,
+              extras: selectedVestingContract.id as string
+            });
+            setIsBusy(false);
+            setNeedReloadMultisig(true);
+            setOngoingOperation(undefined);
+            onCloseTreasuryTransactionFinished();
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  };
 
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
@@ -1020,7 +1411,7 @@ export const VestingView = () => {
       disabled: !isInspectedAccountTheConnectedWallet(),
       uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractClose}`,
       tooltip: '',
-      callBack: () => { }
+      callBack: showVestingContractCloseModal
     });
     ctaItems++;
 
@@ -1029,6 +1420,7 @@ export const VestingView = () => {
   }, [
     isXsDevice,
     showAddFundsModal,
+    showVestingContractCloseModal,
     showVestingContractSolBalanceModal,
     isInspectedAccountTheConnectedWallet,
   ]);
@@ -1241,6 +1633,48 @@ export const VestingView = () => {
     consoleOut('ds:', ds, 'blue');
   }, [deletedStreams]);
 
+  // Hook on wallet connect/disconnect
+  useEffect(() => {
+
+    if (previousWalletConnectState !== connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', '', 'green');
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+        setCanSubscribe(true);
+      }
+    }
+
+    return () => {
+      clearTimeout();
+    };
+
+  }, [
+    connected,
+    publicKey,
+    previousWalletConnectState,
+    onTxConfirmed,
+    onTxTimedout,
+  ]);
+
+  // Setup event listeners
+  useEffect(() => {
+    if (canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    }
+  }, [
+    canSubscribe,
+    onTxConfirmed,
+    onTxTimedout
+  ]);
 
   ////////////////////////////
   //   Events and actions   //
@@ -1485,9 +1919,9 @@ export const VestingView = () => {
         <div className="container main-container">
           {publicKey ? (
             <div className="interaction-area">
-  
+
               <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
-  
+
                 {/* Left / top panel */}
                 <div className="meanfi-two-panel-left">
   
@@ -1510,9 +1944,10 @@ export const VestingView = () => {
                           onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
                         />
                       </span>
+                      <div id="refresh-contracts-cta" onClick={() => refreshVestingContracts()}></div>
                     </div>
                   </div>
-  
+
                   <div className="inner-container">
                     <div className="item-block vertical-scroll">
   
@@ -1523,9 +1958,9 @@ export const VestingView = () => {
                           onAccountSelected={(item: Treasury | undefined) => onSelectVestingContract(item)}
                         />
                       </div>
-  
+
                     </div>
-  
+
                     {/* Bottom CTA */}
                     <div className="bottom-ctas">
                       <div className="primary-action">
@@ -1540,9 +1975,9 @@ export const VestingView = () => {
                       </div>
                     </div>
                   </div>
-  
+
                 </div>
-  
+
                 {/* Right / down panel */}
                 <div className="meanfi-two-panel-right">
                   <div className="meanfi-panel-heading"><span className="title">{t('vesting.vesting-account-details.panel-title')}</span></div>
@@ -1559,9 +1994,9 @@ export const VestingView = () => {
                     </div>
                   </div>
                 </div>
-  
+
               </div>
-  
+
             </div>
           ) : (
             <div className="interaction-area">
@@ -1594,7 +2029,7 @@ export const VestingView = () => {
             nativeBalance={nativeBalance}
             transactionFees={transactionFees}
             withdrawTransactionFees={withdrawTransactionFees}
-            treasuryDetails={selectedVestingContract}
+            vestingContract={selectedVestingContract}
             isVisible={isAddFundsModalVisible}
             userBalances={userBalances}
             treasuryStreams={treasuryStreams}
@@ -1609,6 +2044,19 @@ export const VestingView = () => {
             isVisible={isVestingContractSolBalanceModalOpen}
             handleClose={hideVestingContractSolBalanceModal}
             treasuryBalance={treasuryEffectiveBalance}
+          />
+        )}
+
+        {isVestingContractCloseModalOpen && selectedVestingContract && (
+          <VestingContractCloseModal
+            handleClose={hideVestingContractCloseModal}
+            handleOk={onAcceptCloseVestingContractModal}
+            nativeBalance={nativeBalance}
+            treasuryBalance={treasuryEffectiveBalance}
+            vestingContract={selectedVestingContract}
+            isVisible={isVestingContractCloseModalOpen}
+            transactionFees={transactionFees}
+            isBusy={isBusy}
           />
         )}
       </>

@@ -34,7 +34,6 @@ export const VestingLockAccountList = (props: {
                         : undefined;
                     const vcType = item.treasuryType;
                     const onTreasuryClick = () => {
-                        // consoleOut('Selected streaming account:', item, 'blue');
                         onAccountSelected(item);
                     };
                     return (
@@ -66,7 +65,7 @@ export const VestingLockAccountList = (props: {
                                 <div className="rate-amount">
                                     {formatThousands(item.totalStreams)}
                                 </div>
-                                <div className="interval">streams</div>
+                                <div className="interval">{item.totalStreams === 1 ? 'stream' : 'streams'}</div>
                             </div>
                         </div>
                     );

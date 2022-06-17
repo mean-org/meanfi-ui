@@ -84,6 +84,19 @@ export enum AppUsageEvent {
     CreateStreamingAccountSigned = "Create Streaming Account Signed",
     CreateStreamingAccountCompleted = "Create Streaming Account Completed",
     CreateStreamingAccountFailed = "Create Streaming Account Failed",
+    // Vesting contract
+    VestingContractCreateFormButton = "Create Vesting contract form button click",
+    VestingContractCreateSigned = "Create Vesting contract Signed",
+    VestingContractCreateCompleted = "Create Vesting contract Completed",
+    VestingContractCreateFailed = "Create Vesting contract Failed",
+    VestingContractTopupFormButton = "Topup Vesting contract form button click",
+    VestingContractTopupSigned = "Topup Vesting contract Signed",
+    VestingContractTopupCompleted = "Topup Vesting contract Completed",
+    VestingContractTopupFailed = "Topup Vesting contract Failed",
+    VestingContractCloseFormButton = "Close Vesting contract form button click",
+    VestingContractCloseSigned = "Close Vesting contract Signed",
+    VestingContractCloseCompleted = "Close Vesting contract Completed",
+    VestingContractCloseFailed = "Close Vesting contract Failed",
 }
 
 export enum StatsTriggertEvent {
