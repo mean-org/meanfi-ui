@@ -1517,7 +1517,7 @@ export const MoneyStreamsInfoView = (props: {
 
               const onSelectedStreamingAccount = () => {
                 // Sends outgoing stream value to the parent component "Accounts"
-                onSendFromStreamingAccountDetails(streaming.streams);
+                onSendFromStreamingAccountDetails(streaming.streams, streaming.treasury);
               }
 
               const state = isNewTreasury

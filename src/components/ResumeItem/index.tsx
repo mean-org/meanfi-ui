@@ -22,9 +22,11 @@ export const ResumeItem = (props: {
   approved?: any;
   rejected?: any;
   status?: number | string | undefined;
+  content?: string;
   resume?: any;
   isDetailsPanel?: boolean;
   isStream?: boolean;
+  isStreamingAccount?: boolean;
   rightIcon?: any;
   hasRightIcon?: boolean;
   rightIconHasDropdown?: boolean;
@@ -51,9 +53,11 @@ export const ResumeItem = (props: {
     approved,
     rejected,
     status,
+    content,
     resume,
     isDetailsPanel,
     isStream,
+    isStreamingAccount,
     rightIcon,
     hasRightIcon,
     rightIconHasDropdown,
@@ -245,9 +249,14 @@ export const ResumeItem = (props: {
                     {amount}
                   </div>
                 )}
+                {content && (
+                  <div className="info-label">
+                    {content}
+                  </div>
+                )}
               </div>
               {resume && (
-                <div className="info-label mb-0">{resume}</div>
+                <div className={`${!isStreamingAccount ? "info-label" : ""} mb-0`}>{resume}</div>
               )}
             </>
           </div>

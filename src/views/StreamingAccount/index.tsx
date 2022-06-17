@@ -1,20 +1,22 @@
-import { StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
-import { Stream, STREAM_STATUS } from "@mean-dao/msp";
+import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
+import { Stream, STREAM_STATUS, Treasury } from "@mean-dao/msp";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { Button, Col, Dropdown, Menu, Row } from "antd";
 import BN from "bn.js";
 import { useCallback, useContext } from "react";
 import { useTranslation } from "react-i18next";
+import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
 import { TabsMean } from "../../components/TabsMean";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical } from "../../Icons";
-import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from "../../utils/ui";
-import { formatAmount, shortenAddress, toUiAmount } from "../../utils/utils";
+import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, toUsCurrency } from "../../utils/ui";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
 
 export const StreamingAccountView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
+  streamingAccountSelected: Treasury | TreasuryInfo | undefined;
   streams: Array<Stream | StreamInfo> | undefined;
   onSendFromStreamingAccountDetails?: any;
   onSendFromOutgoingStreamInfo?: any;
@@ -23,7 +25,7 @@ export const StreamingAccountView = (props: {
     getTokenByMintAddress,
   } = useContext(AppStateContext);
   
-  const { streamSelected, streams, onSendFromStreamingAccountDetails, onSendFromOutgoingStreamInfo  } = props;
+  const { streamSelected, streamingAccountSelected, streams, onSendFromStreamingAccountDetails, onSendFromOutgoingStreamInfo  } = props;
 
   const { t } = useTranslation('common');
 
@@ -257,10 +259,27 @@ export const StreamingAccountView = (props: {
     }
   ];
 
-  const streamTitle = streamSelected ? getStreamTitle(streamSelected) : `Unknown outgoing stream`;
-  const streamSubtitle = streamSelected ? getStreamSubtitle(streamSelected) : "--";
-  const streamStatus = streamSelected ? getStreamStatus(streamSelected) : "--";
-  const streamResume = streamSelected ? getStreamResume(streamSelected) : "--";
+  const v1 = streamingAccountSelected as TreasuryInfo;
+  const v2 = streamingAccountSelected as Treasury;
+
+  const isNewTreasury = streamingAccountSelected && streamingAccountSelected.version >= 2 ? true : false;
+
+
+  const streamAccountTitle = isNewTreasury ? v2.name : v1.label;
+
+  const streamAccountSubtitle = <CopyExtLinkGroup
+    content={isNewTreasury ? v2.id as string : v1.id as string}
+    number={8}
+    externalLink={true}
+  />;
+
+  const streamAccountContent = "Available streaming balance";
+
+  const token = getTokenByMintAddress(isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string);
+
+  const streamAccountResume = (v1.balance || v2.balance) ? getTokenAmountAndSymbolByTokenAddress(isNewTreasury 
+    ? toUiAmount(new BN(v2.balance), token?.decimals || 6)
+    : v1.balance, isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string) : "$0.00";
 
   return (
     <>
@@ -272,15 +291,16 @@ export const StreamingAccountView = (props: {
           </div>
         </Row>
 
-        {streamSelected && (
+        {streamingAccountSelected && (
           <ResumeItem
-            title={streamTitle}
-            subtitle={streamSubtitle}
-            status={streamStatus}
-            resume={streamResume}
+            title={streamAccountTitle}
+            subtitle={streamAccountSubtitle}
+            content={streamAccountContent}
+            resume={streamAccountResume}
             isDetailsPanel={true}
             isLink={false}
-            isStream={true}
+            // isStream={true}
+            isStreamingAccount={true}
           />
         )}
 

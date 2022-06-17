@@ -50,8 +50,8 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { Streams } from '../../views';
 import { initialSummary, StreamsSummary } from '../../models/streams';
-import { MSP, Stream, STREAM_STATUS, TransactionFees } from '@mean-dao/msp';
-import { StreamInfo, STREAM_STATE, MoneyStreaming } from '@mean-dao/money-streaming';
+import { MSP, Stream, STREAM_STATUS, TransactionFees, Treasury } from '@mean-dao/msp';
+import { StreamInfo, STREAM_STATE, MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
 import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
@@ -4430,6 +4430,7 @@ export const AccountsNewView = () => {
 
   const [isStreamingAccountDetails, setIsStreamingAccountDetails] = useState(false);
   const [selectedStreamingAccountStreams, setSelectedStreamingAccountStreams] = useState<any>();
+  const [selectedStreamingAccount, setSelectedStreamingAccount] = useState<Treasury | TreasuryInfo | undefined>();
 
   const goToStreamIncomingDetailsHandler = (stream: any) => {
     // setIsStreamIncomingDetails(true);
@@ -4461,8 +4462,9 @@ export const AccountsNewView = () => {
     navigate(url);
   }
 
-  const goToStreamingAccountDetailsHandler = (streamingAccountStreams: any) => {
+  const goToStreamingAccountDetailsHandler = (streamingAccountStreams: any, streamingTreasury: Treasury | TreasuryInfo | undefined) => {
     setSelectedStreamingAccountStreams(streamingAccountStreams);
+    setSelectedStreamingAccount(streamingTreasury);
     console.log("streamingAccount", streamingAccountStreams);
     setIsStreamingAccountDetails(true);
   }
@@ -4780,6 +4782,7 @@ export const AccountsNewView = () => {
                             ) : isStreamingAccountDetails ? (
                               <StreamingAccountView
                                 streamSelected={streamDetail}
+                                streamingAccountSelected={selectedStreamingAccount}
                                 streams={selectedStreamingAccountStreams}
                                 onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
                                 onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
