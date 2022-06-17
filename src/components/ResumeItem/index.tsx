@@ -16,7 +16,7 @@ export const ResumeItem = (props: {
   extraTitle?: any;
   classNameTitle?: string;
   subtitle?: any;
-  amount?: number | string;
+  amount?: any;
   expires?: any;
   executedOn?: any;
   approved?: any;

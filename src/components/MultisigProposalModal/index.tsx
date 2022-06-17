@@ -270,10 +270,6 @@ export const MultisigProposalModal = (props: {
   }, []);
 
   useEffect(() => {
-    console.log("isNumberInput", isNumberInput);
-  }, [isNumberInput])
-
-  useEffect(() => {
 
     if (!appsProvider || !selectedApp) { return; }
 

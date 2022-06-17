@@ -1,5 +1,5 @@
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Menu, Row, Tabs } from "antd";
+import { Button, Col, Menu, Row, Spin, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
@@ -8,7 +8,7 @@ import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreate
 import { AppStateContext } from "../../contexts/appstate";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { IconArrowForward, IconVerticalEllipsis } from "../../Icons";
+import { IconArrowForward, IconLoading, IconVerticalEllipsis } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { PieChartComponent } from "./PieChart";
@@ -37,15 +37,17 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { NO_FEES, ONE_MINUTE_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { TreasuryOpenModal } from "../../components/TreasuryOpenModal";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { TreasuryCreateOptions } from "../../models/treasuries";
 import { customLogger } from "../..";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
-import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, ArrowUpOutlined, LoadingOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 const { TabPane } = Tabs;
 
@@ -95,6 +97,7 @@ export const MoneyStreamsInfoView = (props: {
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
+  const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -130,13 +133,15 @@ export const MoneyStreamsInfoView = (props: {
   // Treasuries related
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
-  const [treasuryStreams, setTreasuryStreams] = useState<(Stream | StreamInfo)[]>([]);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
-  const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
+  const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
+  const [loadingOutgoingStreamList, setLoadingOutgoingStreamList] = useState(true);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
 
   const [treasuryCombinedList, setTreasuryCombinedList] = useState<CombinedStreamingAccounts[]>();
+
+  const [autocloseTreasuries, setAutocloseTreasuries] = useState<(Treasury | TreasuryInfo)[]>([]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -315,7 +320,11 @@ export const MoneyStreamsInfoView = (props: {
       }
 
       treasuries = multisigTreasuries;
-    } 
+    }
+
+    const autoclosables = treasuries.filter((t: any) => t.autoClose);
+
+    setAutocloseTreasuries(autoclosables);
 
     return treasuries.filter((t: any) => !t.autoClose);
 
@@ -428,7 +437,11 @@ export const MoneyStreamsInfoView = (props: {
           consoleOut("finalList", items, "blue");
     
           setTreasuryCombinedList(items);
-        });
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => setLoadingCombinedStreamingList(false));
     }
   }, [getStreamingAccountStreams, treasuryList]);
 
@@ -1017,17 +1030,17 @@ export const MoneyStreamsInfoView = (props: {
   ]);
 
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
-    if (item && publicKey) {
+    if (item && publicKey && accountAddress) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
       if (v1.version < 2) {
-        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
+        return v1.beneficiaryAddress === accountAddress ? true : false;
       } else {
-        return v2.beneficiary === publicKey.toBase58() ? true : false;
+        return v2.beneficiary === accountAddress ? true : false;
       }
     }
     return false;
-  }, [publicKey]);
+  }, [accountAddress, publicKey]);
 
   const getStreamTitle = (item: Stream | StreamInfo): string => {
     let title = '';
@@ -1190,25 +1203,81 @@ export const MoneyStreamsInfoView = (props: {
 
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
 
-  const [incomingAmount, setIncomingAmount] = useState(0);
-  const [outgoingAmount, setOutgoingAmount] = useState(0);
+  const [incomingAmount, setIncomingAmount] = useState<number | undefined>(undefined);
+  const [outgoingAmount, setOutgoingAmount] = useState<number | undefined>(undefined);
+
+  const goToIncomingTabHandler = () => {
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
+
+    navigate(url);
+  }
+
+  const goToOutgoingTabHandler = () => {
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+
+    navigate(url);
+  }
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const onTabChange = useCallback((activeKey: string) => {
+    consoleOut('Selected tab option:', activeKey, 'blue');
+    
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/${activeKey}`;
+
+    const param = getQueryAccountType();
+    if (param) {
+      url += `?account-type=${param}`;
+    }
+
+    navigate(url);
+  }, [accountAddress, getQueryAccountType, navigate]);
 
   useEffect(() => {
-    if (!connection || !publicKey || !streamList) { return; }
+    if (!connection || !publicKey || !autocloseTreasuries || autocloseTreasuries.length === 0 || !streamList) {
+      setIncomingStreamList([]);
+      setOutgoingStreamList([]);
+
+      return;
+    }
 
     setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)));
 
-    setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream)));
+    const param = getQueryAccountType();
 
-  }, [connection, isInboundStream, publicKey, streamList]);
+    if (param === "multisig") {
+      setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream)));
+    } else {
+      setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream) && autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress)));
+    }
+  }, [
+    autocloseTreasuries,
+    connection,
+     getQueryAccountType,
+    isInboundStream,
+    publicKey,
+    streamList
+  ]);
 
   useEffect(() => {
-    if (!incomingStreamList || !outgoingStreamList) { return; }
+    if (!incomingStreamList || !outgoingStreamList || !treasuryCombinedList) { return; }
 
     setIncomingAmount(incomingStreamList.length);
-    setOutgoingAmount(outgoingStreamList.length);
 
-  }, [incomingStreamList, outgoingStreamList]);
+    if (!loadingOutgoingStreamList || !loadingCombinedStreamingList) {
+      setOutgoingAmount(outgoingStreamList.length + treasuryCombinedList.length);
+    }
+
+  }, [incomingStreamList, loadingCombinedStreamingList, loadingOutgoingStreamList, outgoingStreamList, treasuryCombinedList]);
 
   // Protocol
   const listOfBadges = ["MSP", "DEFI", "Money Streams"];
@@ -1238,18 +1307,6 @@ export const MoneyStreamsInfoView = (props: {
       content: renderBalance
     }
   ];
-
-  const goToIncomingTabHandler = () => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
-
-    navigate(url);
-  }
-
-  const goToOutgoingTabHandler = () => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
-
-    navigate(url);
-  }
 
   const renderSummary = (
     <>
@@ -1282,7 +1339,7 @@ export const MoneyStreamsInfoView = (props: {
                 Total streams
               </div>
               <div className="info-value">
-                {incomingAmount} {incomingAmount > 1 ? "streams" : "stream"}
+                {incomingAmount} {(incomingAmount && incomingAmount > 1) ? "streams" : "stream"}
               </div>
             </div>
           </div>
@@ -1315,19 +1372,19 @@ export const MoneyStreamsInfoView = (props: {
                 Total streams
               </div>
               <div className="info-value">
-                {outgoingAmount} {outgoingAmount > 1 ? "streams" : "stream"}
+                {outgoingAmount} {(outgoingAmount && outgoingAmount > 1) ? "streams" : "stream"}
               </div>
             </div>
           </div>
         </Col>
       </Row>
 
-      {(incomingAmount > 0 && outgoingAmount > 0) && (
+      {((incomingAmount && incomingAmount > 0) || (outgoingAmount && outgoingAmount > 0)) ? (
         <PieChartComponent
           incomingAmount={incomingAmount}
           outgoingAmount={outgoingAmount}
         />
-      )}
+      ) : null}
     </>
   );
 
@@ -1388,6 +1445,16 @@ export const MoneyStreamsInfoView = (props: {
     </Menu>
   );
 
+  const renderOutgoingAmoungOfStreams = (
+    <>
+      {outgoingAmount === undefined ? (
+        <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+      ) : (
+        outgoingAmount
+      )}
+    </>
+  )
+
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
     <>
@@ -1395,141 +1462,141 @@ export const MoneyStreamsInfoView = (props: {
         title="Outflows"
         classNameTitle="text-uppercase"
         subtitle={subtitle}
-        amount={outgoingAmount}
+        amount={renderOutgoingAmoungOfStreams}
         resume="outflow"
-        className="account-category-title"
+        className="account-category-title pr-0"
         hasRightIcon={true}
         rightIconHasDropdown={true}
         rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
         dropdownMenu={menu}
         isLink={false}
       />
-      {outgoingStreamList && outgoingStreamList.map((stream, index) => {
-        const onSelectStream = () => {
-          // Sends outgoing stream value to the parent component "Accounts"
-          onSendFromOutgoingStreamInfo(stream);
-        };
+      
+      <Spin indicator={bigLoadingIcon} spinning={loadingOutgoingStreamList && loadingCombinedStreamingList}>
+        <>
+          {(outgoingStreamList && outgoingStreamList.length > 0) && (
+            outgoingStreamList.map((stream, index) => {
+              const onSelectStream = () => {
+                // Sends outgoing stream value to the parent component "Accounts"
+                onSendFromOutgoingStreamInfo(stream);
+              };
 
-        const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
-        const subtitle = getStreamSubtitle(stream);
-        const status = getStreamStatus(stream);
-        const resume = getStreamResume(stream);
+              const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+              const subtitle = getStreamSubtitle(stream);
+              const status = getStreamStatus(stream);
+              const resume = getStreamResume(stream);
 
-        return (
-          <div 
-            key={index}
-            onClick={onSelectStream}
-            className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-          >
-            <ResumeItem
-              id={index}
-              title={title}
-              subtitle={subtitle}
-              resume={resume}
-              status={status}
-              hasRightIcon={true}
-              rightIcon={<IconArrowForward className="mean-svg-icons" />}
-              isLink={true}
-              isStream={true}
-            />
-          </div>
-        )
-      })}
+              return (
+                <div 
+                  key={index}
+                  onClick={onSelectStream}
+                  className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    id={index}
+                    title={title}
+                    subtitle={subtitle}
+                    resume={resume}
+                    status={status}
+                    hasRightIcon={true}
+                    rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                    isLink={true}
+                    isStream={true}
+                  />
+                </div>
+              )
+            })
+          )}
 
-      {treasuryCombinedList && treasuryCombinedList.length > 0 ? (
-        treasuryCombinedList.map((streaming, index) => {
+          {(treasuryCombinedList && treasuryCombinedList.length > 0) && (
+            treasuryCombinedList.map((streaming, index) => {
 
-          const v1 = streaming.treasury as unknown as TreasuryInfo;
-          const v2 = streaming.treasury as Treasury;
-          const isNewTreasury = streaming.treasury && streaming.treasury.version >= 2 ? true : false;
+              const v1 = streaming.treasury as unknown as TreasuryInfo;
+              const v2 = streaming.treasury as Treasury;
+              const isNewTreasury = streaming.treasury && streaming.treasury.version >= 2 ? true : false;
 
-          const onSelectedStreamingAccount = () => {
-            // Sends outgoing stream value to the parent component "Accounts"
-            onSendFromStreamingAccountDetails(streaming.streams);
-          }
+              const onSelectedStreamingAccount = () => {
+                // Sends outgoing stream value to the parent component "Accounts"
+                onSendFromStreamingAccountDetails(streaming.streams);
+              }
 
-          const state = isNewTreasury
-            ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-            : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+              const state = isNewTreasury
+                ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+                : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
 
-          const title = isNewTreasury ? v2.name : v1.label;
+              const title = isNewTreasury ? v2.name : v1.label;
 
-          const subtitle = <CopyExtLinkGroup
-            content={streaming.treasury.id as string}
-            number={8}
-            externalLink={true}
-          />;
+              const subtitle = <CopyExtLinkGroup
+                content={streaming.treasury.id as string}
+                number={8}
+                externalLink={true}
+              />;
 
-          const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
+              const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
 
-          const resume = amount > 1 ? "streams" : "stream";
+              const resume = amount > 1 ? "streams" : "stream";
 
-          return (
-            <div 
-              key={index}
-              // onClick={onSelectedStreamingAccount}
-              // className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-            >
-              <ResumeItem
-                title={title}
-                extraTitle={state}
-                classNameTitle="text-uppercase"
-                subtitle={subtitle}
-                amount={amount}
-                resume={resume}
-                className="account-category-title"
-                hasRightIcon={true}
-                rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                isLink={true}
-                onClick={onSelectedStreamingAccount}
-              />
+              return (
+                <div 
+                  key={index}
+                  // onClick={onSelectedStreamingAccount}
+                  // className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    title={title}
+                    extraTitle={state}
+                    classNameTitle="text-uppercase"
+                    subtitle={subtitle}
+                    amount={amount}
+                    resume={resume}
+                    className="account-category-title"
+                    hasRightIcon={true}
+                    rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                    isLink={true}
+                    onClick={onSelectedStreamingAccount}
+                  />
 
-              {(streaming.streams && streaming.streams.length > 0) && (
-                streaming.streams.map((stream, index) => {
-                  const onSelectStream = () => {
-                    // Sends outgoing stream value to the parent component "Accounts"
-                    onSendFromOutgoingStreamInfo(stream);
-                  };
+                  {(streaming.streams && streaming.streams.length > 0) && (
+                    streaming.streams.map((stream, index) => {
+                      const onSelectStream = () => {
+                        // Sends outgoing stream value to the parent component "Accounts"
+                        onSendFromOutgoingStreamInfo(stream);
+                      };
 
-                  const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
-                  const subtitle = getStreamSubtitle(stream);
-                  const status = getStreamStatus(stream);
-                  const resume = getStreamResume(stream);
+                      const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+                      const subtitle = getStreamSubtitle(stream);
+                      const status = getStreamStatus(stream);
+                      const resume = getStreamResume(stream);
 
-                  return (
-                    <div 
-                      key={index}
-                      onClick={onSelectStream}
-                      className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                      >
-                        <ResumeItem
-                          id={index}
-                          title={title}
-                          status={status}
-                          subtitle={subtitle}
-                          resume={resume}
-                          hasRightIcon={true}
-                          rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                          isLink={true}
-                          isStream={true}
-                        />
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          )
-        })
-      ) : null}
+                      return (
+                        <div 
+                          key={index}
+                          onClick={onSelectStream}
+                          className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                          >
+                            <ResumeItem
+                              id={index}
+                              title={title}
+                              status={status}
+                              subtitle={subtitle}
+                              resume={resume}
+                              hasRightIcon={true}
+                              rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                              isLink={true}
+                              isStream={true}
+                            />
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              )
+            })
+          )}
+        </>
+      </Spin>
     </>
   );
-
-  const onTabChange = useCallback((activeKey: string) => {
-    consoleOut('Selected tab option:', activeKey, 'blue');
-    // /accounts/:address/streaming/:streamingTab
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/${activeKey}`;
-    navigate(url);
-  }, [accountAddress, navigate]);
 
   // Tabs
   const tabs = [
@@ -1540,13 +1607,13 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       id: "incoming",
-      name: `Incoming ${incomingAmount > 0 ? `(${incomingAmount})` : ""}`,
-      render: incomingAmount > 0 ? renderListOfIncomingStreams : "You don't have any incoming stream"
+      name: `Incoming ${(incomingAmount && incomingAmount > 0) ? `(${incomingAmount})` : ""}`,
+      render: incomingAmount && incomingAmount > 0 ? renderListOfIncomingStreams : "You don't have any incoming stream"
     },
     {
       id: "outgoing",
-      name: `Outgoing ${outgoingAmount > 0 ? `(${outgoingAmount})` : ""}`,
-      render: outgoingAmount > 0 ? renderListOfOutgoingStreams : "You don't have any outgoing stream"
+      name: `Outgoing ${(outgoingAmount && outgoingAmount > 0) ? `(${outgoingAmount})` : ""}`,
+      render: outgoingAmount && outgoingAmount > 0 ? renderListOfOutgoingStreams : "You don't have any outgoing stream"
     },
   ];
 
