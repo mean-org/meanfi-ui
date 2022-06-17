@@ -170,6 +170,7 @@ export const SafeView = () => {
   const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isAssetDetails, setIsAssetDetails] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [assetSelected, setAssetSelected] = useState<any>();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedTab, setSelectedTab] = useState<number>();
@@ -3236,29 +3237,21 @@ export const SafeView = () => {
   // Keep account balance updated
   useEffect(() => {
 
-    if (!account) { return; }
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
 
-    const timeout = setTimeout(() => {
-
-      const getAccountBalance = (): number => {
-        return (account.lamports || 0) / LAMPORTS_PER_SOL;
-      }
-
+    if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
-      setPreviousBalance(account.lamports);
-    });
-
-    return () => {
-      clearTimeout(timeout);
+      setPreviousBalance(account?.lamports);
     }
-
   }, [
-    account, 
-    nativeBalance, 
-    previousBalance, 
+    account,
+    nativeBalance,
+    previousBalance,
     refreshTokenBalance
   ]);
 
@@ -3276,6 +3269,8 @@ export const SafeView = () => {
         filters: [execDataAccountsFilter]
       }
     );
+
+    if (execDataAccounts.length === 0) { return []; }
 
     const programs: ProgramAccounts[] = [];
     const group = (size: number, data: any) => {
@@ -3730,14 +3725,12 @@ export const SafeView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">multisigTxs:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
           <span className="ml-1">proposalLoadStatusRegister:</span><span className="ml-1 font-bold fg-dark-active">{proposalLoadStatusRegister.size}</span>
-          {/* <span className="ml-1">isProposalDetails:</span><span className="ml-1 font-bold fg-dark-active">{isProposalDetails ? 'true' : 'false'}</span>
-          <span className="ml-1">isProgramDetails:</span><span className="ml-1 font-bold fg-dark-active">{isProgramDetails ? 'true' : 'false'}</span> */}
         </div>
-      )}
+      )} */}
 
       <div className="container main-container">
 
