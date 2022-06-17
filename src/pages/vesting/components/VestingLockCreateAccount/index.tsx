@@ -16,7 +16,7 @@ import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { TransactionFees } from '@mean-dao/msp';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
-import { CheckOutlined } from '@ant-design/icons';
+import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TreasuryTypeOption } from '../../../../models/treasuries';
 import { FormLabelWithIconInfo } from '../../../../components/FormLabelWithIconInfo';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
@@ -24,6 +24,7 @@ import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../../../hooks/useWindowResize';
 import { IconCaretDown } from '../../../../Icons';
 import { VESTING_CATEGORIES } from '../../../../models/vesting';
+import { isError } from '../../../../utils/transactions';
 
 export const VestingLockCreateAccount = (props: {
     inModal: boolean;
@@ -55,6 +56,7 @@ export const VestingLockCreateAccount = (props: {
         loadingPrices,
         lockPeriodAmount,
         paymentStartDate,
+        transactionStatus,
         lockPeriodFrequency,
         setLockPeriodFrequency,
         getTokenPriceBySymbol,
@@ -851,8 +853,17 @@ export const VestingLockCreateAccount = (props: {
                                 shape="round"
                                 size="large"
                                 className="thin-stroke"
+                                disabled={isBusy}
                                 onClick={onStartTransaction}>
-                                Create vesting contract
+                                {isBusy && (
+                                    <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                                )}
+                                {isBusy
+                                    ? t('vesting.create-account.create-cta-busy')
+                                    : isError(transactionStatus.currentOperation)
+                                        ? t('general.retry')
+                                        : t('vesting.create-account.create-cta')
+                                }
                             </Button>
                         </div>
                     </div>
