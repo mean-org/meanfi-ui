@@ -3,22 +3,29 @@ import { Modal } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { UserTokenAccount } from '../../models/transactions';
 import { VestingLockCreateAccount } from '../../pages/vesting/components/VestingLockCreateAccount';
+import { TransactionFees } from '@mean-dao/msp';
 
 export const VestingContractCreateModal = (props: {
   handleClose: any;
+  handleOk: any;
+  isBusy: boolean;
   isVisible: boolean;
-  selectedToken: UserTokenAccount | undefined;
-  userBalances: any;
   nativeBalance: number;
   selectedList: TokenInfo[];
+  selectedToken: UserTokenAccount | undefined;
+  transactionFees: TransactionFees;
+  userBalances: any;
 }) => {
   const {
-    isVisible,
     handleClose,
-    userBalances,
+    handleOk,
+    isBusy,
+    isVisible,
+    nativeBalance,
     selectedList,
     selectedToken,
-    nativeBalance,
+    transactionFees,
+    userBalances,
   } = props;
   const [token, setToken] = useState<TokenInfo | undefined>(undefined);
 
@@ -34,13 +41,14 @@ export const VestingContractCreateModal = (props: {
       title={<div className="modal-title">Create Vesting Contract</div>}
       footer={null}
       visible={isVisible}
-      onOk={handleClose}
       onCancel={handleClose}
       width={480}>
         <VestingLockCreateAccount
           inModal={true}
           token={token}
-          vestingAccountCreated={handleClose}
+          isBusy={isBusy}
+          transactionFees={transactionFees}
+          onStartTransaction={handleOk}
           tokenChanged={(t: TokenInfo) => setToken(t)}
           userBalances={userBalances}
           nativeBalance={nativeBalance}

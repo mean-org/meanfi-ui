@@ -48,6 +48,7 @@ import { VestingContractAddFundsModal } from './components/TreasuryAddFundsModal
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
 import { segmentAnalytics } from '../../App';
 import { AppUsageEvent } from '../../utils/segment-service';
+import { ZERO_FEES } from '../../models/multisig';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -118,14 +119,9 @@ export const VestingView = () => {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
-  const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>({
-    multisigFee: 0,
-    networkFee: 0,
-    rentExempt: 0
-  } as MultisigTransactionFees);
-  const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
-    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-  });
+  const [createVestingContractTxFees, setCreateVestingContractTxFees] = useState<TransactionFees>(NO_FEES);
+  const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>(NO_FEES);
+  const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
   const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
@@ -1228,6 +1224,16 @@ export const VestingView = () => {
     refreshTokenBalance
   ]);
 
+  // Create Vesting contract fees
+  useEffect(() => {
+    if (!createVestingContractTxFees.mspFlatFee) {
+      getTransactionFees(MSP_ACTIONS.createTreasury).then(value => {
+        setCreateVestingContractTxFees(value);
+        consoleOut('createVestingContractTxFees:', value, 'orange');
+      });
+    }
+  }, [getTransactionFees, createVestingContractTxFees]);
+
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
 
@@ -1852,11 +1858,13 @@ export const VestingView = () => {
           <div className="place-transaction-box flat mb-0">
             <VestingLockCreateAccount
               inModal={false}
+              isBusy={isBusy}
               token={selectedToken}
               selectedList={selectedList}
               userBalances={userBalances}
               nativeBalance={nativeBalance}
-              vestingAccountCreated={() => {}}
+              onStartTransaction={() => {}}
+              transactionFees={createVestingContractTxFees}
               tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
             />
           </div>
@@ -1865,9 +1873,9 @@ export const VestingView = () => {
       <PreFooter />
       </>
     );
-  }, [nativeBalance, selectedList, selectedToken, setSelectedToken, t, userBalances]);
+  }, [isBusy, nativeBalance, selectedList, selectedToken, setSelectedToken, t, createVestingContractTxFees, userBalances]);
 
-  // TODO: Add multisig to the condition when the moment comes
+  // Unauthorized access or disconnected access
   if (!publicKey || (publicKey && accountAddress && getQueryAccountType() !== "multisig" && publicKey.toBase58() !== accountAddress)) {
     return (
       <>
@@ -2013,7 +2021,10 @@ export const VestingView = () => {
 
         {isVestingContractCreateModalVisible && (
           <VestingContractCreateModal
+            isBusy={isBusy}
             isVisible={isVestingContractCreateModalVisible}
+            handleOk={() => {}}
+            transactionFees={createVestingContractTxFees}
             handleClose={closeVestingContractCreateModal}
             selectedToken={selectedToken}
             nativeBalance={nativeBalance}

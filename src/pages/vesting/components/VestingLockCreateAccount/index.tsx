@@ -5,10 +5,7 @@ import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { cutNumber, getAmountWithSymbol, getTokenBySymbol, isValidNumber, slugify } from '../../../../utils/utils';
 import { consoleOut, disabledDate, getLockPeriodOptionLabel, isToday, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
-import { confirmationEvents, TxConfirmationInfo } from '../../../../contexts/transaction-status';
-import { EventType, OperationType, PaymentRateType, TransactionStatus } from '../../../../models/enums';
-import { AppUsageEvent } from '../../../../utils/segment-service';
-import { segmentAnalytics } from '../../../../App';
+import { PaymentRateType } from '../../../../models/enums';
 import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
 import { TokenListItem } from '../../../../components/TokenListItem';
 import { TextInput } from '../../../../components/TextInput';
@@ -16,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import moment from "moment";
 import { Button, DatePicker, Drawer, Dropdown, Menu, Modal } from 'antd';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { calculateActionFees, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
+import { TransactionFees } from '@mean-dao/msp';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
 import { CheckOutlined } from '@ant-design/icons';
@@ -30,21 +27,25 @@ import { VESTING_CATEGORIES } from '../../../../models/vesting';
 
 export const VestingLockCreateAccount = (props: {
     inModal: boolean;
+    isBusy: boolean;
+    nativeBalance: number;
+    onStartTransaction: any;
+    selectedList: TokenInfo[];
     token?: TokenInfo;
     tokenChanged: any;
+    transactionFees: TransactionFees;
     userBalances: any;
-    nativeBalance: number;
-    selectedList: TokenInfo[];
-    vestingAccountCreated: any;
 }) => {
     const {
-        token,
         inModal,
-        tokenChanged,
-        selectedList,
-        userBalances,
+        isBusy,
         nativeBalance,
-        vestingAccountCreated,
+        onStartTransaction,
+        selectedList,
+        token,
+        tokenChanged,
+        transactionFees,
+        userBalances,
     } = props;
     const { t } = useTranslation('common');
     const connection = useConnection();
@@ -55,10 +56,8 @@ export const VestingLockCreateAccount = (props: {
         lockPeriodAmount,
         paymentStartDate,
         lockPeriodFrequency,
-        previousWalletConnectState,
         setLockPeriodFrequency,
         getTokenPriceBySymbol,
-        setTransactionStatus,
         setLockPeriodAmount,
         setPaymentStartDate,
         setEffectiveRate,
@@ -68,69 +67,20 @@ export const VestingLockCreateAccount = (props: {
     const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
     const [tokenFilter, setTokenFilter] = useState("");
     const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
-    const [canSubscribe, setCanSubscribe] = useState(true);
     const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
     const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
     const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
     const [vestingLockName, setVestingLockName] = useState<string>('');
     const [vestingCategory, setVestingCategory] = useState<string>('');
     const [vestingLockFundingAmount, setVestingLockFundingAmount] = useState<string>('');
-    const [otpFees, setOtpFees] = useState<TransactionFees>({
-        blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-    });
     const [currentStep, setCurrentStep] = useState(0);
     const percentages = [5, 10, 15, 20];
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("");
     const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption>(VESTING_ACCOUNT_TYPE_OPTIONS[0]);
 
-    const resetTransactionStatus = useCallback(() => {
-
-        setTransactionStatus({
-            lastOperation: TransactionStatus.Iddle,
-            currentOperation: TransactionStatus.Iddle
-        });
-
-    }, [
-        setTransactionStatus
-    ]);
-
-    const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
-        return await calculateActionFees(connection, action);
-    }, [connection]);
-
-    const recordTxConfirmation = useCallback((signature: string, success = true) => {
-        const event = success
-            ? AppUsageEvent.CreateStreamingAccountCompleted
-            : AppUsageEvent.CreateStreamingAccountFailed;
-        segmentAnalytics.recordEvent(event, { signature: signature });
-    }, []);
-
-    // Setup event handler for Tx confirmed
-    const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
-        consoleOut("onTxConfirmed event executed:", item, 'crimson');
-        // setIsBusy(false);
-        resetTransactionStatus();
-        if (item && item.operationType === OperationType.TreasuryCreate) {
-            recordTxConfirmation(item.signature, true);
-        }
-    }, [
-        resetTransactionStatus,
-        recordTxConfirmation,
-    ]);
-
-    // Setup event handler for Tx confirmation error
-    const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
-        consoleOut("onTxTimedout event executed:", item, 'crimson');
-        if (item && item.operationType === OperationType.TreasuryCreate) {
-            recordTxConfirmation(item.signature, false);
-        }
-        // setIsBusy(false);
-        resetTransactionStatus();
-    }, [recordTxConfirmation, resetTransactionStatus]);
-
     const getFeeAmount = useCallback(() => {
-        return otpFees.blockchainFee + otpFees.mspFlatFee;
-    }, [otpFees.blockchainFee, otpFees.mspFlatFee]);
+        return transactionFees.blockchainFee + transactionFees.mspFlatFee;
+    }, [transactionFees.blockchainFee, transactionFees.mspFlatFee]);
 
     const getMinSolBlanceRequired = useCallback(() => {
         return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED
@@ -251,19 +201,6 @@ export const VestingLockCreateAccount = (props: {
         }
     }, [token, selectedToken, inModal]);
 
-    // Fees
-    useEffect(() => {
-        const getTransactionFees = async (): Promise<TransactionFees> => {
-            return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
-        }
-        if (!otpFees.mspFlatFee) {
-            getTransactionFees().then(values => {
-                setOtpFees(values);
-                consoleOut("otpFees:", values);
-            });
-        }
-    }, [connection, otpFees]);
-
     // Select one vesting category initially
     useEffect(() => {
         if (!vestingCategory) {
@@ -297,36 +234,6 @@ export const VestingLockCreateAccount = (props: {
             setIsXsDevice(false);
         }
     }, [width]);
-
-    // Hook on wallet connect/disconnect
-    useEffect(() => {
-
-        if (previousWalletConnectState !== connected) {
-            if (!previousWalletConnectState && connected && publicKey) {
-                consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-            } else if (previousWalletConnectState && !connected) {
-                consoleOut('User is disconnecting...', '', 'green');
-                confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-                consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
-                confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-                consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
-                setCanSubscribe(true);
-            }
-        } else if (!connected) {
-            setSelectedTokenBalance(0);
-        }
-
-        return () => {
-            clearTimeout();
-        };
-
-    }, [
-        connected,
-        publicKey,
-        previousWalletConnectState,
-        onTxConfirmed,
-        onTxTimedout,
-    ]);
 
     // Reset results when the filter is cleared
     useEffect(() => {
@@ -365,23 +272,6 @@ export const VestingLockCreateAccount = (props: {
             window.removeEventListener('resize', resizeListener);
         }
     }, []);
-
-    // Setup event listeners
-    useEffect(() => {
-        if (publicKey && canSubscribe) {
-            setCanSubscribe(false);
-            confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-            consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
-            confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-            consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
-        }
-    }, [
-        publicKey,
-        canSubscribe,
-        onTxConfirmed,
-        onTxTimedout,
-    ]);
-
 
     ////////////////////////////////////
     // Events, actions and Validation //
@@ -645,11 +535,6 @@ export const VestingLockCreateAccount = (props: {
 
     return (
         <>
-            {/* {isLocal() && (
-                <div className="debug-bar">
-                    <span className="ml-1">currentStep:</span><span className="ml-1 font-bold fg-dark-active">{currentStep}</span>
-                </div>
-            )} */}
 
             <div className={`${inModal ? 'scrollable-content pl-5 pr-4 py-2' : 'elastic-form-container'}`}>
 
@@ -966,7 +851,7 @@ export const VestingLockCreateAccount = (props: {
                                 shape="round"
                                 size="large"
                                 className="thin-stroke"
-                                onClick={() => {}}>
+                                onClick={onStartTransaction}>
                                 Create vesting contract
                             </Button>
                         </div>
