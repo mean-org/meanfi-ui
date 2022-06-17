@@ -1444,9 +1444,8 @@ export const MoneyStreamsInfoView = (props: {
           const isNewTreasury = streaming.treasury && streaming.treasury.version >= 2 ? true : false;
 
           const onSelectedStreamingAccount = () => {
-            // setTreasuryDetails(streaming);
             // Sends outgoing stream value to the parent component "Accounts"
-            onSendFromStreamingAccountDetails(streaming.treasury);
+            onSendFromStreamingAccountDetails(streaming.streams);
           }
 
           const state = isNewTreasury
@@ -1512,6 +1511,7 @@ export const MoneyStreamsInfoView = (props: {
                           hasRightIcon={true}
                           rightIcon={<IconArrowForward className="mean-svg-icons" />}
                           isLink={true}
+                          isStream={true}
                         />
                     </div>
                   )

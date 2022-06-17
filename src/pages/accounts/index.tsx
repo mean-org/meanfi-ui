@@ -4430,6 +4430,7 @@ export const AccountsNewView = () => {
   // ];
 
   const [isStreamingAccountDetails, setIsStreamingAccountDetails] = useState(false);
+  const [selectedStreamingAccountStreams, setSelectedStreamingAccountStreams] = useState<any>();
 
   const goToStreamIncomingDetailsHandler = (stream: any) => {
     // setIsStreamIncomingDetails(true);
@@ -4461,7 +4462,9 @@ export const AccountsNewView = () => {
     navigate(url);
   }
 
-  const goToStreamingAccountDetailsHandler = (stream: any) => {
+  const goToStreamingAccountDetailsHandler = (streamingAccountStreams: any) => {
+    setSelectedStreamingAccountStreams(streamingAccountStreams);
+    console.log("streamingAccount", streamingAccountStreams);
     setIsStreamingAccountDetails(true);
   }
 
@@ -4775,12 +4778,13 @@ export const AccountsNewView = () => {
                                 streamList={streamList}
                                 onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
                               />
-                            // ) : isStreamingAccountDetails ? (
-                            //   <StreamingAccountView
-                            //     stream={selectedStream}
-                            //     onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
-                            //     onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
-                            //   />
+                            ) : isStreamingAccountDetails ? (
+                              <StreamingAccountView
+                                streamSelected={streamDetail}
+                                streams={selectedStreamingAccountStreams}
+                                onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
+                                onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
+                              />
                             ) : null}
                           </div>
                         ) : null}
