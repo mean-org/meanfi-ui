@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import moment from "moment";
 import { Button, DatePicker, Drawer, Dropdown, Menu, Modal } from 'antd';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { TransactionFees } from '@mean-dao/msp';
+import { TransactionFees, TreasuryType } from '@mean-dao/msp';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -23,7 +23,7 @@ import { WizardStepSelector } from '../../../../components/WizardStepSelector';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../../../hooks/useWindowResize';
 import { IconCaretDown } from '../../../../Icons';
-import { VESTING_CATEGORIES } from '../../../../models/vesting';
+import { VestingContractCreateOptions, VESTING_CATEGORIES } from '../../../../models/vesting';
 import { isError } from '../../../../utils/transactions';
 
 export const VestingLockCreateAccount = (props: {
@@ -287,6 +287,18 @@ export const VestingLockCreateAccount = (props: {
     const hideDrawer = () => {
         setIsTokenSelectorVisible(false);
     };
+
+    // TODO: Modify payload as needed
+    const onAccountCreateClick = () => {
+        const options: VestingContractCreateOptions = {
+            vestingContractName: vestingLockName,
+            vestingContractCategory: vestingCategory,
+            vestingContractType: treasuryOption ? treasuryOption.type : TreasuryType.Lock,
+            token: selectedToken as TokenInfo,
+            amount: vestingLockFundingAmount
+        };
+        onStartTransaction(options);
+    }
 
     const handleVestingLockNameChange = (e: any) => {
         setVestingLockName(e.target.value);
@@ -854,7 +866,7 @@ export const VestingLockCreateAccount = (props: {
                                 size="large"
                                 className="thin-stroke"
                                 disabled={isBusy}
-                                onClick={onStartTransaction}>
+                                onClick={onAccountCreateClick}>
                                 {isBusy && (
                                     <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                                 )}
