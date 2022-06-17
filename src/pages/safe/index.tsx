@@ -170,6 +170,7 @@ export const SafeView = () => {
   const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isAssetDetails, setIsAssetDetails] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [assetSelected, setAssetSelected] = useState<any>();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedTab, setSelectedTab] = useState<number>();
@@ -3268,6 +3269,8 @@ export const SafeView = () => {
         filters: [execDataAccountsFilter]
       }
     );
+
+    if (execDataAccounts.length === 0) { return []; }
 
     const programs: ProgramAccounts[] = [];
     const group = (size: number, data: any) => {
