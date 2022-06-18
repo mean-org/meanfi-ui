@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { UserTokenAccount } from '../../models/transactions';
-import { VestingLockCreateAccount } from '../../pages/vesting/components/VestingLockCreateAccount';
+import { UserTokenAccount } from '../../../../models/transactions';
+import { VestingContractCreateForm } from '../VestingContractCreateForm';
 import { TransactionFees } from '@mean-dao/msp';
 
 export const VestingContractCreateModal = (props: {
@@ -43,7 +43,7 @@ export const VestingContractCreateModal = (props: {
       visible={isVisible}
       onCancel={handleClose}
       width={480}>
-        <VestingLockCreateAccount
+        <VestingContractCreateForm
           inModal={true}
           token={token}
           isBusy={isBusy}

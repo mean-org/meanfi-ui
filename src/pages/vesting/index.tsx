@@ -26,15 +26,15 @@ import { ArrowLeftOutlined, WarningFilled } from '@ant-design/icons';
 import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, openLinkInNewTab, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
-import { VestingLockAccountList } from './components/VestingLockAccountList';
+import { VestingContractList } from './components/VestingContractList';
 import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isMobile } from 'react-device-detect';
 import { MetaInfoCta, TreasuryTopupParams } from '../../models/common-types';
 import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
-import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
+import { VestingContractCreateForm } from './components/VestingContractCreateForm';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { VestingContractCreateModal } from '../../components/VestingContractCreateModal';
+import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
 import { VestingContractCreateOptions, VESTING_CATEGORIES } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
@@ -2275,7 +2275,7 @@ export const VestingView = () => {
             <h3 className="user-instruction-headline">{t('vesting.user-instruction-headline')}</h3>
           </div>
           <div className="place-transaction-box flat mb-0">
-            <VestingLockCreateAccount
+            <VestingContractCreateForm
               inModal={false}
               isBusy={isBusy}
               token={selectedToken}
@@ -2390,7 +2390,7 @@ export const VestingView = () => {
                     <div className="item-block vertical-scroll">
   
                       <div className="asset-category flex-column">
-                        <VestingLockAccountList
+                        <VestingContractList
                           streamingAccounts={treasuryList}
                           selectedAccount={selectedVestingContract}
                           onAccountSelected={(item: Treasury | undefined) => onSelectVestingContract(item)}

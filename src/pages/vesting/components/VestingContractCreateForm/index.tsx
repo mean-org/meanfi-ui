@@ -26,7 +26,7 @@ import { IconCaretDown } from '../../../../Icons';
 import { VestingContractCreateOptions, VESTING_CATEGORIES } from '../../../../models/vesting';
 import { isError } from '../../../../utils/transactions';
 
-export const VestingLockCreateAccount = (props: {
+export const VestingContractCreateForm = (props: {
     inModal: boolean;
     isBusy: boolean;
     nativeBalance: number;

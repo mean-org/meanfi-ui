@@ -7,7 +7,7 @@ import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { formatThousands } from '../../../../utils/utils';
 
-export const VestingLockAccountList = (props: {
+export const VestingContractList = (props: {
     streamingAccounts: Treasury[] | undefined;
     selectedAccount: Treasury | undefined;
     onAccountSelected: any;
