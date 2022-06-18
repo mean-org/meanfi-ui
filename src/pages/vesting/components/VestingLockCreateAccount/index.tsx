@@ -435,11 +435,19 @@ export const VestingLockCreateAccount = (props: {
                 selectedToken &&
                 nativeBalance > 0 &&
                 tokenBalance > 0 &&
-                vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > 0 &&
-                parseFloat(vestingLockFundingAmount) <= maxAmount
+                (!vestingLockFundingAmount || parseFloat(vestingLockFundingAmount) <= maxAmount)
             ? true
             : false;
-    }
+    };
+
+    const isStepTwoValid = (): boolean => {
+        return  isStepOneValid() &&
+                lockPeriodAmount &&
+                parseFloat(lockPeriodAmount) > 0 &&
+                lockPeriodFrequency
+        ? true
+        : false;
+    };
 
     const onChangeValuePercentages = (value: number) => {
         setCliffReleasePercentage(`${value}`);
@@ -876,7 +884,7 @@ export const VestingLockCreateAccount = (props: {
                                 shape="round"
                                 size="large"
                                 className="thin-stroke"
-                                disabled={isBusy}
+                                disabled={isBusy || !isStepTwoValid()}
                                 onClick={onAccountCreateClick}>
                                 {isBusy && (
                                     <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
