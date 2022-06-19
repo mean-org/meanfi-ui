@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Modal } from "antd";
 import { JupiterExchange } from '../../views';
 import { getTokenBySymbol, useLocalStorageState } from '../../utils/utils';
-import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
+import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { useNavigate } from 'react-router-dom';
 import { Connection } from '@solana/web3.js';
 import { consoleOut } from '../../utils/ui';

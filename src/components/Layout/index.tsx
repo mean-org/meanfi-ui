@@ -30,6 +30,7 @@ import { shortenAddress } from "../../utils/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { INVEST_ROUTE_BASE_PATH } from "../../pages/invest";
 import { VESTING_ROUTE_BASE_PATH } from "../../pages/vesting";
+import { getDefaultRpc } from "../../services/connections-hq";
 
 const { Header, Content, Footer } = Layout;
 
@@ -87,13 +88,7 @@ export const AppLayout = React.memo((props: any) => {
   // Callback to fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
 
-    let connection: Connection;
-
-    if (isProd()) {
-      connection = new Connection("https://ssc-dao.genesysgo.net/");
-    } else {
-      connection = new Connection("https://api.devnet.solana.com/");
-    }
+    const connection = new Connection(getDefaultRpc().httpProvider);
 
     if (!connection) { return null; }
 
