@@ -9,7 +9,6 @@ import { WizardStepSelector } from '../../../../components/WizardStepSelector';
 import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { TreasuryTypeOption } from '../../../../models/treasuries';
 import { useWallet } from '../../../../contexts/wallet';
 import { LoadingOutlined } from '@ant-design/icons';
 import { isError } from '../../../../utils/transactions';
@@ -37,6 +36,7 @@ export const VestingContractCreateStreamModal = (props: {
         isXsDevice,
     } = props;
     const {
+        theme,
         tokenList,
         selectedToken,
         loadingPrices,
@@ -64,7 +64,7 @@ export const VestingContractCreateStreamModal = (props: {
     const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
 
     // Setting from the vesting contract
-    const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption | undefined>(undefined);
+    const [treasuryOption, setTreasuryOption] = useState<TreasuryType | undefined>(undefined);
     const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
 
 
@@ -372,6 +372,23 @@ export const VestingContractCreateStreamModal = (props: {
     };
 
 
+    const renderVcName = () => {
+        if (!vestingContract) { return null; }
+        return (
+            <div className="flex-fixed-right px-1 mt-2 mb-2">
+                <div className="left font-bold">
+                    {vestingContract.name}
+                </div>
+                <div className="right">
+                    <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                        {treasuryOption === TreasuryType.Open ? 'Open' : 'Locked'}
+                    </span>
+                </div>
+            </div>
+        );
+    }
+
+
     return (
         <Modal
             className="mean-modal simple-modal unpadded-content"
@@ -390,7 +407,8 @@ export const VestingContractCreateStreamModal = (props: {
                 />
 
                 <div className={`panel1 ${currentStep === 0 ? 'show' : 'hide'}`}>
-                    <h2 className="form-group-label">{t('vesting.create-stream.step-one-label')}</h2>
+
+                    {vestingContract && renderVcName()}
 
                     {/* Vesting Stream name */}
                     <div className="form-label">{t('vesting.create-stream.vesting-stream-name-label')}</div>
@@ -405,7 +423,7 @@ export const VestingContractCreateStreamModal = (props: {
                                     type="text"
                                     maxLength={32}
                                     onChange={handleVestingStreamNameChange}
-                                    placeholder={t('vesting.create-stream.vesting-stream-name-placeholder')} // Name for this no-code vesting stream
+                                    placeholder={t('vesting.create-stream.vesting-stream-name-placeholder')}
                                     spellCheck="false"
                                     value={vestingStreamName}
                                 />
@@ -427,13 +445,13 @@ export const VestingContractCreateStreamModal = (props: {
                                         onFocus={handleRecipientAddressFocusIn}
                                         onChange={handleRecipientAddressChange}
                                         onBlur={handleRecipientAddressFocusOut}
-                                        placeholder={t('transactions.recipient.placeholder')}
+                                        placeholder={t('vesting.create-stream.beneficiary-address-placeholder')}
                                         required={true}
                                         spellCheck="false"
                                         value={recipientAddress} />
                                     <span id="payment-recipient-static-field"
                                         className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                                        {recipientAddress || t('transactions.recipient.placeholder')}
+                                        {recipientAddress || t('vesting.create-stream.beneficiary-address-placeholder')}
                                     </span>
                                 </span>
                             </div>
@@ -455,7 +473,7 @@ export const VestingContractCreateStreamModal = (props: {
                     </div>
 
                     {/* Amount to stream */}
-                    {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (
+                    {(treasuryOption === TreasuryType.Open) ? (
                         <div className="form-label">{t('vesting.create-stream.total-funds-to-stream')}</div>
                     ) : (
                         <div className="form-label">{t('vesting.create-stream.total-funds-to-commit')}</div>
@@ -561,6 +579,8 @@ export const VestingContractCreateStreamModal = (props: {
 
                 <div className={`panel2 ${currentStep === 1 ? 'show' : 'hide'}`}>
                     <h2 className="form-group-label">{t('vesting.create-stream.step-two-label')}</h2>
+
+                    {vestingContract && renderVcName()}
 
                     <div className="ml-1">
                         <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
