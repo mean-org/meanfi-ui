@@ -10,7 +10,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { consoleOut, copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { ResumeItem } from '../UI/ResumeItem';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 // import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
@@ -20,9 +19,9 @@ import { Idl } from '@project-serum/anchor';
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
 import { OperationType } from '../../../../models/enums';
 import moment from "moment";
+import { ResumeItem } from '../../../../components/ResumeItem';
 
 export const ProposalDetailsView = (props: {
-  isProposalDetails: boolean;
   onDataToSafeView: any;
   proposalSelected?: any;
   selectedMultisig?: any;
@@ -43,8 +42,7 @@ export const ProposalDetailsView = (props: {
     connection,
     solanaApps,
     appsProvider,
-    multisigClient,
-    isProposalDetails, 
+    multisigClient, 
     onDataToSafeView, 
     proposalSelected, 
     selectedMultisig, 
@@ -188,7 +186,7 @@ export const ProposalDetailsView = (props: {
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
     proposalIxInfo ? (
-      <div className="safe-details-collapse w-100 pl-1">
+      <div className="safe-details-collapse w-100 pl-1 pr-4">
         <Row gutter={[8, 8]} className="mb-2 mt-2" key="programs">
           <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
             <span className="info-label">{t('multisig.proposal-modal.instruction-program')}</span>
@@ -217,8 +215,7 @@ export const ProposalDetailsView = (props: {
             return (
               <Row gutter={[8, 8]} className="mb-2" key={`item-${index}`}>
                 <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                    {/* <span className="info-label">{t('multisig.proposal-modal.instruction-account')} :</span> */}
-                    <span className="info-label">{account.label || t('multisig.proposal-modal.instruction-account')}</span>
+                  <span className="info-label">{account.label || t('multisig.proposal-modal.instruction-account')}</span>
                 </Col>
                 <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
                   <span onClick={() => copyAddressToClipboard(account.value)} className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
@@ -255,14 +252,14 @@ export const ProposalDetailsView = (props: {
                       <>
                         {item.value.map((owner: any, idx: number) => {
                           return (
-                            <Row key={`owners-${idx}`}>
+                            <Row key={`owners-${idx}`} className="pr-1">
                               <Col xs={6} sm={6} md={4} lg={4} className="pl-1 pr-1 text-truncate">
                                 <Tooltip placement="right" title={owner.label || ""}>
                                   <span className="info-label">{owner.label || t('multisig.proposal-modal.instruction-data')}</span>
                                 </Tooltip>
                               </Col>
                               <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
-                                <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                                <span onClick={() => copyAddressToClipboard(owner.data)} className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
                                   {owner.data}
                                 </span>
                               </Col>
@@ -279,15 +276,13 @@ export const ProposalDetailsView = (props: {
                         })}
                       </>
                     ) : (
-                      item.value && (
-                        <>
-                          <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3" key="loquejea">
-                            <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
-                              {item.value}
-                            </span>
-                          </Col>
-                        </>
-                      )
+                      <>
+                        <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3" key="loquejea">
+                          <span className="d-block info-data text-truncate" style={{cursor: 'pointer'}}>
+                            {item.value}
+                          </span>
+                        </Col>
+                      </>
                     )
                   }
                 </Row>
@@ -303,7 +298,7 @@ export const ProposalDetailsView = (props: {
                     </Tooltip>
                   </Col>
                   <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
-                    <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                    <span className="d-block info-data text-truncate" style={{cursor: 'pointer'}}>
                       {item.value}
                     </span>
                   </Col>
@@ -314,7 +309,7 @@ export const ProposalDetailsView = (props: {
         }
       </div>
     ) : (
-      <span>Loading instruction...</span>
+      <span className="pl-1">Loading instruction...</span>
     )
   );
 
@@ -352,7 +347,7 @@ export const ProposalDetailsView = (props: {
                 key={`${activity.index + 1}`}
                 className={`d-flex w-100 align-items-center activities-list ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                 >
-                  <div className="list-item">
+                  <div className="resume-item-container">
                     <span className="mr-2">
                       {moment(activity.createdOn).format("LLL").toLocaleString()}
                     </span>
@@ -380,7 +375,7 @@ export const ProposalDetailsView = (props: {
         <span className="pl-1">This proposal has no activities</span>
       )
     ) : (
-      <span>Loading activities...</span>
+      <span className="pl-1">Loading activities...</span>
     )
   )
 
@@ -422,6 +417,8 @@ export const ProposalDetailsView = (props: {
 
   if (!selectedProposal || !selectedProposal.proposer) { return (<></>); }
 
+  const title = selectedProposal.details.title ? selectedProposal.details.title : "Unknown proposal";
+
   // Number of participants who have already approved the Tx
   const approvedSigners = selectedProposal.signers.filter((s: any) => s === true).length;
   const neededSigners = approvedSigners && (selectedMultisig.threshold - approvedSigners);
@@ -429,6 +426,8 @@ export const ProposalDetailsView = (props: {
   const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : "";
 
   const proposedBy = selectedMultisig.owners.find((owner: any) => owner.address === selectedProposal.proposer?.toBase58());
+
+  const resume = (selectedProposal.status === 0 && neededSigners > 0) && `Needs ${neededSigners} ${neededSigners > 1 ? "approvals" : "approval"} to pass`;
   
   return (
     <div className="safe-details-container">
@@ -441,14 +440,15 @@ export const ProposalDetailsView = (props: {
       <ResumeItem
         id={selectedProposal.id}
         // src={selectedProposal.src}
-        title={selectedProposal.details.title}
+        title={title}
         expires={expirationDate}
         executedOn={executedOnDate}
         approved={approvedSigners}
         // rejected={selectedProposal.rejected}
         status={selectedProposal.status}
-        needs={neededSigners}
-        isProposalDetails={isProposalDetails}
+        resume={resume}
+        isDetailsPanel={true}
+        isLink={false}
       />
       {selectedProposal.details.description && (
         <Row className="safe-details-description pl-1">
@@ -497,7 +497,7 @@ export const ProposalDetailsView = (props: {
           )}
         </>
         <>
-          <Col className="safe-details-right-container btn-group">
+          <Col className="safe-details-right-container btn-group mr-1">
             {selectedProposal.status !== MultisigTransactionStatus.Approved && selectedProposal.status !== MultisigTransactionStatus.Executed ? (
               <Button
                 type="default"

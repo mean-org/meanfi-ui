@@ -819,6 +819,7 @@
 			"status-running": "Fonctionnement",
 			"status-scheduled": "Programmé",
 			"status-stopped": "Arrêté",
+			"status-paused": "Paused",
 			"stopped": "À court de fonds",
 			"stopped-manually": "Arrêté manuellement",
 			"streaming": "Diffusion"
@@ -1255,7 +1256,8 @@
 			"screen-title": "Streaming Accounts - Streams",
 			"status-running": "Fonctionnement",
 			"status-scheduled": "Programmé",
-			"status-stopped": "Arrêté"
+			"status-stopped": "Arrêté",
+			"status-paused": "Paused"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

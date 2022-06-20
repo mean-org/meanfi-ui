@@ -1,12 +1,9 @@
 import { useState } from "react";
-import { Button, Popover, Tooltip } from "antd";
+import { Button, Popover } from "antd";
 import { useTranslation } from "react-i18next";
-import { CloseOutlined, CopyOutlined } from "@ant-design/icons";
-// import { shortenAddress } from "../../utils/utils";
+import { CloseOutlined } from "@ant-design/icons";
 import "./style.scss";
 import { MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
-// import { copyText } from "../../utils/ui";
-// import { openNotification } from "../Notifications";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 
 export const MultisigOwnersView = (props: {
@@ -20,20 +17,6 @@ export const MultisigOwnersView = (props: {
   const handlePopoverVisibleChange = (visibleChange: boolean) => {
     setPopoverVisible(visibleChange);
   };
-
-  // const onCopyAddress = (address: any) => {
-  //   if (address && copyText(address)) {
-  //     openNotification({
-  //       description: t('notifications.account-address-copied-message'),
-  //       type: "info"
-  //     });
-  //   } else {
-  //     openNotification({
-  //       description: t('notifications.account-address-not-copied-message'),
-  //       type: "error"
-  //     });
-  //   }
-  // }
 
   const titleContent = (
     <div className="flexible-left">
@@ -63,18 +46,6 @@ export const MultisigOwnersView = (props: {
               message={t('assets.account-address-copy-cta')}
               externalLink={true}
             />
-            {/* <div className="right text-monospace">{shortenAddress(item.address, 6)}</div>
-            <span className="icon-button-container">
-              <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
-                <Button
-                  type="default"
-                  shape="circle"
-                  size="middle"
-                  icon={<CopyOutlined />}
-                  onClick={() => onCopyAddress(item.address)}
-                />
-              </Tooltip>
-            </span> */}
           </div>
         );
       })}

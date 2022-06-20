@@ -813,6 +813,7 @@
 			"status-running": "در حال اجرا",
 			"status-scheduled": "برنامه ریزی شده است",
 			"status-stopped": "متوقف شد",
+			"status-paused": "Paused",
 			"stopped": "بودجه تمام شد",
 			"stopped-manually": "به صورت دستی متوقف شد",
 			"streaming": "استریمینگ"
@@ -1237,6 +1238,7 @@
 			"status-running": "در حال اجرا",
 			"status-scheduled": "برنامه ریزی شده است",
 			"status-stopped": "متوقف شد",
+			"status-paused": "Paused",
 			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
