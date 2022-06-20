@@ -670,9 +670,9 @@ export const VestingContractCreateStreamModal = (props: {
                         </div>
                     </div>
 
-                    <div className="mb-2">{t('treasuries.treasury-streams.add-stream-locked.panel3-text-one')} {vestingStreamName ? vestingStreamName : "--"}</div>
+                    <div className="mb-2 px-1">{t('treasuries.treasury-streams.add-stream-locked.panel3-text-one')} {vestingStreamName ? vestingStreamName : "--"}</div>
 
-                    <Row className="mb-2">
+                    <Row className="mb-2 px-1">
                         <Col span={24}>
                             <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}  </strong> {recipientAddress ? recipientAddress : "--"}
                         </Col>
