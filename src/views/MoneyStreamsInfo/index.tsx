@@ -1292,7 +1292,7 @@ export const MoneyStreamsInfoView = (props: {
 
   // Balance
   const renderBalance = (
-    <a href="#" className="simplelink underline-on-hover">Tracking 2 smart contracts</a>
+    <a href="https://docs.meanfi.com/products/developers/smart-contracts"  target="_blank" rel="noopener noreferrer" className="simplelink underline-on-hover">Tracking 2 smart contracts</a>
   );
 
   const infoData = [
