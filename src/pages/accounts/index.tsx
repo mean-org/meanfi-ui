@@ -1969,7 +1969,7 @@ export const AccountsNewView = () => {
     resetTransactionStatus
   ]);
 
-  const onExecuteTransferOwnershipTx  = useCallback(async (selectedAuthority: string) => {
+  const onExecuteTransferOwnershipTx  = useCallback(async (data: any) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1982,7 +1982,7 @@ export const AccountsNewView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createTransferOwnershipTx = async (selectedAuthority: string) => {
+    const createTransferOwnershipTx = async (data: any) => {
 
       if (!publicKey || !selectedAsset || !selectedMultisig || !multisigClient) { 
         return null;
@@ -1991,7 +1991,7 @@ export const AccountsNewView = () => {
       const setAuthIx = Token.createSetAuthorityInstruction(
         TOKEN_PROGRAM_ID,
         new PublicKey(selectedAsset.publicAddress as string),
-        new PublicKey(selectedAuthority),
+        new PublicKey(data.selectedAuthority),
         'AccountOwner',
         selectedMultisig.authority,
         []
@@ -2001,7 +2001,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Change asset ownership",
+        data.title === "" ? "Change asset ownership" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.SetAssetAuthority,
@@ -2016,7 +2016,7 @@ export const AccountsNewView = () => {
 
     const createTx = async (): Promise<boolean> => {
 
-      if (!publicKey || !selectedAuthority) {
+      if (!publicKey || !data) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -2032,7 +2032,8 @@ export const AccountsNewView = () => {
 
       // Create transaction payload for debugging
       const payload = {
-        selectedAuthority: selectedAuthority,
+        title: data.title as string,
+        selectedAuthority: data.selectedAuthority,
       };
 
       consoleOut('data:', payload);
@@ -2073,7 +2074,7 @@ export const AccountsNewView = () => {
         return false;
       }
 
-      const result =  await createTransferOwnershipTx(selectedAuthority)
+      const result =  await createTransferOwnershipTx(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('createTransferVaultAuthorityTx returned transaction:', value);
