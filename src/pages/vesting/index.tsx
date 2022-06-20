@@ -2523,6 +2523,8 @@ export const VestingView = () => {
             handleOk={(options: any) => onAcceptCreateStream(options)}
             isVisible={isCreateStreamModalVisible}
             nativeBalance={nativeBalance}
+            minRequiredBalance={minRequiredBalance}
+            isMultisigTreasury={isMultisigTreasury()}
             transactionFees={transactionFees}
             vestingContract={selectedVestingContract}
             withdrawTransactionFees={withdrawTransactionFees}

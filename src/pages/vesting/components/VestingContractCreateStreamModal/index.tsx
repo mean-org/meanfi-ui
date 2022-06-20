@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useContext, useState } from 'react';
 import { Button, Checkbox, Modal } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { cutNumber, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
+import { cutNumber, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut, isValidAddress, toUsCurrency } from '../../../../utils/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
@@ -16,24 +16,28 @@ import { isError } from '../../../../utils/transactions';
 export const VestingContractCreateStreamModal = (props: {
     handleClose: any;
     handleOk: any;
+    isBusy: boolean;
+    isMultisigTreasury: boolean;
     isVisible: boolean;
+    isXsDevice: boolean;
+    minRequiredBalance: number;
     nativeBalance: number;
     transactionFees: TransactionFees;
     vestingContract: Treasury | undefined;
     withdrawTransactionFees: TransactionFees;
-    isBusy: boolean;
-    isXsDevice: boolean;
 }) => {
     const {
         handleClose,
         handleOk,
+        isBusy,
+        isMultisigTreasury,
         isVisible,
+        isXsDevice,
+        minRequiredBalance,
         nativeBalance,
         transactionFees,
         vestingContract,
         withdrawTransactionFees,
-        isBusy,
-        isXsDevice,
     } = props;
     const {
         theme,
@@ -173,6 +177,16 @@ export const VestingContractCreateStreamModal = (props: {
 
         return parseFloat(fromCoinAmount) * price;
     }, [fromCoinAmount, getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken]);
+
+    const getMinBalanceRequired = useCallback(() => {
+        if (!transactionFees) { return 0; }
+
+        const bf = transactionFees.blockchainFee;       // Blockchain fee
+        const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+        const minRequired = isMultisigTreasury ? minRequiredBalance : bf + ff;
+        return minRequired;
+
+    }, [isMultisigTreasury, minRequiredBalance, transactionFees]);
 
     /////////////////////
     // Data management //
@@ -371,6 +385,33 @@ export const VestingContractCreateStreamModal = (props: {
         : false;
     };
 
+    const getStepOneButtonLabel = (): string => {
+        return  !publicKey
+            ? t('transactions.validation.not-connected')
+            : !vestingStreamName || vestingStreamName.length > 32
+                ? t('vesting.create-stream.stream-name-empty')
+                : !recipientAddress || !isValidAddress(recipientAddress)
+                    ? t('vesting.create-stream.beneficiary-address-missing')
+                    : isAddressOwnAccount()
+                        ? t('vesting.create-stream.cannot-send-to-yourself')
+                        : !selectedToken || unallocatedBalance.isZero()
+                            ? t('transactions.validation.no-balance')
+                            : !tokenAmount || tokenAmount.isZero()
+                                ? t('transactions.validation.no-amount')
+                                : (isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
+                                (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))
+                                    ? t('transactions.validation.amount-high')
+                                    : !isVerifiedRecipient
+                                        ? t('transactions.validation.verified-recipient-unchecked')
+                                        : nativeBalance < getMinBalanceRequired()
+                                            ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
+                                            : t('vesting.create-stream.step-one-validation-pass');
+    }
+
+
+    ///////////////
+    // Rendering //
+    ///////////////
 
     const renderVcName = () => {
         if (!vestingContract) { return null; }
@@ -570,7 +611,7 @@ export const VestingContractCreateStreamModal = (props: {
                             className="thin-stroke"
                             disabled={!isStepOneValid()}
                             onClick={onContinueStepOneButtonClick}>
-                            Next
+                            {getStepOneButtonLabel()}
                         </Button>
                     </div>
 

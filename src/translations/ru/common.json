@@ -1346,7 +1346,11 @@
 			"beneficiary-address-label": "Beneficiary address",
 			"beneficiary-address-placeholder": "Input a valid Solana address",
 			"total-funds-to-stream": "Total funds to stream",
-			"total-funds-to-commit": "Total funds to commit"
+			"total-funds-to-commit": "Total funds to commit",
+			"step-one-validation-pass": "Next",
+			"stream-name-empty": "Stream name cannot be empty",
+			"beneficiary-address-missing": "Add valid beneficiary",
+			"cannot-send-to-yourself": "Can't send to yourself"
 		},
 		"vesting-account-details": {
 			"panel-title": "Vesting Account Details"
