@@ -2292,9 +2292,9 @@ export const AccountsNewView = () => {
     setIsDeleteVaultModalVisible(true);
   }, []);
 
-  const onAcceptDeleteVault = () => {
+  const onAcceptDeleteVault = (data: any) => {
 
-    onExecuteCloseAssetTx();
+    onExecuteCloseAssetTx(data);
   };
 
   const onVaultDeleted = useCallback(() => {
@@ -2302,7 +2302,7 @@ export const AccountsNewView = () => {
     resetTransactionStatus();
   },[resetTransactionStatus]);
 
-  const onExecuteCloseAssetTx = useCallback(async () => {
+  const onExecuteCloseAssetTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -2315,7 +2315,7 @@ export const AccountsNewView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const closeAssetTx = async (inputAsset: UserTokenAccount) => {
+    const closeAssetTx = async (inputAsset: UserTokenAccount, data: any) => {
 
       if (!publicKey || !inputAsset || !selectedMultisig || !multisigClient || !inputAsset.publicAddress) { 
         console.error("I do not have anything, review");
@@ -2339,7 +2339,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Close asset",
+        data.title === "" ? "Close asset" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.DeleteAsset,
@@ -2370,6 +2370,7 @@ export const AccountsNewView = () => {
 
       // Create transaction payload for debugging
       const payload = {
+        title: data.title,
         asset: selectedAsset,
       };
 
@@ -2410,7 +2411,7 @@ export const AccountsNewView = () => {
         return false;
       }
 
-      const result =  await closeAssetTx(selectedAsset)
+      const result =  await closeAssetTx(selectedAsset, data)
         .then((value: any) => {
           if (!value) { return false; }
           consoleOut('deleteVaultTx returned transaction:', value);
