@@ -36,7 +36,7 @@ import { VestingContractCreateForm } from './components/VestingContractCreateFor
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { VestingContractCreateOptions, VESTING_CATEGORIES } from '../../models/vesting';
+import { VestingContractCreateOptions, VestingContractWithdrawOptions, VESTING_CATEGORIES } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
@@ -48,9 +48,10 @@ import { VestingContractSolBalanceModal } from './components/VestingContractSolB
 import { VestingContractAddFundsModal } from './components/TreasuryAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
 import { segmentAnalytics } from '../../App';
-import { AppUsageEvent } from '../../utils/segment-service';
+import { AppUsageEvent, SegmentVestingContractWithdrawData } from '../../utils/segment-service';
 import { ZERO_FEES } from '../../models/multisig';
 import { VestingContractCreateStreamModal } from './components/VestingContractCreateStreamModal';
+import { VestingContractTransferFundsModal } from './components/VestingContractTransferFundsModal';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -71,6 +72,8 @@ export const VestingView = () => {
     pendingMultisigTxCount,
     previousWalletConnectState,
     setPendingMultisigTxCount,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
@@ -1636,6 +1639,367 @@ export const VestingView = () => {
     setIsCreateStreamModalVisibility(false);
   }, [resetTransactionStatus]);
 
+  // Transfer funds modal
+  const [isVestingContractTransferFundsModalVisible, setIsVestingContractTransferFundsModalVisible] = useState(false);
+  const showVestingContractTransferFundsModal = useCallback(() => {
+    setIsVestingContractTransferFundsModalVisible(true);
+    getTransactionFees(MSP_ACTIONS.treasuryWithdraw).then(value => {
+      setTransactionFees(value);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+    resetTransactionStatus();
+  }, [getTransactionFees, resetTransactionStatus]);
+
+  const onAcceptTreasuryVestingContractTransferFunds = (params: VestingContractWithdrawOptions) => {
+    consoleOut('params', params, 'blue');
+    onExecuteTreasuryVestingContractTransferFundsTx(params);
+  };
+
+  const closeVestingContractTransferFundsModal = () => {
+    setIsVestingContractTransferFundsModalVisible(false);
+    setOngoingOperation(undefined);
+    resetTransactionStatus();
+  };
+
+  const onExecuteTreasuryVestingContractTransferFundsTx = async (params: VestingContractWithdrawOptions) => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    resetTransactionStatus();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryCreate);
+    setRetryOperationPayload(params);
+    setIsBusy(true);
+
+    const treasuryWithdraw = async (data: any) => {
+
+      if (!msp) { return null; }
+
+      if (!isMultisigTreasury()) {
+        return await msp.treasuryWithdraw(
+          new PublicKey(data.payer),              // payer
+          new PublicKey(data.destination),        // treasurer
+          new PublicKey(data.treasury),           // treasury
+          data.amount,                            // amount
+          true                                    // TODO: Define if the user can determine this
+        );
+      }
+
+      if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      const treasury = selectedVestingContract as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      const msTreasuryWithdraw = await msp.treasuryWithdraw(
+        new PublicKey(data.payer),              // payer
+        new PublicKey(data.destination),        // treasurer
+        new PublicKey(data.treasury),           // treasury
+        data.amount,                            // amount
+        false
+      );
+
+      const ixData = Buffer.from(msTreasuryWithdraw.instructions[0].data);
+      const ixAccounts = msTreasuryWithdraw.instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Withdraw Treasury Funds",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.TreasuryWithdraw,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
+
+      return tx;
+    }
+
+    const createTx = async () => {
+
+      if (!connection || !wallet || !publicKey) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      if (!selectedVestingContract || !msp) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: 'Cannot start transaction! Treasury details or MSP client not found!'
+        });
+        customLogger.logError('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      /**
+       * payer: PublicKey,
+       * destination: PublicKey,
+       * treasury: PublicKey,
+       * amount: number
+       */
+
+      const destinationPk = new PublicKey(params.destinationAccount);
+      const treasuryPk = new PublicKey(selectedVestingContract.id);
+      const amount = params.tokenAmount;
+      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
+
+      // Create a transaction
+      const payload = {
+        payer: publicKey.toBase58(),
+        destination: destinationPk.toBase58(),
+        treasury: treasuryPk.toBase58(),
+        amount: amount.toNumber()
+      };
+      consoleOut('payload:', payload);
+
+      // Report event to Segment analytics
+      const segmentData: SegmentVestingContractWithdrawData = {
+        asset: selectedToken ? selectedToken.symbol : '-',
+        assetPrice: price,
+        vestingContract: selectedVestingContract.id as string,
+        destination: params.destinationAccount,
+        amount: parseFloat(params.amount),
+        valueInUsd: parseFloat(params.amount) * price
+      };
+      consoleOut('segment data:', segmentData, 'brown');
+      segmentAnalytics.recordEvent(AppUsageEvent.VestingContractWithdrawFundsFormButton, segmentData);
+
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: payload
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < minRequired) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Starting Treasury Withdraw using MSP V2...', '', 'blue');
+
+      const result = await treasuryWithdraw(payload)
+        .then(value => {
+          if (!value) { return false; }
+          consoleOut('treasuryWithdraw returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('treasuryWithdraw error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet && publicKey) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logError('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet && selectedToken && selectedVestingContract) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryWithdraw,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Withdraw ${formatThousands(
+                parseFloat(params.amount),
+                selectedToken.decimals
+              )} ${selectedToken.symbol} from vesting contract ${selectedVestingContract.name}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successful withdrawal of ${formatThousands(
+                parseFloat(params.amount),
+                selectedToken.decimals
+              )} ${selectedToken.symbol} from vesting contract ${selectedVestingContract.name}`,
+              extras: params
+            });
+            setIsBusy(false);
+            closeVestingContractTransferFundsModal();
+            setNeedReloadMultisig(true);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+  };
+
 
   /////////////////////
   // Data management //
@@ -1851,7 +2215,7 @@ export const VestingView = () => {
       disabled: !isInspectedAccountTheConnectedWallet(),
       uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractWithdrawFunds}`,
       tooltip: '',
-      callBack: () => { }
+      callBack: showVestingContractTransferFundsModal
     });
     ctaItems++;
 
@@ -1877,6 +2241,7 @@ export const VestingView = () => {
     showVestingContractCloseModal,
     showVestingContractSolBalanceModal,
     isInspectedAccountTheConnectedWallet,
+    showVestingContractTransferFundsModal,
   ]);
 
   // Load treasuries once per page access
@@ -2557,6 +2922,22 @@ export const VestingView = () => {
             isBusy={isBusy}
           />
         )}
+
+        {isVestingContractTransferFundsModalVisible && (
+          <VestingContractTransferFundsModal
+            isVisible={isVestingContractTransferFundsModalVisible}
+            nativeBalance={nativeBalance}
+            transactionFees={transactionFees}
+            treasuryDetails={selectedVestingContract}
+            isMultisigTreasury={isMultisigTreasury()}
+            multisigAccounts={multisigAccounts}
+            minRequiredBalance={minRequiredBalance}
+            handleOk={(options: VestingContractWithdrawOptions) => onAcceptTreasuryVestingContractTransferFunds(options)}
+            handleClose={closeVestingContractTransferFundsModal}
+            isBusy={isBusy}
+          />
+        )}
+
       </>
     );
   } else if (treasuriesLoaded && treasuryList.length === 0 && !loadingTreasuries) {

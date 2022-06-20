@@ -20,3 +20,9 @@ export interface VestingContractCreateOptions {
     token: TokenInfo;
     feePayedByTreasurer: boolean;
 }
+
+export interface VestingContractWithdrawOptions {
+    amount: string;
+    tokenAmount: any;
+    destinationAccount: string;
+}
