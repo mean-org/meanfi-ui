@@ -1,7 +1,7 @@
 import { appConfig } from "..";
 import { meanFiHeaders } from "../constants";
 import { Allocation } from "../models/common-types";
-import { getDefaultRpc, RpcConfig } from "../models/connections-hq";
+import { getDefaultRpc, RpcConfig } from "../services/connections-hq";
 import { WhitelistClaimType } from "../models/enums";
 import { TokenPrice } from "../models/token";
 

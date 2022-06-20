@@ -5,7 +5,7 @@ import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { environment } from "../environments/environment";
 import { Cluster, Connection, ConnectionConfig, PublicKey } from "@solana/web3.js";
-import { DEFAULT_RPCS, RpcConfig } from "../models/connections-hq";
+import { DEFAULT_RPCS, RpcConfig } from "../services/connections-hq";
 import { useLocalStorageState } from "./../utils/utils";
 import { TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
 

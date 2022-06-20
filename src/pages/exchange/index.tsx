@@ -6,7 +6,7 @@ import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
 import { AppStateContext } from '../../contexts/appstate';
 import { getTokenBySymbol, useLocalStorageState } from '../../utils/utils';
-import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
+import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
