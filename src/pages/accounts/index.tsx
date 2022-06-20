@@ -1670,7 +1670,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Propose funds transfer",
+        data.title === "" ? "Propose funds transfer" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         (fromMintAddress.equals(NATIVE_SOL_MINT) ? OperationType.Transfer : OperationType.TransferTokens),
@@ -1695,6 +1695,7 @@ export const AccountsNewView = () => {
 
         // Create a transaction
         const payload = {
+          title: data.title,
           from: data.from,
           to: data.to,
           amount: data.amount
