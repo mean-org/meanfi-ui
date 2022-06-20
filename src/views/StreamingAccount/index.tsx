@@ -35,6 +35,7 @@ import { customLogger } from "../..";
 import { TreasuryStreamsBreakdown } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFundsModal";
+import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -50,10 +51,11 @@ export const StreamingAccountView = (props: {
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
-    refreshTokenBalance,
+    setHighLightableStreamId,
     getTokenByMintAddress,
     setTransactionStatus,
-    setHighLightableStreamId,
+    refreshTokenBalance,
+    resetContractValues,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -227,6 +229,28 @@ export const StreamingAccountView = (props: {
     treasuryDetails
   ]);
 
+  // TODO: Here the multisig ID is returned
+  const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
+
+    const treasuryInfo: any = treasury ?? treasuryDetails;
+
+    if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
+      return PublicKey.default;
+    }
+
+    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
+
+    if (!multisigAccounts || !treasuryDetails) { return PublicKey.default; }
+    const multisig = multisigAccounts.filter(a => a.authority.equals(treasurer))[0];
+    if (!multisig) { return PublicKey.default; }
+    return multisig.id;
+
+  }, [
+    multisigAccounts, 
+    publicKey, 
+    treasuryDetails
+  ])
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -249,6 +273,35 @@ export const StreamingAccountView = (props: {
   ////////////////
   ///  MODALS  ///
   ////////////////
+
+  // Create Stream modal
+  const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
+  const showCreateStreamModal = useCallback(() => {
+    resetTransactionStatus();
+    refreshUserBalances();
+    refreshTokenBalance();
+    setIsCreateStreamModalVisibility(true);
+    getTransactionFeesV2(MSP_ACTIONS_V2.createStreamWithFunds).then(value => {
+      setTransactionFees(value);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+    getTransactionFeesV2(MSP_ACTIONS_V2.withdraw).then(value => {
+      setWithdrawTransactionFees(value);
+      consoleOut('withdrawTransactionFees:', value, 'orange');
+    });
+  }, [
+    refreshUserBalances,
+    refreshTokenBalance,
+    getTransactionFeesV2,
+    resetTransactionStatus,
+  ]);
+
+  const closeCreateStreamModal = useCallback(() => {
+    setIsCreateStreamModalVisibility(false);
+    resetContractValues();
+    refreshTokenBalance();
+    resetTransactionStatus();
+  }, [refreshTokenBalance, resetContractValues, resetTransactionStatus]);
 
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
@@ -2621,7 +2674,7 @@ export const StreamingAccountView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
-              onClick={() => {}}>
+              onClick={showCreateStreamModal}>
                 <div className="btn-content">
                   Create stream
                 </div>
@@ -2671,6 +2724,32 @@ export const StreamingAccountView = (props: {
           defaultTab="streams"
         />
       </div>
+
+      {/* TODO: Here the multisig ID is used */}
+      {multisigClient && isCreateStreamModalVisible && (
+        <TreasuryStreamCreateModal
+          associatedToken={
+            treasuryDetails
+              ? (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
+                ? (treasuryDetails as Treasury).associatedToken as string
+                : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
+              : ''
+          }
+          connection={connection}
+          handleClose={closeCreateStreamModal}
+          handleOk={closeCreateStreamModal}
+          isVisible={isCreateStreamModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          withdrawTransactionFees={withdrawTransactionFees}
+          treasuryDetails={treasuryDetails}
+          isMultisigTreasury={isMultisigTreasury()}
+          minRequiredBalance={minRequiredBalance}
+          multisigClient={multisigClient}
+          multisigAddress={getSelectedTreasuryMultisig()}
+          userBalances={userBalances}
+        />
+      )}
 
       {isAddFundsModalVisible && (
         <TreasuryAddFundsModal
