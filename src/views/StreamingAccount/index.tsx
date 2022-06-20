@@ -34,6 +34,7 @@ import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { customLogger } from "../..";
 import { TreasuryStreamsBreakdown } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFundsModal";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1589,6 +1590,345 @@ export const StreamingAccountView = (props: {
     }
   };
 
+  // Transfer funds modal
+  const [isTransferFundsModalVisible, setIsTransferFundsModalVisible] = useState(false);
+  const showTransferFundsModal = useCallback(() => {
+    setIsTransferFundsModalVisible(true);
+    getTransactionFeesV2(MSP_ACTIONS_V2.treasuryWithdraw).then(value => {
+      setTransactionFees(value);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+    resetTransactionStatus();
+  }, [getTransactionFeesV2, resetTransactionStatus]);
+
+  const onAcceptTreasuryTransferFunds = (params: any) => {
+    consoleOut('params', params, 'blue');
+    onExecuteTreasuryTransferFundsTx(params);
+  };
+
+  const onTreasuryFundsTransferred = () => {
+    setIsTransferFundsModalVisible(false);
+    onAfterEveryModalClose();
+  };
+
+  const onExecuteTreasuryTransferFundsTx = async (data: any) => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTxConfirmationContext();
+    resetTransactionStatus();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryCreate);
+    setRetryOperationPayload(data);
+    setIsBusy(true);
+
+    const treasuryWithdraw = async (data: any) => {
+
+      if (!msp) { return null; }
+
+      if (!isMultisigTreasury()) {
+        return await msp.treasuryWithdraw(
+          new PublicKey(data.payer),              // payer
+          new PublicKey(data.destination),        // treasurer
+          new PublicKey(data.treasury),           // treasury
+          data.amount,                            // amount
+          true                                    // TODO: Define if the user can determine this
+        );
+      }
+
+      if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      const msTreasuryWithdraw = await msp.treasuryWithdraw(
+        new PublicKey(data.payer),              // payer
+        new PublicKey(data.destination),        // treasurer
+        new PublicKey(data.treasury),           // treasury
+        data.amount,                            // amount
+        false
+      );
+
+      const ixData = Buffer.from(msTreasuryWithdraw.instructions[0].data);
+      const ixAccounts = msTreasuryWithdraw.instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Withdraw Treasury Funds",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.TreasuryWithdraw,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
+
+      return tx;
+    }
+
+    const createTx = async () => {
+
+      if (!connection || !wallet || !publicKey) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Treasury withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      if (!treasuryDetails || !msp) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: 'Cannot start transaction! Treasury details or MSP client not found!'
+        });
+        customLogger.logError('Treasury withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      /**
+       * payer: PublicKey,
+       * destination: PublicKey,
+       * treasury: PublicKey,
+       * amount: number
+       */
+
+      const destinationPk = new PublicKey(data.destinationAccount);
+      const treasuryPk = new PublicKey(treasuryDetails.id);
+      const amount = data.tokenAmount;
+
+      // Create a transaction
+      const payload = {
+        payer: publicKey.toBase58(),
+        destination: destinationPk.toBase58(),
+        treasury: treasuryPk.toBase58(),
+        amount: amount.toNumber()
+      };
+
+      consoleOut('payload:', payload);
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: payload
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < minRequired) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Treasury withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Starting Treasury Withdraw using MSP V2...', '', 'blue');
+
+      const result = await treasuryWithdraw(payload)
+        .then(value => {
+          if (!value) { return false; }
+          consoleOut('treasuryWithdraw returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('treasuryWithdraw error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Treasury withdraw transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet && publicKey) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Treasury withdraw transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logError('Treasury withdraw transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Treasury withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Treasury withdraw transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Treasury withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryWithdraw);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            onTreasuryFundsTransferred();
+            setNeedReloadMultisig(true);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+  };
+
+  const onAfterEveryModalClose = useCallback(() => {
+    resetTransactionStatus();
+  },[resetTransactionStatus]);
+
   // Common reusable transaction execution modal
   const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
   const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
@@ -2301,7 +2641,7 @@ export const StreamingAccountView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
-              onClick={() => {}}>
+              onClick={showTransferFundsModal}>
                 <div className="btn-content">
                   Withdraw funds
                 </div>
@@ -2351,6 +2691,23 @@ export const StreamingAccountView = (props: {
                 : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
               : ''
           }
+          isBusy={isBusy}
+        />
+      )}
+
+      {isTransferFundsModalVisible && (
+        <TreasuryTransferFundsModal
+          isVisible={isTransferFundsModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          treasuryDetails={treasuryDetails}
+          multisigAccounts={multisigAccounts}
+          minRequiredBalance={minRequiredBalance}
+          handleOk={onAcceptTreasuryTransferFunds}
+          handleClose={() => {
+            onAfterEveryModalClose();
+            setIsTransferFundsModalVisible(false);
+          }}
           isBusy={isBusy}
         />
       )}
