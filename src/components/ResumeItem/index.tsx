@@ -2,7 +2,7 @@ import { useCallback, useContext } from 'react';
 import './style.scss';
 import { Button, Col, Dropdown, Row } from "antd"
 import { useTranslation } from 'react-i18next';
-import { MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import Countdown from 'react-countdown';
 import { IconThumbsUp, IconThumbsDown } from '../../Icons';
 import { AppStateContext } from '../../contexts/appstate';
@@ -13,17 +13,20 @@ export const ResumeItem = (props: {
   src?: any;
   img?: any;
   title?: string;
+  extraTitle?: any;
   classNameTitle?: string;
   subtitle?: any;
-  amount?: number | string;
+  amount?: any;
   expires?: any;
   executedOn?: any;
   approved?: any;
   rejected?: any;
-  status?: any;
+  status?: number | string | undefined;
+  content?: string;
   resume?: any;
   isDetailsPanel?: boolean;
   isStream?: boolean;
+  isStreamingAccount?: boolean;
   rightIcon?: any;
   hasRightIcon?: boolean;
   rightIconHasDropdown?: boolean;
@@ -41,6 +44,7 @@ export const ResumeItem = (props: {
     img,
     version,
     title,
+    extraTitle,
     classNameTitle,
     subtitle,
     amount,
@@ -49,9 +53,11 @@ export const ResumeItem = (props: {
     approved,
     rejected,
     status,
+    content,
     resume,
     isDetailsPanel,
     isStream,
+    isStreamingAccount,
     rightIcon,
     hasRightIcon,
     rightIconHasDropdown,
@@ -63,7 +69,7 @@ export const ResumeItem = (props: {
 
   const { t } = useTranslation('common');
 
-  const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
+  const getTransactionStatusAction = useCallback((status: number) => {
 
     if (status === MultisigTransactionStatus.Pending) {
       return "active";
@@ -82,14 +88,14 @@ export const ResumeItem = (props: {
     }
 
     if (status === MultisigTransactionStatus.Expired) {
-      return "Expired";
+      return "expired";
     }
 
     return t("multisig.multisig-transactions.tx-rejected");
 
-  },[status, t]);
+  },[t]);
 
-  const getTransactionStatusBackgroundColor = useCallback((mtx: MultisigTransaction) => {
+  const getTransactionStatusBackgroundColor = useCallback((status: number) => {
 
     if (status === MultisigTransactionStatus.Pending) {
       return "bg-purple";
@@ -113,7 +119,7 @@ export const ResumeItem = (props: {
 
     return "";
 
-  },[status, theme]);
+  },[theme]);
 
   const getStreamStatusBackgroundColor = useCallback((status: string) => {
 
@@ -169,7 +175,14 @@ export const ResumeItem = (props: {
             </div>
           )}
           <div className={`resume-left-text ${isDetailsPanel ? "pb-1" : ""}`}>
-            <div className={`resume-title ${isDetailsPanel ? "big-title" : ""} ${classNameTitle}`}>{title}</div>
+            <div className={`resume-title ${isDetailsPanel ? "big-title" : ""} ${classNameTitle}`}>
+              {title}
+              {extraTitle && (
+                <span className="ml-1 badge darken small text-uppercase">
+                  {extraTitle}
+                </span>
+              )}
+            </div>
 
             {version !== 0 && (
               subtitle ? (
@@ -218,25 +231,32 @@ export const ResumeItem = (props: {
                   </div>
                   )
                 )}
-                {(!isStream && status >= 0) ? (
-                  <div className={`badge-container ${getTransactionStatusBackgroundColor(status)}`}>
-                    <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
-                  </div>
-                ) : (
-                  <div className={`badge-container ${getStreamStatusBackgroundColor(status)}`}>
-                    <span className="badge darken small text-uppercase">
-                      {status}
-                    </span>
-                  </div>
+                {status !== undefined && (
+                  (!isStream) ? (
+                    <div className={`badge-container ${getTransactionStatusBackgroundColor(status as number)}`}>
+                      <span className="badge darken small text-uppercase">{getTransactionStatusAction(status as number)}</span>
+                    </div>
+                  ) : (
+                    <div className={`badge-container ${getStreamStatusBackgroundColor(status as string)}`}>
+                      <span className="badge darken small text-uppercase">
+                        {status}
+                      </span>
+                    </div>
+                  )
                 )}
                 {amount && (
                   <div className="rate-amount">
                     {amount}
                   </div>
                 )}
+                {content && (
+                  <div className="info-label">
+                    {content}
+                  </div>
+                )}
               </div>
               {resume && (
-                <div className="info-label mb-0">{resume}</div>
+                <div className={`${!isStreamingAccount ? "info-label" : ""} mb-0`}>{resume}</div>
               )}
             </>
           </div>
