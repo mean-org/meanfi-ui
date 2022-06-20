@@ -32,7 +32,7 @@ import { IconClock, IconExchange, IconExternalLink } from '../../Icons';
 import { ArrowDownOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons';
 import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
+import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { useNavigate } from 'react-router-dom';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { NATIVE_SOL_MINT } from '../../utils/ids';

@@ -81,8 +81,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
 import { MultisigTransactionWithId, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 
+const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
-
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -379,8 +379,9 @@ export const SafeView = () => {
         }
       });
 
-      const tx = await multisigClient.createMultisig(
-        publicKey, 
+      const tx = await multisigClient.createFundedMultisig(
+        publicKey,
+        MEAN_MULTISIG_ACCOUNT_LAMPORTS,
         data.label, 
         data.threshold, 
         owners
@@ -426,10 +427,11 @@ export const SafeView = () => {
         consoleOut('nativeBalance:', nativeBalance, 'blue');
         consoleOut('networkFee:', transactionFees.networkFee, 'blue');
         consoleOut('rentExempt:', transactionFees.rentExempt, 'blue');
-        consoleOut('multisigFee:', transactionFees.multisigFee, 'blue');
-        const minRequired = transactionFees.multisigFee + transactionFees.rentExempt + transactionFees.networkFee;
+        const totalMultisigFee = transactionFees.multisigFee + (MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL);
+        consoleOut('multisigFee:', totalMultisigFee, 'blue');
+        const minRequired = totalMultisigFee + transactionFees.rentExempt + transactionFees.networkFee;
         consoleOut('Min required balance:', minRequired, 'blue');
-
+        
         setMinRequiredBalance(minRequired);
 
         if (nativeBalance < minRequired) {

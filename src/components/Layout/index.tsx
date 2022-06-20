@@ -28,6 +28,7 @@ import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 import { shortenAddress } from "../../utils/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
+import { getDefaultRpc } from "../../services/connections-hq";
 
 const { Header, Content, Footer } = Layout;
 
@@ -85,13 +86,7 @@ export const AppLayout = React.memo((props: any) => {
   // Callback to fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
 
-    let connection: Connection;
-
-    if (isProd()) {
-      connection = new Connection("https://ssc-dao.genesysgo.net/");
-    } else {
-      connection = new Connection("https://api.devnet.solana.com/");
-    }
+    const connection = new Connection(getDefaultRpc().httpProvider);
 
     if (!connection) { return null; }
 

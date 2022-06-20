@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { CountdownTimer } from '../../components/CountdownTimer';
 import { IconDiscord, IconSolana } from '../../Icons';
-import { RELOAD_TIMER } from '../../models/connections-hq';
+import { RELOAD_TIMER } from '../../services/connections-hq';
 import { useLocalStorageState } from '../../utils/utils';
 
 export const ServiceUnavailableView = () => {
