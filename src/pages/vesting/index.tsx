@@ -2087,6 +2087,18 @@ export const VestingView = () => {
     consoleOut('ds:', ds, 'blue');
   }, [deletedStreams]);
 
+  // Get the default Vesting contract settings template
+  useEffect(() => {
+    if (publicKey && msp && selectedVestingContract) {
+      const pk = new PublicKey(selectedVestingContract.id as string);
+      consoleOut('VC address:', pk.toString(), 'blue');
+      msp.getStreamTemplate(pk)
+      .then(value => {
+        consoleOut('StreamTemplate:', value, 'blue');
+      })
+    }
+  }, [msp, publicKey, selectedVestingContract]);
+
   // Hook on wallet connect/disconnect
   useEffect(() => {
 

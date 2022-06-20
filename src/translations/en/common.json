@@ -1355,19 +1355,22 @@
 			}
 		},
 		"create-stream": {
-			"modal-title": "Create a vesting stream",
-			"step-one-label": "Stream details",
-			"step-two-label": "Stream summry",
-			"vesting-stream-name-label": "Vesting stream name",
-			"vesting-stream-name-placeholder": "Name for this no-code vesting stream",
 			"beneficiary-address-label": "Beneficiary address",
-			"beneficiary-address-placeholder": "Input a valid Solana address",
-			"total-funds-to-stream": "Total funds to stream",
-			"total-funds-to-commit": "Total funds to commit",
-			"step-one-validation-pass": "Next",
-			"stream-name-empty": "Stream name cannot be empty",
 			"beneficiary-address-missing": "Add valid beneficiary",
-			"cannot-send-to-yourself": "Can't send to yourself"
+			"beneficiary-address-placeholder": "Input a valid Solana address",
+			"cannot-send-to-yourself": "Can't send to yourself",
+			"create-cta": "Create vesting stream",
+			"create-cta-busy": "Creating vesting stream",
+			"modal-title": "Create a vesting stream",
+			"start-immediately": "Immediately after approval",
+			"step-one-label": "Stream details",
+			"step-one-validation-pass": "Next",
+			"step-two-label": "Stream summry",
+			"stream-name-empty": "Stream name cannot be empty",
+			"total-funds-to-commit": "Total funds to commit",
+			"total-funds-to-stream": "Total funds to stream",
+			"vesting-stream-name-label": "Vesting stream name",
+			"vesting-stream-name-placeholder": "Name for this no-code vesting stream"
 		},
 		"vesting-account-details": {
 			"panel-title": "Vesting Account Details"
