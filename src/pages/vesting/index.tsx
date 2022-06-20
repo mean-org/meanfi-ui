@@ -50,6 +50,7 @@ import { VestingContractCloseModal } from './components/VestingContractCloseModa
 import { segmentAnalytics } from '../../App';
 import { AppUsageEvent } from '../../utils/segment-service';
 import { ZERO_FEES } from '../../models/multisig';
+import { VestingContractCreateStreamModal } from './components/VestingContractCreateStreamModal';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -1608,6 +1609,33 @@ export const VestingView = () => {
 
   };
 
+  // Create stream modal (VestingContractCreateStream)
+  const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
+  const showCreateStreamModal = useCallback(() => {
+    resetTransactionStatus();
+    if (vestingContract) {
+      getTransactionFees(MSP_ACTIONS.createStreamWithFunds).then(value => {
+        setTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
+      getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
+        setWithdrawTransactionFees(value);
+        consoleOut('withdrawTransactionFees:', value, 'orange');
+      });
+      setIsCreateStreamModalVisibility(true);
+    }
+  }, [getTransactionFees, resetTransactionStatus, vestingContract]);
+
+  const onAcceptCreateStream = (params: any) => {
+    consoleOut('Create stream params:', params, 'blue');
+    // onExecuteCreateStreamTransaction(params);
+  };
+
+  const closeCreateStreamModal = useCallback(() => {
+    resetTransactionStatus();
+    setIsCreateStreamModalVisibility(false);
+  }, [resetTransactionStatus]);
+
 
   /////////////////////
   // Data management //
@@ -1758,7 +1786,7 @@ export const VestingView = () => {
       uiComponentType: 'button',
       uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamOnce}`,
       tooltip: '',
-      callBack: () => { }
+      callBack: showCreateStreamModal
     });
     ctaItems++;
 
@@ -1845,6 +1873,7 @@ export const VestingView = () => {
   }, [
     isXsDevice,
     showAddFundsModal,
+    showCreateStreamModal,
     showVestingContractCloseModal,
     showVestingContractSolBalanceModal,
     isInspectedAccountTheConnectedWallet,
@@ -2485,6 +2514,20 @@ export const VestingView = () => {
             isVisible={isVestingContractSolBalanceModalOpen}
             handleClose={hideVestingContractSolBalanceModal}
             treasuryBalance={treasuryEffectiveBalance}
+          />
+        )}
+
+        {isCreateStreamModalVisible && (
+          <VestingContractCreateStreamModal
+            handleClose={closeCreateStreamModal}
+            handleOk={(options: any) => onAcceptCreateStream(options)}
+            isVisible={isCreateStreamModalVisible}
+            nativeBalance={nativeBalance}
+            transactionFees={transactionFees}
+            vestingContract={selectedVestingContract}
+            withdrawTransactionFees={withdrawTransactionFees}
+            isBusy={isBusy}
+            isXsDevice={isXsDevice}
           />
         )}
 

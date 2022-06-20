@@ -714,7 +714,7 @@ export const VestingContractCreateForm = (props: {
 
                 </div>
 
-                <div className={`panel1 ${currentStep === 1 ? 'show' : 'hide'}`}>
+                <div className={`panel2 ${currentStep === 1 ? 'show' : 'hide'}`}>
 
                     <h2 className="form-group-label">{t('vesting.create-account.step-two-label')}</h2>
 
