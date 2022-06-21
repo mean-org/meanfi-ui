@@ -323,7 +323,7 @@ export const VestingContractWithdrawFundsModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('treasuries.withdraw-funds.modal-title')}</div>}
+      title={<div className="modal-title">{t('vesting.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       visible={isVisible}
@@ -342,7 +342,7 @@ export const VestingContractWithdrawFundsModal = (props: {
             {/* Transfer from */}
             {treasuryDetails && (
               <div className="mb-3">
-                <div className="form-label">{t('treasuries.withdraw-funds.selected-treasury-label')}</div>
+                <div className="form-label">{t('vesting.withdraw-funds.from-vesting-contract')}</div>
                   <div className="well">
                     {renderTreasury()}
                   </div>

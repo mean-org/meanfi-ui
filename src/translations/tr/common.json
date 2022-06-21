@@ -1393,6 +1393,10 @@
 			"contract-balance-low-warning": "You are running low on SOL needed to pay for vesting transaction fees.",
 			"qrcode-scan-label": "Scan the QR code to receive funds",
 			"deposit-address-disclaimer": "This address can only be used to receive SOL to pay for transaction fees on this vesting contract account"
+		},
+		"withdraw-funds": {
+			"modal-title": "Withdraw vesting contract funds",
+			"from-vesting-contract": "From vesting contract"
 		}
 	},
 	"wallet-selector": {
