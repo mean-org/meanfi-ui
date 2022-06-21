@@ -21,6 +21,7 @@ export const ResumeItem = (props: {
   executedOn?: any;
   approved?: any;
   rejected?: any;
+  userSigned?: any;
   status?: number | string | undefined;
   content?: string;
   resume?: any;
@@ -52,6 +53,7 @@ export const ResumeItem = (props: {
     executedOn,
     approved,
     rejected,
+    userSigned,
     status,
     content,
     resume,
@@ -218,14 +220,14 @@ export const ResumeItem = (props: {
             <>
               <div className={`resume-right-text-up`}>
                 {approved > 0 && (
-                  <div className="thumbs-up">
+                  <div className="thumbs-up" title={userSigned === true ? "You approved this proposal" : ""}>
                     <span>{approved}</span>
                     <IconThumbsUp className="mean-svg-icons" />
                   </div>
                 )}
                 {rejected > 0 && (
                   version !== 0 && (
-                  <div className="thumbs-down">
+                  <div className="thumbs-down" title={userSigned === false ? "You rejected this proposal" : ""}>
                     <IconThumbsDown className="mean-svg-icons" />
                     <span>{rejected}</span>
                   </div>

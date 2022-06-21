@@ -644,6 +644,7 @@ export const SafeMeanInfo = (props: {
                     executedOn={executedOnDate}
                     approved={approvedSigners}
                     rejected={rejectedSigners}
+                    userSigned={proposal.didSigned}
                     status={proposal.status}
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
