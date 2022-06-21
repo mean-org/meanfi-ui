@@ -339,19 +339,15 @@ export const MoneyStreamsInfoView = (props: {
 
   // Call only if you have control over every loop
   const getStreamingAccountStreams = useCallback(async (treasuryPk: PublicKey, isNewTreasury: boolean) => {
-    if (!publicKey || !ms || !msp || !treasuryPk) { return undefined; }
+    if (!publicKey || !ms || !msp || !treasuryPk || !streamList) { return undefined; }
 
     if (isNewTreasury) {
-      return await msp.listStreams({treasury: treasuryPk });
+      return streamList.filter((item: any) => item.treasury === treasuryPk.toBase58());
     } else {
-      return await ms.listStreams({treasury: treasuryPk });
+      return  streamList.filter((item: any) => item.treasuryAddress === treasuryPk.toBase58());
     }
 
-  }, [
-    ms,
-    msp,
-    publicKey
-  ]);
+  }, [ms, msp, publicKey, streamList]);
 
   const refreshTreasuries = useCallback((reset = false) => {
     
