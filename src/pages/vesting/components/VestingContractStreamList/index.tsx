@@ -406,7 +406,7 @@ export const VestingContractStreamList = (props: {
 
     return (
         <>
-            <div className="vesting-contract-streams">
+            <div className="tab-inner-content-wrapper vertical-scroll">
                 <Spin spinning={loadingTreasuryStreams}>
                     {(treasuryStreams && treasuryStreams.length > 0) ? (
                         treasuryStreams.map((item, index) => {

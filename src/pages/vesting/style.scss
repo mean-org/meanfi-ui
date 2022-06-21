@@ -43,6 +43,18 @@
                 }
             }
             .meanfi-two-panel-right {
+                .flexible-column-bottom {
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
+                    justify-content: flex-start;
+                    .top {
+                        flex: 0 0 auto;
+                    }
+                    .bottom {
+                        flex: auto;
+                    }
+                }
                 .vesting-contract-streams {
                     .transaction-list-row {
                         border-radius: unset;
@@ -78,6 +90,21 @@
                 }
             }
         }
+    }
+
+    .ant-tabs.stretch-content {
+        height: 100%;
+        .ant-tabs-content.ant-tabs-content-top {
+            height: 100%;
+            .ant-tabs-tabpane.ant-tabs-tabpane-active {
+                height: 100%;
+                display: table;
+            }
+        }
+    }
+
+    .tab-inner-content-wrapper {
+        height: 100%;
     }
 
     .interaction-area .elastic-form-container,

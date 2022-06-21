@@ -51,7 +51,8 @@ import { segmentAnalytics } from '../../App';
 import { AppUsageEvent, SegmentVestingContractWithdrawData } from '../../utils/segment-service';
 import { ZERO_FEES } from '../../models/multisig';
 import { VestingContractCreateStreamModal } from './components/VestingContractCreateStreamModal';
-import { VestingContractTransferFundsModal } from './components/VestingContractTransferFundsModal';
+import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
+import { VestingContractActivity } from './components/VestingContractActivity';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -346,6 +347,9 @@ export const VestingView = () => {
         hardReloadContracts();
         break;
       case OperationType.StreamAddFunds:
+        softReloadContracts();
+        break;
+      case OperationType.TreasuryWithdraw:
         softReloadContracts();
         break;
       default:
@@ -1650,9 +1654,9 @@ export const VestingView = () => {
     resetTransactionStatus();
   }, [getTransactionFees, resetTransactionStatus]);
 
-  const onAcceptTreasuryVestingContractTransferFunds = (params: VestingContractWithdrawOptions) => {
+  const onAcceptVestingContractTransferFunds = (params: VestingContractWithdrawOptions) => {
     consoleOut('params', params, 'blue');
-    onExecuteTreasuryVestingContractTransferFundsTx(params);
+    onExecuteVestingContractTransferFundsTx(params);
   };
 
   const closeVestingContractTransferFundsModal = () => {
@@ -1661,7 +1665,7 @@ export const VestingView = () => {
     resetTransactionStatus();
   };
 
-  const onExecuteTreasuryVestingContractTransferFundsTx = async (params: VestingContractWithdrawOptions) => {
+  const onExecuteVestingContractTransferFundsTx = async (params: VestingContractWithdrawOptions) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -2605,7 +2609,7 @@ export const VestingView = () => {
 
   const renderTabset = () => {
     return (
-      <Tabs activeKey={accountDetailTab} onChange={onTabChange} className="neutral">
+      <Tabs activeKey={accountDetailTab} onChange={onTabChange} className="neutral stretch-content">
         <TabPane tab="Overview" key={"overview"}>
           <VestingContractOverview
             vestingContract={selectedVestingContract}
@@ -2627,7 +2631,10 @@ export const VestingView = () => {
           />
         </TabPane>
         <TabPane tab="Activity" key={"activity"}>
-          <p>Tab 3</p>
+          <VestingContractActivity
+            param1="list item 1"
+            param2="list item 2"
+          />
         </TabPane>
       </Tabs>
     );
@@ -2924,7 +2931,7 @@ export const VestingView = () => {
         )}
 
         {isVestingContractTransferFundsModalVisible && (
-          <VestingContractTransferFundsModal
+          <VestingContractWithdrawFundsModal
             isVisible={isVestingContractTransferFundsModalVisible}
             nativeBalance={nativeBalance}
             transactionFees={transactionFees}
@@ -2932,7 +2939,7 @@ export const VestingView = () => {
             isMultisigTreasury={isMultisigTreasury()}
             multisigAccounts={multisigAccounts}
             minRequiredBalance={minRequiredBalance}
-            handleOk={(options: VestingContractWithdrawOptions) => onAcceptTreasuryVestingContractTransferFunds(options)}
+            handleOk={(options: VestingContractWithdrawOptions) => onAcceptVestingContractTransferFunds(options)}
             handleClose={closeVestingContractTransferFundsModal}
             isBusy={isBusy}
           />

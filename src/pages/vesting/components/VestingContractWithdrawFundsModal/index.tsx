@@ -24,7 +24,7 @@ import { VestingContractWithdrawOptions } from '../../../../models/vesting';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const VestingContractTransferFundsModal = (props: {
+export const VestingContractWithdrawFundsModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;

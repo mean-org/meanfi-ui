@@ -79,7 +79,7 @@ export const VestingContractOverview = (props: {
     }, [t, streamsStartDate, isStartDateFuture]);
 
     return (
-        <>
+        <div className="tab-inner-content-wrapper vertical-scroll">
             {vestingContract && (
                 <div>
                     <div className="font-size-110 font-bold">
@@ -93,6 +93,6 @@ export const VestingContractOverview = (props: {
                     <div className="font-size-100">{100 - cliffRelease}% of allocated funds streamed equally across {lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)}</div>
                 </div>
             )}
-        </>
+        </div>
     );
 };
