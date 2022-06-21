@@ -1,6 +1,6 @@
 import './style.scss';
 import { Button, Col, Row, Tooltip } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus, IconThumbsDown } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus, IconThumbsDown, IconCheckedBox } from "../../../../Icons"
 
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
@@ -450,6 +450,7 @@ export const ProposalDetailsView = (props: {
         executedOn={executedOnDate}
         approved={approvedSigners}
         rejected={rejectedSigners}
+        userSigned={selectedProposal.didSigned}
         status={selectedProposal.status}
         resume={resume}
         isDetailsPanel={true}
@@ -503,66 +504,79 @@ export const ProposalDetailsView = (props: {
         </>
         <>
           <Col className="safe-details-right-container btn-group mr-1">
-            {(
-              selectedProposal.status === MultisigTransactionStatus.Pending &&
-              selectedProposal.didSigned === null
-            ) ? (
+            {selectedProposal.status === MultisigTransactionStatus.Pending ? (
               <>
                 <Button
                   type="default"
                   shape="round"
                   size="small"
                   className="thin-stroke"
-                  disabled={selectedProposal.didSigned || hasMultisigPendingProposal}
+                  disabled={selectedProposal.didSigned === true || hasMultisigPendingProposal}
                   onClick={() => {
                     const operation = { transaction: selectedProposal };
                     onOperationStarted(operation)
                     onProposalApprove(operation);
                   }}>
-                    <div className="btn-content">
-                      <IconThumbsUp className="mean-svg-icons" />
-                      Approve
-                    </div>
+                    {
+                      selectedProposal.didSigned !== true ? (
+                        <div className="btn-content">
+                          <IconThumbsUp className="mean-svg-icons" />
+                          Approve
+                        </div>
+                      ) : (
+                        <div className="btn-content">
+                          <IconApprove className="mean-svg-icons" />
+                          Approved
+                        </div>
+                      )
+                    }
                 </Button>
                 <Button
                   type="default"
                   shape="round"
                   size="small"
                   className="thin-stroke"
-                  disabled={selectedProposal.didSigned || hasMultisigPendingProposal}
+                  disabled={selectedProposal.didSigned === false || hasMultisigPendingProposal}
                   onClick={() => {
                     const operation = { transaction: selectedProposal };
                     onOperationStarted(operation)
                     onProposalReject(operation);
                   }}>
-                    <div className="btn-content">
-                      <IconThumbsDown className="mean-svg-icons" />
-                      Reject
-                    </div>
+                    {
+                      selectedProposal.didSigned !== false ? (
+                        <div className="btn-content">
+                          <IconThumbsDown className="mean-svg-icons" />
+                          Reject
+                        </div>
+                      ) : (
+                        <div className="btn-content">
+                          <IconApprove className="mean-svg-icons" />
+                          Rejected
+                        </div>
+                      )
+                    }
                 </Button>
               </>
             ) : (
               approvedSigners === selectedMultisig.threshold && 
               selectedProposal.status !== MultisigTransactionStatus.Executed &&
               selectedProposal.status !== MultisigTransactionStatus.Voided
-            ) ? (
-              anyoneCanExecuteTx() || (!anyoneCanExecuteTx() && isProposer) ? (
-                <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke d-flex justify-content-center align-items-center"
-                  disabled={hasMultisigPendingProposal}
-                  onClick={() => {
-                    const operation = { transaction: selectedProposal }
-                    onOperationStarted(operation)
-                    onProposalExecute(operation);
-                  }}>
-                    <div className="btn-content">
-                      Execute
-                    </div>
-                </Button>
-              ) : null
+            ) ? ( 
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke d-flex justify-content-center align-items-center"
+                disabled={!anyoneCanExecuteTx() || hasMultisigPendingProposal}
+                onClick={() => {
+                  const operation = { transaction: selectedProposal }
+                  onOperationStarted(operation)
+                  onProposalExecute(operation);
+                }}>
+                  <div className="btn-content">
+                    Execute
+                  </div>
+              </Button>
             ) : selectedProposal.status === MultisigTransactionStatus.Rejected || selectedProposal.status === MultisigTransactionStatus.Voided ? (
               isProposer ? (
                 <Button
