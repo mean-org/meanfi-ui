@@ -1,10 +1,10 @@
 import './style.scss';
-import { formatThousands, shortenAddress, tabNameFormat } from "../../../../utils/utils";
+import { formatThousands, shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { consoleOut, isLocal } from '../../../../utils/ui';
+import { consoleOut } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { IconArrowForward } from '../../../../Icons';
@@ -59,8 +59,8 @@ export const SafeMeanInfo = (props: {
   const {
     connection,
     publicKey,
-    isProposalDetails,
-    isProgramDetails,
+    // isProposalDetails,
+    // isProgramDetails,
     selectedMultisig,
     onEditMultisigClick,
     onNewProposalMultisigClick,
@@ -69,7 +69,7 @@ export const SafeMeanInfo = (props: {
     proposalSelected,
     onDataToSafeView,
     onDataToProgramView,
-    assetSelected,
+    // assetSelected,
     onRefreshRequested,
     loadingProposals,
     loadingPrograms,
@@ -626,6 +626,7 @@ export const SafeMeanInfo = (props: {
 
             // Number of participants who have already approved the Tx
             const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
+            const rejectedSigners = proposal.signers.filter((s: any) => s === false).length;
             const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate : "";
             const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
 
@@ -642,7 +643,7 @@ export const SafeMeanInfo = (props: {
                     expires={expirationDate}
                     executedOn={executedOnDate}
                     approved={approvedSigners}
-                    // rejected={proposal.rejected}
+                    rejected={rejectedSigners}
                     status={proposal.status}
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
