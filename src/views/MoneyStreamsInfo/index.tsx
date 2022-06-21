@@ -38,7 +38,6 @@ import { useAccountsContext } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { NO_FEES, ONE_MINUTE_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { TreasuryOpenModal } from "../../components/TreasuryOpenModal";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { TreasuryCreateOptions } from "../../models/treasuries";
 import { customLogger } from "../..";
@@ -46,7 +45,7 @@ import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
 import { ArrowDownOutlined, ArrowUpOutlined, LoadingOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
-import { UserTokenAccount } from "../../models/transactions";
+import { StreamOpenModal } from "../../components/StreamOpenModal";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -67,7 +66,6 @@ export const MoneyStreamsInfoView = (props: {
 }) => {
   const {
     tokenList,
-    coinPrices,
     selectedToken,
     treasuryOption,
     transactionStatus,
@@ -82,6 +80,7 @@ export const MoneyStreamsInfoView = (props: {
     setTreasuryOption,
     setEffectiveRate,
     setSelectedToken,
+    openStreamById
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -205,106 +204,6 @@ export const MoneyStreamsInfoView = (props: {
       currentOperation: TransactionStatus.Iddle
     });
   }, [setTransactionStatus]);
-
-  const setCustomToken = useCallback((address: string) => {
-
-    if (address && isValidAddress(address)) {
-      const unkToken: TokenInfo = {
-        address: address,
-        name: 'Unknown',
-        chainId: 101,
-        decimals: 6,
-        symbol: shortenAddress(address),
-      };
-      setSelectedToken(unkToken);
-      consoleOut("token selected:", unkToken, 'blue');
-      setEffectiveRate(0);
-    }
-  }, [
-    setEffectiveRate,
-    setSelectedToken,
-  ]);
-
-  const openTreasuryById = useCallback((treasuryId: string, isNew = true, dock = false) => {
-    if (!connection || !publicKey || !msp || !ms || loadingTreasuryDetails) { return; }
-
-    setLoadingTreasuryDetails(true);
-    const mspInstance: any = isNew || dock ? msp : ms;
-    const treasuryPk = new PublicKey(treasuryId);
-
-    mspInstance.getTreasury(treasuryPk)
-      .then((details: Treasury | TreasuryInfo | undefined) => {
-        if (details) {
-          consoleOut('treasuryDetails:', details, 'blue');
-          setTreasuryDetails(details);
-          setSignalRefreshTreasuryStreams(true);
-          const v1 = details as TreasuryInfo;
-          const v2 = details as Treasury;
-          const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-      
-          // Preset active token to the treasury associated token
-          const ata = isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string;
-          const type = isNewTreasury ? v2.treasuryType : v1.type;
-          const token = getTokenByMintAddress(ata);
-          consoleOut("treasury token:", token ? token.symbol : 'Custom', 'blue');
-          if (token) {
-            if (!selectedToken || selectedToken.address !== token.address) {
-              setSelectedToken(token);
-            }
-          } else if (!token && (!selectedToken || selectedToken.address !== ata)) {
-            setCustomToken(ata);
-          }
-
-          const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === type);
-          if (tOption) {
-            setTreasuryOption(tOption);
-          }
-          if (dock) {
-            setTreasuryList([details]);
-            setCustomStreamDocked(true);
-            openNotification({
-              description: t('notifications.success-loading-treasury-message', {treasuryId: shortenAddress(treasuryId, 10)}),
-              type: "success"
-            });
-          }
-        } else {
-          setTreasuryDetails(undefined);
-          setTreasuryDetails(undefined);
-          if (dock) {
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
-              type: "error"
-            });
-          }
-        }
-      })
-      .catch((error: any) => {
-        console.error(error);
-        setTreasuryDetails(undefined);
-        openNotification({
-          title: t('notifications.error-title'),
-          description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
-          type: "error"
-        });
-      })
-      .finally(() => {
-        setLoadingTreasuryDetails(false);
-      });
-
-  }, [
-    ms,
-    msp,
-    publicKey,
-    connection,
-    selectedToken,
-    loadingTreasuryDetails,
-    getTokenByMintAddress,
-    setTreasuryOption,
-    setSelectedToken,
-    setCustomToken,
-    t,
-  ]);
 
   const getAllUserV2Treasuries = useCallback(async () => {
 
@@ -539,15 +438,22 @@ export const MoneyStreamsInfoView = (props: {
     treasuryDetails
   ]);
 
-  // Open treasury modal
-  const [isOpenTreasuryModalVisible, setIsOpenTreasuryModalVisibility] = useState(false);
-  const showOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(true), []);
-  const closeOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(false), []);
+  // Open stream modal
+  const [isOpenStreamModalVisible, setIsOpenStreamModalVisibility] = useState(false);
+  const showOpenStreamModal = useCallback(() => setIsOpenStreamModalVisibility(true), []);
+  const closeOpenStreamModal = useCallback(() => setIsOpenStreamModalVisibility(false), []);
+  const onAcceptOpenStream = (e: any) => {
+    if (streamList) {
+      const findStream = streamList.filter((stream: Stream | StreamInfo) => stream.id === e);
+      const streamSelected = Object.assign({}, ...findStream);
 
-  const onAcceptOpenTreasury = (e: any) => {
-    closeOpenTreasuryModal();
-    consoleOut('treasury id:', e, 'blue');
-    openTreasuryById(e, true, true);
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
+
+      navigate(url);
+    }
+
+    openStreamById(e, true);
+    closeOpenStreamModal();
   };
 
   // Create treasury modal
@@ -1278,15 +1184,6 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [incomingStreamList, loadingCombinedStreamingList, loadingOutgoingStreamList, outgoingStreamList, treasuryCombinedList]);
 
-  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-
-  }, [coinPrices]);
-
   useEffect(() => {
     let totalWithdrawAmount = 0;
 
@@ -1724,7 +1621,7 @@ export const MoneyStreamsInfoView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
-              onClick={showOpenTreasuryModal}>
+              onClick={showOpenStreamModal}>
                 <div className="btn-content">
                   Find money stream
                 </div>
@@ -1761,11 +1658,11 @@ export const MoneyStreamsInfoView = (props: {
         />
       )}
 
-      {isOpenTreasuryModalVisible && (
-        <TreasuryOpenModal
-          isVisible={isOpenTreasuryModalVisible}
-          handleOk={onAcceptOpenTreasury}
-          handleClose={closeOpenTreasuryModal}
+      {isOpenStreamModalVisible && (
+        <StreamOpenModal
+          isVisible={isOpenStreamModalVisible}
+          handleOk={onAcceptOpenStream}
+          handleClose={closeOpenStreamModal}
         />
       )}
 
