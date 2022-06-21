@@ -1262,10 +1262,13 @@ export const MoneyStreamsInfoView = (props: {
 
     setIncomingAmount(incomingStreamList.length);
 
-    if (!loadingOutgoingStreamList || !loadingCombinedStreamingList) {
-      setOutgoingAmount(outgoingStreamList.length + treasuryCombinedList.length);
-    }
+    const sumStreamingStreams = treasuryCombinedList.reduce((accumulator, streaming: any) => {
+      return accumulator + streaming.streams?.length;
+    }, 0);
 
+    if (!loadingOutgoingStreamList || !loadingCombinedStreamingList) {
+      setOutgoingAmount(outgoingStreamList.length + sumStreamingStreams);
+    }
   }, [incomingStreamList, loadingCombinedStreamingList, loadingOutgoingStreamList, outgoingStreamList, treasuryCombinedList]);
 
   // Protocol
