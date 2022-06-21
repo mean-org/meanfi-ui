@@ -453,8 +453,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [stakedAmount, updateStakedAmount] = useState<string>(contextDefaultValues.stakedAmount);
   const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
-  const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
-  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
   const [raydiumLps, setRaydiumLps] = useState<any>(contextDefaultValues.raydiumLps);
   const [shouldLoadRaydiumLps, setShouldLoadRaydiumLps] = useState(true);
@@ -474,6 +472,9 @@ const AppStateProvider: React.FC = ({ children }) => {
       ? true
       : false;
   }, [tpsAvg]);
+
+  const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
+  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
 
   if (!streamProgramAddress) {
     setStreamProgramAddress(streamProgramAddressFromConfig);
