@@ -115,7 +115,14 @@ export const ProposalSummaryModal = (props: {
 
   const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
     if (mtx && mtx.signers) {
-      return mtx.signers.filter((s: boolean) => s === true).length;
+      return mtx.signers.filter((s: any) => s === true).length;
+    }
+    return 0;
+  }, []);
+
+  const getTxRejectedCount = useCallback((mtx: MultisigTransaction) => {
+    if (mtx && mtx.signers) {
+      return mtx.signers.filter((s: any) => s === false).length;
     }
     return 0;
   }, []);
@@ -411,7 +418,17 @@ export const ProposalSummaryModal = (props: {
           {isTxPendingExecution() ? (
             <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
           ) : isTxPendingApproval() ? (
-            <div className="text-center proposal-resume">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
+            <div className="text-center proposal-resume">
+            {
+              (selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 
+                ? t('multisig.multisig-transactions.missing-signatures', {
+                  missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)
+                }) 
+                : t('multisig.multisig-transactions.missing-signature', {
+                  missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)
+                })
+             }
+            </div>
           ) : isTxVoided() ? (
             <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-voided')}</div>
           ) : isTxExpired() ? (

@@ -782,7 +782,7 @@ export const ProgramDetailsView = (props: {
   ]);
 
   // Program Address
-  const renderProgramAddress = (
+  const renderProgramAddress = programSelected && (
     <CopyExtLinkGroup
       content={programSelected && programSelected.pubkey.toBase58()}
       number={4}

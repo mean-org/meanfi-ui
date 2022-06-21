@@ -1,6 +1,6 @@
 import './style.scss';
 import { Button, Col, Row, Tooltip } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus, IconThumbsDown } from "../../../../Icons"
 
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
@@ -26,7 +26,9 @@ export const ProposalDetailsView = (props: {
   proposalSelected?: any;
   selectedMultisig?: any;
   onProposalApprove?: any;
+  onProposalReject?: any;
   onProposalExecute?: any;
+  onProposalCancel?: any;
   connection?: any;
   solanaApps?: any;
   appsProvider?: any;
@@ -46,8 +48,10 @@ export const ProposalDetailsView = (props: {
     onDataToSafeView, 
     proposalSelected, 
     selectedMultisig, 
-    onProposalApprove, 
+    onProposalApprove,
+    onProposalReject,
     onProposalExecute,
+    onProposalCancel,
     onOperationStarted,
     hasMultisigPendingProposal
   } = props;
@@ -421,6 +425,7 @@ export const ProposalDetailsView = (props: {
 
   // Number of participants who have already approved the Tx
   const approvedSigners = selectedProposal.signers.filter((s: any) => s === true).length;
+  const rejectedSigners = selectedProposal.signers.filter((s: any) => s === false).length;
   const neededSigners = approvedSigners && (selectedMultisig.threshold - approvedSigners);
   const expirationDate = selectedProposal.details.expirationDate ? new Date(selectedProposal.details.expirationDate) : "";
   const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : "";
@@ -444,7 +449,7 @@ export const ProposalDetailsView = (props: {
         expires={expirationDate}
         executedOn={executedOnDate}
         approved={approvedSigners}
-        // rejected={selectedProposal.rejected}
+        rejected={rejectedSigners}
         status={selectedProposal.status}
         resume={resume}
         isDetailsPanel={true}
@@ -498,24 +503,46 @@ export const ProposalDetailsView = (props: {
         </>
         <>
           <Col className="safe-details-right-container btn-group mr-1">
-            {selectedProposal.status !== MultisigTransactionStatus.Approved && selectedProposal.status !== MultisigTransactionStatus.Executed ? (
-              <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke"
-                disabled={selectedProposal.didSigned || hasMultisigPendingProposal}
-                onClick={() => {
-                  const operation = { transaction: selectedProposal };
-                  onOperationStarted(operation)
-                  onProposalApprove(operation);
-                }}>
-                  <div className="btn-content">
-                    <IconThumbsUp className="mean-svg-icons" />
-                    Approve
-                  </div>
-              </Button>
-            ) : approvedSigners === selectedMultisig.threshold && selectedProposal.status !== MultisigTransactionStatus.Executed ? (
+            {selectedProposal.status === MultisigTransactionStatus.Pending ? (
+              <>
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  disabled={selectedProposal.didSigned || hasMultisigPendingProposal}
+                  onClick={() => {
+                    const operation = { transaction: selectedProposal };
+                    onOperationStarted(operation)
+                    onProposalApprove(operation);
+                  }}>
+                    <div className="btn-content">
+                      <IconThumbsUp className="mean-svg-icons" />
+                      Approve
+                    </div>
+                </Button>
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  disabled={selectedProposal.didSigned || hasMultisigPendingProposal}
+                  onClick={() => {
+                    const operation = { transaction: selectedProposal };
+                    onOperationStarted(operation)
+                    onProposalReject(operation);
+                  }}>
+                    <div className="btn-content">
+                      <IconThumbsDown className="mean-svg-icons" />
+                      Reject
+                    </div>
+                </Button>
+              </>
+            ) : (
+              approvedSigners === selectedMultisig.threshold && 
+              selectedProposal.status !== MultisigTransactionStatus.Executed &&
+              selectedProposal.status !== MultisigTransactionStatus.Voided
+            ) ? (
               anyoneCanExecuteTx() || (!anyoneCanExecuteTx() && isProposer) ? (
                 <Button
                   type="default"
@@ -530,6 +557,24 @@ export const ProposalDetailsView = (props: {
                   }}>
                     <div className="btn-content">
                       Execute
+                    </div>
+                </Button>
+              ) : null
+            ) : selectedProposal.status === MultisigTransactionStatus.Rejected || selectedProposal.status === MultisigTransactionStatus.Voided ? (
+              isProposer ? (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke d-flex justify-content-center align-items-center"
+                  disabled={hasMultisigPendingProposal}
+                  onClick={() => {
+                    const operation = { transaction: selectedProposal }
+                    onOperationStarted(operation)
+                    onProposalCancel(operation);
+                  }}>
+                    <div className="btn-content">
+                      Cancel
                     </div>
                 </Button>
               ) : null
