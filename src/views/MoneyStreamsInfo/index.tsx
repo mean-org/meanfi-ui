@@ -27,7 +27,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isValidAddress } from "../../utils/ui";
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isValidAddress, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from "../../utils/utils";
 import { TREASURY_TYPE_OPTIONS } from "../../constants/treasury-type-options";
@@ -46,6 +46,7 @@ import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
 import { ArrowDownOutlined, ArrowUpOutlined, LoadingOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
+import { UserTokenAccount } from "../../models/transactions";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -66,11 +67,14 @@ export const MoneyStreamsInfoView = (props: {
 }) => {
   const {
     tokenList,
+    coinPrices,
     selectedToken,
     treasuryOption,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
@@ -125,6 +129,9 @@ export const MoneyStreamsInfoView = (props: {
     networkFee: 0,
     rentExempt: 0
   } as MultisigTransactionFees);
+
+  const [withdrawalBalance, setWithdrawalBalance] = useState(0);
+  const [unallocatedBalance, setUnallocatedBalance] = useState(0);
 
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -1271,6 +1278,76 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [incomingStreamList, loadingCombinedStreamingList, loadingOutgoingStreamList, outgoingStreamList, treasuryCombinedList]);
 
+  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
+    if (!token || !coinPrices) { return 0; }
+
+    return coinPrices && coinPrices[token.symbol]
+      ? coinPrices[token.symbol]
+      : 0;
+
+  }, [coinPrices]);
+
+  useEffect(() => {
+    let totalWithdrawAmount = 0;
+
+    if (incomingStreamList) {
+      for (const stream of incomingStreamList) {
+        const v1 = stream as StreamInfo;
+        const v2 = stream as Stream;
+
+        const isNew = v2.version && v2.version >= 2 ? true : false;
+
+        const token = getTokenByMintAddress(stream.associatedToken as string);
+        
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+          const withdrawAmount = isNew ? toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6) : v1.escrowVestedAmount;
+
+          totalWithdrawAmount += withdrawAmount * tokenPrice;
+        }
+      }
+
+        setWithdrawalBalance(totalWithdrawAmount);
+    }
+  }, [
+    getTokenByMintAddress,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    incomingStreamList
+  ]);
+
+  useEffect(() => {
+    let totalUnallocatedAmount = 0;
+
+    if (outgoingStreamList) {
+      for (const stream of outgoingStreamList) {
+        const v1 = stream as StreamInfo;
+        const v2 = stream as Stream;
+
+        const isNew = v2.version && v2.version >= 2 ? true : false;
+
+        const token = getTokenByMintAddress(stream.associatedToken as string);
+        
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+          const fundsLeftInStreamAmount = isNew ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount;
+
+          totalUnallocatedAmount += fundsLeftInStreamAmount * tokenPrice;
+        }
+      }
+    }
+
+    setUnallocatedBalance(totalUnallocatedAmount);
+
+  }, [
+    getTokenByMintAddress, 
+    getTokenPriceByAddress, 
+    getTokenPriceBySymbol, 
+    outgoingStreamList
+  ]);
+
   // Protocol
   const listOfBadges = ["MSP", "DEFI", "Money Streams"];
 
@@ -1295,7 +1372,7 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       name: "Balance (My TVL)",
-      value: "$3,391.01",
+      value: toUsCurrency(withdrawalBalance + unallocatedBalance),
       content: renderBalance
     }
   ];
@@ -1323,7 +1400,7 @@ export const MoneyStreamsInfoView = (props: {
                 Balance
               </div>
               <div className="info-value">
-                $49,853.58
+                {toUsCurrency(withdrawalBalance)}
               </div>
             </div>
             <div className="card-column">
@@ -1356,7 +1433,7 @@ export const MoneyStreamsInfoView = (props: {
                 Balance
               </div>
               <div className="info-value">
-                $12,291.01
+                {toUsCurrency(unallocatedBalance)}
               </div>
             </div>
             <div className="card-column">
