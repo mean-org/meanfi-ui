@@ -3,8 +3,8 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { cutNumber, getAmountWithSymbol, getTokenBySymbol, isValidNumber, slugify } from '../../../../utils/utils';
-import { consoleOut, disabledDate, getLockPeriodOptionLabel, isToday, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
+import { cutNumber, getAmountWithSymbol, getTokenBySymbol, isValidNumber, slugify, toTokenAmount } from '../../../../utils/utils';
+import { consoleOut, disabledDate, getLockPeriodOptionLabel, getRateIntervalInSeconds, isToday, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
 import { TokenListItem } from '../../../../components/TokenListItem';
@@ -295,13 +295,26 @@ export const VestingContractCreateForm = (props: {
 
     // TODO: Modify payload as needed
     const onAccountCreateClick = () => {
+        const now = new Date();
+        const parsedDate = Date.parse(paymentStartDate as string);
+        const startUtc = new Date(parsedDate);
+        startUtc.setHours(now.getHours());
+        startUtc.setMinutes(now.getMinutes());
+        startUtc.setSeconds(now.getSeconds());
+        startUtc.setMilliseconds(now.getMilliseconds());
+
         const options: VestingContractCreateOptions = {
             vestingContractName: vestingLockName,
             vestingContractCategory: vestingCategory,
             vestingContractType: treasuryOption ? treasuryOption.type : TreasuryType.Lock,
             token: selectedToken as TokenInfo,
             amount: vestingLockFundingAmount,
-            feePayedByTreasurer: isFeePaidByTreasurer
+            feePayedByTreasurer: isFeePaidByTreasurer,
+            duration: parseFloat(lockPeriodAmount),
+            durationUnit: getRateIntervalInSeconds(lockPeriodFrequency),
+            cliffVestPercent: parseFloat(cliffReleasePercentage),
+            startDate: startUtc,
+            fundingAmount: toTokenAmount(parseFloat(vestingLockFundingAmount), (selectedToken as TokenInfo).decimals)
         };
         onStartTransaction(options);
     }

@@ -1,4 +1,4 @@
-import { TreasuryType } from "@mean-dao/msp";
+import { TimeUnit, TreasuryType } from "@mean-dao/msp";
 import { TokenInfo } from "@solana/spl-token-registry";
 
 export const VESTING_CATEGORIES: string[] = [
@@ -19,6 +19,11 @@ export interface VestingContractCreateOptions {
     amount: string;
     token: TokenInfo;
     feePayedByTreasurer: boolean;
+    duration: number;
+    durationUnit: TimeUnit;
+    cliffVestPercent: number;
+    startDate: Date;
+    fundingAmount: number;
 }
 
 export interface VestingContractWithdrawOptions {

@@ -17,7 +17,8 @@ import {
   TransactionFees,
   Treasury,
   Constants as MSPV2Constants,
-  TreasuryType
+  TreasuryType,
+  TimeUnit
 } from '@mean-dao/msp';
 import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -60,6 +61,21 @@ const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingAccountDetailTab = "overview" | "streams" | "activity" | undefined;
 let ds: string[] = [];
+
+interface CreateVestingTreasuryParams {
+  payer: PublicKey;
+  treasurer: PublicKey;
+  label: string;
+  type: TreasuryType;
+  associatedTokenAddress: string;
+  duration: number;
+  durationUnit: TimeUnit;
+  startUtc: Date;
+  cliffVestPercent: number;
+  feePayedByTreasurer?: boolean | undefined;
+  multisig: string;
+  fundingAmount: number;
+}
 
 export const VestingView = () => {
   const {
@@ -533,7 +549,7 @@ export const VestingView = () => {
     if (accountAddress && getQueryAccountType() === "multisig") {
       const multisig = multisigAccounts.find(t => t.authority.toBase58() === accountAddress);
       if (multisig) {
-        return multisig.id;
+        return multisig.id.toBase58();
       }
     }
 
@@ -587,11 +603,9 @@ export const VestingView = () => {
     setRetryOperationPayload(createOptions);
     setIsBusy(true);
 
-    const createTreasury = async (data: any) => {
+    const createTreasury = async (data: CreateVestingTreasuryParams) => {
 
       if (!connection || !msp || !publicKey) { return null; }
-
-      const treasuryType = data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock;
 
       /**
        * payer: PublicKey
@@ -600,10 +614,10 @@ export const VestingView = () => {
        * type: TreasuryType
        * solFeePayedByTreasury: boolean
        * treasuryAssociatedTokenMint: PublicKey
-       * rateAmount: number
-       * rateIntervalInSeconds: number
+       * duration: number
+       * durationUnit: TimeUnit
+       * fundingAmount: number
        * startUtc?: Date | undefined
-       * cliffVestAmount?: number | undefined
        * cliffVestPercent?: number | undefined
        * feePayedByTreasurer?: boolean | undefined
        */
@@ -611,22 +625,19 @@ export const VestingView = () => {
       const solFeePayedByTreasury = data.multisig ? true : false;
 
       if (!data.multisig) {
-        // return await msp.createVestingTreasury(
-        //   new PublicKey(data.treasurer),                        // treasurer
-        //   new PublicKey(data.treasurer),                        // treasurer
-        //   data.label,                                           // label
-        //   treasuryType,                                         // type
-        //   solFeePayedByTreasury,                                // solFeePayedByTreasury
-        //   new PublicKey(data.associatedTokenAddress),           // associatedToken
-
-        //   data.feePayedByTreasurer,                           // feePayedByTreasurer
-        // );
-        return await msp.createTreasury(
-          new PublicKey(data.treasurer),                    // treasurer
-          new PublicKey(data.treasurer),                    // treasurer
-          new PublicKey(data.associatedTokenAddress),       // associatedToken
-          data.label,                                       // label
-          treasuryType                                      // type
+        return await msp.createVestingTreasury(
+          new PublicKey(data.treasurer),                        // payer
+          new PublicKey(data.treasurer),                        // treasurer
+          data.label,                                           // label
+          data.type,                                            // type
+          solFeePayedByTreasury,                                // solFeePayedByTreasury
+          new PublicKey(data.associatedTokenAddress),           // treasuryAssociatedTokenMint
+          data.duration,                                        // duration
+          data.durationUnit,                                    // durationUnit
+          data.fundingAmount,                                   // fundingAmount
+          data.startUtc,                                        // startUtc
+          data.cliffVestPercent,                                // cliffVestPercent
+          data.feePayedByTreasurer,                             // feePayedByTreasurer
         );
       }
 
@@ -642,7 +653,7 @@ export const VestingView = () => {
         multisig.authority,                               // treasurer
         new PublicKey(data.associatedTokenAddress),       // associatedToken
         data.label,                                       // label
-        treasuryType,                                     // type
+        data.type,                                        // type
         true,                                             // solFeePayedByTreasury = true
       );
 
@@ -689,19 +700,24 @@ export const VestingView = () => {
 
       // Create a transaction
       const associatedToken = createOptions.token;
-      const payload = {
-        treasurer: publicKey.toBase58(),                                      // treasurer
-        label: createOptions.vestingContractName,                             // label
-        type: createOptions.vestingContractType === TreasuryType.Open         // type
-          ? 'Open'
-          : 'Lock',
-        multisig: multisigId,                                                 // multisig
-        associatedTokenAddress: associatedToken.address,                      // Associated token address
-        feePayedByTreasurer: createOptions.feePayedByTreasurer                // feePayedByTreasurer
+      const payload: CreateVestingTreasuryParams = {
+        payer: publicKey,                                                       // payer
+        treasurer: publicKey,                                                   // treasurer
+        label: createOptions.vestingContractName,                               // label
+        type: createOptions.vestingContractType,                                // type
+        duration: createOptions.duration,                                       // duration
+        durationUnit: createOptions.durationUnit,                               // durationUnit
+        fundingAmount: createOptions.fundingAmount,                             // fundingAmount
+        associatedTokenAddress: associatedToken.address,                        // treasuryAssociatedTokenMint
+        cliffVestPercent: createOptions.cliffVestPercent,                       // cliffVestPercent
+        startUtc: createOptions.startDate,                                      // startUtc
+        multisig: multisigId,                                                   // multisig
+        feePayedByTreasurer: createOptions.feePayedByTreasurer                  // feePayedByTreasurer
       };
 
       consoleOut('payload:', payload);
       // Log input data
+
       transactionLog.push({
         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
         inputs: payload
@@ -746,17 +762,22 @@ export const VestingView = () => {
 
       const result = await createTreasury(payload)
         .then(value => {
+          // TODO: Log the error
           if (!value) { return false; }
           consoleOut('Create vesting account returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
+          if (value instanceof Transaction) {
+            transaction = value;
+          } else {
+            transaction = value[0];
+          }
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
+            result: getTxIxResume(transaction)
           });
-          transaction = value;
           return true;
         })
         .catch(error => {
