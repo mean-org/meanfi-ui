@@ -37,7 +37,7 @@ import {
 } from "@solana/wallet-adapter-wallets";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useNavigate } from "react-router-dom";
-import { getDefaultRpc } from "../models/connections-hq";
+import { getDefaultRpc } from "../services/connections-hq";
 import { environment } from "../environments/environment";
 
 export type MeanFiWallet = PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
