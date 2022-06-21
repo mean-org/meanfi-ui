@@ -51,10 +51,10 @@ const renderActiveShape = (props: any) => {
       />
       <path
         d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
-        stroke={fill}
+        stroke="#818cab"
         fill="none"
       />
-      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
+      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="#818cab" />
       <text
         x={ex + (cos >= 0 ? 1 : -1) * 12}
         y={ey}
@@ -94,6 +94,7 @@ export const PieChartComponent = ({
         innerRadius={60}
         outerRadius={80}
         fill="#323645"
+        stroke="#818cab"
         dataKey="value"
         onMouseEnter={onPieEnter}
       />

@@ -1032,7 +1032,8 @@ export const SafeView = () => {
       const ixData = program.coder.instruction.encode("edit_multisig", {
         owners: owners,
         threshold: new BN(data.threshold),
-        label: data.label as any
+        label: data.label as any,
+        title: data.title
       });
 
       const ixAccounts = [
@@ -1052,7 +1053,7 @@ export const SafeView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Edit safe",
+        data.title === "" ? "Edit safe" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.EditMultisig,
@@ -1079,6 +1080,7 @@ export const SafeView = () => {
         // Create a transaction
         const payload = {
           wallet: publicKey.toBase58(),     // wallet
+          title: data.title,
           label: data.label,                // multisig label
           threshold: data.threshold,
           owners: data.owners

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useContext } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
@@ -11,6 +11,7 @@ import { Identicon } from '../Identicon';
 import { consoleOut, getTransactionOperationDescription } from '../../utils/ui';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { UserTokenAccount } from '../../models/transactions';
+import { InputMean } from '../InputMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -26,20 +27,51 @@ export const MultisigVaultDeleteModal = (props: {
   const {
     transactionStatus,
     getTokenByMintAddress,
+    setTransactionStatus
   } = useContext(AppStateContext);
+
+  const [proposalTitle, setProposalTitle] = useState("");
 
   const onCloseModal = () => {
     consoleOut('onCloseModal called!', '', 'crimson');
     props.handleClose();
+    onAfterClose();
   }
 
   const onAcceptDeleteVault = () => {
-    props.handleOk();
+    props.handleOk({
+      title: proposalTitle
+    });
+  }
+
+  const onAfterClose = () => {
+    props.handleAfterClose();
+
+    setTimeout(() => {
+      setProposalTitle("");
+    });
+
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setProposalTitle(e.target.value);
   }
 
   const refreshPage = () => {
     props.handleClose();
     window.location.reload();
+  }
+
+  const isValidForm = (): boolean => {
+    return proposalTitle && 
+          props.selectedVault &&
+          props.selectedVault.balance as number === 0
+      ? true
+      : false;
   }
 
   const renderVault = (item: UserTokenAccount) => {
@@ -92,11 +124,25 @@ export const MultisigVaultDeleteModal = (props: {
       visible={props.isVisible}
       onOk={onAcceptDeleteVault}
       onCancel={onCloseModal}
+      afterClose={onAfterClose}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
       <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
+            {/* Proposal title */}
+            <div className="mb-3">
+              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+              <InputMean
+                id="proposal-title-field"
+                name="Title"
+                className="w-100 general-text-input"
+                onChange={onTitleInputValueChange}
+                placeholder="Add a proposal title (required)"
+                value={proposalTitle}
+              />
+            </div>
+
             {(props.selectedVault && props.selectedVault.balance as number > 0) && (
               <h3>{t('multisig.multisig-assets.delete-asset.warning-message')}</h3>
             )}
@@ -169,7 +215,7 @@ export const MultisigVaultDeleteModal = (props: {
                 type="primary"
                 shape="round"
                 size="middle"
-                disabled={props.selectedVault && props.selectedVault.balance as number > 0 }
+                disabled={!isValidForm()}
                 onClick={() => {
                   if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                     onAcceptDeleteVault();

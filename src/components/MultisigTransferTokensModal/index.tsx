@@ -17,6 +17,7 @@ import { MintLayout } from '@solana/spl-token';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { UserTokenAccount } from '../../models/transactions';
+import { InputMean } from '../InputMean';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -43,6 +44,7 @@ export const MultisigTransferTokensModal = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
 
+  const [proposalTitle, setProposalTitle] = useState("");
   const [fromVault, setFromVault] = useState<UserTokenAccount>();
   const [fromMint, setFromMint] = useState<any>();
   const [to, setTo] = useState('');
@@ -105,6 +107,7 @@ export const MultisigTransferTokensModal = (props: {
 
   const onAcceptModal = () => {
     props.handleOk({
+      title: proposalTitle,
       from: fromVault ? fromVault.publicAddress as string : '',
       amount: +amount,
       to: to
@@ -114,6 +117,10 @@ export const MultisigTransferTokensModal = (props: {
   const onCloseModal = () => {
     consoleOut('onCloseModal called!', '', 'crimson');
     props.handleClose();
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setProposalTitle(e.target.value);
   }
 
   const onVaultChanged = useCallback((e: any) => {
@@ -162,6 +169,7 @@ export const MultisigTransferTokensModal = (props: {
 
   const isValidForm = (): boolean => {
     return (
+      proposalTitle &&
       fromVault &&
       to &&
       isValidAddress(fromVault.publicAddress) &&
@@ -203,6 +211,19 @@ export const MultisigTransferTokensModal = (props: {
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
+            {/* Proposal title */}
+            <div className="mb-3">
+              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+              <InputMean
+                id="proposal-title-field"
+                name="Title"
+                className="w-100 general-text-input"
+                onChange={onTitleInputValueChange}
+                placeholder="Add a proposal title (required)"
+                value={proposalTitle}
+              />
+            </div>
+
             {/* Amount to send */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>

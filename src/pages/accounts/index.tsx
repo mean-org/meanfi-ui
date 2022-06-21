@@ -1670,7 +1670,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Propose funds transfer",
+        data.title === "" ? "Propose funds transfer" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         (fromMintAddress.equals(NATIVE_SOL_MINT) ? OperationType.Transfer : OperationType.TransferTokens),
@@ -1695,6 +1695,7 @@ export const AccountsNewView = () => {
 
         // Create a transaction
         const payload = {
+          title: data.title,
           from: data.from,
           to: data.to,
           amount: data.amount
@@ -1968,7 +1969,7 @@ export const AccountsNewView = () => {
     resetTransactionStatus
   ]);
 
-  const onExecuteTransferOwnershipTx  = useCallback(async (selectedAuthority: string) => {
+  const onExecuteTransferOwnershipTx  = useCallback(async (data: any) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1981,7 +1982,7 @@ export const AccountsNewView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createTransferOwnershipTx = async (selectedAuthority: string) => {
+    const createTransferOwnershipTx = async (data: any) => {
 
       if (!publicKey || !selectedAsset || !selectedMultisig || !multisigClient) { 
         return null;
@@ -1990,7 +1991,7 @@ export const AccountsNewView = () => {
       const setAuthIx = Token.createSetAuthorityInstruction(
         TOKEN_PROGRAM_ID,
         new PublicKey(selectedAsset.publicAddress as string),
-        new PublicKey(selectedAuthority),
+        new PublicKey(data.selectedAuthority),
         'AccountOwner',
         selectedMultisig.authority,
         []
@@ -2000,7 +2001,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Change asset ownership",
+        data.title === "" ? "Change asset ownership" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.SetAssetAuthority,
@@ -2015,7 +2016,7 @@ export const AccountsNewView = () => {
 
     const createTx = async (): Promise<boolean> => {
 
-      if (!publicKey || !selectedAuthority) {
+      if (!publicKey || !data) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -2031,7 +2032,8 @@ export const AccountsNewView = () => {
 
       // Create transaction payload for debugging
       const payload = {
-        selectedAuthority: selectedAuthority,
+        title: data.title as string,
+        selectedAuthority: data.selectedAuthority,
       };
 
       consoleOut('data:', payload);
@@ -2072,7 +2074,7 @@ export const AccountsNewView = () => {
         return false;
       }
 
-      const result =  await createTransferOwnershipTx(selectedAuthority)
+      const result =  await createTransferOwnershipTx(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('createTransferVaultAuthorityTx returned transaction:', value);
@@ -2290,9 +2292,9 @@ export const AccountsNewView = () => {
     setIsDeleteVaultModalVisible(true);
   }, []);
 
-  const onAcceptDeleteVault = () => {
+  const onAcceptDeleteVault = (data: any) => {
 
-    onExecuteCloseAssetTx();
+    onExecuteCloseAssetTx(data);
   };
 
   const onVaultDeleted = useCallback(() => {
@@ -2300,7 +2302,7 @@ export const AccountsNewView = () => {
     resetTransactionStatus();
   },[resetTransactionStatus]);
 
-  const onExecuteCloseAssetTx = useCallback(async () => {
+  const onExecuteCloseAssetTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -2313,7 +2315,7 @@ export const AccountsNewView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const closeAssetTx = async (inputAsset: UserTokenAccount) => {
+    const closeAssetTx = async (inputAsset: UserTokenAccount, data: any) => {
 
       if (!publicKey || !inputAsset || !selectedMultisig || !multisigClient || !inputAsset.publicAddress) { 
         console.error("I do not have anything, review");
@@ -2337,7 +2339,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Close asset",
+        data.title === "" ? "Close asset" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.DeleteAsset,
@@ -2368,6 +2370,7 @@ export const AccountsNewView = () => {
 
       // Create transaction payload for debugging
       const payload = {
+        title: data.title,
         asset: selectedAsset,
       };
 
@@ -2408,7 +2411,7 @@ export const AccountsNewView = () => {
         return false;
       }
 
-      const result =  await closeAssetTx(selectedAsset)
+      const result =  await closeAssetTx(selectedAsset, data)
         .then((value: any) => {
           if (!value) { return false; }
           consoleOut('deleteVaultTx returned transaction:', value);

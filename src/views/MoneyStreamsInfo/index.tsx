@@ -1292,7 +1292,7 @@ export const MoneyStreamsInfoView = (props: {
 
   // Balance
   const renderBalance = (
-    <a href="#" className="simplelink underline-on-hover">Tracking 2 smart contracts</a>
+    <a href="https://docs.meanfi.com/products/developers/smart-contracts"  target="_blank" rel="noopener noreferrer" className="simplelink underline-on-hover">Tracking 2 smart contracts</a>
   );
 
   const infoData = [
@@ -1608,12 +1608,12 @@ export const MoneyStreamsInfoView = (props: {
     {
       id: "incoming",
       name: `Incoming ${(incomingAmount && incomingAmount > 0) ? `(${incomingAmount})` : ""}`,
-      render: incomingAmount && incomingAmount > 0 ? renderListOfIncomingStreams : "You don't have any incoming stream"
+      render: incomingAmount && incomingAmount > 0 ? renderListOfIncomingStreams : "You don't have any incoming streams"
     },
     {
       id: "outgoing",
       name: `Outgoing ${(outgoingAmount && outgoingAmount > 0) ? `(${outgoingAmount})` : ""}`,
-      render: outgoingAmount && outgoingAmount > 0 ? renderListOfOutgoingStreams : "You don't have any outgoing stream"
+      render: outgoingAmount && outgoingAmount > 0 ? renderListOfOutgoingStreams : "You don't have any outgoing streams"
     },
   ];
 
