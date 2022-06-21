@@ -503,7 +503,10 @@ export const ProposalDetailsView = (props: {
         </>
         <>
           <Col className="safe-details-right-container btn-group mr-1">
-            {selectedProposal.status === MultisigTransactionStatus.Pending ? (
+            {(
+              selectedProposal.status === MultisigTransactionStatus.Pending &&
+              selectedProposal.didSigned === null
+            ) ? (
               <>
                 <Button
                   type="default"

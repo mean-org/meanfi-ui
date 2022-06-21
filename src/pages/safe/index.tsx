@@ -3169,7 +3169,7 @@ export const SafeView = () => {
 
     switch (item.operationType) {
       case OperationType.CreateTransaction:
-        reloadSelectedMultisig(item.extras as string);
+        reloadMultisigs();
         break;
       case OperationType.ApproveTransaction:
         refreshSelectedProposal(item.extras as any);
