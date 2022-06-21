@@ -12,12 +12,12 @@ import BN from "bn.js";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { segmentAnalytics } from "../../App";
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "../../utils/segment-service";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isValidAddress } from "../../utils/ui";
+import { consoleOut, copyText, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isValidAddress } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { openNotification } from "../../components/Notifications";
 import { calculateActionFees } from "@mean-dao/money-streaming/lib/utils";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { NO_FEES } from "../../constants";
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamTopupParams } from "../../models/common-types";
 import { OperationType, TransactionStatus } from "../../models/enums";
@@ -84,6 +84,23 @@ export const MoneyStreamsOutgoingView = (props: {
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
+
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (copyText(address.toString())) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t])
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
@@ -2343,11 +2360,13 @@ export const MoneyStreamsOutgoingView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="mso-00" onClick={() => {}}>
+      <Menu.Item key="mso-00" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
         <span className="menu-item-text">Copy stream id</span>
       </Menu.Item>
       <Menu.Item key="mso-01" onClick={() => {}}>
-        <span className="menu-item-text">View on Explorer</span>
+        <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
+          <span className="menu-item-text">View on Explorer</span>
+        </a>
       </Menu.Item>
       <Menu.Item key="mso-02" onClick={showCloseStreamModal}>
         <span className="menu-item-text">Close stream</span>
