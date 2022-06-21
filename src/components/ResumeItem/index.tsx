@@ -217,13 +217,13 @@ export const ResumeItem = (props: {
           <div className="resume-right-text">
             <>
               <div className={`resume-right-text-up`}>
-                {approved && (
+                {approved > 0 && (
                   <div className="thumbs-up">
                     <span>{approved}</span>
                     <IconThumbsUp className="mean-svg-icons" />
                   </div>
                 )}
-                {rejected && (
+                {rejected > 0 && (
                   version !== 0 && (
                   <div className="thumbs-down">
                     <IconThumbsDown className="mean-svg-icons" />
