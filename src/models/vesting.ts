@@ -31,3 +31,9 @@ export interface VestingContractWithdrawOptions {
     tokenAmount: any;
     destinationAccount: string;
 }
+
+export interface VestingContractStreamCreateOptions {
+    streamName: string;
+    beneficiaryAddress: string;
+    tokenAmount: number;
+}

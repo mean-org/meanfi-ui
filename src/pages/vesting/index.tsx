@@ -37,7 +37,7 @@ import { VestingContractCreateForm } from './components/VestingContractCreateFor
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { VestingContractCreateOptions, VestingContractWithdrawOptions, VESTING_CATEGORIES } from '../../models/vesting';
+import { VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions, VESTING_CATEGORIES } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
@@ -1657,15 +1657,395 @@ export const VestingView = () => {
     }
   }, [getTransactionFees, resetTransactionStatus, vestingContract]);
 
-  const onAcceptCreateStream = (params: any) => {
+  const onAcceptCreateStream = (params: VestingContractStreamCreateOptions) => {
     consoleOut('Create stream params:', params, 'blue');
-    // onExecuteCreateStreamTransaction(params);
+    onExecuteCreateStreamTransaction(params);
   };
 
   const closeCreateStreamModal = useCallback(() => {
     resetTransactionStatus();
     setIsCreateStreamModalVisibility(false);
   }, [resetTransactionStatus]);
+
+  const onExecuteCreateStreamTransaction = async (params: VestingContractStreamCreateOptions) => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: string;
+    let encodedTx: string;
+
+    const transactionLog: any[] = [];
+
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    /*
+    const createStreams = async (data: any) => {
+
+      consoleOut('Is Multisig Treasury: ', isMultisigTreasury, 'blue');
+      consoleOut('Starting create streams using MSP V2...', '', 'blue');
+      const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
+
+      if (!isMultisigTreasury) {
+
+        const beneficiaries: Beneficiary[] = data.beneficiaries.map((b: any) => {
+          return {
+            ...b,
+            address: new PublicKey(b.address)
+          } as Beneficiary
+        });
+
+        return await msp.createStreams(
+          new PublicKey(data.payer),                                          // initializer
+          new PublicKey(data.treasurer),                                      // treasurer
+          new PublicKey(data.treasury),                                       // treasury
+          beneficiaries,                                                      // beneficiary
+          new PublicKey(data.associatedToken),                                // associatedToken
+          data.allocationAssigned,                                            // allocationAssigned
+          data.rateAmount,                                                    // rateAmount
+          data.rateIntervalInSeconds,                                         // rateIntervalInSeconds
+          data.startUtc,                                                      // startUtc
+          data.cliffVestAmount,                                               // cliffVestAmount
+          data.cliffVestPercent,                                              // cliffVestPercent
+          data.feePayedByTreasurer                                            // feePayedByTreasurer
+        );
+      }
+
+      if (!selectedVestingContract || !multisigClient || !multisigAddress || !publicKey) { return null; }
+
+      const [multisigSigner] = await PublicKey.findProgramAddress(
+        [multisigAddress.toBuffer()],
+        MEAN_MULTISIG_PROGRAM
+      );
+
+      const streams: StreamBeneficiary[] = [];
+      const streamsBumps: any = {};
+      let seedCounter = 0;
+
+      const timeStamp = parseInt((Date.now() / 1000).toString());
+
+      for (const beneficiary of data.beneficiaries) {
+        
+        const timeStampCounter = new u64(timeStamp + seedCounter);
+        const [stream, streamBump] = await PublicKey.findProgramAddress(
+          [multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
+          MEAN_MULTISIG_PROGRAM
+        );
+
+        streams.push({
+          streamName: beneficiary.streamName,
+          address: stream,
+          beneficiary: new PublicKey(beneficiary.address)
+
+        } as StreamBeneficiary);
+
+        streamsBumps[stream.toBase58()] = {
+          bump: streamBump,
+          timeStamp: timeStampCounter
+        };
+
+        seedCounter += 1;
+      }
+
+      const createStreams = await msp.createStreamsFromPda(
+        publicKey,                                                            // payer
+        multisigSigner,                                                       // treasurer
+        new PublicKey(data.treasury),                                         // treasury
+        new PublicKey(data.associatedToken),                                  // associatedToken
+        streams,                                                              // streams
+        data.allocationAssigned,                                              // allocationAssigned
+        data.rateAmount,                                                      // rateAmount
+        data.rateIntervalInSeconds,                                           // rateIntervalInSeconds
+        data.startUtc,                                                        // startUtc
+        data.cliffVestAmount,                                                 // cliffVestAmount
+        data.cliffVestPercent,                                                // cliffVestPercent
+        data.feePayedByTreasurer                                              // feePayedByTreasurer
+      );
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const txs: Transaction[] = [];
+
+      for (const createTx of createStreams) {
+
+        const ixData = Buffer.from(createTx.instructions[0].data);
+        const ixAccounts = createTx.instructions[0].keys;
+        const streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
+
+        const tx = await multisigClient.createMoneyStreamTransaction(
+          publicKey,
+          "Create Stream",
+          "", // description
+          new Date(expirationTime * 1_000),
+          streamSeedData.timeStamp.toNumber(),
+          streamSeedData.bump,
+          OperationType.StreamCreate,
+          multisigAddress,
+          MSPV2Constants.MSP,
+          ixAccounts,
+          ixData
+        );
+        
+        if (tx) {
+          txs.push(tx);
+        }
+      } 
+
+      return txs;
+    }
+    */
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (!publicKey || !msp || !selectedVestingContract || !selectedToken) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Wallet address:', publicKey.toBase58());
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      const associatedToken = new PublicKey(selectedToken?.address as string);
+      const treasury = new PublicKey(selectedVestingContract.id as string);
+
+      // Create a transaction
+      const data = {
+        payer: publicKey.toBase58(),                                    // payer
+        treasurer: publicKey.toBase58(),                                // treasurer
+        treasury: treasury.toBase58(),                                  // treasury
+        beneficiary: params.beneficiaryAddress,                         // beneficiary
+        treasuryAssociatedTokenMint: associatedToken,                   // treasuryAssociatedTokenMint
+        allocationAssigned: params.tokenAmount,                         // allocationAssigned
+        streamName: params.streamName                                   // streamName
+      };
+
+      consoleOut('data:', data);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+
+      const minRequired = minRequiredBalance;
+      consoleOut('Min balance required:', minRequired, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < minRequired) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      const result = await msp.createStreamWithTemplate(
+        publicKey,                                // payer
+        publicKey,                                // treasurer
+        treasury,                                 // treasury
+        new PublicKey(params.beneficiaryAddress), // beneficiary
+        associatedToken,                          // treasuryAssociatedTokenMint
+        params.tokenAmount,                       // allocationAssigned
+        params.streamName                         // streamName
+      )
+        .then(values => {
+          if (!values || !values.length) { return false; }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transaction = values[0];
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(values[0])
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('createStream error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet && publicKey) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet && selectedToken && selectedVestingContract) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            // consoleOut('Send Tx to confirmation queue:', signature);
+            // enqueueTransactionConfirmation({
+            //   signature: signature,
+            //   operationType: OperationType.TreasuryWithdraw,
+            //   finality: "confirmed",
+            //   txInfoFetchStatus: "fetching",
+            //   loadingTitle: "Confirming transaction",
+            //   loadingMessage: `Withdraw ${formatThousands(
+            //     parseFloat(params.amount),
+            //     selectedToken.decimals
+            //   )} ${selectedToken.symbol} from vesting contract ${selectedVestingContract.name}`,
+            //   completedTitle: "Transaction confirmed",
+            //   completedMessage: `Successful withdrawal of ${formatThousands(
+            //     parseFloat(params.amount),
+            //     selectedToken.decimals
+            //   )} ${selectedToken.symbol} from vesting contract ${selectedVestingContract.name}`,
+            //   extras: params
+            // });
+            setIsBusy(false);
+            closeCreateStreamModal();
+            setNeedReloadMultisig(true);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  };
 
   // Transfer funds modal
   const [isVestingContractTransferFundsModalVisible, setIsVestingContractTransferFundsModalVisible] = useState(false);
@@ -3301,7 +3681,7 @@ export const VestingView = () => {
         {isCreateStreamModalVisible && (
           <VestingContractCreateStreamModal
             handleClose={closeCreateStreamModal}
-            handleOk={(options: any) => onAcceptCreateStream(options)}
+            handleOk={(options: VestingContractStreamCreateOptions) => onAcceptCreateStream(options)}
             isVisible={isCreateStreamModalVisible}
             nativeBalance={nativeBalance}
             minRequiredBalance={minRequiredBalance}

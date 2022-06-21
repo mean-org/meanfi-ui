@@ -14,6 +14,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { isError } from '../../../../utils/transactions';
 import { IconEdit, IconWarning } from '../../../../Icons';
 import { PaymentRateType } from '../../../../models/enums';
+import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
 
 export const VestingContractCreateStreamModal = (props: {
     handleClose: any;
@@ -307,10 +308,10 @@ export const VestingContractCreateStreamModal = (props: {
 
     // TODO: Create a type for this
     const onStreamCreateClick = () => {
-        const options = {
+        const options: VestingContractStreamCreateOptions = {
             streamName: vestingStreamName,
             beneficiaryAddress: recipientAddress,
-            amount: tokenAmount
+            tokenAmount: tokenAmount.toNumber()
         };
         handleOk(options);
     }
