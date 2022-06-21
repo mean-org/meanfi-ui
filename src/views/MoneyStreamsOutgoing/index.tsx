@@ -2369,16 +2369,31 @@ export const MoneyStreamsOutgoingView = (props: {
               Add funds
             </div>
         </Button>
-        <Button
-          type="default"
-          shape="round"
-          size="small"
-          className="thin-stroke"
-          onClick={showPauseStreamModal}>
-            <div className="btn-content">
-              Pause stream
-            </div>
-        </Button>
+        {streamSelected && (
+          (getStreamStatus(streamSelected) === "Paused") ? (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={showResumeStreamModal}>
+                <div className="btn-content">
+                  Resume stream
+                </div>
+            </Button>
+          ) : (getStreamStatus(streamSelected) === "Running") ? (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={showPauseStreamModal}>
+                <div className="btn-content">
+                  Pause stream
+                </div>
+            </Button>
+          ) : null
+        )}
       </Col>
 
       <Col xs={4} sm={6} md={4} lg={6}>

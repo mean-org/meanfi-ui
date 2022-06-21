@@ -395,14 +395,11 @@ export const MoneyStreamsInfoView = (props: {
     msp,
     publicKey,
     connection,
-    // treasuryAddress,
-    // treasuryDetails,
     selectedMultisig,
     fetchTxInfoStatus,
     loadingTreasuries,
+    getAllUserV2Treasuries,
     clearTxConfirmationContext,
-    // openTreasuryById,
-    getAllUserV2Treasuries
   ]);
 
   useEffect(() => {
@@ -444,10 +441,6 @@ export const MoneyStreamsInfoView = (props: {
         .finally(() => setLoadingCombinedStreamingList(false));
     }
   }, [getStreamingAccountStreams, treasuryList]);
-
-  useEffect(() => {
-    consoleOut("treasuryCombinedList", treasuryCombinedList, "blue");
-  }, [treasuryCombinedList])
 
   const refreshUserBalances = useCallback(() => {
 
@@ -1453,7 +1446,7 @@ export const MoneyStreamsInfoView = (props: {
         outgoingAmount
       )}
     </>
-  )
+  );
 
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
