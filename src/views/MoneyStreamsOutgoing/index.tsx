@@ -2365,7 +2365,7 @@ export const MoneyStreamsOutgoingView = (props: {
       </Menu.Item>
       <Menu.Item key="mso-01" onClick={() => {}}>
         <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-          <span className="menu-item-text">View on Explorer</span>
+          <span className="menu-item-text">View on Solscan</span>
         </a>
       </Menu.Item>
       <Menu.Item key="mso-02" onClick={showCloseStreamModal}>

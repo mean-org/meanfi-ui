@@ -17,9 +17,9 @@ import {
   MSP
 } from '@mean-dao/msp';
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { useConnectionConfig } from "../../contexts/connection";
+import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { NO_FEES } from "../../constants";
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toTokenAmount, toUiAmount } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
@@ -1016,9 +1016,11 @@ export const MoneyStreamsIncomingView = (props: {
           size="small"
           className="thin-stroke"
           onClick={() => {}}>
-            <div className="btn-content">
-              View on Solscan
-            </div>
+            <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
+              <div className="btn-content">
+                  View on Solscan
+              </div>
+            </a>
         </Button>
       </Col>
 
