@@ -17,7 +17,8 @@ import {
   TransactionFees,
   Treasury,
   Constants as MSPV2Constants,
-  StreamTemplate
+  StreamTemplate,
+  StreamBeneficiary
 } from '@mean-dao/msp';
 import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -36,10 +37,10 @@ import { VestingContractCreateForm } from './components/VestingContractCreateFor
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { CreateVestingTreasuryParams, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions, VESTING_CATEGORIES } from '../../models/vesting';
+import { CreateVestingStreamParams, CreateVestingTreasuryParams, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions, VESTING_CATEGORIES } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../utils/ids';
 import { appConfig, customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
@@ -56,6 +57,7 @@ import { VestingContractActivity } from './components/VestingContractActivity';
 import { AccountLayout } from '@solana/spl-token';
 import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import { BN } from 'bn.js';
+import { u64 } from '@solana/spl-token';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -1698,6 +1700,117 @@ export const VestingView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
+    /* TODO: Complete the multisig part of a single stream create for a vesting contract
+    const createStream = async (data: CreateVestingStreamParams) => {
+
+      if (!selectedVestingContract || !msp) { return null; }
+
+      const isMsTreasury = isMultisigTreasury(selectedVestingContract);
+
+      consoleOut('Is Multisig Treasury: ', isMsTreasury, 'blue');
+      consoleOut('Starting create stream using MSP V2...', '', 'blue');
+
+      if (!isMsTreasury) {
+        return await msp.createStreamWithTemplate(
+          data.payer,                                 // payer
+          data.treasurer,                             // treasurer
+          data.treasury,                              // treasury
+          data.beneficiary,                           // beneficiary
+          data.treasuryAssociatedTokenMint,           // treasuryAssociatedTokenMint
+          data.allocationAssigned,                    // allocationAssigned
+          data.streamName                             // streamName
+        );
+      }
+
+      if (!multisigClient || !data.multisig || !publicKey) { return null; }
+
+      const multisigAddress = new PublicKey(data.multisig);
+      const [multisigSigner] = await PublicKey.findProgramAddress(
+        [multisigAddress.toBuffer()],
+        MEAN_MULTISIG_PROGRAM
+      );
+
+      const streams: StreamBeneficiary[] = [];
+      const streamsBumps: any = {};
+      let seedCounter = 0;
+
+      const timeStamp = parseInt((Date.now() / 1000).toString());
+
+      // Add only one for now
+      const beneficiaries = [{
+        streamName: data.streamName,
+        address: data.beneficiary
+      }];
+
+      for (const beneficiary of beneficiaries) {
+
+        const timeStampCounter = new u64(timeStamp + seedCounter);
+        const [stream, streamBump] = await PublicKey.findProgramAddress(
+          [multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
+          MEAN_MULTISIG_PROGRAM
+        );
+
+        streams.push({
+          streamName: beneficiary.streamName,
+          address: stream,
+          beneficiary: beneficiary.address
+        } as StreamBeneficiary);
+
+        streamsBumps[stream.toBase58()] = {
+          bump: streamBump,
+          timeStamp: timeStampCounter
+        };
+
+        seedCounter += 1;
+      }
+
+      const createStreams = await msp.createStreamsFromPda(
+        publicKey,                                                            // payer
+        multisigSigner,                                                       // treasurer
+        new PublicKey(data.treasury),                                         // treasury
+        new PublicKey(data.associatedToken),                                  // associatedToken
+        streams,                                                              // streams
+        data.allocationAssigned,                                              // allocationAssigned
+        data.rateAmount,                                                      // rateAmount
+        data.rateIntervalInSeconds,                                           // rateIntervalInSeconds
+        data.startUtc,                                                        // startUtc
+        data.cliffVestAmount,                                                 // cliffVestAmount
+        data.cliffVestPercent,                                                // cliffVestPercent
+        data.feePayedByTreasurer                                              // feePayedByTreasurer
+      );
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const txs: Transaction[] = [];
+
+      for (const createTx of createStreams) {
+
+        const ixData = Buffer.from(createTx.instructions[0].data);
+        const ixAccounts = createTx.instructions[0].keys;
+        const streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
+
+        const tx = await multisigClient.createMoneyStreamTransaction(
+          publicKey,
+          "Create Stream",
+          "", // description
+          new Date(expirationTime * 1_000),
+          streamSeedData.timeStamp.toNumber(),
+          streamSeedData.bump,
+          OperationType.StreamCreate,
+          multisigAddress,
+          MSPV2Constants.MSP,
+          ixAccounts,
+          ixData
+        );
+        
+        if (tx) {
+          txs.push(tx);
+        }
+      } 
+
+      return txs;
+    }
+    */
+
     const createTx = async (): Promise<boolean> => {
 
       if (!publicKey || !msp || !selectedVestingContract || !selectedToken) {
@@ -1705,7 +1818,7 @@ export const VestingView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Vesting Stream transaction failed', { transcript: transactionLog });
         return false;
       }
 
@@ -1779,7 +1892,7 @@ export const VestingView = () => {
             getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
-        customLogger.logWarning('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
+        customLogger.logWarning('Create Vesting Stream transaction failed', { transcript: transactionLog });
         return false;
       }
 
@@ -1815,7 +1928,7 @@ export const VestingView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create Vesting Stream transaction failed', { transcript: transactionLog });
           return false;
         });
 
@@ -1843,7 +1956,7 @@ export const VestingView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Vesting Stream transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1866,7 +1979,7 @@ export const VestingView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create Vesting Stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1879,7 +1992,7 @@ export const VestingView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Vesting Stream transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1911,7 +2024,7 @@ export const VestingView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Vesting Stream transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1924,7 +2037,7 @@ export const VestingView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Vesting Stream transaction failed', { transcript: transactionLog });
         return false;
       }
     }

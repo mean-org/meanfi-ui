@@ -57,3 +57,14 @@ export interface VestingContractStreamCreateOptions {
     rateAmount: number;
     interval: string;
 }
+
+export interface CreateVestingStreamParams {
+    payer: PublicKey;
+    treasurer: PublicKey;
+    treasury: PublicKey;
+    beneficiary: PublicKey;
+    treasuryAssociatedTokenMint: PublicKey;
+    allocationAssigned: number;
+    streamName: string;
+    multisig: string;
+}
