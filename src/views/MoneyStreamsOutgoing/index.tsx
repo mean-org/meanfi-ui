@@ -1242,6 +1242,7 @@ export const MoneyStreamsOutgoingView = (props: {
             });
             setOngoingOperation(undefined);
             onTransactionFinished();
+            setLoadingStreamDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2268,7 +2269,7 @@ export const MoneyStreamsOutgoingView = (props: {
   ]);
 
   useEffect(() => {
-    if (!ms || !msp || !streamSelected || !loadingStreamDetails) {return;}
+    if (!ms || !msp || !streamSelected) {return;}
 
     const timeout = setTimeout(() => {
       if (msp && streamSelected && streamSelected.version >= 2) {

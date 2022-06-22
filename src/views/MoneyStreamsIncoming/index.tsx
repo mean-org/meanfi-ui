@@ -16,7 +16,7 @@ import {
   STREAM_STATUS,
   MSP
 } from '@mean-dao/msp';
-import { Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
@@ -33,6 +33,8 @@ import { segmentAnalytics } from "../../App";
 import { StreamWithdrawModal } from "../../components/StreamWithdrawModal";
 import { StreamWithdrawData } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { useNativeAccount } from "../../contexts/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -41,8 +43,6 @@ export const MoneyStreamsIncomingView = (props: {
   onSendFromIncomingStreamDetails?: any;
 }) => {
   const {
-    streamDetail,
-    selectedToken,
     transactionStatus,
     refreshTokenBalance,
     streamProgramAddress,
@@ -58,13 +58,19 @@ export const MoneyStreamsIncomingView = (props: {
   const { streamSelected, onSendFromIncomingStreamDetails } = props;
 
   const connectionConfig = useConnectionConfig();
+  const { endpoint } = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const { t } = useTranslation('common');
-  const { endpoint } = useConnectionConfig();
+  const { account } = useNativeAccount();
 
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [lastStreamTransferAddress, setLastStreamTransferAddress] = useState('');
+
+  const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>();
+
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
   const hideDetailsHandler = () => {
     onSendFromIncomingStreamDetails();
@@ -193,13 +199,13 @@ export const MoneyStreamsIncomingView = (props: {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && streamDetail && selectedToken && msp) {
+      if (publicKey && streamSelected && selectedToken && msp) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        const stream = new PublicKey(streamDetail.id as string);
+        const stream = new PublicKey(streamSelected.id as string);
         const newBeneficiary = new PublicKey(address);
         const data = {
           beneficiary: publicKey.toBase58(),                              // beneficiary
@@ -411,7 +417,7 @@ export const MoneyStreamsIncomingView = (props: {
       }
     }
 
-    if (wallet && streamDetail) {
+    if (wallet && streamSelected) {
       showTransferStreamTransactionModal();
       const created = await createTx();
       consoleOut('created:', created, 'blue');
@@ -432,9 +438,10 @@ export const MoneyStreamsIncomingView = (props: {
               loadingMessage: `Transfer stream to: ${shortenAddress(address)}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Stream transferred to: ${shortenAddress(address)}`,
-              extras: streamDetail.id as string
+              extras: streamSelected.id as string
             });
             onTransferStreamTransactionFinished();
+            setLoadingStreamDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -449,7 +456,7 @@ export const MoneyStreamsIncomingView = (props: {
   const showWithdrawModal = useCallback(async () => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalButton);
-    const lastDetail = Object.assign({}, streamDetail);
+    const lastDetail = Object.assign({}, streamSelected);
     resetTransactionStatus();
     setLastStreamDetail(lastDetail);
     setIsWithdrawModalVisibility(true);
@@ -465,7 +472,7 @@ export const MoneyStreamsIncomingView = (props: {
       });
     }
   }, [
-    streamDetail,
+    streamSelected,
     getTransactionFees,
     getTransactionFeesV2,
     resetTransactionStatus
@@ -505,14 +512,15 @@ export const MoneyStreamsIncomingView = (props: {
     setIsBusy(true);
 
     const createTxV1 = async (): Promise<boolean> => {
-      if (wallet && streamDetail) {
+      if (wallet && streamSelected) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        const stream = new PublicKey(streamDetail.id as string);
-        const beneficiary = new PublicKey((streamDetail as StreamInfo).beneficiaryAddress as string);
+        const stream = new PublicKey(streamSelected.id as string);
+        
+        const beneficiary = new PublicKey((streamSelected as StreamInfo).beneficiaryAddress as string);
         const amount = parseFloat(withdrawData.amount);
         const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
         const valueInUsd = price * amount;
@@ -617,14 +625,15 @@ export const MoneyStreamsIncomingView = (props: {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && streamDetail && msp && selectedToken) {
+      if (publicKey && streamSelected && msp && selectedToken) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        const stream = new PublicKey(streamDetail.id as string);
-        const beneficiary = new PublicKey((streamDetail as Stream).beneficiary as string);
+        const stream = new PublicKey(streamSelected.id as string);
+
+        const beneficiary = new PublicKey((streamSelected as Stream).beneficiary as string);
         const amount = toTokenAmount(parseFloat(withdrawData.amount as string), selectedToken.decimals);
         const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
         const valueInUsd = price * parseFloat(withdrawData.amount);
@@ -845,11 +854,11 @@ export const MoneyStreamsIncomingView = (props: {
       }
     }
 
-    if (wallet && streamDetail && selectedToken) {
+    if (wallet && streamSelected && selectedToken) {
       const token = Object.assign({}, selectedToken);
       showWithdrawFundsTransactionModal();
       let created: boolean;
-      if (streamDetail.version < 2) {
+      if (streamSelected.version < 2) {
         created = await createTxV1();
       } else {
         created = await createTxV2();
@@ -878,10 +887,11 @@ export const MoneyStreamsIncomingView = (props: {
                 parseFloat(withdrawData.amount),
                 token.decimals
               )} ${token.symbol}`,
-              extras: streamDetail.id as string
+              extras: streamSelected.id as string
             });
             setIsBusy(false);
             onWithdrawFundsTransactionFinished();
+            setLoadingStreamDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -935,10 +945,12 @@ export const MoneyStreamsIncomingView = (props: {
       if (msp && streamSelected && streamSelected.version >= 2) {
         msp.refreshStream(streamSelected as Stream).then(detail => {
           setStreamDetail(detail as Stream);
+          setLoadingStreamDetails(false);
         });
       } else if (ms && streamSelected && streamSelected.version < 2) {
         ms.refreshStream(streamSelected as StreamInfo).then(detail => {
           setStreamDetail(detail as StreamInfo);
+          setLoadingStreamDetails(false);
         });
       }
     }, 1000);
@@ -946,7 +958,36 @@ export const MoneyStreamsIncomingView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  }, [ms, msp, setStreamDetail, streamSelected]);
+  }, [ms, msp, setStreamDetail, streamSelected, loadingStreamDetails]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
+
+  useEffect(() => {
+    if (streamSelected) {
+      const token = getTokenByMintAddress(streamSelected.associatedToken as string);
+  
+      setSelectedToken(token);
+    }
+  }, [getTokenByMintAddress, streamSelected])
 
   const renderFundsToWithdraw = () => {
     if (!streamSelected) { return null; }
@@ -983,7 +1024,7 @@ export const MoneyStreamsIncomingView = (props: {
   const infoData = [
     {
       name: "Funds available to withdraw now",
-      value: renderFundsToWithdraw()
+      value: streamSelected ? renderFundsToWithdraw() : "--"
     },
   ];
 
@@ -1045,13 +1086,15 @@ export const MoneyStreamsIncomingView = (props: {
 
   return (
     <>
-      <MoneyStreamDetails
-        stream={streamSelected}
-        hideDetailsHandler={hideDetailsHandler}
-        infoData={infoData}
-        isStreamIncoming={true}
-        buttons={buttons}
-      />
+      <Spin spinning={loadingStreamDetails}>
+        <MoneyStreamDetails
+          stream={streamSelected}
+          hideDetailsHandler={hideDetailsHandler}
+          infoData={infoData}
+          isStreamIncoming={true}
+          buttons={buttons}
+        />
+      </Spin>
 
       {isWithdrawModalVisible && (
         <StreamWithdrawModal

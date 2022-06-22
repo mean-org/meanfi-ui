@@ -444,7 +444,7 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: isStreamIncoming && "Receiving from:",
-      value: isStreamIncoming && renderReceivingFrom()
+      value: isStreamIncoming && (stream ? renderReceivingFrom() : "--")
     },
     {
       label: isStreamOutgoing && "Sending to:",
