@@ -15,6 +15,7 @@ import { TransactionStatus } from '../../../../models/enums';
 import { MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { TreasuryTopupParams } from '../../../../models/common-types';
 import { VestingContractAddFundsModal } from '../TreasuryAddFundsModal';
+import { VestingContractStreamDetail } from '../VestingContractStreamDetail';
 
 export const VestingContractStreamList = (props: {
     accountAddress: string;
@@ -301,6 +302,11 @@ export const VestingContractStreamList = (props: {
         sethHighlightedStream(undefined);
     }, [setHighLightableStreamId]);
 
+    // Stream detail modal
+    const [isVestingContractStreamDetailModalVisible, setIsVestingContractStreamDetailModalVisibility] = useState(false);
+    const showVestingContractStreamDetailModal = useCallback(() => setIsVestingContractStreamDetailModalVisibility(true), []);
+    const closeVestingContractStreamDetailModal = useCallback(() => setIsVestingContractStreamDetailModalVisibility(false), []);
+
     ///////////////
     // Rendering //
     ///////////////
@@ -344,24 +350,7 @@ export const VestingContractStreamList = (props: {
                 <Menu.Item key="5" onClick={() => copyAddressToClipboard(item.id)}>
                     <span className="menu-item-text">Copy Stream ID</span>
                 </Menu.Item>
-                <Menu.Item key="6" onClick={() => {
-                    // setHighLightableStreamId(item.id as string);
-                    // if (isMultisigTreasury(treasuryDetails)) {
-                    //     const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}/${(treasuryDetails as Treasury).id}/streams`;
-                    //     consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
-                    //     // Populate the list of streams in the state before going there.
-                    //     setStreamList(treasuryStreams || []);
-                    //     consoleOut('Heading to:', url, 'blue');
-                    //     // Set this so we can know how to return
-                    //     if (selectedMultisig) {
-                    //         setHighLightableMultisigId(selectedMultisig.authority.toBase58());
-                    //     }
-                    //     navigate(url);
-                    // } else {
-                    //     refreshStreamList();
-                    //     navigate(STREAMS_ROUTE_BASE_PATH);
-                    // }
-                }}>
+                <Menu.Item key="6" onClick={showVestingContractStreamDetailModal}>
                     <span className="menu-item-text">Show stream</span>
                 </Menu.Item>
                 <Menu.Item key="7" onClick={() => { }}>
@@ -482,6 +471,14 @@ export const VestingContractStreamList = (props: {
                     treasuryStreams={treasuryStreams}
                     associatedToken={vestingContract ? vestingContract.associatedToken as string : ''}
                     isBusy={isBusy}
+                />
+            )}
+
+            {isVestingContractStreamDetailModalVisible && highlightedStream && (
+                <VestingContractStreamDetail
+                    handleClose={closeVestingContractStreamDetailModal}
+                    isVisible={isVestingContractStreamDetailModalVisible}
+                    highlightedStream={highlightedStream}
                 />
             )}
         </>

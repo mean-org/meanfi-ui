@@ -613,7 +613,8 @@ export function displayTimestamp(
 }
 
 export const getTimeToNow = (date: string): string => {
-    return moment(date).toNow(true);
+    const parsedDate = Date.parse(date);
+    return moment(parsedDate).toNow(true);
 }
 
 export function addMinutes(date: Date, minutes: number) {
