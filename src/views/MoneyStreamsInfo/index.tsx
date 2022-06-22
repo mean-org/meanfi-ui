@@ -127,6 +127,8 @@ export const MoneyStreamsInfoView = (props: {
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
   const [rateIncomingPerDay, setRateIncomingPerDay] = useState(0);
   const [rateOutgoingPerDay, setRateOutgoingPerDay] = useState(0);
+  const [loadingIncomingStreams, setLoadingIncomingStreams] = useState(true);
+  const [loadingOutgoingStreams, setLoadingOutgoingStreams] = useState(true);
 
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -140,7 +142,7 @@ export const MoneyStreamsInfoView = (props: {
   const [loadingOutgoingStreamList, setLoadingOutgoingStreamList] = useState(true);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
 
-  const [treasuryCombinedList, setTreasuryCombinedList] = useState<CombinedStreamingAccounts[]>();
+  const [treasuryCombinedList, setTreasuryCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
 
   const [autocloseTreasuries, setAutocloseTreasuries] = useState<(Treasury | TreasuryInfo)[]>([]);
 
@@ -1157,13 +1159,26 @@ export const MoneyStreamsInfoView = (props: {
       setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream) && autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress)));
     }
   }, [
-    autocloseTreasuries,
-    connection,
-     getQueryAccountType,
-    isInboundStream,
     publicKey,
-    streamList
+    streamList,
+    connection,
+    autocloseTreasuries,
+    getQueryAccountType,
+    isInboundStream,
   ]);
+
+  useEffect(() => {
+    if (incomingStreamList && incomingStreamList.length > 0) {
+      setLoadingIncomingStreams(false);
+    }
+
+    if (outgoingStreamList && outgoingStreamList.length > 0) {
+      setLoadingOutgoingStreams(false);
+    }
+  }, [
+    incomingStreamList,
+    outgoingStreamList,
+  ])
 
   useEffect(() => {
     if (!incomingStreamList || !outgoingStreamList || !treasuryCombinedList) { return; }
@@ -1434,37 +1449,45 @@ export const MoneyStreamsInfoView = (props: {
   // Incoming streams list
   const renderListOfIncomingStreams = (
     <>
-      {incomingStreamList && incomingStreamList.map((stream, index) => {
-        const onSelectStream = () => {
-          // Sends outgoing stream value to the parent component "Accounts"
-          onSendFromIncomingStreamInfo(stream);
-        };
-
-        const title = stream ? getStreamTitle(stream) : "Unknown incoming stream";
-        const subtitle = getStreamSubtitle(stream);
-        const status = getStreamStatus(stream);
-        const resume = getStreamResume(stream);
-
-        return (
-          <div 
-            key={index}
-            onClick={onSelectStream}
-            className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-          >
-            <ResumeItem
-              id={index}
-              title={title}
-              subtitle={subtitle}
-              resume={resume}
-              status={status}
-              hasRightIcon={true}
-              rightIcon={<IconArrowForward className="mean-svg-icons" />}
-              isLink={true}
-              isStream={true}
-            />
-          </div>
+      {!loadingIncomingStreams ? (
+        (incomingStreamList !== undefined && incomingStreamList.length > 0) ? (
+          incomingStreamList.map((stream, index) => {
+            const onSelectStream = () => {
+              // Sends outgoing stream value to the parent component "Accounts"
+              onSendFromIncomingStreamInfo(stream);
+            };
+    
+            const title = stream ? getStreamTitle(stream) : "Unknown incoming stream";
+            const subtitle = getStreamSubtitle(stream);
+            const status = getStreamStatus(stream);
+            const resume = getStreamResume(stream);
+    
+            return (
+              <div 
+                key={index}
+                onClick={onSelectStream}
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              >
+                <ResumeItem
+                  id={index}
+                  title={title}
+                  subtitle={subtitle}
+                  resume={resume}
+                  status={status}
+                  hasRightIcon={true}
+                  rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                  isLink={true}
+                  isStream={true}
+                />
+              </div>
+            )
+          })
+        ) : (
+          <span className="pl-1">You don't have any incoming streams</span>
         )
-      })}
+      ) : (
+        <span className="pl-1">Loading incoming streams ...</span>
+      )}
     </>
   );
 
@@ -1493,143 +1516,147 @@ export const MoneyStreamsInfoView = (props: {
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
     <>
-      <ResumeItem
-        title="Outflows"
-        classNameTitle="text-uppercase"
-        subtitle={subtitle}
-        amount={renderOutgoingAmoungOfStreams}
-        resume="outflow"
-        className="account-category-title pr-0"
-        hasRightIcon={true}
-        rightIconHasDropdown={true}
-        rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
-        dropdownMenu={menu}
-        isLink={false}
-      />
+      {(!loadingOutgoingStreams && !loadingCombinedStreamingList) ? (
+        ((outgoingStreamList !== undefined && outgoingStreamList.length > 0) || (treasuryCombinedList !== undefined && treasuryCombinedList.length > 0)) ? (
+          <>
+            <ResumeItem
+              title="Outflows"
+              classNameTitle="text-uppercase"
+              subtitle={subtitle}
+              amount={renderOutgoingAmoungOfStreams}
+              resume="outflow"
+              className="account-category-title pr-0"
+              hasRightIcon={true}
+              rightIconHasDropdown={true}
+              rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
+              dropdownMenu={menu}
+              isLink={false}
+            />
+
+            <>
+              {outgoingStreamList && outgoingStreamList.map((stream, index) => {
+                const onSelectStream = () => {
+                  // Sends outgoing stream value to the parent component "Accounts"
+                  onSendFromOutgoingStreamInfo(stream);
+                };
+    
+                const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+                const subtitle = getStreamSubtitle(stream);
+                const status = getStreamStatus(stream);
+                const resume = getStreamResume(stream);
+    
+                return (
+                  <div 
+                    key={index}
+                    onClick={onSelectStream}
+                    className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                  >
+                    <ResumeItem
+                      id={index}
+                      title={title}
+                      subtitle={subtitle}
+                      resume={resume}
+                      status={status}
+                      hasRightIcon={true}
+                      rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                      isLink={true}
+                      isStream={true}
+                    />
+                  </div>
+                )
+              })}
+
+              {(treasuryCombinedList && treasuryCombinedList.map((streaming, index) => {
+                  const v1 = streaming.treasury as unknown as TreasuryInfo;
+                  const v2 = streaming.treasury as Treasury;
+                  const isNewTreasury = streaming.treasury && streaming.treasury.version >= 2 ? true : false;
       
-      <Spin indicator={bigLoadingIcon} spinning={loadingOutgoingStreamList && loadingCombinedStreamingList}>
-        <>
-          {(outgoingStreamList && outgoingStreamList.length > 0) && (
-            outgoingStreamList.map((stream, index) => {
-              const onSelectStream = () => {
-                // Sends outgoing stream value to the parent component "Accounts"
-                onSendFromOutgoingStreamInfo(stream);
-              };
-
-              const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
-              const subtitle = getStreamSubtitle(stream);
-              const status = getStreamStatus(stream);
-              const resume = getStreamResume(stream);
-
-              return (
-                <div 
-                  key={index}
-                  onClick={onSelectStream}
-                  className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                >
-                  <ResumeItem
-                    id={index}
-                    title={title}
-                    subtitle={subtitle}
-                    resume={resume}
-                    status={status}
-                    hasRightIcon={true}
-                    rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                    isLink={true}
-                    isStream={true}
-                  />
-                </div>
-              )
-            })
-          )}
-
-          {(treasuryCombinedList && treasuryCombinedList.length > 0) && (
-            treasuryCombinedList.map((streaming, index) => {
-
-              const v1 = streaming.treasury as unknown as TreasuryInfo;
-              const v2 = streaming.treasury as Treasury;
-              const isNewTreasury = streaming.treasury && streaming.treasury.version >= 2 ? true : false;
-
-              const onSelectedStreamingAccount = () => {
-                // Sends outgoing stream value to the parent component "Accounts"
-                onSendFromStreamingAccountDetails(streaming.streams, streaming.treasury);
-              }
-
-              const state = isNewTreasury
-                ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-                : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
-
-              const title = isNewTreasury ? v2.name : v1.label;
-
-              const subtitle = <CopyExtLinkGroup
-                content={streaming.treasury.id as string}
-                number={8}
-                externalLink={true}
-              />;
-
-              const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
-
-              const resume = amount > 1 ? "streams" : "stream";
-
-              return (
-                <div 
-                  key={index}
-                  // onClick={onSelectedStreamingAccount}
-                  // className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                >
-                  <ResumeItem
-                    title={title}
-                    extraTitle={state}
-                    classNameTitle="text-uppercase"
-                    subtitle={subtitle}
-                    amount={amount}
-                    resume={resume}
-                    className="account-category-title"
-                    hasRightIcon={true}
-                    rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                    isLink={true}
-                    onClick={onSelectedStreamingAccount}
-                  />
-
-                  {(streaming.streams && streaming.streams.length > 0) && (
-                    streaming.streams.map((stream, index) => {
-                      const onSelectStream = () => {
-                        // Sends outgoing stream value to the parent component "Accounts"
-                        onSendFromOutgoingStreamInfo(stream);
-                      };
-
-                      const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
-                      const subtitle = getStreamSubtitle(stream);
-                      const status = getStreamStatus(stream);
-                      const resume = getStreamResume(stream);
-
-                      return (
-                        <div 
-                          key={index}
-                          onClick={onSelectStream}
-                          className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                          >
-                            <ResumeItem
-                              id={index}
-                              title={title}
-                              status={status}
-                              subtitle={subtitle}
-                              resume={resume}
-                              hasRightIcon={true}
-                              rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                              isLink={true}
-                              isStream={true}
-                            />
-                        </div>
-                      )
-                    })
-                  )}
-                </div>
-              )
-            })
-          )}
-        </>
-      </Spin>
+                  const onSelectedStreamingAccount = () => {
+                    // Sends outgoing stream value to the parent component "Accounts"
+                    onSendFromStreamingAccountDetails(streaming.streams, streaming.treasury);
+                  }
+      
+                  const state = isNewTreasury
+                    ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+                    : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+      
+                  const title = isNewTreasury ? v2.name : v1.label;
+      
+                  const subtitle = <CopyExtLinkGroup
+                    content={streaming.treasury.id as string}
+                    number={8}
+                    externalLink={true}
+                  />;
+      
+                  const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
+      
+                  const resume = amount > 1 ? "streams" : "stream";
+      
+                  return (
+                    <div 
+                      key={index}
+                      // onClick={onSelectedStreamingAccount}
+                      // className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                    >
+                      <ResumeItem
+                        title={title}
+                        extraTitle={state}
+                        classNameTitle="text-uppercase"
+                        subtitle={subtitle}
+                        amount={amount}
+                        resume={resume}
+                        className="account-category-title"
+                        hasRightIcon={true}
+                        rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                        isLink={true}
+                        onClick={onSelectedStreamingAccount}
+                      />
+      
+                      {(streaming.streams && streaming.streams.length > 0) && (
+                        streaming.streams.map((stream, index) => {
+                          const onSelectStream = () => {
+                            // Sends outgoing stream value to the parent component "Accounts"
+                            onSendFromOutgoingStreamInfo(stream);
+                          };
+      
+                          const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+                          const subtitle = getStreamSubtitle(stream);
+                          const status = getStreamStatus(stream);
+                          const resume = getStreamResume(stream);
+      
+                          return (
+                            <div 
+                              key={index}
+                              onClick={onSelectStream}
+                              className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                              >
+                                <ResumeItem
+                                  id={index}
+                                  title={title}
+                                  status={status}
+                                  subtitle={subtitle}
+                                  resume={resume}
+                                  hasRightIcon={true}
+                                  rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                                  isLink={true}
+                                  isStream={true}
+                                />
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                  )
+                })
+              )}
+            </>
+          </>
+        ) : (
+          <span className="pl-1">You don't have any outgoing streams</span>
+        )
+      ) : (
+        <span className="pl-1">Loading outgoing streams ...</span>
+      )}
     </>
   );
 
@@ -1643,7 +1670,7 @@ export const MoneyStreamsInfoView = (props: {
     {
       id: "incoming",
       name: `Incoming ${(incomingAmount && incomingAmount > 0) ? `(${incomingAmount})` : ""}`,
-      render: incomingAmount && incomingAmount > 0 ? renderListOfIncomingStreams : "You don't have any incoming streams"
+      render: renderListOfIncomingStreams
     },
     {
       id: "outgoing",
