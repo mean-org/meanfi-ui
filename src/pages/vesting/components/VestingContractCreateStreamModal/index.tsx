@@ -304,21 +304,14 @@ export const VestingContractCreateStreamModal = (props: {
     useEffect(() => {
         if (isVisible && vestingContract && streamTemplate) {
             if (currentStep === 1) {
-                consoleOut('Vesting contract type:', TreasuryType[vestingContract.treasuryType], 'blue');
                 setTreasuryOption(vestingContract.treasuryType);
                 const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
-                consoleOut('cliffPercent:', cliffPercent, 'blue');
                 setCliffReleasePercentage(formatPercent(cliffPercent, 4));
-                consoleOut('feePayedByTreasurer:', streamTemplate.feePayedByTreasurer, 'blue');
                 setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
                 const startUtc = streamTemplate.startUtc as Date;
-                consoleOut('startUtc:', startUtc.toUTCString(), 'blue');
                 setPaymentStartDate(startUtc.toUTCString());
-                consoleOut('durationNumberOfUnits:', streamTemplate.durationNumberOfUnits, 'blue');
                 updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
                 const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
-                consoleOut('rateIntervalInSeconds:', streamTemplate.rateIntervalInSeconds, 'blue');
-                consoleOut('periodFrequency:', PaymentRateType[periodFrequency], 'blue');
                 setLockPeriodFrequency(periodFrequency);
             }
         }

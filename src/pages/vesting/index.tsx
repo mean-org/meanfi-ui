@@ -17,8 +17,6 @@ import {
   TransactionFees,
   Treasury,
   Constants as MSPV2Constants,
-  TreasuryType,
-  TimeUnit,
   StreamTemplate
 } from '@mean-dao/msp';
 import "./style.scss";
@@ -33,7 +31,7 @@ import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isMobile } from 'react-device-detect';
 import { MetaInfoCta, TreasuryTopupParams } from '../../models/common-types';
-import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
+import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
 import { VestingContractCreateForm } from './components/VestingContractCreateForm';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';

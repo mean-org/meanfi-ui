@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TimeData } from '../../../../models/common-types';
 import { PaymentRateType } from '../../../../models/enums';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getReadableDate, getTimeEllapsed, getTimeRemaining } from '../../../../utils/ui';
-import { formatPercent, makeDecimal } from '../../../../utils/utils';
+import { getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getReadableDate, getTimeEllapsed, getTimeRemaining } from '../../../../utils/ui';
+import { makeDecimal } from '../../../../utils/utils';
 
 export const VestingContractOverview = (props: {
     vestingContract: Treasury | undefined;
@@ -34,21 +34,14 @@ export const VestingContractOverview = (props: {
     // When modal goes visible, set template data
     useEffect(() => {
         if (vestingContract && streamTemplate) {
-            consoleOut('Vesting contract type:', TreasuryType[vestingContract.treasuryType], 'blue');
             setTreasuryOption(vestingContract.treasuryType);
             const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
-            consoleOut('cliffPercent:', cliffPercent, 'blue');
             setCliffReleasePercentage(cliffPercent);
-            consoleOut('feePayedByTreasurer:', streamTemplate.feePayedByTreasurer, 'blue');
             setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
             const startUtc = streamTemplate.startUtc as Date;
-            consoleOut('startUtc:', startUtc.toUTCString(), 'blue');
             setPaymentStartDate(startUtc.toUTCString());
-            consoleOut('durationNumberOfUnits:', streamTemplate.durationNumberOfUnits, 'blue');
             updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
             const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
-            consoleOut('rateIntervalInSeconds:', streamTemplate.rateIntervalInSeconds, 'blue');
-            consoleOut('periodFrequency:', PaymentRateType[periodFrequency], 'blue');
             setLockPeriodFrequency(periodFrequency);
         }
     }, [

@@ -5,16 +5,19 @@ import { Stream } from '@mean-dao/msp';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut } from '../../../../utils/ui';
 import { shortenAddress } from '../../../../utils/utils';
+import { MoneyStreamDetails } from '../MoneyStreamDetails';
 
 export const VestingContractStreamDetail = (props: {
+  accountAddress: string;
   handleClose: any;
-  isVisible: boolean;
   highlightedStream: Stream | undefined;
+  isVisible: boolean;
 }) => {
   const {
+    accountAddress,
     handleClose,
-    isVisible,
     highlightedStream,
+    isVisible,
   } = props;
   const {
     getTokenByMintAddress,
@@ -23,6 +26,10 @@ export const VestingContractStreamDetail = (props: {
 
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [streamDetail, setStreamDetail] = useState<Stream | undefined>();
+
+  const isInboundStream = useCallback((): boolean => {
+    return streamDetail && accountAddress && streamDetail.beneficiary === accountAddress ? true : false;
+  }, [accountAddress, streamDetail]);
 
   const setCustomToken = useCallback((address: string) => {
 
@@ -71,7 +78,12 @@ export const VestingContractStreamDetail = (props: {
       visible={isVisible}
       onCancel={handleClose}
       width={480}>
-      <p>Here it goes</p>
+      <MoneyStreamDetails
+        stream={streamDetail}
+        highlightedStream={highlightedStream}
+        isInboundStream={isInboundStream()}
+        selectedToken={selectedToken}
+      />
     </Modal>
   );
 };

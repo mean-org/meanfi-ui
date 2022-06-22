@@ -1,0 +1,31 @@
+.stream-detail-component {
+  .details-item {
+    line-height: 2.2;
+  }
+  .transaction-list-row {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    .description-cell {
+      padding-left: 8px;
+      .title {
+        line-height: 1;
+        .badge.small {
+          vertical-align: 2px;
+        }
+      }
+      .subtitle {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        margin-top: 4px;
+        flex-wrap: wrap;
+      }
+    }
+    .info-data {
+      color: var(--text-color);
+      font-weight: 700;
+    }
+  }
+}

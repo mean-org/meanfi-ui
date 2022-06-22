@@ -133,7 +133,7 @@ export const VestingContractStreamList = (props: {
     //     }
     // }, [isInboundStream]);
 
-    const getStreamDescription = (item: Stream): string => {
+    const getStreamTitle = (item: Stream): string => {
         let title = '';
         if (item) {
             const isInbound = isInboundStream(item);
@@ -180,7 +180,7 @@ export const VestingContractStreamList = (props: {
 
     }, [t])
 
-    const getTransactionSubTitle = useCallback((item: Stream) => {
+    const getStreamSubtitle = useCallback((item: Stream) => {
         let title = '';
 
         if (item) {
@@ -387,11 +387,6 @@ export const VestingContractStreamList = (props: {
         );
     }
 
-    // const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    //     event.currentTarget.src = FALLBACK_COIN_IMAGE;
-    //     event.currentTarget.className = "error";
-    // };
-
     return (
         <>
             <div className="tab-inner-content-wrapper vesting-contract-streams vertical-scroll">
@@ -431,8 +426,8 @@ export const VestingContractStreamList = (props: {
                                         </div>
                                     </div> */}
                                     <div className="description-cell no-padding">
-                                        <div className="title text-truncate">{getStreamDescription(item)}</div>
-                                        <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
+                                        <div className="title text-truncate">{getStreamTitle(item)}</div>
+                                        <div className="subtitle text-truncate">{getStreamSubtitle(item)}</div>
                                     </div>
                                     <div className="rate-cell">
                                         <div className="rate-amount">{getStreamStatus(item)}</div>
@@ -478,6 +473,7 @@ export const VestingContractStreamList = (props: {
                 <VestingContractStreamDetail
                     handleClose={closeVestingContractStreamDetailModal}
                     isVisible={isVestingContractStreamDetailModalVisible}
+                    accountAddress={accountAddress}
                     highlightedStream={highlightedStream}
                 />
             )}
