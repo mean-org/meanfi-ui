@@ -576,6 +576,20 @@ export const VestingView = () => {
 
   }, [accountAddress, getQueryAccountType, multisigAccounts, selectedVestingContract])
 
+  const getAvailableStreamingBalance = useCallback(() => {
+    if (!selectedVestingContract) { return 0; }
+
+    const token = getTokenByMintAddress(selectedVestingContract.associatedToken as string);
+
+    if (token) {
+      const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
+      const ub = makeDecimal(new BN(unallocated), token.decimals);
+      return ub >= 0 ? ub : 0;
+    }
+
+    return 0;
+  }, [getTokenByMintAddress, selectedVestingContract]);
+
 
   //////////////
   //  Modals  //
@@ -2828,7 +2842,7 @@ export const VestingView = () => {
       action: MetaInfoCtaAction.VestingContractCreateStreamOnce,
       isVisible: true,
       caption: 'Create stream',
-      disabled: !isInspectedAccountTheConnectedWallet(),
+      disabled: !isInspectedAccountTheConnectedWallet() || !getAvailableStreamingBalance(),
       uiComponentType: 'button',
       uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamOnce}`,
       tooltip: '',
@@ -2920,6 +2934,7 @@ export const VestingView = () => {
     isXsDevice,
     showAddFundsModal,
     showCreateStreamModal,
+    getAvailableStreamingBalance,
     showVestingContractCloseModal,
     showVestingContractSolBalanceModal,
     isInspectedAccountTheConnectedWallet,
