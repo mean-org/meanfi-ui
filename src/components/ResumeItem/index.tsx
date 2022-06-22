@@ -73,11 +73,11 @@ export const ResumeItem = (props: {
 
   const getTransactionStatusAction = useCallback((status: number) => {
 
-    if (status === MultisigTransactionStatus.Pending) {
+    if (status === MultisigTransactionStatus.Active) {
       return "active";
     } 
     
-    if (status === MultisigTransactionStatus.Approved) {
+    if (status === MultisigTransactionStatus.Passed) {
       return "passed";
     }
 
@@ -99,11 +99,11 @@ export const ResumeItem = (props: {
 
   const getTransactionStatusBackgroundColor = useCallback((status: number) => {
 
-    if (status === MultisigTransactionStatus.Pending) {
+    if (status === MultisigTransactionStatus.Active) {
       return "bg-purple";
     } 
     
-    if (status === MultisigTransactionStatus.Approved) {
+    if (status === MultisigTransactionStatus.Passed) {
       return "bg-green";
     }
 

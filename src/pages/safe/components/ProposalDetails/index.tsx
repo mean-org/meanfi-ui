@@ -464,7 +464,10 @@ export const ProposalDetailsView = (props: {
 
       <Row gutter={[8, 8]} className="safe-details-proposal">
         <>
-          {selectedProposal.status === MultisigTransactionStatus.Approved ? (
+          {
+            selectedProposal.status === MultisigTransactionStatus.Active
+          }
+          {selectedProposal.status === MultisigTransactionStatus.Passed ? (
             anyoneCanExecuteTx() ? (
               <Col className="safe-details-left-container">
                 <IconUserClock className="user-image mean-svg-icons bg-yellow" />
@@ -504,7 +507,7 @@ export const ProposalDetailsView = (props: {
         </>
         <>
           <Col className="safe-details-right-container btn-group mr-1">
-            {selectedProposal.status === MultisigTransactionStatus.Pending ? (
+            {selectedProposal.status === MultisigTransactionStatus.Active ? (
               <>
                 <Button
                   type="default"
@@ -577,7 +580,7 @@ export const ProposalDetailsView = (props: {
                     Execute
                   </div>
               </Button>
-            ) : selectedProposal.status === MultisigTransactionStatus.Rejected || selectedProposal.status === MultisigTransactionStatus.Voided ? (
+            ) : selectedProposal.status === MultisigTransactionStatus.Failed || selectedProposal.status === MultisigTransactionStatus.Voided ? (
               isProposer ? (
                 <Button
                   type="default"

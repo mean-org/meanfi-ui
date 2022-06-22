@@ -138,7 +138,7 @@ export const SafeView = () => {
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
-  // Pending Txs
+  // Active Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(false);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
@@ -1780,9 +1780,9 @@ export const SafeView = () => {
 
   const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
     consoleOut('onAcceptMultisigActionModal:', item, 'blue');
-    if (item.status === MultisigTransactionStatus.Pending) {
+    if (item.status === MultisigTransactionStatus.Active) {
       onExecuteApproveTx({ transaction: item });
-    } else if (item.status === MultisigTransactionStatus.Approved) {
+    } else if (item.status === MultisigTransactionStatus.Passed) {
       onExecuteFinishTx({ transaction: item })
     } else if (item.status === MultisigTransactionStatus.Voided) {
       onExecuteCancelTx({ transaction: item })
