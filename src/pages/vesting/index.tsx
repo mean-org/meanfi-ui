@@ -3295,6 +3295,7 @@ export const VestingView = () => {
   };
 
   const renderTabset = () => {
+    if (!selectedVestingContract) { return (<span>&nbsp;</span>) }
     return (
       <Tabs activeKey={accountDetailTab} onChange={onTabChange} className="neutral stretch-content">
         <TabPane tab="Overview" key={"overview"}>
@@ -3303,7 +3304,7 @@ export const VestingView = () => {
             streamTemplate={streamTemplate}
           />
         </TabPane>
-        <TabPane tab="Streams" key={"streams"}>
+        <TabPane tab={`Streams (${selectedVestingContract.totalStreams})`} key={"streams"}>
           <VestingContractStreamList
             vestingContract={selectedVestingContract}
             accountAddress={accountAddress}

@@ -734,7 +734,7 @@ export const VestingContractCreateForm = (props: {
                     {/* Vesting category */}
                     <FormLabelWithIconInfo
                         label="Vesting category"
-                        tooltip_text="This vesting category helps identify the type of streams in this ctract. Some examples are seed round, investor, marketing, token lock."
+                        tooltip_text="This vesting category helps identify the type of streams in this contract. Some examples are seed round, investor, marketing, token lock."
                     />
                     <div className="well">
                         <Dropdown
