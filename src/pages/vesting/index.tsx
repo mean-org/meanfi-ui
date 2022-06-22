@@ -402,7 +402,10 @@ export const VestingView = () => {
 
     const treasuries = await msp.listTreasuries(publicKey);
 
-    return treasuries.filter((t: any) => !t.autoClose);
+    // TODO: listTreasuries should already return a list without autoClose treasuries and include category 1
+    // probably it would be better to create a new method only for listing vesting contracts for when
+    // the additional category comes
+    return treasuries.filter(t => !t.autoClose && t.data.category === 1);
 
   }, [connection, msp, publicKey]);
 
