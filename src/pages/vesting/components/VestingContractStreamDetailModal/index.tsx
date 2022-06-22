@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { MSP, Stream } from '@mean-dao/msp';
+import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut } from '../../../../utils/ui';
 import { shortenAddress } from '../../../../utils/utils';
@@ -76,7 +76,7 @@ export const VestingContractStreamDetailModal = (props: {
   useEffect(() => {
 
     const timeout = setTimeout(() => {
-      if (msp && streamDetail) {
+      if (msp && streamDetail && streamDetail.status === STREAM_STATUS.Running) {
         msp.refreshStream(streamDetail as Stream).then(detail => {
           setStreamDetail(detail as Stream);
         });
