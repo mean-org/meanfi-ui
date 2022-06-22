@@ -33,7 +33,6 @@ export const VestingContractStreamList = (props: {
         nativeBalance,
     } = props;
     const {
-        theme,
         deletedStreams,
         setHighLightableStreamId,
         getTokenByMintAddress,
@@ -249,10 +248,10 @@ export const VestingContractStreamList = (props: {
         }
 
         return (
-            <span className={`badge small font-bold text-uppercase ${theme === 'light' ? 'fg-dark' : 'fg-white'} ${bgClass}`}>{content}</span>
+            <span className={`badge small font-bold text-uppercase fg-white ${bgClass}`}>{content}</span>
         );
 
-    }, [t, theme]);
+    }, [t]);
 
     const getStreamStatusSubtitle = useCallback((item: Stream) => {
         if (item) {
@@ -406,7 +405,7 @@ export const VestingContractStreamList = (props: {
 
     return (
         <>
-            <div className="tab-inner-content-wrapper vertical-scroll">
+            <div className="tab-inner-content-wrapper vesting-contract-streams vertical-scroll">
                 <Spin spinning={loadingTreasuryStreams}>
                     {(treasuryStreams && treasuryStreams.length > 0) ? (
                         treasuryStreams.map((item, index) => {

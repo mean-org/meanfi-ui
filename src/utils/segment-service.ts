@@ -101,6 +101,10 @@ export enum AppUsageEvent {
     VestingContractWithdrawFundsSigned = "Withdraw Vesting contract funds Signed",
     VestingContractWithdrawFundsCompleted = "Withdraw Vesting contract funds Completed",
     VestingContractWithdrawFundsFailed = "Withdraw Vesting contract funds Failed",
+    VestingContractStreamCreateFormButton = "Create Vesting contract stream form button click",
+    VestingContractStreamCreateSigned = "Create Vesting contract stream Signed",
+    VestingContractStreamCreateCompleted = "Create Vesting contract stream Completed",
+    VestingContractStreamCreateFailed = "Create Vesting contract stream Failed",
 }
 
 export enum StatsTriggertEvent {
@@ -202,6 +206,18 @@ export interface SegmentVestingContractWithdrawData {
     vestingContract: string;
     destination: string;
     amount: number;
+    valueInUsd: number;
+}
+
+export interface SegmentVestingContractStreamCreateData {
+    asset: string;
+    assetPrice: number;
+    vestingContract: string;
+    beneficiary: string;
+    allocation: number;
+    rateAmount: number;
+    interval: string;
+    feePayedByTreasurer: boolean;
     valueInUsd: number;
 }
 

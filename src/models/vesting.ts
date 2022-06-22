@@ -52,4 +52,8 @@ export interface VestingContractStreamCreateOptions {
     streamName: string;
     beneficiaryAddress: string;
     tokenAmount: number;
+    sendRate: string;
+    feePayedByTreasurer: boolean;
+    rateAmount: number;
+    interval: string;
 }

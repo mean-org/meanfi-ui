@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useContext, useState } from 'react';
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { cutNumber, formatPercent, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress, toUiAmount } from '../../../../utils/utils';
+import { cutNumber, formatPercent, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, isValidAddress, toUsCurrency } from '../../../../utils/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
@@ -13,8 +13,8 @@ import { useWallet } from '../../../../contexts/wallet';
 import { LoadingOutlined } from '@ant-design/icons';
 import { isError } from '../../../../utils/transactions';
 import { IconEdit, IconWarning } from '../../../../Icons';
-import { PaymentRateType } from '../../../../models/enums';
 import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
+import { PaymentRateType } from '../../../../models/enums';
 
 export const VestingContractCreateStreamModal = (props: {
     handleClose: any;
@@ -206,6 +206,43 @@ export const VestingContractCreateStreamModal = (props: {
         return fromParsedDate.getDate() > today.getDate() ? true : false;
     }, [today]);
 
+    const getPaymentRateLabel = useCallback((
+        rate: PaymentRateType,
+        amount: string | undefined
+    ): string => {
+        let label = '';
+
+        if (!selectedToken || !amount) {
+            return label;
+        }
+
+        label = getAmountWithSymbol(parseFloat(amount || '0'), selectedToken.address, false, tokenList);
+        switch (rate) {
+            case PaymentRateType.PerMinute:
+                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-minute')}`;
+                break;
+            case PaymentRateType.PerHour:
+                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-hour')}`;
+                break;
+            case PaymentRateType.PerDay:
+                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-day')}`;
+                break;
+            case PaymentRateType.PerWeek:
+                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-week')}`;
+                break;
+            case PaymentRateType.PerMonth:
+                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-month')}`;
+                break;
+            case PaymentRateType.PerYear:
+                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-year')}`;
+                break;
+            default:
+                break;
+        }
+        return label;
+    }, [selectedToken, t, tokenList]);
+
+
     /////////////////////
     // Data management //
     /////////////////////
@@ -292,6 +329,7 @@ export const VestingContractCreateStreamModal = (props: {
         vestingContract,
     ]);
 
+    // Set Cliff release
     useEffect(() => {
         const percentageFromCoinAmount = parseFloat(fromCoinAmount) > 0 ? `${(parseFloat(fromCoinAmount) * parseFloat(cliffReleasePercentage) / 100)}` : '';
 
@@ -299,13 +337,10 @@ export const VestingContractCreateStreamModal = (props: {
 
     }, [fromCoinAmount, cliffReleasePercentage]);
 
+    // Set payment rate amount
     useEffect(() => {
-        if (treasuryOption === TreasuryType.Lock) {
-            setPaymentRateAmount(cutNumber((parseFloat(fromCoinAmount) - parseFloat(cliffRelease)) / parseFloat(lockPeriodAmount), 6));
-        }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cliffRelease, lockPeriodAmount]);
+        setPaymentRateAmount(cutNumber((parseFloat(fromCoinAmount) - parseFloat(cliffRelease)) / parseFloat(lockPeriodAmount), 6));
+    }, [cliffRelease, fromCoinAmount, lockPeriodAmount]);
 
     // Window resize listener
     useEffect(() => {
@@ -337,12 +372,15 @@ export const VestingContractCreateStreamModal = (props: {
     // Events & validation //
     /////////////////////////
 
-    // TODO: Create a type for this
     const onStreamCreateClick = () => {
         const options: VestingContractStreamCreateOptions = {
             streamName: vestingStreamName,
             beneficiaryAddress: recipientAddress,
-            tokenAmount: tokenAmount.toNumber()
+            tokenAmount: tokenAmount.toNumber(),
+            sendRate: getPaymentRateLabel(lockPeriodFrequency, lockPeriodAmount),
+            feePayedByTreasurer: isFeePaidByTreasurer,
+            rateAmount: parseFloat(paymentRateAmount),
+            interval: getPaymentRateOptionLabel(lockPeriodFrequency, t)
         };
         handleOk(options);
     }
