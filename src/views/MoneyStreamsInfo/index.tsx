@@ -27,10 +27,9 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isValidAddress, toUsCurrency } from "../../utils/ui";
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from "../../utils/utils";
-import { TREASURY_TYPE_OPTIONS } from "../../constants/treasury-type-options";
+import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from "../../utils/utils";
 import { openNotification } from "../../components/Notifications";
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -66,7 +65,6 @@ export const MoneyStreamsInfoView = (props: {
 }) => {
   const {
     tokenList,
-    selectedToken,
     treasuryOption,
     transactionStatus,
     streamProgramAddress,
@@ -77,9 +75,6 @@ export const MoneyStreamsInfoView = (props: {
     setTransactionStatus,
     refreshTokenBalance,
     resetContractValues,
-    setTreasuryOption,
-    setEffectiveRate,
-    setSelectedToken,
     openStreamById
   } = useContext(AppStateContext);
   const {
@@ -104,7 +99,6 @@ export const MoneyStreamsInfoView = (props: {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
@@ -131,6 +125,8 @@ export const MoneyStreamsInfoView = (props: {
 
   const [withdrawalBalance, setWithdrawalBalance] = useState(0);
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
+  const [rateIncomingPerDay, setRateIncomingPerDay] = useState(0);
+  const [rateOutgoingPerDay, setRateOutgoingPerDay] = useState(0);
 
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -140,7 +136,6 @@ export const MoneyStreamsInfoView = (props: {
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
-  const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
   const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
   const [loadingOutgoingStreamList, setLoadingOutgoingStreamList] = useState(true);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
@@ -1245,6 +1240,80 @@ export const MoneyStreamsInfoView = (props: {
     outgoingStreamList
   ]);
 
+  useEffect(() => {
+    if (incomingStreamList) {
+      const runningIncomingStreams = incomingStreamList.filter((stream: Stream | StreamInfo) => getStreamStatus(stream) === "Running");
+
+      for (const stream of runningIncomingStreams) {
+        const v1 = stream as StreamInfo;
+        const v2 = stream as Stream;
+
+        const isNew = v2.version && v2.version >= 2 ? true : false;
+
+        const token = getTokenByMintAddress(stream.associatedToken as string);
+
+        let totalRateAmountValue = 0;
+
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+          const rateAmountValue = isNew ? toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount;
+
+          totalRateAmountValue += rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
+        }
+
+        setRateIncomingPerDay(totalRateAmountValue);
+      }
+    }
+
+  }, [
+    incomingStreamList,
+    getDepositAmountDisplay,
+    getTokenPriceByAddress,
+    getTokenByMintAddress,
+    getTokenPriceBySymbol,
+    getRateAmountDisplay,
+    getStreamStatus,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (outgoingStreamList) {
+      const runningOutgoingStreams = outgoingStreamList.filter((stream: Stream | StreamInfo) => getStreamStatus(stream) === "Running");
+
+      for (const stream of runningOutgoingStreams) {
+        const v1 = stream as StreamInfo;
+        const v2 = stream as Stream;
+
+        const isNew = v2.version && v2.version >= 2 ? true : false;
+
+        const token = getTokenByMintAddress(stream.associatedToken as string);
+
+        let totalRateAmountValue = 0;
+
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+          const rateAmountValue = isNew ? toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount;
+
+          totalRateAmountValue += rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
+        }
+
+        setRateOutgoingPerDay(totalRateAmountValue);
+      }
+    }
+
+  }, [
+    outgoingStreamList,
+    getDepositAmountDisplay,
+    getTokenPriceByAddress,
+    getTokenByMintAddress,
+    getTokenPriceBySymbol,
+    getRateAmountDisplay,
+    getStreamStatus,
+    t,
+  ]);
+
   // Protocol
   const listOfBadges = ["MSP", "DEFI", "Money Streams"];
 
@@ -1289,7 +1358,7 @@ export const MoneyStreamsInfoView = (props: {
                 )}
               </span>
             </div>
-            <span className="incoming-amount">+$15.40/day</span>
+            <span className="incoming-amount">{rateIncomingPerDay ? `+ ${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
           </div>
           <div className="card-row">
             <div className="card-column">
@@ -1297,7 +1366,7 @@ export const MoneyStreamsInfoView = (props: {
                 Balance
               </div>
               <div className="info-value">
-                {toUsCurrency(withdrawalBalance)}
+                {withdrawalBalance ? toUsCurrency(withdrawalBalance) : "$0.00"}
               </div>
             </div>
             <div className="card-column">
@@ -1305,7 +1374,7 @@ export const MoneyStreamsInfoView = (props: {
                 Total streams
               </div>
               <div className="info-value">
-                {incomingAmount} {(incomingAmount && incomingAmount > 1) ? "streams" : "stream"}
+                {incomingAmount ? `${incomingAmount} ${(incomingAmount > 1) ? "streams" : "stream"}` : "--"}
               </div>
             </div>
           </div>
@@ -1322,7 +1391,7 @@ export const MoneyStreamsInfoView = (props: {
                 )}
               </span>
             </div>
-            <span className="outgoing-amount">-$4.00/day</span>
+            <span className="outgoing-amount">{rateOutgoingPerDay ? `- ${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
           </div>
           <div className="card-row">
             <div className="card-column">
@@ -1330,7 +1399,7 @@ export const MoneyStreamsInfoView = (props: {
                 Balance
               </div>
               <div className="info-value">
-                {toUsCurrency(unallocatedBalance)}
+                {unallocatedBalance ? toUsCurrency(unallocatedBalance) : "$0.00"}
               </div>
             </div>
             <div className="card-column">
@@ -1338,7 +1407,7 @@ export const MoneyStreamsInfoView = (props: {
                 Total streams
               </div>
               <div className="info-value">
-                {outgoingAmount} {(outgoingAmount && outgoingAmount > 1) ? "streams" : "stream"}
+                {outgoingAmount ? `${outgoingAmount} ${(outgoingAmount > 1) ? "streams" : "stream"}` : "--"}
               </div>
             </div>
           </div>
