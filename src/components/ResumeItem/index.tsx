@@ -74,15 +74,15 @@ export const ResumeItem = (props: {
   const getTransactionStatusAction = useCallback((status: number) => {
 
     if (status === MultisigTransactionStatus.Active) {
-      return "active";
+      return t("multisig.multisig-transactions.tx-active");
     } 
     
     if (status === MultisigTransactionStatus.Passed) {
-      return "passed";
+      return t("multisig.multisig-transactions.tx-passed");
     }
 
     if (status === MultisigTransactionStatus.Executed) {
-      return "executed";
+      return t("multisig.multisig-transactions.tx-executed");
     }
     
     if (status === MultisigTransactionStatus.Voided) {
@@ -90,10 +90,10 @@ export const ResumeItem = (props: {
     }
 
     if (status === MultisigTransactionStatus.Expired) {
-      return "expired";
+      return t("multisig.multisig-transactions.tx-expired");
     }
 
-    return t("multisig.multisig-transactions.tx-rejected");
+    return t("multisig.multisig-transactions.tx-failed");
 
   },[t]);
 
@@ -113,6 +113,10 @@ export const ResumeItem = (props: {
     
     if (status === MultisigTransactionStatus.Voided) {
       return "bg-orange-dark";
+    }
+
+    if (status === MultisigTransactionStatus.Failed) {
+      return "bg-red";
     }
 
     if (status === MultisigTransactionStatus.Expired) {

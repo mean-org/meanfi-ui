@@ -426,14 +426,12 @@ export const ProposalDetailsView = (props: {
   // Number of participants who have already approved the Tx
   const approvedSigners = selectedProposal.signers.filter((s: any) => s === true).length;
   const rejectedSigners = selectedProposal.signers.filter((s: any) => s === false).length;
-  const neededSigners = approvedSigners && (selectedMultisig.threshold - approvedSigners);
   const expirationDate = selectedProposal.details.expirationDate ? new Date(selectedProposal.details.expirationDate) : "";
   const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : "";
-
   const proposedBy = selectedMultisig.owners.find((owner: any) => owner.address === selectedProposal.proposer?.toBase58());
+  const neededSigners = () => { return selectedMultisig.threshold - approvedSigners; };
+  const resume = (selectedProposal.status === 0 && neededSigners() > 0) && `Needs ${neededSigners()} ${neededSigners() > 1 ? "approvals" : "approval"} to pass`;
 
-  const resume = (selectedProposal.status === 0 && neededSigners > 0) && `Needs ${neededSigners} ${neededSigners > 1 ? "approvals" : "approval"} to pass`;
-  
   return (
     <div className="safe-details-container">
       <Row gutter={[8, 8]} className="safe-details-resume">
@@ -464,9 +462,6 @@ export const ProposalDetailsView = (props: {
 
       <Row gutter={[8, 8]} className="safe-details-proposal">
         <>
-          {
-            selectedProposal.status === MultisigTransactionStatus.Active
-          }
           {selectedProposal.status === MultisigTransactionStatus.Passed ? (
             anyoneCanExecuteTx() ? (
               <Col className="safe-details-left-container">
@@ -507,7 +502,35 @@ export const ProposalDetailsView = (props: {
         </>
         <>
           <Col className="safe-details-right-container btn-group mr-1">
-            {selectedProposal.status === MultisigTransactionStatus.Active ? (
+          {
+            (
+              (
+                selectedProposal.status === MultisigTransactionStatus.Voided ||
+                selectedProposal.status === MultisigTransactionStatus.Failed ||
+                selectedProposal.status === MultisigTransactionStatus.Expired
+
+              ) && isProposer
+
+            ) && (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke d-flex justify-content-center align-items-center"
+                disabled={hasMultisigPendingProposal}
+                onClick={() => {
+                  const operation = { transaction: selectedProposal }
+                  onOperationStarted(operation)
+                  onProposalCancel(operation);
+                }}>
+                  <div className="btn-content">
+                    Close
+                  </div>
+              </Button>
+            )
+          }
+          {
+            selectedProposal.status === MultisigTransactionStatus.Active && (
               <>
                 <Button
                   type="default"
@@ -559,46 +582,68 @@ export const ProposalDetailsView = (props: {
                       )
                     }
                 </Button>
+                {
+                  isProposer && (
+                    <Button
+                      type="default"
+                      shape="round"
+                      size="small"
+                      className="thin-stroke d-flex justify-content-center align-items-center"
+                      disabled={hasMultisigPendingProposal}
+                      onClick={() => {
+                        const operation = { transaction: selectedProposal }
+                        onOperationStarted(operation)
+                        onProposalCancel(operation);
+                      }}>
+                        <div className="btn-content">
+                          Close
+                        </div>
+                    </Button>
+                  )
+                }
               </>
-            ) : (
-              approvedSigners === selectedMultisig.threshold && 
-              selectedProposal.status !== MultisigTransactionStatus.Executed &&
-              selectedProposal.status !== MultisigTransactionStatus.Voided
-            ) ? ( 
-              <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke d-flex justify-content-center align-items-center"
-                disabled={!anyoneCanExecuteTx() || hasMultisigPendingProposal}
-                onClick={() => {
-                  const operation = { transaction: selectedProposal }
-                  onOperationStarted(operation)
-                  onProposalExecute(operation);
-                }}>
-                  <div className="btn-content">
-                    Execute
-                  </div>
-              </Button>
-            ) : selectedProposal.status === MultisigTransactionStatus.Failed || selectedProposal.status === MultisigTransactionStatus.Voided ? (
-              isProposer ? (
+            )
+          }
+          {
+            selectedProposal.status === MultisigTransactionStatus.Passed && (
+              <>
                 <Button
                   type="default"
                   shape="round"
                   size="small"
                   className="thin-stroke d-flex justify-content-center align-items-center"
-                  disabled={hasMultisigPendingProposal}
+                  disabled={!anyoneCanExecuteTx() || hasMultisigPendingProposal}
                   onClick={() => {
                     const operation = { transaction: selectedProposal }
                     onOperationStarted(operation)
-                    onProposalCancel(operation);
+                    onProposalExecute(operation);
                   }}>
                     <div className="btn-content">
-                      Cancel
+                      Execute
                     </div>
                 </Button>
-              ) : null
-            ) : null}
+                {
+                  isProposer && (
+                    <Button
+                      type="default"
+                      shape="round"
+                      size="small"
+                      className="thin-stroke d-flex justify-content-center align-items-center"
+                      disabled={hasMultisigPendingProposal}
+                      onClick={() => {
+                        const operation = { transaction: selectedProposal }
+                        onOperationStarted(operation)
+                        onProposalCancel(operation);
+                      }}>
+                        <div className="btn-content">
+                          Close
+                        </div>
+                    </Button>
+                  )
+                }
+              </>
+            )
+          }
           </Col>
         </>
       </Row>

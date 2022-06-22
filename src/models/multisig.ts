@@ -16,21 +16,6 @@ export const ZERO_FEES = {
   rentExempt: 0
 } as MultisigTransactionFees;
 
-export enum MultisigTransactionStatus {
-  // No enough signatures
-  Pending = 0,
-  // Approved by the required amount of signers
-  Approved = 1,
-  // Successfully executed (didExecute = true)
-  Executed = 2,
-  // Rejected by any owner
-  Rejected = 3,
-  // Invalid owners set seq number
-  Voided = 4,
-  //
-  Expired = 5
-}
-
 export type Multisig = {
   id: PublicKey;
   label: string;
