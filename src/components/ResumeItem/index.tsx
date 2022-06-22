@@ -21,6 +21,7 @@ export const ResumeItem = (props: {
   executedOn?: any;
   approved?: any;
   rejected?: any;
+  userSigned?: any;
   status?: number | string | undefined;
   content?: string;
   resume?: any;
@@ -52,6 +53,7 @@ export const ResumeItem = (props: {
     executedOn,
     approved,
     rejected,
+    userSigned,
     status,
     content,
     resume,
@@ -71,16 +73,16 @@ export const ResumeItem = (props: {
 
   const getTransactionStatusAction = useCallback((status: number) => {
 
-    if (status === MultisigTransactionStatus.Pending) {
-      return "active";
+    if (status === MultisigTransactionStatus.Active) {
+      return t("multisig.multisig-transactions.tx-active");
     } 
     
-    if (status === MultisigTransactionStatus.Approved) {
-      return "passed";
+    if (status === MultisigTransactionStatus.Passed) {
+      return t("multisig.multisig-transactions.tx-passed");
     }
 
     if (status === MultisigTransactionStatus.Executed) {
-      return "executed";
+      return t("multisig.multisig-transactions.tx-executed");
     }
     
     if (status === MultisigTransactionStatus.Voided) {
@@ -88,20 +90,20 @@ export const ResumeItem = (props: {
     }
 
     if (status === MultisigTransactionStatus.Expired) {
-      return "expired";
+      return t("multisig.multisig-transactions.tx-expired");
     }
 
-    return t("multisig.multisig-transactions.tx-rejected");
+    return t("multisig.multisig-transactions.tx-failed");
 
   },[t]);
 
   const getTransactionStatusBackgroundColor = useCallback((status: number) => {
 
-    if (status === MultisigTransactionStatus.Pending) {
+    if (status === MultisigTransactionStatus.Active) {
       return "bg-purple";
     } 
     
-    if (status === MultisigTransactionStatus.Approved) {
+    if (status === MultisigTransactionStatus.Passed) {
       return "bg-green";
     }
 
@@ -111,6 +113,10 @@ export const ResumeItem = (props: {
     
     if (status === MultisigTransactionStatus.Voided) {
       return "bg-orange-dark";
+    }
+
+    if (status === MultisigTransactionStatus.Failed) {
+      return "bg-red";
     }
 
     if (status === MultisigTransactionStatus.Expired) {
@@ -218,14 +224,14 @@ export const ResumeItem = (props: {
             <>
               <div className={`resume-right-text-up`}>
                 {approved > 0 && (
-                  <div className="thumbs-up">
+                  <div className="thumbs-up" title={userSigned === true ? "You approved this proposal" : ""}>
                     <span>{approved}</span>
                     <IconThumbsUp className="mean-svg-icons" />
                   </div>
                 )}
                 {rejected > 0 && (
                   version !== 0 && (
-                  <div className="thumbs-down">
+                  <div className="thumbs-down" title={userSigned === false ? "You rejected this proposal" : ""}>
                     <IconThumbsDown className="mean-svg-icons" />
                     <span>{rejected}</span>
                   </div>
