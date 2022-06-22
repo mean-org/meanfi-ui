@@ -1,4 +1,4 @@
-import { Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Menu, Row, Spin, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
@@ -33,7 +33,7 @@ import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIx
 import { openNotification } from "../../components/Notifications";
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { useAccountsContext } from "../../contexts/accounts";
+import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { NO_FEES, ONE_MINUTE_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -91,11 +91,12 @@ export const MoneyStreamsInfoView = (props: {
     selectedTab,
   } = props;
 
-  const accounts = useAccountsContext();
-  const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation('common');
+  const { account } = useNativeAccount();
+  const accounts = useAccountsContext();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -111,6 +112,7 @@ export const MoneyStreamsInfoView = (props: {
   const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
 
   // Transactions
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [userBalances, setUserBalances] = useState<any>();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
@@ -340,6 +342,27 @@ export const MoneyStreamsInfoView = (props: {
         .finally(() => setLoadingCombinedStreamingList(false));
     }
   }, [getStreamingAccountStreams, treasuryList]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
 
   const refreshUserBalances = useCallback(() => {
 
@@ -1512,15 +1535,6 @@ export const MoneyStreamsInfoView = (props: {
       )}
     </>
   );
-
-
-  useEffect(() => {
-    console.log("========================================");
-    console.log("outgoingStreamList", outgoingStreamList);
-    console.log("treasuryCombinedList", treasuryCombinedList);
-    console.log("loadingOutgoingStreams", loadingOutgoingStreams);
-    console.log("loadingCombinedStreamingList", loadingCombinedStreamingList);
-  }, [incomingStreamList, loadingCombinedStreamingList, loadingIncomingStreams, loadingOutgoingStreams, outgoingStreamList, treasuryCombinedList]);
 
   // Outgoing streams list
   const renderListOfOutgoingStreams = (

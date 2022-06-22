@@ -812,6 +812,20 @@ export const AccountsNewView = () => {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+    const softReloadStreams = () => {
+      const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
+    const hardReloadStreams = () => {
+      const streamsRefreshCta = document.getElementById("streams-refresh-reset-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
     if (item) {
       if (item.operationType === OperationType.Wrap) {
         recordTxConfirmation(item, true);
@@ -843,10 +857,21 @@ export const AccountsNewView = () => {
           setHighLightableMultisigId(multisigAuthority);
         }
         navigate(`/multisig/${multisigAuthority}?v=proposals`);
+      } else if (item.operationType === OperationType.StreamAddFunds) {
+        softReloadStreams();
+      } else if (item.operationType === OperationType.StreamPause) {
+        softReloadStreams();
+      } else if (item.operationType === OperationType.StreamResume) {
+        softReloadStreams();
+      } else if (item.operationType === OperationType.StreamClose) {
+        hardReloadStreams();
+        const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
+
+        navigate(url);
       }
     }
     resetTransactionStatus();
-  }, [isSelectedAssetNativeAccount, navigate, recordTxConfirmation, reloadSwitch, resetTransactionStatus, setHighLightableMultisigId, setShouldLoadTokens]);
+  }, [address, isSelectedAssetNativeAccount, navigate, recordTxConfirmation, reloadSwitch, resetTransactionStatus, setHighLightableMultisigId, setShouldLoadTokens]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -3687,6 +3712,13 @@ export const AccountsNewView = () => {
     }
   }
 
+  const onRefreshStreamsNoReset = () => {
+    refreshStreamList(false);
+  };
+
+  const onRefreshStreamsReset = () => {
+    refreshStreamList(true);
+  };
 
   ///////////////
   // Rendering //
@@ -4762,6 +4794,8 @@ export const AccountsNewView = () => {
                           </>
                         ) : selectedCategory === "streaming" ? (
                           <div className="scroll-wrapper vertical-scroll">
+                            <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
+                            <div id="streams-refresh-reset-cta" onClick={onRefreshStreamsReset}></div>
                             {!pathParamStreamId && !isStreamingAccountDetails ? (
                               <MoneyStreamsInfoView
                                 onSendFromIncomingStreamInfo={goToStreamIncomingDetailsHandler}

@@ -2142,6 +2142,7 @@ export const MoneyStreamsOutgoingView = (props: {
               extras: streamSelected.id as string
             });
             onCloseStreamTransactionFinished();
+            setLoadingStreamDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2204,10 +2205,6 @@ export const MoneyStreamsOutgoingView = (props: {
     setIsBusy(false);
     setCloseStreamTransactionModalVisibility(false);
     resetTransactionStatus();
-
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
-
-    navigate(url);
   }
 
   const onTransactionFinished = useCallback(() => {
