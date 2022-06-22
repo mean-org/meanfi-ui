@@ -1,11 +1,12 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { MSP, Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut } from '../../../../utils/ui';
 import { shortenAddress } from '../../../../utils/utils';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
+import { PublicKey } from '@solana/web3.js';
 
 export const VestingContractStreamDetailModal = (props: {
   accountAddress: string;
@@ -28,6 +29,9 @@ export const VestingContractStreamDetailModal = (props: {
 
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [streamDetail, setStreamDetail] = useState<Stream | undefined>();
+  const [loadingStreamActivity, setLoadingStreamActivity] = useState(false);
+  const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
+  const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(true);
 
   const isInboundStream = useCallback((): boolean => {
     return streamDetail && accountAddress && streamDetail.beneficiary === accountAddress ? true : false;
@@ -49,11 +53,56 @@ export const VestingContractStreamDetailModal = (props: {
 
   }, [setEffectiveRate]);
 
-  // Get a copy of the stream to work with
+  const getStreamActivity = useCallback((streamId: string, clearHistory = false) => {
+    if (!streamId || !msp || loadingStreamActivity) {
+      return;
+    }
+
+    consoleOut('Loading stream activity...', '', 'crimson');
+
+    setLoadingStreamActivity(true);
+    const streamPublicKey = new PublicKey(streamId);
+
+    const before = clearHistory
+      ? ''
+      : streamActivity && streamActivity.length > 0
+        ? streamActivity[streamActivity.length - 1].signature
+        : '';
+    consoleOut('before:', before, 'crimson');
+    msp.listStreamActivity(streamPublicKey, before, 5)
+      .then((value: StreamActivity[]) => {
+        consoleOut('activity:', value);
+        const activities = clearHistory
+          ? []
+          : streamActivity && streamActivity.length > 0
+            ? JSON.parse(JSON.stringify(streamActivity)) // Object.assign({}, streamActivity)
+            : [];
+
+        if (value && value.length > 0) {
+          activities.push(...value);
+          setHasMoreStreamActivity(true);
+        } else {
+          setHasMoreStreamActivity(false);
+        }
+        setStreamActivity(activities);
+      })
+      .catch(err => {
+        console.error(err);
+        setStreamActivity([]);
+        setHasMoreStreamActivity(false);
+      })
+      .finally(() => setLoadingStreamActivity(false));
+
+  }, [loadingStreamActivity, msp, streamActivity]);
+
+  // Get a copy of the stream to work with and reset activity data
   useEffect(() => {
     if (isVisible && highlightedStream && !streamDetail) {
       setStreamDetail(highlightedStream);
       consoleOut('highlightedStream:', highlightedStream, 'darkgreen');
+      // Clear previous data related to stream activity
+      setStreamActivity([]);
+      setHasMoreStreamActivity(true);
     }
   }, [highlightedStream, isVisible, streamDetail]);
 
@@ -89,6 +138,11 @@ export const VestingContractStreamDetailModal = (props: {
 
   }, [msp, streamDetail]);
 
+  const loadMoreActivity = () => {
+    if (!highlightedStream) { return; }
+    getStreamActivity(highlightedStream.id as string);
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -98,10 +152,14 @@ export const VestingContractStreamDetailModal = (props: {
       onCancel={handleClose}
       width={480}>
       <MoneyStreamDetails
-        stream={streamDetail}
+        hasMoreStreamActivity={hasMoreStreamActivity}
         highlightedStream={highlightedStream}
         isInboundStream={isInboundStream()}
+        loadingStreamActivity={loadingStreamActivity}
+        onLoadMoreActivities={loadMoreActivity}
         selectedToken={selectedToken}
+        stream={streamDetail}
+        streamActivity={streamActivity}
       />
     </Modal>
   );

@@ -21,24 +21,28 @@ const { TabPane } = Tabs;
 export type StreamDetailTab = "details" | "activity";
 
 export const MoneyStreamDetails = (props: {
+  hasMoreStreamActivity: boolean;
   highlightedStream: Stream | undefined;
   isInboundStream: boolean;
+  loadingStreamActivity: boolean;
+  onLoadMoreActivities: any;
   selectedToken: TokenInfo | undefined;
   stream: Stream | undefined;
+  streamActivity: StreamActivity[];
 }) => {
   const {
+    hasMoreStreamActivity,
     highlightedStream,
     isInboundStream,
+    loadingStreamActivity,
+    onLoadMoreActivities,
     selectedToken,
     stream,
+    streamActivity,
   } = props;
   const {
     splTokenList,
-    streamActivity,
-    loadingStreamActivity,
-    hasMoreStreamActivity,
     getTokenByMintAddress,
-    getStreamActivity,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [tabOption, setTabOption] = useState<StreamDetailTab>("details");
@@ -240,8 +244,8 @@ export const MoneyStreamDetails = (props: {
   /////////////////////
 
   useEffect(() => {
-    if (highlightedStream && tabOption === "activity") {
-      getStreamActivity(highlightedStream.id as string, highlightedStream.version);
+    if (highlightedStream && tabOption === "activity" && streamActivity.length < 5) {
+      onLoadMoreActivities();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabOption]);
@@ -340,15 +344,11 @@ export const MoneyStreamDetails = (props: {
             </>
           )}
         </Spin>
-        {hasMoreStreamActivity && (
+        {streamActivity.length > 0 && hasMoreStreamActivity && (
           <div className="mt-1 text-center">
             <span className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
               role="link"
-              onClick={() => {
-                if (stream) {
-                  getStreamActivity(stream.id as string, stream.version);
-                }
-              }}>
+              onClick={onLoadMoreActivities}>
               {t('general.cta-load-more')}
             </span>
           </div>
