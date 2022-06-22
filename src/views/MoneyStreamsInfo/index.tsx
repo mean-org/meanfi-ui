@@ -1361,7 +1361,7 @@ export const MoneyStreamsInfoView = (props: {
   const renderSummary = (
     <>
       <Row gutter={[8, 8]}>
-        <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink" onClick={goToIncomingTabHandler}>
+        <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
           <div className="incoming-stream-amount">
             <div className="d-flex align-items-center">
               <h3>Incoming Streams</h3>
@@ -1394,7 +1394,7 @@ export const MoneyStreamsInfoView = (props: {
             </div>
           </div>
         </Col>
-        <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink" onClick={goToOutgoingTabHandler}>
+        <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
           <div className="outgoing-stream-amount">
             <div className="d-flex align-items-center">
               <h3>Outgoing Streams</h3>
