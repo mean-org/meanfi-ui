@@ -7,7 +7,7 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
 import moment from "moment";
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
 import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
@@ -259,16 +259,6 @@ export const MoneyStreamDetails = (props: {
     }
   }
 
-  // const isAddressMyAccount = (addr: string): boolean => {
-  //   return wallet && addr && publicKey && addr === publicKey.toBase58()
-  //          ? true
-  //          : false;
-  // }
-
-  // const getActivityActor = (item: StreamActivity): string => {
-  //   return isAddressMyAccount(item.initializer) ? t('general.you') : shortenAddress(item.initializer);
-  // }
-
   const getActivityAction = (item: StreamActivity): string => {
     const actionText = item.action === 'deposited'
       ? t('streams.stream-activity.action-deposit')
@@ -458,7 +448,7 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: isStreamOutgoing && "Sending to:",
-      value: isStreamOutgoing && renderSendingTo()
+      value: isStreamOutgoing && (stream ? renderSendingTo() : "--")
     },
     {
       label: "Payment rate:",
@@ -466,15 +456,15 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: "Reserved allocation:",
-      value: renderReservedAllocation() ? renderReservedAllocation() : ""
+      value: renderReservedAllocation() ? renderReservedAllocation() : "--"
     },
     {
       label: isStreamIncoming && "Funds left in account:",
-      value: isStreamIncoming && renderFundsLeftInAccount()
+      value: isStreamIncoming && (stream ? renderFundsLeftInAccount() : "--")
     },
     {
       label: isStreamOutgoing && "Funds sent to recipient:",
-      value: isStreamOutgoing && renderFundsSendToRecipient()
+      value: isStreamOutgoing && (stream ? renderFundsSendToRecipient() : "--")
     },
     {
       label: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && "Funds will run out in:",

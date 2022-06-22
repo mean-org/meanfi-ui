@@ -34,6 +34,8 @@ import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
+import { useNavigate, useParams } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -44,7 +46,6 @@ export const MoneyStreamsOutgoingView = (props: {
 }) => {
   const {
     splTokenList,
-    // streamDetail,
     tokenBalance,
     activeStream,
     selectedToken,
@@ -63,8 +64,10 @@ export const MoneyStreamsOutgoingView = (props: {
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
 
-  const connection = useConnection();
   const { wallet, publicKey } = useWallet();
+  const connection = useConnection();
+  const { address } = useParams();
+  const navigate = useNavigate();
 
   const { streamSelected, streamList, onSendFromOutgoingStreamDetails } = props;
   const { t } = useTranslation('common');
@@ -84,6 +87,7 @@ export const MoneyStreamsOutgoingView = (props: {
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
+  const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
@@ -100,7 +104,7 @@ export const MoneyStreamsOutgoingView = (props: {
       });
     }
 
-  },[t])
+  },[t]);
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
@@ -808,6 +812,7 @@ export const MoneyStreamsOutgoingView = (props: {
             });
             setIsBusy(false);
             onAddFundsTransactionFinished();
+            setLoadingStreamDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1689,6 +1694,7 @@ export const MoneyStreamsOutgoingView = (props: {
             });
             setOngoingOperation(undefined);
             onTransactionFinished();
+            setLoadingStreamDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2197,6 +2203,10 @@ export const MoneyStreamsOutgoingView = (props: {
     setIsBusy(false);
     setCloseStreamTransactionModalVisibility(false);
     resetTransactionStatus();
+
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
+
+    navigate(url);
   }
 
   const onTransactionFinished = useCallback(() => {
@@ -2258,16 +2268,18 @@ export const MoneyStreamsOutgoingView = (props: {
   ]);
 
   useEffect(() => {
-    if (!ms || !msp || !streamSelected) {return;}
+    if (!ms || !msp || !streamSelected || !loadingStreamDetails) {return;}
 
     const timeout = setTimeout(() => {
       if (msp && streamSelected && streamSelected.version >= 2) {
         msp.refreshStream(streamSelected as Stream).then(detail => {
           setStreamDetail(detail as Stream);
+          setLoadingStreamDetails(false);
         });
       } else if (ms && streamSelected && streamSelected.version < 2) {
         ms.refreshStream(streamSelected as StreamInfo).then(detail => {
           setStreamDetail(detail as StreamInfo);
+          setLoadingStreamDetails(false);
         });
       }
     }, 1000);
@@ -2275,7 +2287,7 @@ export const MoneyStreamsOutgoingView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  }, [ms, msp, setStreamDetail, streamSelected]);
+  }, [ms, msp, setStreamDetail, streamSelected, loadingStreamDetails]);
 
   const isNewStream = useCallback(() => {
     if (streamSelected) {
@@ -2353,7 +2365,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const infoData = [
     {
       name: "Funds left in account",
-      value: renderFundsLeftInAccount()
+      value: streamSelected ? renderFundsLeftInAccount() : "--"
     },
   ];
 
@@ -2436,13 +2448,15 @@ export const MoneyStreamsOutgoingView = (props: {
 
   return (
     <>
-      <MoneyStreamDetails
-        stream={streamSelected}
-        hideDetailsHandler={hideDetailsHandler}
-        infoData={infoData}
-        isStreamOutgoing={true}
-        buttons={buttons}
-      />
+      <Spin spinning={loadingStreamDetails}>
+        <MoneyStreamDetails
+          stream={streamSelected}
+          hideDetailsHandler={hideDetailsHandler}
+          infoData={infoData}
+          isStreamOutgoing={true}
+          buttons={buttons}
+        />
+      </Spin>
 
       {isAddFundsModalVisible && (
         <StreamAddFundsModal
