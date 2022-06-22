@@ -1142,7 +1142,7 @@ export const MoneyStreamsInfoView = (props: {
   }, [accountAddress, getQueryAccountType, navigate]);
 
   useEffect(() => {
-    if (!connection || !publicKey || !autocloseTreasuries || autocloseTreasuries.length === 0 || !streamList) {
+    if (!connection || !publicKey || !streamList || !autocloseTreasuries) {
       setIncomingStreamList([]);
       setOutgoingStreamList([]);
 
@@ -1168,11 +1168,11 @@ export const MoneyStreamsInfoView = (props: {
   ]);
 
   useEffect(() => {
-    if (incomingStreamList && incomingStreamList.length > 0) {
+    if (incomingStreamList && incomingStreamList.length >= 0) {
       setLoadingIncomingStreams(false);
     }
 
-    if (outgoingStreamList && outgoingStreamList.length > 0) {
+    if (outgoingStreamList && outgoingStreamList.length >= 0) {
       setLoadingOutgoingStreams(false);
     }
   }, [
@@ -1512,6 +1512,15 @@ export const MoneyStreamsInfoView = (props: {
       )}
     </>
   );
+
+
+  useEffect(() => {
+    console.log("========================================");
+    console.log("outgoingStreamList", outgoingStreamList);
+    console.log("treasuryCombinedList", treasuryCombinedList);
+    console.log("loadingOutgoingStreams", loadingOutgoingStreams);
+    console.log("loadingCombinedStreamingList", loadingCombinedStreamingList);
+  }, [incomingStreamList, loadingCombinedStreamingList, loadingIncomingStreams, loadingOutgoingStreams, outgoingStreamList, treasuryCombinedList]);
 
   // Outgoing streams list
   const renderListOfOutgoingStreams = (

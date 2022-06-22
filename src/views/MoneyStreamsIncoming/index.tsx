@@ -35,6 +35,8 @@ import { StreamWithdrawData } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../contexts/accounts";
+import { useNavigate, useParams } from "react-router-dom";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -62,6 +64,8 @@ export const MoneyStreamsIncomingView = (props: {
   const { publicKey, wallet } = useWallet();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
+  const { address } = useParams();
+  const navigate = useNavigate();
 
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -176,6 +180,10 @@ export const MoneyStreamsIncomingView = (props: {
     setIsBusy(false);
     hideTransferStreamTransactionModal();
     resetTransactionStatus();
+
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/incoming`;
+
+    navigate(url);
   };
 
   const onAfterTransferStreamTransactionModalClosed = () => {
