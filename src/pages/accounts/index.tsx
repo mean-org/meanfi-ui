@@ -866,7 +866,12 @@ export const AccountsNewView = () => {
       } else if (item.operationType === OperationType.StreamClose) {
         hardReloadStreams();
         const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
-
+        navigate(url);
+      } else if (item.operationType === OperationType.StreamWithdraw) {
+        softReloadStreams();
+      } else if (item.operationType === OperationType.StreamTransferBeneficiary) {
+        hardReloadStreams();
+        const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/incoming`;
         navigate(url);
       }
     }

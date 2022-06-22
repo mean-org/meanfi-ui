@@ -7,7 +7,6 @@ import { useWallet } from '../../contexts/wallet';
 import { Stream } from '@mean-dao/msp';
 import { StreamInfo } from '@mean-dao/money-streaming';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
-import { AppStateContext } from '../../contexts/appstate';
 
 export const StreamTransferOpenModal = (props: {
   handleClose: any;
@@ -18,10 +17,8 @@ export const StreamTransferOpenModal = (props: {
   const [address, setAddress] = useState('');
   const { publicKey } = useWallet();
   const { t } = useTranslation('common');
-  const {
-    isVerifiedRecipient,
-    setIsVerifiedRecipient
-  } = useContext(AppStateContext);
+
+  const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
 
   const isAddressTreasurer = useCallback((address: string): boolean => {
     if (props.streamDetail && address) {
@@ -46,9 +43,12 @@ export const StreamTransferOpenModal = (props: {
 
   const onAcceptNewAddress = () => {
     props.handleOk(address);
-    setTimeout(() => {
-      setAddress('');
-    }, 50);
+  }
+
+  const onCloseModal = () => {
+    setAddress('');
+    setIsVerifiedRecipient(false);
+    props.handleClose();
   }
 
   const onIsVerifiedRecipientChange = (e: any) => {
@@ -62,7 +62,7 @@ export const StreamTransferOpenModal = (props: {
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptNewAddress}
-      onCancel={props.handleClose}
+      onCancel={onCloseModal}
       width={480}>
 
       <div className="form-label">{t('transfer-stream.label-streamid-input')}</div>

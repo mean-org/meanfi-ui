@@ -34,8 +34,6 @@ import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
-import { useNavigate, useParams } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -66,8 +64,6 @@ export const MoneyStreamsOutgoingView = (props: {
 
   const { wallet, publicKey } = useWallet();
   const connection = useConnection();
-  const { address } = useParams();
-  const navigate = useNavigate();
 
   const { streamSelected, streamList, onSendFromOutgoingStreamDetails } = props;
   const { t } = useTranslation('common');
