@@ -356,6 +356,25 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
     return value;
 }
 
+export const getPaymentIntervalFromSeconds = (value: number): PaymentRateType => {
+    switch (value) {
+        case 60:
+            return PaymentRateType.PerMinute;
+        case 3600:
+            return PaymentRateType.PerHour;
+        case 86400:
+            return PaymentRateType.PerDay;
+        case 604800:
+            return PaymentRateType.PerWeek;
+        case 2629750:
+            return PaymentRateType.PerMonth;
+        case 31557000:
+            return PaymentRateType.PerYear;
+        default:
+            return PaymentRateType.PerMonth;    // Default
+    }
+}
+
 export const getTransactionOperationDescription = (status: TransactionStatus | undefined, trans?: any): string => {
     switch (status) {
         case TransactionStatus.TransactionStart:

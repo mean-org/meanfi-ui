@@ -98,7 +98,10 @@
             height: 100%;
             .ant-tabs-tabpane.ant-tabs-tabpane-active {
                 height: 100%;
-                display: table;
+                display: block;
+                @media (min-width: 768px) {
+                    display: table;
+                }
             }
         }
     }

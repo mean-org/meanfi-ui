@@ -136,11 +136,14 @@ export const formatUSD = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-export const numberFormatter = new Intl.NumberFormat("en-US", {
-  style: "decimal",
-  minimumFractionDigits: 4,
-  maximumFractionDigits: 9,
-});
+export const formatPercent = (val: number, maxDecimals?: number) => {
+  const convertedVlue = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals || 0
+  });
+
+  return convertedVlue.format(val);
+}
 
 export const isSmallNumber = (val: number) => {
   return val < 0.001 && val > 0;

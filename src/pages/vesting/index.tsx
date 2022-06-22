@@ -18,7 +18,8 @@ import {
   Treasury,
   Constants as MSPV2Constants,
   TreasuryType,
-  TimeUnit
+  TimeUnit,
+  StreamTemplate
 } from '@mean-dao/msp';
 import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -37,7 +38,7 @@ import { VestingContractCreateForm } from './components/VestingContractCreateFor
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions, VESTING_CATEGORIES } from '../../models/vesting';
+import { CreateVestingTreasuryParams, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions, VESTING_CATEGORIES } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
@@ -60,31 +61,13 @@ import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingAccountDetailTab = "overview" | "streams" | "activity" | undefined;
-let ds: string[] = [];
-
-interface CreateVestingTreasuryParams {
-  payer: PublicKey;
-  treasurer: PublicKey;
-  label: string;
-  type: TreasuryType;
-  associatedTokenAddress: string;
-  duration: number;
-  durationUnit: TimeUnit;
-  startUtc: Date;
-  cliffVestPercent: number;
-  feePayedByTreasurer?: boolean | undefined;
-  multisig: string;
-  fundingAmount: number;
-}
 
 export const VestingView = () => {
   const {
     tokenList,
     userTokens,
-    tokenBalance,
     splTokenList,
     selectedToken,
-    deletedStreams,
     detailsPanelOpen,
     transactionStatus,
     streamV2ProgramAddress,
@@ -128,6 +111,7 @@ export const VestingView = () => {
   // Selected vesting contract
   const [selectedVestingContract, setSelectedVestingContract] = useState<Treasury | undefined>(undefined);
   // const [loadingselectedVestingContract, setLoadingselectedVestingContract] = useState(false);
+  const [streamTemplate, setStreamTemplate] = useState<StreamTemplate | undefined>(undefined);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [assetCtas, setAssetCtas] = useState<MetaInfoCta[]>([]);
@@ -393,6 +377,24 @@ export const VestingView = () => {
       : false
   }, [accountAddress, publicKey]);
 
+  const navigateToVestingContract = useCallback((contractId: string) => {
+    if (accountAddress && contractId) {
+      let url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
+      const param = getQueryAccountType();
+      if (param && param === "multisig") {
+        url += '?account-type=multisig';
+      }
+      navigate(url);
+    }
+  }, [accountAddress, getQueryAccountType, navigate]);
+
+  const onSelectVestingContract = useCallback((item: Treasury | undefined) => {
+    if (accountAddress && item) {
+      navigateToVestingContract(item.id.toString());
+      setAutoOpenDetailsPanel(true);
+    }
+  }, [accountAddress, navigateToVestingContract]);
+
   const getAllUserV2Accounts = useCallback(async () => {
 
     if (!connection || !publicKey || !msp) { return []; }
@@ -419,23 +421,23 @@ export const VestingView = () => {
       .then(treasuries => {
         consoleOut('Streaming accounts:', treasuries, 'blue');
         setTreasuryList(treasuries);
+        // /vesting/:address/contracts/:vestingContract
+        if (reset) {
+          const contractId = treasuries[0].id.toString();
+          navigateToVestingContract(contractId);
+        } else if (vestingContractAddress) {
+          const item = treasuries.find(i => i.id === vestingContractAddress);
+          if (item) {
+            navigateToVestingContract(item.id.toString());
+          }
+        }
       })
       .catch(error => {
         console.error(error);
       })
       .finally(() => setLoadingTreasuries(false));
 
-  }, [connection, getAllUserV2Accounts, msp, publicKey]);
-
-  const onSelectVestingContract = useCallback((item: Treasury | undefined) => {
-    if (accountAddress && item) {
-      // /vesting/:address/contracts/:vestingContract
-      const contractId = item.id.toString();
-      const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
-      navigate(url);
-      setAutoOpenDetailsPanel(true);
-    }
-  }, [accountAddress, navigate]);
+  }, [connection, getAllUserV2Accounts, msp, navigateToVestingContract, publicKey, vestingContractAddress]);
 
   const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
     if (!publicKey || !msp || loadingTreasuryStreams) { return; }
@@ -1311,8 +1313,10 @@ export const VestingView = () => {
   };
 
   const closeAddFundsModal = useCallback(() => {
+    resetTransactionStatus();
     setIsAddFundsModalVisibility(false);
-  }, []);
+    setOngoingOperation(undefined);
+  }, [resetTransactionStatus]);
 
   const onExecuteAddFundsTransaction = async (params: TreasuryTopupParams) => {
     let transaction: Transaction;
@@ -1630,9 +1634,8 @@ export const VestingView = () => {
               extras: params.streamId
             });
             setIsBusy(false);
-            resetTransactionStatus();
+            closeAddFundsModal();
             setNeedReloadMultisig(true);
-            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2935,17 +2938,17 @@ export const VestingView = () => {
     ctaItems++;
 
     // Bulk create
-    actions.push({
-      action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
-      isVisible: false,
-      caption: 'Bulk create',
-      disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentType: 'button',
-      uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
-      tooltip: '',
-      callBack: () => { }
-    });
-    ctaItems++;
+    // actions.push({
+    //   action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
+    //   isVisible: true,
+    //   caption: 'Bulk create',
+    //   disabled: !isInspectedAccountTheConnectedWallet(),
+    //   uiComponentType: 'button',
+    //   uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
+    //   tooltip: '',
+    //   callBack: () => { }
+    // });
+    // ctaItems++;
 
     // Add funds
     actions.push({
@@ -3227,13 +3230,7 @@ export const VestingView = () => {
     setPendingMultisigTxCount,
   ]);
 
-  // Log the list of deleted streams
-  useEffect(() => {
-    ds = deletedStreams;
-    consoleOut('ds:', ds, 'blue');
-  }, [deletedStreams]);
-
-  // Get the default Vesting contract settings template
+  // Get the Vesting contract settings template
   useEffect(() => {
     if (publicKey && msp && selectedVestingContract) {
       const pk = new PublicKey(selectedVestingContract.id as string);
@@ -3241,6 +3238,7 @@ export const VestingView = () => {
       msp.getStreamTemplate(pk)
       .then(value => {
         consoleOut('StreamTemplate:', value, 'blue');
+        setStreamTemplate(value);
       })
     }
   }, [msp, publicKey, selectedVestingContract]);
@@ -3678,7 +3676,7 @@ export const VestingView = () => {
           />
         )}
 
-        {isCreateStreamModalVisible && (
+        {isCreateStreamModalVisible && selectedVestingContract && (
           <VestingContractCreateStreamModal
             handleClose={closeCreateStreamModal}
             handleOk={(options: VestingContractStreamCreateOptions) => onAcceptCreateStream(options)}
@@ -3686,6 +3684,7 @@ export const VestingView = () => {
             nativeBalance={nativeBalance}
             minRequiredBalance={minRequiredBalance}
             isMultisigTreasury={isMultisigTreasury()}
+            streamTemplate={streamTemplate}
             transactionFees={transactionFees}
             vestingContract={selectedVestingContract}
             withdrawTransactionFees={withdrawTransactionFees}

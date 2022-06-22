@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useContext, useState } from 'react';
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { cutNumber, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
+import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { cutNumber, formatPercent, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress, toUiAmount } from '../../../../utils/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentRateOptionLabel, isValidAddress, toUsCurrency } from '../../../../utils/ui';
+import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, isValidAddress, toUsCurrency } from '../../../../utils/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
 import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
@@ -25,6 +25,7 @@ export const VestingContractCreateStreamModal = (props: {
     isXsDevice: boolean;
     minRequiredBalance: number;
     nativeBalance: number;
+    streamTemplate: StreamTemplate | undefined;
     transactionFees: TransactionFees;
     vestingContract: Treasury | undefined;
     withdrawTransactionFees: TransactionFees;
@@ -38,6 +39,7 @@ export const VestingContractCreateStreamModal = (props: {
         isXsDevice,
         minRequiredBalance,
         nativeBalance,
+        streamTemplate,
         transactionFees,
         vestingContract,
         withdrawTransactionFees,
@@ -75,11 +77,11 @@ export const VestingContractCreateStreamModal = (props: {
     const [treasuryOption, setTreasuryOption] = useState<TreasuryType | undefined>(undefined);
     const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
     const [paymentStartDate, setPaymentStartDate] = useState<string>("");
+    const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
+    const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("");
     const [cliffRelease, setCliffRelease] = useState<string>("")
     const [paymentRateAmount, setPaymentRateAmount] = useState<string>("");
-    const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
-    const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
 
 
     /////////////////
@@ -234,7 +236,7 @@ export const VestingContractCreateStreamModal = (props: {
         getMaxAmount
     ]);
 
-    // When modal goes visible, use the treasury associated token
+    // When modal goes visible, set the associated token
     useEffect(() => {
         if (isVisible && vestingContract) {
             const assTokenAddr = vestingContract.associatedToken as string;
@@ -254,11 +256,40 @@ export const VestingContractCreateStreamModal = (props: {
         selectedToken,
         vestingContract,
         getTokenPriceByAddress,
-        getTokenByMintAddress,
         getTokenPriceBySymbol,
+        getTokenByMintAddress,
         setSelectedToken,
         setEffectiveRate,
         setCustomToken,
+    ]);
+
+    // When modal goes visible, set template data
+    useEffect(() => {
+        if (isVisible && vestingContract && streamTemplate) {
+            if (currentStep === 1) {
+                consoleOut('Vesting contract type:', TreasuryType[vestingContract.treasuryType], 'blue');
+                setTreasuryOption(vestingContract.treasuryType);
+                const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
+                consoleOut('cliffPercent:', cliffPercent, 'blue');
+                setCliffReleasePercentage(formatPercent(cliffPercent, 4));
+                consoleOut('feePayedByTreasurer:', streamTemplate.feePayedByTreasurer, 'blue');
+                setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
+                const startUtc = streamTemplate.startUtc as Date;
+                consoleOut('startUtc:', startUtc.toUTCString(), 'blue');
+                setPaymentStartDate(startUtc.toUTCString());
+                consoleOut('durationNumberOfUnits:', streamTemplate.durationNumberOfUnits, 'blue');
+                updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
+                const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
+                consoleOut('rateIntervalInSeconds:', streamTemplate.rateIntervalInSeconds, 'blue');
+                consoleOut('periodFrequency:', PaymentRateType[periodFrequency], 'blue');
+                setLockPeriodFrequency(periodFrequency);
+            }
+        }
+    }, [
+        isVisible,
+        currentStep,
+        streamTemplate,
+        vestingContract,
     ]);
 
     useEffect(() => {

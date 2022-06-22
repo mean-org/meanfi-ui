@@ -1,5 +1,6 @@
 import { TimeUnit, TreasuryType } from "@mean-dao/msp";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { PublicKey } from "@solana/web3.js";
 
 export const VESTING_CATEGORIES: string[] = [
     'Advisor',
@@ -11,6 +12,21 @@ export const VESTING_CATEGORIES: string[] = [
     'Seed round',
     'Team',
 ];
+
+export interface CreateVestingTreasuryParams {
+    payer: PublicKey;
+    treasurer: PublicKey;
+    label: string;
+    type: TreasuryType;
+    associatedTokenAddress: string;
+    duration: number;
+    durationUnit: TimeUnit;
+    startUtc: Date;
+    cliffVestPercent: number;
+    feePayedByTreasurer?: boolean | undefined;
+    multisig: string;
+    fundingAmount: number;
+}
 
 export interface VestingContractCreateOptions {
     vestingContractName: string;
