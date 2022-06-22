@@ -3302,11 +3302,7 @@ export const VestingView = () => {
         <TabPane tab="Overview" key={"overview"}>
           <VestingContractOverview
             vestingContract={selectedVestingContract}
-            cliffRelease={10}
-            lockPeriodAmount={4}
-            lockPeriodFrequency={PaymentRateType.PerMonth}
-            vestingCategory={VESTING_CATEGORIES[6]}
-            streamsStartDate={'13 Jun 2022 23:30:00 GMT'}
+            streamTemplate={streamTemplate}
           />
         </TabPane>
         <TabPane tab="Streams" key={"streams"}>

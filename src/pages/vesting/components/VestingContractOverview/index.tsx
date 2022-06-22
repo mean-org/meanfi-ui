@@ -1,24 +1,60 @@
-import { Treasury, TreasuryType } from '@mean-dao/msp';
+import { StreamTemplate, Treasury, TreasuryType } from '@mean-dao/msp';
+import BN from 'bn.js';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TimeData } from '../../../../models/common-types';
 import { PaymentRateType } from '../../../../models/enums';
-import { getLockPeriodOptionLabel, getReadableDate, getTimeEllapsed, getTimeRemaining } from '../../../../utils/ui';
+import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getReadableDate, getTimeEllapsed, getTimeRemaining } from '../../../../utils/ui';
+import { formatPercent, makeDecimal } from '../../../../utils/utils';
 
 export const VestingContractOverview = (props: {
     vestingContract: Treasury | undefined;
-    lockPeriodFrequency: PaymentRateType;
-    lockPeriodAmount: number;
-    vestingCategory: string;
-    streamsStartDate: string;
-    cliffRelease: number;
+    vestingCategory?: string;
+    streamTemplate: StreamTemplate | undefined;
 }) => {
-    const { vestingContract, lockPeriodAmount, lockPeriodFrequency, cliffRelease, vestingCategory, streamsStartDate } = props;
+    const {
+        vestingContract,
+        vestingCategory,
+        streamTemplate
+    } = props;
     const { t } = useTranslation('common');
     const { theme } = useContext(AppStateContext);
     const [today, setToday] = useState(new Date());
     const [startRemainingTime, setStartRemainingTime] = useState('');
+
+    // Setting from the vesting contract
+    const [treasuryOption, setTreasuryOption] = useState<TreasuryType | undefined>(undefined);
+    const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
+    const [paymentStartDate, setPaymentStartDate] = useState<string>("");
+    const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
+    const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+    const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
+
+    // When modal goes visible, set template data
+    useEffect(() => {
+        if (vestingContract && streamTemplate) {
+            consoleOut('Vesting contract type:', TreasuryType[vestingContract.treasuryType], 'blue');
+            setTreasuryOption(vestingContract.treasuryType);
+            const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
+            consoleOut('cliffPercent:', cliffPercent, 'blue');
+            setCliffReleasePercentage(cliffPercent);
+            consoleOut('feePayedByTreasurer:', streamTemplate.feePayedByTreasurer, 'blue');
+            setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
+            const startUtc = streamTemplate.startUtc as Date;
+            consoleOut('startUtc:', startUtc.toUTCString(), 'blue');
+            setPaymentStartDate(startUtc.toUTCString());
+            consoleOut('durationNumberOfUnits:', streamTemplate.durationNumberOfUnits, 'blue');
+            updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
+            const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
+            consoleOut('rateIntervalInSeconds:', streamTemplate.rateIntervalInSeconds, 'blue');
+            consoleOut('periodFrequency:', PaymentRateType[periodFrequency], 'blue');
+            setLockPeriodFrequency(periodFrequency);
+        }
+    }, [
+        streamTemplate,
+        vestingContract,
+    ]);
 
     useEffect(() => {
 
@@ -40,15 +76,15 @@ export const VestingContractOverview = (props: {
 
     useEffect(() => {
 
-        if (streamsStartDate) {
+        if (paymentStartDate) {
 
             let timedata: TimeData;
             const remainingTime: string[] = [];
 
-            if (isStartDateFuture(streamsStartDate)) {
-                timedata = getTimeRemaining(streamsStartDate);
+            if (isStartDateFuture(paymentStartDate)) {
+                timedata = getTimeRemaining(paymentStartDate);
             } else {
-                timedata = getTimeEllapsed(streamsStartDate);
+                timedata = getTimeEllapsed(paymentStartDate);
             }
 
             if (timedata.days > 0) {
@@ -68,7 +104,7 @@ export const VestingContractOverview = (props: {
                 remainingTime.push(`${timedata.seconds} ${timedata.seconds === 1 ? t('general.second') : t('general.seconds')}`);
             }
 
-            if (isStartDateFuture(streamsStartDate)) {
+            if (isStartDateFuture(paymentStartDate)) {
                 setStartRemainingTime(`in ${remainingTime.join(', ')}`);
             } else {
                 setStartRemainingTime(`Streamin for ${remainingTime.join(', ')}`);
@@ -76,7 +112,7 @@ export const VestingContractOverview = (props: {
 
         }
 
-    }, [t, streamsStartDate, isStartDateFuture]);
+    }, [t, paymentStartDate, isStartDateFuture]);
 
     return (
         <div className="tab-inner-content-wrapper vertical-scroll">
@@ -84,13 +120,15 @@ export const VestingContractOverview = (props: {
                 <div>
                     <div className="font-size-110 font-bold">
                         <span className="align-middle">{lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)} - {vestingContract.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'} Vesting Account</span>
-                        <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>{vestingCategory}</span>
+                        {vestingCategory && (
+                            <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>{vestingCategory}</span>
+                        )}
                     </div>
                     <div className="font-size-100 font-extrabold text-uppercase mt-3 mb-2">Vesting Distribution</div>
-                    <div className="font-size-100">{isStartDateFuture(streamsStartDate) ? 'Streams start on' : 'Streams started on'} {getReadableDate(streamsStartDate)}</div>
+                    <div className="font-size-100">{isStartDateFuture(paymentStartDate) ? 'Streams start on' : 'Streams started on'} {getReadableDate(paymentStartDate)}</div>
                     <div className="font-size-70 text-italic">{startRemainingTime}</div>
-                    <div className="font-size-100 mt-3">{cliffRelease}% unlocked on commencement date</div>
-                    <div className="font-size-100">{100 - cliffRelease}% of allocated funds streamed equally across {lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)}</div>
+                    <div className="font-size-100 mt-3">{cliffReleasePercentage}% unlocked on commencement date</div>
+                    <div className="font-size-100">{100 - cliffReleasePercentage}% of allocated funds streamed equally across {lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)}</div>
                 </div>
             )}
         </div>
