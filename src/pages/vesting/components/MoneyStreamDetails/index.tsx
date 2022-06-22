@@ -246,6 +246,7 @@ export const MoneyStreamDetails = (props: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabOption]);
 
+
   ///////////////
   // Rendering //
   ///////////////
@@ -581,11 +582,11 @@ export const MoneyStreamDetails = (props: {
             {
               isInboundStream
                 ? getTokenAmountAndSymbolByTokenAddress(
-                    toUiAmount(new BN(item.fundsLeftInStream), selectedToken?.decimals || 6),
+                    toUiAmount(new BN(item.withdrawableAmount), selectedToken?.decimals || 6),
                     item.associatedToken as string
                   )
                 : getTokenAmountAndSymbolByTokenAddress(
-                    toUiAmount(new BN(item.withdrawableAmount), selectedToken?.decimals || 6),
+                    toUiAmount(new BN(item.fundsLeftInStream), selectedToken?.decimals || 6),
                     item.associatedToken as string,
                   )
             }

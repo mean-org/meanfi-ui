@@ -3306,6 +3306,7 @@ export const VestingView = () => {
         </TabPane>
         <TabPane tab={`Streams (${selectedVestingContract.totalStreams})`} key={"streams"}>
           <VestingContractStreamList
+            msp={msp}
             vestingContract={selectedVestingContract}
             accountAddress={accountAddress}
             loadingTreasuryStreams={loadingTreasuryStreams}

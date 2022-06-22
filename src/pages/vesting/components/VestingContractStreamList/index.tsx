@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useState } from 'react';
-import { calculateActionFees, MSP_ACTIONS, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { calculateActionFees, MSP, MSP_ACTIONS, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTimeToNow } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
@@ -15,7 +15,7 @@ import { TransactionStatus } from '../../../../models/enums';
 import { MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { TreasuryTopupParams } from '../../../../models/common-types';
 import { VestingContractAddFundsModal } from '../TreasuryAddFundsModal';
-import { VestingContractStreamDetail } from '../VestingContractStreamDetail';
+import { VestingContractStreamDetailModal } from '../VestingContractStreamDetailModal';
 
 export const VestingContractStreamList = (props: {
     accountAddress: string;
@@ -24,6 +24,7 @@ export const VestingContractStreamList = (props: {
     loadingTreasuryStreams: boolean;
     userBalances: any;
     nativeBalance: number;
+    msp: MSP | undefined;
 }) => {
     const {
         accountAddress,
@@ -32,6 +33,7 @@ export const VestingContractStreamList = (props: {
         loadingTreasuryStreams,
         userBalances,
         nativeBalance,
+        msp,
     } = props;
     const {
         deletedStreams,
@@ -305,7 +307,11 @@ export const VestingContractStreamList = (props: {
     // Stream detail modal
     const [isVestingContractStreamDetailModalVisible, setIsVestingContractStreamDetailModalVisibility] = useState(false);
     const showVestingContractStreamDetailModal = useCallback(() => setIsVestingContractStreamDetailModalVisibility(true), []);
-    const closeVestingContractStreamDetailModal = useCallback(() => setIsVestingContractStreamDetailModalVisibility(false), []);
+    const closeVestingContractStreamDetailModal = useCallback(() => {
+        setIsVestingContractStreamDetailModalVisibility(false);
+        setHighLightableStreamId(undefined);
+        sethHighlightedStream(undefined);
+    }, [setHighLightableStreamId]);
 
     ///////////////
     // Rendering //
@@ -470,7 +476,8 @@ export const VestingContractStreamList = (props: {
             )}
 
             {isVestingContractStreamDetailModalVisible && highlightedStream && (
-                <VestingContractStreamDetail
+                <VestingContractStreamDetailModal
+                    msp={msp}
                     handleClose={closeVestingContractStreamDetailModal}
                     isVisible={isVestingContractStreamDetailModalVisible}
                     accountAddress={accountAddress}

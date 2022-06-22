@@ -1,23 +1,25 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { Stream } from '@mean-dao/msp';
+import { MSP, Stream } from '@mean-dao/msp';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut } from '../../../../utils/ui';
 import { shortenAddress } from '../../../../utils/utils';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
 
-export const VestingContractStreamDetail = (props: {
+export const VestingContractStreamDetailModal = (props: {
   accountAddress: string;
   handleClose: any;
   highlightedStream: Stream | undefined;
   isVisible: boolean;
+  msp: MSP | undefined;
 }) => {
   const {
     accountAddress,
     handleClose,
     highlightedStream,
     isVisible,
+    msp,
   } = props;
   const {
     getTokenByMintAddress,
@@ -69,6 +71,23 @@ export const VestingContractStreamDetail = (props: {
 
     }
   }, [getTokenByMintAddress, isVisible, selectedToken, setCustomToken, highlightedStream]);
+
+  // Live data calculation - Refresh Stream detail
+  useEffect(() => {
+
+    const timeout = setTimeout(() => {
+      if (msp && streamDetail) {
+        msp.refreshStream(streamDetail as Stream).then(detail => {
+          setStreamDetail(detail as Stream);
+        });
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [msp, streamDetail]);
 
   return (
     <Modal
