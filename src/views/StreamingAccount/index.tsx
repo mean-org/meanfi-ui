@@ -2387,6 +2387,10 @@ export const StreamingAccountView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
+              disabled={
+                isTxInProgress() ||
+                (!streamingAccountSelected || !isNewTreasury || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)
+              }
               onClick={showCreateStreamModal}>
                 <div className="btn-content">
                   Create stream
