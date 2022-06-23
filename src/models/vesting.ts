@@ -98,3 +98,10 @@ export interface CreateVestingStreamParams {
     streamName: string;
     multisig: string;
 }
+
+export interface VestingContractCloseStreamOptions {
+    closeTreasuryOption: boolean;
+    vestedReturns: number;
+    unvestedReturns: number;
+    feeAmount: number;
+}

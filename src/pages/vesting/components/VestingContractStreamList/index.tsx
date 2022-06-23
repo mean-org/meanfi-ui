@@ -36,6 +36,7 @@ import { useWallet } from '../../../../contexts/wallet';
 import { customLogger } from '../../../..';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
+import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -66,8 +67,9 @@ export const VestingContractStreamList = (props: {
         vestingContract,
     } = props;
     const {
-        selectedToken,
+        splTokenList,
         tokenBalance,
+        selectedToken,
         deletedStreams,
         transactionStatus,
         setHighLightableStreamId,
@@ -79,6 +81,7 @@ export const VestingContractStreamList = (props: {
         lastSentTxOperationType,
         startFetchTxSignatureInfo,
         clearTxConfirmationContext,
+        enqueueTransactionConfirmation,
     } = useContext(TxConfirmationContext);
     const connection = useConnection();
     const { t } = useTranslation('common');
@@ -373,9 +376,9 @@ export const VestingContractStreamList = (props: {
         }
     }, [getTransactionFees, resetTransactionStatus, vestingContract]);
     const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
-    const onAcceptCloseStream = (closeTreasury: any) => {
+    const onAcceptCloseStream = (options: VestingContractCloseStreamOptions) => {
         hideCloseStreamModal();
-        onExecuteCloseStreamTransaction(closeTreasury);
+        onExecuteCloseStreamTransaction(options);
     };
 
     // Common reusable transaction execution modal
@@ -387,9 +390,10 @@ export const VestingContractStreamList = (props: {
         resetTransactionStatus();
         hideTransactionExecutionModal();
         refreshTokenBalance();
+        setOngoingOperation(undefined);
     };
 
-    const onExecuteCloseStreamTransaction = async (closeTreasury: any) => {
+    const onExecuteCloseStreamTransaction = async (closeStreamOptions: VestingContractCloseStreamOptions) => {
         let transaction: Transaction;
         let signedTransaction: Transaction;
         let signature: any;
@@ -398,7 +402,7 @@ export const VestingContractStreamList = (props: {
 
         setTransactionCancelled(false);
         setOngoingOperation(OperationType.StreamClose);
-        setRetryOperationPayload(closeTreasury);
+        setRetryOperationPayload(closeStreamOptions);
         setIsBusy(true);
 
         const closeStream = async (data: any) => {
@@ -468,7 +472,7 @@ export const VestingContractStreamList = (props: {
             const data = {
                 stream: streamPublicKey.toBase58(),                     // stream
                 payer: publicKey.toBase58(),                            // initializer
-                closeTreasury: closeTreasury.closeTreasuryOption        // closeTreasury
+                closeTreasury: closeStreamOptions.closeTreasuryOption        // closeTreasury
             }
 
             consoleOut('data:', data);
@@ -657,10 +661,32 @@ export const VestingContractStreamList = (props: {
                     consoleOut('sent:', sent);
                     if (sent && !transactionCancelled) {
                         consoleOut('Send Tx to confirmation queue:', signature);
-                        startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamClose);
+                        const message = `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of [${
+                            getTokenAmountAndSymbolByTokenAddress(
+                                closeStreamOptions.vestedReturns,
+                                highlightedStream.associatedToken as string,
+                                false, splTokenList
+                            )
+                        }] has been sent to [${shortenAddress(highlightedStream.beneficiary as string)}]. Unvested amount of [${
+                            getTokenAmountAndSymbolByTokenAddress(
+                                closeStreamOptions.unvestedReturns,
+                                highlightedStream.associatedToken as string,
+                                false, splTokenList
+                            )
+                        }] was returned to the vesting contract.`;
+                        enqueueTransactionConfirmation({
+                            signature: signature,
+                            operationType: OperationType.StreamClose,
+                            finality: "confirmed",
+                            txInfoFetchStatus: "fetching",
+                            loadingTitle: "Confirming transaction",
+                            loadingMessage: `Vesting stream ${highlightedStream.name} closure is pending confirmation`,
+                            completedTitle: "Transaction confirmed",
+                            completedMessage: message,
+                            extras: closeStreamOptions
+                        });
                         setIsBusy(false);
                         onCloseStreamTransactionFinished();
-                        setOngoingOperation(undefined);
                     } else { setIsBusy(false); }
                 } else { setIsBusy(false); }
             } else { setIsBusy(false); }
@@ -1532,7 +1558,7 @@ export const VestingContractStreamList = (props: {
                     selectedToken={selectedToken}
                     transactionFees={transactionFees}
                     streamDetail={highlightedStream}
-                    handleOk={onAcceptCloseStream}
+                    handleOk={(options: VestingContractCloseStreamOptions) => onAcceptCloseStream(options)}
                     handleClose={hideCloseStreamModal}
                     content={getStreamClosureMessage()}
                     mspClient={msp}

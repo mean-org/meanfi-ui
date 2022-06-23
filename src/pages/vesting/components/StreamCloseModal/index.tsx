@@ -17,6 +17,7 @@ import { consoleOut, percentage } from '../../../../utils/ui';
 import { getAmountWithSymbol, toUiAmount } from '../../../../utils/utils';
 import { STREAMS_ROUTE_BASE_PATH } from '../../../../views/Streams';
 import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../../treasuries';
+import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
 
 export const StreamCloseModal = (props: {
   handleClose: any;
@@ -261,12 +262,13 @@ export const StreamCloseModal = (props: {
   ]);
 
   const onAcceptModal = () => {
-    props.handleOk({
+    const options: VestingContractCloseStreamOptions = {
       closeTreasuryOption,
       vestedReturns: getWithdrawableAmount(),
       unvestedReturns: amITreasurer() ? getUnvested() : 0,
-      feeAmount: amIBeneficiary() && getWithdrawableAmount() > 0 ? feeAmount : 0
-    });
+      feeAmount: amIBeneficiary() && getWithdrawableAmount() > 0 ? (feeAmount || 0) : 0
+    }
+    props.handleOk(options);
   }
 
   const onCloseTreasuryOptionChanged = (e: any) => {
