@@ -2,21 +2,21 @@ import React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col, Radio } from 'antd';
 import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { useWallet } from '../../contexts/wallet';
-import { consoleOut, percentage } from '../../utils/ui';
-import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
-import { useConnection } from '../../contexts/connection';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { StreamTreasuryType } from '../../models/treasuries';
-import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
-import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
+import { useConnection } from '../../../../contexts/connection';
+import { useWallet } from '../../../../contexts/wallet';
+import { StreamTreasuryType } from '../../../../models/treasuries';
+import { consoleOut, percentage } from '../../../../utils/ui';
+import { getAmountWithSymbol, toUiAmount } from '../../../../utils/utils';
+import { STREAMS_ROUTE_BASE_PATH } from '../../../../views/Streams';
+import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../../treasuries';
 
 export const StreamCloseModal = (props: {
   handleClose: any;

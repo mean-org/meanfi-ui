@@ -2,14 +2,14 @@ import React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
-import { useWallet } from '../../contexts/wallet';
-import { percentage } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
 import BN from 'bn.js';
+import { useWallet } from '../../../../contexts/wallet';
+import { percentage } from '../../../../utils/ui';
+import { getAmountWithSymbol, toUiAmount } from '../../../../utils/utils';
 
 export const StreamPauseModal = (props: {
   handleClose: any;
