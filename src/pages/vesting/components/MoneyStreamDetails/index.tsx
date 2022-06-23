@@ -5,7 +5,7 @@ import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity } from '@mean-dao/msp';
 import { cutNumber, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress, toUiAmount } from '../../../../utils/utils';
-import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTimeToNow } from '../../../../utils/ui';
+import { getFormattedNumberToLocale, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
@@ -255,6 +255,11 @@ export const MoneyStreamDetails = (props: {
   // Rendering //
   ///////////////
 
+  const getRelativeDate = (utcDate: string) => {
+    const reference = new Date(utcDate);
+    return relativeTimeFromDates(reference);
+  }
+
   const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
     event.currentTarget.className = "error";
@@ -485,11 +490,11 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && "Funds will run out in:",
-      value: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && "12 days and 23 hours"
+      value: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && `${getReadableDate(stream.estimatedDepletionDate as string)} (${getTimeToNow(stream.estimatedDepletionDate as string)})`
     },
     {
       label: stream && stream.status === STREAM_STATUS.Paused && "Funds ran out on:",
-      value: stream && stream.status === STREAM_STATUS.Paused && "June 1, 2022 (6 days ago)"
+      value: stream && stream.status === STREAM_STATUS.Paused && getRelativeDate(stream.estimatedDepletionDate as string)
     },
   ];
 
