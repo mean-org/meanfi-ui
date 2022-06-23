@@ -881,6 +881,8 @@ export const AccountsNewView = () => {
         hardReloadStreams();
         const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
         navigate(url);
+      } else if (item.operationType === OperationType.TreasuryRefreshBalance) {
+        softReloadStreams();
       }
     }
     resetTransactionStatus();

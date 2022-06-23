@@ -3,11 +3,13 @@ import { Stream, STREAM_STATUS, TransactionFees, Treasury, MSP_ACTIONS as MSP_AC
 import { 
   MSP_ACTIONS, 
   calculateActionFees,
-  MoneyStreaming
+  MoneyStreaming,
+  Constants,
+  refreshTreasuryBalanceInstruction
 } from '@mean-dao/money-streaming';
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
 import BN from "bn.js";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -24,7 +26,7 @@ import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical } from "../../Icons";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
 import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { openNotification } from "../../components/Notifications";
 import { TreasuryTopupParams } from "../../models/common-types";
@@ -67,8 +69,8 @@ export const StreamingAccountView = (props: {
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
 
+  const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
-  const { publicKey, wallet } = useWallet();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
@@ -105,6 +107,8 @@ export const StreamingAccountView = (props: {
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [multisigAddress, setMultisigAddress] = useState('');
+
+  const V1_TREASURY_ID = useMemo(() => { return new PublicKey("DVhWHsWSybDD8n5P6ep7rP4bg7yj55MoeZGQrbLGpQtQ"); }, []);
 
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
@@ -1600,6 +1604,374 @@ export const StreamingAccountView = (props: {
     }
   };
 
+  // Refresh account data
+  const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
+    refreshTokenBalance();
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  },[
+    refreshTokenBalance, 
+    setTransactionStatus
+  ]);
+  
+  const onExecuteRefreshTreasuryBalance = useCallback(async() => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    resetTransactionStatus();
+    clearTxConfirmationContext();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryRefreshBalance);
+    setIsBusy(true);
+
+    const refreshBalance = async (treasury: PublicKey) => {
+
+      if (!connection || !connected || !publicKey || !msp) {
+        return false;
+      }
+
+      const ixs: TransactionInstruction[] = [];
+
+      const { value } = await connection.getTokenAccountsByOwner(treasury, {
+        programId: TOKEN_PROGRAM_ID
+      });
+
+      if (!value || !value.length) {
+        return false;
+      }
+
+      const tokenAddress = value[0].pubkey;
+      const tokenAccount = AccountLayout.decode(value[0].account.data);
+      const associatedTokenMint = new PublicKey(tokenAccount.mint);
+      const mspAddress = isProd() ? Constants.MSP_PROGRAM : Constants.MSP_PROGRAM_DEV;
+      const feeTreasuryAddress: PublicKey = new PublicKey(
+        "3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw"
+      );
+
+      ixs.push(
+        await refreshTreasuryBalanceInstruction(
+          mspAddress,
+          publicKey,
+          associatedTokenMint,
+          treasury,
+          tokenAddress,
+          feeTreasuryAddress
+        )
+      );
+
+      const tx = new Transaction().add(...ixs);
+      tx.feePayer = publicKey;
+      const { blockhash } = await connection.getLatestBlockhash("recent");
+      tx.recentBlockhash = blockhash;
+
+      return tx;
+    };
+
+    const refreshTreasuryData = async (data: any) => {
+
+      if (!publicKey || !streamingAccountSelected || !msp) { return null; }
+
+      const v2 = streamingAccountSelected as Treasury;
+      const isNewTreasury = v2.version >= 2 ? true : false;
+
+      if (!isNewTreasury) {
+        return await refreshBalance(new PublicKey(data.treasury));
+      }
+
+      if (!isMultisigTreasury()) {
+        return await msp.refreshTreasuryData(
+          new PublicKey(publicKey),
+          new PublicKey(data.treasurer),
+          new PublicKey(data.treasury)
+        );
+      }
+
+      if (!streamingAccountSelected || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      const treasury = streamingAccountSelected as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      const refreshTreasury = await msp.refreshTreasuryData(
+        new PublicKey(publicKey),
+        multisig.authority,
+        new PublicKey(data.treasury)
+      );
+
+      const ixData = Buffer.from(refreshTreasury.instructions[0].data);
+      const ixAccounts = refreshTreasury.instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Refresh Treasury Data",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.TreasuryRefreshBalance,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
+
+      return tx;
+    }
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (!publicKey || !streamingAccountSelected) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      const treasury = new PublicKey(streamingAccountSelected.id as string);
+      const data = {
+        treasurer: publicKey.toBase58(),                      // treasurer
+        treasury: treasury.toBase58()                         // treasury
+      }
+
+      consoleOut('data:', data);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < minRequired) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      // Create a transaction
+      const result = await refreshTreasuryData(data)
+        .then(value => {
+          if (!value) { return false; }
+          consoleOut('refreshBalance returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('refreshBalance error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet && publicKey) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryRefreshBalance);
+            setIsBusy(false);
+            onRefreshTreasuryBalanceTransactionFinished();
+            setOngoingOperation(undefined);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  },[
+    msp,
+    wallet,
+    connected,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigTxFees,
+    multisigClient,
+    streamingAccountSelected,
+    multisigAccounts,
+    transactionCancelled,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    onRefreshTreasuryBalanceTransactionFinished,
+    clearTxConfirmationContext,
+    startFetchTxSignatureInfo,
+    resetTransactionStatus,
+    setTransactionStatus,
+    isMultisigTreasury,
+  ]);
+
   // Common reusable transaction execution modal
   const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
   const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
@@ -2269,12 +2641,16 @@ export const StreamingAccountView = (props: {
       <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={isTxInProgress() || (streams && streams.length > 0) || !isTreasurer()}>
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
-      <Menu.Item key="ms-01" onClick={() => {}}>
-        <span className="menu-item-text">Refresh account data</span>
-      </Menu.Item>
-      <Menu.Item key="ms-02" onClick={() => {}}>
-        <span className="menu-item-text">SOL balance</span>
-      </Menu.Item>
+      {(streamingAccountSelected && streamingAccountSelected.id !== V1_TREASURY_ID.toBase58()) && (
+        <Menu.Item key="ms-01" disabled={isTxInProgress() || !isTreasurer()} onClick={() => onExecuteRefreshTreasuryBalance()}>
+          <span className="menu-item-text">Refresh account data</span>
+        </Menu.Item>
+      )}
+      {isMultisigTreasury() && (
+        <Menu.Item key="ms-02" onClick={() => {}}>
+          <span className="menu-item-text">SOL balance</span>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
