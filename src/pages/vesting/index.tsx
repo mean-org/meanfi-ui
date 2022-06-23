@@ -18,6 +18,7 @@ import {
   Treasury,
   Constants as MSPV2Constants,
   StreamTemplate,
+  Category,
 } from '@mean-dao/msp';
 import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -389,43 +390,38 @@ export const VestingView = () => {
     }
   }, [accountAddress, navigateToVestingContract]);
 
-  const getAllUserV2Accounts = useCallback(async () => {
+  const getAllUserV2Accounts = useCallback(async (account: string) => {
 
-    if (!connection || !publicKey || !msp) { return []; }
+    if (!msp) { return []; }
 
     setTimeout(() => {
       setLoadingTreasuries(true);
     });
 
-    const treasuries = await msp.listTreasuries(publicKey);
+    const pk = new PublicKey(account);
 
-    // TODO: listTreasuries should already return a list without autoClose treasuries and include category 1
-    // probably it would be better to create a new method only for listing vesting contracts for when
-    // the additional category comes
-    return treasuries.filter(t => !t.autoClose && t.data.category === 1);
+    return await msp.listTreasuries(pk, true, true, Category.vesting);
 
-  }, [connection, msp, publicKey]);
+  }, [msp]);
 
   const refreshVestingContracts = useCallback((reset = false) => {
 
-    if (!connection || !publicKey || !msp) { return; }
+    if (!connection || !publicKey || !msp || !accountAddress) { return; }
 
-    setTimeout(() => {
-      setLoadingTreasuries(true);
-    });
-
-    getAllUserV2Accounts()
+    getAllUserV2Accounts(accountAddress)
       .then(treasuries => {
         consoleOut('Streaming accounts:', treasuries, 'blue');
         setTreasuryList(treasuries);
-        // /vesting/:address/contracts/:vestingContract
-        if (reset) {
-          const contractId = treasuries[0].id.toString();
-          navigateToVestingContract(contractId);
-        } else if (vestingContractAddress) {
-          const item = treasuries.find(i => i.id === vestingContractAddress);
-          if (item) {
-            navigateToVestingContract(item.id.toString());
+        if (treasuries.length > 0) {
+          // /vesting/:address/contracts/:vestingContract
+          if (reset) {
+            const contractId = treasuries[0].id.toString();
+            navigateToVestingContract(contractId);
+          } else if (vestingContractAddress) {
+            const item = treasuries.find(i => i.id === vestingContractAddress);
+            if (item) {
+              navigateToVestingContract(item.id.toString());
+            }
           }
         }
       })
@@ -434,7 +430,7 @@ export const VestingView = () => {
       })
       .finally(() => setLoadingTreasuries(false));
 
-  }, [connection, getAllUserV2Accounts, msp, navigateToVestingContract, publicKey, vestingContractAddress]);
+  }, [accountAddress, connection, getAllUserV2Accounts, msp, navigateToVestingContract, publicKey, vestingContractAddress]);
 
   const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
     if (!publicKey || !msp || loadingTreasuryStreams) { return; }
@@ -3050,13 +3046,13 @@ export const VestingView = () => {
   // Load treasuries once per page access
   useEffect(() => {
 
-    if (!publicKey || treasuriesLoaded) { return; }
+    if (!publicKey || !accountAddress || treasuriesLoaded) { return; }
 
     consoleOut('Calling refreshTreasuries...', '', 'blue');
     setTreasuriesLoaded(true);
     refreshVestingContracts(true);
 
-  }, [publicKey, refreshVestingContracts, treasuriesLoaded]);
+  }, [accountAddress, publicKey, refreshVestingContracts, treasuriesLoaded]);
 
   // Set a vesting contract if passed-in via url if found in list of vesting contracts
   // If not found or not provided, will pick the first one available via redirect
