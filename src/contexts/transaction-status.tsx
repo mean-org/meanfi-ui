@@ -280,12 +280,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     getTxStatus
   ]);
 
-  const rebuildHistoryFromCache = useCallback(() => {
-    const history = Array.from(txStatusCache.values());
-    setConfirmationHistory(history.reverse());
-    consoleOut('confirmationHistory:', history, 'orange');
-  }, []);
-
   const fetchTxStatus = useCallback(async (
     signature: string,
     targetFinality: TransactionConfirmationStatus,
@@ -311,6 +305,13 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
   }, [connection]);
 
   const enqueueTransactionConfirmation = useCallback(async (data: TxConfirmationInfo) => {
+
+    const rebuildHistoryFromCache = () => {
+      const history = Array.from(txStatusCache.values());
+      setConfirmationHistory(history.reverse());
+      consoleOut('confirmationHistory:', history, 'orange');
+    };
+
     const now = new Date().getTime();
     txConfirmationCache.add(data.signature, data, now);
     openNotification({
@@ -375,6 +376,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
           </>
         )
       });
+      consoleOut('Emitting event:', EventType.TxConfirmSuccess, 'orange');
       confirmationEvents.emit(EventType.TxConfirmSuccess, data);
       rebuildHistoryFromCache();
     } else {
@@ -412,13 +414,13 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
           </>
         )
       });
+      consoleOut('Emitting event:', EventType.TxConfirmTimeout, 'orange');
       confirmationEvents.emit(EventType.TxConfirmTimeout, data);
       rebuildHistoryFromCache();
     }
   }, [
     t,
     fetchTxStatus,
-    rebuildHistoryFromCache
   ]);
 
   return (
