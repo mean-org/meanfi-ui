@@ -2,7 +2,7 @@ import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
 import { IconEllipsisVertical } from "../../Icons";
 import { MoneyStreamDetails } from "../../components/MoneyStreamDetails";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Stream, STREAM_STATUS, TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, AllocationType, Treasury,   Constants as MSPV2Constants } from "@mean-dao/msp";
+import { Stream, STREAM_STATUS, TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, AllocationType, Treasury,   Constants as MSPV2Constants, TreasuryType } from "@mean-dao/msp";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
@@ -47,6 +47,7 @@ export const MoneyStreamsOutgoingView = (props: {
     tokenBalance,
     activeStream,
     selectedToken,
+    deletedStreams,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
@@ -59,6 +60,7 @@ export const MoneyStreamsOutgoingView = (props: {
     setStreamDetail,
   } = useContext(AppStateContext);
   const {
+    confirmationHistory,
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
 
@@ -172,6 +174,44 @@ export const MoneyStreamsOutgoingView = (props: {
     publicKey, 
     treasuryDetails
   ]);
+
+  // confirmationHistory
+  const hasStreamPendingTx = useCallback(() => {
+    if (!streamSelected) { return false; }
+
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.extras === streamSelected.id && h.txInfoFetchStatus === "fetching");
+    }
+
+    return false;
+  }, [confirmationHistory, streamSelected]);
+
+  const isOtp = (): boolean => {
+    return streamSelected?.rateAmount === 0 ? true : false;
+  }
+
+  const isDeletedStream = useCallback((id: string) => {
+    if (!deletedStreams) {
+      return false;
+    }
+    return deletedStreams.some(i => i === id);
+  }, [deletedStreams]);
+
+  const getTreasuryType = useCallback((): StreamTreasuryType | undefined => {
+    if (treasuryDetails) {
+      const v1 = treasuryDetails as TreasuryInfo;
+      const v2 = treasuryDetails as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      const type = isNewTreasury ? v2.treasuryType : v1.type;
+      if (type === TreasuryType.Lock) {
+        return "locked";
+      } else {
+        return "open";
+      }
+    }
+
+    return "unknown";
+  }, [treasuryDetails]);
 
   const getTreasuryByTreasuryId = useCallback(async (treasuryId: string, streamVersion: number): Promise<StreamTreasuryType | undefined> => {
     if (!connection || !publicKey || !ms || !msp) { return undefined; }
@@ -2389,6 +2429,13 @@ export const MoneyStreamsOutgoingView = (props: {
           shape="round"
           size="small"
           className="thin-stroke"
+          disabled={
+            isBusy ||
+            hasStreamPendingTx() ||
+            isOtp() ||
+            (streamSelected && isDeletedStream(streamSelected.id as string)) ||
+            (getTreasuryType() === "locked" && streamSelected && getStreamStatus(streamSelected) === "Running")
+          }
           onClick={showAddFundsModal}>
             <div className="btn-content">
               Add funds
