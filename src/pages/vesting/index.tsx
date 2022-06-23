@@ -18,7 +18,6 @@ import {
   Treasury,
   Constants as MSPV2Constants,
   StreamTemplate,
-  StreamBeneficiary
 } from '@mean-dao/msp';
 import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -37,10 +36,10 @@ import { VestingContractCreateForm } from './components/VestingContractCreateFor
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { CreateVestingStreamParams, CreateVestingTreasuryParams, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions, VESTING_CATEGORIES } from '../../models/vesting';
+import { CreateVestingTreasuryParams, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../utils/ids';
 import { appConfig, customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
@@ -57,7 +56,6 @@ import { VestingContractActivity } from './components/VestingContractActivity';
 import { AccountLayout } from '@solana/spl-token';
 import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import { BN } from 'bn.js';
-import { u64 } from '@solana/spl-token';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -114,7 +112,6 @@ export const VestingView = () => {
   const [inspectedAccountType, setInspectedAccountType] = useState<InspectedAccountType>(undefined);
   // Selected vesting contract
   const [selectedVestingContract, setSelectedVestingContract] = useState<Treasury | undefined>(undefined);
-  // const [loadingselectedVestingContract, setLoadingselectedVestingContract] = useState(false);
   const [streamTemplate, setStreamTemplate] = useState<StreamTemplate | undefined>(undefined);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
@@ -485,27 +482,25 @@ export const VestingView = () => {
 
   },[t])
 
-  const isMultisigTreasury = useCallback((treasury?: any) => {
+  const isMultisigTreasury = useCallback((treasury?: Treasury) => {
 
-    const treasuryInfo: any = treasury ?? selectedVestingContract;
+    const treasuryInfo = treasury ?? selectedVestingContract;
 
     if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
       return false;
     }
 
+    const contextAddress = new PublicKey(accountAddress);
     const treasurer = new PublicKey(treasuryInfo.treasurer as string);
+    const isMultisigContext = getQueryAccountType() === "multisig" && accountAddress && treasuryInfo.treasurer ? true : false;
 
-    if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
+    if (isMultisigContext && treasurer.equals(contextAddress) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
       return true;
     }
 
     return false;
 
-  }, [
-    multisigAccounts, 
-    publicKey, 
-    selectedVestingContract
-  ]);
+  }, [accountAddress, getQueryAccountType, multisigAccounts, publicKey, selectedVestingContract]);
 
   const parseSerumMultisigAccount = useCallback((info: any) => {
 
@@ -1700,7 +1695,7 @@ export const VestingView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    /* TODO: Complete the multisig part of a single stream create for a vesting contract
+    /* TODO: Convert to only one stream creation Tx for SS
     const createStream = async (data: CreateVestingStreamParams) => {
 
       if (!selectedVestingContract || !msp) { return null; }
@@ -2807,7 +2802,6 @@ export const VestingView = () => {
     isMultisigTreasury,
   ]);
 
-
   /////////////////////
   // Data management //
   /////////////////////
@@ -3327,6 +3321,10 @@ export const VestingView = () => {
     navigate(url);
   }, [accountAddress, navigate, vestingContractAddress]);
 
+  const onNeedReloadMultisigs = () => {
+    setNeedReloadMultisig(true);
+  }
+
 
   ///////////////
   // Rendering //
@@ -3419,13 +3417,17 @@ export const VestingView = () => {
         </TabPane>
         <TabPane tab={`Streams (${selectedVestingContract.totalStreams})`} key={"streams"}>
           <VestingContractStreamList
-            msp={msp}
-            vestingContract={selectedVestingContract}
             accountAddress={accountAddress}
+            isMultisigTreasury={isMultisigTreasury()}
             loadingTreasuryStreams={loadingTreasuryStreams}
-            treasuryStreams={treasuryStreams}
+            minRequiredBalance={minRequiredBalance}
+            msp={msp}
+            multisigAccounts={multisigAccounts}
+            multisigClient={multisigClient}
             nativeBalance={nativeBalance}
+            treasuryStreams={treasuryStreams}
             userBalances={userBalances}
+            vestingContract={selectedVestingContract}
           />
         </TabPane>
         <TabPane tab="Activity" key={"activity"}>
