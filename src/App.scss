@@ -7684,6 +7684,7 @@ code {
     transition-property: height, opacity;
     transition-duration: 0.3s;
     transition-timing-function: ease-in-out;
+    position: relative;
 }
 .panel1.hide,
 .panel2.hide,
@@ -7696,6 +7697,7 @@ code {
     transition-property: height, opacity;
     transition-duration: 0.3s;
     transition-timing-function: ease-in-out;
+    position: absolute;
 }
 
 ////////////////////////////

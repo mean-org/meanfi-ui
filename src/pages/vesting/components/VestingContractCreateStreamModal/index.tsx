@@ -303,8 +303,8 @@ export const VestingContractCreateStreamModal = (props: {
     // When modal goes visible, set template data
     useEffect(() => {
         if (isVisible && vestingContract && streamTemplate) {
+            setTreasuryOption(vestingContract.treasuryType);
             if (currentStep === 1) {
-                setTreasuryOption(vestingContract.treasuryType);
                 const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
                 setCliffReleasePercentage(formatPercent(cliffPercent, 4));
                 setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
