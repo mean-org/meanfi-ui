@@ -877,6 +877,10 @@ export const AccountsNewView = () => {
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryCreate) {
         hardReloadStreams();
+      } else if (item.operationType === OperationType.TreasuryClose) {
+        hardReloadStreams();
+        const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
+        navigate(url);
       }
     }
     resetTransactionStatus();
