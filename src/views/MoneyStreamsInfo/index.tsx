@@ -1199,10 +1199,7 @@ export const MoneyStreamsInfoView = (props: {
     if (outgoingStreamList && outgoingStreamList.length >= 0) {
       setLoadingOutgoingStreams(false);
     }
-  }, [
-    incomingStreamList,
-    outgoingStreamList,
-  ])
+  }, [incomingStreamList, outgoingStreamList]);
 
   useEffect(() => {
     if (!incomingStreamList || !outgoingStreamList || !treasuryCombinedList) { return; }

@@ -875,10 +875,21 @@ export const AccountsNewView = () => {
         navigate(url);
       } else if (item.operationType === OperationType.TreasuryAddFunds) {
         softReloadStreams();
+      } else if (item.operationType === OperationType.TreasuryCreate) {
+        hardReloadStreams();
       }
     }
     resetTransactionStatus();
-  }, [address, isSelectedAssetNativeAccount, navigate, recordTxConfirmation, reloadSwitch, resetTransactionStatus, setHighLightableMultisigId, setShouldLoadTokens]);
+  }, [
+    address, 
+    isSelectedAssetNativeAccount, 
+    navigate, 
+    recordTxConfirmation, 
+    reloadSwitch, 
+    resetTransactionStatus, 
+    setHighLightableMultisigId, 
+    setShouldLoadTokens
+  ]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
