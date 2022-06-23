@@ -2308,12 +2308,16 @@ export const MoneyStreamsOutgoingView = (props: {
       if (msp && streamSelected && streamSelected.version >= 2) {
         msp.refreshStream(streamSelected as Stream).then(detail => {
           setStreamDetail(detail as Stream);
-          setLoadingStreamDetails(false);
+          if (!hasStreamPendingTx()) {
+            setLoadingStreamDetails(false);
+          }
         });
       } else if (ms && streamSelected && streamSelected.version < 2) {
         ms.refreshStream(streamSelected as StreamInfo).then(detail => {
           setStreamDetail(detail as StreamInfo);
-          setLoadingStreamDetails(false);
+          if (!hasStreamPendingTx()) {
+            setLoadingStreamDetails(false);
+          }
         });
       }
     }, 1000);
@@ -2321,7 +2325,14 @@ export const MoneyStreamsOutgoingView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  }, [ms, msp, setStreamDetail, streamSelected, loadingStreamDetails]);
+  }, [
+    ms, 
+    msp, 
+    setStreamDetail, 
+    streamSelected, 
+    loadingStreamDetails, 
+    hasStreamPendingTx
+  ]);
 
   const isNewStream = useCallback(() => {
     if (streamSelected) {
@@ -2406,15 +2417,15 @@ export const MoneyStreamsOutgoingView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="mso-00" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
+      <Menu.Item key="mso-00" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)} disabled={isBusy || hasStreamPendingTx()}>
         <span className="menu-item-text">Copy stream id</span>
       </Menu.Item>
-      <Menu.Item key="mso-01" onClick={() => {}}>
+      <Menu.Item key="mso-01" onClick={() => {}} disabled={isBusy || hasStreamPendingTx()}>
         <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">View on Solscan</span>
         </a>
       </Menu.Item>
-      <Menu.Item key="mso-02" onClick={showCloseStreamModal}>
+      <Menu.Item key="mso-02" disabled={isBusy || hasStreamPendingTx()} onClick={showCloseStreamModal}>
         <span className="menu-item-text">Close stream</span>
       </Menu.Item>
     </Menu>
@@ -2448,6 +2459,7 @@ export const MoneyStreamsOutgoingView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
+              disabled={isBusy || hasStreamPendingTx()}
               onClick={showResumeStreamModal}>
                 <div className="btn-content">
                   Resume stream
@@ -2459,6 +2471,7 @@ export const MoneyStreamsOutgoingView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
+              disabled={isBusy || hasStreamPendingTx()}
               onClick={showPauseStreamModal}>
                 <div className="btn-content">
                   Pause stream

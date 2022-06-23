@@ -978,12 +978,16 @@ export const MoneyStreamsIncomingView = (props: {
       if (msp && streamSelected && streamSelected.version >= 2) {
         msp.refreshStream(streamSelected as Stream).then(detail => {
           setStreamDetail(detail as Stream);
-          setLoadingStreamDetails(false);
+          if (!hasStreamPendingTx()) {
+            setLoadingStreamDetails(false);
+          }
         });
       } else if (ms && streamSelected && streamSelected.version < 2) {
         ms.refreshStream(streamSelected as StreamInfo).then(detail => {
           setStreamDetail(detail as StreamInfo);
-          setLoadingStreamDetails(false);
+          if (!hasStreamPendingTx()) {
+            setLoadingStreamDetails(false);
+          }
         });
       }
     }, 1000);
@@ -991,7 +995,14 @@ export const MoneyStreamsIncomingView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  }, [ms, msp, setStreamDetail, streamSelected, loadingStreamDetails]);
+  }, [
+    ms, 
+    msp, 
+    setStreamDetail, 
+    streamSelected, 
+    loadingStreamDetails, 
+    hasStreamPendingTx
+  ]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -1100,7 +1111,10 @@ export const MoneyStreamsIncomingView = (props: {
           shape="round"
           size="small"
           className="thin-stroke"
-          disabled={!streamSelected}
+          disabled={isBusy ||
+            hasStreamPendingTx() ||
+            !streamSelected
+          }
           onClick={() => {}}>
             {streamSelected ? (
               <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">

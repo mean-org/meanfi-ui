@@ -201,6 +201,15 @@ export const MoneyStreamsInfoView = (props: {
     });
   }, [setTransactionStatus]);
 
+  const isTxInProgress = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching"
+            ? true
+            : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+  ]);
+
   const getAllUserV2Treasuries = useCallback(async () => {
 
     if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
@@ -1515,10 +1524,10 @@ export const MoneyStreamsInfoView = (props: {
   // Dropdown (three dots button) inside outgoing stream list
   const menu = (
     <Menu>
-      <Menu.Item key="00" onClick={showCreateStreamModal}>
+      <Menu.Item key="00" disabled={isTxInProgress()} onClick={showCreateStreamModal}>
         <span className="menu-item-text">Add outgoing stream</span>
       </Menu.Item>
-      <Menu.Item key="01" onClick={showCreateTreasuryModal}>
+      <Menu.Item key="01" disabled={isTxInProgress()} onClick={showCreateTreasuryModal}>
         <span className="menu-item-text">Add streaming account</span>
       </Menu.Item>
     </Menu>
@@ -1728,6 +1737,7 @@ export const MoneyStreamsInfoView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
+              disabled={isTxInProgress()}
               onClick={showCreateStreamModal}>
                 <div className="btn-content">
                   Create stream
@@ -1738,6 +1748,7 @@ export const MoneyStreamsInfoView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
+              disabled={isTxInProgress()}
               onClick={showOpenStreamModal}>
                 <div className="btn-content">
                   Find money stream
