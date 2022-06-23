@@ -4833,6 +4833,7 @@ export const AccountsNewView = () => {
                               <MoneyStreamsIncomingView
                                 streamSelected={streamDetail}
                                 onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
+                                accountAddress={accountAddress}
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
                               <MoneyStreamsOutgoingView

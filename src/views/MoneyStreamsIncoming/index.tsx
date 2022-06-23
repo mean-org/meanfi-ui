@@ -41,8 +41,10 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const MoneyStreamsIncomingView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
   onSendFromIncomingStreamDetails?: any;
+  accountAddress: string;
 }) => {
   const {
+    deletedStreams,
     transactionStatus,
     refreshTokenBalance,
     streamProgramAddress,
@@ -53,9 +55,10 @@ export const MoneyStreamsIncomingView = (props: {
     setStreamDetail,
   } = useContext(AppStateContext);
   const {
+    confirmationHistory,
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
-  const { streamSelected, onSendFromIncomingStreamDetails } = props;
+  const { streamSelected, onSendFromIncomingStreamDetails, accountAddress } = props;
 
   const connectionConfig = useConnectionConfig();
   const { endpoint } = useConnectionConfig();
@@ -938,6 +941,36 @@ export const MoneyStreamsIncomingView = (props: {
     }
   }, [t]);
 
+  // confirmationHistory
+  const hasStreamPendingTx = useCallback(() => {
+    if (!streamSelected) { return false; }
+
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.extras === streamSelected.id && h.txInfoFetchStatus === "fetching");
+    }
+
+    return false;
+  }, [confirmationHistory, streamSelected]);
+
+  const isScheduledOtp = (): boolean => {
+    if (streamSelected && streamSelected.rateAmount === 0) {
+      const now = new Date().toUTCString();
+      const nowUtc = new Date(now);
+      const streamStartDate = new Date(streamSelected.startUtc as string);
+      if (streamStartDate > nowUtc) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  const isDeletedStream = useCallback((id: string) => {
+    if (!deletedStreams) {
+      return false;
+    }
+    return deletedStreams.some(i => i === id);
+  }, [deletedStreams]);
+
   useEffect(() => {
     if (!ms || !msp || !streamSelected) {return;}
 
@@ -1037,6 +1070,9 @@ export const MoneyStreamsIncomingView = (props: {
     </Menu>
   );
 
+  const v1 = streamSelected as StreamInfo;
+  const v2 = streamSelected as Stream;
+
   // Buttons
   const buttons = (
     <Row gutter={[8, 8]} className="safe-btns-container mb-1">
@@ -1046,6 +1082,14 @@ export const MoneyStreamsIncomingView = (props: {
           shape="round"
           size="small"
           className="thin-stroke"
+          disabled={
+            isBusy ||
+            hasStreamPendingTx() ||
+            isScheduledOtp() ||
+            (!v1.escrowVestedAmount && !v2.withdrawableAmount) ||
+            (streamSelected && isDeletedStream(streamSelected.id as string)) ||
+            ((accountAddress !== v2.beneficiary) && (accountAddress !== v1.beneficiaryAddress))
+          }
           onClick={showWithdrawModal}>
             <div className="btn-content">
               Withdraw funds
@@ -1056,12 +1100,19 @@ export const MoneyStreamsIncomingView = (props: {
           shape="round"
           size="small"
           className="thin-stroke"
+          disabled={!streamSelected}
           onClick={() => {}}>
-            <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
+            {streamSelected ? (
+              <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
+                <div className="btn-content">
+                    View on Solscan
+                </div>
+              </a>
+            ) : (
               <div className="btn-content">
-                  View on Solscan
-              </div>
-            </a>
+                View on Solscan
+            </div>
+            )}
         </Button>
       </Col>
 
