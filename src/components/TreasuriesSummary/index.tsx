@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
-import { MSP, Treasury, TreasuryType } from '@mean-dao/msp';
+import { Category, MSP, Treasury, TreasuryType } from '@mean-dao/msp';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { consoleOut, kFormatter, toUsCurrency } from '../../utils/ui';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
@@ -67,7 +67,7 @@ export const TreasuriesSummary = (props: {
 
         if (!connection || !address || loadingTreasuries || !msp) { return []; }
 
-        const treasuries = await msp.listTreasuries(new PublicKey(address));
+        const treasuries = await msp.listTreasuries(new PublicKey(address), true, true, Category.default);
 
         return treasuries.filter((t: any) => !t.autoClose);
 

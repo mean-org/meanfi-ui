@@ -96,7 +96,8 @@ import {
   STREAM_STATUS,
   MSP,
   TreasuryType,
-  Constants as MSPV2Constants
+  Constants as MSPV2Constants,
+  Category
   
 } from '@mean-dao/msp';
 
@@ -469,7 +470,7 @@ export const TreasuriesView = () => {
 
     if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
 
-    let treasuries = await msp.listTreasuries(publicKey);
+    let treasuries = await msp.listTreasuries(publicKey, true, true, Category.default);
 
     if (selectedMultisig && multisigAccounts) {
 
@@ -481,7 +482,7 @@ export const TreasuriesView = () => {
 
       if (filterMultisigAccounts) {
         for (const key of filterMultisigAccounts) {
-          multisigTreasuries.push(...(await msp.listTreasuries(key)));
+          multisigTreasuries.push(...(await msp.listTreasuries(key, true, true, Category.default)));
         }
       }
 

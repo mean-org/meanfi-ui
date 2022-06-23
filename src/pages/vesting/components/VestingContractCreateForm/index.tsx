@@ -208,13 +208,6 @@ export const VestingContractCreateForm = (props: {
         }
     }, [token, selectedToken, inModal]);
 
-    // Select one vesting category initially
-    useEffect(() => {
-        if (!vestingCategory) {
-            setVestingCategory(VESTING_CATEGORIES[0]);
-        }
-    }, [vestingCategory]);
-
     // Keep token balance updated
     useEffect(() => {
 
@@ -487,12 +480,12 @@ export const VestingContractCreateForm = (props: {
 
     const vestingCategoriesMenu = (
         <Menu>
-            {VESTING_CATEGORIES.map((item: VestingContractCategory) => {
+            {VESTING_CATEGORIES.map(item => {
                 return (
                     <Menu.Item
                         key={`${slugify(item.label)}-${item.value}`}
                         onClick={() => setVestingCategory(item)}>
-                        {item}
+                        {item.label}
                     </Menu.Item>
                 );
             })}
@@ -742,7 +735,7 @@ export const VestingContractCreateForm = (props: {
                             trigger={["click"]}>
                             <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                                 <div className="left">
-                                    <span>{vestingCategory}</span>
+                                    <span>{vestingCategory.label}</span>
                                 </div>
                                 <div className="right">
                                     <IconCaretDown className="mean-svg-icons" />
