@@ -2401,6 +2401,7 @@ export const StreamingAccountView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
+              disabled={isTxInProgress()}
               onClick={showAddFundsModal}>
                 <div className="btn-content">
                   Add funds
@@ -2411,6 +2412,10 @@ export const StreamingAccountView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
+              disabled={
+                getTreasuryUnallocatedBalance() <= 0 ||
+                isTxInProgress()
+              }
               onClick={showTransferFundsModal}>
                 <div className="btn-content">
                   Withdraw funds
