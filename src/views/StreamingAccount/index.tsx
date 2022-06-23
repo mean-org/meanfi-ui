@@ -62,6 +62,7 @@ export const StreamingAccountView = (props: {
     resetContractValues,
   } = useContext(AppStateContext);
   const {
+    fetchTxInfoStatus,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
@@ -80,7 +81,6 @@ export const StreamingAccountView = (props: {
   // Treasuries
   const [highlightedStream, sethHighlightedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamStats, setStreamStats] = useState<TreasuryStreamsBreakdown | undefined>(undefined);
-  const [treasuryStreams, setTreasuryStreams] = useState<(Stream | StreamInfo)[]>([]);
 
   // Transactions
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -275,6 +275,37 @@ export const StreamingAccountView = (props: {
     hideTransactionExecutionModal();
     window.location.reload();
   }
+
+  const isTxInProgress = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching"
+            ? true
+            : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+  ]);
+
+  const isTreasurer = useCallback((): boolean => {
+    if (streamingAccountSelected && publicKey) {
+      const v1 = streamingAccountSelected as TreasuryInfo;
+      const v2 = streamingAccountSelected as Treasury;
+      if (v2.version && v2.version >= 2) {
+        const isMultisig = isMultisigTreasury();
+        if (isMultisig && multisigAccounts) {
+          return multisigAccounts.find(m => m.authority.equals(new PublicKey(v2.treasurer as string))) ? true : false;
+        }
+        return v2.treasurer === publicKey.toBase58() ? true : false;
+      }
+      return v1.treasurerAddress === publicKey.toBase58() ? true : false;
+    }
+    return false;
+  }, [
+    publicKey,
+    streamingAccountSelected,
+    multisigAccounts,
+    isMultisigTreasury
+  ]);
+
 
   ////////////////
   ///  MODALS  ///
@@ -2235,7 +2266,7 @@ export const StreamingAccountView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="ms-00" onClick={showCloseTreasuryModal}>
+      <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={isTxInProgress() || (streams && streams.length > 0) || !isTreasurer()}>
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
       <Menu.Item key="ms-01" onClick={() => {}}>
@@ -2444,7 +2475,7 @@ export const StreamingAccountView = (props: {
           isVisible={isAddFundsModalVisible}
           userBalances={userBalances}
           streamStats={streamStats}
-          treasuryStreams={treasuryStreams}
+          treasuryStreams={streams}
           associatedToken={
             streamingAccountSelected
               ? (streamingAccountSelected as Treasury).version && (streamingAccountSelected as Treasury).version >= 2

@@ -53,7 +53,7 @@ export const TreasuryAddFundsModal = (props: {
   withdrawTransactionFees: TransactionFees;
   streamStats: TreasuryStreamsBreakdown | undefined;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
-  treasuryStreams: (Stream | StreamInfo)[];
+  treasuryStreams: Array<Stream | StreamInfo> | undefined;
   associatedToken: string;
 }) => {
   const {
