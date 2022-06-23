@@ -37,6 +37,8 @@ import { customLogger } from '../../../..';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
+import { AppUsageEvent, SegmentStreamCloseData } from '../../../../utils/segment-service';
+import { segmentAnalytics } from '../../../../App';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -73,6 +75,8 @@ export const VestingContractStreamList = (props: {
         deletedStreams,
         transactionStatus,
         setHighLightableStreamId,
+        getTokenPriceByAddress,
+        getTokenPriceBySymbol,
         getTokenByMintAddress,
         setTransactionStatus,
         refreshTokenBalance,
@@ -474,8 +478,25 @@ export const VestingContractStreamList = (props: {
                 payer: publicKey.toBase58(),                            // initializer
                 closeTreasury: closeStreamOptions.closeTreasuryOption        // closeTreasury
             }
-
             consoleOut('data:', data);
+            const price = selectedToken
+                ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol)
+                : 0;
+
+            // Report event to Segment analytics
+            const segmentData: SegmentStreamCloseData = {
+                asset: selectedToken ? selectedToken.symbol : '-',
+                assetPrice: price,
+                stream: data.stream,
+                initializer: data.payer,
+                closeTreasury: closeStreamOptions.closeTreasuryOption,
+                vestedReturns: closeStreamOptions.vestedReturns,
+                unvestedReturns: closeStreamOptions.unvestedReturns,
+                feeAmount: closeStreamOptions.feeAmount,
+                valueInUsd: price * (closeStreamOptions.vestedReturns + closeStreamOptions.unvestedReturns)
+            };
+            consoleOut('segment data:', segmentData, 'brown');
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
 
             // Log input data
             transactionLog.push({
