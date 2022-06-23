@@ -323,6 +323,7 @@
 			"qrcode-scan-label": "Scan the QR code to receive funds",
 			"deposit-address-disclaimer": "This address can only be used to receive SOL to pay for transaction fees on this vesting contract account"
 		},
+		"refresh-tooltip": "Click to refresh the list of vesting contracts",
 		"withdraw-funds": {
 			"modal-title": "Withdraw vesting contract funds",
 			"from-vesting-contract": "From vesting contract"

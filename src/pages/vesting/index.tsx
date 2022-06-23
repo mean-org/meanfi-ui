@@ -2,12 +2,12 @@ import React, { useEffect, useState, useContext, useCallback, useMemo, useRef } 
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { IconExternalLink, IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
+import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
 import { consoleOut, copyText, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
+import { useConnectionConfig } from '../../contexts/connection';
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
   calculateActionFees,
@@ -23,10 +23,10 @@ import {
 import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import SerumIDL from '../../models/serum-multisig-idl';
-import { ArrowLeftOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, openLinkInNewTab, shortenAddress } from '../../utils/utils';
+import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
+import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { NO_FEES } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
 import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
@@ -86,7 +86,6 @@ export const VestingView = () => {
     setSelectedToken,
   } = useContext(AppStateContext);
   const {
-    confirmationHistory,
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
   const location = useLocation();
@@ -3561,6 +3560,13 @@ export const VestingView = () => {
     // Render normal UI
     return (
       <>
+        {/* {isLocal() && (
+          <div className="debug-bar">
+            <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
+            <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
+          </div>
+        )} */}
+
         {detailsPanelOpen && (
           <Button
             id="back-button"
@@ -3580,6 +3586,7 @@ export const VestingView = () => {
   
                   <div className="meanfi-panel-heading">
                     <span className="title">{t('vesting.screen-title')} ({treasuryList.length})</span>
+
                     <div className="user-address">
                       <span className="fg-secondary">
                         (<Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
@@ -3588,17 +3595,18 @@ export const VestingView = () => {
                           </span>
                         </Tooltip>)
                       </span>
-                      <span className="icon-button-container">
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
-                          icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
-                          onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
-                        />
-                      </span>
+                      <Tooltip placement="bottom" title={t('vesting.refresh-tooltip')}>
+                        <span className="icon-button-container simplelink" onClick={() => refreshVestingContracts(true)}>
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="small"
+                            icon={<ReloadOutlined />}
+                            onClick={() => {}}
+                          />
+                        </span>
+                      </Tooltip>
                       <div id="soft-refresh-contracts-cta" onClick={() => refreshVestingContracts(false)}></div>
-                      <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
                     </div>
                   </div>
 
