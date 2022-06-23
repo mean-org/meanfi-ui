@@ -1,16 +1,45 @@
-import { TimeUnit, TreasuryType } from "@mean-dao/msp";
+import { SubCategory, TimeUnit, TreasuryType } from "@mean-dao/msp";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { PublicKey } from "@solana/web3.js";
 
-export const VESTING_CATEGORIES: string[] = [
-    'Advisor',
-    'Development',
-    'Foundation',
-    'Investor',
-    'Marketing',
-    'Partnership',
-    'Seed round',
-    'Team',
+export type VestingContractCategory = {
+    label: string;
+    value: SubCategory;
+}
+
+export const VESTING_CATEGORIES: VestingContractCategory[] = [
+    {
+        label: 'Advisor',
+        value: SubCategory.advisor
+    },
+    {
+        label: 'Development',
+        value: SubCategory.development
+    },
+    {
+        label: 'Foundation',
+        value: SubCategory.foundation
+    },
+    {
+        label: 'Investor',
+        value: SubCategory.investor
+    },
+    {
+        label: 'Marketing',
+        value: SubCategory.marketing
+    },
+    {
+        label: 'Partnership',
+        value: SubCategory.partnership
+    },
+    {
+        label: 'Seed round',
+        value: SubCategory.seed
+    },
+    {
+        label: 'Team',
+        value: SubCategory.team
+    }
 ];
 
 export interface CreateVestingTreasuryParams {
@@ -22,6 +51,7 @@ export interface CreateVestingTreasuryParams {
     duration: number;
     durationUnit: TimeUnit;
     startUtc: Date;
+    vestingCategory: SubCategory;
     cliffVestPercent: number;
     feePayedByTreasurer?: boolean | undefined;
     multisig: string;
@@ -31,7 +61,7 @@ export interface CreateVestingTreasuryParams {
 export interface VestingContractCreateOptions {
     vestingContractName: string;
     vestingContractType: TreasuryType;
-    vestingContractCategory: string;
+    vestingCategory: SubCategory;
     amount: string;
     token: TokenInfo;
     feePayedByTreasurer: boolean;

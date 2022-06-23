@@ -23,7 +23,7 @@ import { WizardStepSelector } from '../../../../components/WizardStepSelector';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../../../hooks/useWindowResize';
 import { IconCaretDown } from '../../../../Icons';
-import { VestingContractCreateOptions, VESTING_CATEGORIES } from '../../../../models/vesting';
+import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from '../../../../models/vesting';
 import { isError } from '../../../../utils/transactions';
 
 export const VestingContractCreateForm = (props: {
@@ -73,7 +73,7 @@ export const VestingContractCreateForm = (props: {
     const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
     const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
     const [vestingLockName, setVestingLockName] = useState<string>('');
-    const [vestingCategory, setVestingCategory] = useState<string>('');
+    const [vestingCategory, setVestingCategory] = useState<VestingContractCategory>(VESTING_CATEGORIES[0]);
     const [vestingLockFundingAmount, setVestingLockFundingAmount] = useState<string>('');
     const [currentStep, setCurrentStep] = useState(0);
     const percentages = [5, 10, 15, 20];
@@ -305,7 +305,7 @@ export const VestingContractCreateForm = (props: {
 
         const options: VestingContractCreateOptions = {
             vestingContractName: vestingLockName,
-            vestingContractCategory: vestingCategory,
+            vestingCategory: vestingCategory.value,
             vestingContractType: treasuryOption ? treasuryOption.type : TreasuryType.Lock,
             token: selectedToken as TokenInfo,
             amount: vestingLockFundingAmount,
@@ -487,10 +487,10 @@ export const VestingContractCreateForm = (props: {
 
     const vestingCategoriesMenu = (
         <Menu>
-            {VESTING_CATEGORIES.map((item: string, index: number) => {
+            {VESTING_CATEGORIES.map((item: VestingContractCategory) => {
                 return (
                     <Menu.Item
-                        key={`${slugify(item)}-${index}`}
+                        key={`${slugify(item.label)}-${item.value}`}
                         onClick={() => setVestingCategory(item)}>
                         {item}
                     </Menu.Item>

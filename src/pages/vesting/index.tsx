@@ -624,6 +624,7 @@ export const VestingView = () => {
        * duration: number
        * durationUnit: TimeUnit
        * fundingAmount: number
+       * vestingCategory: SubCategory
        * startUtc?: Date | undefined
        * cliffVestPercent?: number | undefined
        * feePayedByTreasurer?: boolean | undefined
@@ -642,6 +643,7 @@ export const VestingView = () => {
           data.duration,                                        // duration
           data.durationUnit,                                    // durationUnit
           data.fundingAmount,                                   // fundingAmount
+          data.vestingCategory,                                 // vestingCategory
           data.startUtc,                                        // startUtc
           data.cliffVestPercent,                                // cliffVestPercent
           data.feePayedByTreasurer,                             // feePayedByTreasurer
@@ -717,6 +719,7 @@ export const VestingView = () => {
         fundingAmount: createOptions.fundingAmount,                             // fundingAmount
         associatedTokenAddress: associatedToken.address,                        // treasuryAssociatedTokenMint
         cliffVestPercent: createOptions.cliffVestPercent,                       // cliffVestPercent
+        vestingCategory: createOptions.vestingCategory,                 // vestingCategory
         startUtc: createOptions.startDate,                                      // startUtc
         multisig: multisigId,                                                   // multisig
         feePayedByTreasurer: createOptions.feePayedByTreasurer                  // feePayedByTreasurer
