@@ -821,17 +821,28 @@ export const ProgramDetailsView = (props: {
 
   // Balance SOL
   const [balanceSol, setBalanceSol] = useState<any>();
-  useEffect(() => {
-    if (!connection && programSelected && !programSelected.pubkey) { return; }
 
-    connection.getBalance(programSelected.pubkey)
-        .then(balance => {
-          setBalanceSol(formatThousands(balance / LAMPORTS_PER_SOL, NATIVE_SOL.decimals, NATIVE_SOL.decimals));
-        })
-        .catch(error => {
-          console.error(error);
-        })
-  }, [connection, programSelected]);
+  useEffect(() => {
+
+    if (!connection || !programSelected || !programSelected.pubkey) { return; }
+
+    connection
+      .getBalance(programSelected.pubkey)
+      .then(balance => {
+        setBalanceSol(
+          formatThousands(
+            balance / LAMPORTS_PER_SOL, 
+            NATIVE_SOL.decimals, 
+            NATIVE_SOL.decimals
+          )
+        );
+      })
+      .catch(error => console.error(error));
+
+  }, [
+    connection, 
+    programSelected
+  ]);
 
   const infoProgramData = [
     {
