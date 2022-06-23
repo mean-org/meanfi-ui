@@ -3,7 +3,7 @@ import { Layout } from "antd";
 import { AppRoutes } from "./routes";
 import "./App.scss";
 import { useLocalStorageState } from './utils/utils';
-import { refreshCachedRpc } from './models/connections-hq';
+import { refreshCachedRpc } from './services/connections-hq';
 import { useTranslation } from 'react-i18next';
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { appConfig } from '.';

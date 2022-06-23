@@ -1,0 +1,13 @@
+.PieChartComponent {
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.pie-chart {
+  width: 100% !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+}
