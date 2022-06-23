@@ -1,5 +1,5 @@
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Menu, Row, Spin, Tabs } from "antd";
+import { Button, Col, Menu, Row, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
@@ -42,11 +42,9 @@ import { TreasuryCreateOptions } from "../../models/treasuries";
 import { customLogger } from "../..";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
-import { ArrowDownOutlined, ArrowUpOutlined, LoadingOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamOpenModal } from "../../components/StreamOpenModal";
-
-const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 const { TabPane } = Tabs;
 
@@ -141,7 +139,6 @@ export const MoneyStreamsInfoView = (props: {
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
-  const [loadingOutgoingStreamList, setLoadingOutgoingStreamList] = useState(true);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
 
   const [treasuryCombinedList, setTreasuryCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
@@ -406,6 +403,10 @@ export const MoneyStreamsInfoView = (props: {
   const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
+
+  //////////////////////
+  // MODALS & ACTIONS //
+  //////////////////////
 
   // Create Stream modal
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
@@ -1212,10 +1213,10 @@ export const MoneyStreamsInfoView = (props: {
       return accumulator + streaming.streams?.length;
     }, 0);
 
-    if (!loadingOutgoingStreamList || !loadingCombinedStreamingList) {
+    if (!loadingOutgoingStreams || !loadingCombinedStreamingList) {
       setOutgoingAmount(outgoingStreamList.length + sumStreamingStreams);
     }
-  }, [incomingStreamList, loadingCombinedStreamingList, loadingOutgoingStreamList, outgoingStreamList, treasuryCombinedList]);
+  }, [incomingStreamList, loadingCombinedStreamingList, loadingOutgoingStreams, outgoingStreamList, treasuryCombinedList]);
 
   useEffect(() => {
     let totalWithdrawAmount = 0;
