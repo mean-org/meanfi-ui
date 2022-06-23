@@ -312,6 +312,10 @@ export const VestingView = () => {
         event = success ? AppUsageEvent.VestingContractCreateCompleted : AppUsageEvent.VestingContractCreateFailed;
         segmentAnalytics.recordEvent(event, { signature: signature });
         break;
+      case OperationType.StreamClose:
+        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseCompleted;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
       default:
         break;
     }

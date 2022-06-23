@@ -515,13 +515,11 @@ export const MoneyStreamDetails = (props: {
     {
       id: "details",
       name: "Details",
-      amount: undefined,
       render: renderDetails()
     },
     {
       id: "activity",
       name: "Activity",
-      amount: !loadingStreamActivity && streamActivity ? streamActivity.length : undefined,
       render: renderActivities()
     }
   ];
@@ -531,7 +529,7 @@ export const MoneyStreamDetails = (props: {
       <Tabs activeKey={tabOption} onChange={onTabChanged} className="neutral">
         {tabs.map(item => {
           return (
-            <TabPane tab={`${item.name}${item.amount !== undefined ? ` (${item.amount})` : ''}`} key={item.id} tabKey={item.id}>
+            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
               {item.render}
             </TabPane>
           );
