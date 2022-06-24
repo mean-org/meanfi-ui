@@ -37,7 +37,7 @@ import { TreasuryStreamsBreakdown } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFundsModal";
 import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 
@@ -77,6 +77,7 @@ export const StreamingAccountView = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const { address } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -1227,10 +1228,7 @@ export const StreamingAccountView = (props: {
   const onCloseTreasuryTransactionFinished = () => {
     hideCloseTreasuryModal();
     refreshTokenBalance();
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
+    resetTransactionStatus();
   };
 
   const onExecuteCloseTreasuryTransaction = async () => {
@@ -1596,9 +1594,13 @@ export const StreamingAccountView = (props: {
 
     if (wallet && streamingAccountSelected) {
       let created: boolean;
+
+      let streamingAccountName = "";
       if (streamingAccountSelected.version && streamingAccountSelected.version >= 2) {
+        streamingAccountName = (streamingAccountSelected as Treasury).name as string;
         created = await createTxV2();
       } else {
+        streamingAccountName = (streamingAccountSelected as TreasuryInfo).label as string;
         created = await createTxV1();
       }
       consoleOut('created:', created, 'blue');
@@ -1610,11 +1612,21 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryClose);
-            setIsBusy(false);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryClose,
+              finality: "finalized",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: "Close streaming account",
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Streaming account ${streamingAccountName} has been successfully closed`,
+              extras: streamingAccountSelected.id as string
+            });
             onCloseTreasuryTransactionFinished();
             setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
+            setLoadingStreamingAccountDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2418,10 +2430,9 @@ export const StreamingAccountView = (props: {
     if (!streamingAccountSelected) {return;}
 
     const timeout = setTimeout(() => {
-      if (streamingAccountSelected) {
-        if (!hasStreamingAccountPendingTx()) {
-          setLoadingStreamingAccountDetails(false);
-        }
+      if (streamingAccountSelected && streams && !hasStreamingAccountPendingTx()) {
+        console.log("Stop loading ...");
+        setLoadingStreamingAccountDetails(false);
       }
     }, 1000);
 
@@ -2430,7 +2441,8 @@ export const StreamingAccountView = (props: {
     }
   }, [
     hasStreamingAccountPendingTx,
-    streamingAccountSelected
+    streamingAccountSelected,
+    streams
   ]);
 
   // Keep account balance updated
