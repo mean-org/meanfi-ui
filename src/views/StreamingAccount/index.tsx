@@ -65,7 +65,7 @@ export const StreamingAccountView = (props: {
     resetContractValues,
   } = useContext(AppStateContext);
   const {
-    fetchTxInfoStatus,
+    confirmationHistory,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
     enqueueTransactionConfirmation
@@ -2401,6 +2401,17 @@ export const StreamingAccountView = (props: {
     }
   };
 
+  // confirmationHistory
+  const hasStreamingAccountPendingTx = useCallback(() => {
+    if (!streamingAccountSelected) { return false; }
+
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.extras === streamingAccountSelected.id && h.txInfoFetchStatus === "fetching");
+    }
+
+    return false;
+  }, [confirmationHistory, streamingAccountSelected]);
+
   // Keep account balance updated
   useEffect(() => {
 
@@ -2694,11 +2705,11 @@ export const StreamingAccountView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={(streams && streams.length > 0) || !isTreasurer()}>
+      <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={hasStreamingAccountPendingTx() || (streams && streams.length > 0) || !isTreasurer()}>
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
       {(streamingAccountSelected && streamingAccountSelected.id !== V1_TREASURY_ID.toBase58()) && (
-        <Menu.Item key="ms-01" disabled={!isTreasurer()} onClick={() => onExecuteRefreshTreasuryBalance()}>
+        <Menu.Item key="ms-01" disabled={hasStreamingAccountPendingTx() || !isTreasurer()} onClick={() => onExecuteRefreshTreasuryBalance()}>
           <span className="menu-item-text">Refresh account data</span>
         </Menu.Item>
       )}
@@ -2817,6 +2828,7 @@ export const StreamingAccountView = (props: {
               size="small"
               className="thin-stroke"
               disabled={
+                hasStreamingAccountPendingTx() ||
                 (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)
               }
               onClick={showCreateStreamModal}>
@@ -2829,6 +2841,7 @@ export const StreamingAccountView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
+              disabled={hasStreamingAccountPendingTx()}
               onClick={showAddFundsModal}>
                 <div className="btn-content">
                   Add funds
@@ -2839,7 +2852,10 @@ export const StreamingAccountView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
-              disabled={getTreasuryUnallocatedBalance() <= 0}
+              disabled={
+                hasStreamingAccountPendingTx() ||
+                getTreasuryUnallocatedBalance() <= 0
+              }
               onClick={showTransferFundsModal}>
                 <div className="btn-content">
                   Withdraw funds
