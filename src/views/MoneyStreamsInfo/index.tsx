@@ -79,6 +79,7 @@ export const MoneyStreamsInfoView = (props: {
     fetchTxInfoStatus,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
+    enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
   const {
     streamList,
@@ -200,15 +201,6 @@ export const MoneyStreamsInfoView = (props: {
       currentOperation: TransactionStatus.Iddle
     });
   }, [setTransactionStatus]);
-
-  const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching"
-            ? true
-            : false;
-  }, [
-    isBusy,
-    fetchTxInfoStatus,
-  ]);
 
   const getAllUserV2Treasuries = useCallback(async () => {
 
@@ -514,28 +506,8 @@ export const MoneyStreamsInfoView = (props: {
   const onTreasuryCreated = useCallback((createOptions: TreasuryCreateOptions) => {
     closeCreateTreasuryModal();
     refreshTokenBalance();
-
-    // const usedOptions = retryOperationPayload as TreasuryCreateOptions;
-    consoleOut('retryOperationPayload:', retryOperationPayload, 'blue');
-
-    if (createOptions && createOptions.multisigId) {
-      openNotification({
-        description: t('treasuries.create-treasury.create-multisig-streaming-account-success'),
-        type: "success"
-      });
-    } else {
-      openNotification({
-        description: t('treasuries.create-treasury.success-multisig-streaming-account-message'),
-        type: "success"
-      });
-    }
-
-  }, [
-    retryOperationPayload,
-    closeCreateTreasuryModal,
-    refreshTokenBalance,
-    t,
-  ]);
+    resetTransactionStatus();
+  }, [closeCreateTreasuryModal, refreshTokenBalance, resetTransactionStatus]);
 
   const onExecuteCreateTreasuryTx = async (createOptions: TreasuryCreateOptions) => {
     let transaction: Transaction;
@@ -827,12 +799,18 @@ export const MoneyStreamsInfoView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryCreate);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryCreate,
+              finality: "finalized",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: "Create streaming account",
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Streaming account ${createOptions.treasuryName} has been created`,
+              extras: createOptions.multisigId as string
             });
+            setIsBusy(false);
             onTreasuryCreated(createOptions);
             setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
@@ -1524,10 +1502,10 @@ export const MoneyStreamsInfoView = (props: {
   // Dropdown (three dots button) inside outgoing stream list
   const menu = (
     <Menu>
-      <Menu.Item key="00" disabled={isTxInProgress()} onClick={showCreateStreamModal}>
+      <Menu.Item key="00" onClick={showCreateStreamModal}>
         <span className="menu-item-text">Add outgoing stream</span>
       </Menu.Item>
-      <Menu.Item key="01" disabled={isTxInProgress()} onClick={showCreateTreasuryModal}>
+      <Menu.Item key="01" onClick={showCreateTreasuryModal}>
         <span className="menu-item-text">Add streaming account</span>
       </Menu.Item>
     </Menu>
@@ -1737,7 +1715,6 @@ export const MoneyStreamsInfoView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
-              disabled={isTxInProgress()}
               onClick={showCreateStreamModal}>
                 <div className="btn-content">
                   Create stream
@@ -1748,7 +1725,6 @@ export const MoneyStreamsInfoView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
-              disabled={isTxInProgress()}
               onClick={showOpenStreamModal}>
                 <div className="btn-content">
                   Find money stream
