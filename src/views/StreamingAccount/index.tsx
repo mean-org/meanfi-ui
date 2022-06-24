@@ -87,6 +87,7 @@ export const StreamingAccountView = (props: {
   // Treasuries
   const [highlightedStream, sethHighlightedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamStats, setStreamStats] = useState<TreasuryStreamsBreakdown | undefined>(undefined);
+  const [loadingStreamingAccountDetails, setLoadingStreamingAccountDetails] = useState(true);
 
   // Transactions
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -840,6 +841,7 @@ export const StreamingAccountView = (props: {
             onAddFundsTransactionFinished();
             setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
+            setLoadingStreamingAccountDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2412,6 +2414,25 @@ export const StreamingAccountView = (props: {
     return false;
   }, [confirmationHistory, streamingAccountSelected]);
 
+  useEffect(() => {
+    if (!streamingAccountSelected) {return;}
+
+    const timeout = setTimeout(() => {
+      if (streamingAccountSelected) {
+        if (!hasStreamingAccountPendingTx()) {
+          setLoadingStreamingAccountDetails(false);
+        }
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [
+    hasStreamingAccountPendingTx,
+    streamingAccountSelected
+  ]);
+
   // Keep account balance updated
   useEffect(() => {
 
@@ -2800,7 +2821,7 @@ export const StreamingAccountView = (props: {
 
   return (
     <>
-      <>
+      <Spin spinning={loadingStreamingAccountDetails}>
         <Row gutter={[8, 8]} className="safe-details-resume">
           <div onClick={hideDetailsHandler} className="back-button icon-button-container">
             <IconArrowBack className="mean-svg-icons" />
@@ -2886,7 +2907,7 @@ export const StreamingAccountView = (props: {
           defaultTab="streams"
         /> */}
         {tabs && renderTabset()}
-      </>
+      </Spin>
 
       {/* TODO: Here the multisig ID is used */}
       {multisigClient && isCreateStreamModalVisible && (

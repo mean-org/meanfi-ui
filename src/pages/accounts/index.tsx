@@ -3528,7 +3528,7 @@ export const AccountsNewView = () => {
       setTreasuryDetail(undefined);
     }
 
-    if (pathParamTreasuryId && treasuryId && pathParamTreasuryId === treasuryId && (!treasuryDetail || treasuryDetail.id !== pathParamTreasuryId)) {
+    if (pathParamTreasuryId && treasuryId && pathParamTreasuryId === treasuryId) {
       const item = treasuryList.find(s => s.id as string === pathParamTreasuryId);
       consoleOut('treasuryList:', treasuryList, 'darkgreen');
       consoleOut('item:', item, 'darkgreen');
