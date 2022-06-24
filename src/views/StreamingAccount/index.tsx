@@ -1618,9 +1618,9 @@ export const StreamingAccountView = (props: {
               finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: "Close streaming account",
+              loadingMessage: `Close streaming account: ${streamingAccountName}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Streaming account ${streamingAccountName} has been successfully closed`,
+              completedMessage: `Successfully closed streaming account: ${streamingAccountName}`,
               extras: streamingAccountSelected.id as string
             });
             onCloseTreasuryTransactionFinished();
@@ -1636,13 +1636,10 @@ export const StreamingAccountView = (props: {
   // Refresh account data
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
     refreshTokenBalance();
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
+    resetTransactionStatus();
   },[
     refreshTokenBalance, 
-    setTransactionStatus
+    resetTransactionStatus
   ]);
   
   const onExecuteRefreshTreasuryBalance = useCallback(async() => {
@@ -1958,7 +1955,7 @@ export const StreamingAccountView = (props: {
       }
     }
 
-    if (wallet) {
+    if (wallet && streamingAccountSelected) {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -1969,15 +1966,24 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryRefreshBalance);
-            setIsBusy(false);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryRefreshBalance,
+              finality: "finalized",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: "Refresh streaming account data",
+              completedTitle: "Transaction confirmed",
+              completedMessage: "Successfully refreshed data in streaming account",
+              extras: streamingAccountSelected.id as string
+            });
             onRefreshTreasuryBalanceTransactionFinished();
             setOngoingOperation(undefined);
+            setLoadingStreamingAccountDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-
   },[
     msp,
     wallet,
@@ -1987,18 +1993,18 @@ export const StreamingAccountView = (props: {
     nativeBalance,
     multisigTxFees,
     multisigClient,
-    streamingAccountSelected,
     multisigAccounts,
     transactionCancelled,
+    streamingAccountSelected,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     onRefreshTreasuryBalanceTransactionFinished,
+    enqueueTransactionConfirmation,
     clearTxConfirmationContext,
-    startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
-    isMultisigTreasury,
+    isMultisigTreasury
   ]);
 
   // Common reusable transaction execution modal
