@@ -1,11 +1,10 @@
 import './style.scss';
-import { shortenAddress } from "../../../../utils/utils";
+import { formatThousands, shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { consoleOut, isLocal } from '../../../../utils/ui';
-import { ResumeItem } from '../UI/ResumeItem';
+import { consoleOut } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { IconArrowForward } from '../../../../Icons';
@@ -21,6 +20,7 @@ import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import BN from 'bn.js';
 import { MultisigVault } from '../../../../models/multisig';
 import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
+import { ResumeItem } from '../../../../components/ResumeItem';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
@@ -59,8 +59,8 @@ export const SafeMeanInfo = (props: {
   const {
     connection,
     publicKey,
-    isProposalDetails,
-    isProgramDetails,
+    // isProposalDetails,
+    // isProgramDetails,
     selectedMultisig,
     onEditMultisigClick,
     onNewProposalMultisigClick,
@@ -69,6 +69,7 @@ export const SafeMeanInfo = (props: {
     proposalSelected,
     onDataToSafeView,
     onDataToProgramView,
+    // assetSelected,
     onRefreshRequested,
     loadingProposals,
     loadingPrograms,
@@ -621,8 +622,11 @@ export const SafeMeanInfo = (props: {
               onDataToSafeView(proposal);
             };
 
+            const title = proposal.details.title ? proposal.details.title : "Unknown proposal";
+
             // Number of participants who have already approved the Tx
             const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
+            const rejectedSigners = proposal.signers.filter((s: any) => s === false).length;
             const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate : "";
             const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
 
@@ -635,15 +639,16 @@ export const SafeMeanInfo = (props: {
                   <ResumeItem
                     id={proposal.id.toBase58()}
                     // logo={proposal.logo}
-                    title={proposal.details.title}
+                    title={title}
                     expires={expirationDate}
                     executedOn={executedOnDate}
                     approved={approvedSigners}
-                    // rejected={proposal.rejected}
+                    rejected={rejectedSigners}
+                    userSigned={proposal.didSigned}
                     status={proposal.status}
-                    isProposalDetails={isProposalDetails}
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                    isLink={true}
                   />
               </div>
             )
@@ -666,8 +671,8 @@ export const SafeMeanInfo = (props: {
               // Sends program value to the parent component "SafeView"
               onDataToProgramView(program);
             }
-  
-            const programTitle = shortenAddress(program.pubkey.toBase58(), 4);
+
+            const programTitle = program.pubkey ? shortenAddress(program.pubkey.toBase58(), 4) : "Unknown program";
             const programSubtitle = shortenAddress(program.pubkey.toBase58(), 8);
   
             return (
@@ -680,12 +685,11 @@ export const SafeMeanInfo = (props: {
                     id={program.pubkey.toBase58()}
                     title={programTitle}
                     subtitle={programSubtitle}
-                    isProposalDetails={isProposalDetails}
-                    isProgram={true}
-                    programSize={program.size}
-                    isProgramDetails={isProgramDetails}
+                    amount={formatThousands(program.size)}
+                    resume="bytes"
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                    isLink={true}
                   />
               </div>
             )

@@ -67,7 +67,7 @@ import { ProgramDetailsView } from './components/ProgramDetails';
 import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MultisigTransactionSummary, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MultisigTransactionSummary, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk/';
 // import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import { NATIVE_SOL } from '../../utils/tokens';
@@ -138,7 +138,7 @@ export const SafeView = () => {
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
-  // Pending Txs
+  // Active Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(false);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
@@ -1780,9 +1780,9 @@ export const SafeView = () => {
 
   const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
     consoleOut('onAcceptMultisigActionModal:', item, 'blue');
-    if (item.status === MultisigTransactionStatus.Pending) {
+    if (item.status === MultisigTransactionStatus.Active) {
       onExecuteApproveTx({ transaction: item });
-    } else if (item.status === MultisigTransactionStatus.Approved) {
+    } else if (item.status === MultisigTransactionStatus.Passed) {
       onExecuteFinishTx({ transaction: item })
     } else if (item.status === MultisigTransactionStatus.Voided) {
       onExecuteCancelTx({ transaction: item })
@@ -2091,6 +2091,304 @@ export const SafeView = () => {
     transactionCancelled, 
     enqueueTransactionConfirmation, 
     onExecuteApproveTxCancelled
+  ]);
+
+  const onExecuteRejectTxCancelled = useCallback(() => {
+    resetTransactionStatus();
+    openNotification({
+      type: "info",
+      duration: 5,
+      description: t('notifications.tx-not-approved')
+    });
+  },[
+    t,
+    resetTransactionStatus
+  ]);
+
+  const onExecuteRejectTx = useCallback(async (data: any) => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTxConfirmationContext();
+    resetTransactionStatus();
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const rejectTx = async (data: any) => {
+
+      if (!selectedMultisig || !multisigClient || !publicKey) { return null; }
+
+      const tx = await multisigClient.rejectTransaction(publicKey, data.transaction.id);
+  
+      return tx;
+    };
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (publicKey && data) {
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        // Create a transaction
+        const payload = { transaction: data.transaction };        
+        consoleOut('data:', payload);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: payload
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        const minRequired = 0.000005;
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        consoleOut('Min required balance:', minRequired, 'blue');
+        setMinRequiredBalance(minRequired);
+
+        if (nativeBalance < minRequired) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(
+                minRequired, 
+                NATIVE_SOL_MINT.toBase58()
+              )
+            })`
+          });
+          customLogger.logWarning('Multisig Reject transaction failed', { transcript: transactionLog });
+          openNotification({
+            description: t('transactions.status.tx-start-failure', {
+              accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                nativeBalance,
+                NATIVE_SOL_MINT.toBase58()
+              ),
+              feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                minRequired,
+                NATIVE_SOL_MINT.toBase58()
+              )}),
+            type: "info"
+          });
+          return false;
+        }
+
+        return await rejectTx(payload)
+          .then(value => {
+            if (!value) { return false; }
+            consoleOut('approveTx returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('mint tokens error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Multisig Reject transaction failed', { transcript: transactionLog });
+            return false;
+          });
+
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Multisig Reject transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Multisig Reject transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: signedPublicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch((error: any) => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logError('Multisig Reject transaction failed', { transcript: transactionLog });
+          return false;
+        });
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Multisig Reject transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Multisig Reject transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.RejectTransaction,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Reject proposal: ${data.transaction.details.title}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully rejected proposal: ${data.transaction.details.title}`,
+              extras: {
+                multisigId: data.transaction.multisig,
+                transactionId: data.transaction.id
+              }
+            });
+          } else { setIsBusy(false); }
+        } else { 
+          setIsBusy(false);
+          onExecuteRejectTxCancelled();
+        }
+      } else { setIsBusy(false); }
+    }
+
+  }, [
+    clearTxConfirmationContext, 
+    resetTransactionStatus, 
+    wallet, 
+    selectedMultisig, 
+    multisigClient, 
+    publicKey, 
+    setTransactionStatus, 
+    nativeBalance, 
+    transactionStatus.currentOperation, 
+    t, 
+    connection, 
+    transactionCancelled, 
+    enqueueTransactionConfirmation, 
+    onExecuteRejectTxCancelled
   ]);
 
   const onExecuteFinishTxCancelled = useCallback(() => {
@@ -2474,10 +2772,8 @@ export const SafeView = () => {
         !publicKey || 
         !multisigClient ||
         !selectedMultisig || 
-        !selectedMultisig.id || 
         selectedMultisig.id.toBase58() !== data.transaction.multisig.toBase58() || 
         data.transaction.proposer.toBase58() !== publicKey.toBase58() ||
-        data.transaction.ownerSetSeqno === selectedMultisig.ownerSetSeqno ||
         data.transaction.executedOn
       ) {
         return null;
@@ -2713,13 +3009,26 @@ export const SafeView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CancelTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            onTxExecuted();
+            resetTransactionStatus();
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.CancelTransaction,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Create proposal: ${data.transaction.details.title}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully created proposal: ${data.transaction.details.title}`,
+              extras: {
+                multisigId: data.transaction.multisig,
+                transactionId: data.transaction.id
+              }
+            });
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2734,11 +3043,10 @@ export const SafeView = () => {
     transactionCancelled,
     multisigClient,
     transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
     clearTxConfirmationContext,
-    startFetchTxSignatureInfo,
     resetTransactionStatus,
-    setTransactionStatus,
-    onTxExecuted,
+    setTransactionStatus
   ]);
 
   const parseSerumMultisigAccount = (info: any) => {
@@ -2802,8 +3110,16 @@ export const SafeView = () => {
         event = success ? AppUsageEvent.ApproveProposalCompleted : AppUsageEvent.ApproveProposalFailed;
         segmentAnalytics.recordEvent(event, { signature: signature });
         break;
+      case OperationType.RejectTransaction:
+        event = success ? AppUsageEvent.RejectProposalCompleted : AppUsageEvent.RejectProposalFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
       case OperationType.ExecuteTransaction:
         event = success ? AppUsageEvent.ExecuteProposalCompleted : AppUsageEvent.ExecuteProposalFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.CancelTransaction:
+        event = success ? AppUsageEvent.CancelProposalCompleted : AppUsageEvent.CancelProposalFailed;
         segmentAnalytics.recordEvent(event, { signature: signature });
         break;
       default:
@@ -2820,16 +3136,7 @@ export const SafeView = () => {
         refreshCta.click();
       }
     };
-
-    const reloadSelectedMultisig = (id: string) => {
-      if (multisigClient && publicKey) {
-        multisigClient
-          .getMultisig(new PublicKey(id))
-          .then((multisig: MultisigInfo | null) => setSelectedMultisig(multisig || undefined))
-          .catch((err: any) => console.error(err));
-      }
-    };
-
+    
     const refreshSelectedProposal = (extras: any) => {
       if (multisigClient && publicKey && extras && extras.multisigId && extras.transactionId) {
         multisigClient
@@ -2839,17 +3146,31 @@ export const SafeView = () => {
       }
     };
 
+    const goToProposals = () => {
+      const backCta = document.querySelector("div.back-button") as HTMLElement;
+      if (backCta) {
+        backCta.click();
+      }
+    }
+
     consoleOut("onTxConfirmed event handled:", item, 'crimson');
     recordTxConfirmation(item.signature, item.operationType, true);
+
     switch (item.operationType) {
       case OperationType.CreateTransaction:
-        reloadSelectedMultisig(item.extras as string);
+        reloadMultisigs();
         break;
       case OperationType.ApproveTransaction:
         refreshSelectedProposal(item.extras as any);
         break;
+      case OperationType.RejectTransaction:
+        refreshSelectedProposal(item.extras as any);
+        break;
       case OperationType.ExecuteTransaction:
         reloadMultisigs();
+        break;
+      case OperationType.CancelTransaction:
+        goToProposals();
         break;  
       default:
         break;
@@ -3541,21 +3862,22 @@ export const SafeView = () => {
 
       if (isValidParam) {
         if (isProposalsFork) {
-          const filteredMultisigTxs = multisigTxs.find(tx => tx.id.toBase58() === id);
-          if (filteredMultisigTxs) {
-            consoleOut('filteredMultisigTxs:', filteredMultisigTxs, 'orange');
-            getProposal(filteredMultisigTxs)
-            .then(tx => {
-              consoleOut('getProposal -> finished...');
-              consoleOut('getProposal -> tx:', tx, 'orange');
-              setProposalSelected(tx);
-              setIsProposalDetails(true);
-              setIsProgramDetails(false);
-            })
+          const filteredMultisigTx = multisigTxs.filter(tx => tx.id.toBase58() === id)[0];
+          if (filteredMultisigTx) {
+            consoleOut('filteredMultisigTx:', filteredMultisigTx, 'orange');
+            getProposal(filteredMultisigTx)
+              .then(tx => {
+                consoleOut('getProposal -> finished...');
+                consoleOut('getProposal -> tx:', tx, 'orange');
+                setProposalSelected(tx);
+                setIsProposalDetails(true);
+                setIsProgramDetails(false);
+              })
+              .catch((err: any) => console.error(err));
           }
         } else {
-          const filteredPrograms = programs.find(program => program.pubkey.toBase58() === id);
-          setProgramSelected(filteredPrograms);
+          const filteredProgram = programs.filter(program => program.pubkey.toBase58() === id)[0];
+          setProgramSelected(filteredProgram);
           setIsProposalDetails(false);
           setIsProgramDetails(true);
         }
@@ -3867,12 +4189,13 @@ export const SafeView = () => {
                           )
                         ) : isProposalDetails ? (
                           <ProposalDetailsView
-                            isProposalDetails={isProposalDetails}
                             onDataToSafeView={returnFromProposalDetailsHandler}
                             proposalSelected={proposalSelected}
                             selectedMultisig={selectedMultisig}
                             onProposalApprove={onExecuteApproveTx}
+                            onProposalReject={onExecuteRejectTx}
                             onProposalExecute={onExecuteFinishTx}
+                            onProposalCancel={onExecuteCancelTx}
                             onOperationStarted={saveOperationPayloadOnStart}
                             connection={connection}
                             solanaApps={solanaApps}
@@ -3970,10 +4293,12 @@ export const SafeView = () => {
             resetTransactionStatus();
             closeMultisigTxResultModal();
             if (operationPayload) {
-              if (operationPayload.operation) {
+              if (operationPayload.operation === OperationType.ExecuteTransaction) {
                 onExecuteFinishTx(operationPayload);
-              } else {
+              } else if (operationPayload.operation === OperationType.ApproveTransaction) {
                 onExecuteApproveTx(operationPayload);
+              } else if (operationPayload.operation === OperationType.RejectTransaction) {
+                onExecuteRejectTx(operationPayload);
               }
             }
           }}
