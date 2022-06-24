@@ -2437,7 +2437,6 @@ export const StreamingAccountView = (props: {
 
     const timeout = setTimeout(() => {
       if (streamingAccountSelected && streams && !hasStreamingAccountPendingTx()) {
-        console.log("Stop loading ...");
         setLoadingStreamingAccountDetails(false);
       }
     }, 1000);

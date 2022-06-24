@@ -1,5 +1,5 @@
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Menu, Row, Tabs } from "antd";
+import { Button, Col, Menu, Row, Spin, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
@@ -79,6 +79,7 @@ export const MoneyStreamsInfoView = (props: {
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
+    confirmationHistory,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
     enqueueTransactionConfirmation,
@@ -145,6 +146,7 @@ export const MoneyStreamsInfoView = (props: {
   // const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
 
   const [treasuryCombinedList, setTreasuryCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
+  const [loadingMoneyStreamsDetails, setLoadingMoneyStreamsDetails] = useState(true);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -718,14 +720,15 @@ export const MoneyStreamsInfoView = (props: {
               finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: "Create streaming account",
+              loadingMessage: `Create streaming account: ${createOptions.treasuryName}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Streaming account ${createOptions.treasuryName} has been created`,
+              completedMessage: `Successfully streaming account creation: ${createOptions.treasuryName}`,
               extras: createOptions.multisigId as string
             });
             setIsBusy(false);
             onTreasuryCreated(createOptions);
             setNeedReloadMultisig(true);
+            setLoadingMoneyStreamsDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -753,6 +756,32 @@ export const MoneyStreamsInfoView = (props: {
     publicKey, 
     treasuryDetails
   ])
+
+  // confirmationHistory
+  const hasMoneyStreamPendingTx = useCallback(() => {
+    if (!streamList || !treasuryList) { return false; }
+
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.txInfoFetchStatus === "fetching");
+    }
+
+    return false;
+  }, [confirmationHistory, streamList, treasuryList]);
+
+  useEffect(() => {
+    if (!streamList || !treasuryList) {return;}
+
+    const timeout = setTimeout(() => {
+      if (streamList && treasuryList && !hasMoneyStreamPendingTx()) {
+        console.log("Stop loading ...");
+        setLoadingMoneyStreamsDetails(false);
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [hasMoneyStreamPendingTx, streamList, treasuryList]);
 
   // Get the Multisig accounts
   // TODO: Signal when it is loading
@@ -1616,38 +1645,40 @@ export const MoneyStreamsInfoView = (props: {
 
   return (
     <>
-      <RightInfoDetails
-        infoData={infoData}
-      />
+      <Spin spinning={loadingMoneyStreamsDetails}>
+        <RightInfoDetails
+          infoData={infoData}
+        />
 
-      {selectedTab === "summary" && (
-        <Row gutter={[8, 8]} className="safe-btns-container mb-1">
-          <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              onClick={showCreateStreamModal}>
-                <div className="btn-content">
-                  Create stream
-                </div>
-            </Button>
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              onClick={showOpenStreamModal}>
-                <div className="btn-content">
-                  Find money stream
-                </div>
-            </Button>
-          </Col>
-        </Row>
-      )}
+        {selectedTab === "summary" && (
+          <Row gutter={[8, 8]} className="safe-btns-container mb-1">
+            <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                onClick={showCreateStreamModal}>
+                  <div className="btn-content">
+                    Create stream
+                  </div>
+              </Button>
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                onClick={showOpenStreamModal}>
+                  <div className="btn-content">
+                    Find money stream
+                  </div>
+              </Button>
+            </Col>
+          </Row>
+        )}
 
-      {renderTabset()}
+        {renderTabset()}
+      </Spin>
 
       {/* TODO: Here the multisig ID is used */}
       {multisigClient && isCreateStreamModalVisible && (
