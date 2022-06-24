@@ -2,6 +2,11 @@ import { SubCategory, TimeUnit, TreasuryType } from "@mean-dao/msp";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { PublicKey } from "@solana/web3.js";
 
+export type VestingFlowRateInfo = {
+    amount: number;
+    durationUnit: TimeUnit;
+}
+
 export type VestingContractCategory = {
     label: string;
     value: SubCategory;
@@ -113,3 +118,43 @@ export interface VestingContractCloseStreamOptions {
     unvestedReturns: number;
     feeAmount: number;
 }
+
+// Map cache to maintain the vesting flow rates between reloads of the vesting accounts' list
+const vfrCache = new Map<string, VestingFlowRateInfo>();
+
+export const vestingFlowRatesCache = {
+    add: (
+        vcId: string,
+        data: VestingFlowRateInfo
+    ) => {
+        if (!vcId || !data) { return; }
+
+        const isNew = !vfrCache.has(vcId);
+        if (isNew) {
+            vfrCache.set(vcId, data);
+        }
+    },
+    get: (vcId: string) => {
+        return vfrCache.get(vcId);
+    },
+    delete: (vcId: string) => {
+        if (vfrCache.get(vcId)) {
+            vfrCache.delete(vcId);
+            return true;
+        }
+        return false;
+    },
+    update: (
+        vcId: string,
+        data: VestingFlowRateInfo
+    ) => {
+        if (vfrCache.get(vcId)) {
+            vfrCache.set(vcId, data);
+            return true;
+        }
+        return false;
+    },
+    clear: () => {
+        vfrCache.clear();
+    },
+};

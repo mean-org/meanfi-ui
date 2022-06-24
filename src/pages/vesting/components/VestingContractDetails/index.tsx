@@ -7,15 +7,21 @@ import { getAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../ut
 import { Identicon } from '../../../../components/Identicon';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
+import { VestingFlowRateInfo } from '../../../../models/vesting';
 import BN from 'bn.js';
 import { Col, Row } from 'antd';
+import { IconLoading } from '../../../../Icons';
+import { getIntervalFromSeconds } from '../../../../utils/ui';
 
 export const VestingContractDetails = (props: {
     vestingContract: Treasury | undefined;
+    loadingVestingContractFlowRate: boolean;
+    vestingContractFlowRate: VestingFlowRateInfo | undefined;
 }) => {
-    const { vestingContract } = props;
+    const { vestingContract, loadingVestingContractFlowRate, vestingContractFlowRate } = props;
     const {
         theme,
+        splTokenList,
         getTokenByMintAddress,
     } = useContext(AppStateContext);
 
@@ -77,7 +83,17 @@ export const VestingContractDetails = (props: {
                         <div className="title text-truncate">{shortenAddress(item.id as string, 8)}</div>
                     )}
                     <div className="subtitle">
-                        <span className="mr-1">Sending #,###.00 {selectedToken?.symbol} per ###</span>
+                        {loadingVestingContractFlowRate ? (
+                            <span className="mr-1"><IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/></span>
+                        ) : vestingContractFlowRate && vestingContract && selectedToken ? (
+                            <span className="mr-1">Sending {getAmountWithSymbol(
+                                vestingContractFlowRate.amount,
+                                vestingContract.associatedToken as string,
+                                false, splTokenList
+                            )} {getIntervalFromSeconds(vestingContractFlowRate.durationUnit)}</span>
+                        ) : (
+                            <span className="mr-1">--</span>
+                        )}
                         <AddressDisplay
                             address={item.id as string}
                             prefix="("
@@ -87,9 +103,6 @@ export const VestingContractDetails = (props: {
                             newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
                         />
                     </div>
-                    {/* {isMultisigTreasury(item) && (
-                        <div className="subtitle text-truncate">{t('treasuries.treasury-list.multisig-treasury-label')}</div>
-                    )} */}
                 </div>
             </div>
         );

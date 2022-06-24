@@ -39,7 +39,7 @@ import { VestingContractCreateForm } from './components/VestingContractCreateFor
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions } from '../../models/vesting';
+import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
@@ -140,6 +140,8 @@ export const VestingView = () => {
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
+  const [vestingContractFlowRate, setVestingContractFlowRate] = useState<VestingFlowRateInfo | undefined>(undefined);
+  const [loadingVestingContractFlowRate, setLoadingVestingContractFlowRate] = useState(false);
 
   /////////////////////////
   //  Setup & Init code  //
@@ -419,6 +421,9 @@ export const VestingView = () => {
   const refreshVestingContracts = useCallback((reset = false) => {
 
     if (!connection || !publicKey || !msp || !accountAddress) { return; }
+
+    // Before fetching the list of vesting contracts, clear the cache of flow rates
+    vestingFlowRatesCache.clear();
 
     getAllUserV2Accounts(accountAddress)
       .then(treasuries => {
@@ -3000,7 +3005,7 @@ export const VestingView = () => {
     onExecuteRefreshVestingContractBalance,
   ]);
 
-  // Load treasuries once per page access
+  // Load vesting account once per page access
   useEffect(() => {
 
     if (!publicKey || !accountAddress || treasuriesLoaded) { return; }
@@ -3048,6 +3053,40 @@ export const VestingView = () => {
     autoOpenDetailsPanel,
     vestingContractAddress,
   ]);
+
+  // Get the vesting flow rate
+  useEffect(() => {
+    if (!publicKey || !msp) { return; }
+
+    if (vestingContractAddress && selectedVestingContract &&
+        vestingContractAddress === selectedVestingContract.id) {
+      // First check if there is already a value for this key in the cache
+      // Just get the value from cache if already exists and push it to the state
+      // Otherwise fetch it, add it to the cache and push it to the state
+      const vcFlowRate = vestingFlowRatesCache.get(selectedVestingContract.id);
+      if (vcFlowRate) {
+        setVestingContractFlowRate(vcFlowRate);
+        consoleOut('Set VestingContractFlowRate from cache:', vcFlowRate, 'orange');
+        return;
+      }
+
+      setLoadingVestingContractFlowRate(true);
+      consoleOut('calling getVestingFlowRate:', selectedVestingContract.id as string, 'blue');
+      const treasuryPk = new PublicKey(selectedVestingContract.id as string);
+      msp.getVestingFlowRate(treasuryPk)
+      .then(value => {
+        const freshFlowRate: VestingFlowRateInfo = {
+          amount: makeDecimal(new BN(value[0]), selectedToken?.decimals || 6),
+          durationUnit: new BN(value[1]).toNumber()
+        };
+        consoleOut('flowRate:', freshFlowRate, 'darkgreen');
+        vestingFlowRatesCache.add(selectedVestingContract.id as string, freshFlowRate);
+        setVestingContractFlowRate(freshFlowRate);
+      })
+      .catch(error => console.error('', error))
+      .finally(() => setLoadingVestingContractFlowRate(false));
+    }
+  }, [msp, publicKey, selectedToken, selectedVestingContract, vestingContractAddress]);
 
   // Set a tab if none already set
   useEffect(() => {
@@ -3563,7 +3602,7 @@ export const VestingView = () => {
 
                   <div className="inner-container">
                     <div className="item-block vertical-scroll">
-  
+
                       <div className="asset-category flex-column">
                         <VestingContractList
                           streamingAccounts={treasuryList}
@@ -3597,7 +3636,11 @@ export const VestingView = () => {
                   <div className="inner-container">
                     <div className="flexible-column-bottom">
                       <div className="top">
-                        <VestingContractDetails vestingContract={selectedVestingContract} />
+                        <VestingContractDetails
+                          vestingContract={selectedVestingContract}
+                          loadingVestingContractFlowRate={loadingVestingContractFlowRate}
+                          vestingContractFlowRate={vestingContractFlowRate}
+                        />
                         {/* Render CTAs row here */}
                         {renderMetaInfoCtaRow()}
                       </div>
