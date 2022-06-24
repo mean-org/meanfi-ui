@@ -27,7 +27,7 @@ import { IconArrowBack, IconArrowForward, IconEllipsisVertical } from "../../Ico
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
+import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { openNotification } from "../../components/Notifications";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
@@ -67,6 +67,7 @@ export const StreamingAccountView = (props: {
     fetchTxInfoStatus,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
+    enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
 
   const { publicKey, connected, wallet } = useWallet();
@@ -387,14 +388,7 @@ export const StreamingAccountView = (props: {
   const onAddFundsTransactionFinished = () => {
     closeAddFundsModal();
     refreshTokenBalance();
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-    openNotification({
-      description: t('treasuries.add-funds.success-message'),
-      type: "success"
-    });
+    resetTransactionStatus();
   };
 
   const onAcceptAddFunds = (params: TreasuryTopupParams) => {
@@ -800,7 +794,7 @@ export const StreamingAccountView = (props: {
       }
     }
 
-    if (publicKey && streamingAccountSelected) {
+    if (publicKey && streamingAccountSelected && selectedToken) {
       let created: boolean;
       if ((streamingAccountSelected as Treasury).version && (streamingAccountSelected as Treasury).version >= 2) {
         created = await createTxV2();
@@ -816,11 +810,22 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryAddFunds);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryAddFunds,
+              finality: "finalized",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Fund streaming account with ${formatThousands(
+                parseFloat(params.amount),
+                selectedToken.decimals
+              )} ${selectedToken.symbol}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Streaming account funded with ${formatThousands(
+                parseFloat(params.amount),
+                selectedToken.decimals
+              )} ${selectedToken.symbol}`,
+              extras: streamingAccountSelected.id as string
             });
             onAddFundsTransactionFinished();
             setNeedReloadMultisig(true);
