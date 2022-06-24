@@ -496,7 +496,7 @@ export const VestingContractStreamList = (props: {
                 valueInUsd: price * (closeStreamOptions.vestedReturns + closeStreamOptions.unvestedReturns)
             };
             consoleOut('segment data:', segmentData, 'brown');
-            segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
 
             // Log input data
             transactionLog.push({

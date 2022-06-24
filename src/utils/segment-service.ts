@@ -35,12 +35,23 @@ export enum AppUsageEvent {
     StreamTransferSigned = "Stream Transfer Ownership Signed",
     StreamTransferCompleted = "Stream Transfer Ownership Completed",
     StreamTransferFailed = "Stream Transfer Ownership Failed",
+    // Create a stream
+    StreamCreateFormButton = "Create stream form button click",
+    StreamCreateSigned = "Create stream Signed",
+    StreamCreateCompleted = "Create stream Completed",
+    StreamCreateFailed = "Create stream Failed",
     // Close Stream Action
     StreamCloseButton = "Stream Close button click",
-    StreamCloseStreamFormButton = "Stream Close form button click",
+    StreamCloseFormButton = "Stream Close form button click",
     StreamCloseSigned = "Stream Close Signed",
     StreamCloseCompleted = "Stream Close Completed",
     StreamCloseFailed = "Stream Close Failed",
+    // Stream StatusChange Action
+    StreamStatusChangeButton = "Stream Status change button click",
+    StreamStatusChangeFormButton = "Stream Status change form button click",
+    StreamStatusChangeSigned = "Stream Status change Signed",
+    StreamStatusChangeCompleted = "Stream Status change Completed",
+    StreamStatusChangeFailed = "Stream Status change Failed",
     // Page /transfers
     TransferOTPFormButton = "New OTP approve form button click",
     TransferOTPSigned = "New OTP Signed",
@@ -101,10 +112,6 @@ export enum AppUsageEvent {
     VestingContractWithdrawFundsSigned = "Withdraw Vesting contract funds Signed",
     VestingContractWithdrawFundsCompleted = "Withdraw Vesting contract funds Completed",
     VestingContractWithdrawFundsFailed = "Withdraw Vesting contract funds Failed",
-    VestingContractStreamCreateFormButton = "Create Vesting contract stream form button click",
-    VestingContractStreamCreateSigned = "Create Vesting contract stream Signed",
-    VestingContractStreamCreateCompleted = "Create Vesting contract stream Completed",
-    VestingContractStreamCreateFailed = "Create Vesting contract stream Failed",
 }
 
 export enum StatsTriggertEvent {
@@ -200,6 +207,22 @@ export interface SegmentStreamTransferOwnershipData {
     newBeneficiary: string;
 }
 
+export interface SegmentVestingContractCreateData {
+    asset: string;
+    assetPrice: number;
+    valueInUsd: number;
+    contractName: string;
+    type: string;
+    fundingAmount: number;
+    duration: number;
+    durationUnit: string;
+    subCategory: string;
+    cliffVestPercent: number;
+    startUtc: string;
+    multisig: string;
+    feePayedByTreasurer: boolean;
+}
+
 export interface SegmentVestingContractWithdrawData {
     asset: string;
     assetPrice: number;
@@ -209,16 +232,22 @@ export interface SegmentVestingContractWithdrawData {
     valueInUsd: number;
 }
 
-export interface SegmentVestingContractStreamCreateData {
+export interface SegmentStreamCreateData {
     asset: string;
     assetPrice: number;
-    vestingContract: string;
+    treasury: string;
     beneficiary: string;
     allocation: number;
     rateAmount: number;
     interval: string;
+    category: number;
     feePayedByTreasurer: boolean;
     valueInUsd: number;
+}
+
+export interface SegmentStreamStatusChangeActionData {
+    action: string;
+    streamId: string;
 }
 
 ///////////////////

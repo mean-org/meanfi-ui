@@ -3629,7 +3629,7 @@ export const Streams = () => {
           valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -3738,7 +3738,7 @@ export const Streams = () => {
           valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
 
         // Log input data
         transactionLog.push({

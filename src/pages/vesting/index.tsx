@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, copyText, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -19,6 +19,8 @@ import {
   Constants as MSPV2Constants,
   StreamTemplate,
   Category,
+  SubCategory,
+  TreasuryType,
 } from '@mean-dao/msp';
 import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -37,7 +39,7 @@ import { VestingContractCreateForm } from './components/VestingContractCreateFor
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { CreateVestingTreasuryParams, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions } from '../../models/vesting';
+import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
@@ -49,7 +51,7 @@ import { VestingContractSolBalanceModal } from './components/VestingContractSolB
 import { VestingContractAddFundsModal } from './components/TreasuryAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
 import { segmentAnalytics } from '../../App';
-import { AppUsageEvent, SegmentVestingContractStreamCreateData, SegmentVestingContractWithdrawData } from '../../utils/segment-service';
+import { AppUsageEvent, SegmentStreamCreateData, SegmentVestingContractCreateData, SegmentVestingContractWithdrawData } from '../../utils/segment-service';
 import { ZERO_FEES } from '../../models/multisig';
 import { VestingContractCreateStreamModal } from './components/VestingContractCreateStreamModal';
 import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
@@ -709,9 +711,9 @@ export const VestingView = () => {
       });
 
       const multisigId = getMultisigIdFromContext();
-
-      // Create a transaction
       const associatedToken = createOptions.token;
+      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
+
       const payload: CreateVestingTreasuryParams = {
         payer: publicKey,                                                       // payer
         treasurer: publicKey,                                                   // treasurer
@@ -722,15 +724,33 @@ export const VestingView = () => {
         fundingAmount: createOptions.fundingAmount,                             // fundingAmount
         associatedTokenAddress: associatedToken.address,                        // treasuryAssociatedTokenMint
         cliffVestPercent: createOptions.cliffVestPercent,                       // cliffVestPercent
-        vestingCategory: createOptions.vestingCategory,                 // vestingCategory
+        vestingCategory: createOptions.vestingCategory,                         // vestingCategory
         startUtc: createOptions.startDate,                                      // startUtc
         multisig: multisigId,                                                   // multisig
         feePayedByTreasurer: createOptions.feePayedByTreasurer                  // feePayedByTreasurer
       };
-
       consoleOut('payload:', payload);
-      // Log input data
 
+      // Report event to Segment analytics
+      const segmentData: SegmentVestingContractCreateData = {
+        asset: associatedToken.address,
+        assetPrice: price,
+        valueInUsd: parseFloat(createOptions.amount) * price,
+        fundingAmount: parseFloat(createOptions.amount),
+        contractName: createOptions.vestingContractName,
+        subCategory: getCategoryLabelByValue(createOptions.vestingCategory),
+        cliffVestPercent: createOptions.cliffVestPercent,
+        duration: createOptions.duration,
+        durationUnit: getDurationUnitFromSeconds(createOptions.durationUnit),
+        feePayedByTreasurer: createOptions.feePayedByTreasurer,
+        multisig: multisigId,
+        startUtc: getReadableDate(createOptions.startDate.toUTCString()),
+        type: TreasuryType[createOptions.vestingContractType]
+      };
+      consoleOut('segment data:', segmentData, 'brown');
+      segmentAnalytics.recordEvent(AppUsageEvent.StreamCreateFormButton, segmentData);
+
+      // Log input data
       transactionLog.push({
         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
         inputs: payload
@@ -955,6 +975,7 @@ export const VestingView = () => {
     wallet,
     publicKey,
     connection,
+    selectedToken,
     nativeBalance,
     multisigClient,
     multisigAccounts,
@@ -966,9 +987,11 @@ export const VestingView = () => {
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
-    getMultisigIdFromContext,
     onVestingContractCreated,
+    getMultisigIdFromContext,
+    getTokenPriceByAddress,
     resetTransactionStatus,
+    getTokenPriceBySymbol,
     setTransactionStatus,
   ]);
 
@@ -1697,117 +1720,6 @@ export const VestingView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    /* TODO: Convert to only one stream creation Tx for SS
-    const createStream = async (data: CreateVestingStreamParams) => {
-
-      if (!selectedVestingContract || !msp) { return null; }
-
-      const isMsTreasury = isMultisigTreasury(selectedVestingContract);
-
-      consoleOut('Is Multisig Treasury: ', isMsTreasury, 'blue');
-      consoleOut('Starting create stream using MSP V2...', '', 'blue');
-
-      if (!isMsTreasury) {
-        return await msp.createStreamWithTemplate(
-          data.payer,                                 // payer
-          data.treasurer,                             // treasurer
-          data.treasury,                              // treasury
-          data.beneficiary,                           // beneficiary
-          data.treasuryAssociatedTokenMint,           // treasuryAssociatedTokenMint
-          data.allocationAssigned,                    // allocationAssigned
-          data.streamName                             // streamName
-        );
-      }
-
-      if (!multisigClient || !data.multisig || !publicKey) { return null; }
-
-      const multisigAddress = new PublicKey(data.multisig);
-      const [multisigSigner] = await PublicKey.findProgramAddress(
-        [multisigAddress.toBuffer()],
-        MEAN_MULTISIG_PROGRAM
-      );
-
-      const streams: StreamBeneficiary[] = [];
-      const streamsBumps: any = {};
-      let seedCounter = 0;
-
-      const timeStamp = parseInt((Date.now() / 1000).toString());
-
-      // Add only one for now
-      const beneficiaries = [{
-        streamName: data.streamName,
-        address: data.beneficiary
-      }];
-
-      for (const beneficiary of beneficiaries) {
-
-        const timeStampCounter = new u64(timeStamp + seedCounter);
-        const [stream, streamBump] = await PublicKey.findProgramAddress(
-          [multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
-          MEAN_MULTISIG_PROGRAM
-        );
-
-        streams.push({
-          streamName: beneficiary.streamName,
-          address: stream,
-          beneficiary: beneficiary.address
-        } as StreamBeneficiary);
-
-        streamsBumps[stream.toBase58()] = {
-          bump: streamBump,
-          timeStamp: timeStampCounter
-        };
-
-        seedCounter += 1;
-      }
-
-      const createStreams = await msp.createStreamsFromPda(
-        publicKey,                                                            // payer
-        multisigSigner,                                                       // treasurer
-        new PublicKey(data.treasury),                                         // treasury
-        new PublicKey(data.associatedToken),                                  // associatedToken
-        streams,                                                              // streams
-        data.allocationAssigned,                                              // allocationAssigned
-        data.rateAmount,                                                      // rateAmount
-        data.rateIntervalInSeconds,                                           // rateIntervalInSeconds
-        data.startUtc,                                                        // startUtc
-        data.cliffVestAmount,                                                 // cliffVestAmount
-        data.cliffVestPercent,                                                // cliffVestPercent
-        data.feePayedByTreasurer                                              // feePayedByTreasurer
-      );
-
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      const txs: Transaction[] = [];
-
-      for (const createTx of createStreams) {
-
-        const ixData = Buffer.from(createTx.instructions[0].data);
-        const ixAccounts = createTx.instructions[0].keys;
-        const streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
-
-        const tx = await multisigClient.createMoneyStreamTransaction(
-          publicKey,
-          "Create Stream",
-          "", // description
-          new Date(expirationTime * 1_000),
-          streamSeedData.timeStamp.toNumber(),
-          streamSeedData.bump,
-          OperationType.StreamCreate,
-          multisigAddress,
-          MSPV2Constants.MSP,
-          ixAccounts,
-          ixData
-        );
-        
-        if (tx) {
-          txs.push(tx);
-        }
-      } 
-
-      return txs;
-    }
-    */
-
     const createTx = async (): Promise<boolean> => {
 
       if (!publicKey || !msp || !selectedVestingContract || !selectedToken) {
@@ -1844,19 +1756,20 @@ export const VestingView = () => {
       consoleOut('data:', data);
 
       // Report event to Segment analytics
-      const segmentData: SegmentVestingContractStreamCreateData = {
+      const segmentData: SegmentStreamCreateData = {
         asset: selectedToken.symbol,
         assetPrice: price,
-        vestingContract: selectedVestingContract.id as string,
+        treasury: selectedVestingContract.id as string,
         beneficiary: params.beneficiaryAddress,
         allocation: amount,
-        feePayedByTreasurer: params.feePayedByTreasurer,
-        valueInUsd: amount * price,
         rateAmount: params.rateAmount,
         interval: params.interval,
+        category: selectedVestingContract.category,
+        feePayedByTreasurer: params.feePayedByTreasurer,
+        valueInUsd: amount * price,
       };
       consoleOut('segment data:', segmentData, 'brown');
-      segmentAnalytics.recordEvent(AppUsageEvent.VestingContractStreamCreateFormButton, segmentData);
+      segmentAnalytics.recordEvent(AppUsageEvent.StreamCreateFormButton, segmentData);
 
       // Log input data
       transactionLog.push({
@@ -2211,7 +2124,6 @@ export const VestingView = () => {
       };
       consoleOut('segment data:', segmentData, 'brown');
       segmentAnalytics.recordEvent(AppUsageEvent.VestingContractWithdrawFundsFormButton, segmentData);
-
 
       // Log input data
       transactionLog.push({

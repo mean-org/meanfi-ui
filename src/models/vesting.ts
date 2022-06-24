@@ -42,6 +42,14 @@ export const VESTING_CATEGORIES: VestingContractCategory[] = [
     }
 ];
 
+export const getCategoryLabelByValue = (value: SubCategory) => {
+    const item = VESTING_CATEGORIES.find(c => c.value === value);
+    if (item) {
+        return item.label;
+    }
+    return '-';
+}
+
 export interface CreateVestingTreasuryParams {
     payer: PublicKey;
     treasurer: PublicKey;

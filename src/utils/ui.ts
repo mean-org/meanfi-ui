@@ -375,6 +375,25 @@ export const getPaymentIntervalFromSeconds = (value: number): PaymentRateType =>
     }
 }
 
+export const getDurationUnitFromSeconds = (value: number, trans?: any): string => {
+    switch (value) {
+        case 60:
+            return trans ? trans('general.minute') : 'minute';
+        case 3600:
+            return trans ? trans('general.hour') : 'hour';
+        case 86400:
+            return trans ? trans('general.day') : 'day';
+        case 604800:
+            return trans ? trans('general.week') : 'week';
+        case 2629750:
+            return trans ? trans('general.month') : 'month';
+        case 31557000:
+            return trans ? trans('general.year') : 'year';
+        default:
+            return trans ? trans('general.month') : 'month';
+    }
+}
+
 export const getTransactionOperationDescription = (status: TransactionStatus | undefined, trans?: any): string => {
     switch (status) {
         case TransactionStatus.TransactionStart:
