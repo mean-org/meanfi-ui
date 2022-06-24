@@ -313,8 +313,13 @@ export const VestingView = () => {
         event = success ? AppUsageEvent.VestingContractCreateCompleted : AppUsageEvent.VestingContractCreateFailed;
         segmentAnalytics.recordEvent(event, { signature: signature });
         break;
+      case OperationType.StreamPause:
+      case OperationType.StreamResume:
+        event = success ? AppUsageEvent.StreamStatusChangeCompleted : AppUsageEvent.StreamStatusChangeFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
       case OperationType.StreamClose:
-        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseCompleted;
+        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
         segmentAnalytics.recordEvent(event, { signature: signature });
         break;
       default:
@@ -343,16 +348,18 @@ export const VestingView = () => {
     recordTxConfirmation(item.signature, item.operationType, true);
 
     switch (item.operationType) {
-      case OperationType.StreamClose:
       case OperationType.TreasuryAddFunds:
-      case OperationType.StreamAddFunds:
+      case OperationType.TreasuryRefreshBalance:
+      case OperationType.TreasuryWithdraw:
       case OperationType.TreasuryStreamCreate:
+      case OperationType.StreamClose:
+      case OperationType.StreamAddFunds:
+      case OperationType.StreamPause:
+      case OperationType.StreamResume:
         softReloadContracts();
         break;
       case OperationType.TreasuryClose:
       case OperationType.TreasuryCreate:
-      case OperationType.TreasuryRefreshBalance:
-      case OperationType.TreasuryWithdraw:
         hardReloadContracts();
         break;
       default:

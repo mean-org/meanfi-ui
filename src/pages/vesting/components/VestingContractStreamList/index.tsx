@@ -37,7 +37,7 @@ import { customLogger } from '../../../..';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
-import { AppUsageEvent, SegmentStreamCloseData } from '../../../../utils/segment-service';
+import { AppUsageEvent, SegmentStreamCloseData, SegmentStreamStatusChangeActionData } from '../../../../utils/segment-service';
 import { segmentAnalytics } from '../../../../App';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -81,12 +81,7 @@ export const VestingContractStreamList = (props: {
         setTransactionStatus,
         refreshTokenBalance,
     } = useContext(AppStateContext);
-    const {
-        lastSentTxOperationType,
-        startFetchTxSignatureInfo,
-        clearTxConfirmationContext,
-        enqueueTransactionConfirmation,
-    } = useContext(TxConfirmationContext);
+    const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
     const connection = useConnection();
     const { t } = useTranslation('common');
     const { publicKey, wallet } = useWallet();
@@ -746,6 +741,7 @@ export const VestingContractStreamList = (props: {
         resetTransactionStatus();
         hideTransactionExecutionModal();
         refreshTokenBalance();
+        setOngoingOperation(undefined);
     };
 
     const onExecutePauseStreamTransaction = async () => {
@@ -755,7 +751,6 @@ export const VestingContractStreamList = (props: {
         let encodedTx: string;
         const transactionLog: any[] = [];
 
-        clearTxConfirmationContext();
         resetTransactionStatus();
         setTransactionCancelled(false);
         setOngoingOperation(OperationType.StreamPause);
@@ -825,8 +820,15 @@ export const VestingContractStreamList = (props: {
                 stream: streamPublicKey.toBase58(),               // stream
                 payer: publicKey.toBase58(),                      // payer
             }
-
             consoleOut('data:', data);
+
+            // Report event to Segment analytics
+            const segmentData: SegmentStreamStatusChangeActionData = {
+                action: 'Pause',
+                streamId: data.stream
+            };
+            consoleOut('segment data:', segmentData, 'brown');
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamStatusChangeFormButton, segmentData);
 
             // Log input data
             transactionLog.push({
@@ -1014,10 +1016,19 @@ export const VestingContractStreamList = (props: {
                     consoleOut('sent:', sent);
                     if (sent && !transactionCancelled) {
                         consoleOut('Send Tx to confirmation queue:', signature);
-                        startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamPause);
+                        enqueueTransactionConfirmation({
+                            signature: signature,
+                            operationType: OperationType.StreamPause,
+                            finality: "confirmed",
+                            txInfoFetchStatus: "fetching",
+                            loadingTitle: "Confirming transaction",
+                            loadingMessage: `Pause stream: ${highlightedStream.name}`,
+                            completedTitle: "Transaction confirmed",
+                            completedMessage: `Successfully paused stream: ${highlightedStream.name}`,
+                            extras: highlightedStream.id as string
+                        });
                         setIsBusy(false);
-                        onCloseStreamTransactionFinished();
-                        setOngoingOperation(undefined);
+                        onPauseStreamTransactionFinished();
                     } else { setIsBusy(false); }
                 } else { setIsBusy(false); }
             } else { setIsBusy(false); }
@@ -1056,6 +1067,7 @@ export const VestingContractStreamList = (props: {
         resetTransactionStatus();
         hideTransactionExecutionModal();
         refreshTokenBalance();
+        setOngoingOperation(undefined);
     };
 
     const onExecuteResumeStreamTransaction = async () => {
@@ -1065,7 +1077,6 @@ export const VestingContractStreamList = (props: {
         let encodedTx: string;
         const transactionLog: any[] = [];
 
-        clearTxConfirmationContext();
         resetTransactionStatus();
         setTransactionCancelled(false);
         setOngoingOperation(OperationType.StreamResume);
@@ -1135,8 +1146,15 @@ export const VestingContractStreamList = (props: {
                 stream: streamPublicKey.toBase58(),               // stream
                 payer: publicKey.toBase58(),                      // payer
             }
-
             consoleOut('data:', data);
+
+            // Report event to Segment analytics
+            const segmentData: SegmentStreamStatusChangeActionData = {
+                action: 'Resume',
+                streamId: data.stream
+            };
+            consoleOut('segment data:', segmentData, 'brown');
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamStatusChangeFormButton, segmentData);
 
             // Log input data
             transactionLog.push({
@@ -1322,10 +1340,19 @@ export const VestingContractStreamList = (props: {
                     consoleOut('sent:', sent);
                     if (sent && !transactionCancelled) {
                         consoleOut('Send Tx to confirmation queue:', signature);
-                        startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamResume);
+                        enqueueTransactionConfirmation({
+                            signature: signature,
+                            operationType: OperationType.StreamResume,
+                            finality: "confirmed",
+                            txInfoFetchStatus: "fetching",
+                            loadingTitle: "Confirming transaction",
+                            loadingMessage: `Resume stream: ${highlightedStream.name}`,
+                            completedTitle: "Transaction confirmed",
+                            completedMessage: `Successfully resumed stream: ${highlightedStream.name}`,
+                            extras: highlightedStream.id as string
+                        });
                         setIsBusy(false);
                         onResumeStreamTransactionFinished();
-                        setOngoingOperation(undefined);
                     } else { setIsBusy(false); }
                 } else { setIsBusy(false); }
             } else { setIsBusy(false); }
@@ -1641,11 +1668,11 @@ export const VestingContractStreamList = (props: {
                                 type="primary"
                                 shape="round"
                                 size="middle"
-                                onClick={() => lastSentTxOperationType === OperationType.StreamPause
+                                onClick={() => ongoingOperation === OperationType.StreamPause
                                     ? onPauseStreamTransactionFinished()
-                                    : lastSentTxOperationType === OperationType.StreamResume
+                                    : ongoingOperation === OperationType.StreamResume
                                         ? onResumeStreamTransactionFinished()
-                                        : lastSentTxOperationType === OperationType.StreamClose
+                                        : ongoingOperation === OperationType.StreamClose
                                             ? onCloseStreamTransactionFinished()
                                             : hideTransactionExecutionModal()}>
                                 {t('general.cta-finish')}
