@@ -38,7 +38,8 @@ import {
   FALLBACK_COIN_IMAGE,
   WRAPPED_SOL_MINT_ADDRESS,
   ACCOUNTS_LOW_BALANCE_LIMIT,
-  NO_FEES
+  NO_FEES,
+  ONE_MINUTE_REFRESH_TIMEOUT
 } from '../../constants';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
@@ -112,7 +113,7 @@ export const AccountsNewView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { address, asset, streamingTab, streamId } = useParams();
+  const { address, asset, streamingTab, streamId, treasuryId } = useParams();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
@@ -191,6 +192,7 @@ export const AccountsNewView = () => {
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [pathParamAsset, setPathParamAsset] = useState('');
   const [pathParamStreamId, setPathParamStreamId] = useState('');
+  const [pathParamTreasuryId, setPathParamTreasuryId] = useState('');
   const [pathParamStreamingTab, setPathParamStreamingTab] = useState('');
   const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
   const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
@@ -224,6 +226,17 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+
+  const [loadingTreasuries, setLoadingTreasuries] = useState(false);
+  const [autocloseTreasuries, setAutocloseTreasuries] = useState<(Treasury | TreasuryInfo)[]>([]);
+  const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
+  const [customStreamDocked, setCustomStreamDocked] = useState(false);
+  const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
+
+  // Streaming account
+  // const [isStreamingAccountDetails, setIsStreamingAccountDetails] = useState(false);
+  const [selectedStreamingAccountStreams, setSelectedStreamingAccountStreams] = useState<any>();
+  const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
 
   const selectedMultisigRef = useRef(selectedMultisig);
   useEffect(() => {
@@ -876,7 +889,7 @@ export const AccountsNewView = () => {
       } else if (item.operationType === OperationType.TreasuryAddFunds) {
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryCreate) {
-        hardReloadStreams();
+        softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryClose) {
         hardReloadStreams();
         const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
@@ -2641,9 +2654,121 @@ export const AccountsNewView = () => {
     onVaultDeleted
   ]);
 
+  const getAllUserV2Treasuries = useCallback(async () => {
+
+    if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
+
+    let treasuries = await msp.listTreasuries(publicKey);
+
+    if (selectedMultisig && multisigAccounts) {
+
+      const multisigTreasuries: any[] = [];
+
+      const filterMultisigAccounts = selectedMultisig
+        ? [selectedMultisig.authority]
+        : multisigAccounts.map(m => m.authority);
+
+      if (filterMultisigAccounts) {
+        for (const key of filterMultisigAccounts) {
+          multisigTreasuries.push(...(await msp.listTreasuries(key)));
+        }
+      }
+
+      treasuries = multisigTreasuries;
+    }
+
+    const autoclosables = treasuries.filter((t: any) => t.autoClose);
+
+    setAutocloseTreasuries(autoclosables);
+
+    return treasuries.filter((t: any) => !t.autoClose);
+
+  }, [
+    connection, 
+    loadingTreasuries, 
+    msp,
+    selectedMultisig,
+    multisigAccounts,
+    publicKey
+  ]);
+
+  const refreshTreasuries = useCallback((reset = false) => {
+    
+    if (!connection || !publicKey || loadingTreasuries) { return; }
+
+    if (msp && ms) {
+
+      setTimeout(() => {
+        setLoadingTreasuries(true);
+        clearTxConfirmationContext();
+      });
+
+      const treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
+      let treasuriesv1: TreasuryInfo[] = [];
+      getAllUserV2Treasuries()
+        .then(async (treasuriesv2) => {
+          treasuryAccumulator.push(...treasuriesv2);
+          consoleOut('v2 treasuries:', treasuriesv2, 'blue');
+
+          if (!selectedMultisig) {
+            try {
+              treasuriesv1 = await ms.listTreasuries(publicKey);
+            } catch (error) {
+              console.error(error);
+            }
+            consoleOut('v1 treasuries:', treasuriesv1, 'blue');
+            treasuryAccumulator.push(...treasuriesv1);
+          }
+
+          setTreasuryList(treasuryAccumulator);
+          consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
+        })
+        .catch(error => {
+          console.error(error);
+        })
+        .finally(() => setLoadingTreasuries(false));
+    }
+
+  }, [
+    ms,
+    msp,
+    publicKey,
+    connection,
+    selectedMultisig,
+    loadingTreasuries,
+    getAllUserV2Treasuries,
+    clearTxConfirmationContext,
+  ]);
+
   /////////////////////
   // Data management //
   /////////////////////
+
+  // Treasury list refresh timeout
+  useEffect(() => {
+    let timer: any;
+
+    if (publicKey && !treasuriesLoaded && !loadingTreasuries) {
+      setTreasuriesLoaded(true);
+      consoleOut("Loading treasuries for the first time");
+      refreshTreasuries(true);
+    }
+
+    if (publicKey && treasuriesLoaded && !customStreamDocked) {
+      timer = setInterval(() => {
+        consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        refreshTreasuries(false);
+      }, ONE_MINUTE_REFRESH_TIMEOUT);
+    }
+
+    return () => clearInterval(timer);
+  }, [
+    publicKey,
+    treasuriesLoaded,
+    loadingTreasuries,
+    customStreamDocked,
+    refreshTreasuries
+  ]);
 
   // Detect XS screen
   useEffect(() => {
@@ -2872,6 +2997,13 @@ export const AccountsNewView = () => {
       setPathParamStreamId(streamId);
     }
 
+    if (treasuryId) {
+      consoleOut('Route param treasuryId:', treasuryId, 'crimson');
+      setPathParamTreasuryId(treasuryId);
+    } else {
+      setPathParamTreasuryId("");
+    }
+
     // The category is inferred from the route path
     if (location.pathname.indexOf('/assets') !== -1) {
       consoleOut('Setting category:', 'assets', 'crimson');
@@ -2915,6 +3047,7 @@ export const AccountsNewView = () => {
     address,
     streamId,
     publicKey,
+    treasuryId,
     isFirstLoad,
     streamingTab,
     searchParams,
@@ -3389,6 +3522,22 @@ export const AccountsNewView = () => {
     onTxTimedout,
   ]);
 
+  // Preset the selected streaming account from the list if provided in path param (treasuryId)
+  useEffect(() => {
+    if (!publicKey || !treasuryList || treasuryList.length === 0) {
+      setTreasuryDetail(undefined);
+    }
+
+    if (pathParamTreasuryId && treasuryId && pathParamTreasuryId === treasuryId && (!treasuryDetail || treasuryDetail.id !== pathParamTreasuryId)) {
+      const item = treasuryList.find(s => s.id as string === pathParamTreasuryId);
+      consoleOut('treasuryList:', treasuryList, 'darkgreen');
+      consoleOut('item:', item, 'darkgreen');
+      if (item) {
+        setTreasuryDetail(item);
+      }
+    }
+  }, [pathParamTreasuryId, publicKey, treasuryDetail, treasuryId, treasuryList]);
+
   // Preset the selected stream from the list if provided in path param (streamId)
   useEffect(() => {
     if (publicKey && streamList && streamList.length > 0 && pathParamStreamId && (!streamDetail || streamDetail.id !== pathParamStreamId)) {
@@ -3738,10 +3887,12 @@ export const AccountsNewView = () => {
 
   const onRefreshStreamsNoReset = () => {
     refreshStreamList(false);
+    refreshTreasuries(false);
   };
 
   const onRefreshStreamsReset = () => {
     refreshStreamList(true);
+    refreshTreasuries(false);
   };
 
   ///////////////
@@ -4487,10 +4638,6 @@ export const AccountsNewView = () => {
   //   }
   // ];
 
-  const [isStreamingAccountDetails, setIsStreamingAccountDetails] = useState(false);
-  const [selectedStreamingAccountStreams, setSelectedStreamingAccountStreams] = useState<any>();
-  const [selectedStreamingAccount, setSelectedStreamingAccount] = useState<Treasury | TreasuryInfo | undefined>();
-
   const goToStreamIncomingDetailsHandler = (stream: any) => {
     // setIsStreamIncomingDetails(true);
 
@@ -4523,9 +4670,22 @@ export const AccountsNewView = () => {
 
   const goToStreamingAccountDetailsHandler = (streamingAccountStreams: any, streamingTreasury: Treasury | TreasuryInfo | undefined) => {
     setSelectedStreamingAccountStreams(streamingAccountStreams);
-    setSelectedStreamingAccount(streamingTreasury);
-    console.log("streamingAccount", streamingAccountStreams);
-    setIsStreamingAccountDetails(true);
+    // setTreasuryDetail(streamingTreasury);
+    // console.log("streamingAccount", streamingAccountStreams);
+    // setIsStreamingAccountDetails(true);
+
+    if (streamingTreasury) {
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${streamingTreasury.id as string}`;
+
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig&v=details`;
+      } else {
+        url += `?v=streams`;
+      }
+  
+      navigate(url);
+    }
+
   }
 
   const returnFromIncomingStreamDetailsHandler = () => {
@@ -4555,7 +4715,15 @@ export const AccountsNewView = () => {
   }
 
   const returnFromStreamingAccountDetailsHandler = () => {
-    setIsStreamingAccountDetails(false);
+    // setIsStreamingAccountDetails(false);
+
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+
+    if (inspectedAccountType && inspectedAccountType === "multisig") {
+      url += `?account-type=multisig`;
+    }
+
+    navigate(url);
   }
 
   return (
@@ -4820,7 +4988,7 @@ export const AccountsNewView = () => {
                           <div className="scroll-wrapper vertical-scroll">
                             <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
                             <div id="streams-refresh-reset-cta" onClick={onRefreshStreamsReset}></div>
-                            {!pathParamStreamId && !isStreamingAccountDetails ? (
+                            {!pathParamStreamId && !pathParamTreasuryId ? (
                               <MoneyStreamsInfoView
                                 onSendFromIncomingStreamInfo={goToStreamIncomingDetailsHandler}
                                 onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
@@ -4828,6 +4996,8 @@ export const AccountsNewView = () => {
                                 streamList={streamList}
                                 accountAddress={accountAddress}
                                 selectedTab={pathParamStreamingTab}
+                                autocloseTreasuries={autocloseTreasuries}
+                                treasuryList={treasuryList}
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                               <MoneyStreamsIncomingView
@@ -4841,10 +5011,10 @@ export const AccountsNewView = () => {
                                 streamList={streamList}
                                 onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
                               />
-                            ) : isStreamingAccountDetails ? (
+                            ) : pathParamTreasuryId && pathParamStreamingTab === "outgoing" ? (
                               <StreamingAccountView
                                 streamSelected={streamDetail}
-                                streamingAccountSelected={selectedStreamingAccount}
+                                streamingAccountSelected={treasuryDetail}
                                 streams={selectedStreamingAccountStreams}
                                 onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
                                 onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}

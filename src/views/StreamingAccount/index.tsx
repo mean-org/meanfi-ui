@@ -10,7 +10,7 @@ import {
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
+import { Button, Col, Dropdown, Menu, Modal, Row, Spin, Tabs } from "antd";
 import BN from "bn.js";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -28,7 +28,6 @@ import { OperationType, TransactionStatus } from "../../models/enums";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
 import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
-import { openNotification } from "../../components/Notifications";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
@@ -38,10 +37,12 @@ import { TreasuryStreamsBreakdown } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFundsModal";
 import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+const { TabPane } = Tabs;
 
 export const StreamingAccountView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
@@ -72,12 +73,14 @@ export const StreamingAccountView = (props: {
 
   const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const location = useLocation();
+  const navigate = useNavigate();
   
-  const { streamingAccountSelected, streams, onSendFromStreamingAccountDetails, onSendFromOutgoingStreamInfo  } = props;
+  const { streamingAccountSelected, streams, onSendFromStreamingAccountDetails, onSendFromOutgoingStreamInfo } = props;
 
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
@@ -114,6 +117,22 @@ export const StreamingAccountView = (props: {
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
   }
+
+  const getQueryTabOption = useCallback(() => {
+
+    let tabOptionInQuery: string | null = null;
+    if (searchParams) {
+      tabOptionInQuery = searchParams.get('v');
+      if (tabOptionInQuery) {
+        return tabOptionInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const navigateToTab = useCallback((tab: string) => {
+    setSearchParams({v: tab as string});
+  }, [setSearchParams]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -280,15 +299,6 @@ export const StreamingAccountView = (props: {
     hideTransactionExecutionModal();
     window.location.reload();
   }
-
-  const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching"
-            ? true
-            : false;
-  }, [
-    isBusy,
-    fetchTxInfoStatus,
-  ]);
 
   const isTreasurer = useCallback((): boolean => {
     if (streamingAccountSelected && publicKey) {
@@ -2638,16 +2648,57 @@ export const StreamingAccountView = (props: {
     return (
       <div>{t('treasuries.close-account.close-treasury-confirmation')}</div>
     );
-  }
+  };
+
+  const getStreamingAccountName = useCallback(() => {
+    if (streamingAccountSelected) {
+      const v1 = streamingAccountSelected as TreasuryInfo;
+      const v2 = streamingAccountSelected as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      return isNewTreasury ? v2.name : v1.label;
+    }
+    return "";
+  }, [streamingAccountSelected]);
+
+  const getStreamingAccountContent = useCallback(() => {
+    if (streamingAccountSelected) {
+      const v1 = streamingAccountSelected as TreasuryInfo;
+      const v2 = streamingAccountSelected as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      return isNewTreasury ? v2.id as string : v1.id as string;
+    }
+    return "";
+  }, [streamingAccountSelected]);
+
+  const getStreamingAccountResume = useCallback(() => {
+    if (streamingAccountSelected) {
+      const v1 = streamingAccountSelected as TreasuryInfo;
+      const v2 = streamingAccountSelected as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+
+      const token = isNewTreasury
+      ? v2.associatedToken
+        ? getTokenByMintAddress(v2.associatedToken as string)
+        : undefined
+      : v1.associatedTokenAddress
+        ? getTokenByMintAddress(v1.associatedTokenAddress as string)
+        : undefined;
+
+        if (token) {
+          return getAmountWithSymbol (getTreasuryUnallocatedBalance(), token ? token.address : '');
+        }
+    }
+    return "$0.00";
+  }, [getTokenByMintAddress, getTreasuryUnallocatedBalance, streamingAccountSelected])
 
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={isTxInProgress() || (streams && streams.length > 0) || !isTreasurer()}>
+      <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={(streams && streams.length > 0) || !isTreasurer()}>
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
       {(streamingAccountSelected && streamingAccountSelected.id !== V1_TREASURY_ID.toBase58()) && (
-        <Menu.Item key="ms-01" disabled={isTxInProgress() || !isTreasurer()} onClick={() => onExecuteRefreshTreasuryBalance()}>
+        <Menu.Item key="ms-01" disabled={!isTreasurer()} onClick={() => onExecuteRefreshTreasuryBalance()}>
           <span className="menu-item-text">Refresh account data</span>
         </Menu.Item>
       )}
@@ -2713,35 +2764,32 @@ export const StreamingAccountView = (props: {
     }
   ];
 
-  const v1 = streamingAccountSelected as TreasuryInfo;
-  const v2 = streamingAccountSelected as Treasury;
-
-  const isNewTreasury = streamingAccountSelected && streamingAccountSelected.version >= 2 ? true : false;
-
-
-  const streamAccountTitle = isNewTreasury ? v2.name : v1.label;
-
   const streamAccountSubtitle = <CopyExtLinkGroup
-    content={isNewTreasury ? v2.id as string : v1.id as string}
+    content={getStreamingAccountContent()}
     number={8}
     externalLink={true}
   />;
 
   const streamAccountContent = "Available streaming balance";
 
-  const token = isNewTreasury
-  ? v2.associatedToken
-    ? getTokenByMintAddress(v2.associatedToken as string)
-    : undefined
-  : v1.associatedTokenAddress
-    ? getTokenByMintAddress(v1.associatedTokenAddress as string)
-    : undefined;
-
-  const streamAccountResume = token ? getAmountWithSymbol (getTreasuryUnallocatedBalance(), token ? token.address : '') : "$0.00";
+  const renderTabset = () => {
+    const option = getQueryTabOption() || 'streams'
+    return (
+      <Tabs activeKey={option} onChange={navigateToTab} className="neutral">
+        {tabs.map(item => {
+          return (
+            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
+              {item.render}
+            </TabPane>
+          );
+        })}
+      </Tabs>
+    );
+  }
 
   return (
     <>
-      <div className="">
+      <>
         <Row gutter={[8, 8]} className="safe-details-resume">
           <div onClick={hideDetailsHandler} className="back-button icon-button-container">
             <IconArrowBack className="mean-svg-icons" />
@@ -2751,10 +2799,10 @@ export const StreamingAccountView = (props: {
 
         {streamingAccountSelected && (
           <ResumeItem
-            title={streamAccountTitle}
+            title={getStreamingAccountName()}
             subtitle={streamAccountSubtitle}
             content={streamAccountContent}
-            resume={streamAccountResume}
+            resume={getStreamingAccountResume()}
             isDetailsPanel={true}
             isLink={false}
             isStreamingAccount={true}
@@ -2769,8 +2817,7 @@ export const StreamingAccountView = (props: {
               size="small"
               className="thin-stroke"
               disabled={
-                isTxInProgress() ||
-                (!streamingAccountSelected || !isNewTreasury || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)
+                (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)
               }
               onClick={showCreateStreamModal}>
                 <div className="btn-content">
@@ -2782,7 +2829,6 @@ export const StreamingAccountView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
-              disabled={isTxInProgress()}
               onClick={showAddFundsModal}>
                 <div className="btn-content">
                   Add funds
@@ -2793,10 +2839,7 @@ export const StreamingAccountView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
-              disabled={
-                getTreasuryUnallocatedBalance() <= 0 ||
-                isTxInProgress()
-              }
+              disabled={getTreasuryUnallocatedBalance() <= 0}
               onClick={showTransferFundsModal}>
                 <div className="btn-content">
                   Withdraw funds
@@ -2822,11 +2865,12 @@ export const StreamingAccountView = (props: {
           </Col>
         </Row>
 
-        <TabsMean
+        {/* <TabsMean
           tabs={tabs}
           defaultTab="streams"
-        />
-      </div>
+        /> */}
+        {tabs && renderTabset()}
+      </>
 
       {/* TODO: Here the multisig ID is used */}
       {multisigClient && isCreateStreamModalVisible && (

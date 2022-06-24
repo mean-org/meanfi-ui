@@ -60,6 +60,8 @@ export const MoneyStreamsInfoView = (props: {
   streamList?: Array<Stream | StreamInfo> | undefined;
   accountAddress: string;
   selectedTab: string;
+  autocloseTreasuries: (Treasury | TreasuryInfo)[];
+  treasuryList: (Treasury | TreasuryInfo)[];
 }) => {
   const {
     tokenList,
@@ -82,12 +84,14 @@ export const MoneyStreamsInfoView = (props: {
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
   const {
-    streamList,
+    onSendFromStreamingAccountDetails,
     onSendFromIncomingStreamInfo,
     onSendFromOutgoingStreamInfo,
-    onSendFromStreamingAccountDetails,
+    autocloseTreasuries,
     accountAddress,
+    treasuryList,
     selectedTab,
+    streamList,
   } = props;
 
   const connectionConfig = useConnectionConfig();
@@ -99,7 +103,6 @@ export const MoneyStreamsInfoView = (props: {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
 
@@ -136,15 +139,12 @@ export const MoneyStreamsInfoView = (props: {
   });
 
   // Treasuries related
-  const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
-  const [loadingTreasuries, setLoadingTreasuries] = useState(false);
+  // const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
-  const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
+  // const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
 
   const [treasuryCombinedList, setTreasuryCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
-
-  const [autocloseTreasuries, setAutocloseTreasuries] = useState<(Treasury | TreasuryInfo)[]>([]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -202,44 +202,6 @@ export const MoneyStreamsInfoView = (props: {
     });
   }, [setTransactionStatus]);
 
-  const getAllUserV2Treasuries = useCallback(async () => {
-
-    if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
-
-    let treasuries = await msp.listTreasuries(publicKey);
-
-    if (selectedMultisig && multisigAccounts) {
-
-      const multisigTreasuries: any[] = [];
-
-      const filterMultisigAccounts = selectedMultisig
-        ? [selectedMultisig.authority]
-        : multisigAccounts.map(m => m.authority);
-
-      if (filterMultisigAccounts) {
-        for (const key of filterMultisigAccounts) {
-          multisigTreasuries.push(...(await msp.listTreasuries(key)));
-        }
-      }
-
-      treasuries = multisigTreasuries;
-    }
-
-    const autoclosables = treasuries.filter((t: any) => t.autoClose);
-
-    setAutocloseTreasuries(autoclosables);
-
-    return treasuries.filter((t: any) => !t.autoClose);
-
-  }, [
-    connection, 
-    loadingTreasuries, 
-    msp,
-    selectedMultisig,
-    multisigAccounts,
-    publicKey
-  ]);
-
   // Call only if you have control over every loop
   const getStreamingAccountStreams = useCallback(async (treasuryPk: PublicKey, isNewTreasury: boolean) => {
     if (!publicKey || !ms || !msp || !treasuryPk || !streamList) { return undefined; }
@@ -251,55 +213,6 @@ export const MoneyStreamsInfoView = (props: {
     }
 
   }, [ms, msp, publicKey, streamList]);
-
-  const refreshTreasuries = useCallback((reset = false) => {
-    
-    if (!connection || !publicKey || loadingTreasuries) { return; }
-
-    if (msp && ms && fetchTxInfoStatus !== "fetching") {
-
-      setTimeout(() => {
-        setLoadingTreasuries(true);
-        clearTxConfirmationContext();
-      });
-
-      const treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
-      let treasuriesv1: TreasuryInfo[] = [];
-      getAllUserV2Treasuries()
-        .then(async (treasuriesv2) => {
-          treasuryAccumulator.push(...treasuriesv2);
-          consoleOut('v2 treasuries:', treasuriesv2, 'blue');
-
-          if (!selectedMultisig) {
-            try {
-              treasuriesv1 = await ms.listTreasuries(publicKey);
-            } catch (error) {
-              console.error(error);
-            }
-            consoleOut('v1 treasuries:', treasuriesv1, 'blue');
-            treasuryAccumulator.push(...treasuriesv1);
-          }
-
-          setTreasuryList(treasuryAccumulator);
-          consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
-        })
-        .catch(error => {
-          console.error(error);
-        })
-        .finally(() => setLoadingTreasuries(false));
-    }
-
-  }, [
-    ms,
-    msp,
-    publicKey,
-    connection,
-    selectedMultisig,
-    fetchTxInfoStatus,
-    loadingTreasuries,
-    getAllUserV2Treasuries,
-    clearTxConfirmationContext,
-  ]);
 
   useEffect(() => {
     const getFinalList = async (list: (Treasury | TreasuryInfo)[]) => {
@@ -914,30 +827,30 @@ export const MoneyStreamsInfoView = (props: {
   ]);
 
   // Treasury list refresh timeout
-  useEffect(() => {
-    let timer: any;
+  // useEffect(() => {
+  //   let timer: any;
 
-    if (publicKey && !treasuriesLoaded && !loadingTreasuries) {
-      setTreasuriesLoaded(true);
-      consoleOut("Loading treasuries for the first time");
-      refreshTreasuries(true);
-    }
+  //   if (publicKey && !treasuriesLoaded && !loadingTreasuries) {
+  //     setTreasuriesLoaded(true);
+  //     consoleOut("Loading treasuries for the first time");
+  //     refreshTreasuries(true);
+  //   }
 
-    if (publicKey && treasuriesLoaded && !customStreamDocked) {
-      timer = setInterval(() => {
-        consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
-        refreshTreasuries(false);
-      }, ONE_MINUTE_REFRESH_TIMEOUT);
-    }
+  //   if (publicKey && treasuriesLoaded && !customStreamDocked) {
+  //     timer = setInterval(() => {
+  //       consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+  //       refreshTreasuries(false);
+  //     }, ONE_MINUTE_REFRESH_TIMEOUT);
+  //   }
 
-    return () => clearInterval(timer);
-  }, [
-    publicKey,
-    treasuriesLoaded,
-    loadingTreasuries,
-    customStreamDocked,
-    refreshTreasuries
-  ]);
+  //   return () => clearInterval(timer);
+  // }, [
+  //   publicKey,
+  //   treasuriesLoaded,
+  //   loadingTreasuries,
+  //   customStreamDocked,
+  //   refreshTreasuries
+  // ]);
 
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
     if (item && publicKey && accountAddress) {
