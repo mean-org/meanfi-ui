@@ -3059,7 +3059,7 @@ export const VestingView = () => {
     if (!publicKey || !msp) { return; }
 
     if (vestingContractAddress && selectedVestingContract &&
-        vestingContractAddress === selectedVestingContract.id) {
+        vestingContractAddress === selectedVestingContract.id && selectedToken) {
       // First check if there is already a value for this key in the cache
       // Just get the value from cache if already exists and push it to the state
       // Otherwise fetch it, add it to the cache and push it to the state
@@ -3076,7 +3076,7 @@ export const VestingView = () => {
       msp.getVestingFlowRate(treasuryPk)
       .then(value => {
         const freshFlowRate: VestingFlowRateInfo = {
-          amount: makeDecimal(new BN(value[0]), selectedToken?.decimals || 6),
+          amount: makeDecimal(new BN(value[0]), selectedToken.decimals || 6),
           durationUnit: new BN(value[1]).toNumber()
         };
         consoleOut('flowRate:', freshFlowRate, 'darkgreen');
@@ -3605,8 +3605,10 @@ export const VestingView = () => {
 
                       <div className="asset-category flex-column">
                         <VestingContractList
+                          msp={msp}
                           streamingAccounts={treasuryList}
                           selectedAccount={selectedVestingContract}
+                          loadingVestingAccounts={loadingTreasuries}
                           onAccountSelected={(item: Treasury | undefined) => onSelectVestingContract(item)}
                         />
                       </div>

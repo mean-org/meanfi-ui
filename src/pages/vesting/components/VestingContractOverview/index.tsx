@@ -31,7 +31,7 @@ export const VestingContractOverview = (props: {
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
 
-    // When modal goes visible, set template data
+    // Set template data
     useEffect(() => {
         if (vestingContract && streamTemplate) {
             setTreasuryOption(vestingContract.treasuryType);
