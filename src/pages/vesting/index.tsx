@@ -51,7 +51,7 @@ import { VestingContractSolBalanceModal } from './components/VestingContractSolB
 import { VestingContractAddFundsModal } from './components/TreasuryAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
 import { segmentAnalytics } from '../../App';
-import { AppUsageEvent, SegmentStreamCreateData, SegmentVestingContractCreateData, SegmentVestingContractWithdrawData } from '../../utils/segment-service';
+import { AppUsageEvent, SegmentRefreshAccountBalanceData, SegmentStreamAddFundsData, SegmentStreamCreateData, SegmentVestingContractCloseData, SegmentVestingContractCreateData, SegmentVestingContractWithdrawData } from '../../utils/segment-service';
 import { ZERO_FEES } from '../../models/multisig';
 import { VestingContractCreateStreamModal } from './components/VestingContractCreateStreamModal';
 import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
@@ -1106,8 +1106,16 @@ export const VestingView = () => {
         treasurer: publicKey.toBase58(),                      // treasurer
         treasury: treasury.toBase58()                         // treasury
       }
-
       consoleOut('data:', data);
+
+      // Report event to Segment analytics
+      const segmentData: SegmentVestingContractCloseData = {
+        contractName: selectedVestingContract.name,
+        subCategory: getCategoryLabelByValue(selectedVestingContract.subCategory),
+        type: TreasuryType[selectedVestingContract.treasuryType]
+      };
+      consoleOut('segment data:', segmentData, 'brown');
+      segmentAnalytics.recordEvent(AppUsageEvent.VestingContractCloseFormButton, segmentData);
 
       // Log input data
       transactionLog.push({
@@ -1445,6 +1453,8 @@ export const VestingView = () => {
       const treasury = new PublicKey(selectedVestingContract.id);
       const associatedToken = new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toNumber();
+      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
+
       const data = {
         payer: publicKey.toBase58(),                              // payer
         contributor: publicKey.toBase58(),                        // contributor
@@ -1453,8 +1463,23 @@ export const VestingView = () => {
         stream: params.streamId ? params.streamId : '',
         amount,                                                   // amount
       }
-
       consoleOut('data:', data);
+
+      // Report event to Segment analytics
+      const segmentData: SegmentStreamAddFundsData = {
+        stream: data.stream,
+        contributor: data.contributor,
+        treasury: data.treasury,
+        asset: selectedToken
+          ? `${selectedToken.symbol} [${selectedToken.address}]`
+          : params.associatedToken,
+        assetPrice: price,
+        amount: parseFloat(params.amount),
+        valueInUsd: price * parseFloat(params.amount)
+      };
+      consoleOut('segment data:', segmentData, 'brown');
+      segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
+
 
       // Log input data
       transactionLog.push({
@@ -2480,8 +2505,15 @@ export const VestingView = () => {
         treasurer: publicKey.toBase58(),                      // treasurer
         treasury: treasury.toBase58()                         // treasury
       }
-
       consoleOut('data:', data);
+
+      // Report event to Segment analytics
+      const segmentData: SegmentRefreshAccountBalanceData = {
+        treasurer: data.treasurer,
+        treasury: data.treasury
+      };
+      consoleOut('segment data:', segmentData, 'brown');
+      segmentAnalytics.recordEvent(AppUsageEvent.RefreshAccountBalanceFormButton, segmentData);
 
       // Log input data
       transactionLog.push({

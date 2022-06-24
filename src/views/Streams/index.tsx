@@ -2544,7 +2544,7 @@ export const Streams = () => {
       const treasury = new PublicKey((streamDetail as Stream).treasury as string);
       const associatedToken = new PublicKey(streamDetail.associatedToken as string);
       const amount = addFundsData.tokenAmount;
-      const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
+      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
       setAddFundsPayload(addFundsData);
 
       const data = {
@@ -2553,7 +2553,6 @@ export const Streams = () => {
         stream: stream.toBase58(),                                      // stream
         amount: `${amount.toNumber()} (${addFundsData.amount})`,        // amount
       }
-
       consoleOut('add funds data:', data);
 
       // Report event to Segment analytics

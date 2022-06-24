@@ -95,6 +95,11 @@ export enum AppUsageEvent {
     CreateStreamingAccountSigned = "Create Streaming Account Signed",
     CreateStreamingAccountCompleted = "Create Streaming Account Completed",
     CreateStreamingAccountFailed = "Create Streaming Account Failed",
+    // Refresh account balance
+    RefreshAccountBalanceFormButton = "Refresh account balance form button click",
+    RefreshAccountBalanceSigned = "Refresh account balance Signed",
+    RefreshAccountBalanceCompleted = "Refresh account balance Completed",
+    RefreshAccountBalanceFailed = "Refresh account balance Failed",
     // Vesting contract
     VestingContractCreateFormButton = "Create Vesting contract form button click",
     VestingContractCreateSigned = "Create Vesting contract Signed",
@@ -248,6 +253,17 @@ export interface SegmentStreamCreateData {
 export interface SegmentStreamStatusChangeActionData {
     action: string;
     streamId: string;
+}
+
+export interface SegmentVestingContractCloseData {
+    contractName: string;
+    type: string;
+    subCategory: string;
+}
+
+export interface SegmentRefreshAccountBalanceData {
+    treasurer: string;
+    treasury: string;
 }
 
 ///////////////////
