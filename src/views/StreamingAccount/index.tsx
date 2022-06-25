@@ -63,6 +63,7 @@ export const StreamingAccountView = (props: {
     setTransactionStatus,
     refreshTokenBalance,
     resetContractValues,
+    setSelectedToken,
   } = useContext(AppStateContext);
   const {
     confirmationHistory,
@@ -2471,6 +2472,48 @@ export const StreamingAccountView = (props: {
     refreshTokenBalance
   ]);
 
+  // Automatically update all token balances (in token list)
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      refreshUserBalances();
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    accounts,
+    tokenList,
+    publicKey,
+    connection,
+    refreshUserBalances
+  ]);
+
+  // Auto select a token
+  useEffect(() => {
+
+    if (tokenList && !selectedToken) {
+      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
+    }
+
+    return () => { };
+  }, [
+    tokenList,
+    selectedToken,
+    setSelectedToken
+  ]);
+
   // Set selectedMultisig based on the passed-in multisigAddress in query params
   useEffect(() => {
 
@@ -2679,9 +2722,26 @@ export const StreamingAccountView = (props: {
 
   const getTreasuryUnallocatedBalance = useCallback(() => {
     if (streamingAccountSelected) {
+      const v1 = streamingAccountSelected as TreasuryInfo;
+      const v2 = streamingAccountSelected as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+  
+      const token = isNewTreasury
+      ? v2.associatedToken
+        ? getTokenByMintAddress(v2.associatedToken as string)
+        : undefined
+      : v1.associatedTokenAddress
+        ? getTokenByMintAddress(v1.associatedTokenAddress as string)
+        : undefined;
+
+      if (token) {
+        if (!selectedToken || selectedToken.address !== token.address) {
+          setSelectedToken(token);
+        }
+      }
+
       const decimals = selectedToken ? selectedToken.decimals : 6;
       const unallocated = streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned;
-      const isNewTreasury = streamingAccountSelected.version >= 2 ? true : false;
       const ub = isNewTreasury
         ? makeDecimal(new BN(unallocated), decimals)
         : unallocated;
@@ -2689,8 +2749,10 @@ export const StreamingAccountView = (props: {
     }
     return 0;
   }, [
-    selectedToken,
+    selectedToken, 
     streamingAccountSelected,
+    getTokenByMintAddress, 
+    setSelectedToken,
   ]);
 
   const getTreasuryClosureMessage = () => {
@@ -2733,9 +2795,9 @@ export const StreamingAccountView = (props: {
         ? getTokenByMintAddress(v1.associatedTokenAddress as string)
         : undefined;
 
-        if (token) {
-          return getAmountWithSymbol (getTreasuryUnallocatedBalance(), token ? token.address : '');
-        }
+      if (token) {
+        return getAmountWithSymbol(getTreasuryUnallocatedBalance(), token ? token.address : '');
+      }
     }
     return "$0.00";
   }, [getTokenByMintAddress, getTreasuryUnallocatedBalance, streamingAccountSelected])
