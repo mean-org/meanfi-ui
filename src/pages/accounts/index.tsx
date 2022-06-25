@@ -888,6 +888,8 @@ export const AccountsNewView = () => {
         navigate(url);
       } else if (item.operationType === OperationType.TreasuryAddFunds) {
         softReloadStreams();
+      } else if (item.operationType === OperationType.TreasuryWithdraw) {
+        softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryStreamCreate) {
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryCreate) {

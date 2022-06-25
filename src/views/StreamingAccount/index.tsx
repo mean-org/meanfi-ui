@@ -868,7 +868,7 @@ export const StreamingAccountView = (props: {
 
   const onTreasuryFundsTransferred = () => {
     setIsTransferFundsModalVisible(false);
-    onAfterEveryModalClose();
+    resetTransactionStatus();
   };
 
   const onExecuteTreasuryTransferFundsTx = async (data: any) => {
@@ -881,7 +881,7 @@ export const StreamingAccountView = (props: {
     clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryCreate);
+    setOngoingOperation(OperationType.TreasuryWithdraw);
     setRetryOperationPayload(data);
     setIsBusy(true);
 
@@ -1160,7 +1160,7 @@ export const StreamingAccountView = (props: {
       }
     }
 
-    if (wallet) {
+    if (wallet && streamingAccountSelected && selectedToken) {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -1171,23 +1171,32 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryWithdraw);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryWithdraw,
+              finality: "finalized",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Withdraw ${formatThousands(
+                parseFloat(data.amount),
+                selectedToken.decimals
+              )} ${selectedToken.symbol}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully withdrawn ${formatThousands(
+                parseFloat(data.amount),
+                selectedToken.decimals
+              )} ${selectedToken.symbol}`,
+              extras: streamingAccountSelected.id as string
             });
             onTreasuryFundsTransferred();
             setNeedReloadMultisig(true);
+            setOngoingOperation(undefined);
+            setLoadingStreamingAccountDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
   };
-
-  const onAfterEveryModalClose = useCallback(() => {
-    resetTransactionStatus();
-  },[resetTransactionStatus]);
 
   // Close treasury modal
   const [isCloseTreasuryModalVisible, setIsCloseTreasuryModalVisibility] = useState(false);
@@ -3047,7 +3056,6 @@ export const StreamingAccountView = (props: {
           minRequiredBalance={minRequiredBalance}
           handleOk={onAcceptTreasuryTransferFunds}
           handleClose={() => {
-            onAfterEveryModalClose();
             setIsTransferFundsModalVisible(false);
           }}
           isBusy={isBusy}
