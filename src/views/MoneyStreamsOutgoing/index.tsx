@@ -34,6 +34,7 @@ import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
+import { useParams } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -71,6 +72,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const { endpoint } = useConnectionConfig();
+  const { treasuryId } = useParams();
 
   const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
@@ -84,7 +86,6 @@ export const MoneyStreamsOutgoingView = (props: {
 
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
-  const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
 
   // Copy address to clipboard
@@ -217,14 +218,10 @@ export const MoneyStreamsOutgoingView = (props: {
     if (!connection || !publicKey || !ms || !msp) { return undefined; }
 
     const mspInstance = streamVersion < 2 ? ms : msp;
-    const treasueyPk = new PublicKey(treasuryId);
-
-    setTimeout(() => {
-      setLoadingTreasuryDetails(true);
-    });
+    const treasuryPk = new PublicKey(treasuryId);
 
     try {
-      const details = await mspInstance.getTreasury(treasueyPk);
+      const details = await mspInstance.getTreasury(treasuryPk);
       if (details) {
         setTreasuryDetails(details);
         consoleOut('treasuryDetails:', details, 'blue');
@@ -233,10 +230,7 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoadingTreasuryDetails(false);
     }
-
   }, [
     ms,
     msp,
@@ -2277,15 +2271,14 @@ export const MoneyStreamsOutgoingView = (props: {
 
   // Read treasury data
   useEffect(() => {
-    if (!publicKey || !ms || !msp || !activeStream) { return; }
+    if (!publicKey || !ms || !msp || !streamSelected) { return; }
 
     const timeout = setTimeout(() => {
-      const v1 = activeStream as StreamInfo;
-      const v2 = activeStream as Stream;
+      const v1 = streamSelected as StreamInfo;
+      const v2 = streamSelected as Stream;
       consoleOut('Reading treasury data...', '', 'blue');
       getTreasuryByTreasuryId(
-        activeStream.version < 2 ? v1.treasuryAddress as string : v2.treasury as string,
-          activeStream.version
+        streamSelected.version < 2 ? v1.treasuryAddress as string : v2.treasury as string, streamSelected.version
       );
     });
 
@@ -2293,13 +2286,7 @@ export const MoneyStreamsOutgoingView = (props: {
       clearTimeout(timeout);
     }
 
-  }, [
-    ms,
-    msp,
-    publicKey,
-    activeStream,
-    getTreasuryByTreasuryId
-  ]);
+  }, [ms, msp, publicKey, streamSelected, getTreasuryByTreasuryId, treasuryId]);
 
   useEffect(() => {
     if (!ms || !msp || !streamSelected) {return;}
@@ -2425,9 +2412,11 @@ export const MoneyStreamsOutgoingView = (props: {
           <span className="menu-item-text">View on Solscan</span>
         </a>
       </Menu.Item>
-      <Menu.Item key="mso-02" disabled={isBusy || hasStreamPendingTx()} onClick={showCloseStreamModal}>
-        <span className="menu-item-text">Close stream</span>
-      </Menu.Item>
+      {(getTreasuryType() === "open" || (getTreasuryType() === "locked" && streamSelected && (getStreamStatus(streamSelected) === "Stopped" || getStreamStatus(streamSelected) === "Paused"))) && (
+        <Menu.Item key="mso-02" disabled={isBusy || hasStreamPendingTx()} onClick={showCloseStreamModal}>
+          <span className="menu-item-text">Close stream</span>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
@@ -2445,14 +2434,14 @@ export const MoneyStreamsOutgoingView = (props: {
             hasStreamPendingTx() ||
             isOtp() ||
             (streamSelected && isDeletedStream(streamSelected.id as string)) ||
-            (getTreasuryType() === "locked" && streamSelected && getStreamStatus(streamSelected) === "Running")
+            getTreasuryType() === "locked"
           }
           onClick={showAddFundsModal}>
             <div className="btn-content">
               Add funds
             </div>
         </Button>
-        {streamSelected && (
+        {(streamSelected && getTreasuryType() !== "locked") && (
           (getStreamStatus(streamSelected) === "Paused") ? (
             <Button
               type="default"

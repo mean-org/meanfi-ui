@@ -234,8 +234,6 @@ export const AccountsNewView = () => {
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
 
   // Streaming account
-  // const [isStreamingAccountDetails, setIsStreamingAccountDetails] = useState(false);
-  const [selectedStreamingAccountStreams, setSelectedStreamingAccountStreams] = useState<any>();
   const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
 
   const selectedMultisigRef = useRef(selectedMultisig);
@@ -4643,9 +4641,6 @@ export const AccountsNewView = () => {
   // ];
 
   const goToStreamIncomingDetailsHandler = (stream: any) => {
-    // setIsStreamIncomingDetails(true);
-
-    // /accounts/:address/streaming/:streamingTab/:streamId
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${stream.id as string}`;
 
     if (inspectedAccountType && inspectedAccountType === "multisig") {
@@ -4658,9 +4653,6 @@ export const AccountsNewView = () => {
   }
 
   const goToStreamOutgoingDetailsHandler = (stream: any) => {
-    // setIsStreamOutgoingDetails(true);
-
-    // /accounts/:address/streaming/:streamingTab/:streamId
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/${stream.id as string}`;
 
     if (inspectedAccountType && inspectedAccountType === "multisig") {
@@ -4672,12 +4664,7 @@ export const AccountsNewView = () => {
     navigate(url);
   }
 
-  const goToStreamingAccountDetailsHandler = (streamingAccountStreams: any, streamingTreasury: Treasury | TreasuryInfo | undefined) => {
-    setSelectedStreamingAccountStreams(streamingAccountStreams);
-    // setTreasuryDetail(streamingTreasury);
-    // console.log("streamingAccount", streamingAccountStreams);
-    // setIsStreamingAccountDetails(true);
-
+  const goToStreamingAccountDetailsHandler = (streamingTreasury: Treasury | TreasuryInfo | undefined) => {
     if (streamingTreasury) {
       let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${streamingTreasury.id as string}`;
 
@@ -4689,13 +4676,23 @@ export const AccountsNewView = () => {
   
       navigate(url);
     }
+  }
 
+  const goToStreamingAccountStreamOutgoingDetailsHandler = (stream: any, streamingTreasury: Treasury | TreasuryInfo | undefined) => {
+    if (streamingTreasury) {
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${streamingTreasury.id as string}/${stream.id as string}`;
+
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig&v=details`;
+      } else {
+        url += `?v=details`;
+      }
+  
+      navigate(url);
+    }
   }
 
   const returnFromIncomingStreamDetailsHandler = () => {
-    // setIsStreamIncomingDetails(false);
-
-    // /accounts/:address/streaming/:streamingTab
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
 
     if (inspectedAccountType && inspectedAccountType === "multisig") {
@@ -4706,10 +4703,12 @@ export const AccountsNewView = () => {
   }
 
   const returnFromOutgoingStreamDetailsHandler = () => {
-    // setIsStreamOutgoingDetails(false);
-
-    // /accounts/:address/streaming/:streamingTab
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+    let url;
+    if (treasuryId !== undefined) {
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId as string}`;
+    } else {
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+    }
 
     if (inspectedAccountType && inspectedAccountType === "multisig") {
       url += `?account-type=multisig`;
@@ -4997,6 +4996,7 @@ export const AccountsNewView = () => {
                                 onSendFromIncomingStreamInfo={goToStreamIncomingDetailsHandler}
                                 onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
                                 onSendFromStreamingAccountDetails={goToStreamingAccountDetailsHandler}
+                                onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
                                 streamList={streamList}
                                 accountAddress={accountAddress}
                                 selectedTab={pathParamStreamingTab}
@@ -5006,8 +5006,8 @@ export const AccountsNewView = () => {
                             ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                               <MoneyStreamsIncomingView
                                 streamSelected={streamDetail}
-                                onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                                 accountAddress={accountAddress}
+                                onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
                               <MoneyStreamsOutgoingView
@@ -5019,9 +5019,8 @@ export const AccountsNewView = () => {
                               <StreamingAccountView
                                 streamSelected={streamDetail}
                                 streamingAccountSelected={treasuryDetail}
-                                streams={selectedStreamingAccountStreams}
                                 onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
-                                onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
+                                onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
                               />
                             ) : null}
                           </div>

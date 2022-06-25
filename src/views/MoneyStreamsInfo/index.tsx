@@ -57,6 +57,7 @@ export const MoneyStreamsInfoView = (props: {
   onSendFromIncomingStreamInfo?: any;
   onSendFromOutgoingStreamInfo?: any;
   onSendFromStreamingAccountDetails?: any;
+  onSendFromStreamingAccountOutgoingStreamInfo?: any;
   streamList?: Array<Stream | StreamInfo> | undefined;
   accountAddress: string;
   selectedTab: string;
@@ -85,6 +86,7 @@ export const MoneyStreamsInfoView = (props: {
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
   const {
+    onSendFromStreamingAccountOutgoingStreamInfo,
     onSendFromStreamingAccountDetails,
     onSendFromIncomingStreamInfo,
     onSendFromOutgoingStreamInfo,
@@ -773,7 +775,6 @@ export const MoneyStreamsInfoView = (props: {
 
     const timeout = setTimeout(() => {
       if (streamList && treasuryList && !hasMoneyStreamPendingTx()) {
-        console.log("Stop loading ...");
         setLoadingMoneyStreamsDetails(false);
       }
     }, 1000);
@@ -1523,7 +1524,7 @@ export const MoneyStreamsInfoView = (props: {
       
                   const onSelectedStreamingAccount = () => {
                     // Sends outgoing stream value to the parent component "Accounts"
-                    onSendFromStreamingAccountDetails(streaming.streams, streaming.treasury);
+                    onSendFromStreamingAccountDetails(streaming.treasury);
                   }
       
                   const state = isNewTreasury
@@ -1566,7 +1567,7 @@ export const MoneyStreamsInfoView = (props: {
                         streaming.streams.map((stream, index) => {
                           const onSelectStream = () => {
                             // Sends outgoing stream value to the parent component "Accounts"
-                            onSendFromOutgoingStreamInfo(stream);
+                            onSendFromStreamingAccountOutgoingStreamInfo(stream, streaming.treasury);
                           };
       
                           const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";

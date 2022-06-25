@@ -37,9 +37,8 @@ import { TreasuryStreamsBreakdown } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFundsModal";
 import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
-import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -47,9 +46,8 @@ const { TabPane } = Tabs;
 export const StreamingAccountView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
   streamingAccountSelected: Treasury | TreasuryInfo | undefined;
-  streams: Array<Stream | StreamInfo> | undefined;
   onSendFromStreamingAccountDetails?: any;
-  onSendFromOutgoingStreamInfo?: any;
+  onSendFromStreamingAccountOutgoingStreamInfo?: any;
 }) => {
   const {
     tokenList,
@@ -78,18 +76,19 @@ export const StreamingAccountView = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
-  const { address } = useParams();
+  const { treasuryId } = useParams();
   const location = useLocation();
-  const navigate = useNavigate();
   
-  const { streamingAccountSelected, streams, onSendFromStreamingAccountDetails, onSendFromOutgoingStreamInfo } = props;
+  const { streamingAccountSelected, onSendFromStreamingAccountDetails, onSendFromStreamingAccountOutgoingStreamInfo } = props;
 
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
-  // Treasuries
+  // Streaming account
   const [highlightedStream, sethHighlightedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamStats, setStreamStats] = useState<TreasuryStreamsBreakdown | undefined>(undefined);
   const [loadingStreamingAccountDetails, setLoadingStreamingAccountDetails] = useState(true);
+  const [streamingAccountStreams, setStreamingAccountStreams] = useState<Array<Stream | StreamInfo> | undefined>(undefined);
+  const [loadingStreamingAccountStreams, setLoadingStreamingAccountStreams] = useState(true);
 
   // Transactions
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -2443,10 +2442,10 @@ export const StreamingAccountView = (props: {
   }, [confirmationHistory, streamingAccountSelected]);
 
   useEffect(() => {
-    if (!streamingAccountSelected) {return;}
+    if (!streamingAccountSelected) { return; }
 
     const timeout = setTimeout(() => {
-      if (streamingAccountSelected && streams && !hasStreamingAccountPendingTx()) {
+      if (streamingAccountSelected && !loadingStreamingAccountStreams && !hasStreamingAccountPendingTx()) {
         setLoadingStreamingAccountDetails(false);
       }
     }, 1000);
@@ -2455,9 +2454,9 @@ export const StreamingAccountView = (props: {
       clearTimeout(timeout);
     }
   }, [
-    hasStreamingAccountPendingTx,
     streamingAccountSelected,
-    streams
+    loadingStreamingAccountStreams,
+    hasStreamingAccountPendingTx,
   ]);
 
   // Keep account balance updated
@@ -2809,12 +2808,68 @@ export const StreamingAccountView = (props: {
       }
     }
     return "$0.00";
-  }, [getTokenByMintAddress, getTreasuryUnallocatedBalance, streamingAccountSelected])
+  }, [getTokenByMintAddress, getTreasuryUnallocatedBalance, streamingAccountSelected]);
+
+  const getStreamingAccountStreams = useCallback((treasuryPk: PublicKey, isNewTreasury: boolean) => {
+    if (!publicKey || !ms) { return; }
+
+    consoleOut('Executing getStreamingAccountStreams...', '', 'blue');
+
+    if (isNewTreasury) {
+      if (msp) {
+        msp.listStreams({treasury: treasuryPk})
+          .then((streams: any) => {
+            consoleOut('treasuryStreams:', streams, 'blue');
+            setStreamingAccountStreams(streams);
+          })
+          .catch((err: any) => {
+            console.error(err);
+            setStreamingAccountStreams([]);
+          })
+          .finally(() => {
+            setLoadingStreamingAccountStreams(false);
+          });
+      }
+    } else {
+      if (ms) {
+        ms.listStreams({treasury: treasuryPk })
+          .then((streams: any) => {
+            consoleOut('treasuryStreams:', streams, 'blue');
+            setStreamingAccountStreams(streams);
+          })
+          .catch((err: any) => {
+            console.error(err);
+            setStreamingAccountStreams([]);
+          })
+          .finally(() => {
+            setLoadingStreamingAccountStreams(false);
+          });
+      }
+    }
+  }, [
+    ms,
+    msp,
+    publicKey
+  ]);
+
+  // Reload streaming account streams whenever the selected streaming account changes
+  useEffect(() => {
+    if (!publicKey || !streamingAccountSelected) { return; }
+
+    if (streamingAccountSelected && streamingAccountSelected.id === treasuryId) {
+      consoleOut('calling getTreasuryStreams...', '', 'blue');
+      const treasuryPk = new PublicKey(treasuryId as string);
+      const isNewTreasury = (streamingAccountSelected as Treasury).version && (streamingAccountSelected as Treasury).version >= 2
+        ? true
+        : false;
+        getStreamingAccountStreams(treasuryPk, isNewTreasury);
+    }
+  }, [ms, publicKey, streamingAccountSelected, getStreamingAccountStreams, treasuryId]);
 
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={hasStreamingAccountPendingTx() || (streams && streams.length > 0) || !isTreasurer()}>
+      <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={hasStreamingAccountPendingTx() || (streamingAccountStreams && streamingAccountStreams.length > 0) || !isTreasurer()}>
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
       {(streamingAccountSelected && streamingAccountSelected.id !== V1_TREASURY_ID.toBase58()) && (
@@ -2832,40 +2887,44 @@ export const StreamingAccountView = (props: {
 
   const renderStreamingAccountStreams = (
     <>
-      {(streams && streams.length > 0) ? (
-        streams.map((stream, index) => {
-          const onSelectStream = () => {
-            // Sends outgoing stream value to the parent component "Accounts"
-            onSendFromOutgoingStreamInfo(stream);
-          };
-  
-          const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
-          const subtitle = getStreamSubtitle(stream);
-          const status = getStreamStatus(stream);
-          const resume = getStreamResume(stream);
-  
-          return (
-            <div 
-              key={index}
-              onClick={onSelectStream}
-              className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-            >
-              <ResumeItem
-                id={index}
-                title={title}
-                subtitle={subtitle}
-                resume={resume}
-                status={status}
-                hasRightIcon={true}
-                rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                isLink={true}
-                isStream={true}
-              />
-            </div>
-          )
-        })
+      {!loadingStreamingAccountStreams ? (
+        (streamingAccountStreams !== undefined && streamingAccountStreams.length > 0) ? (
+          streamingAccountStreams.map((stream, index) => {
+            const onSelectStream = () => {
+              // Sends outgoing stream value to the parent component "Accounts"
+              onSendFromStreamingAccountOutgoingStreamInfo(stream, streamingAccountSelected);
+            };
+    
+            const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+            const subtitle = getStreamSubtitle(stream);
+            const status = getStreamStatus(stream);
+            const resume = getStreamResume(stream);
+    
+            return (
+              <div 
+                key={index}
+                onClick={onSelectStream}
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              >
+                <ResumeItem
+                  id={index}
+                  title={title}
+                  subtitle={subtitle}
+                  resume={resume}
+                  status={status}
+                  hasRightIcon={true}
+                  rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                  isLink={true}
+                  isStream={true}
+                />
+              </div>
+            )
+          })
+        ) : (
+          <span className="pl-1">This streaming account has no streams</span>
+        )
       ) : (
-        <span className="pl-1">This streaming account has no streams</span>
+        <span className="pl-1">Loading streams ...</span>
       )}
     </>
   );
@@ -3034,7 +3093,7 @@ export const StreamingAccountView = (props: {
           isVisible={isAddFundsModalVisible}
           userBalances={userBalances}
           streamStats={streamStats}
-          treasuryStreams={streams}
+          treasuryStreams={streamingAccountStreams}
           associatedToken={
             streamingAccountSelected
               ? (streamingAccountSelected as Treasury).version && (streamingAccountSelected as Treasury).version >= 2
