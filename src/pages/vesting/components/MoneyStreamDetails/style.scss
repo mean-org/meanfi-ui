@@ -2,7 +2,7 @@
   .details-item {
     line-height: 2.2;
   }
-  .transaction-list-row {
+  > .transaction-list-row {
     margin: 0 !important;
     padding: 0 !important;
     border: 0 !important;
@@ -28,6 +28,31 @@
     .info-data {
       color: var(--text-color);
       font-weight: 700;
+    }
+  }
+  .stream-activity-list {
+    .transaction-list-row {
+      .icon-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: 0 0 26px;
+        width: 26px;
+        padding-right: 4px;
+        .mean-svg-icons {
+          width: auto;
+          height: auto;
+        }
+      }
+      .actions-cell {
+        width: 30px;
+        flex: 0 0 30px;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        color: var(--color-secondary-alpha-85);
+        padding-left: 4px;
+      }
     }
   }
 }

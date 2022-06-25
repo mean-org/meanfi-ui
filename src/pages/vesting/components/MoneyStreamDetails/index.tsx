@@ -270,11 +270,11 @@ export const MoneyStreamDetails = (props: {
       if (item.action === 'withdrew') {
         return (
           <ArrowUpOutlined className="mean-svg-icons outgoing" />
-          );
-        } else {
+        );
+      } else {
         return (
           <ArrowDownOutlined className="mean-svg-icons incoming" />
-          );
+        );
       }
     } else {
       if (item.action === 'withdrew') {
@@ -299,67 +299,6 @@ export const MoneyStreamDetails = (props: {
   const getActivityAmount = (item: StreamActivity) => {
     const token = getTokenByMintAddress(item.mint as string);
     return toUiAmount(new BN(item.amount), token?.decimals || 6);
-  }
-
-  const renderActivities = () => {
-    return (
-      <>
-        <Spin spinning={loadingStreamActivity}>
-          {(streamActivity && streamActivity.length > 0) ? (
-            streamActivity.map((item, index) => {
-              return (
-                <a key={`${index + 50}`} target="_blank" rel="noopener noreferrer"
-                  className="transaction-list-row stripped-rows"
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                  <div className="icon-cell">
-                    <div className="token-icon">
-                      {getActivityIcon(item)}
-                    </div>
-                  </div>
-                  <div className="description-cell no-padding">
-                    <div className="title text-truncate">{getActivityAction(item)}</div>
-                    <div className="subtitle text-truncate">{shortenAddress(item.initializer)}</div>
-                  </div>
-                  <div className="rate-cell">
-                    <div className="rate-amount">{
-                      getAmountWithSymbol(
-                        getActivityAmount(item),
-                        item.mint,
-                        false,
-                        splTokenList
-                      )}
-                    </div>
-                    <div className="interval">{getShortDate(item.utcDate as string, true)}</div>
-                  </div>
-                  <div className="actions-cell">
-                    <IconExternalLink className="mean-svg-icons" style={{ width: "15", height: "15" }} />
-                  </div>
-                </a>
-              );
-            })
-          ) : (
-            <>
-              {loadingStreamActivity ? (
-                <p>{t('streams.stream-activity.loading-activity')}</p>
-              ) : (
-                <>
-                  <p>{t('streams.stream-activity.no-activity')}</p>
-                </>
-              )}
-            </>
-          )}
-        </Spin>
-        {streamActivity.length > 0 && hasMoreStreamActivity && (
-          <div className="mt-1 text-center">
-            <span className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
-              role="link"
-              onClick={onLoadMoreActivities}>
-              {t('general.cta-load-more')}
-            </span>
-          </div>
-        )}
-      </>
-    );
   }
 
   const renderReceivingFrom = () => {
@@ -456,6 +395,65 @@ export const MoneyStreamDetails = (props: {
         }
       </>
     )
+  }
+
+  const renderActivities = () => {
+    return (
+      <div className="stream-activity-list">
+        <Spin spinning={loadingStreamActivity}>
+          {(streamActivity && streamActivity.length > 0) ? (
+            streamActivity.map((item, index) => {
+              return (
+                <a key={`${index + 50}`} target="_blank" rel="noopener noreferrer"
+                  className="transaction-list-row stripped-rows"
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                  <div className="icon-cell">
+                    {getActivityIcon(item)}
+                  </div>
+                  <div className="description-cell no-padding">
+                    <div className="title text-truncate">{getActivityAction(item)}</div>
+                    <div className="subtitle text-truncate">{shortenAddress(item.initializer)}</div>
+                  </div>
+                  <div className="rate-cell">
+                    <div className="rate-amount">{
+                      getAmountWithSymbol(
+                        getActivityAmount(item),
+                        item.mint,
+                        false,
+                        splTokenList
+                      )}
+                    </div>
+                    <div className="interval">{getShortDate(item.utcDate as string, true)}</div>
+                  </div>
+                  <div className="actions-cell">
+                    <IconExternalLink className="mean-svg-icons" style={{ width: "15", height: "15" }} />
+                  </div>
+                </a>
+              );
+            })
+          ) : (
+            <>
+              {loadingStreamActivity ? (
+                <p>{t('streams.stream-activity.loading-activity')}</p>
+              ) : (
+                <>
+                  <p>{t('streams.stream-activity.no-activity')}</p>
+                </>
+              )}
+            </>
+          )}
+        </Spin>
+        {streamActivity.length > 0 && hasMoreStreamActivity && (
+          <div className="mt-1 text-center">
+            <span className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
+              role="link"
+              onClick={onLoadMoreActivities}>
+              {t('general.cta-load-more')}
+            </span>
+          </div>
+        )}
+      </div>
+    );
   }
 
   // Tab details
