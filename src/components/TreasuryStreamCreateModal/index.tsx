@@ -51,6 +51,7 @@ import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, DEFAULT_EXPIRATION_TIME_SECONDS } from '@mean-dao/mean-multisig-sdk';
 import { InfoIcon } from '../InfoIcon';
+import { useSearchParams } from 'react-router-dom';
 
 const { Option } = Select;
 
@@ -71,6 +72,7 @@ export const TreasuryStreamCreateModal = (props: {
   userBalances: any;
 }) => {
   const { t } = useTranslation('common');
+  const [searchParams] = useSearchParams();
   const { wallet, publicKey } = useWallet();
   const { endpoint } = useConnectionConfig();
   const { treasuryOption } = useContext(AppStateContext);
@@ -360,7 +362,7 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.verified-recipient-unchecked')
       : props.nativeBalance < getMinBalanceRequired()
         ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-        : t('transactions.validation.valid-approve');
+        : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
   };
 
   const getTransactionStartButtonLabelInLocked = (): string => {
@@ -390,7 +392,7 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.verified-recipient-unchecked')
       : props.nativeBalance < getMinBalanceRequired()
         ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-        : t('transactions.validation.valid-approve');
+        : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
   };
 
   const getPaymentSettingsButtonLabel = (): string => {
@@ -1351,10 +1353,23 @@ export const TreasuryStreamCreateModal = (props: {
     </Menu>
   );
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
+
   return (
     <Modal
       className="mean-modal treasury-stream-create-modal"
-      title={(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
+      title={(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (<div className="modal-title">{param === "multisig" ? "Propose stream to the account" : t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
       maskClosable={false}
       footer={null}
       visible={props.isVisible}
