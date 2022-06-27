@@ -1321,7 +1321,7 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       name: "Balance (My TVL)",
-      value: toUsCurrency(withdrawalBalance + unallocatedBalance),
+      value: (withdrawalBalance && unallocatedBalance) ? toUsCurrency(withdrawalBalance + unallocatedBalance) : "$0.00",
       content: renderBalance
     }
   ];
