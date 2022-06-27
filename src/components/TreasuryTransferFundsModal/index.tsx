@@ -21,6 +21,7 @@ import { BN } from 'bn.js';
 import { StreamTreasuryType } from '../../models/treasuries';
 
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { useSearchParams } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -35,6 +36,7 @@ export const TreasuryTransferFundsModal = (props: {
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
 }) => {
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const {
@@ -348,10 +350,23 @@ export const TreasuryTransferFundsModal = (props: {
     );
   };
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
+
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('treasuries.withdraw-funds.modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Propose withdrawal" : t('treasuries.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       visible={props.isVisible}
@@ -636,9 +651,9 @@ export const TreasuryTransferFundsModal = (props: {
                   }
                 }}>
                 {props.isBusy
-                  ? t('multisig.transfer-tokens.main-cta-busy')
+                  ? ('multisig.transfer-tokens.main-cta-busy')
                   : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? t('treasuries.withdraw-funds.main-cta')
+                    ? (param === "multisig" ? "Submit proposal" : t('treasuries.withdraw-funds.main-cta'))
                     : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                       ? t('general.cta-finish')
                       : t('general.refresh')
