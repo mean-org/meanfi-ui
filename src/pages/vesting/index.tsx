@@ -21,6 +21,7 @@ import {
   Category,
   SubCategory,
   TreasuryType,
+  VestingTreasuryActivity,
 } from '@mean-dao/msp';
 import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -142,6 +143,9 @@ export const VestingView = () => {
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [vestingContractFlowRate, setVestingContractFlowRate] = useState<VestingFlowRateInfo | undefined>(undefined);
   const [loadingVestingContractFlowRate, setLoadingVestingContractFlowRate] = useState(false);
+  const [loadingContractActivity, setLoadingContractActivity] = useState(false);
+  const [contractActivity, setContractActivity] = useState<VestingTreasuryActivity[]>([]);
+  const [hasMoreContractActivity, setHasMoreContractActivity] = useState<boolean>(true);
 
   /////////////////////////
   //  Setup & Init code  //
@@ -597,6 +601,48 @@ export const VestingView = () => {
 
     return 0;
   }, [getTokenByMintAddress, selectedVestingContract]);
+
+  const getContractActivity = useCallback((streamId: string, clearHistory = false) => {
+    if (!streamId || !msp || loadingContractActivity) {
+      return;
+    }
+
+    consoleOut('Loading stream activity...', '', 'crimson');
+
+    setLoadingContractActivity(true);
+    const streamPublicKey = new PublicKey(streamId);
+
+    const before = clearHistory
+      ? ''
+      : contractActivity && contractActivity.length > 0
+        ? contractActivity[contractActivity.length - 1].signature
+        : '';
+    consoleOut('before:', before, 'crimson');
+    msp.listVestingTreasuryActivity(streamPublicKey, before, 5)
+      .then(value => {
+        consoleOut('VC Activity:', value);
+        const activities = clearHistory
+          ? []
+          : contractActivity && contractActivity.length > 0
+            ? JSON.parse(JSON.stringify(contractActivity))
+            : [];
+
+        if (value && value.length > 0) {
+          activities.push(...value);
+          setHasMoreContractActivity(true);
+        } else {
+          setHasMoreContractActivity(false);
+        }
+        setContractActivity(activities);
+      })
+      .catch(err => {
+        console.error(err);
+        setContractActivity([]);
+        setHasMoreContractActivity(false);
+      })
+      .finally(() => setLoadingContractActivity(false));
+
+  }, [loadingContractActivity, msp, contractActivity]);
 
 
   //////////////
@@ -3030,6 +3076,9 @@ export const VestingView = () => {
         if (item) {
           setSelectedVestingContract(item);
           setSignalRefreshTreasuryStreams(true);
+          // Clear previous data related to stream activity
+          setContractActivity([]);
+          setHasMoreContractActivity(true);
           consoleOut('selectedVestingContract:', item, 'blue');
           if (autoOpenDetailsPanel) {
             setDtailsPanelOpen(true);
@@ -3254,6 +3303,14 @@ export const VestingView = () => {
     }
   }, [msp, publicKey, selectedVestingContract]);
 
+  // Get the Vesting contract activity while in "activity" tab
+  useEffect(() => {
+    if (publicKey && msp && selectedVestingContract && accountDetailTab === "activity" && contractActivity.length < 5) {
+      getContractActivity(selectedVestingContract.id as string);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountDetailTab, msp, publicKey, selectedVestingContract]);
+
   // Hook on wallet connect/disconnect
   useEffect(() => {
 
@@ -3267,6 +3324,13 @@ export const VestingView = () => {
         confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
         consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
         setCanSubscribe(true);
+        // Cleanup state
+        setAccountAddress('');
+        setVestingContractAddress('');
+        setAccountDetailTab(undefined);
+        setInspectedAccountType(undefined);
+        setSelectedVestingContract(undefined);
+        setStreamTemplate(undefined);
       }
     }
 
@@ -3315,6 +3379,11 @@ export const VestingView = () => {
 
   const onNeedReloadMultisigs = () => {
     setNeedReloadMultisig(true);
+  }
+
+  const loadMoreActivity = () => {
+    if (!vestingContractAddress) { return; }
+    getContractActivity(vestingContractAddress);
   }
 
 
@@ -3424,8 +3493,10 @@ export const VestingView = () => {
         </TabPane>
         <TabPane tab="Activity" key={"activity"}>
           <VestingContractActivity
-            param1="list item 1"
-            param2="list item 2"
+            contractActivity={contractActivity}
+            hasMoreStreamActivity={hasMoreContractActivity}
+            loadingStreamActivity={loadingContractActivity}
+            onLoadMoreActivities={loadMoreActivity}
           />
         </TabPane>
       </Tabs>
