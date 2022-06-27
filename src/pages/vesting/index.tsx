@@ -376,9 +376,26 @@ export const VestingView = () => {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
+
+    const hardReloadContracts = () => {
+      const contractsRefreshCta = document.getElementById("hard-refresh-contracts-cta");
+      if (contractsRefreshCta) {
+        contractsRefreshCta.click();
+      }
+    };
+
     if (item) {
       consoleOut("onTxTimedout event executed:", item, 'crimson');
       recordTxConfirmation(item.signature, item.operationType, false);
+      if (item.operationType === OperationType.TreasuryCreate) {
+        openNotification({
+          title: 'Create vesting contract status',
+          description: 'The transaction to create the vesting contract was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully created.',
+          duration: null,
+          type: "info",
+          handleClose: () => hardReloadContracts()
+        });
+      }
     }
   }, [
     recordTxConfirmation,
