@@ -1,0 +1,35 @@
+import React, { useEffect, useState } from 'react';
+import { Modal } from "antd";
+import { useTranslation } from "react-i18next";
+import { RepeatingPayment } from '../../views';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { UserTokenAccount } from '../../models/transactions';
+
+export const CreateStreamModal = (props: {
+  handleClose: any;
+  isVisible: boolean;
+  selectedToken: UserTokenAccount | undefined;
+}) => {
+  const { isVisible, handleClose, selectedToken } = props;
+  const { t } = useTranslation("common");
+  const [token, setToken] = useState<TokenInfo | undefined>(undefined);
+
+  useEffect(() => {
+    if (isVisible && selectedToken) {
+      setToken(selectedToken);
+    }
+  }, [isVisible, selectedToken]);
+
+  return (
+    <Modal
+      className="mean-modal simple-modal"
+      title={<div className="modal-title">{t("transfers.create-money-stream-modal-title")}</div>}
+      footer={null}
+      visible={isVisible}
+      onOk={handleClose}
+      onCancel={handleClose}
+      width={480}>
+        <RepeatingPayment inModal={true} transferCompleted={props.handleClose} token={token} tokenChanged={(t: TokenInfo) => setToken(t)} />
+    </Modal>
+  );
+};

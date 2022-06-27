@@ -898,6 +898,8 @@ export const AccountsNewView = () => {
         navigate(url);
       } else if (item.operationType === OperationType.TreasuryRefreshBalance) {
         softReloadStreams();
+      } else if (item.operationType === OperationType.Transfer) {
+        softReloadStreams();
       }
     }
     resetTransactionStatus();

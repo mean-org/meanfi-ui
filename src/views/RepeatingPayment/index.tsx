@@ -104,7 +104,7 @@ export const RepeatingPayment = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
@@ -378,8 +378,8 @@ export const RepeatingPayment = (props: {
   const handleGoToStreamsClick = useCallback(() => {
     resetContractValues();
     setCurrentStep(0);
-    navigate(STREAMS_ROUTE_BASE_PATH);
-  }, [navigate, resetContractValues]);
+    // navigate(STREAMS_ROUTE_BASE_PATH);
+  }, [resetContractValues]);
 
   const recordTxConfirmation = useCallback((signature: string, success = true) => {
     const event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
@@ -1125,7 +1125,7 @@ export const RepeatingPayment = (props: {
               transferCompleted();
               if (location.pathname !== STREAMS_ROUTE_BASE_PATH) {
                 setSelectedStream(undefined);
-                navigate(STREAMS_ROUTE_BASE_PATH);
+                // navigate(STREAMS_ROUTE_BASE_PATH);
               }
             }
           } else { setIsBusy(false); }
@@ -1160,7 +1160,7 @@ export const RepeatingPayment = (props: {
     setSelectedStream,
     transferCompleted,
     getFeeAmount,
-    navigate,
+    // navigate,
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {

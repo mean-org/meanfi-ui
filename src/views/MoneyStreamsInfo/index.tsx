@@ -45,6 +45,8 @@ import BN from "bn.js";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamOpenModal } from "../../components/StreamOpenModal";
+import { SendAssetModal } from "../../components/SendAssetModal";
+import { CreateStreamModal } from "../../components/CreateStreamModal";
 
 const { TabPane } = Tabs;
 
@@ -322,9 +324,36 @@ export const MoneyStreamsInfoView = (props: {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
 
+  const isMultisigTreasury = useCallback((treasury?: any) => {
+
+    const treasuryInfo: any = treasury ?? treasuryDetails;
+  
+    if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
+      return false;
+    }
+  
+    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
+  
+    if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
+      return true;
+    }
+  
+    return false;
+  
+  }, [
+    multisigAccounts, 
+    publicKey, 
+    treasuryDetails
+  ]);
+
   //////////////////////
   // MODALS & ACTIONS //
   //////////////////////
+
+  // Send selected token modal
+  const [isCreateMoneyStreamModalOpen, setIsCreateMoneyStreamModalOpen] = useState(false);
+  const hideCreateMoneyStreamModal = useCallback(() => setIsCreateMoneyStreamModalOpen(false), []);
+  const showCreateMoneyStreamModal = useCallback(() => setIsCreateMoneyStreamModalOpen(true), []);
 
   // Create Stream modal
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
@@ -354,28 +383,6 @@ export const MoneyStreamsInfoView = (props: {
     refreshTokenBalance();
     resetTransactionStatus();
   }, [refreshTokenBalance, resetContractValues, resetTransactionStatus]);
-
-  const isMultisigTreasury = useCallback((treasury?: any) => {
-
-    const treasuryInfo: any = treasury ?? treasuryDetails;
-
-    if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
-      return false;
-    }
-
-    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
-
-    if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
-      return true;
-    }
-
-    return false;
-
-  }, [
-    multisigAccounts, 
-    publicKey, 
-    treasuryDetails
-  ]);
 
   // Open stream modal
   const [isOpenStreamModalVisible, setIsOpenStreamModalVisibility] = useState(false);
@@ -1445,7 +1452,7 @@ export const MoneyStreamsInfoView = (props: {
   // Dropdown (three dots button) inside outgoing stream list
   const menu = (
     <Menu>
-      <Menu.Item key="00" onClick={showCreateStreamModal}>
+      <Menu.Item key="00" onClick={showCreateMoneyStreamModal}>
         <span className="menu-item-text">Add outgoing stream</span>
       </Menu.Item>
       <Menu.Item key="01" onClick={showCreateTreasuryModal}>
@@ -1659,7 +1666,7 @@ export const MoneyStreamsInfoView = (props: {
                 shape="round"
                 size="small"
                 className="thin-stroke"
-                onClick={showCreateStreamModal}>
+                onClick={showCreateMoneyStreamModal}>
                   <div className="btn-content">
                     Create stream
                   </div>
@@ -1726,6 +1733,14 @@ export const MoneyStreamsInfoView = (props: {
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts || []}
           multisigAddress={multisigAddress || undefined}
+        />
+      )}
+
+      {isCreateMoneyStreamModalOpen && (
+        <CreateStreamModal
+          selectedToken={undefined}
+          isVisible={isCreateMoneyStreamModalOpen}
+          handleClose={hideCreateMoneyStreamModal}
         />
       )}
     </>
