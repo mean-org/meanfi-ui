@@ -140,7 +140,7 @@ export const VestingContractOverview = (props: {
                         )}
                     </div>
                     <div className="font-size-100 font-extrabold text-uppercase mt-3 mb-2">Vesting Distribution</div>
-                    <div className="font-size-100">{isStartDateFuture(paymentStartDate) ? 'Streams start on' : 'Streams started on'} {getReadableDate(paymentStartDate)}</div>
+                    <div className="font-size-100">{isStartDateFuture(paymentStartDate) ? 'Streams start on' : 'Streams started on'} {getReadableDate(paymentStartDate, true)}</div>
                     <div className="font-size-70 text-italic">{startRemainingTime}</div>
                     <div className="font-size-100 mt-3">{cliffReleasePercentage}% unlocked on commencement date</div>
                     <div className="font-size-100">{100 - cliffReleasePercentage}% of allocated funds streamed equally across {lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)}</div>
