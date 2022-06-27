@@ -4,7 +4,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { cutNumber, formatPercent, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, isValidAddress, toUsCurrency } from '../../../../utils/ui';
+import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isLocal, isValidAddress, toUsCurrency } from '../../../../utils/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
 import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
@@ -335,8 +335,8 @@ export const VestingContractCreateStreamModal = (props: {
 
     // Set payment rate amount
     useEffect(() => {
-        setPaymentRateAmount(cutNumber((parseFloat(fromCoinAmount) - parseFloat(cliffRelease)) / parseFloat(lockPeriodAmount), 6));
-    }, [cliffRelease, fromCoinAmount, lockPeriodAmount]);
+        setPaymentRateAmount(cutNumber((parseFloat(fromCoinAmount) - parseFloat(cliffRelease)) / parseFloat(lockPeriodAmount), selectedToken?.decimals || 6));
+    }, [cliffRelease, fromCoinAmount, lockPeriodAmount, selectedToken?.decimals]);
 
     // Window resize listener
     useEffect(() => {
@@ -368,6 +368,12 @@ export const VestingContractCreateStreamModal = (props: {
     // Events & validation //
     /////////////////////////
 
+    const getStreamTxDescription = () => {
+        const cliff = `${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol}`;
+        const rate = `${paymentRateAmount} ${selectedToken?.symbol} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
+        return `Stream to send ${rate} with ${cliff} released on commencement has been scheduled.`;
+    }
+
     const onStreamCreateClick = () => {
         const options: VestingContractStreamCreateOptions = {
             streamName: vestingStreamName,
@@ -376,7 +382,8 @@ export const VestingContractCreateStreamModal = (props: {
             sendRate: getPaymentRateLabel(lockPeriodFrequency, lockPeriodAmount),
             feePayedByTreasurer: isFeePaidByTreasurer,
             rateAmount: parseFloat(paymentRateAmount),
-            interval: getPaymentRateOptionLabel(lockPeriodFrequency, t)
+            interval: getPaymentRateOptionLabel(lockPeriodFrequency, t),
+            txDescription: getStreamTxDescription()
         };
         handleOk(options);
     }
@@ -740,22 +747,22 @@ export const VestingContractCreateStreamModal = (props: {
 
                     <Row className="mb-2 px-1">
                         <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}  </strong> {recipientAddress ? recipientAddress : "--"}
+                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}</strong> {recipientAddress ? recipientAddress : "--"}
                         </Col>
                         <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), 6)} ${selectedToken && selectedToken.symbol}` : "--"}
+                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}</strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), selectedToken?.decimals || 6)} ${selectedToken?.symbol}` : "--"}
                         </Col>
                         <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}  </strong> {
+                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}</strong> {
                                 paymentStartDate
                                 ? isStartDateFuture(paymentStartDate)
-                                    ? paymentStartDate
+                                    ? getReadableDate(paymentStartDate, true)
                                     : t('vesting.create-stream.start-immediately')
                                 : '--'
                             }
                         </Col>
                         <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.symbol} (on commencement)`) : "--"}
+                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}</strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol} (on commencement)`) : "--"}
                         </Col>
                         <Col span={24}>
                             <strong>Amount to be streamed: </strong>

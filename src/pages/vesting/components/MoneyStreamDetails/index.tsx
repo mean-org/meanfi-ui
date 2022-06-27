@@ -52,6 +52,16 @@ export const MoneyStreamDetails = (props: {
     setTabOption(tab as StreamDetailTab);
   }, []);
 
+  const isStartDateFuture = useCallback((date: string): boolean => {
+    const now = new Date().toUTCString();
+    const nowUtc = new Date(now);
+    const comparedDate = new Date(date);
+    if (comparedDate > nowUtc) {
+      return true;
+    }
+    return false;
+  }, []);
+
   const getStreamTypeIcon = useCallback(() => {
     if (isInboundStream) {
       return (
@@ -459,8 +469,8 @@ export const MoneyStreamDetails = (props: {
   // Tab details
   const detailsData = [
     {
-      label: "Started on:",
-      value: stream ? moment(stream.startUtc).format("LLL").toLocaleString() : "--"
+      label: stream ? isStartDateFuture(stream.startUtc as string) ? "Starting on:" : "Started on:" : "--",
+      value: stream ? getReadableDate(stream.startUtc as string, true) : "--"
     },
     {
       label: isInboundStream && "Receiving from:",

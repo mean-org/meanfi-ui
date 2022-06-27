@@ -35,7 +35,7 @@ import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isMobile } from 'react-device-detect';
 import { MetaInfoCta, TreasuryTopupParams } from '../../models/common-types';
-import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
+import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import { VestingContractCreateForm } from './components/VestingContractCreateForm';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
@@ -79,6 +79,7 @@ export const VestingView = () => {
     setPendingMultisigTxCount,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
+    setLockPeriodFrequency,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
@@ -665,11 +666,13 @@ export const VestingView = () => {
 
   const clearFormValues = useCallback(() => {
     setIsVerifiedRecipient(false);
+    const today = new Date().toLocaleDateString("en-US");
+    setLockPeriodFrequency(PaymentRateType.PerMonth);
+    setPaymentStartDate(today);
     setRecipientAddress('');
     setLockPeriodAmount('');
-    setPaymentStartDate('');
     setFromCoinAmount('');
-  }, [setFromCoinAmount, setIsVerifiedRecipient, setLockPeriodAmount, setPaymentStartDate, setRecipientAddress]);
+  }, [setFromCoinAmount, setIsVerifiedRecipient, setLockPeriodAmount, setLockPeriodFrequency, setPaymentStartDate, setRecipientAddress]);
 
 
   //////////////
@@ -2079,7 +2082,7 @@ export const VestingView = () => {
               loadingTitle: "Confirming transaction",
               loadingMessage: `Create stream to send ${params.sendRate} on vesting contract ${selectedVestingContract.name}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Stream to send ${params.sendRate} has been created.`,
+              completedMessage: params.txDescription,
               extras: params
             });
             setIsBusy(false);
@@ -3351,8 +3354,7 @@ export const VestingView = () => {
         consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
         setCanSubscribe(true);
         // Cleanup state
-        setAccountAddress('');
-        setVestingContractAddress('');
+        clearFormValues();
         setAccountDetailTab(undefined);
         setInspectedAccountType(undefined);
         setSelectedVestingContract(undefined);
@@ -3368,6 +3370,7 @@ export const VestingView = () => {
     connected,
     publicKey,
     previousWalletConnectState,
+    clearFormValues,
     onTxConfirmed,
     onTxTimedout,
   ]);

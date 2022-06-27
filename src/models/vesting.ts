@@ -99,6 +99,7 @@ export interface VestingContractStreamCreateOptions {
     feePayedByTreasurer: boolean;
     rateAmount: number;
     interval: string;
+    txDescription: string;
 }
 
 export interface CreateVestingStreamParams {
