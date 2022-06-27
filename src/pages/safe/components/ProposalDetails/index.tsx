@@ -613,7 +613,7 @@ export const ProposalDetailsView = (props: {
                   shape="round"
                   size="small"
                   className="thin-stroke d-flex justify-content-center align-items-center"
-                  disabled={!anyoneCanExecuteTx() || hasMultisigPendingProposal}
+                  disabled={hasMultisigPendingProposal || (!isProposer && !anyoneCanExecuteTx())}
                   onClick={() => {
                     const operation = { transaction: selectedProposal }
                     onOperationStarted(operation)

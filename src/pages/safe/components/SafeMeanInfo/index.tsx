@@ -235,59 +235,6 @@ export const SafeMeanInfo = (props: {
     }
   }, [location]);
 
-  // // Update list of txs
-  // useEffect(() => {
-
-  //   if (
-  //     !connection || 
-  //     !publicKey || 
-  //     !multisigClient || 
-  //     !selectedMultisig || 
-  //     !selectedMultisig.id ||
-  //     !assetSelected ||
-  //     !loadingMultisigTxs
-  //   ) { 
-  //     return;
-  //   }
-
-  //   const timeout = setTimeout(() => {
-
-  //     consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
-
-  //     multisigClient
-  //       .getMultisigTransactions(selectedMultisig.id, publicKey)
-  //       .then((txs: MultisigTransaction[]) => {
-  //         consoleOut('selected multisig txs', txs, 'blue');
-  //         const transactions: MultisigTransaction[] = [];
-  //         for (const tx of txs) {
-  //           if (tx.accounts.some((a: any) => a.pubkey.equals(assetSelected.address))) {
-  //             transactions.push(tx);
-  //           }
-  //         }
-  //         setMultisigPendingTxs(transactions);
-  //       })
-  //       .catch((err: any) => {
-  //         console.error("Error fetching all transactions", err);
-  //         setMultisigPendingTxs([]);
-  //         consoleOut('multisig txs:', [], 'blue');
-  //       })
-  //       .finally(() => setLoadingMultisigTxs(false));
-          
-  //   });
-
-  //   return () => {
-  //     clearTimeout(timeout);
-  //   }   
-
-  // }, [
-  //   publicKey, 
-  //   selectedMultisig, 
-  //   connection, 
-  //   multisigClient, 
-  //   loadingMultisigTxs, 
-  //   assetSelected
-  // ]);
-
   // Load/Unload multisig on wallet connect/disconnect
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
