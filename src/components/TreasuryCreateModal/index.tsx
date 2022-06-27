@@ -23,6 +23,7 @@ import { useWallet } from '../../contexts/wallet';
 import { TokenListItem } from '../TokenListItem';
 import { MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { PublicKey } from '@solana/web3.js';
+import { useSearchParams } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -37,6 +38,7 @@ export const TreasuryCreateModal = (props: {
   multisigAccounts: MultisigInfo[];
   multisigAddress?: string;
 }) => {
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const {
     tokenList,
@@ -430,11 +432,24 @@ export const TreasuryCreateModal = (props: {
     </div>
   );
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
+
   return (
     <>
       <Modal
         className="mean-modal simple-modal"
-        title={<div className="modal-title">{t('treasuries.create-treasury.modal-title')}</div>}
+        title={<div className="modal-title">{param === "multisig" ? "Initiate streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
         maskClosable={false}
         footer={null}
         visible={props.isVisible}
@@ -656,8 +671,8 @@ export const TreasuryCreateModal = (props: {
                     ? t('treasuries.create-treasury.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
                       ? enableMultisigTreasuryOption && props.multisigAccounts.length > 0
-                        ? t('treasuries.create-treasury.create-multisig-cta')
-                        : t('treasuries.create-treasury.main-cta')
+                        ? ('treasuries.create-treasury.create-multisig-cta')
+                        : (param === "multisig" ? "Submit proposal" : t('treasuries.create-treasury.main-cta'))
                       : t('general.refresh')
                   }
                 </Button>
