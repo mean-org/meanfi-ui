@@ -631,6 +631,11 @@ export function displayTimestamp(
     return `${dateString} at ${timeString}`;
 }
 
+export const getTimeFromNow = (date: string, withoutSuffix = false): string => {
+    const parsedDate = Date.parse(date);
+    return moment(parsedDate).fromNow(withoutSuffix);
+}
+
 export const getTimeToNow = (date: string): string => {
     const parsedDate = Date.parse(date);
     return moment(parsedDate).toNow(true);

@@ -1,6 +1,5 @@
 import { StreamTemplate, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
-import moment from "moment";
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../../../contexts/appstate';
@@ -62,9 +61,13 @@ export const VestingContractOverview = (props: {
     });
 
     const isStartDateFuture = useCallback((date: string): boolean => {
-        const parsedDate = Date.parse(date);
-        const fromParsedDate = new Date(parsedDate);
-        return fromParsedDate.getDate() > today.getDate() ? true : false;
+        const now = today.toUTCString();
+        const nowUtc = new Date(now);
+        const comparedDate = new Date(date);
+        if (comparedDate > nowUtc) {
+            return true;
+        }
+        return false;
     }, [today]);
 
     /**
@@ -80,47 +83,47 @@ export const VestingContractOverview = (props: {
 
         if (paymentStartDate) {
 
-            // let timedata: TimeData;
-            // const remainingTime: string[] = [];
-
-            // if (isStartDateFuture(paymentStartDate)) {
-            //     timedata = getTimeRemaining(paymentStartDate);
-            // } else {
-            //     timedata = getTimeEllapsed(paymentStartDate);
-            // }
-
-            // if (timedata.days > 0) {
-            //     remainingTime.push(`${timedata.days} ${timedata.days === 1 ? t('general.day') : t('general.days')}`);
-            // }
-            // if (timedata.hours > 0) {
-            //     remainingTime.push(`${timedata.hours} ${timedata.hours === 1 ? t('general.hour') : t('general.hours')}`);
-            // } else {
-            //     if (timedata.days > 0) {
-            //         remainingTime.push(`0 ${t('general.hours')}`);
-            //     }
-            // }
-            // if (timedata.minutes > 0) {
-            //     remainingTime.push(`${timedata.minutes} ${timedata.minutes === 1 ? t('general.minute') : t('general.minutes')}`);
-            // } else {
-            //     if (timedata.hours > 0) {
-            //         remainingTime.push(`0 ${t('general.minutes')}`);
-            //     }
-            // }
-            // if (timedata.seconds > 0) {
-            //     remainingTime.push(`${timedata.seconds} ${timedata.seconds === 1 ? t('general.second') : t('general.seconds')}`);
-            // }
+            let timedata: TimeData;
+            const remainingTime: string[] = [];
 
             if (isStartDateFuture(paymentStartDate)) {
-                setStartRemainingTime(moment(paymentStartDate).fromNow());
+                timedata = getTimeRemaining(paymentStartDate);
             } else {
-                setStartRemainingTime(`Streaming since ${moment(paymentStartDate).fromNow()}`);
+                timedata = getTimeEllapsed(paymentStartDate);
+            }
+
+            if (timedata.days > 0) {
+                remainingTime.push(`${timedata.days} ${timedata.days === 1 ? t('general.day') : t('general.days')}`);
+            }
+            if (timedata.hours > 0) {
+                remainingTime.push(`${timedata.hours} ${timedata.hours === 1 ? t('general.hour') : t('general.hours')}`);
+            } else {
+                if (timedata.days > 0) {
+                    remainingTime.push(`0 ${t('general.hours')}`);
+                }
+            }
+            if (timedata.minutes > 0) {
+                remainingTime.push(`${timedata.minutes} ${timedata.minutes === 1 ? t('general.minute') : t('general.minutes')}`);
+            } else {
+                if (timedata.hours > 0) {
+                    remainingTime.push(`0 ${t('general.minutes')}`);
+                }
+            }
+            if (timedata.seconds > 0) {
+                remainingTime.push(`${timedata.seconds} ${timedata.seconds === 1 ? t('general.second') : t('general.seconds')}`);
             }
 
             // if (isStartDateFuture(paymentStartDate)) {
-            //     setStartRemainingTime(`in ${remainingTime.join(', ')}`);
+            //     setStartRemainingTime(getTimeFromNow(paymentStartDate));
             // } else {
-            //     setStartRemainingTime(`Streaming for ${remainingTime.join(', ')}`);
+            //     setStartRemainingTime(`Streaming since ${getTimeFromNow(paymentStartDate)}`);
             // }
+
+            if (isStartDateFuture(paymentStartDate)) {
+                setStartRemainingTime(`in ${remainingTime.join(', ')}`);
+            } else {
+                setStartRemainingTime(`Streaming for ${remainingTime.join(', ')}`);
+            }
 
         }
 
