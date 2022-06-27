@@ -1459,14 +1459,16 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
+  const param = getQueryAccountType();
+
   // Dropdown (three dots button) inside outgoing stream list
   const menu = (
     <Menu>
       <Menu.Item key="00" onClick={showCreateMoneyStreamModal}>
-        <span className="menu-item-text">Add outgoing stream</span>
+        <span className="menu-item-text">{param === "multisig" ? "Initiate outgoing stream" : "Add outgoing stream"}</span>
       </Menu.Item>
       <Menu.Item key="01" onClick={showCreateTreasuryModal}>
-        <span className="menu-item-text">Add streaming account</span>
+        <span className="menu-item-text">{param === "multisig" ? "Initiate streaming account" : "Add streaming account"}</span>
       </Menu.Item>
     </Menu>
   );
@@ -1678,7 +1680,7 @@ export const MoneyStreamsInfoView = (props: {
                 className="thin-stroke"
                 onClick={showCreateMoneyStreamModal}>
                   <div className="btn-content">
-                    Create stream
+                    {param === "multisig" ? "Initiate stream" : "Create stream"}
                   </div>
               </Button>
               <Button
