@@ -86,14 +86,16 @@ export const VestingContractDetails = (props: {
                         {loadingVestingContractFlowRate ? (
                             <span className="mr-1"><IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/></span>
                         ) : vestingContractFlowRate && vestingContract && selectedToken ? (
-                            <span className="mr-1">Sending {getAmountWithSymbol(
-                                vestingContractFlowRate.amount,
-                                vestingContract.associatedToken as string,
-                                false, splTokenList
-                            )} {getIntervalFromSeconds(vestingContractFlowRate.durationUnit)}</span>
-                        ) : (
-                            <span className="mr-1">--</span>
-                        )}
+                            <>
+                                {vestingContractFlowRate.amount > 0 && (
+                                    <span className="mr-1">Sending {getAmountWithSymbol(
+                                        vestingContractFlowRate.amount,
+                                        vestingContract.associatedToken as string,
+                                        false, splTokenList
+                                    )} {getIntervalFromSeconds(vestingContractFlowRate.durationUnit)}</span>
+                                )}
+                            </>
+                        ) : null}
                         <AddressDisplay
                             address={item.id as string}
                             prefix="("
@@ -116,19 +118,6 @@ export const VestingContractDetails = (props: {
                     <Row gutter={8}>
                         <Col xs={24} sm={17} md={16} lg={17}>
                             {renderStreamingAccount(vestingContract)}
-                            {/* <div className="info-label text-truncate">
-                                {t('treasuries.treasury-detail.treasury-address-label')}
-                            </div>
-                            <div className="transaction-detail-row">
-                                <span className="info-icon">
-                                    <IconShieldOutline className="mean-svg-icons" />
-                                </span>
-                                <div onClick={() => copyAddressToClipboard(vestingContract.id)}
-                                    className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
-                                    style={{ cursor: 'pointer', fontSize: '1.1rem' }}>
-                                    {shortenAddress(vestingContract.id as string, 8)}
-                                </div>
-                            </div> */}
                         </Col>
                         <Col xs={24} sm={7} md={8} lg={7}>
                             <div className="info-label text-truncate line-height-110">

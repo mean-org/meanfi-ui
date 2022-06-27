@@ -34,9 +34,13 @@ export const VestingContractList = (props: {
     const [loadingTemplates, setLoadingTemplates] = useState(false);
 
     const isStartDateFuture = useCallback((date: string): boolean => {
-        const parsedDate = Date.parse(date);
-        const fromParsedDate = new Date(parsedDate);
-        return fromParsedDate.getDate() > today.getDate() ? true : false;
+        const now = today.toUTCString();
+        const nowUtc = new Date(now);
+        const comparedDate = new Date(date);
+        if (comparedDate > nowUtc) {
+            return true;
+        }
+        return false;
     }, [today]);
 
     // Set template data

@@ -3318,8 +3318,8 @@ export const VestingView = () => {
 
   // Get the Vesting contract settings template
   useEffect(() => {
-    if (publicKey && msp && selectedVestingContract) {
-      const pk = new PublicKey(selectedVestingContract.id as string);
+    if (publicKey && msp && vestingContractAddress) {
+      const pk = new PublicKey(vestingContractAddress);
       consoleOut('VC address:', pk.toString(), 'blue');
       msp.getStreamTemplate(pk)
       .then(value => {
@@ -3327,7 +3327,7 @@ export const VestingView = () => {
         setStreamTemplate(value);
       })
     }
-  }, [msp, publicKey, selectedVestingContract]);
+  }, [msp, publicKey, vestingContractAddress]);
 
   // Get the Vesting contract activity while in "activity" tab
   useEffect(() => {
