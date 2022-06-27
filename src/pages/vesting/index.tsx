@@ -3551,17 +3551,20 @@ export const VestingView = () => {
             <h3 className="user-instruction-headline">{t('vesting.user-instruction-headline')}</h3>
           </div>
           <div className="place-transaction-box flat mb-0">
-            <VestingContractCreateForm
-              inModal={false}
-              isBusy={isBusy}
-              token={selectedToken}
-              selectedList={selectedList}
-              userBalances={userBalances}
-              nativeBalance={nativeBalance}
-              onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
-              transactionFees={createVestingContractTxFees}
-              tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
-            />
+            <>
+              <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
+              <VestingContractCreateForm
+                inModal={false}
+                isBusy={isBusy}
+                token={selectedToken}
+                selectedList={selectedList}
+                userBalances={userBalances}
+                nativeBalance={nativeBalance}
+                onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
+                transactionFees={createVestingContractTxFees}
+                tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
+              />
+            </>
           </div>
         </div>
       </div>
@@ -3576,6 +3579,7 @@ export const VestingView = () => {
     selectedToken,
     createVestingContractTxFees,
     onAcceptCreateVestingContract,
+    refreshVestingContracts,
     setSelectedToken,
     t,
   ]);
@@ -3657,7 +3661,7 @@ export const VestingView = () => {
                         </Tooltip>)
                       </span>
                       <Tooltip placement="bottom" title={t('vesting.refresh-tooltip')}>
-                        <span className="icon-button-container simplelink" onClick={() => refreshVestingContracts(true)}>
+                        <span id="hard-refresh-contracts-cta" className="icon-button-container simplelink" onClick={() => refreshVestingContracts(true)}>
                           <Button
                             type="default"
                             shape="circle"
