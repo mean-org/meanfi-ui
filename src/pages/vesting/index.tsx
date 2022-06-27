@@ -82,6 +82,8 @@ export const VestingView = () => {
     getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
+    setLockPeriodAmount,
+    setPaymentStartDate,
     refreshTokenBalance,
     setRecipientAddress,
     setDtailsPanelOpen,
@@ -661,6 +663,14 @@ export const VestingView = () => {
 
   }, [loadingContractActivity, msp, contractActivity]);
 
+  const clearFormValues = useCallback(() => {
+    setIsVerifiedRecipient(false);
+    setRecipientAddress('');
+    setLockPeriodAmount('');
+    setPaymentStartDate('');
+    setFromCoinAmount('');
+  }, [setFromCoinAmount, setIsVerifiedRecipient, setLockPeriodAmount, setPaymentStartDate, setRecipientAddress]);
+
 
   //////////////
   //  Modals  //
@@ -675,7 +685,8 @@ export const VestingView = () => {
     closeVestingContractCreateModal();
     setOngoingOperation(undefined);
     refreshTokenBalance();
-  }, [closeVestingContractCreateModal, refreshTokenBalance]);
+    clearFormValues();
+  }, [clearFormValues, closeVestingContractCreateModal, refreshTokenBalance]);
 
   const onExecuteCreateVestingContractTransaction = useCallback(async (createOptions: VestingContractCreateOptions) => {
     let transaction: Transaction;
@@ -1799,15 +1810,11 @@ export const VestingView = () => {
     onExecuteCreateStreamTransaction(params);
   };
 
-  const closeCreateStreamModal = useCallback((reset = false) => {
+  const closeCreateStreamModal = useCallback(() => {
     resetTransactionStatus();
     setIsCreateStreamModalVisibility(false);
-    if (reset) {
-      setIsVerifiedRecipient(false);
-      setRecipientAddress('');
-      setFromCoinAmount('');
-    }
-  }, [resetTransactionStatus, setFromCoinAmount, setIsVerifiedRecipient, setRecipientAddress]);
+    clearFormValues();
+  }, [clearFormValues, resetTransactionStatus]);
 
   const onExecuteCreateStreamTransaction = async (params: VestingContractStreamCreateOptions) => {
 
@@ -1817,6 +1824,7 @@ export const VestingView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -2075,7 +2083,7 @@ export const VestingView = () => {
               extras: params
             });
             setIsBusy(false);
-            closeCreateStreamModal(true);
+            closeCreateStreamModal();
             setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -2104,6 +2112,7 @@ export const VestingView = () => {
     setIsVestingContractTransferFundsModalVisible(false);
     setOngoingOperation(undefined);
     resetTransactionStatus();
+    clearFormValues();
   };
 
   const onExecuteVestingContractTransferFundsTx = async (params: VestingContractWithdrawOptions) => {
