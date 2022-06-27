@@ -66,6 +66,15 @@ export const VestingContractOverview = (props: {
         return fromParsedDate.getDate() > today.getDate() ? true : false;
     }, [today]);
 
+    /**
+     * Should I use this format?
+     * console.log(moment().endOf('day').fromNow());                // in 9 hours
+     * console.log(moment("2020-04-04 11:45:26.123").fromNow());    // 6 minutes ago
+     * console.log(moment().startOf('hour').fromNow());             // an hour ago
+     * console.log(moment().startOf('day').fromNow());              // 15 hours ago
+     * console.log(moment("20111031", "YYYYMMDD").fromNow());       // 10 years ago
+     */
+
     useEffect(() => {
 
         if (paymentStartDate) {
@@ -85,12 +94,16 @@ export const VestingContractOverview = (props: {
             if (timedata.hours > 0) {
                 remainingTime.push(`${timedata.hours} ${timedata.hours === 1 ? t('general.hour') : t('general.hours')}`);
             } else {
-                remainingTime.push(`${timedata.days > 0 ? '0 ' + t('general.hours') : ''}`);
+                if (timedata.days > 0) {
+                    remainingTime.push(`0 ${t('general.hours')}`);
+                }
             }
             if (timedata.minutes > 0) {
                 remainingTime.push(`${timedata.minutes} ${timedata.minutes === 1 ? t('general.minute') : t('general.minutes')}`);
             } else {
-                remainingTime.push(`${timedata.hours > 0 ? '0 ' + t('general.minutes') : ''}`);
+                if (timedata.hours > 0) {
+                    remainingTime.push(`0 ${t('general.minutes')}`);
+                }
             }
             if (timedata.seconds > 0) {
                 remainingTime.push(`${timedata.seconds} ${timedata.seconds === 1 ? t('general.second') : t('general.seconds')}`);
@@ -99,7 +112,7 @@ export const VestingContractOverview = (props: {
             if (isStartDateFuture(paymentStartDate)) {
                 setStartRemainingTime(`in ${remainingTime.join(', ')}`);
             } else {
-                setStartRemainingTime(`Streamin for ${remainingTime.join(', ')}`);
+                setStartRemainingTime(`Streaming for ${remainingTime.join(', ')}`);
             }
 
         }
