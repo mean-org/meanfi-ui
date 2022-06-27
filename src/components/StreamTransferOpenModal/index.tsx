@@ -7,6 +7,7 @@ import { useWallet } from '../../contexts/wallet';
 import { Stream } from '@mean-dao/msp';
 import { StreamInfo } from '@mean-dao/money-streaming';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
+import { useSearchParams } from 'react-router-dom';
 
 export const StreamTransferOpenModal = (props: {
   handleClose: any;
@@ -15,8 +16,9 @@ export const StreamTransferOpenModal = (props: {
   streamDetail: Stream | StreamInfo | undefined;
 }) => {
   const [address, setAddress] = useState('');
-  const { publicKey } = useWallet();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
+  const { publicKey } = useWallet();
 
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
 
@@ -55,10 +57,23 @@ export const StreamTransferOpenModal = (props: {
     setIsVerifiedRecipient(e.target.checked);
   }
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
+
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">{t('transfer-stream.modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Propose transfer stream" : t('transfer-stream.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptNewAddress}
@@ -112,7 +127,7 @@ export const StreamTransferOpenModal = (props: {
         size="large"
         disabled={!address || !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address) || !isVerifiedRecipient}
         onClick={onAcceptNewAddress}>
-        {!address ? t('transfer-stream.streamid-empty') : t('transfer-stream.streamid-open-cta')}
+        {param === "multisig" ? "Submit proposal" : !address ? t('transfer-stream.streamid-empty') : t('transfer-stream.streamid-open-cta')}
       </Button>
     </Modal>
   );
