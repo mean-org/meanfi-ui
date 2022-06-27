@@ -1214,13 +1214,38 @@ export const MoneyStreamsInfoView = (props: {
       }
     }
 
+    if (treasuryCombinedList) {
+      // eslint-disable-next-line array-callback-return
+      treasuryCombinedList.map(function(streaming) {
+        if (!streaming.streams) { return false; }
+
+        for (const stream of streaming.streams) {
+          const v1 = stream as StreamInfo;
+          const v2 = stream as Stream;
+
+          const isNew = v2.version && v2.version >= 2 ? true : false;
+
+          const token = getTokenByMintAddress(stream.associatedToken as string);
+
+          if (token) {
+            const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+            const fundsLeftInStreamAmount = isNew ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount;
+
+            totalUnallocatedAmount += fundsLeftInStreamAmount * tokenPrice;
+          }
+        }
+      });
+    }
+
     setUnallocatedBalance(totalUnallocatedAmount);
 
   }, [
-    getTokenByMintAddress, 
-    getTokenPriceByAddress, 
-    getTokenPriceBySymbol, 
-    outgoingStreamList
+    getTokenByMintAddress,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    outgoingStreamList,
+    treasuryCombinedList
   ]);
 
   useEffect(() => {
