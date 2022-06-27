@@ -4671,7 +4671,7 @@ export const AccountsNewView = () => {
       let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${streamingTreasury.id as string}`;
 
       if (inspectedAccountType && inspectedAccountType === "multisig") {
-        url += `?account-type=multisig&v=details`;
+        url += `?account-type=multisig&v=streams`;
       } else {
         url += `?v=streams`;
       }
