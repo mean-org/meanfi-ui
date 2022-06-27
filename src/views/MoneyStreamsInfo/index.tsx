@@ -229,8 +229,7 @@ export const MoneyStreamsInfoView = (props: {
         const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2
           ? true
           : false;
-  
-          
+            
         const streamList = await getStreamingAccountStreams(treasuryPk, isNewTreasury);
         
         const listItem: CombinedStreamingAccounts = {
@@ -246,8 +245,25 @@ export const MoneyStreamsInfoView = (props: {
       return finalList;
     }
 
-    if (treasuryList) {
-      getFinalList(treasuryList)
+    const sortedStreamingAccountList = treasuryList.map((streaming) => streaming).sort((a, b) => {
+      const vA1 = a as TreasuryInfo;
+      const vA2 = a as Treasury;
+      const vB1 = b as TreasuryInfo;
+      const vB2 = b as Treasury;
+
+      const isNewTreasury = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
+        ? true
+        : false;
+        
+      if (isNewTreasury) {
+        return vB2.totalStreams - vA2.totalStreams;
+      } else {
+        return vB1.streamsAmount - vA1.streamsAmount;
+      }
+    });
+
+    if (sortedStreamingAccountList) {
+      getFinalList(sortedStreamingAccountList)
         .then(items => {
           consoleOut("finalList", items, "blue");
     
@@ -1527,7 +1543,7 @@ export const MoneyStreamsInfoView = (props: {
               {(treasuryCombinedList && treasuryCombinedList.map((streaming, index) => {
                   const v1 = streaming.treasury as unknown as TreasuryInfo;
                   const v2 = streaming.treasury as Treasury;
-                  const isNewTreasury = streaming.treasury && streaming.treasury.version >= 2 ? true : false;
+                  const isNewTreasury = streaming && streaming.treasury.version >= 2 ? true : false;
       
                   const onSelectedStreamingAccount = () => {
                     // Sends outgoing stream value to the parent component "Accounts"
