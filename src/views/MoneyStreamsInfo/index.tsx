@@ -1128,13 +1128,7 @@ export const MoneyStreamsInfoView = (props: {
 
     setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)));
 
-    const param = getQueryAccountType();
-
-    if (param === "multisig") {
-      setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream)));
-    } else {
-      setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream) && autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress)));
-    }
+    setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream) && autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress)));
   }, [
     publicKey,
     streamList,
