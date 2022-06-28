@@ -3136,16 +3136,7 @@ export const SafeView = () => {
         refreshCta.click();
       }
     };
-
-    const reloadSelectedMultisig = (id: string) => {
-      if (multisigClient && publicKey) {
-        multisigClient
-          .getMultisig(new PublicKey(id))
-          .then((multisig: MultisigInfo | null) => setSelectedMultisig(multisig || undefined))
-          .catch((err: any) => console.error(err));
-      }
-    };
-
+    
     const refreshSelectedProposal = (extras: any) => {
       if (multisigClient && publicKey && extras && extras.multisigId && extras.transactionId) {
         multisigClient
