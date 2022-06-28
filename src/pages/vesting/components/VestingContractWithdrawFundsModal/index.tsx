@@ -8,19 +8,18 @@ import { TransactionStatus } from '../../../../models/enums';
 import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../../../utils/ui';
 import { isError } from '../../../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
-import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
+import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming';
 import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
 import { useWallet } from '../../../../contexts/wallet';
-import { FALLBACK_COIN_IMAGE } from '../../../../constants';
+import { FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { BN } from 'bn.js';
-import { StreamTreasuryType } from '../../../../models/treasuries';
-
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { Identicon } from '../../../../components/Identicon';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { VestingContractWithdrawOptions } from '../../../../models/vesting';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -32,7 +31,7 @@ export const VestingContractWithdrawFundsModal = (props: {
   nativeBalance: number;
   minRequiredBalance: number;
   transactionFees: TransactionFees;
-  treasuryDetails: Treasury | undefined;
+  vestingContract: Treasury | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
   isMultisigTreasury: boolean;
 }) => {
@@ -44,7 +43,7 @@ export const VestingContractWithdrawFundsModal = (props: {
     nativeBalance,
     minRequiredBalance,
     transactionFees,
-    treasuryDetails,
+    vestingContract,
     multisigAccounts,
     isMultisigTreasury,
   } = props;
@@ -53,7 +52,6 @@ export const VestingContractWithdrawFundsModal = (props: {
   const {
     theme,
     tokenBalance,
-    selectedToken,
     isWhitelisted,
     loadingPrices,
     effectiveRate,
@@ -71,37 +69,26 @@ export const VestingContractWithdrawFundsModal = (props: {
   const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
-  const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
 
   const shouldFundFromTreasury = useCallback(() => {
-    if (!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose)) {
+    if (!vestingContract || (vestingContract && vestingContract.autoClose)) {
       return false;
     }
 
     return true;
-  }, [treasuryDetails]);
+  }, [vestingContract]);
 
   const onAcceptWithdrawTreasuryFunds = () => {
     const options: VestingContractWithdrawOptions = {
       amount: withdrawAmount,
       tokenAmount: tokenAmount,
-      destinationAccount: to
+      destinationAccount: to,
+      associatedToken: selectedToken
     };
     handleOk(options);
   }
-
-  useEffect(() => {
-    if (isVisible) {
-      if (multisigAccounts && multisigAccounts.length > 0) {
-        const msAddresses = multisigAccounts.map(ms => ms.id.toBase58());
-        setMultisigAddresses(msAddresses);
-      }
-    }
-  }, [
-    isVisible,
-    multisigAccounts
-  ]);
 
   const onCloseModal = () => {
     consoleOut('onCloseModal called!', '', 'crimson');
@@ -250,18 +237,45 @@ export const VestingContractWithdrawFundsModal = (props: {
   ]);
 
   const isNewTreasury = useCallback(() => {
-    if (treasuryDetails) {
-      const v2 = treasuryDetails as Treasury;
+    if (vestingContract) {
+      const v2 = vestingContract as Treasury;
       return v2.version >= 2 ? true : false;
     }
 
     return false;
-  }, [treasuryDetails]);
+  }, [vestingContract]);
+
+  // Set a working token based on the Vesting Contract's Associated Token
+  useEffect(() => {
+    if (vestingContract) {
+      let token = getTokenByMintAddress(vestingContract.associatedToken as string);
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+      setSelectedToken(token);
+    }
+
+    return () => { }
+  }, [getTokenByMintAddress, vestingContract])
+
+  useEffect(() => {
+    if (isVisible) {
+      if (multisigAccounts && multisigAccounts.length > 0) {
+        const msAddresses = multisigAccounts.map(ms => ms.id.toBase58());
+        setMultisigAddresses(msAddresses);
+      }
+    }
+  }, [
+    isVisible,
+    multisigAccounts
+  ]);
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
-    if (isVisible && treasuryDetails) {
-      const unallocated = treasuryDetails.balance - treasuryDetails.allocationAssigned;
+    if (isVisible && vestingContract) {
+      const unallocated = vestingContract.balance - vestingContract.allocationAssigned;
       const ub = isNewTreasury()
         ? new BN(unallocated)
         : makeInteger(unallocated, selectedToken?.decimals || 6);
@@ -270,14 +284,14 @@ export const VestingContractWithdrawFundsModal = (props: {
     }
   }, [
     isVisible,
-    treasuryDetails,
+    vestingContract,
     selectedToken?.decimals,
     isNewTreasury,
   ]);
 
   const renderTreasury = () => {
-    if (!treasuryDetails) { return null; }
-    const token = getTokenByMintAddress(treasuryDetails.associatedToken as string);
+    if (!vestingContract) { return null; }
+    const token = getTokenByMintAddress(vestingContract.associatedToken as string);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
@@ -290,21 +304,21 @@ export const VestingContractWithdrawFundsModal = (props: {
             {token ? (
               <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
-              <Identicon address={treasuryDetails.associatedToken} style={{ width: "30", height: "30", display: "inline-flex" }} />
+              <Identicon address={vestingContract.associatedToken} style={{ width: "30", height: "30", display: "inline-flex" }} />
             )}
           </div>
         </div>
         <div className="description-cell">
-          {treasuryDetails.name ? (
+          {vestingContract.name ? (
             <div className="title text-truncate">
-              {treasuryDetails.name}
+              {vestingContract.name}
               <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                {treasuryDetails.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+                {vestingContract.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
                 }
               </span>
             </div>
           ) : (
-            <div className="title text-truncate">{shortenAddress(treasuryDetails.id as string, 8)}</div>
+            <div className="title text-truncate">{shortenAddress(vestingContract.id as string, 8)}</div>
           )}
           {isMultisigTreasury && (
             <div className="subtitle text-truncate">{t('treasuries.treasury-list.multisig-treasury-label')}</div>
@@ -312,9 +326,9 @@ export const VestingContractWithdrawFundsModal = (props: {
         </div>
         <div className="rate-cell text-center">
           <div className="rate-amount">
-            {formatThousands(treasuryDetails.totalStreams)}
+            {formatThousands(vestingContract.totalStreams)}
           </div>
-          <div className="interval">{treasuryDetails.totalStreams === 1 ? 'stream' : 'streams'}</div>
+          <div className="interval">{vestingContract.totalStreams === 1 ? 'stream' : 'streams'}</div>
         </div>
       </div>
     );
@@ -340,7 +354,7 @@ export const VestingContractWithdrawFundsModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Transfer from */}
-            {treasuryDetails && (
+            {vestingContract && (
               <div className="mb-3">
                 <div className="form-label">{t('vesting.withdraw-funds.from-vesting-contract')}</div>
                   <div className="well">
@@ -386,7 +400,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                         showCaretDown={false}
                       />
                     )}
-                    {treasuryDetails && treasuryDetails.autoClose ? (
+                    {vestingContract && vestingContract.autoClose ? (
                       <>
                         {selectedToken && tokenBalance ? (
                           <div
@@ -445,12 +459,12 @@ export const VestingContractWithdrawFundsModal = (props: {
               </div>
               <div className="flex-fixed-right">
                 <div className="left inner-label">
-                  {!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose) ? (
+                  {!vestingContract || (vestingContract && vestingContract.autoClose) ? (
                     <span>{t('add-funds.label-right')}:</span>
                   ) : (
                     <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                   )}
-                  {treasuryDetails && treasuryDetails.autoClose ? (
+                  {vestingContract && vestingContract.autoClose ? (
                     <span>
                       {`${tokenBalance && selectedToken
                           ? getTokenAmountAndSymbolByTokenAddress(

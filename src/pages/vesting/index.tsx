@@ -2223,7 +2223,8 @@ export const VestingView = () => {
       const destinationPk = new PublicKey(params.destinationAccount);
       const treasuryPk = new PublicKey(selectedVestingContract.id);
       const amount = params.tokenAmount;
-      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
+      const token = params.associatedToken;
+      const price = token ? getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol) : 0;
 
       // Create a transaction
       const payload = {
@@ -2236,7 +2237,7 @@ export const VestingView = () => {
 
       // Report event to Segment analytics
       const segmentData: SegmentVestingContractWithdrawData = {
-        asset: selectedToken ? selectedToken.symbol : '-',
+        asset: token ? token.symbol : '-',
         assetPrice: price,
         vestingContract: selectedVestingContract.id as string,
         destination: params.destinationAccount,
@@ -2428,7 +2429,7 @@ export const VestingView = () => {
       }
     }
 
-    if (wallet && selectedToken && selectedVestingContract) {
+    if (wallet && params && selectedVestingContract) {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -2447,13 +2448,13 @@ export const VestingView = () => {
               loadingTitle: "Confirming transaction",
               loadingMessage: `Withdraw ${formatThousands(
                 parseFloat(params.amount),
-                selectedToken.decimals
-              )} ${selectedToken.symbol} from vesting contract ${selectedVestingContract.name}`,
+                params.associatedToken?.decimals
+              )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successful withdrawal of ${formatThousands(
                 parseFloat(params.amount),
-                selectedToken.decimals
-              )} ${selectedToken.symbol} from vesting contract ${selectedVestingContract.name}`,
+                params.associatedToken?.decimals
+              )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name}`,
               extras: params
             });
             setIsBusy(false);
@@ -3869,7 +3870,7 @@ export const VestingView = () => {
             isVisible={isVestingContractTransferFundsModalVisible}
             nativeBalance={nativeBalance}
             transactionFees={transactionFees}
-            treasuryDetails={selectedVestingContract}
+            vestingContract={selectedVestingContract}
             isMultisigTreasury={isMultisigTreasury()}
             multisigAccounts={multisigAccounts}
             minRequiredBalance={minRequiredBalance}
