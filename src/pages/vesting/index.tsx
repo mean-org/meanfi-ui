@@ -77,6 +77,7 @@ export const VestingView = () => {
     pendingMultisigTxCount,
     previousWalletConnectState,
     setPendingMultisigTxCount,
+    setHighLightableStreamId,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
     setLockPeriodFrequency,
@@ -1435,6 +1436,7 @@ export const VestingView = () => {
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
+    setHighLightableStreamId(undefined);
     if (vestingContract) {
       getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
         setTransactionFees(value);
@@ -1446,7 +1448,7 @@ export const VestingView = () => {
       });
       setIsAddFundsModalVisibility(true);
     }
-  }, [getTransactionFees, resetTransactionStatus, vestingContract]);
+  }, [getTransactionFees, resetTransactionStatus, setHighLightableStreamId, vestingContract]);
 
   const onAcceptAddFunds = (params: TreasuryTopupParams) => {
     consoleOut('AddFunds params:', params, 'blue');
