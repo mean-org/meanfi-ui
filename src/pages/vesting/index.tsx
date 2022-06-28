@@ -3415,6 +3415,14 @@ export const VestingView = () => {
     getContractActivity(vestingContractAddress);
   }
 
+  const reloadVestingContracts = (manual = false) => {
+    if (manual) {
+      refreshVestingContracts();
+    } else {
+      refreshVestingContracts(true)
+    }
+  }
+
 
   ///////////////
   // Rendering //
@@ -3690,7 +3698,7 @@ export const VestingView = () => {
                         </Tooltip>)
                       </span>
                       <Tooltip placement="bottom" title={t('vesting.refresh-tooltip')}>
-                        <span id="hard-refresh-contracts-cta" className="icon-button-container simplelink" onClick={() => refreshVestingContracts(true)}>
+                        <span id="hard-refresh-contracts-cta" className="icon-button-container simplelink" onClick={() => reloadVestingContracts(true)}>
                           <Button
                             type="default"
                             shape="circle"
