@@ -35,7 +35,8 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
-  PaymentRateTypeOption
+  PaymentRateTypeOption,
+  toUsCurrency
 } from "../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
@@ -76,7 +77,6 @@ export const RepeatingPayment = (props: {
     tokenList,
     userTokens,
     splTokenList,
-    effectiveRate,
     loadingPrices,
     recipientNote,
     fromCoinAmount,
@@ -556,12 +556,13 @@ export const RepeatingPayment = (props: {
   ]);
 
   const getTokenPrice = useCallback(() => {
-    if (!fromCoinAmount || ! effectiveRate) {
+    if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
 
-    return parseFloat(fromCoinAmount) * effectiveRate;
-  }, [effectiveRate, fromCoinAmount]);
+    return parseFloat(fromCoinAmount) * price;
+  }, [fromCoinAmount, selectedToken, getTokenPriceByAddress, getTokenPriceBySymbol]);
 
   const getPaymentRateAmount = useCallback(() => {
 
@@ -894,16 +895,17 @@ export const RepeatingPayment = (props: {
         consoleOut('data:', data);
 
         // Report event to Segment analytics
+        const price = getTokenPrice();
         const segmentData: SegmentStreamRPTransferData = {
           asset: selectedToken?.symbol,
-          assetPrice: effectiveRate,
+          assetPrice: price,
           allocation: parseFloat(fromCoinAmount as string),
           beneficiary: data.beneficiary,
           startUtc: dateFormat(data.startUtc, SIMPLE_DATE_TIME_FORMAT),
           rateAmount: parseFloat(paymentRateAmount as string),
           interval: getPaymentRateOptionLabel(paymentRateFrequency),
           feePayedByTreasurer: data.feePayedByTreasurer,
-          valueInUsd: effectiveRate * parseFloat(fromCoinAmount as string)
+          valueInUsd: price * parseFloat(fromCoinAmount as string)
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFormButton, segmentData);
@@ -1141,11 +1143,11 @@ export const RepeatingPayment = (props: {
     nativeBalance,
     recipientNote,
     selectedToken,
-    effectiveRate,
     fromCoinAmount,
     recipientAddress,
     paymentStartDate,
     paymentRateAmount,
+    transferCompleted,
     location.pathname,
     paymentRateFrequency,
     transactionCancelled,
@@ -1158,7 +1160,7 @@ export const RepeatingPayment = (props: {
     resetContractValues,
     getPaymentRateLabel,
     setSelectedStream,
-    transferCompleted,
+    getTokenPrice,
     getFeeAmount,
     navigate,
   ]);
@@ -1607,9 +1609,9 @@ export const RepeatingPayment = (props: {
             </div>
             <div className="right inner-label">
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                ~${fromCoinAmount && effectiveRate
-                  ? formatAmount(getTokenPrice(), 2)
-                  : "0.00"}
+                ~{fromCoinAmount
+                  ? toUsCurrency(getTokenPrice())
+                  : "$0.00"}
               </span>
             </div>
           </div>

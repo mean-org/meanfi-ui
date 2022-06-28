@@ -22,9 +22,9 @@ import {
   getIntervalFromSeconds,
   getFormattedNumberToLocale,
   getTransactionOperationDescription,
-  isValidAddress
+  isValidAddress,
+  toUsCurrency
 } from '../../../../utils/ui';
-import { TreasuryStreamsBreakdown } from '../../../../models/streams';
 import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { TransactionStatus } from '../../../../models/enums';
 import { useWallet } from '../../../../contexts/wallet';
@@ -46,33 +46,44 @@ const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const VestingContractAddFundsModal = (props: {
+  associatedToken: string;
   handleClose: any;
   handleOk: any;
-  isVisible: boolean;
-  userBalances: any;
   isBusy: boolean;
+  isVisible: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-  withdrawTransactionFees: TransactionFees;
-  streamStats?: TreasuryStreamsBreakdown;
-  vestingContract: Treasury | undefined;
   treasuryStreams: Stream[];
-  associatedToken: string;
+  userBalances: any;
+  vestingContract: Treasury | undefined;
+  withdrawTransactionFees: TransactionFees;
 }) => {
+  const {
+    associatedToken,
+    handleClose,
+    handleOk,
+    isBusy,
+    isVisible,
+    nativeBalance,
+    transactionFees,
+    treasuryStreams,
+    userBalances,
+    vestingContract,
+    withdrawTransactionFees,
+  } = props;
   const {
     theme,
     tokenList,
     tokenBalance,
     selectedToken,
-    effectiveRate,
     loadingPrices,
     transactionStatus,
     highLightableStreamId,
-    getTokenByMintAddress,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
+    getTokenByMintAddress,
     setTransactionStatus,
     setSelectedToken,
-    setEffectiveRate,
     refreshPrices,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -89,20 +100,27 @@ export const VestingContractAddFundsModal = (props: {
   //   Getters   //
   /////////////////
 
+  const getTokenPrice = useCallback((inputAmount: string) => {
+    if (!selectedToken) { return 0; }
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+
+    return parseFloat(inputAmount) * price;
+  }, [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken]);
+
   const getSelectedStream = useCallback((id?: string) => {
-    if (!props.treasuryStreams || props.treasuryStreams.length === 0 || (!id && !highLightableStreamId)) {
+    if (!treasuryStreams || treasuryStreams.length === 0 || (!id && !highLightableStreamId)) {
       return undefined;
     }
 
     if (id) {
-      return props.treasuryStreams.find(ts => ts.id === id);
+      return treasuryStreams.find(ts => ts.id === id);
     } else if (highLightableStreamId) {
-      return props.treasuryStreams.find(ts => ts.id ===highLightableStreamId);
+      return treasuryStreams.find(ts => ts.id ===highLightableStreamId);
     }
 
     return undefined;
   }, [
-    props.treasuryStreams,
+    treasuryStreams,
     highLightableStreamId
   ]);
 
@@ -124,12 +142,12 @@ export const VestingContractAddFundsModal = (props: {
   ]);
 
   const getMaxAmount = useCallback((preSetting = false) => {
-    if (props.withdrawTransactionFees && allocationOption === AllocationType.Specific && highLightableStreamId) {
+    if (withdrawTransactionFees && allocationOption === AllocationType.Specific && highLightableStreamId) {
       const stream = getSelectedStream();
       if (stream && ((stream as any).feePayedByTreasurer || preSetting)) {
 
         const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
-        const feeNumerator = props.withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
+        const feeNumerator = withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
         const feeDenaminator = 1000000;
         const badStreamMaxAllocation = availableBalance
           .mul(new BN(feeDenaminator))
@@ -151,7 +169,7 @@ export const VestingContractAddFundsModal = (props: {
     availableBalance,
     allocationOption,
     highLightableStreamId,
-    props.withdrawTransactionFees,
+    withdrawTransactionFees,
     getSelectedStream
   ]);
 
@@ -419,7 +437,6 @@ export const VestingContractAddFundsModal = (props: {
       };
       setSelectedToken(unkToken);
       consoleOut("token selected:", unkToken, 'blue');
-      setEffectiveRate(0);
       toggleOverflowEllipsisMiddle(true);
     } else {
       openNotification({
@@ -430,29 +447,28 @@ export const VestingContractAddFundsModal = (props: {
     }
   }, [
     toggleOverflowEllipsisMiddle,
-    setEffectiveRate,
     setSelectedToken,
     t,
   ]);
 
   const selectFromTokenBalance = useCallback(() => {
-    if (!selectedToken) { return props.nativeBalance; }
+    if (!selectedToken) { return nativeBalance; }
     return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-      ? props.nativeBalance
+      ? nativeBalance
       : tokenBalance
-  }, [props.nativeBalance, selectedToken, tokenBalance]);
+  }, [nativeBalance, selectedToken, tokenBalance]);
 
   /////////////////////
   // Data management //
   /////////////////////
 
-  // Set available balance in BN either from user's wallet or from treasury is a streams is being funded
+  // When modal goes visible, Set available balance in BN either from user's wallet or from treasury is a streams is being funded
   useEffect(() => {
-    if (props.isVisible && props.vestingContract && props.vestingContract && selectedToken) {
+    if (isVisible && vestingContract && selectedToken) {
       const decimals = selectedToken ? selectedToken.decimals : 6;
       if (highLightableStreamId) {
         // Take source balance from the treasury
-        const unallocated = props.vestingContract.balance - props.vestingContract.allocationAssigned;
+        const unallocated = vestingContract.balance - vestingContract.allocationAssigned;
         const ub = new BN(unallocated);
         consoleOut('Treasury unallocated balance:', ub.toNumber(), 'blue');
         setAvailableBalance(ub);
@@ -468,47 +484,52 @@ export const VestingContractAddFundsModal = (props: {
   }, [
     tokenBalance,
     selectedToken,
-    props.isVisible,
-    props.vestingContract,
+    isVisible,
+    vestingContract,
     highLightableStreamId,
     selectFromTokenBalance,
   ]);
 
   // When modal goes visible, use the treasury associated token or use the default from the appState
   useEffect(() => {
-    if (props.isVisible && props.associatedToken) {
-      const token = tokenList.find(t => t.address === props.associatedToken);
+    if (isVisible && associatedToken) {
+      const token = getTokenByMintAddress(associatedToken);
       if (token) {
-        if (!selectedToken || selectedToken.address !== token.address) {
-          setSelectedToken(token);
-        }
-      } else if (!token && (!selectedToken || selectedToken.address !== props.associatedToken)) {
-        setCustomToken(props.associatedToken);
+        consoleOut("Contract Associated Token:", token.symbol, 'darkgreen');
+        setSelectedToken(token);
+      } else {
+        setCustomToken(associatedToken as string);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    tokenList,
-    selectedToken,
-    props.isVisible,
-    props.associatedToken,
-    setCustomToken,
-    setSelectedToken,
-    toggleOverflowEllipsisMiddle
+    isVisible,
+    associatedToken,
   ]);
 
   // When modal goes visible, update allocation type option
   useEffect(() => {
-    if (!props.vestingContract) { return; }
-    setTreasuryType(props.vestingContract.treasuryType);
+    if (!vestingContract) { return; }
+    setTreasuryType(vestingContract.treasuryType);
     if (highLightableStreamId) {
       setAllocationOption(AllocationType.Specific);
     } else {
       setAllocationOption(AllocationType.None);
     }
   }, [
-    props.vestingContract,
-    props.treasuryStreams,
+    vestingContract,
+    treasuryStreams,
     highLightableStreamId,
+  ]);
+
+  // When modal goes visible, output userBalances to the console
+  useEffect(() => {
+    if (isVisible && userBalances) {
+      consoleOut('userBalances:', userBalances, 'blue');
+    }
+  }, [
+    isVisible,
+    userBalances
   ]);
 
   // Window resize listener
@@ -558,11 +579,11 @@ export const VestingContractAddFundsModal = (props: {
       streamId: highLightableStreamId && allocationOption === AllocationType.Specific
                 ? highLightableStreamId : ''
     };
-    props.handleOk(params);
+    handleOk(params);
   }
 
   const onCloseModal = () => {
-    props.handleClose();
+    handleClose();
   }
 
   const onAfterClose = () => {
@@ -577,7 +598,7 @@ export const VestingContractAddFundsModal = (props: {
   }
 
   const refreshPage = () => {
-    props.handleClose();
+    handleClose();
     window.location.reload();
   }
 
@@ -620,7 +641,6 @@ export const VestingContractAddFundsModal = (props: {
     const token = getTokenByMintAddress(e);
     if (token) {
       setSelectedToken(token as TokenInfo);
-      setEffectiveRate(getTokenPriceBySymbol(token.symbol));
       toggleOverflowEllipsisMiddle(false);
     }
   }
@@ -693,14 +713,14 @@ export const VestingContractAddFundsModal = (props: {
       }
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      visible={isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
       <div className="scrollable-content pl-5 pr-4 py-2">
 
-        <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+        <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
 
           {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
             <>
@@ -714,12 +734,12 @@ export const VestingContractAddFundsModal = (props: {
                 ) : (
                   <div className="form-label">{t('treasuries.add-funds.label')}</div>
                 )}
-                <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+                <div className={`well ${isBusy ? 'disabled' : ''}`}>
                   <div className="flex-fixed-left">
                     <div className="left">
                       <span className="add-on">
                         {(selectedToken && tokenList) && (
-                          <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
+                          <Select className={`token-selector-dropdown ${associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
                               onChange={onTokenChange} bordered={false} showArrow={false}
                               dropdownRender={menu => (
                               <div>
@@ -743,11 +763,11 @@ export const VestingContractAddFundsModal = (props: {
                                     <TokenDisplay onClick={() => {}}
                                       mintAddress={option.address}
                                       name={option.name}
-                                      showCaretDown={props.associatedToken ? false : true}
+                                      showCaretDown={associatedToken ? false : true}
                                     />
                                     <div className="balance">
-                                      {props.userBalances && props.userBalances[option.address] > 0 && (
-                                        <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
+                                      {userBalances && userBalances[option.address] > 0 && (
+                                        <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
                                       )}
                                     </div>
                                   </div>
@@ -818,9 +838,9 @@ export const VestingContractAddFundsModal = (props: {
                     </div>
                     <div className="right inner-label">
                       <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                        ~${topupAmount && effectiveRate
-                          ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-                          : "0.00"}
+                        ~{topupAmount
+                          ? toUsCurrency(getTokenPrice(topupAmount))
+                          : "$0.00"}
                       </span>
                     </div>
                   </div>
@@ -852,11 +872,11 @@ export const VestingContractAddFundsModal = (props: {
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
                       accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                        props.nativeBalance,
+                        nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
                       feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                        props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})
                     }
@@ -872,8 +892,8 @@ export const VestingContractAddFundsModal = (props: {
 
         </div>
 
-        <div className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
-          {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        <div className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
+          {isBusy && transactionStatus !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
@@ -886,7 +906,7 @@ export const VestingContractAddFundsModal = (props: {
           )}
         </div>
 
-        {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+        {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
           <div className="row two-col-ctas mt-3 transaction-progress p-0">
             <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
               <Button
@@ -894,7 +914,7 @@ export const VestingContractAddFundsModal = (props: {
                 type="text"
                 shape="round"
                 size="middle"
-                className={props.isBusy ? 'inactive' : ''}
+                className={isBusy ? 'inactive' : ''}
                 onClick={() => isError(transactionStatus.currentOperation)
                   ? onAcceptModal()
                   : onCloseModal()}>
@@ -907,7 +927,7 @@ export const VestingContractAddFundsModal = (props: {
             {!isError(transactionStatus.currentOperation) && (
               <div className="col-6">
                 <Button
-                  className={props.isBusy ? 'inactive' : ''}
+                  className={isBusy ? 'inactive' : ''}
                   block
                   type="primary"
                   shape="round"
@@ -920,7 +940,7 @@ export const VestingContractAddFundsModal = (props: {
                       refreshPage();
                     }
                   }}>
-                  {props.isBusy
+                  {isBusy
                     ? allocationOption === AllocationType.Specific && highLightableStreamId
                       ? t('treasuries.add-funds.main-cta-fund-stream-busy')
                       : t('treasuries.add-funds.main-cta-busy')
@@ -934,28 +954,28 @@ export const VestingContractAddFundsModal = (props: {
           </div>
         )}
 
-        {!props.isBusy && !highLightableStreamId && transactionStatus.currentOperation === TransactionStatus.Iddle && (
+        {!isBusy && !highLightableStreamId && transactionStatus.currentOperation === TransactionStatus.Iddle && (
           <div className={`buy-token-options text-center mt-4 mb-2`}>
             <p>You can also fund this contract by sending {selectedToken?.symbol} tokens to:</p>
 
-            {showQrCode && props.vestingContract && (
+            {showQrCode && vestingContract && (
               <>
                 <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
                   <QRCodeSVG
-                    value={props.vestingContract.id as string}
+                    value={vestingContract.id as string}
                     size={200}
                   />
                 </div>
               </>
             )}
 
-            {props.vestingContract && (
+            {vestingContract && (
               <div className="flex-center font-size-70 mb-2">
                 <AddressDisplay
-                  address={props.vestingContract.id as string}
+                  address={vestingContract.id as string}
                   showFullAddress={true}
                   iconStyles={{ width: "15", height: "15" }}
-                  newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${props.vestingContract.id as string}${getSolanaExplorerClusterParam()}`}
+                  newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${vestingContract.id as string}${getSolanaExplorerClusterParam()}`}
                 />
               </div>
             )}

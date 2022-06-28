@@ -5,11 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TransactionStatus } from '../../../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../../../utils/ui';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from '../../../../utils/ui';
 import { isError } from '../../../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming';
-import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
+import { cutNumber, formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
 import { useWallet } from '../../../../contexts/wallet';
 import { FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
@@ -54,10 +54,11 @@ export const VestingContractWithdrawFundsModal = (props: {
     tokenBalance,
     isWhitelisted,
     loadingPrices,
-    effectiveRate,
     transactionStatus,
     isVerifiedRecipient,
     setIsVerifiedRecipient,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshPrices,
@@ -71,6 +72,13 @@ export const VestingContractWithdrawFundsModal = (props: {
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+
+  const getTokenPrice = useCallback((inputAmount: string) => {
+    if (!selectedToken) { return 0; }
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+
+    return parseFloat(inputAmount) * price;
+  }, [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken]);
 
   const shouldFundFromTreasury = useCallback(() => {
     if (!vestingContract || (vestingContract && vestingContract.autoClose)) {
@@ -503,9 +511,9 @@ export const VestingContractWithdrawFundsModal = (props: {
                 </div>
                 <div className="right inner-label">
                   <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                    ~${withdrawAmount && effectiveRate
-                      ? formatAmount(parseFloat(withdrawAmount) * effectiveRate, 2)
-                      : "0.00"}
+                    ~{withdrawAmount
+                      ? toUsCurrency(getTokenPrice(withdrawAmount))
+                      : "$0.00"}
                   </span>
                 </div>
               </div>
