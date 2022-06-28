@@ -84,7 +84,7 @@ export const PieChartComponent = ({
   ];
   
   return (
-    <PieChart width={220} height={220} className="pie-chart">
+    <PieChart width={400} height={250} className="pie-chart">
       <Pie
         activeIndex={activeIndex}
         activeShape={renderActiveShape}

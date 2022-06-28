@@ -5,11 +5,12 @@
 
 .pie-chart {
   width: 100% !important;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
   cursor: pointer;
   padding-top: 2em;
   padding-right: 1em;
+}
+
+svg.recharts-surface {
+  width: 100% !important;
+  margin: 0 6.25em !important;
 }
