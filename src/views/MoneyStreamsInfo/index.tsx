@@ -1511,23 +1511,22 @@ export const MoneyStreamsInfoView = (props: {
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
     <>
+      <ResumeItem
+        title="Outflows"
+        classNameTitle="text-uppercase"
+        subtitle={subtitle}
+        amount={renderOutgoingAmoungOfStreams}
+        resume="outflow"
+        className="account-category-title pr-0"
+        hasRightIcon={true}
+        rightIconHasDropdown={true}
+        rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
+        dropdownMenu={menu}
+        isLink={false}
+      />
       {(!loadingOutgoingStreams && !loadingCombinedStreamingList) ? (
         ((outgoingStreamList !== undefined && outgoingStreamList.length > 0) || (treasuryCombinedList !== undefined && treasuryCombinedList.length > 0)) ? (
           <>
-            <ResumeItem
-              title="Outflows"
-              classNameTitle="text-uppercase"
-              subtitle={subtitle}
-              amount={renderOutgoingAmoungOfStreams}
-              resume="outflow"
-              className="account-category-title pr-0"
-              hasRightIcon={true}
-              rightIconHasDropdown={true}
-              rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
-              dropdownMenu={menu}
-              isLink={false}
-            />
-
             <>
               {outgoingStreamList && outgoingStreamList.map((stream, index) => {
                 const onSelectStream = () => {
