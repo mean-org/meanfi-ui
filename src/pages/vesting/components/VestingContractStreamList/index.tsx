@@ -1546,7 +1546,11 @@ export const VestingContractStreamList = (props: {
                                             )}
                                         </div>
                                     </div> */}
-                                    <div className="description-cell no-padding">
+                                    <div className="description-cell no-padding simplelink" onClick={() => {
+                                        sethHighlightedStream(item);
+                                        setHighLightableStreamId(item.id as string);
+                                        showVestingContractStreamDetailModal();
+                                    }}>
                                         <div className="title text-truncate">{getStreamTitle(item)}</div>
                                         <div className="subtitle text-truncate">{getStreamSubtitle(item)}</div>
                                     </div>
