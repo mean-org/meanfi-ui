@@ -2225,7 +2225,7 @@ export const AccountsNewView = () => {
     
     const isTxPendingApproval = (tx: MultisigTransaction) => {
       if (tx) {
-        if (tx.status === MultisigTransactionStatus.Pending) {
+        if (tx.status === MultisigTransactionStatus.Active) {
           return true;
         }
       }
@@ -2234,7 +2234,7 @@ export const AccountsNewView = () => {
 
     const isTxPendingExecution = (tx: MultisigTransaction) => {
       if (tx) {
-        if (tx.status === MultisigTransactionStatus.Approved) {
+        if (tx.status === MultisigTransactionStatus.Passed) {
           return true;
         }
       }

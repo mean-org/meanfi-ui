@@ -782,9 +782,9 @@ export const ProgramDetailsView = (props: {
   ]);
 
   // Program Address
-  const renderProgramAddress = (
+  const renderProgramAddress = programSelected && (
     <CopyExtLinkGroup
-      content={programSelected.pubkey.toBase58()}
+      content={programSelected && programSelected.pubkey.toBase58()}
       number={4}
       externalLink={true}
     />
@@ -803,7 +803,7 @@ export const ProgramDetailsView = (props: {
   // Upgrade Authority
   const renderUpgradeAuthority = (
     <CopyExtLinkGroup
-      content={programSelected.upgradeAuthority.toBase58()}
+      content={programSelected && programSelected.upgradeAuthority.toBase58()}
       number={4}
       externalLink={true}
     />
@@ -821,17 +821,28 @@ export const ProgramDetailsView = (props: {
 
   // Balance SOL
   const [balanceSol, setBalanceSol] = useState<any>();
-  useEffect(() => {
-    if (!connection) { return; }
 
-    connection.getBalance(programSelected.pubkey)
-        .then(balance => {
-          setBalanceSol(formatThousands(balance / LAMPORTS_PER_SOL, NATIVE_SOL.decimals, NATIVE_SOL.decimals));
-        })
-        .catch(error => {
-          console.error(error);
-        })
-  }, [connection, programSelected.pubkey]);
+  useEffect(() => {
+
+    if (!connection || !programSelected || !programSelected.pubkey) { return; }
+
+    connection
+      .getBalance(programSelected.pubkey)
+      .then(balance => {
+        setBalanceSol(
+          formatThousands(
+            balance / LAMPORTS_PER_SOL, 
+            NATIVE_SOL.decimals, 
+            NATIVE_SOL.decimals
+          )
+        );
+      })
+      .catch(error => console.error(error));
+
+  }, [
+    connection, 
+    programSelected
+  ]);
 
   const infoProgramData = [
     {
