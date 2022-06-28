@@ -33,13 +33,13 @@ import { VestingContractList } from './components/VestingContractList';
 import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isMobile } from 'react-device-detect';
-import { MetaInfoCta, TreasuryTopupParams } from '../../models/common-types';
+import { MetaInfoCta } from '../../models/common-types';
 import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import { VestingContractCreateForm } from './components/VestingContractCreateForm';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
+import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
@@ -48,7 +48,7 @@ import { appConfig, customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { VestingContractSolBalanceModal } from './components/VestingContractSolBalanceModal';
-import { VestingContractAddFundsModal } from './components/TreasuryAddFundsModal';
+import { VestingContractAddFundsModal } from './components/VestingContractAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
 import { segmentAnalytics } from '../../App';
 import { AppUsageEvent, SegmentRefreshAccountBalanceData, SegmentStreamAddFundsData, SegmentStreamCreateData, SegmentVestingContractCloseData, SegmentVestingContractCreateData, SegmentVestingContractWithdrawData } from '../../utils/segment-service';
@@ -1449,7 +1449,7 @@ export const VestingView = () => {
     }
   }, [getTransactionFees, resetTransactionStatus, setHighLightableStreamId, vestingContract]);
 
-  const onAcceptAddFunds = (params: TreasuryTopupParams) => {
+  const onAcceptAddFunds = (params: VestingContractTopupParams) => {
     consoleOut('AddFunds params:', params, 'blue');
     onExecuteAddFundsTransaction(params);
   };
@@ -1460,7 +1460,7 @@ export const VestingView = () => {
     setOngoingOperation(undefined);
   }, [resetTransactionStatus]);
 
-  const onExecuteAddFundsTransaction = async (params: TreasuryTopupParams) => {
+  const onExecuteAddFundsTransaction = async (params: VestingContractTopupParams) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -1551,9 +1551,10 @@ export const VestingView = () => {
       });
 
       const treasury = new PublicKey(selectedVestingContract.id);
-      const associatedToken = new PublicKey(params.associatedToken);
+      const associatedToken = new PublicKey(params.associatedToken.address);
       const amount = params.tokenAmount.toNumber();
-      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
+      const token = params.associatedToken;
+      const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
 
       const data = {
         payer: publicKey.toBase58(),                              // payer
@@ -1570,9 +1571,7 @@ export const VestingView = () => {
         stream: data.stream,
         contributor: data.contributor,
         treasury: data.treasury,
-        asset: selectedToken
-          ? `${selectedToken.symbol} [${selectedToken.address}]`
-          : params.associatedToken,
+        asset: `${token.symbol} [${token.address}]`,
         assetPrice: price,
         amount: parseFloat(params.amount),
         valueInUsd: price * parseFloat(params.amount)
@@ -1764,7 +1763,6 @@ export const VestingView = () => {
     }
 
     if (publicKey && selectedVestingContract) {
-      const token = getTokenByMintAddress(params.associatedToken);
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
@@ -1783,13 +1781,13 @@ export const VestingView = () => {
               loadingTitle: "Confirming transaction",
               loadingMessage: `${params.streamId ? 'Fund stream with' : 'Fund vesting account with'} ${formatThousands(
                 parseFloat(params.amount),
-                token?.decimals
-              )} ${token?.symbol}`,
+                params.associatedToken?.decimals
+              )} ${params.associatedToken?.symbol}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `${params.streamId ? 'Stream funded with' : 'Vesting account funded with'} ${formatThousands(
                 parseFloat(params.amount),
-                token?.decimals
-              )} ${token?.symbol}`,
+                params.associatedToken?.decimals
+              )} ${params.associatedToken?.symbol}`,
               extras: params.streamId
             });
             setIsBusy(false);
@@ -3083,14 +3081,16 @@ export const VestingView = () => {
 
   }, [
     isXsDevice,
-    showAddFundsModal,
-    showCreateStreamModal,
-    getAvailableStreamingBalance,
-    showVestingContractCloseModal,
-    showVestingContractSolBalanceModal,
-    isInspectedAccountTheConnectedWallet,
-    showVestingContractTransferFundsModal,
+    selectedVestingContract,
     onExecuteRefreshVestingContractBalance,
+    showVestingContractTransferFundsModal,
+    isInspectedAccountTheConnectedWallet,
+    showVestingContractSolBalanceModal,
+    showVestingContractCloseModal,
+    getAvailableStreamingBalance,
+    showCreateStreamModal,
+    isMultisigTreasury,
+    showAddFundsModal,
   ]);
 
   // Load vesting account once per page access
@@ -3811,7 +3811,7 @@ export const VestingView = () => {
 
         {isAddFundsModalVisible && (
           <VestingContractAddFundsModal
-            handleOk={(params: TreasuryTopupParams) => onAcceptAddFunds(params)}
+            handleOk={(params: VestingContractTopupParams) => onAcceptAddFunds(params)}
             handleClose={closeAddFundsModal}
             nativeBalance={nativeBalance}
             transactionFees={transactionFees}

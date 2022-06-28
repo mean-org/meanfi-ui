@@ -1,4 +1,4 @@
-import { SubCategory, TimeUnit, TreasuryType } from "@mean-dao/msp";
+import { AllocationType, SubCategory, TimeUnit, TreasuryType } from "@mean-dao/msp";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { PublicKey } from "@solana/web3.js";
 
@@ -118,6 +118,14 @@ export interface VestingContractCloseStreamOptions {
     vestedReturns: number;
     unvestedReturns: number;
     feeAmount: number;
+}
+
+export interface VestingContractTopupParams {
+    amount: string;
+    tokenAmount: any;
+    allocationType: AllocationType;
+    streamId: string;
+    associatedToken: TokenInfo | undefined;
 }
 
 // Map cache to maintain the vesting flow rates between reloads of the vesting accounts' list

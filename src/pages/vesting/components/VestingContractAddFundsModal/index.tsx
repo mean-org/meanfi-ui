@@ -25,8 +25,7 @@ import {
   isValidAddress
 } from '../../../../utils/ui';
 import { TreasuryStreamsBreakdown } from '../../../../models/streams';
-import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
-import { TreasuryTopupParams } from '../../../../models/common-types';
+import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { TransactionStatus } from '../../../../models/enums';
 import { useWallet } from '../../../../contexts/wallet';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
@@ -41,6 +40,7 @@ import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { QRCodeSVG } from 'qrcode.react';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
+import { VestingContractTopupParams } from '../../../../models/vesting';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -546,15 +546,15 @@ export const VestingContractAddFundsModal = (props: {
   }
 
   const onAcceptModal = () => {
-    const params: TreasuryTopupParams = {
+    const params: VestingContractTopupParams = {
       amount: topupAmount,
       tokenAmount: tokenAmount,
       allocationType: allocationOption,
       associatedToken: selectedToken
         ? selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-          ? NATIVE_SOL_MINT.toBase58()
-          : selectedToken.address
-        : '',
+          ? NATIVE_SOL
+          : selectedToken
+        : undefined,
       streamId: highLightableStreamId && allocationOption === AllocationType.Specific
                 ? highLightableStreamId : ''
     };

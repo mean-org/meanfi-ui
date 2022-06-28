@@ -1,4 +1,4 @@
-import { AllocationType } from "@mean-dao/money-streaming";
+import { AllocationType } from "@mean-dao/msp";
 import { MetaInfoCtaAction } from "./enums";
 import { StreamTreasuryType } from "./treasuries";
 

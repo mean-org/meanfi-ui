@@ -24,7 +24,7 @@ import { getSolanaExplorerClusterParam, useConnection } from '../../../../contex
 import { OperationType, TransactionStatus } from '../../../../models/enums';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TreasuryTopupParams } from '../../../../models/common-types';
-import { VestingContractAddFundsModal } from '../TreasuryAddFundsModal';
+import { VestingContractAddFundsModal } from '../VestingContractAddFundsModal';
 import { VestingContractStreamDetailModal } from '../VestingContractStreamDetailModal';
 import { StreamCloseModal } from '../StreamCloseModal';
 import { StreamPauseModal } from '../StreamPauseModal';
