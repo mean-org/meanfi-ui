@@ -75,21 +75,6 @@
   }
 }
 
-.list-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  padding-left: 0.5em;
-}
-.hover-list {
-  &:hover {
-    background-color: var(--color-secondary-alpha-05);
-    width: 100%;
-  }
-}
-
 .safe-details-resume {
   margin-bottom: 1.2rem;
 }

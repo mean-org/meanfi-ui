@@ -1,9 +1,9 @@
-import { Commitment, Connection, GetProgramAccountsFilter, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { AnchorProvider, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
 import { OperationType } from "./enums";
 import bs58 from "bs58";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { MEAN_MULTISIG_PROGRAM } from "@mean-dao/mean-multisig-sdk";
+import { MEAN_MULTISIG_PROGRAM, MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
 import { MeanSplTokenInstructionCoder } from "./spl-token-coder/instruction";
 import { MeanSystemInstructionCoder } from "./system-program-coder/instruction";
 
@@ -15,21 +15,6 @@ export const ZERO_FEES = {
   networkFee: 0,
   rentExempt: 0
 } as MultisigTransactionFees;
-
-export enum MultisigTransactionStatus {
-  // No enough signatures
-  Pending = 0,
-  // Approved by the required amount of signers
-  Approved = 1,
-  // Successfully executed (didExecute = true)
-  Executed = 2,
-  // Rejected by any owner
-  Rejected = 3,
-  // Invalid owners set seq number
-  Voided = 4,
-  //
-  Expired = 5
-}
 
 export type Multisig = {
   id: PublicKey;
@@ -58,25 +43,6 @@ export type MultisigV2 = {
   pendingTxsAmount: number;
   version: number
 };
-
-export type MultisigTransaction = {
-  id: PublicKey;
-  operation: OperationType;
-  multisig: PublicKey;
-  programId: PublicKey;
-  signers: boolean[];
-  createdOn: Date;
-  executedOn: Date | undefined;
-  ownerSetSeqno: number;
-  status: MultisigTransactionStatus;
-  accounts: any[];
-  data: Buffer;
-  proposer: PublicKey | undefined;
-  pdaTimestamp: number | undefined,
-  pdaBump: number | undefined;
-  details: MultisigTransactionDetail,
-  didSigned: boolean; // this should be a number needs to be changed in the program (0 = not signed, 1 = signed, 2 = rejected),
-}
 
 export type MultisigTransactionDetail = {
   title: string;
@@ -182,47 +148,6 @@ export type MultisigTransactionFees = {
   multisigFee: number,
 }
 
-export const listMultisigTransactions = async (
-  program: Program<Idl>,
-  multisig: Multisig,
-  owner: PublicKey
-
-): Promise<MultisigTransaction[]> => {
-
-  try {
-
-    const filters: GetProgramAccountsFilter[] = [
-      { dataSize: 1200 },
-      { memcmp: { offset: 8, bytes: multisig.id.toString() } }
-    ];
-
-    const transactions: MultisigTransaction[] = [];
-    const txs = await program.account.transaction.all(filters);
-    for (const tx of txs) {
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          multisig.id.toBuffer(),
-          tx.publicKey.toBuffer()
-        ], 
-        program.programId
-      );
-
-      const txDetail = await program.account.transactionDetail.fetchNullable(txDetailAddress);
-      const txInfo = parseMultisigTransaction(multisig, owner, tx, txDetail);
-      transactions.push(txInfo);
-    }
-    
-    const sortedTxs = transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime());
-
-    return sortedTxs;
-
-  } catch (err: any) {
-    console.error(`List Multisig Transactions: ${err}`);
-    return [];
-  }
-}
-
 export const getFees = async (
   program: Program<Idl>,
   action: MULTISIG_ACTIONS
@@ -260,200 +185,6 @@ export const getFees = async (
 
   return txFees;
 };
-
-export const getTransactionStatus = (multisig: any, info: any, detail: any): MultisigTransactionStatus => {
-
-  try {
-
-    if (!multisig) { throw Error("Invalid parameter: 'multisig'"); }
-
-    const executed = info.account.executedOn && info.account.executedOn.toNumber() > 0;
-
-    if (executed) {
-      return MultisigTransactionStatus.Executed;
-    }
-
-    const expirationDate = (
-      !executed &&
-      detail && 
-      detail.expirationDate > 0
-    ) ? new Date(detail.expirationDate.toNumber() * 1_000) : undefined;
-
-    if (expirationDate && expirationDate.getTime() < Date.now()) {
-      return MultisigTransactionStatus.Expired;
-    }
-  
-    let status = MultisigTransactionStatus.Pending;
-    const approvals = info.account.signers.filter((s: boolean) => s === true).length;
-  
-    if (multisig && multisig.threshold === approvals) {
-      status = MultisigTransactionStatus.Approved;
-    }
-  
-    if (multisig && multisig.ownerSetSeqno !== info.account.ownerSetSeqno) {
-      status = MultisigTransactionStatus.Voided;
-    }
-  
-    return status;
-
-  } catch (err) {
-    throw Error(`Multisig Transaction Status: ${err}`);
-  }
-}
-
-export const parseMultisigTransaction = (
-  multisig: any,
-  owner: PublicKey,
-  txInfo: any,
-  txDetailInfo: any
-
-): MultisigTransaction => {
-
-  try {
-    const currentOwnerIndex = multisig.owners.findIndex((o: any) => o.address === owner.toBase58());
-    return Object.assign({}, {
-      id: txInfo.publicKey,
-      multisig: txInfo.account.multisig,
-      programId: txInfo.account.programId,
-      signers: txInfo.account.signers,
-      ownerSetSeqno: txInfo.account.ownerSetSeqno,
-      createdOn: new Date(txInfo.account.createdOn.toNumber() * 1000),
-      executedOn: txInfo.account.executedOn && txInfo.account.executedOn > 0
-        ? new Date(txInfo.account.executedOn.toNumber() * 1000) 
-        : undefined,
-      status: getTransactionStatus(multisig, txInfo, txDetailInfo),
-      operation: parseInt(Object.keys(OperationType).filter(k => k === txInfo.account.operation.toString())[0]),
-      accounts: txInfo.account.accounts,
-      didSigned: txInfo.account.signers[currentOwnerIndex],
-      proposer: txInfo.account.proposer,
-      pdaTimestamp: txInfo.account.pdaTimestamp ? txInfo.account.pdaTimestamp.toNumber() : undefined,
-      pdaBump: txInfo.account.pdaBump,
-      data: txInfo.account.data,
-      details: parseMultisigTransactionDetail(txDetailInfo)
-
-    } as MultisigTransaction);
-
-  } catch (err) {
-    throw Error(`Multisig Transaction Error: ${err}`);
-  }
-}
-
-export const parseMultisigTransactionDetail = (txDetailInfo: any): MultisigTransactionDetail => {
-
-  try {
-
-    const txDetail = {
-      title: txDetailInfo && txDetailInfo.title ? new TextDecoder('utf8').decode(
-        Buffer.from(
-          Uint8Array.of(...txDetailInfo.title.filter((b: number) => b !== 0))
-        )
-      ) : "",
-      description: txDetailInfo && txDetailInfo.description ? new TextDecoder('utf8').decode(
-        Buffer.from(
-          Uint8Array.of(...txDetailInfo.description.filter((b: number) => b !== 0))
-        )
-      ) : "",
-      expirationDate: ( 
-        txDetailInfo && 
-        txDetailInfo.expirationDate > 0
-      ) ? new Date(txDetailInfo.expirationDate.toNumber() * 1_000) : undefined,
-
-    } as MultisigTransactionDetail;
-
-    return txDetail;
-
-  } catch (err) {
-    throw Error(`Multisig Transaction Error: ${err}`);
-  }
-}
-
-export const getMultisigTransactionSummary = (
-  transaction: MultisigTransaction
-
-): MultisigTransactionSummary | undefined => {
-  try {
-
-    const expDate = (
-      transaction.details && 
-      transaction.details.expirationDate
-    ) ? (
-      transaction.details.expirationDate.getTime().toString().length > 13
-         ? new Date(parseInt((transaction.details.expirationDate.getTime() / 1_000).toString())).toString()
-         : transaction.details.expirationDate.toString()
-     ) : "";
-
-    const txSummary = {
-      address: transaction.id.toBase58(),
-      operation: transaction.operation.toString(),
-      proposer: transaction.proposer ? transaction.proposer.toBase58() : "",
-      title: transaction.details ? transaction.details.title : "",
-      description: transaction.details ? transaction.details.description : "",
-      createdOn: transaction.createdOn.toString(),
-      executedOn: transaction.executedOn ? transaction.executedOn.toString() : "",
-      expirationDate: expDate,
-      approvals: transaction.signers.filter(s => s === true).length,
-      multisig: transaction.multisig.toBase58(),
-      status: transaction.status.toString(),
-      didSigned: transaction.didSigned,
-      instruction: parseMultisigTransactionInstruction(transaction)
-
-    } as MultisigTransactionSummary;
-
-    return txSummary;
-
-  } catch (err: any) {
-    console.error(`Parse Multisig Transaction: ${err}`);
-    return undefined;
-  }
-}
-
-export const parseMultisigTransactionInstruction = (
-  transaction: MultisigTransaction
-
-): MultisigTransactionInstructionInfo | null => {
-  try {
-
-    const ixAccInfos: InstructionAccountInfo[] = [];
-    let accIndex = 0;
-
-    for (const acc of transaction.accounts) {
-
-      ixAccInfos.push({
-        index: accIndex,
-        label: "",
-        value: acc.pubkey.toBase58()
-
-      } as InstructionAccountInfo);
-
-      accIndex ++;
-    }
-
-    // let ixDataInfos: InstructionDataInfo[] = [];
-    const bufferStr = Buffer.from(transaction.data).toString('hex');
-    const bufferStrArray: string[] = [];
-
-    for (let i = 0; i < bufferStr.length; i += 2) {
-      bufferStrArray.push(bufferStr.substring(i, i + 2));
-    }
-
-    const ixInfo = {
-      programId: transaction.programId.toBase58(),
-      accounts: ixAccInfos,
-      data: [{
-        label: "",
-        value: bufferStrArray.join(' ')
-
-      } as InstructionDataInfo]
-
-    } as MultisigTransactionInstructionInfo;
-
-    return ixInfo;
-
-  } catch (err: any) {
-    console.error(`Parse Multisig Transaction: ${err}`);
-    return null;
-  }
-}
 
 export const getIxNameFromMultisigTransaction = (transaction: MultisigTransaction, programIdl?: Idl) => {
 

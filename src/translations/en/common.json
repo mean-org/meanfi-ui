@@ -594,7 +594,11 @@
 			"tx-pending": "pending",
 			"tx-pending-approval": "Pending Approval",
 			"tx-pending-execution": "Pending Execution",
-			"tx-rejected": "Rejected",
+			"tx-failed": "Failed",
+			"tx-active": "Active",
+			"tx-executed": "Executed",
+			"tx-expired": "Expired",
+			"tx-passed": "Passed",
 			"tx-signed": "signed",
 			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
 			"tx-voided": "Voided",
@@ -822,6 +826,7 @@
 			"status-running": "Running",
 			"status-scheduled": "Scheduled",
 			"status-stopped": "Stopped",
+			"status-paused": "Paused",
 			"stopped": "Ran out of funds",
 			"stopped-manually": "Manually stopped",
 			"streaming": "Streaming"
@@ -1258,7 +1263,8 @@
 			"screen-title": "Streaming Accounts - Streams",
 			"status-running": "Running",
 			"status-scheduled": "Scheduled",
-			"status-stopped": "Stopped"
+			"status-stopped": "Stopped",
+			"status-paused": "Paused"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

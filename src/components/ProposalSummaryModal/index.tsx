@@ -115,7 +115,14 @@ export const ProposalSummaryModal = (props: {
 
   const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
     if (mtx && mtx.signers) {
-      return mtx.signers.filter((s: boolean) => s === true).length;
+      return mtx.signers.filter((s: any) => s === true).length;
+    }
+    return 0;
+  }, []);
+
+  const getTxRejectedCount = useCallback((mtx: MultisigTransaction) => {
+    if (mtx && mtx.signers) {
+      return mtx.signers.filter((s: any) => s === false).length;
     }
     return 0;
   }, []);
@@ -140,7 +147,7 @@ export const ProposalSummaryModal = (props: {
 
   const isTxPendingApproval = useCallback(() => {
     if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending) {
+      if (highlightedMultisigTx.status === MultisigTransactionStatus.Active) {
         return true;
       }
     }
@@ -149,16 +156,16 @@ export const ProposalSummaryModal = (props: {
 
   const isTxPendingExecution = useCallback(() => {
     if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
+      if (highlightedMultisigTx.status === MultisigTransactionStatus.Passed) {
         return true;
       }
     }
     return false;
   }, [highlightedMultisigTx]);
 
-  const isTxRejected = useCallback(() => {
+  const isTxFailed = useCallback(() => {
     if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Rejected) {
+      if (highlightedMultisigTx.status === MultisigTransactionStatus.Failed) {
         return true;
       }
     }
@@ -201,7 +208,7 @@ export const ProposalSummaryModal = (props: {
     if (!highlightedMultisigTx) { return false; }
 
     const result = (
-      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+      highlightedMultisigTx.status === MultisigTransactionStatus.Active &&
       !highlightedMultisigTx.didSigned
     );
 
@@ -214,7 +221,7 @@ export const ProposalSummaryModal = (props: {
     if (!highlightedMultisigTx) { return false; }
 
     const isPendingForExecution = () => {
-      return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+      return  highlightedMultisigTx.status === MultisigTransactionStatus.Passed &&
               !highlightedMultisigTx.executedOn
         ? true
         : false;
@@ -411,7 +418,17 @@ export const ProposalSummaryModal = (props: {
           {isTxPendingExecution() ? (
             <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
           ) : isTxPendingApproval() ? (
-            <div className="text-center proposal-resume">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
+            <div className="text-center proposal-resume">
+            {
+              (selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 
+                ? t('multisig.multisig-transactions.missing-signatures', {
+                  missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)
+                }) 
+                : t('multisig.multisig-transactions.missing-signature', {
+                  missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)
+                })
+             }
+            </div>
           ) : isTxVoided() ? (
             <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-voided')}</div>
           ) : isTxExpired() ? (
@@ -512,7 +529,7 @@ export const ProposalSummaryModal = (props: {
             ) : (
               <>
                 <Divider className="mt-0" />
-                {(!isTxVoided() && !isTxRejected()) && (
+                {(!isTxVoided() && !isTxFailed()) && (
                   renderGeneralSummaryModal
                 )}
               </>

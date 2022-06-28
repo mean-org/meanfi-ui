@@ -144,11 +144,11 @@ export const MultisigProgramsView = () => {
 
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
-    if (mtx.status === MultisigTransactionStatus.Pending) {
+    if (mtx.status === MultisigTransactionStatus.Active) {
       return t("multisig.multisig-transactions.tx-pending-approval");
     } 
     
-    if (mtx.status === MultisigTransactionStatus.Approved) {
+    if (mtx.status === MultisigTransactionStatus.Passed) {
       return t("multisig.multisig-transactions.tx-pending-execution");
     }
 
@@ -181,7 +181,7 @@ export const MultisigProgramsView = () => {
     } else if (mtx.didSigned === false) {
       return !longStatus
         ? t("multisig.multisig-transactions.not-signed")
-        : mtx.status === MultisigTransactionStatus.Approved
+        : mtx.status === MultisigTransactionStatus.Passed
           ? t("multisig.multisig-transactions.not-sign-tx")
           : t("multisig.multisig-transactions.not-signed-tx");
     } else {
@@ -193,8 +193,8 @@ export const MultisigProgramsView = () => {
   const getTransactionStatusClass = useCallback((mtx: MultisigTransaction) => {
     
     if(
-      mtx.status === MultisigTransactionStatus.Pending || 
-      mtx.status === MultisigTransactionStatus.Approved || 
+      mtx.status === MultisigTransactionStatus.Active || 
+      mtx.status === MultisigTransactionStatus.Passed || 
       mtx.status === MultisigTransactionStatus.Voided ||
       mtx.status === MultisigTransactionStatus.Expired
     ) {
@@ -329,7 +329,7 @@ export const MultisigProgramsView = () => {
   //   if (!highlightedMultisigTx) { return false; }
 
   //   let result = (
-  //     highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+  //     highlightedMultisigTx.status === MultisigTransactionStatus.Active &&
   //     !highlightedMultisigTx.didSigned
   //   );
 
@@ -342,7 +342,7 @@ export const MultisigProgramsView = () => {
   //   if (!highlightedMultisigTx) { return false; }
 
   //   const isPendingForExecution = () => {
-  //     return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+  //     return  highlightedMultisigTx.status === MultisigTransactionStatus.Passed &&
   //             !highlightedMultisigTx.executedOn
   //       ? true
   //       : false;
@@ -2586,9 +2586,9 @@ export const MultisigProgramsView = () => {
 
   const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
     consoleOut('onAcceptMultisigActionModal:', item, 'blue');
-    if (item.status === MultisigTransactionStatus.Pending) {
+    if (item.status === MultisigTransactionStatus.Active) {
       onExecuteApproveTx({ transaction: item });
-    } else if (item.status === MultisigTransactionStatus.Approved) {
+    } else if (item.status === MultisigTransactionStatus.Passed) {
       onExecuteFinishTx({ transaction: item })
     } else if (item.status === MultisigTransactionStatus.Voided) {
       onExecuteCancelTx({ transaction: item })

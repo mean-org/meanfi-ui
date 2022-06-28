@@ -24,6 +24,13 @@ export const TabsMean = (props: {
     setSearchParams({v: tab as string});
   }, [setSearchParams]);
 
+
+  useEffect(() => {
+    if (activeTab === '') {
+      setActiveTab(defaultTab || tabNameFormat(tabs[0].id));
+    }
+  }, [activeTab, defaultTab, setActiveTab, tabs]);
+
   // useEffect(() => {
   //   if (activeTab === '') {
   //     setActiveTab((selectedTab && tabNameFormat(tabs[selectedTab].id)) || tabNameFormat(tabs[0].id));
@@ -55,6 +62,21 @@ export const TabsMean = (props: {
         break;
       case "anchor-idl":
         setActiveTab("anchor-idl");
+        break;
+      case "summary":
+        setActiveTab("summary");
+        break;
+      case "incoming":
+        setActiveTab("incoming");
+        break;
+      case "outgoing":
+        setActiveTab("outgoing");
+        break;
+      case "details":
+        setActiveTab("details");
+        break;
+      case "streams":
+        setActiveTab("streams");
         break;
       default:
         setActiveTab(defaultTab);
