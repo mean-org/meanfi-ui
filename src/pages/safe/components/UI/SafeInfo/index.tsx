@@ -4,6 +4,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
+import { RightInfoDetails } from "../../../../../components/RightInfoDetails";
 import { TabsMean } from "../../../../../components/TabsMean";
 import { AppStateContext } from "../../../../../contexts/appstate";
 import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
@@ -57,14 +58,14 @@ export const SafeInfo = (props: {
   }, [selectedMultisig.id, selectedMultisig.label]);
 
   const renderSafeName = (
-      <Row className="d-flex align-items-center">
-        {(safeNameImg && safeNameImgAlt) && (
-          <Tooltip placement="rightTop" title="Serum Multisig">
-            <img src={safeNameImg} alt={safeNameImgAlt} width={16} height={16} className="simplelink mr-1" />
-          </Tooltip>
-        )}
-        <div>{selectedLabelName}</div>
-      </Row>
+    <Row className="d-flex align-items-center">
+      {(safeNameImg && safeNameImgAlt) && (
+        <Tooltip placement="rightTop" title="Serum Multisig">
+          <img src={safeNameImg} alt={safeNameImgAlt} width={16} height={16} className="simplelink mr-1" />
+        </Tooltip>
+      )}
+      <div>{selectedLabelName}</div>
+    </Row>
   );
 
   // Security
@@ -76,7 +77,6 @@ export const SafeInfo = (props: {
   );
   
   // Safe Balance
-  // const [safeAssetsAmount, setSafeAssetsAmount] = useState<any>();
   const [assetsAmout, setAssetsAmount] = useState<string>();
 
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
@@ -219,20 +219,9 @@ export const SafeInfo = (props: {
 
   return (
     <>
-      <Row gutter={[8, 8]} className="safe-info-container">
-        {infoSafeData.map((info, index) => (
-          <Col xs={12} sm={12} md={12} lg={12} key={index}>
-            <div className="info-safe-group">
-              <span className="info-label">
-                {info.name}
-              </span>
-              <span className="info-data">
-                {info.value}
-              </span>
-            </div>
-          </Col>
-        ))}
-      </Row>
+      <RightInfoDetails
+        infoData={infoSafeData}
+      /> 
 
       <Row gutter={[8, 8]} className="safe-btns-container mb-1">
         <Col xs={20} sm={18} md={20} lg={18} className="btn-group">

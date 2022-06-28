@@ -822,6 +822,7 @@
 			"status-running": "Çalışıyor",
 			"status-scheduled": "Zamanlanmış",
 			"status-stopped": "Durduruldu",
+			"status-paused": "Paused",
 			"stopped": "para tükendi",
 			"stopped-manually": "Manuel durduruldu",
 			"streaming": "Aktarılıyor"
@@ -1258,7 +1259,8 @@
 			"screen-title": "Streaming Accounts - Streams",
 			"status-running": "Devam ediyor",
 			"status-scheduled": "Zamanlanmış",
-			"status-stopped": "Durduruldu"
+			"status-stopped": "Durduruldu",
+			"status-paused": "Paused"
 		},
 		"withdraw-funds": {
 			"button-title": "",

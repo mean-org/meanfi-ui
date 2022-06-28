@@ -88,6 +88,8 @@ export enum AppUsageEvent {
     CreateProposalFailed = "Create Proposal Failed",
     ApproveProposalCompleted = "Approve Proposal Completed",
     ApproveProposalFailed = "Approve Proposal Failed",
+    RejectProposalCompleted = "Reject Proposal Completed",
+    RejectProposalFailed = "Reject Proposal Failed",
     ExecuteProposalCompleted = "Execute Proposal Completed",
     ExecuteProposalFailed = "Execute Proposal Failed",
     // Streaming account

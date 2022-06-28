@@ -54,8 +54,9 @@ export function AppRoutes() {
                       <Route path="/accounts/:address" element={<AccountsNewView />} />
                       <Route path="/accounts/:address/assets" element={<AccountsNewView />} />
                       <Route path="/accounts/:address/assets/:asset" element={<AccountsNewView />} />
-                      <Route path="/accounts/:address/msigs" element={<AccountsNewView />} />
-                      <Route path="/accounts/:address/msigs/:asset" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming/:streamingTab" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming/:streamingTab/:streamId" element={<AccountsNewView />} />
                       {/* Streams routes (under refactor) */}
                       <Route path="/accounts/streams" element={<AccountsNewView />} />
                       <Route path="/vesting" element={<VestingView />} />

@@ -124,7 +124,7 @@ export const MultisigView = () => {
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigInfo)[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
-  // Pending Txs
+  // Active Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(true);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
@@ -991,9 +991,9 @@ export const MultisigView = () => {
 
   const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
     consoleOut('onAcceptMultisigActionModal:', item, 'blue');
-    if (item.status === MultisigTransactionStatus.Pending) {
+    if (item.status === MultisigTransactionStatus.Active) {
       onExecuteApproveTx({ transaction: item });
-    } else if (item.status === MultisigTransactionStatus.Approved) {
+    } else if (item.status === MultisigTransactionStatus.Passed) {
       onExecuteFinishTx({ transaction: item })
     } else if (item.status === MultisigTransactionStatus.Voided) {
       onExecuteCancelTx({ transaction: item })
@@ -1888,11 +1888,11 @@ export const MultisigView = () => {
 
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
-    if (mtx.status === MultisigTransactionStatus.Pending) {
+    if (mtx.status === MultisigTransactionStatus.Active) {
       return t("multisig.multisig-transactions.tx-pending-approval");
     } 
     
-    if (mtx.status === MultisigTransactionStatus.Approved) {
+    if (mtx.status === MultisigTransactionStatus.Passed) {
       return t("multisig.multisig-transactions.tx-pending-execution");
     }
 
@@ -1925,7 +1925,7 @@ export const MultisigView = () => {
     } else if (mtx.didSigned === false) {
       return !longStatus
         ? t("multisig.multisig-transactions.not-signed")
-        : mtx.status === MultisigTransactionStatus.Approved
+        : mtx.status === MultisigTransactionStatus.Passed
           ? t("multisig.multisig-transactions.not-sign-tx")
           : t("multisig.multisig-transactions.not-signed-tx");
     } else {
@@ -1937,8 +1937,8 @@ export const MultisigView = () => {
   const getTransactionStatusClass = useCallback((mtx: MultisigTransaction) => {
     
     if(
-      mtx.status === MultisigTransactionStatus.Pending || 
-      mtx.status === MultisigTransactionStatus.Approved || 
+      mtx.status === MultisigTransactionStatus.Active || 
+      mtx.status === MultisigTransactionStatus.Passed || 
       mtx.status === MultisigTransactionStatus.Voided ||
       mtx.status === MultisigTransactionStatus.Expired
     ) {

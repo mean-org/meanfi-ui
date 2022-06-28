@@ -822,6 +822,7 @@
 			"status-running": "Running",
 			"status-scheduled": "Scheduled",
 			"status-stopped": "Stopped",
+			"status-paused": "Paused",
 			"stopped": "Ran out of funds",
 			"stopped-manually": "Manually stopped",
 			"streaming": "Streaming"
@@ -1258,7 +1259,8 @@
 			"screen-title": "Streaming Accounts - Streams",
 			"status-running": "Running",
 			"status-scheduled": "Scheduled",
-			"status-stopped": "Stopped"
+			"status-stopped": "Stopped",
+			"status-paused": "Paused"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

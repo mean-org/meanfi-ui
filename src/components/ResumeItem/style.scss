@@ -10,15 +10,26 @@
   }
 }
 .resume-item-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  padding-left: 0.5em !important;
   .resume-left-container {
     display: flex;
     align-items: center;
+    .resume-title {
+      display: flex;
+      align-items: center;
+    }
     .img-container {
       margin-right: 0.5em;
       width: 30px;
       height: 30px;
       display: flex;
       justify-content: center;
+      align-items: center;
     }
     .resume-left-text {
       line-height: 1.3;
@@ -28,6 +39,9 @@
       .info-label {
         margin-bottom: 0 !important;
       }
+    }
+    .external-icon {
+      width: 14px !important;
     }
   }
   // @media (max-width: 575px) {
@@ -66,9 +80,9 @@
           display: flex;
           border-radius: 0.25em;
           .badge {
-            width: 6em !important;
-            font-size: 9px !important;
-            padding: 0.25px !important;
+            width: 6.8em !important;
+            font-size: 8px !important;
+            padding: 1px !important;
             font-weight: 600 !important;
           }
         }
@@ -85,4 +99,9 @@
 }
 .big-title {
   font-size: 1.4em !important;
+}
+.hover-list {
+  &:hover {
+    background-color: var(--color-secondary-alpha-05);
+  }
 }

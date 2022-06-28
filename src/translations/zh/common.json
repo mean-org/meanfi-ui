@@ -822,6 +822,7 @@
 			"status-running": "运行中",
 			"status-scheduled": "计划的",
 			"status-stopped": "已停止",
+			"status-paused": "Paused",
 			"stopped": "资金耗尽",
 			"stopped-manually": "手动停止",
 			"streaming": "流式处理"
@@ -1258,7 +1259,8 @@
 			"screen-title": "Streaming Accounts - Streams",
 			"status-running": "运行中",
 			"status-scheduled": "计划的",
-			"status-stopped": "已停止"
+			"status-stopped": "已停止",
+			"status-paused": "Paused"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

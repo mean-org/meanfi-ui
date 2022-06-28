@@ -3894,6 +3894,8 @@ main section {
           @media (min-width: 576px) {
             padding-right: 40px;
             padding-left: 40px;
+            padding-top: 40px;
+            padding-bottom: 20px;
           }
         }
       }
@@ -7705,6 +7707,13 @@ code {
 
 .warning-message {
   color: var(--color-notify-warning);
+}
+
+.account-category-title {
+  color: var(--color-secondary-alpha-70);
+  background-color: var(--color-section) !important;
+  padding-right: 0.5em;
+  border-bottom: 0.05px solid #525460;
 }
 
 .panel1,

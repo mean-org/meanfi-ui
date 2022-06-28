@@ -893,6 +893,7 @@
 			"status-running": "운영",
 			"status-scheduled": "예정된",
 			"status-stopped": "정지된",
+			"status-paused": "Paused",
 			"stopped": "자금 부족",
 			"stopped-manually": "수동으로 중지됨",
 			"streaming": "스트리밍"
@@ -1318,6 +1319,7 @@
 			"status-running": "운영",
 			"status-scheduled": "예정된",
 			"status-stopped": "중지된",
+			"status-paused": "Paused",
 			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {

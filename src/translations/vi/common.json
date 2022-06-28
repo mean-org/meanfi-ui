@@ -893,6 +893,7 @@
 			"status-running": "Đang chạy",
 			"status-scheduled": "Đã lập lịch",
 			"status-stopped": "Đã dừng",
+			"status-paused": "Paused",
 			"stopped": "Đã hết quỹ",
 			"stopped-manually": "Đã dừng thủ công",
 			"streaming": "Đang stream"
@@ -1314,6 +1315,7 @@
 			"status-running": "Đang chạy",
 			"status-scheduled": "Đã lập lịch",
 			"status-stopped": "Đã dừng",
+			"status-paused": "Paused",
 			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
