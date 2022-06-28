@@ -10,8 +10,7 @@ import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } fro
 import { TokenListItem } from '../../../../components/TokenListItem';
 import { TextInput } from '../../../../components/TextInput';
 import { useTranslation } from 'react-i18next';
-import moment from "moment";
-import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal } from 'antd';
+import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, TimePicker } from 'antd';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { TransactionFees, TreasuryType } from '@mean-dao/msp';
 import { NATIVE_SOL } from '../../../../utils/tokens';
@@ -25,6 +24,9 @@ import useWindowSize from '../../../../hooks/useWindowResize';
 import { IconCaretDown } from '../../../../Icons';
 import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from '../../../../models/vesting';
 import { isError } from '../../../../utils/transactions';
+import moment from 'moment';
+
+const timeFormat="HH:mm: A"
 
 export const VestingContractCreateForm = (props: {
     inModal: boolean;
@@ -80,6 +82,7 @@ export const VestingContractCreateForm = (props: {
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("");
     const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
     const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption>(VESTING_ACCOUNT_TYPE_OPTIONS[0]);
+    const [contractTime, setContractTime] = useState<string>('');
 
     const getFeeAmount = useCallback(() => {
         return transactionFees.blockchainFee + transactionFees.mspFlatFee;
@@ -183,9 +186,21 @@ export const VestingContractCreateForm = (props: {
         setIsFeePaidByTreasurer(e.target.checked);
     }
 
+    const get15MinutesAhead = useCallback(() => {
+        const time =  moment().add(15, 'minutes').format('HH:mm');
+        setContractTime(time);
+    }, []);
+
     /////////////////////
     // Data management //
     /////////////////////
+
+    // Set an initial time for creating a contract
+    useEffect(() => {
+        if (!contractTime) {
+            get15MinutesAhead();
+        }
+    }, [contractTime, get15MinutesAhead]);
 
     // Process inputs
     useEffect(() => {
@@ -288,13 +303,13 @@ export const VestingContractCreateForm = (props: {
 
     // TODO: Modify payload as needed
     const onAccountCreateClick = () => {
-        const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         const startUtc = new Date(parsedDate);
-        startUtc.setHours(now.getHours());
-        startUtc.setMinutes(now.getMinutes());
-        startUtc.setSeconds(now.getSeconds());
-        startUtc.setMilliseconds(now.getMilliseconds());
+        const shortTime = moment(contractTime, "HH:mm");
+        startUtc.setHours(shortTime.hour());
+        startUtc.setMinutes(shortTime.minute());
+        startUtc.setSeconds(shortTime.second());
+        consoleOut('startUtc modified:', startUtc.toUTCString(), 'darkorange');
 
         const options: VestingContractCreateOptions = {
             vestingContractName: vestingLockName,
@@ -305,7 +320,7 @@ export const VestingContractCreateForm = (props: {
             feePayedByTreasurer: isFeePaidByTreasurer,
             duration: parseFloat(lockPeriodAmount),
             durationUnit: getRateIntervalInSeconds(lockPeriodFrequency),
-            cliffVestPercent: parseFloat(cliffReleasePercentage),
+            cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
             startDate: startUtc,
             fundingAmount: toTokenAmount(parseFloat(vestingLockFundingAmount), (selectedToken as TokenInfo).decimals)
         };
@@ -459,6 +474,12 @@ export const VestingContractCreateForm = (props: {
         setCliffReleasePercentage(`${value}`);
     };
 
+    const onChange = (time: moment.Moment | null, timeString: string) => {
+        if (time) {
+            const shortTime = time.format("HH:mm");
+            setContractTime(shortTime);
+        }
+    };
 
     ///////////////
     // Rendering //
@@ -746,74 +767,94 @@ export const VestingContractCreateForm = (props: {
 
                     {/* Vesting period */}
                     <div className="form-label">Vesting period</div>
-                    <div className="d-flex">
-                        <div className="well w-25 mr-1">
-                            <div className="flex-fixed-right">
-                                <div className="left">
-                                    <input
-                                        id="plock-period-field"
-                                        className="w-100 general-text-input"
-                                        autoComplete="on"
-                                        autoCorrect="off"
-                                        type="number"
-                                        onChange={handleLockPeriodAmountChange}
-                                        placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
-                                        spellCheck="false"
-                                        min={0}
-                                        max={12}
-                                        maxLength={2}
-                                        value={lockPeriodAmount}
-                                    />
+                    <div className="two-column-form-layout col60x40">
+                        <div className="left">
+                            <div className="well">
+                                <div className="flex-fixed-right">
+                                    <div className="left">
+                                        <input
+                                            id="plock-period-field"
+                                            className="w-100 general-text-input"
+                                            autoComplete="on"
+                                            autoCorrect="off"
+                                            type="number"
+                                            onChange={handleLockPeriodAmountChange}
+                                            placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
+                                            spellCheck="false"
+                                            min={0}
+                                            max={12}
+                                            maxLength={2}
+                                            value={lockPeriodAmount}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="well w-75 ml-1">
-                            <Dropdown
-                                overlay={lockPeriodOptionsMenu}
-                                trigger={["click"]}>
-                                <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                                    <div className="left">
-                                        <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)}{" "}</span>
-                                    </div>
-                                    <div className="right">
-                                        <IconCaretDown className="mean-svg-icons" />
-                                    </div>
-                                </span>
-                            </Dropdown>
+                        <div className="right">
+                            <div className="well">
+                                <Dropdown
+                                    overlay={lockPeriodOptionsMenu}
+                                    trigger={["click"]}>
+                                    <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                                        <div className="left">
+                                            <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)}{" "}</span>
+                                        </div>
+                                        <div className="right">
+                                            <IconCaretDown className="mean-svg-icons" />
+                                        </div>
+                                    </span>
+                                </Dropdown>
+                            </div>
                         </div>
                     </div>
 
                     {/* Contract commencement date */}
                     <div className="form-label">Contract commencement date</div>
-                    <div className="well">
-                        <div className="flex-fixed-right">
-                            <div className="left static-data-field">
-                                {isToday(paymentStartDate || '')
-                                    ? `${paymentStartDate} (${t('common:general.now')})`
-                                    : `${paymentStartDate}`}
-                            </div>
-                            <div className="right">
-                                <div className="add-on simplelink">
-                                    <>
-                                        {
-                                            <DatePicker
-                                                size="middle"
-                                                bordered={false}
-                                                className="addon-date-picker"
-                                                aria-required={true}
-                                                allowClear={false}
-                                                disabledDate={disabledDate}
-                                                placeholder="Pick a date"
-                                                onChange={(value: any, date: string) => handleDateChange(date)}
-                                                value={moment(
-                                                    paymentStartDate,
-                                                    DATEPICKER_FORMAT
-                                                ) as any}
-                                                format={DATEPICKER_FORMAT}
-                                            />
-                                        }
-                                    </>
+                    <div className="two-column-form-layout col60x40">
+                        <div className="left">
+                            <div className="well">
+                                <div className="flex-fixed-right">
+                                    <div className="left static-data-field">
+                                        {isToday(paymentStartDate || '')
+                                            ? `${paymentStartDate} (${t('common:general.now')})`
+                                            : `${paymentStartDate}`}
+                                    </div>
+                                    <div className="right">
+                                        <div className="add-on simplelink">
+                                            <>
+                                                {
+                                                    <DatePicker
+                                                        size="middle"
+                                                        bordered={false}
+                                                        className="addon-date-picker"
+                                                        aria-required={true}
+                                                        allowClear={false}
+                                                        disabledDate={disabledDate}
+                                                        placeholder="Pick a date"
+                                                        onChange={(value: any, date: string) => handleDateChange(date)}
+                                                        value={moment(
+                                                            paymentStartDate,
+                                                            DATEPICKER_FORMAT
+                                                        ) as any}
+                                                        format={DATEPICKER_FORMAT}
+                                                    />
+                                                }
+                                            </>
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+                        </div>
+                        <div className="right">
+                            <div className="well time-picker">
+                                <TimePicker
+                                    defaultValue={moment().add(15, 'minutes')}
+                                    bordered={false}
+                                    allowClear={false}
+                                    size="middle"
+                                    use12Hours
+                                    format={timeFormat}
+                                    onChange={onChange} />
                             </div>
                         </div>
                     </div>

@@ -3059,6 +3059,33 @@ main section {
   }
 }
 
+.time-picker {
+  .ant-picker.ant-picker-middle.ant-picker-borderless {
+    width: 100%;
+    padding: 0;
+    color: var(--text-color);
+    .ant-picker-input {
+      > input {
+        color: inherit;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1.2;
+      }
+      > .ant-picker-suffix {
+        color: var(--color-secondary-alpha-70);
+      }
+    }
+  }
+}
+
+.ant-picker-panel-container {
+  .ant-picker-content {
+    .ant-picker-time-panel-column:last-child::after {
+      height: auto;
+    }
+  }
+}
+
 // Wells can glue togethwe in a group inside this container
 .well-group {
   display: block;
@@ -3109,22 +3136,23 @@ main section {
     .anticon.anticon-qrcode svg {
       height: 24px;
       width: 24px;
-      color: var(--color-secondary-alpha-50);
+      color: var(--color-secondary-alpha-70);
     }
     .ant-picker.ant-picker-middle.ant-picker-borderless.addon-date-picker {
       padding: 0;
+      color: var(--color-secondary-alpha-70);
       .ant-picker-input {
         input {
           display: none;
         }
         .ant-picker-suffix {
           margin: 0;
-          color: var(--color-secondary-alpha-50);
+          color: var(--color-secondary-alpha-70);
           .anticon.anticon-calendar {
             > svg {
               width: 20px;
               height: 20px;
-              color: var(--color-secondary-alpha-50);
+              color: var(--color-secondary-alpha-70);
             }
           }
         }
