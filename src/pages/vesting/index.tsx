@@ -3548,6 +3548,7 @@ export const VestingView = () => {
             hasMoreStreamActivity={hasMoreContractActivity}
             loadingStreamActivity={loadingContractActivity}
             onLoadMoreActivities={loadMoreActivity}
+            vestingContract={selectedVestingContract}
           />
         </TabPane>
       </Tabs>
