@@ -400,6 +400,7 @@ export const ProposalDetailsView = (props: {
   const anyoneCanExecuteTx = () => {
     if (selectedProposal.operation !== OperationType.StreamWithdraw &&
         selectedProposal.operation !== OperationType.EditMultisig &&
+        selectedProposal.operation !== OperationType.Transfer &&
         selectedProposal.operation !== OperationType.TransferTokens &&
         selectedProposal.operation !== OperationType.UpgradeProgram &&
         selectedProposal.operation !== OperationType.SetMultisigAuthority &&
@@ -612,7 +613,7 @@ export const ProposalDetailsView = (props: {
                   shape="round"
                   size="small"
                   className="thin-stroke d-flex justify-content-center align-items-center"
-                  disabled={!anyoneCanExecuteTx() || hasMultisigPendingProposal}
+                  disabled={hasMultisigPendingProposal || (!isProposer && !anyoneCanExecuteTx())}
                   onClick={() => {
                     const operation = { transaction: selectedProposal }
                     onOperationStarted(operation)
