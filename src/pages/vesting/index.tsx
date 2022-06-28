@@ -672,7 +672,17 @@ export const VestingView = () => {
     setRecipientAddress('');
     setLockPeriodAmount('');
     setFromCoinAmount('');
-  }, [setFromCoinAmount, setIsVerifiedRecipient, setLockPeriodAmount, setLockPeriodFrequency, setPaymentStartDate, setRecipientAddress]);
+    setSelectedToken(selectedList[0]);
+  }, [
+    selectedList,
+    setSelectedToken,
+    setFromCoinAmount,
+    setLockPeriodAmount,
+    setPaymentStartDate,
+    setRecipientAddress,
+    setIsVerifiedRecipient,
+    setLockPeriodFrequency,
+  ]);
 
 
   //////////////
@@ -3698,7 +3708,7 @@ export const VestingView = () => {
                         </Tooltip>)
                       </span>
                       <Tooltip placement="bottom" title={t('vesting.refresh-tooltip')}>
-                        <span id="hard-refresh-contracts-cta" className="icon-button-container simplelink" onClick={() => reloadVestingContracts(true)}>
+                        <span className="icon-button-container simplelink" onClick={() => reloadVestingContracts(true)}>
                           <Button
                             type="default"
                             shape="circle"
@@ -3708,6 +3718,7 @@ export const VestingView = () => {
                           />
                         </span>
                       </Tooltip>
+                      <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
                       <div id="soft-refresh-contracts-cta" onClick={() => refreshVestingContracts(false)}></div>
                     </div>
                   </div>
