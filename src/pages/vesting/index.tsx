@@ -19,7 +19,6 @@ import {
   Constants as MSPV2Constants,
   StreamTemplate,
   Category,
-  SubCategory,
   TreasuryType,
   VestingTreasuryActivity,
 } from '@mean-dao/msp';
@@ -3027,17 +3026,19 @@ export const VestingView = () => {
     ctaItems++;   // Last increment. It seems all other items will go inside the vellipsis menu anyways
 
     // View SOL Balance
-    actions.push({
-      action: MetaInfoCtaAction.VestingContractViewSolBalance,
-      caption: 'View SOL Balance',
-      isVisible: true,
-      uiComponentType: 'menuitem',
-      disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
-      tooltip: '',
-      callBack: showVestingContractSolBalanceModal
-    });
-    ctaItems++;
+    if (selectedVestingContract && isMultisigTreasury(selectedVestingContract)) {
+      actions.push({
+        action: MetaInfoCtaAction.VestingContractViewSolBalance,
+        caption: 'View SOL Balance',
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: !isInspectedAccountTheConnectedWallet(),
+        uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
+        tooltip: '',
+        callBack: showVestingContractSolBalanceModal
+      });
+      ctaItems++;
+    }
 
     // Refresh Account Data
     actions.push({
