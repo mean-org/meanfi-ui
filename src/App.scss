@@ -328,6 +328,9 @@ body {
 ::-ms-input-placeholder { /* Microsoft Edge */
   color: var(--color-secondary-alpha-25);
 }
+.placeholder-text {
+  color: var(--color-secondary-alpha-25);
+}
 h1.mandatory-h1 {
   position: absolute;
   z-index: -1;
@@ -5646,9 +5649,6 @@ main section {
   left: 0;
   @media (max-width: 575.98px) {
     font-size: 20px;
-  }
-  &.placeholder-text {
-    color: var(--color-secondary-alpha-25);
   }
 }
 .address-display {

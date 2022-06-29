@@ -12,7 +12,7 @@ import { TextInput } from '../../../../components/TextInput';
 import { useTranslation } from 'react-i18next';
 import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, TimePicker } from 'antd';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { TransactionFees, TreasuryType } from '@mean-dao/msp';
+import { SubCategory, TransactionFees, TreasuryType } from '@mean-dao/msp';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -75,7 +75,7 @@ export const VestingContractCreateForm = (props: {
     const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
     const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
     const [vestingLockName, setVestingLockName] = useState<string>('');
-    const [vestingCategory, setVestingCategory] = useState<VestingContractCategory>(VESTING_CATEGORIES[0]);
+    const [vestingCategory, setVestingCategory] = useState<VestingContractCategory | undefined>(undefined);
     const [vestingLockFundingAmount, setVestingLockFundingAmount] = useState<string>('');
     const [currentStep, setCurrentStep] = useState(0);
     const percentages = [5, 10, 15, 20];
@@ -313,7 +313,7 @@ export const VestingContractCreateForm = (props: {
 
         const options: VestingContractCreateOptions = {
             vestingContractName: vestingLockName,
-            vestingCategory: vestingCategory.value,
+            vestingCategory: vestingCategory ? vestingCategory.value : SubCategory.default,
             vestingContractType: treasuryOption ? treasuryOption.type : TreasuryType.Lock,
             token: selectedToken as TokenInfo,
             amount: vestingLockFundingAmount,
@@ -756,7 +756,11 @@ export const VestingContractCreateForm = (props: {
                             trigger={["click"]}>
                             <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                                 <div className="left">
-                                    <span>{vestingCategory.label}</span>
+                                    {vestingCategory ? (
+                                        <span>{vestingCategory.label}</span>
+                                    ) : (
+                                        <span className="placeholder-text">Please select a category</span>
+                                    )}
                                 </div>
                                 <div className="right">
                                     <IconCaretDown className="mean-svg-icons" />
