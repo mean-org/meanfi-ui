@@ -30,12 +30,11 @@ import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTr
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from "../../utils/utils";
-import { openNotification } from "../../components/Notifications";
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { NO_FEES, ONE_MINUTE_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { TreasuryCreateOptions } from "../../models/treasuries";
@@ -45,7 +44,6 @@ import BN from "bn.js";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamOpenModal } from "../../components/StreamOpenModal";
-import { SendAssetModal } from "../../components/SendAssetModal";
 import { CreateStreamModal } from "../../components/CreateStreamModal";
 
 const { TabPane } = Tabs;
@@ -60,7 +58,7 @@ export const MoneyStreamsInfoView = (props: {
   onSendFromOutgoingStreamInfo?: any;
   onSendFromStreamingAccountDetails?: any;
   onSendFromStreamingAccountOutgoingStreamInfo?: any;
-  streamList?: Array<Stream | StreamInfo> | undefined;
+  streamList: Array<Stream | StreamInfo> | undefined;
   accountAddress: string;
   selectedTab: string;
   autocloseTreasuries: (Treasury | TreasuryInfo)[];
@@ -82,9 +80,7 @@ export const MoneyStreamsInfoView = (props: {
     openStreamById
   } = useContext(AppStateContext);
   const {
-    fetchTxInfoStatus,
     confirmationHistory,
-    startFetchTxSignatureInfo,
     clearTxConfirmationContext,
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
@@ -209,21 +205,6 @@ export const MoneyStreamsInfoView = (props: {
     streamV2ProgramAddress
   ]);
 
-  // Reset when navigates from multisig
-  // useEffect(() => {
-  //   if (previousRoute.startsWith("/multisig")) {
-  //     console.log("Clean all variables");
-  //     setIncomingStreamList(undefined);
-  //     setOutgoingStreamList(undefined);
-  //     setIncomingAmount(undefined);
-  //     setOutgoingAmount(undefined);
-  //     setStreamingAccountCombinedList(undefined);
-  //     setLoadingIncomingStreams(true);
-  //     setLoadingOutgoingStreams(true);
-  //     setLoadingCombinedStreamingList(true);
-  //   }
-  // }, [previousRoute])
-
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
@@ -243,24 +224,27 @@ export const MoneyStreamsInfoView = (props: {
 
   }, [ms, msp, publicKey, streamList]);
 
+  // Create a combined list of streaming accounts with its 
   useEffect(() => {
+    if (!treasuryList || !streamList) { return; }
+
     const getFinalList = async (list: (Treasury | TreasuryInfo)[]) => {
       const finalList: CombinedStreamingAccounts[] = [];
-      
+
       for (const item of list) {
         const treasuryPk = new PublicKey(item.id as string);
         const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2
           ? true
           : false;
-            
-        const streamList = await getStreamingAccountStreams(treasuryPk, isNewTreasury);
-        
-        const listItem: CombinedStreamingAccounts = {
-          streams: streamList,
-          treasury: item as any
-        };
-  
-        finalList.push(listItem);
+
+        const itemList = await getStreamingAccountStreams(treasuryPk, isNewTreasury);
+        if (itemList) {
+          const listItem: CombinedStreamingAccounts = {
+            streams: itemList,
+            treasury: item as any
+          };
+          finalList.push(listItem);
+        }
       }
 
       return finalList;
@@ -275,7 +259,7 @@ export const MoneyStreamsInfoView = (props: {
       const isNewTreasury = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
         ? true
         : false;
-        
+
       if (isNewTreasury) {
         return vB2.totalStreams - vA2.totalStreams;
       } else {
@@ -286,8 +270,8 @@ export const MoneyStreamsInfoView = (props: {
     if (sortedStreamingAccountList) {
       getFinalList(sortedStreamingAccountList)
         .then(items => {
-          consoleOut("finalList", items, "blue");
-    
+          consoleOut('streamingAccountCombinedList', items, "blue");
+
           setStreamingAccountCombinedList(items);
         })
         .catch((error) => {
@@ -295,7 +279,7 @@ export const MoneyStreamsInfoView = (props: {
         })
         .finally(() => setLoadingCombinedStreamingList(false));
     }
-  }, [getStreamingAccountStreams, treasuryList]);
+  }, [getStreamingAccountStreams, streamList, treasuryList]);
 
   // Keep account balance updated
   useEffect(() => {

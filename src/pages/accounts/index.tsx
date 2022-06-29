@@ -162,6 +162,7 @@ export const AccountsNewView = () => {
     setSelectedAsset,
     setStreamDetail,
     setTransactions,
+    setStreamList,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -2661,15 +2662,11 @@ export const AccountsNewView = () => {
 
   const getAllUserV2Treasuries = useCallback(async () => {
 
-    if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
+    if (!accountAddress || loadingTreasuries || !msp) { return []; }
 
-    const treasuries: any[] = [];
+    const pk = new PublicKey(accountAddress);
 
-    if (selectedMultisig) {
-      treasuries.push(...(await msp.listTreasuries(selectedMultisig?.authority)));
-    } else {
-      treasuries.push(...(await msp.listTreasuries(publicKey)));
-    }
+    const treasuries: any[] = await msp.listTreasuries(pk);
 
     const autoclosables = treasuries.filter((t: any) => t.autoClose);
 
@@ -2679,10 +2676,8 @@ export const AccountsNewView = () => {
 
   }, [
     msp,
-    connection,
-    loadingTreasuries, 
-    selectedMultisig,
-    publicKey
+    loadingTreasuries,
+    accountAddress
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
@@ -2701,27 +2696,23 @@ export const AccountsNewView = () => {
       getAllUserV2Treasuries()
         .then(async (treasuriesv2) => {
           treasuryAccumulator.push(...treasuriesv2);
-          consoleOut('v2 treasuries:', treasuriesv2, 'blue');
-
           if (!selectedMultisig) {
             try {
               treasuriesv1 = await ms.listTreasuries(publicKey);
             } catch (error) {
               console.error(error);
             }
-            consoleOut('v1 treasuries:', treasuriesv1, 'blue');
             treasuryAccumulator.push(...treasuriesv1);
           }
-
           setTreasuryList(treasuryAccumulator);
-          consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
+          consoleOut('treasuryList:', treasuryAccumulator, 'blue');
         })
         .catch(error => {
           console.error(error);
         })
         .finally(() => setLoadingTreasuries(false));
     }
-
+ 
   }, [
     ms,
     msp,
@@ -2739,14 +2730,20 @@ export const AccountsNewView = () => {
 
   // Load treasuries when account address changes
   useEffect(() => {
-    if (publicKey && !treasuriesLoaded) {
-      setTreasuriesLoaded(true);
+    if (publicKey && accountAddress) {
+      if (!treasuriesLoaded) {
+        setTreasuriesLoaded(true);
+      }
 
-      consoleOut("Loading treasuries...");
+      if (!previousRoute.startsWith('/accounts')) {
+        setTreasuryList([]);
+        setStreamList([]);
+      }
+      consoleOut('Loading treasuries...', 'accountAddress changed!', 'purple');
       refreshTreasuries(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey, treasuriesLoaded]);
+  }, [accountAddress, previousRoute, publicKey]);
 
   // Treasury list refresh timeout
   useEffect(() => {
