@@ -21,7 +21,7 @@ import { useAccountsContext } from '../../contexts/accounts';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { TokenListItem } from '../TokenListItem';
-import { MAX_TOKEN_LIST_ITEMS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { PublicKey } from '@solana/web3.js';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -374,7 +374,7 @@ export const TreasuryCreateModal = (props: {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={balance ? workingToken && workingToken.address === t.address ? "selected" : "simplelink" : "dimmed"}
@@ -408,13 +408,13 @@ export const TreasuryCreateModal = (props: {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={workingToken && workingToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={() => {
               const uknwnToken: TokenInfo = {
                 address: tokenFilter,
-                name: 'Unknown',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: 101,
                 decimals: 6,
                 symbol: '',
@@ -480,6 +480,7 @@ export const TreasuryCreateModal = (props: {
                           mintAddress={workingToken.address}
                           name={workingToken.name}
                           showCaretDown={true}
+                          showName={workingToken.name === CUSTOM_TOKEN_NAME ? true : false}
                           fullTokenInfo={workingToken}
                         />
                       )}

@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { useConnection } from '../../../../contexts/connection';
+import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { cutNumber, getAmountWithSymbol, getTokenBySymbol, isValidNumber, slugify, toTokenAmount } from '../../../../utils/utils';
+import { cutNumber, getAmountWithSymbol, getTokenBySymbol, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
 import { consoleOut, disabledDate, getLockPeriodOptionLabel, getRateIntervalInSeconds, isToday, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
 import { TokenListItem } from '../../../../components/TokenListItem';
 import { TextInput } from '../../../../components/TextInput';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +25,8 @@ import { IconCaretDown } from '../../../../Icons';
 import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from '../../../../models/vesting';
 import { isError } from '../../../../utils/transactions';
 import moment from 'moment';
+import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { environment } from '../../../../environments/environment';
 
 const timeFormat="HH:mm: A"
 
@@ -564,7 +566,7 @@ export const VestingContractCreateForm = (props: {
                         return (
                             <TokenListItem
                                 key={t.address}
-                                name={t.name || 'Unknown'}
+                                name={t.name || CUSTOM_TOKEN_NAME}
                                 mintAddress={t.address}
                                 token={t}
                                 className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
@@ -591,6 +593,13 @@ export const VestingContractCreateForm = (props: {
                     extraClass="mb-2"
                     onInputClear={onInputCleared}
                     placeholder={t('token-selector.search-input-placeholder')}
+                    error={
+                        tokenFilter && selectedToken && selectedToken.decimals === -1
+                            ? 'Account not found'
+                            : tokenFilter && selectedToken && selectedToken.decimals === -2
+                                ? 'Account is not a token mint'
+                                : ''
+                    }
                     onInputChange={onTokenSearchInputChange} />
             </div>
             <div className="token-list">
@@ -598,21 +607,47 @@ export const VestingContractCreateForm = (props: {
                 {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
                     <TokenListItem
                         key={tokenFilter}
-                        name="Unknown"
+                        name={CUSTOM_TOKEN_NAME}
                         mintAddress={tokenFilter}
                         className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-                        onClick={() => {
-                            const uknwnToken: TokenInfo = {
-                                address: tokenFilter,
-                                name: 'Unknown',
-                                chainId: 101,
-                                decimals: 6,
-                                symbol: '',
+                        onClick={async () => {
+                            const address = tokenFilter;
+                            let decimals = -1;
+                            let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+                            try {
+                                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                                consoleOut('accountInfo:', accountInfo, 'blue');
+                            } catch (error) {
+                                console.error(error);
+                            }
+                            if (accountInfo) {
+                                if ((accountInfo as any).data["program"] &&
+                                    (accountInfo as any).data["program"] === "spl-token" &&
+                                    (accountInfo as any).data["parsed"] &&
+                                    (accountInfo as any).data["parsed"]["type"] &&
+                                    (accountInfo as any).data["parsed"]["type"] === "mint") {
+                                    decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+                                } else {
+                                    decimals = -2;
+                                }
+                            }
+                            const unknownToken: TokenInfo = {
+                                address,
+                                name: CUSTOM_TOKEN_NAME,
+                                chainId: getNetworkIdByEnvironment(environment),
+                                decimals,
+                                symbol: `[${shortenAddress(address)}]`,
                             };
-                            setSelectedToken(uknwnToken);
-                            consoleOut("token selected:", uknwnToken, 'blue');
-                            setEffectiveRate(0);
-                            onCloseTokenSelector();
+                            tokenChanged(unknownToken);
+                            setSelectedToken(unknownToken);
+                            if (userBalances && userBalances[address]) {
+                                setSelectedTokenBalance(userBalances[address]);
+                            }
+                            consoleOut("token selected:", unknownToken, 'blue');
+                            // Do not close on errors (-1 or -2)
+                            if (decimals >= 0) {
+                                onCloseTokenSelector();
+                            }
                         }}
                         balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
                     />
@@ -669,6 +704,7 @@ export const VestingContractCreateForm = (props: {
                                             mintAddress={selectedToken.address}
                                             name={selectedToken.name}
                                             showCaretDown={true}
+                                            showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                             fullTokenInfo={selectedToken}
                                         />
                                     )}
@@ -918,6 +954,7 @@ export const VestingContractCreateForm = (props: {
                                         <TokenDisplay onClick={() => { }}
                                             mintAddress={selectedToken.address}
                                             name={selectedToken.name}
+                                            showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                             fullTokenInfo={selectedToken}
                                         />
                                     )}

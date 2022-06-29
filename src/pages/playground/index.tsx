@@ -41,7 +41,7 @@ import { BN } from "bn.js";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { MAX_TOKEN_LIST_ITEMS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "../../constants";
 import { TokenListItem } from "../../components/TokenListItem";
 import { TextInput } from "../../components/TextInput";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
@@ -1170,7 +1170,7 @@ export const PlaygroundView = () => {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
@@ -1204,13 +1204,13 @@ export const PlaygroundView = () => {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={() => {
               const uknwnToken: TokenInfo = {
                 address: tokenFilter,
-                name: 'Unknown',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: 101,
                 decimals: 6,
                 symbol: '',

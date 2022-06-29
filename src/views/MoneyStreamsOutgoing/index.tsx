@@ -17,7 +17,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { openNotification } from "../../components/Notifications";
 import { calculateActionFees } from "@mean-dao/money-streaming/lib/utils";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { NO_FEES } from "../../constants";
+import { CUSTOM_TOKEN_NAME, NO_FEES } from "../../constants";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamTopupParams } from "../../models/common-types";
 import { OperationType, TransactionStatus } from "../../models/enums";
@@ -210,7 +210,7 @@ export const MoneyStreamsOutgoingView = (props: {
     if (address && isValidAddress(address)) {
       const unkToken: TokenInfo = {
         address: address,
-        name: 'Unknown',
+        name: CUSTOM_TOKEN_NAME,
         chainId: 101,
         decimals: 6,
         symbol: shortenAddress(address),

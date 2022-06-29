@@ -51,6 +51,7 @@ import {
     SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
     SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
     FIVE_MINUTES_REFRESH_TIMEOUT,
+    CUSTOM_TOKEN_NAME,
 } from "../../constants";
 import {
     getSolanaExplorerClusterParam,
@@ -299,7 +300,7 @@ export const MultisigTreasuryStreams = () => {
             if (address && isValidAddress(address)) {
                 const unkToken: TokenInfo = {
                     address: address,
-                    name: "Unknown",
+                    name: CUSTOM_TOKEN_NAME,
                     chainId: 101,
                     decimals: 6,
                     symbol: shortenAddress(address),

@@ -15,6 +15,7 @@ import { isError } from '../../../../utils/transactions';
 import { IconEdit, IconWarning } from '../../../../Icons';
 import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
 import { PaymentRateType } from '../../../../models/enums';
+import { CUSTOM_TOKEN_NAME } from '../../../../constants';
 
 export const VestingContractCreateStreamModal = (props: {
     handleClose: any;
@@ -113,7 +114,7 @@ export const VestingContractCreateStreamModal = (props: {
     const setCustomToken = useCallback((address: string) => {
         const unkToken: TokenInfo = {
             address: address,
-            name: 'Unknown',
+            name: CUSTOM_TOKEN_NAME,
             chainId: 101,
             decimals: 6,
             symbol: shortenAddress(address),
@@ -636,6 +637,7 @@ export const VestingContractCreateStreamModal = (props: {
                                         <TokenDisplay onClick={() => {}}
                                             mintAddress={selectedToken.address}
                                             name={selectedToken.name}
+                                            showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                             showCaretDown={false}
                                             fullTokenInfo={selectedToken}
                                         />

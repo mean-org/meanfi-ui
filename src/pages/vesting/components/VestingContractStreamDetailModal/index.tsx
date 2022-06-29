@@ -7,6 +7,7 @@ import { consoleOut } from '../../../../utils/ui';
 import { shortenAddress } from '../../../../utils/utils';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
 import { PublicKey } from '@solana/web3.js';
+import { CUSTOM_TOKEN_NAME } from '../../../../constants';
 
 export const VestingContractStreamDetailModal = (props: {
   accountAddress: string;
@@ -41,7 +42,7 @@ export const VestingContractStreamDetailModal = (props: {
 
     const unkToken: TokenInfo = {
       address: address,
-      name: 'Unknown',
+      name: CUSTOM_TOKEN_NAME,
       chainId: 101,
       decimals: 6,
       symbol: shortenAddress(address),
