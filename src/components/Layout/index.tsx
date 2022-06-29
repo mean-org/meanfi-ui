@@ -39,6 +39,7 @@ export const AppLayout = React.memo((props: any) => {
   const {
     theme,
     tpsAvg,
+    previousRoute,
     detailsPanelOpen,
     previousWalletConnectState,
     setPreviousWalletConnectState,
@@ -46,6 +47,7 @@ export const AppLayout = React.memo((props: any) => {
     refreshTokenBalance,
     setDtailsPanelOpen,
     setDiagnosisInfo,
+    setPreviousRoute,
     setSelectedAsset,
     setStreamList,
     setTpsAvg,
@@ -400,6 +402,17 @@ export const AppLayout = React.memo((props: any) => {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
+
+  // Clear accounts state when leaving
+  useEffect(() => {
+    const isAccountPage = location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH);
+
+    if (location.pathname !== previousRoute) {
+      if (!isAccountPage) {
+        setPreviousRoute(location.pathname);
+      }
+    }
+  }, [location.pathname, previousRoute, setPreviousRoute]);
 
   const closeAllPanels = () => {
     if (detailsPanelOpen) {

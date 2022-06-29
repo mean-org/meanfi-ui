@@ -144,6 +144,8 @@ interface AppStateConfig {
   unstakedAmount: string;
   unstakeStartDate: string | undefined;
   stakingMultiplier: number;
+  // Routes
+  previousRoute: string;
   setTheme: (name: string) => void;
   setTpsAvg: (value: number | null | undefined) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -216,6 +218,8 @@ interface AppStateConfig {
   setUnstakedAmount: (data: string) => void;
   setUnstakeStartDate: (date: string) => void;
   setStakingMultiplier: (rate: number) => void;
+  // Routes
+  setPreviousRoute: (route: string) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -300,6 +304,8 @@ const contextDefaultValues: AppStateConfig = {
   unstakedAmount: '',
   unstakeStartDate: 'undefined',
   stakingMultiplier: 1,
+  // Routes
+  previousRoute: '',
   setTheme: () => {},
   setTpsAvg: () => {},
   setDtailsPanelOpen: () => {},
@@ -371,7 +377,9 @@ const contextDefaultValues: AppStateConfig = {
   setStakedAmount: () => {},
   setUnstakedAmount: () => {},
   setUnstakeStartDate: () => {},
-  setStakingMultiplier: () => {}
+  setStakingMultiplier: () => {},
+  // Routes
+  setPreviousRoute: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -468,6 +476,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
+  const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
 
   const isDowngradedPerformance = useMemo(() => {
     return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
@@ -1585,6 +1594,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         unstakedAmount,
         unstakeStartDate,
         stakingMultiplier,
+        previousRoute,
         setTheme,
         setTpsAvg,
         setDtailsPanelOpen,
@@ -1652,7 +1662,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setStakedAmount,
         setUnstakedAmount,
         setUnstakeStartDate,
-        setStakingMultiplier
+        setStakingMultiplier,
+        setPreviousRoute,
       }}>
       {children}
     </AppStateContext.Provider>

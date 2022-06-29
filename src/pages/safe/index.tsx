@@ -97,6 +97,7 @@ export const SafeView = () => {
     coinPrices,
     multisigTxs,
     isWhitelisted,
+    previousRoute,
     detailsPanelOpen,
     transactionStatus,
     highLightableMultisigId,
@@ -4051,12 +4052,14 @@ export const SafeView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">multisigTxs:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
-          <span className="ml-1">proposalLoadStatusRegister:</span><span className="ml-1 font-bold fg-dark-active">{proposalLoadStatusRegister.size}</span>
+          <span className="ml-1">previousRoute:</span><span className="ml-1 font-bold fg-dark-active">{previousRoute || '-'}</span>
+          {/* <span className="ml-1">multisigTxs:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
+          <span className="ml-1">proposalLoadStatusRegister:</span><span className="ml-1 font-bold fg-dark-active">{proposalLoadStatusRegister.size}</span> */}
         </div>
-      )} */}
+      )}
+
 
       <div className="container main-container">
 

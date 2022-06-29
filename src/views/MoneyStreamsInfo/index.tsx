@@ -68,6 +68,7 @@ export const MoneyStreamsInfoView = (props: {
 }) => {
   const {
     tokenList,
+    previousRoute,
     treasuryOption,
     transactionStatus,
     streamProgramAddress,
@@ -136,8 +137,15 @@ export const MoneyStreamsInfoView = (props: {
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
   const [rateIncomingPerDay, setRateIncomingPerDay] = useState(0);
   const [rateOutgoingPerDay, setRateOutgoingPerDay] = useState(0);
+
   const [loadingIncomingStreams, setLoadingIncomingStreams] = useState(true);
   const [loadingOutgoingStreams, setLoadingOutgoingStreams] = useState(true);
+
+  const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
+  const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
+
+  const [incomingAmount, setIncomingAmount] = useState<number | undefined>(undefined);
+  const [outgoingAmount, setOutgoingAmount] = useState<number | undefined>(undefined);
 
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -149,7 +157,7 @@ export const MoneyStreamsInfoView = (props: {
   const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
   // const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
 
-  const [treasuryCombinedList, setTreasuryCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
+  const [streamingAccountCombinedList, setStreamingAccountCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
   const [loadingMoneyStreamsDetails, setLoadingMoneyStreamsDetails] = useState(true);
 
   // Create and cache the connection
@@ -201,6 +209,21 @@ export const MoneyStreamsInfoView = (props: {
     streamV2ProgramAddress
   ]);
 
+  // Reset when navigates from multisig
+  // useEffect(() => {
+  //   if (previousRoute.startsWith("/multisig")) {
+  //     console.log("Clean all variables");
+  //     setIncomingStreamList(undefined);
+  //     setOutgoingStreamList(undefined);
+  //     setIncomingAmount(undefined);
+  //     setOutgoingAmount(undefined);
+  //     setStreamingAccountCombinedList(undefined);
+  //     setLoadingIncomingStreams(true);
+  //     setLoadingOutgoingStreams(true);
+  //     setLoadingCombinedStreamingList(true);
+  //   }
+  // }, [previousRoute])
+
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
@@ -236,8 +259,6 @@ export const MoneyStreamsInfoView = (props: {
           streams: streamList,
           treasury: item as any
         };
-
-        consoleOut("streamList", streamList, "orange");
   
         finalList.push(listItem);
       }
@@ -267,7 +288,7 @@ export const MoneyStreamsInfoView = (props: {
         .then(items => {
           consoleOut("finalList", items, "blue");
     
-          setTreasuryCombinedList(items);
+          setStreamingAccountCombinedList(items);
         })
         .catch((error) => {
           console.log(error);
@@ -1075,13 +1096,6 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [t]);
 
-  const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
-
-  const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
-
-  const [incomingAmount, setIncomingAmount] = useState<number | undefined>(undefined);
-  const [outgoingAmount, setOutgoingAmount] = useState<number | undefined>(undefined);
-
   const goToIncomingTabHandler = () => {
     const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
 
@@ -1120,8 +1134,8 @@ export const MoneyStreamsInfoView = (props: {
 
   useEffect(() => {
     if (!connection || !publicKey || !streamList || !autocloseTreasuries) {
-      setIncomingStreamList([]);
-      setOutgoingStreamList([]);
+      setIncomingStreamList(undefined);
+      setOutgoingStreamList(undefined);
 
       return;
     }
@@ -1148,19 +1162,30 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [incomingStreamList, outgoingStreamList]);
 
+  // Incoming amount
   useEffect(() => {
-    if (!incomingStreamList || !outgoingStreamList || !treasuryCombinedList) { return; }
+    if (!incomingStreamList) { return; }
 
     setIncomingAmount(incomingStreamList.length);
+  }, [
+    incomingStreamList
+  ]);
 
-    const sumStreamingStreams = treasuryCombinedList.reduce((accumulator, streaming: any) => {
+  // Outgoing amount
+  useEffect(() => {
+    if (!outgoingStreamList || !streamingAccountCombinedList) { return; }
+
+    // consoleOut("treasuryCombinedList test", streamingAccountCombinedList);
+
+    const sumStreamingStreams = streamingAccountCombinedList.reduce((accumulator, streaming: any) => {
       return accumulator + streaming.streams?.length;
     }, 0);
 
-    if (!loadingOutgoingStreams || !loadingCombinedStreamingList) {
-      setOutgoingAmount(outgoingStreamList.length + sumStreamingStreams);
-    }
-  }, [incomingStreamList, loadingCombinedStreamingList, loadingOutgoingStreams, outgoingStreamList, treasuryCombinedList]);
+    setOutgoingAmount(outgoingStreamList.length + sumStreamingStreams);
+  }, [
+    outgoingStreamList,
+    streamingAccountCombinedList
+  ]);
 
   useEffect(() => {
     let totalWithdrawAmount = 0;
@@ -1214,9 +1239,9 @@ export const MoneyStreamsInfoView = (props: {
       }
     }
 
-    if (treasuryCombinedList) {
+    if (streamingAccountCombinedList) {
       // eslint-disable-next-line array-callback-return
-      treasuryCombinedList.map(function(streaming) {
+      streamingAccountCombinedList.map(function(streaming) {
         if (!streaming.streams) { return false; }
 
         for (const stream of streaming.streams) {
@@ -1245,7 +1270,7 @@ export const MoneyStreamsInfoView = (props: {
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
     outgoingStreamList,
-    treasuryCombinedList
+    streamingAccountCombinedList
   ]);
 
   useEffect(() => {
@@ -1507,6 +1532,12 @@ export const MoneyStreamsInfoView = (props: {
       )}
     </>
   );
+  
+  // useEffect(() => {
+  //   console.log("===============================");
+  //   console.log("Showing streamingAccountCombinedList", streamingAccountCombinedList);
+  //   console.log("Showing outgoingStreamList", outgoingStreamList);
+  // }, [outgoingStreamList, streamingAccountCombinedList]);
 
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
@@ -1525,7 +1556,7 @@ export const MoneyStreamsInfoView = (props: {
         isLink={false}
       />
       {(!loadingOutgoingStreams && !loadingCombinedStreamingList) ? (
-        ((outgoingStreamList !== undefined && outgoingStreamList.length > 0) || (treasuryCombinedList !== undefined && treasuryCombinedList.length > 0)) ? (
+        ((outgoingStreamList !== undefined && outgoingStreamList.length > 0) || (streamingAccountCombinedList !== undefined && streamingAccountCombinedList.length > 0)) ? (
           <>
             <>
               {outgoingStreamList && outgoingStreamList.map((stream, index) => {
@@ -1560,7 +1591,7 @@ export const MoneyStreamsInfoView = (props: {
                 )
               })}
 
-              {(treasuryCombinedList && treasuryCombinedList.map((streaming, index) => {
+              {(streamingAccountCombinedList && streamingAccountCombinedList.map((streaming, index) => {
                   const v1 = streaming.treasury as unknown as TreasuryInfo;
                   const v2 = streaming.treasury as Treasury;
                   const isNewTreasury = streaming && streaming.treasury.version >= 2 ? true : false;
