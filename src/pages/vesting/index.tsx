@@ -458,7 +458,11 @@ export const VestingView = () => {
     getAllUserV2Accounts(accountAddress)
       .then(treasuries => {
         consoleOut('Streaming accounts:', treasuries, 'blue');
-        setTreasuryList(treasuries);
+        setTreasuryList(treasuries.map(vc => {
+          return Object.assign({}, vc, {
+            name: vc.name.trim()
+          })
+        }));
         if (treasuries.length > 0) {
           // /vesting/:address/contracts/:vestingContract
           if (reset) {
@@ -489,9 +493,13 @@ export const VestingView = () => {
     consoleOut('Executing getTreasuryStreams...', '', 'blue');
 
     msp.listStreams({treasury: treasuryPk })
-      .then((streams: any) => {
+      .then(streams => {
         consoleOut('treasuryStreams:', streams, 'blue');
-        setTreasuryStreams(streams);
+        setTreasuryStreams(streams.map(vc => {
+          return Object.assign({}, vc, {
+            name: vc.name.trim()
+          })
+        }));
       })
       .catch((err: any) => {
         console.error(err);
