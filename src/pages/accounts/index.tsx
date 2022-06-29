@@ -823,6 +823,8 @@ export const AccountsNewView = () => {
     segmentAnalytics.recordEvent(event, { signature: item.signature });
   }, []);
 
+  const param = getQueryAccountType();
+
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
     const softReloadStreams = () => {
@@ -896,7 +898,12 @@ export const AccountsNewView = () => {
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryClose) {
         hardReloadStreams();
-        const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
+        let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
+        if (param === "multisig") {
+          if (inspectedAccountType && inspectedAccountType === "multisig") {
+            url += `?account-type=multisig`;
+          }
+        }
         navigate(url);
       } else if (item.operationType === OperationType.TreasuryRefreshBalance) {
         softReloadStreams();
@@ -906,14 +913,16 @@ export const AccountsNewView = () => {
     }
     resetTransactionStatus();
   }, [
-    address, 
+    param,
+    address,
+    inspectedAccountType,
     isSelectedAssetNativeAccount, 
-    navigate, 
-    recordTxConfirmation, 
-    reloadSwitch, 
-    resetTransactionStatus, 
     setHighLightableMultisigId, 
-    setShouldLoadTokens
+    resetTransactionStatus, 
+    recordTxConfirmation, 
+    setShouldLoadTokens,
+    reloadSwitch, 
+    navigate, 
   ]);
 
   // Setup event handler for Tx confirmation error

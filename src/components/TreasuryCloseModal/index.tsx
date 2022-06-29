@@ -78,7 +78,7 @@ export const TreasuryCloseModal = (props: {
       visible={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+      width={380}>
 
       <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
