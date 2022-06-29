@@ -3016,7 +3016,7 @@ export const SafeView = () => {
               loadingTitle: "Confirming transaction",
               loadingMessage: `Cancel proposal: ${data.transaction.details.title}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Proposal "${data.transaction.details.title}" successfully canceled`,
+              completedMessage: `Successfully cancelled proposal: ${data.transaction.details.title}`,
               extras: {
                 multisigId: data.transaction.multisig,
                 transactionId: data.transaction.id
