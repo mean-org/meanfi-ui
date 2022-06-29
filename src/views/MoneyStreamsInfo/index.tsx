@@ -35,7 +35,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { TreasuryCreateOptions } from "../../models/treasuries";
 import { customLogger } from "../..";
@@ -63,10 +63,11 @@ export const MoneyStreamsInfoView = (props: {
   selectedTab: string;
   autocloseTreasuries: (Treasury | TreasuryInfo)[];
   treasuryList: (Treasury | TreasuryInfo)[];
+  multisigAccounts: MultisigInfo[] | undefined;
+  selectedMultisig: MultisigInfo | undefined;
 }) => {
   const {
     tokenList,
-    previousRoute,
     treasuryOption,
     transactionStatus,
     streamProgramAddress,
@@ -90,6 +91,8 @@ export const MoneyStreamsInfoView = (props: {
     onSendFromIncomingStreamInfo,
     onSendFromOutgoingStreamInfo,
     autocloseTreasuries,
+    multisigAccounts,
+    selectedMultisig,
     accountAddress,
     treasuryList,
     selectedTab,
@@ -102,7 +105,6 @@ export const MoneyStreamsInfoView = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
-  const location = useLocation();
   const navigate = useNavigate();
 
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
@@ -110,10 +112,6 @@ export const MoneyStreamsInfoView = (props: {
 
   // Multisig related
   const [multisigAddress, setMultisigAddress] = useState('');
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
-  const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
 
   // Transactions
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -757,7 +755,6 @@ export const MoneyStreamsInfoView = (props: {
             });
             setIsBusy(false);
             onTreasuryCreated(createOptions);
-            setNeedReloadMultisig(true);
             setLoadingMoneyStreamsDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -811,104 +808,6 @@ export const MoneyStreamsInfoView = (props: {
       clearTimeout(timeout);
     }
   }, [hasMoneyStreamPendingTx, streamList, treasuryList]);
-
-  // Get the Multisig accounts
-  // TODO: Signal when it is loading
-  useEffect(() => {
-
-    if (!connection || !publicKey || !multisigClient || !multisigAddress || !needReloadMultisig) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      consoleOut('Loading multisigs...', '', 'blue');
-      setNeedReloadMultisig(false);
-      setLoadingMultisigAccounts(true);
-
-      multisigClient
-        .getMultisigs(publicKey)
-        .then((allInfo: MultisigInfo[]) => {
-          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-          setMultisigAccounts(allInfo);
-          consoleOut('multisigs:', allInfo, 'blue');
-        })
-        .catch(err => {
-          console.error(err);
-        })
-        .finally(() => {
-          setLoadingMultisigAccounts(false);
-        });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    connection,
-    multisigClient,
-    multisigAddress,
-    needReloadMultisig,
-  ]);
-
-  // Set selectedMultisig based on the passed-in multisigAddress in query params
-  useEffect(() => {
-
-    if (!publicKey || !multisigAddress || !multisigAccounts || multisigAccounts.length === 0) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      if (location.search) {
-        consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-        const selected = multisigAccounts.find(m => m.authority.toBase58() === multisigAddress);
-        if (selected) {
-          consoleOut('selectedMultisig:', selected, 'blue');
-          setSelectedMultisig(selected);
-        } else {
-          consoleOut('multisigAccounts does not contain the requested multisigAddress:', multisigAddress, 'orange');
-        }
-      }
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    location.search,
-    multisigAddress,
-    multisigAccounts,
-  ]);
-
-  // Treasury list refresh timeout
-  // useEffect(() => {
-  //   let timer: any;
-
-  //   if (publicKey && !treasuriesLoaded && !loadingTreasuries) {
-  //     setTreasuriesLoaded(true);
-  //     consoleOut("Loading treasuries for the first time");
-  //     refreshTreasuries(true);
-  //   }
-
-  //   if (publicKey && treasuriesLoaded && !customStreamDocked) {
-  //     timer = setInterval(() => {
-  //       consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
-  //       refreshTreasuries(false);
-  //     }, ONE_MINUTE_REFRESH_TIMEOUT);
-  //   }
-
-  //   return () => clearInterval(timer);
-  // }, [
-  //   publicKey,
-  //   treasuriesLoaded,
-  //   loadingTreasuries,
-  //   customStreamDocked,
-  //   refreshTreasuries
-  // ]);
 
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
     if (item && publicKey && accountAddress) {
@@ -1168,8 +1067,6 @@ export const MoneyStreamsInfoView = (props: {
   // Outgoing amount
   useEffect(() => {
     if (!outgoingStreamList || !streamingAccountCombinedList) { return; }
-
-    // consoleOut("treasuryCombinedList test", streamingAccountCombinedList);
 
     const sumStreamingStreams = streamingAccountCombinedList.reduce((accumulator, streaming: any) => {
       return accumulator + streaming.streams?.length;
@@ -1792,7 +1689,7 @@ export const MoneyStreamsInfoView = (props: {
           handleClose={closeCreateTreasuryModal}
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
-          multisigAccounts={multisigAccounts || []}
+          multisigAccounts={param === "multisig" ? multisigAccounts : undefined}
           multisigAddress={multisigAddress || undefined}
         />
       )}

@@ -5004,6 +5004,8 @@ export const AccountsNewView = () => {
                                 selectedTab={pathParamStreamingTab}
                                 autocloseTreasuries={autocloseTreasuries}
                                 treasuryList={treasuryList}
+                                multisigAccounts={multisigAccounts}
+                                selectedMultisig={selectedMultisig}
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                               <MoneyStreamsIncomingView

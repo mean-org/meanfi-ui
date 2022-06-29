@@ -35,7 +35,7 @@ export const TreasuryCreateModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   selectedMultisig: MultisigInfo | undefined;
-  multisigAccounts: MultisigInfo[];
+  multisigAccounts?: MultisigInfo[] | undefined;
   multisigAddress?: string;
 }) => {
   const [searchParams] = useSearchParams();
@@ -146,6 +146,7 @@ export const TreasuryCreateModal = (props: {
 
   // When modal goes visible, preset the appropriate value for multisig treasury switch
   useEffect(() => {
+    if (!props.multisigAccounts) { return; }
     if (props.isVisible && props.selectedMultisig) {
       setEnableMultisigTreasuryOption(true);
       setLocalSelectedMultisig(props.selectedMultisig);
@@ -571,7 +572,7 @@ export const TreasuryCreateModal = (props: {
                 // )
               }
 
-              {(enableMultisigTreasuryOption && props.multisigAccounts.length > 0) && (
+              {(enableMultisigTreasuryOption && props.multisigAccounts && props.multisigAccounts.length > 0) && (
                 <>
                   <div className="mb-3">
                     <div className="form-label">{t('treasuries.create-treasury.multisig-selector-label')}</div>
@@ -670,8 +671,8 @@ export const TreasuryCreateModal = (props: {
                   {props.isBusy
                     ? t('treasuries.create-treasury.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                      ? enableMultisigTreasuryOption && props.multisigAccounts.length > 0
-                        ? ('treasuries.create-treasury.create-multisig-cta')
+                      ? enableMultisigTreasuryOption && props.multisigAccounts && props.multisigAccounts.length > 0
+                        ? (param === "multisig" ? "Submit proposal" : t('treasuries.create-treasury.create-multisig-cta'))
                         : (param === "multisig" ? "Submit proposal" : t('treasuries.create-treasury.main-cta'))
                       : t('general.refresh')
                   }
