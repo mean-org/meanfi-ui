@@ -4202,6 +4202,7 @@ export const SafeView = () => {
                             appsProvider={appsProvider}
                             multisigClient={multisigClient}
                             hasMultisigPendingProposal={hasMultisigPendingProposal()}
+                            isBusy={isBusy}
                           />
                         ) : isProgramDetails ? (
                           <ProgramDetailsView
