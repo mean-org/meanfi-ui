@@ -1365,7 +1365,8 @@
 		"close-account": {
 			"modal-title": "Close Contract",
 			"cannot-close-warn": "We're Sorry!",
-			"cannot-close-explanation": "There are still {{numItems}} streams that exist in this vesting contract. Please close all {{numItems}} streams and then you will be able to close this contract.",
+			"cannot-close-single-explanation": "There is still one stream that exists in this vesting contract. All streams must be closed before you can close the contract.",
+			"cannot-close-explanation": "There are still {{numItems}} streams that exist in this vesting contract. All streams must be closed before you can close the contract.",
 			"can-close-explanation": "Closing a vesting contract will remove it completely from the list of contracts. Upon closure, all funds left over in the account will be immediately sent back to the contract's treasurer.",
 			"funds-left-in-contract": "Funds left in the contract",
 			"close-cta": "Close contract",
