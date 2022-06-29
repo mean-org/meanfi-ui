@@ -694,7 +694,10 @@ export const VestingContractCreateForm = (props: {
                     </div>
 
                     {/* Token to vest */}
-                    <div className="form-label">{t('vesting.create-account.vesting-contract-token-label')}</div>
+                    <FormLabelWithIconInfo
+                        label={t('vesting.create-account.vesting-contract-token-label')}
+                        tooltip_text={t('vesting.create-account.vesting-contract-token-tooltip')}
+                    />
                     <div className="well">
                         <div className="flex-fixed-left">
                             <div className="left">
