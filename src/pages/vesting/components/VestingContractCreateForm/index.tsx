@@ -34,7 +34,7 @@ export const VestingContractCreateForm = (props: {
     nativeBalance: number;
     onStartTransaction: any;
     selectedList: TokenInfo[];
-    token?: TokenInfo;
+    token: TokenInfo | undefined;
     tokenChanged: any;
     transactionFees: TransactionFees;
     userBalances: any;
@@ -54,7 +54,6 @@ export const VestingContractCreateForm = (props: {
     const connection = useConnection();
     const { connected, publicKey } = useWallet();
     const {
-        tokenList,
         loadingPrices,
         lockPeriodAmount,
         paymentStartDate,
@@ -204,24 +203,10 @@ export const VestingContractCreateForm = (props: {
 
     // Process inputs
     useEffect(() => {
-        if (token && inModal) {
+        if (token) {
             setSelectedToken(token);
-            return;
-        } else {
-            let from: TokenInfo | undefined = undefined;
-            if (token) {
-                from = token
-                    ? token.symbol === 'SOL'
-                        ? getTokenBySymbol('wSOL')
-                        : getTokenBySymbol(token.symbol)
-                    : getTokenBySymbol('MEAN');
-
-                if (from) {
-                    setSelectedToken(from);
-                }
-            }
         }
-    }, [token, selectedToken, inModal]);
+    }, [token, inModal]);
 
     // Keep token balance updated
     useEffect(() => {
@@ -252,11 +237,11 @@ export const VestingContractCreateForm = (props: {
 
     // Reset results when the filter is cleared
     useEffect(() => {
-        if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+        if (selectedList && selectedList.length && filteredTokenList.length === 0 && !tokenFilter) {
             updateTokenListByFilter(tokenFilter);
         }
     }, [
-        tokenList,
+        selectedList,
         tokenFilter,
         filteredTokenList,
         updateTokenListByFilter
@@ -481,6 +466,54 @@ export const VestingContractCreateForm = (props: {
         }
     };
 
+    const getStepOneButtonLabel = () => {
+        let maxAmount = 0;
+        if (selectedToken) {
+            if (selectedToken.address === NATIVE_SOL.address) {
+                const amount = getMaxAmount();
+                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+            } else {
+                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+            }
+        }
+        return  !publicKey
+            ? t('transactions.validation.not-connected')
+            : !vestingLockName
+                ? 'Add contract name'
+                : !selectedToken || !nativeBalance
+                    ? t('transactions.validation.no-balance')
+                    : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
+                        ? t('transactions.validation.amount-high')
+                        : t('transactions.validation.valid-continue');
+
+    }
+
+    const getStepTwoButtonLabel = () => {
+        let maxAmount = 0;
+        if (selectedToken) {
+            if (selectedToken.address === NATIVE_SOL.address) {
+                const amount = getMaxAmount();
+                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+            } else {
+                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+            }
+        }
+        return  !publicKey
+            ? t('transactions.validation.not-connected')
+            : !vestingLockName
+                ? 'Add contract name'
+                : !selectedToken || !nativeBalance
+                    ? t('transactions.validation.no-balance')
+                    : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
+                        ? t('transactions.validation.amount-high')
+                        : !lockPeriodAmount
+                            ? 'Set vesting period'
+                            : !lockPeriodFrequency
+                                ? 'Set vesting period'
+                                : t('vesting.create-account.create-cta');
+
+    }
+
     ///////////////
     // Rendering //
     ///////////////
@@ -534,10 +567,10 @@ export const VestingContractCreateForm = (props: {
                                 name={t.name || 'Unknown'}
                                 mintAddress={t.address}
                                 token={t}
-                                className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
+                                className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
                                 onClick={onClick}
                                 balance={balance}
-                                showZeroBalances={true}
+                                showZeroBalances={false}
                             />
                         );
                     } else {
@@ -735,7 +768,7 @@ export const VestingContractCreateForm = (props: {
                             className="thin-stroke"
                             disabled={!isStepOneValid()}
                             onClick={onContinueStepOneButtonClick}>
-                            Continue
+                            {getStepOneButtonLabel()}
                         </Button>
                     </div>
 
@@ -759,7 +792,7 @@ export const VestingContractCreateForm = (props: {
                                     {vestingCategory ? (
                                         <span>{vestingCategory.label}</span>
                                     ) : (
-                                        <span className="placeholder-text">Please select a category</span>
+                                        <span className="placeholder-text">Please select a vesting category</span>
                                     )}
                                 </div>
                                 <div className="right">
@@ -944,7 +977,7 @@ export const VestingContractCreateForm = (props: {
                                     ? t('vesting.create-account.create-cta-busy')
                                     : isError(transactionStatus.currentOperation)
                                         ? t('general.retry')
-                                        : t('vesting.create-account.create-cta')
+                                        : getStepTwoButtonLabel()
                                 }
                             </Button>
                         </div>

@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, copyText, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -66,7 +66,6 @@ export type VestingAccountDetailTab = "overview" | "streams" | "activity" | unde
 
 export const VestingView = () => {
   const {
-    tokenList,
     userTokens,
     splTokenList,
     selectedToken,
@@ -2910,45 +2909,66 @@ export const VestingView = () => {
       return;
     }
 
-    if (!publicKey || !userTokens || !tokenList || !splTokenList || accounts.tokenAccounts.length === 0) {
+    if (!publicKey || !userTokens || !splTokenList || !accounts.tokenAccounts) {
       return;
     }
 
+    const meanTokensCopy = new Array<TokenInfo>();
+    const intersectedList = new Array<TokenInfo>();
+    const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
     const balancesMap: any = {};
+    balancesMap[userTokensCopy[0].address] = nativeBalance;
 
     fetchAccountTokens(connection, publicKey)
       .then(accTks => {
         if (accTks) {
-
-          const meanTokensCopy = new Array<TokenInfo>();
-          const intersectedList = new Array<TokenInfo>();
-          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
 
           // Build meanTokensCopy including the MeanFi pinned tokens
           userTokensCopy.forEach(item => {
             meanTokensCopy.push(item);
           });
 
-          // Now add all other items but excluding those in userTokens
-          splTokenList.forEach(item => {
-            if (!userTokens.includes(item)) {
-              meanTokensCopy.push(item);
-            }
-          });
+          // Now add all other items but excluding those in userTokens (only in prod)
+          if (isProd()) {
+            splTokenList.forEach(item => {
+              if (!userTokens.includes(item)) {
+                meanTokensCopy.push(item);
+              }
+            });
+          }
 
           // Create a list containing tokens for the user owned token accounts
+          // Code to only add owned tokens
+
+          // accTks.forEach(item => {
+          //   balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+          //   const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+          //   const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+          //   if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+          //     intersectedList.push(tokenFromMeanTokensCopy);
+          //   }
+          // });
+          // intersectedList.unshift(userTokensCopy[0]);
+          // intersectedList.sort((a, b) => {
+          //   if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+          //     return 1;
+          //   } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+          //     return -1;
+          //   }
+          //   return 0;
+          // });
+          // setSelectedList(intersectedList);
+          // if (!selectedToken) { setSelectedToken(intersectedList[0]); }
+
+
+
+
+          // Add owned token accounts to balances map
+          // Code to have all tokens sorted by balance
           accTks.forEach(item => {
             balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
-            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-              intersectedList.push(tokenFromMeanTokensCopy);
-            }
           });
-
-          intersectedList.unshift(userTokensCopy[0]);
-          balancesMap[userTokensCopy[0].address] = nativeBalance;
-          intersectedList.sort((a, b) => {
+          meanTokensCopy.sort((a, b) => {
             if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
               return 1;
             } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
@@ -2956,39 +2976,37 @@ export const VestingView = () => {
             }
             return 0;
           });
-
-          setSelectedList(intersectedList);
-          if (!selectedToken) { setSelectedToken(intersectedList[0]); }
+          setSelectedList(meanTokensCopy);
+          if (!selectedToken) { setSelectedToken(meanTokensCopy[0]); }
 
         } else {
-          for (const t of tokenList) {
+          for (const t of userTokensCopy) {
             balancesMap[t.address] = 0;
           }
           // set the list to the userTokens list
-          setSelectedList(tokenList);
-          if (!selectedToken) { setSelectedToken(tokenList[0]); }
+          setSelectedList(userTokensCopy);
+          if (!selectedToken) { setSelectedToken(userTokensCopy[0]); }
         }
       })
       .catch(error => {
         console.error(error);
-        for (const t of tokenList) {
+        for (const t of userTokensCopy) {
           balancesMap[t.address] = 0;
         }
-        setSelectedList(tokenList);
-        if (!selectedToken) { setSelectedToken(tokenList[0]); }
+        setSelectedList(userTokensCopy);
+        if (!selectedToken) { setSelectedToken(userTokensCopy[0]); }
       })
       .finally(() => setUserBalances(balancesMap));
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
-    tokenList,
     connection,
     userTokens,
     splTokenList,
     nativeBalance,
     selectedToken,
     accounts.tokenAccounts,
+    setSelectedToken
   ]);
 
   // Build CTAs
