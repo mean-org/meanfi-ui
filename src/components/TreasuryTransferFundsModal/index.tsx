@@ -18,7 +18,6 @@ import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { TokenDisplay } from '../TokenDisplay';
 import { BN } from 'bn.js';
-import { StreamTreasuryType } from '../../models/treasuries';
 
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from 'react-router-dom';
@@ -47,8 +46,6 @@ export const TreasuryTransferFundsModal = (props: {
     loadingPrices,
     effectiveRate,
     transactionStatus,
-    isVerifiedRecipient,
-    setIsVerifiedRecipient,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshPrices,
@@ -60,8 +57,8 @@ export const TreasuryTransferFundsModal = (props: {
   const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
-  const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
+  const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
     const treasuryInfo: any = treasury ?? props.treasuryDetails;
@@ -78,9 +75,9 @@ export const TreasuryTransferFundsModal = (props: {
 
     return false;
   }, [
+    publicKey,
     props.multisigAccounts, 
-    publicKey, 
-    props.treasuryDetails
+    props.treasuryDetails,
   ]);
 
   const shouldFundFromTreasury = useCallback(() => {

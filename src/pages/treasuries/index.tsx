@@ -6050,7 +6050,7 @@ export const TreasuriesView = () => {
         </div>
       </Modal>
 
-      {isTransferFundsModalVisible && (
+      {/* {isTransferFundsModalVisible && (
         <TreasuryTransferFundsModal
           isVisible={isTransferFundsModalVisible}
           nativeBalance={nativeBalance}
@@ -6065,7 +6065,7 @@ export const TreasuriesView = () => {
           }}
           isBusy={isBusy}
         />
-      )}
+      )} */}
 
       <PreFooter />
     </>

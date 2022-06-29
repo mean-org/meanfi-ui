@@ -37,7 +37,7 @@ import { TreasuryStreamsBreakdown } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFundsModal";
 import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
-import { useLocation, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -48,6 +48,7 @@ export const StreamingAccountView = (props: {
   streamingAccountSelected: Treasury | TreasuryInfo | undefined;
   onSendFromStreamingAccountDetails?: any;
   onSendFromStreamingAccountOutgoingStreamInfo?: any;
+  multisigAccounts: MultisigInfo[] | undefined;
 }) => {
   const {
     tokenList,
@@ -77,9 +78,13 @@ export const StreamingAccountView = (props: {
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const { treasuryId } = useParams();
-  const location = useLocation();
   
-  const { streamingAccountSelected, onSendFromStreamingAccountDetails, onSendFromStreamingAccountOutgoingStreamInfo } = props;
+  const { 
+    multisigAccounts,
+    streamingAccountSelected,
+    onSendFromStreamingAccountDetails,
+    onSendFromStreamingAccountOutgoingStreamInfo,
+  } = props;
 
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
@@ -107,12 +112,6 @@ export const StreamingAccountView = (props: {
     rentExempt: 0
   } as MultisigTransactionFees);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
-  const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
-
-  // Multisig related
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
-  const [multisigAddress, setMultisigAddress] = useState('');
 
   const V1_TREASURY_ID = useMemo(() => { return new PublicKey("DVhWHsWSybDD8n5P6ep7rP4bg7yj55MoeZGQrbLGpQtQ"); }, []);
 
@@ -840,7 +839,6 @@ export const StreamingAccountView = (props: {
               extras: streamingAccountSelected.id as string
             });
             onAddFundsTransactionFinished();
-            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
             setLoadingStreamingAccountDetails(true);
           } else { setIsBusy(false); }
@@ -1188,7 +1186,6 @@ export const StreamingAccountView = (props: {
               extras: streamingAccountSelected.id as string
             });
             onTreasuryFundsTransferred();
-            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
             setLoadingStreamingAccountDetails(true);
           } else { setIsBusy(false); }
@@ -1633,7 +1630,6 @@ export const StreamingAccountView = (props: {
               extras: streamingAccountSelected.id as string
             });
             onCloseTreasuryTransactionFinished();
-            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
             setLoadingStreamingAccountDetails(true);
           } else { setIsBusy(false); }
@@ -2522,55 +2518,6 @@ export const StreamingAccountView = (props: {
     setSelectedToken
   ]);
 
-  // Set selectedMultisig based on the passed-in multisigAddress in query params
-  useEffect(() => {
-
-    if (!publicKey || !multisigAddress || !multisigAccounts || multisigAccounts.length === 0) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      if (location.search) {
-        consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-        const selected = multisigAccounts.find(m => m.authority.toBase58() === multisigAddress);
-        if (selected) {
-          consoleOut('selectedMultisig:', selected, 'blue');
-          setSelectedMultisig(selected);
-        } else {
-          consoleOut('multisigAccounts does not contain the requested multisigAddress:', multisigAddress, 'orange');
-        }
-      }
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    location.search,
-    multisigAddress,
-    multisigAccounts,
-  ]);
-
-  // Enable deep-linking - Parse and save query params as needed
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    let multisig: string | null = null;
-
-    if (params.has('multisig')) {             // Preset multisig address if passed-in
-      multisig = params.get('multisig');
-      setMultisigAddress(multisig || '');     // Store it in the state
-      consoleOut('params.get("multisig") =', multisig, 'crimson');
-    } else {                                  // Clean any data we may have data relative to a previous multisig
-      if (selectedMultisig) {
-        setMultisigAddress('');
-        setSelectedMultisig(undefined);
-      }
-      consoleOut('No params passed!', '', 'crimson');
-    }
-  }, [location.search, selectedMultisig]);
-
   const getStreamTitle = (item: Stream | StreamInfo): string => {
     let title = '';
     if (item) {
@@ -2878,7 +2825,7 @@ export const StreamingAccountView = (props: {
         </Menu.Item>
       )}
       {isMultisigTreasury() && (
-        <Menu.Item key="ms-02" onClick={() => {}}>
+        <Menu.Item key="ms-02" disabled={hasStreamingAccountPendingTx() || !isTreasurer()} onClick={() => {}}>
           <span className="menu-item-text">SOL balance</span>
         </Menu.Item>
       )}
