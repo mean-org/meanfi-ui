@@ -63,7 +63,7 @@ export const RejectCancelModal = (props: {
           <>
             <div className="mb-3 text-center">
               <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-3 mb-3" />
-              <div>This proposal will be removed from the Multisig list of proposals. If you wish to re-submit the same proposal you will need to start over again. Confirm you wish to cancel</div>
+              <div>This proposal will be removed from the Multisig list of proposals. If you wish to re-submit the same proposal then you will need to start over again. Confirm you wish to cancel.</div>
             </div>
 
             <Row className="mt-3 mb-1">
