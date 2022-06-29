@@ -130,6 +130,7 @@ export const AccountsNewView = () => {
     streamDetail,
     transactions,
     isWhitelisted,
+    previousRoute,
     selectedAsset,
     accountAddress,
     loadingStreams,
@@ -2662,23 +2663,12 @@ export const AccountsNewView = () => {
 
     if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
 
-    let treasuries = await msp.listTreasuries(publicKey);
+    const treasuries: any[] = [];
 
-    if (selectedMultisig && multisigAccounts) {
-
-      const multisigTreasuries: any[] = [];
-
-      const filterMultisigAccounts = selectedMultisig
-        ? [selectedMultisig.authority]
-        : multisigAccounts.map(m => m.authority);
-
-      if (filterMultisigAccounts) {
-        for (const key of filterMultisigAccounts) {
-          multisigTreasuries.push(...(await msp.listTreasuries(key)));
-        }
-      }
-
-      treasuries = multisigTreasuries;
+    if (selectedMultisig) {
+      treasuries.push(...(await msp.listTreasuries(selectedMultisig?.authority)));
+    } else {
+      treasuries.push(...(await msp.listTreasuries(publicKey)));
     }
 
     const autoclosables = treasuries.filter((t: any) => t.autoClose);
@@ -2688,11 +2678,10 @@ export const AccountsNewView = () => {
     return treasuries.filter((t: any) => !t.autoClose);
 
   }, [
-    connection, 
-    loadingTreasuries, 
     msp,
+    connection,
+    loadingTreasuries, 
     selectedMultisig,
-    multisigAccounts,
     publicKey
   ]);
 
@@ -2748,15 +2737,20 @@ export const AccountsNewView = () => {
   // Data management //
   /////////////////////
 
+  // Load treasuries when account address changes
+  useEffect(() => {
+    if (publicKey && !treasuriesLoaded) {
+      setTreasuriesLoaded(true);
+
+      consoleOut("Loading treasuries...");
+      refreshTreasuries(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publicKey, treasuriesLoaded]);
+
   // Treasury list refresh timeout
   useEffect(() => {
     let timer: any;
-
-    if (publicKey && !treasuriesLoaded && !loadingTreasuries) {
-      setTreasuriesLoaded(true);
-      consoleOut("Loading treasuries for the first time");
-      refreshTreasuries(true);
-    }
 
     if (publicKey && treasuriesLoaded && !customStreamDocked) {
       timer = setInterval(() => {
@@ -2768,6 +2762,7 @@ export const AccountsNewView = () => {
     return () => clearInterval(timer);
   }, [
     publicKey,
+    accountAddress,
     treasuriesLoaded,
     loadingTreasuries,
     customStreamDocked,
@@ -2782,6 +2777,13 @@ export const AccountsNewView = () => {
       setIsXsDevice(false);
     }
   }, [width]);
+
+  // Refresh treasuries when navigates from multisig
+  useEffect(() => {
+    if (previousRoute.startsWith("/multisig")) {
+      setTreasuryList([]);
+    }
+  }, [previousRoute])
 
   /**
    * - No CTAs if it is a custom token or we don't know the asset's token
@@ -4737,6 +4739,7 @@ export const AccountsNewView = () => {
         <div className="debug-bar">
           <span className="ml-1">selectedCategory:</span><span className="ml-1 font-bold fg-dark-active">{selectedCategory || '-'}</span>
           <span className="ml-1">pathParamStreamingTab:</span><span className="ml-1 font-bold fg-dark-active">{pathParamStreamingTab || '-'}</span>
+          <span className="ml-1">previousRoute:</span><span className="ml-1 font-bold fg-dark-active">{previousRoute || '-'}</span>
         </div>
       )}
 
