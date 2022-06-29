@@ -1366,7 +1366,7 @@
 			"start-immediately": "Immediately after approval",
 			"step-one-label": "Stream details",
 			"step-one-validation-pass": "Next",
-			"step-two-label": "Stream summry",
+			"step-two-label": "Stream summary",
 			"stream-name-empty": "Stream name cannot be empty",
 			"total-funds-to-commit": "Total funds to commit",
 			"total-funds-to-stream": "Total funds to stream",
