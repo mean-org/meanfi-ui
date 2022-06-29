@@ -11,7 +11,6 @@ import { consoleOut, copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
-// import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
 import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
@@ -41,6 +40,7 @@ export const ProposalDetailsView = (props: {
 }) => {
 
   const {
+    transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -59,7 +59,7 @@ export const ProposalDetailsView = (props: {
     onProposalExecute,
     onProposalCancel,
     onOperationStarted,
-    hasMultisigPendingProposal
+    hasMultisigPendingProposal,
   } = props;
 
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
@@ -86,6 +86,12 @@ export const ProposalDetailsView = (props: {
     onOperationStarted(operation)
     onProposalCancel(operation);
   };
+
+  useEffect(() => {
+    if (transactionStatus.currentOperation === TransactionStatus.ConfirmTransaction) {
+      setIsCancelRejectModalVisible(false);
+    }
+  }, [transactionStatus.currentOperation]);
 
   useEffect(() => {
 

@@ -19,7 +19,6 @@ export const RejectCancelModal = (props: {
   const { t } = useTranslation('common');
   const {
     transactionStatus,
-    setTransactionStatus,
   } = useContext(AppStateContext);
 
   const {
@@ -29,22 +28,12 @@ export const RejectCancelModal = (props: {
     isBusy
   } = props;
 
-  const resetTransactionStatus = useCallback(() => {
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-  }, [
-    setTransactionStatus
-  ]);
-
   const onAcceptModal = () => {
     handleOk();
   }
 
   const onCloseModal = () => {
     handleClose();
-    resetTransactionStatus();
   }
 
   return (

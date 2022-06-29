@@ -2761,7 +2761,6 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -3009,12 +3008,6 @@ export const SafeView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            resetTransactionStatus();
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.CancelTransaction,
@@ -3029,6 +3022,8 @@ export const SafeView = () => {
                 transactionId: data.transaction.id
               }
             });
+            resetTransactionStatus();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -3039,14 +3034,13 @@ export const SafeView = () => {
     publicKey,
     connection,
     nativeBalance,
+    multisigClient,
     selectedMultisig,
     transactionCancelled,
-    multisigClient,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
-    clearTxConfirmationContext,
     resetTransactionStatus,
-    setTransactionStatus
+    setTransactionStatus,
   ]);
 
   const parseSerumMultisigAccount = (info: any) => {
