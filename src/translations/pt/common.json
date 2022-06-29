@@ -684,7 +684,7 @@
 		"account-address-copied-message": "Endereço da conta copiado com sucesso",
 		"account-address-not-copied-message": "Não foi possível copiar o endereço da conta",
 		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction.",
-		"check-transaction-in-explorer": "Check your transaction here",
+		"check-transaction-in-explorer": "View on Solana Explorer",
 		"create-money-stream-completed": "Seu fluxo de dinheiro foi criado",
 		"create-money-stream-completed-wait-for-confirm": "Depois que a transação for confirmada, ela deverá aparecer na lista.",
 		"error-cannot-faucet-mainnet-message": "Não é possível faucet na mainnet",

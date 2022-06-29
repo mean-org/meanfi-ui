@@ -684,7 +684,7 @@
 		"account-address-copied-message": "Hesap adresi başarıyla kopyalandı",
 		"account-address-not-copied-message": "Hesap adresi kopyalanamıyor",
 		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction.",
-		"check-transaction-in-explorer": "",
+		"check-transaction-in-explorer": "View on Solana Explorer",
 		"create-money-stream-completed": "Para-aktarımınız oluşturuldu",
 		"create-money-stream-completed-wait-for-confirm": "İşlem onaylandıktan sonra listede gözükecek",
 		"error-cannot-faucet-mainnet-message": "Musluk mainnetde çalışmıyor",

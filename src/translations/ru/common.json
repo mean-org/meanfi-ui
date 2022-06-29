@@ -678,7 +678,7 @@
 	"notifications": {
 		"account-address-copied-message": "Account Address successfully copied",
 		"account-address-not-copied-message": "Could not copy Account Address",
-		"check-transaction-in-explorer": "Check your transaction here",
+		"check-transaction-in-explorer": "View on Solana Explorer",
 		"create-money-stream-completed": "Your money stream is created",
 		"create-money-stream-completed-wait-for-confirm": "After the transaction is confirmed it should show up in the list.",
 		"error-cannot-faucet-mainnet-message": "Cannot faucet in mainnet",

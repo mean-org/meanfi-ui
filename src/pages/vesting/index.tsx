@@ -1778,12 +1778,12 @@ export const VestingView = () => {
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `${params.streamId ? 'Fund stream with' : 'Fund vesting account with'} ${formatThousands(
+              loadingMessage: `${params.streamId ? 'Fund stream with' : 'Fund vesting contract with'} ${formatThousands(
                 parseFloat(params.amount),
                 params.associatedToken?.decimals
               )} ${params.associatedToken?.symbol}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `${params.streamId ? 'Stream funded with' : 'Vesting account funded with'} ${formatThousands(
+              completedMessage: `${params.streamId ? 'Stream funded with' : 'Vesting contract funded with'} ${formatThousands(
                 parseFloat(params.amount),
                 params.associatedToken?.decimals
               )} ${params.associatedToken?.symbol}`,

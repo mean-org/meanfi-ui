@@ -684,7 +684,7 @@
 		"account-address-copied-message": "已成功复制帐户地址",
 		"account-address-not-copied-message": "无法复制帐户地址",
 		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction.",
-		"check-transaction-in-explorer": "Check your transaction here",
+		"check-transaction-in-explorer": "View on Solana Explorer",
 		"create-money-stream-completed": "你的资金流已被创建",
 		"create-money-stream-completed-wait-for-confirm": "交易确认后，它应该出现在列表中。",
 		"error-cannot-faucet-mainnet-message": "无法在主网中打开水龙头",

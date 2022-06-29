@@ -253,12 +253,11 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
           duration: 4,
           description: (
             <>
-              <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
               <a className="secondary-link"
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}`}
                   target="_blank"
                   rel="noopener noreferrer">
-                  {shortenAddress(lastSentTxSignature, 8)}
+                  {t('notifications.check-transaction-in-explorer')} &gt;
               </a>
             </>
           )
@@ -329,12 +328,11 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
             }
           </span>
           <div>
-            <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
             <a className="secondary-link"
                 href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
                 target="_blank"
                 rel="noopener noreferrer">
-                {shortenAddress(data.signature, 8)}
+                {t('notifications.check-transaction-in-explorer')} &gt;
             </a>
           </div>
         </>
@@ -365,12 +363,11 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
               }
             </span>
             <div>
-              <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
               <a className="secondary-link"
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
                   target="_blank"
                   rel="noopener noreferrer">
-                  {shortenAddress(data.signature, 8)}
+                  {t('notifications.check-transaction-in-explorer')} &gt;
               </a>
             </div>
           </>
@@ -403,12 +400,11 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
               }
             </span>
             <div>
-              <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
               <a className="secondary-link"
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
                   target="_blank"
                   rel="noopener noreferrer">
-                  {shortenAddress(data.signature, 8)}
+                  {t('notifications.check-transaction-in-explorer')} &gt;
               </a>
             </div>
           </>

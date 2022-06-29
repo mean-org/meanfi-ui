@@ -684,7 +684,7 @@
 		"account-address-copied-message": "Adresse du compte copiée avec succès",
 		"account-address-not-copied-message": "Impossible de copier l'adresse du compte",
 		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction.",
-		"check-transaction-in-explorer": "Check your transaction here",
+		"check-transaction-in-explorer": "View on Solana Explorer",
 		"create-money-stream-completed": "Votre flux d'argent est créé",
 		"create-money-stream-completed-wait-for-confirm": "Une fois la transaction confirmée, elle devrait apparaître dans la liste.",
 		"error-cannot-faucet-mainnet-message": "Impossible d'exploiter le réseau principal",

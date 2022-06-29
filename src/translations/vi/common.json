@@ -754,7 +754,7 @@
 	"notifications": {
 		"account-address-copied-message": "Địa chỉ tài khoản sao chép thành công",
 		"account-address-not-copied-message": "Không thể sao chép địa chỉ tài khoản",
-		"check-transaction-in-explorer": "Check your transaction here",
+		"check-transaction-in-explorer": "View on Solana Explorer",
 		"create-money-stream-completed": "Money stream của bạn đã được tạo",
 		"create-money-stream-completed-wait-for-confirm": "Giao dịch sau khi được xác nhận sẽ hiển thị ở danh sách",
 		"error-cannot-faucet-mainnet-message": "Không thể faucet ở mainnet",
