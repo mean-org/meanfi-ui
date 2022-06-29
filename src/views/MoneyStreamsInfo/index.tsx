@@ -1081,13 +1081,23 @@ export const MoneyStreamsInfoView = (props: {
   }, [t]);
 
   const goToIncomingTabHandler = () => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
+
+    const param = getQueryAccountType();
+    if (param) {
+      url += `?account-type=${param}`;
+    }
 
     navigate(url);
   }
 
   const goToOutgoingTabHandler = () => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+
+    const param = getQueryAccountType();
+    if (param) {
+      url += `?account-type=${param}`;
+    }
 
     navigate(url);
   }
