@@ -187,11 +187,15 @@ export const VestingView = () => {
     if (vestingContract) {
       consoleOut('Route param vestingContract:', vestingContract, 'crimson');
       setVestingContractAddress(vestingContract);
+    } else {
+      setVestingContractAddress('');
     }
 
     if (activeTab) {
       consoleOut('Route param activeTab:', activeTab, 'crimson');
       setAccountDetailTab(activeTab as VestingAccountDetailTab);
+    } else {
+      setAccountDetailTab(undefined);
     }
 
     let accountTypeInQuery: string | null = null;
@@ -204,6 +208,8 @@ export const VestingView = () => {
       } else {
         setInspectedAccountType(undefined);
       }
+    } else {
+      setInspectedAccountType(undefined);
     }
 
   }, [accountAddress, activeTab, address, isPageLoaded, publicKey, searchParams, vestingContract]);
@@ -3692,7 +3698,12 @@ export const VestingView = () => {
                 {!publicKey ? (
                   <h3>Please connect your wallet to see your vesting contracts</h3>
                 ) : (
-                  <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
+                  <div className="text-center">
+                    <h3>You don't have access permission to view the vesting contracts for the wallet address specified.</h3>
+                    <p>Please reconnect with the authorized wallet ({shortenAddress(accountAddress)})<br/>or <span className="simplelink underline" onClick={() => {
+                      window.location.href = VESTING_ROUTE_BASE_PATH;
+                    }}>click here</span> to show the vesting contracts for the connected wallet.</p>
+                  </div>
                 )}
               </div>
             </div>
