@@ -3014,9 +3014,9 @@ export const SafeView = () => {
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Create proposal: ${data.transaction.details.title}`,
+              loadingMessage: `Cancel proposal: ${data.transaction.details.title}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully created proposal: ${data.transaction.details.title}`,
+              completedMessage: `Proposal "${data.transaction.details.title}" successfully canceled`,
               extras: {
                 multisigId: data.transaction.multisig,
                 transactionId: data.transaction.id
