@@ -7532,9 +7532,10 @@ code {
 
 .account-category-title {
   color: var(--color-secondary-alpha-70);
-  background-color: var(--color-section) !important;
+  background-color: var(--bg-color) !important;
   padding-right: 0.5em;
   border-bottom: 0.05px solid #525460;
+  margin-top: 10px;
 }
 
 input#stream-id-input {
