@@ -120,7 +120,7 @@ export const AccountsInitAtaModal = (props: {
       });
 
       setSelectedList(finalList);
-      consoleOut('finalList:', finalList, 'blue');
+      consoleOut('token list:', finalList, 'blue');
     }
   }, [isVisible, ownedTokenAccounts, splTokenList, tokenList, tokenAccounts]);
 
