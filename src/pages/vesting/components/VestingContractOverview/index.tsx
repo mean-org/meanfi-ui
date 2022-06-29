@@ -5,17 +5,16 @@ import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TimeData } from '../../../../models/common-types';
 import { PaymentRateType } from '../../../../models/enums';
+import { getCategoryLabelByValue } from '../../../../models/vesting';
 import { getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getReadableDate, getTimeEllapsed, getTimeRemaining } from '../../../../utils/ui';
 import { makeDecimal } from '../../../../utils/utils';
 
 export const VestingContractOverview = (props: {
     vestingContract: Treasury | undefined;
-    vestingCategory?: string;
     streamTemplate: StreamTemplate | undefined;
 }) => {
     const {
         vestingContract,
-        vestingCategory,
         streamTemplate
     } = props;
     const { t } = useTranslation('common');
@@ -135,9 +134,9 @@ export const VestingContractOverview = (props: {
                 <div>
                     <div className="font-size-110 font-bold">
                         <span className="align-middle">{lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)} - {vestingContract.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'} vesting contract</span>
-                        {vestingCategory && (
-                            <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>{vestingCategory}</span>
-                        )}
+                        {vestingContract.subCategory ? (
+                            <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>{getCategoryLabelByValue(vestingContract.subCategory)}</span>
+                        ) : null}
                     </div>
                     <div className="font-size-100 font-extrabold text-uppercase mt-3 mb-2">Vesting Distribution</div>
                     <div className="font-size-100">{isStartDateFuture(paymentStartDate) ? 'Streams start on' : 'Streams started on'} {getReadableDate(paymentStartDate, true)}</div>
