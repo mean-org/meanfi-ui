@@ -28,7 +28,7 @@ import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
 import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
-import { NO_FEES } from '../../constants';
+import { MIN_SOL_BALANCE_REQUIRED, NO_FEES } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
 import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
@@ -42,7 +42,7 @@ import { VestingContractOverview } from './components/VestingContractOverview';
 import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../utils/ids';
 import { appConfig, customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
@@ -683,7 +683,6 @@ export const VestingView = () => {
     setIsVerifiedRecipient,
     setLockPeriodFrequency,
   ]);
-
 
   //////////////
   //  Modals  //
@@ -3354,6 +3353,38 @@ export const VestingView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountDetailTab, msp, publicKey, selectedVestingContract]);
 
+  // Get fees for multisig actions
+  useEffect(() => {
+
+    if (!multisigClient || !accountAddress || getQueryAccountType() !== "multisig") { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
+    .then(value => {
+      setMultisigTxFees(value);
+      consoleOut('Multisig transaction fees:', value, 'orange');
+    });
+  }, [accountAddress, getQueryAccountType, multisigClient]);
+
+  // Get min balance required for multisig actions
+  useEffect(() => {
+    if (accountAddress && selectedVestingContract) {
+      let minRequired = 0;
+      if (getQueryAccountType() === "multisig" && isMultisigTreasury(selectedVestingContract) && multisigTxFees) {
+        minRequired = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal fees
+      } else if (transactionFees) {
+        minRequired = transactionFees.blockchainFee + transactionFees.mspFlatFee;
+      }
+
+      if (minRequired > MIN_SOL_BALANCE_REQUIRED) {
+        setMinRequiredBalance(minRequired);
+        consoleOut('Min balance required:', minRequired, 'blue');
+      } else {
+        setMinRequiredBalance(MIN_SOL_BALANCE_REQUIRED);
+        consoleOut('Min balance required:', MIN_SOL_BALANCE_REQUIRED, 'blue');
+      }
+    }
+  }, [accountAddress, getQueryAccountType, isMultisigTreasury, multisigTxFees, selectedVestingContract, transactionFees]);
+
   // Hook on wallet connect/disconnect
   useEffect(() => {
 
@@ -3537,6 +3568,7 @@ export const VestingView = () => {
             multisigAccounts={multisigAccounts}
             multisigClient={multisigClient}
             nativeBalance={nativeBalance}
+            streamTemplate={streamTemplate}
             treasuryStreams={treasuryStreams}
             userBalances={userBalances}
             vestingContract={selectedVestingContract}
@@ -3813,17 +3845,19 @@ export const VestingView = () => {
 
         {isAddFundsModalVisible && (
           <VestingContractAddFundsModal
-            handleOk={(params: VestingContractTopupParams) => onAcceptAddFunds(params)}
-            handleClose={closeAddFundsModal}
-            nativeBalance={nativeBalance}
-            transactionFees={transactionFees}
-            withdrawTransactionFees={withdrawTransactionFees}
-            vestingContract={selectedVestingContract}
-            isVisible={isAddFundsModalVisible}
-            userBalances={userBalances}
-            treasuryStreams={treasuryStreams}
             associatedToken={selectedVestingContract ? selectedVestingContract.associatedToken as string : ''}
+            handleClose={closeAddFundsModal}
+            handleOk={(params: VestingContractTopupParams) => onAcceptAddFunds(params)}
             isBusy={isBusy}
+            isVisible={isAddFundsModalVisible}
+            nativeBalance={nativeBalance}
+            minRequiredBalance={minRequiredBalance}
+            streamTemplate={streamTemplate}
+            transactionFees={transactionFees}
+            treasuryStreams={treasuryStreams}
+            userBalances={userBalances}
+            vestingContract={selectedVestingContract}
+            withdrawTransactionFees={withdrawTransactionFees}
           />
         )}
 

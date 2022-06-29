@@ -8,7 +8,8 @@ import {
     TransactionFees,
     Treasury,
     TreasuryType,
-    Constants as MSPV2Constants
+    Constants as MSPV2Constants,
+    StreamTemplate
 } from '@mean-dao/msp';
 import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTimeToNow, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
@@ -51,6 +52,7 @@ export const VestingContractStreamList = (props: {
     multisigAccounts: MultisigInfo[] | undefined;
     multisigClient: MeanMultisig | null;
     nativeBalance: number;
+    streamTemplate: StreamTemplate | undefined;
     treasuryStreams: Stream[];
     userBalances: any;
     vestingContract: Treasury | undefined;
@@ -64,6 +66,7 @@ export const VestingContractStreamList = (props: {
         multisigAccounts,
         multisigClient,
         nativeBalance,
+        streamTemplate,
         treasuryStreams,
         userBalances,
         vestingContract,
@@ -1580,17 +1583,19 @@ export const VestingContractStreamList = (props: {
 
             {isAddFundsModalVisible && (
                 <VestingContractAddFundsModal
-                    handleOk={onAcceptAddFunds}
-                    handleClose={closeAddFundsModal}
-                    nativeBalance={nativeBalance}
-                    transactionFees={transactionFees}
-                    withdrawTransactionFees={withdrawTransactionFees}
-                    vestingContract={vestingContract}
-                    isVisible={isAddFundsModalVisible}
-                    userBalances={userBalances}
-                    treasuryStreams={treasuryStreams}
                     associatedToken={vestingContract ? vestingContract.associatedToken as string : ''}
+                    handleClose={closeAddFundsModal}
+                    handleOk={onAcceptAddFunds}
                     isBusy={isBusy}
+                    isVisible={isAddFundsModalVisible}
+                    nativeBalance={nativeBalance}
+                    minRequiredBalance={minRequiredBalance}
+                    streamTemplate={streamTemplate}
+                    transactionFees={transactionFees}
+                    treasuryStreams={treasuryStreams}
+                    userBalances={userBalances}
+                    vestingContract={vestingContract}
+                    withdrawTransactionFees={withdrawTransactionFees}
                 />
             )}
 

@@ -30,7 +30,7 @@ import { TransactionStatus } from '../../../../models/enums';
 import { useWallet } from '../../../../contexts/wallet';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { isError } from '../../../../utils/transactions';
-import { AllocationType, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
+import { AllocationType, Stream, StreamTemplate, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
@@ -52,6 +52,8 @@ export const VestingContractAddFundsModal = (props: {
   isBusy: boolean;
   isVisible: boolean;
   nativeBalance: number;
+  minRequiredBalance: number;
+  streamTemplate: StreamTemplate | undefined;
   transactionFees: TransactionFees;
   treasuryStreams: Stream[];
   userBalances: any;
@@ -65,6 +67,8 @@ export const VestingContractAddFundsModal = (props: {
     isBusy,
     isVisible,
     nativeBalance,
+    minRequiredBalance,
+    streamTemplate,
     transactionFees,
     treasuryStreams,
     userBalances,
@@ -95,6 +99,7 @@ export const VestingContractAddFundsModal = (props: {
   const [availableBalance, setAvailableBalance] = useState<any>();
   const [tokenAmount, setTokenAmount] = useState<any>(0);
   const [showQrCode, setShowQrCode] = useState(false);
+  const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
 
   /////////////////
   //   Getters   //
@@ -124,22 +129,12 @@ export const VestingContractAddFundsModal = (props: {
     highLightableStreamId
   ]);
 
-  const isfeePayedByTreasurerOn = useCallback(() => {
-    if (highLightableStreamId) {
-      consoleOut('highLightableStreamId:', highLightableStreamId, 'orange');
-      consoleOut('Getting stream data...', '', 'orange');
-      const stream = getSelectedStream(highLightableStreamId);
-      consoleOut('stream:', stream, 'orange');
-      if (stream && stream.version >= 2 && (stream as Stream).feePayedByTreasurer) {
-        return true;
-      }
-    }
+  const getMaxPossibleSolAmount = () => {
+    const maxPossibleAmount = nativeBalance - minRequiredBalance;
 
-    return false;
-  }, [
-    highLightableStreamId,
-    getSelectedStream,
-  ]);
+    return maxPossibleAmount > 0
+      ? maxPossibleAmount : nativeBalance;
+  }
 
   const getMaxAmount = useCallback((preSetting = false) => {
     if (withdrawTransactionFees && allocationOption === AllocationType.Specific && highLightableStreamId) {
@@ -475,7 +470,7 @@ export const VestingContractAddFundsModal = (props: {
       } else {
         // Take source balance from the user's wallet
         const balance = makeInteger(selectFromTokenBalance(), decimals);
-        consoleOut('User\'s balance:', balance.toNumber(), 'blue');
+        consoleOut(`User's balance:`, balance.toNumber(), 'blue');
         setAvailableBalance(balance);
       }
     } else {
@@ -495,7 +490,7 @@ export const VestingContractAddFundsModal = (props: {
     if (isVisible && associatedToken) {
       const token = getTokenByMintAddress(associatedToken);
       if (token) {
-        consoleOut("Contract Associated Token:", token.symbol, 'darkgreen');
+        consoleOut("Contract Associated Token:", token, 'darkgreen');
         setSelectedToken(token);
       } else {
         setCustomToken(associatedToken as string);
@@ -530,6 +525,16 @@ export const VestingContractAddFundsModal = (props: {
   }, [
     isVisible,
     userBalances
+  ]);
+
+  // When modal goes visible, set template data
+  useEffect(() => {
+    if (isVisible && streamTemplate) {
+      setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
+    }
+  }, [
+    isVisible,
+    streamTemplate,
   ]);
 
   // Window resize listener
@@ -781,18 +786,27 @@ export const VestingContractAddFundsModal = (props: {
                             id="treasury-add-funds-max"
                             className="token-max simplelink"
                             onClick={() => {
-                              const decimals = selectedToken ? selectedToken.decimals : 6;
-                              if (isfeePayedByTreasurerOn()) {
-                                const maxAmount = getMaxAmount(true);
-                                consoleOut('Treasury pays for fees...', '', 'blue');
-                                consoleOut('Settings maxAmount to:', maxAmount, 'blue');
-                                setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                                setTokenAmount(new BN(maxAmount));
+                              const decimals = selectedToken.decimals;
+                              if (selectedToken.address === WRAPPED_SOL_MINT_ADDRESS) {
+                                const maxSolAmount = getMaxPossibleSolAmount();
+                                consoleOut('nativeBalance:', nativeBalance, 'darkgreen');
+                                consoleOut('minRequiredBalance:', minRequiredBalance, 'darkgreen');
+                                consoleOut('maxSolAmount:', maxSolAmount, 'darkgreen');
+                                setTopupAmount(cutNumber(maxSolAmount, decimals));
+                                setTokenAmount(new BN(maxSolAmount));
                               } else {
-                                const maxAmount = getMaxAmount();
-                                consoleOut('Settings maxAmount to:', maxAmount.toNumber(), 'blue');
-                                setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                                setTokenAmount(new BN(maxAmount));
+                                if (isFeePaidByTreasurer) {
+                                  const maxAmount = getMaxAmount(true);
+                                  consoleOut('Treasury pays for fees...', '', 'blue');
+                                  consoleOut('Settings maxAmount to:', maxAmount, 'blue');
+                                  setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  setTokenAmount(new BN(maxAmount));
+                                } else {
+                                  const maxAmount = getMaxAmount();
+                                  consoleOut('Settings maxAmount to:', maxAmount.toNumber(), 'blue');
+                                  setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  setTokenAmount(new BN(maxAmount));
+                                }
                               }
                             }}>
                             MAX
