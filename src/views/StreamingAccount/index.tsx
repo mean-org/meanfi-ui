@@ -18,7 +18,7 @@ import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
 import { TabsMean } from "../../components/TabsMean";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
-import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { useConnectionConfig } from "../../contexts/connection";
@@ -39,6 +39,7 @@ import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFun
 import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
 import { useParams, useSearchParams } from "react-router-dom";
 import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
+import { Identicon } from "../../components/Identicon";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -2841,6 +2842,25 @@ export const StreamingAccountView = (props: {
               // Sends outgoing stream value to the parent component "Accounts"
               onSendFromStreamingAccountOutgoingStreamInfo(stream, streamingAccountSelected);
             };
+
+            const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+              event.currentTarget.src = FALLBACK_COIN_IMAGE;
+              event.currentTarget.className = "error";
+            };
+
+            const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+
+            let img;
+
+            if (stream.associatedToken) {
+              if (token) {
+                img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
+              } else {
+                img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+              }
+            } else {
+              img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+            }
     
             const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
             const subtitle = getStreamSubtitle(stream);
@@ -2855,6 +2875,7 @@ export const StreamingAccountView = (props: {
               >
                 <ResumeItem
                   id={index}
+                  img={img}
                   title={title}
                   subtitle={subtitle}
                   resume={resume}

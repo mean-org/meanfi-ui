@@ -31,6 +31,9 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      img.token-img {
+        border-radius: 1em !important;
+      }
     }
     .resume-left-text {
       line-height: 1.3;

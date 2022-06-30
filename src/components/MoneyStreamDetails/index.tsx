@@ -13,12 +13,13 @@ import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useSearchParams } from "react-router-dom";
 import { useWallet } from "../../contexts/wallet";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
+import { Identicon } from "../Identicon";
 
 const { TabPane } = Tabs;
 
@@ -521,6 +522,27 @@ export const MoneyStreamDetails = (props: {
     );
   }
 
+  const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    event.currentTarget.src = FALLBACK_COIN_IMAGE;
+    event.currentTarget.className = "error";
+  };
+
+  let img;
+
+  if (stream) {
+    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+
+    if (stream.associatedToken) {
+      if (token) {
+        img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+      } else {
+        img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} />
+      }
+    } else {
+      img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} />
+    }
+  }
+
   const title = stream ? getStreamTitle(stream) : `Unknown ${isStreamIncoming ? "incoming" : "outgoing"} stream`;
   const subtitle = stream ? getStreamSubtitle(stream) : "--";
   const status = stream ? getStreamStatus(stream) : "--";
@@ -538,6 +560,7 @@ export const MoneyStreamDetails = (props: {
 
         {stream && (
           <ResumeItem
+            img={img}
             title={title}
             status={status}
             subtitle={subtitle}

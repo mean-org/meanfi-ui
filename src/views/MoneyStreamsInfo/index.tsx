@@ -1700,12 +1700,12 @@ export const MoneyStreamsInfoView = (props: {
 
             if (stream.associatedToken) {
               if (token) {
-                img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
               } else {
-                img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} />
+                img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
               }
             } else {
-              img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} />
+              img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
             }
     
             const title = stream ? getStreamTitle(stream) : "Unknown incoming stream";
@@ -1802,12 +1802,12 @@ export const MoneyStreamsInfoView = (props: {
     
                 if (stream.associatedToken) {
                   if (token) {
-                    img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                    img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
                   } else {
-                    img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} />
+                    img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
                   }
                 } else {
-                  img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} />
+                  img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
                 }
     
                 const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
@@ -1889,6 +1889,25 @@ export const MoneyStreamsInfoView = (props: {
                             // Sends outgoing stream value to the parent component "Accounts"
                             onSendFromStreamingAccountOutgoingStreamInfo(stream, streaming.treasury);
                           };
+
+                          const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                            event.currentTarget.src = FALLBACK_COIN_IMAGE;
+                            event.currentTarget.className = "error";
+                          };
+              
+                          const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+              
+                          let img;
+              
+                          if (stream.associatedToken) {
+                            if (token) {
+                              img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
+                            } else {
+                              img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                            }
+                          } else {
+                            img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                          }
       
                           const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
                           const subtitle = getStreamSubtitle(stream);
@@ -1903,6 +1922,7 @@ export const MoneyStreamsInfoView = (props: {
                               >
                                 <ResumeItem
                                   id={index}
+                                  img={img}
                                   title={title}
                                   status={status}
                                   subtitle={subtitle}
