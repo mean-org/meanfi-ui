@@ -29,7 +29,7 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from "../../utils/utils";
+import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
@@ -37,7 +37,7 @@ import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
-import { TreasuryCreateOptions } from "../../models/treasuries";
+import { INITIAL_TREASURIES_SUMMARY, TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
 import { customLogger } from "../..";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
@@ -45,6 +45,7 @@ import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamOpenModal } from "../../components/StreamOpenModal";
 import { CreateStreamModal } from "../../components/CreateStreamModal";
+import { initialSummary, StreamsSummary } from "../../models/streams";
 
 const { TabPane } = Tabs;
 
@@ -68,6 +69,8 @@ export const MoneyStreamsInfoView = (props: {
 }) => {
   const {
     tokenList,
+    streamListv1,
+    streamListv2,
     treasuryOption,
     transactionStatus,
     streamProgramAddress,
@@ -150,6 +153,9 @@ export const MoneyStreamsInfoView = (props: {
   // const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
   // const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
+  const [streamingAccountsSummary, setStreamingAccountsSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
+  const [incomingStreamsSummary, setIncomingStreamsSummary] = useState<StreamsSummary>(initialSummary);
+  const [outgoingStreamsSummary, setOutgoingStreamsSummary] = useState<StreamsSummary>(initialSummary);
 
   const [streamingAccountCombinedList, setStreamingAccountCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
   const [loadingMoneyStreamsDetails, setLoadingMoneyStreamsDetails] = useState(true);
@@ -337,6 +343,294 @@ export const MoneyStreamsInfoView = (props: {
     publicKey,
     tokenList,
     connection,
+  ]);
+
+  const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
+    if (tsry) {
+        const decimals = assToken ? assToken.decimals : 9;
+        const unallocated = tsry.balance - tsry.allocationAssigned;
+        const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
+        const ub = isNewTreasury
+            ? makeDecimal(new BN(unallocated), decimals)
+            : unallocated;
+        return ub;
+    }
+    return 0;
+  }, []);
+
+  const refreshTreasuriesSummary = useCallback(async () => {
+
+    if (!treasuryList) { return; }
+
+    const resume: UserTreasuriesSummary = {
+        totalAmount: 0,
+        openAmount: 0,
+        lockedAmount: 0,
+        totalNet: 0
+    };
+
+    consoleOut('=========== Block start ===========', '', 'orange');
+
+    for (const treasury of treasuryList) {
+
+        const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2
+            ? true
+            : false;
+
+        const treasuryType = isNew
+            ? (treasury as Treasury).treasuryType
+            : (treasury as TreasuryInfo).type as TreasuryType;
+
+        const associatedToken = isNew
+            ? (treasury as Treasury).associatedToken as string
+            : (treasury as TreasuryInfo).associatedTokenAddress as string;
+
+        if (treasuryType === TreasuryType.Open) {
+            resume['openAmount'] += 1;
+        } else {
+            resume['lockedAmount'] += 1;
+        }
+
+        let amountChange = 0;
+
+        const token = getTokenByMintAddress(associatedToken as string);
+
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const amount = getTreasuryUnallocatedBalance(treasury, token);
+          amountChange = amount * tokenPrice;
+        }
+
+        resume['totalNet'] += amountChange;
+    }
+
+    resume['totalAmount'] += treasuryList.length;
+
+    consoleOut('openAmount in right part:', resume['openAmount'], 'blue');
+    consoleOut('lockedAmount in right part:', resume['lockedAmount'], 'blue');
+    consoleOut('totalAmount in right part:', resume['totalAmount'], 'blue');
+    consoleOut('totalNet in right part:', resume['totalNet'], 'blue');
+    consoleOut('=========== Block ends ===========', '', 'orange');
+
+    // Update state
+    setStreamingAccountsSummary(resume);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+      getTokenPriceBySymbol,
+      getTokenByMintAddress,
+      getTreasuryUnallocatedBalance,
+      treasuryList
+  ]);
+
+  const refreshIncomingStreamSummary = useCallback(async () => {
+
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) { return; }
+
+    const resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0
+    };
+
+    const treasurer = accountAddress
+      ? new PublicKey(accountAddress)
+      : publicKey;
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+
+    consoleOut('=========== Block start ===========', '', 'orange');
+
+    for (const stream of updatedStreamsv1) {
+
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
+        ? true
+        : false;
+
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+        if (isIncoming) {
+          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * tokenPrice);
+        }
+      }
+    }
+
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    for (const stream of updatedStreamsv2) {
+
+      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+        ? true
+        : false;
+
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      const freshStream = await msp.refreshStream(stream) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const decimals = token.decimals || 6;
+        const amount = freshStream.withdrawableAmount;
+        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+
+        if (isIncoming) {
+          resume['totalNet'] += amountChange;
+        }
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+
+    consoleOut('totalNet in incoming streams:', resume['totalNet'], 'blue');
+    consoleOut('=========== Block ends ===========', '', 'orange');
+
+    // Update state
+    setIncomingStreamsSummary(resume);
+
+  }, [
+    ms,
+    msp,
+    publicKey,
+    streamListv1,
+    streamListv2,
+    accountAddress,
+    getTokenByMintAddress,
+    getTokenPriceBySymbol,
+    getTokenPriceByAddress,
+  ]);
+
+  const refreshOutgoingStreamSummary = useCallback(async () => {
+
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) { return; }
+
+    const resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0
+    };
+
+    const treasurer = accountAddress
+      ? new PublicKey(accountAddress)
+      : publicKey;
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+
+    consoleOut('=========== Block start ===========', '', 'orange');
+
+
+        // if (outgoingStreamList) {
+    //   for (const stream of outgoingStreamList) {
+    //     const v1 = stream as StreamInfo;
+    //     const v2 = stream as Stream;
+
+    //     const isNew = v2.version && v2.version >= 2 ? true : false;
+
+    //     const token = getTokenByMintAddress(stream.associatedToken as string);
+        
+    //     if (token) {
+    //       const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+    //       const fundsLeftInStreamAmount = isNew ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount;
+
+    //       totalUnallocatedAmount += fundsLeftInStreamAmount * tokenPrice;
+    //     }
+    //   }
+    // }
+
+    for (const stream of updatedStreamsv1) {
+
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
+        ? true
+        : false;
+
+      if (!isIncoming) {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+        if (!isIncoming) {
+          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * tokenPrice);
+        }
+      }
+    }
+
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    for (const stream of updatedStreamsv2) {
+
+      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+        ? true
+        : false;
+
+      if (!isIncoming) {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      const freshStream = await msp.refreshStream(stream) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const decimals = token.decimals || 6;
+        const amount = freshStream.withdrawableAmount;
+        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+
+        if (!isIncoming) {
+          resume['totalNet'] -= amountChange;
+        }
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+
+    consoleOut('totalNet in outgoing streams:', resume['totalNet'], 'blue');
+    consoleOut('=========== Block ends ===========', '', 'orange');
+
+    // Update state
+    setOutgoingStreamsSummary(resume);
+
+  }, [
+    ms,
+    msp,
+    publicKey, 
+    streamListv1, 
+    streamListv2,
+    accountAddress, 
+    getTokenPriceBySymbol,
+    getTokenByMintAddress,
+    getTokenPriceByAddress,
   ]);
 
   const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
@@ -1080,91 +1374,117 @@ export const MoneyStreamsInfoView = (props: {
     streamingAccountCombinedList
   ]);
 
+  // Live data calculation
   useEffect(() => {
-    let totalWithdrawAmount = 0;
 
-    if (incomingStreamList) {
-      for (const stream of incomingStreamList) {
-        const v1 = stream as StreamInfo;
-        const v2 = stream as Stream;
+    if (!publicKey || !treasuryList) { return; }
 
-        const isNew = v2.version && v2.version >= 2 ? true : false;
+    const timeout = setTimeout(() => {
+      refreshTreasuriesSummary();
+    }, 1000);
 
-        const token = getTokenByMintAddress(stream.associatedToken as string);
-        
-        if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-
-          const withdrawAmount = isNew ? toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6) : v1.escrowVestedAmount;
-
-          totalWithdrawAmount += withdrawAmount * tokenPrice;
-        }
-      }
-
-      setWithdrawalBalance(totalWithdrawAmount);
+    return () => {
+      clearTimeout(timeout);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publicKey, treasuryList]);
+
+  useEffect(() => {
+
+    if (!publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
+
+    const timeout = setTimeout(() => {
+      refreshIncomingStreamSummary();
+      refreshOutgoingStreamSummary();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    getTokenByMintAddress,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    incomingStreamList
+    publicKey,
+    streamList,
+    streamListv1,
+    streamListv2,
   ]);
 
   useEffect(() => {
-    let totalUnallocatedAmount = 0;
+    // let totalWithdrawAmount = 0;
 
-    if (outgoingStreamList) {
-      for (const stream of outgoingStreamList) {
-        const v1 = stream as StreamInfo;
-        const v2 = stream as Stream;
+    // if (incomingStreamList) {
+    //   for (const stream of incomingStreamList) {
+    //     const v1 = stream as StreamInfo;
+    //     const v2 = stream as Stream;
 
-        const isNew = v2.version && v2.version >= 2 ? true : false;
+    //     const isNew = v2.version && v2.version >= 2 ? true : false;
 
-        const token = getTokenByMintAddress(stream.associatedToken as string);
+    //     const token = getTokenByMintAddress(stream.associatedToken as string);
         
-        if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+    //     if (token) {
+    //       const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
 
-          const fundsLeftInStreamAmount = isNew ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount;
+    //       const withdrawAmount = isNew ? toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6) : v1.escrowVestedAmount;
 
-          totalUnallocatedAmount += fundsLeftInStreamAmount * tokenPrice;
-        }
-      }
-    }
+    //       totalWithdrawAmount += withdrawAmount * tokenPrice;
+    //     }
+    //   }
 
-    if (streamingAccountCombinedList) {
-      // eslint-disable-next-line array-callback-return
-      streamingAccountCombinedList.map(function(streaming) {
-        if (!streaming.streams) { return false; }
+    //   setWithdrawalBalance(totalWithdrawAmount);
+    // }
 
-        for (const stream of streaming.streams) {
-          const v1 = stream as StreamInfo;
-          const v2 = stream as Stream;
+    setWithdrawalBalance(incomingStreamsSummary.totalNet);
+  }, [incomingStreamsSummary]);
 
-          const isNew = v2.version && v2.version >= 2 ? true : false;
+  useEffect(() => {
+    // let totalUnallocatedAmount = 0;
 
-          const token = getTokenByMintAddress(stream.associatedToken as string);
+    // if (outgoingStreamList) {
+    //   for (const stream of outgoingStreamList) {
+    //     const v1 = stream as StreamInfo;
+    //     const v2 = stream as Stream;
 
-          if (token) {
-            const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+    //     const isNew = v2.version && v2.version >= 2 ? true : false;
 
-            const fundsLeftInStreamAmount = isNew ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount;
+    //     const token = getTokenByMintAddress(stream.associatedToken as string);
+        
+    //     if (token) {
+    //       const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
 
-            totalUnallocatedAmount += fundsLeftInStreamAmount * tokenPrice;
-          }
-        }
-      });
-    }
+    //       const fundsLeftInStreamAmount = isNew ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount;
 
-    setUnallocatedBalance(totalUnallocatedAmount);
+    //       totalUnallocatedAmount += fundsLeftInStreamAmount * tokenPrice;
+    //     }
+    //   }
+    // }
 
-  }, [
-    getTokenByMintAddress,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    outgoingStreamList,
-    streamingAccountCombinedList
-  ]);
+    // if (streamingAccountCombinedList) {
+    //   // eslint-disable-next-line array-callback-return
+    //   streamingAccountCombinedList.map(function(streaming) {
+    //     if (!streaming.streams) { return false; }
+
+    //     for (const stream of streaming.streams) {
+    //       const v1 = stream as StreamInfo;
+    //       const v2 = stream as Stream;
+
+    //       const isNew = v2.version && v2.version >= 2 ? true : false;
+
+    //       const token = getTokenByMintAddress(stream.associatedToken as string);
+
+    //       if (token) {
+    //         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+    //         const fundsLeftInStreamAmount = isNew ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount;
+
+    //         totalUnallocatedAmount += fundsLeftInStreamAmount * tokenPrice;
+    //       }
+    //     }
+    //   });
+    // }
+
+    setUnallocatedBalance(outgoingStreamsSummary.totalNet + streamingAccountsSummary.totalNet);
+
+  }, [streamingAccountsSummary, outgoingStreamsSummary]);
 
   useEffect(() => {
     if (incomingStreamList) {
@@ -1433,7 +1753,7 @@ export const MoneyStreamsInfoView = (props: {
         subtitle={subtitle}
         amount={renderOutgoingAmoungOfStreams}
         resume="outflow"
-        className="account-category-title pr-0"
+        className="account-category-title pr-0 pt-2"
         hasRightIcon={true}
         rightIconHasDropdown={true}
         rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}

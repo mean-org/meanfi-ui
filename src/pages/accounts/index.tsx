@@ -25,6 +25,7 @@ import {
   getAmountFromLamports,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
+  makeDecimal,
   openLinkInNewTab,
   shortenAddress,
   tabNameFormat
@@ -51,7 +52,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { Streams } from '../../views';
 import { initialSummary, StreamsSummary } from '../../models/streams';
-import { MSP, Stream, STREAM_STATUS, TransactionFees, Treasury } from '@mean-dao/msp';
+import { MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
 import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
@@ -91,6 +92,7 @@ import { MoneyStreamsIncomingView } from '../../views/MoneyStreamsIncoming';
 import { MoneyStreamsOutgoingView } from '../../views/MoneyStreamsOutgoing';
 import { StreamingAccountView } from '../../views/StreamingAccount';
 import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
+import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -190,6 +192,7 @@ export const AccountsNewView = () => {
   const [inspectedAccountType, setInspectedAccountType] = useState<InspectedAccountType>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
+  const [totalStreamingValue, setTotalStreamingValue] = useState(0);
   const [treasuriesTvl, setTreasuriesTvl] = useState(0);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [pathParamAsset, setPathParamAsset] = useState('');
@@ -237,6 +240,8 @@ export const AccountsNewView = () => {
 
   // Streaming account
   const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
+
+  const [treasuriesSummary, setTreasuriesSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
 
   const selectedMultisigRef = useRef(selectedMultisig);
   useEffect(() => {
@@ -975,12 +980,16 @@ export const AccountsNewView = () => {
       const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = asset ? getTokenPriceByAddress(asset.address) : 0;
-      if (isIncoming) {
-        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
-      } else {
-        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+        if (isIncoming) {
+          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * tokenPrice);
+        } else {
+          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * tokenPrice);
+        }
       }
     }
 
@@ -1004,18 +1013,19 @@ export const AccountsNewView = () => {
       const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const pricePerToken = asset ? getTokenPriceByAddress(asset.address) : 0;
-      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
-      const decimals = asset ? asset.decimals : 9;
-      // const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
-      const amount = freshStream.withdrawableAmount;
-      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
-      if (isIncoming) {
-        resume['totalNet'] += amountChange;
-      } else {
-        resume['totalNet'] -= amountChange;
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const decimals = token.decimals || 6;
+        const amount = freshStream.withdrawableAmount;
+        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+
+        if (isIncoming) {
+          resume['totalNet'] += amountChange;
+        } else {
+          resume['totalNet'] -= amountChange;
+        }
       }
     }
 
@@ -1038,6 +1048,7 @@ export const AccountsNewView = () => {
     accountAddress,
     setLastStreamsSummary,
     getTokenPriceByAddress,
+    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setStreamsSummary,
   ]);
@@ -2733,6 +2744,84 @@ export const AccountsNewView = () => {
     clearTxConfirmationContext,
   ]);
 
+  const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
+    if (tsry) {
+        const decimals = assToken ? assToken.decimals : 9;
+        const unallocated = tsry.balance - tsry.allocationAssigned;
+        const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
+        const ub = isNewTreasury
+            ? makeDecimal(new BN(unallocated), decimals)
+            : unallocated;
+        return ub;
+    }
+    return 0;
+  }, []);
+
+  const refreshTreasuriesSummary = useCallback(async () => {
+
+    if (!treasuryList) { return; }
+
+    const resume: UserTreasuriesSummary = {
+        totalAmount: 0,
+        openAmount: 0,
+        lockedAmount: 0,
+        totalNet: 0
+    };
+
+    consoleOut('=========== Block start ===========', '', 'orange');
+
+    for (const treasury of treasuryList) {
+
+        const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2
+            ? true
+            : false;
+
+        const treasuryType = isNew
+            ? (treasury as Treasury).treasuryType
+            : (treasury as TreasuryInfo).type as TreasuryType;
+
+        const associatedToken = isNew
+            ? (treasury as Treasury).associatedToken as string
+            : (treasury as TreasuryInfo).associatedTokenAddress as string;
+
+        if (treasuryType === TreasuryType.Open) {
+            resume['openAmount'] += 1;
+        } else {
+            resume['lockedAmount'] += 1;
+        }
+
+        let amountChange = 0;
+
+        const token = getTokenByMintAddress(associatedToken as string);
+
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const amount = getTreasuryUnallocatedBalance(treasury, token);
+          amountChange = amount * tokenPrice;
+        }
+
+        resume['totalNet'] += amountChange;
+    }
+
+    resume['totalAmount'] += treasuryList.length;
+
+    consoleOut('openAmount in right part:', resume['openAmount'], 'blue');
+    consoleOut('lockedAmount in right part:', resume['lockedAmount'], 'blue');
+    consoleOut('totalAmount in right part:', resume['totalAmount'], 'blue');
+    consoleOut('totalNet in right part:', resume['totalNet'], 'blue');
+    consoleOut('=========== Block ends ===========', '', 'orange');
+
+    // Update state
+    setTreasuriesSummary(resume);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+      getTokenPriceBySymbol,
+      getTokenByMintAddress,
+      getTreasuryUnallocatedBalance,
+      treasuryList
+  ]);
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -3584,10 +3673,25 @@ export const AccountsNewView = () => {
     refreshStreamSummary,
   ]);
 
+  // Live data calculation
+  useEffect(() => {
+
+    if (!publicKey || !treasuryList) { return; }
+
+    const timeout = setTimeout(() => {
+      refreshTreasuriesSummary();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publicKey, treasuryList]);
+
   // Live data calculation - NetWorth
   useEffect(() => {
 
-    if (streamsSummary && accountTokens) {
+    if (streamsSummary && accountTokens && treasuriesSummary) {
       // Total USD value
       let sumMeanTokens = 0;
       accountTokens.forEach((asset: UserTokenAccount, index: number) => {
@@ -3598,12 +3702,14 @@ export const AccountsNewView = () => {
       });
       setTotalTokenAccountsValue(sumMeanTokens);
 
+      setTotalStreamingValue(streamsSummary.totalNet + treasuriesSummary.totalNet);
+
       // Net Worth
-      const total = sumMeanTokens + streamsSummary.totalNet + treasuriesTvl;
+      const total = sumMeanTokens + streamsSummary.totalNet + treasuriesSummary.totalNet;
       setNetWorth(total);
     }
 
-  }, [treasuriesTvl, streamsSummary, getTokenPriceBySymbol, accountTokens]);
+  }, [streamsSummary, getTokenPriceBySymbol, accountTokens, treasuriesSummary]);
 
   // Window resize listeners
   useEffect(() => {
@@ -4019,7 +4125,7 @@ export const AccountsNewView = () => {
             ) : (
               <>
                 <div className="rate-amount">
-                  {toUsCurrency(Math.abs(streamsSummary.totalNet))}
+                  {toUsCurrency(totalStreamingValue)}
                 </div>
                 <div className="interval">{t('streams.streaming-balance')}</div>
               </>
@@ -4845,7 +4951,7 @@ export const AccountsNewView = () => {
 
                           <div className="asset-category-title flex-fixed-right">
                             <div className="title">Streaming Assets</div>
-                            <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
+                            <div className="amount">{toUsCurrency(totalStreamingValue)}</div>
                           </div>
                           <div className="asset-category">
                             <>
