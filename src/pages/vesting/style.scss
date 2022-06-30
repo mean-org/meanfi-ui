@@ -1,4 +1,20 @@
 .vesting {
+    .VestingProgressChartComponent {
+        font-family: sans-serif;
+        text-align: center;
+    }
+
+    .vesting-pie-chart {
+        width: 100% !important;
+        cursor: pointer;
+    }
+
+    svg.recharts-surface {
+        display: block;
+        width: 100% !important;
+        margin: 0 !important;
+        overflow: visible;
+    }
 
     @media (max-width: 575.98px) {
         .meanfi-two-panel-layout {

@@ -6,8 +6,9 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { TimeData } from '../../../../models/common-types';
 import { PaymentRateType } from '../../../../models/enums';
 import { getCategoryLabelByValue } from '../../../../models/vesting';
-import { getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getReadableDate, getTimeEllapsed, getTimeRemaining } from '../../../../utils/ui';
+import { getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getReadableDate, getTimeEllapsed, getTimeRemaining, getPercentageBetweenTwoDates, toTimestamp, consoleOut, getPercentualTsBetweenTwoDates } from '../../../../utils/ui';
 import { makeDecimal } from '../../../../utils/utils';
+import { VestingProgressChartComponent } from '../VestingProgressChartComponent';
 
 export const VestingContractOverview = (props: {
     vestingContract: Treasury | undefined;
@@ -29,6 +30,8 @@ export const VestingContractOverview = (props: {
     const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
+    const [completedVestingPercentage, setCompletedVestingPercentage] = useState(0);
+    const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
 
     // Set template data
     useEffect(() => {
@@ -39,6 +42,7 @@ export const VestingContractOverview = (props: {
             setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
             setPaymentStartDate(streamTemplate.startUtc as string);
             updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
+            setLockPeriodUnits(streamTemplate.rateIntervalInSeconds);
             const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
             setLockPeriodFrequency(periodFrequency);
         }
@@ -68,15 +72,6 @@ export const VestingContractOverview = (props: {
         }
         return false;
     }, [today]);
-
-    /**
-     * Should I use this format?
-     * console.log(moment().endOf('day').fromNow());                // in 9 hours
-     * console.log(moment("2020-04-04 11:45:26.123").fromNow());    // 6 minutes ago
-     * console.log(moment().startOf('hour').fromNow());             // an hour ago
-     * console.log(moment().startOf('day').fromNow());              // 15 hours ago
-     * console.log(moment("20111031", "YYYYMMDD").fromNow());       // 10 years ago
-     */
 
     useEffect(() => {
 
@@ -112,12 +107,6 @@ export const VestingContractOverview = (props: {
                 remainingTime.push(`${timedata.seconds} ${timedata.seconds === 1 ? t('general.second') : t('general.seconds')}`);
             }
 
-            // if (isStartDateFuture(paymentStartDate)) {
-            //     setStartRemainingTime(getTimeFromNow(paymentStartDate));
-            // } else {
-            //     setStartRemainingTime(`Streaming since ${getTimeFromNow(paymentStartDate)}`);
-            // }
-
             if (isStartDateFuture(paymentStartDate)) {
                 setStartRemainingTime(`in ${remainingTime.join(', ')}`);
             } else {
@@ -128,21 +117,60 @@ export const VestingContractOverview = (props: {
 
     }, [t, paymentStartDate, isStartDateFuture]);
 
+    useEffect(() => {
+        if (paymentStartDate) {
+            if (isStartDateFuture(paymentStartDate)) {
+                setCompletedVestingPercentage(0);
+            } else {
+                // consoleOut('paymentStartDate:', paymentStartDate, 'indianred');
+                // Start date timestamp
+                const sdTimestamp = toTimestamp(paymentStartDate);
+                // consoleOut('sdTimestamp:', sdTimestamp, 'indianred');
+                // Total length of vesting period in seconds
+                const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
+                // consoleOut('lockPeriod:', lockPeriod, 'indianred');
+                // Final date = Start date + lockPeriod
+                const finishDate = new Date((sdTimestamp + lockPeriod) * 1000).toUTCString();
+                // consoleOut('finishDate:', finishDate, 'indianred');
+                const cliffPcsTs = cliffReleasePercentage > 0
+                    ? getPercentualTsBetweenTwoDates(paymentStartDate, finishDate, cliffReleasePercentage)
+                    : sdTimestamp;
+                // consoleOut('cliffPcsTs:', cliffPcsTs, 'indianred');
+                const cliffBasedStartDate = new Date(cliffPcsTs * 1000).toUTCString();
+                // consoleOut('cliffBasedStartDate:', cliffBasedStartDate, 'indianred');
+                // Find today's percentage between Start date and Finish date
+                const todayPct = Math.abs(getPercentageBetweenTwoDates(cliffBasedStartDate, finishDate));
+                // consoleOut('todayPct:', todayPct, 'indianred');
+                setCompletedVestingPercentage(todayPct);
+            }
+        } else {
+            setCompletedVestingPercentage(0);
+        }
+    }, [cliffReleasePercentage, isStartDateFuture, lockPeriodAmount, lockPeriodUnits, paymentStartDate]);
+
     return (
         <div className="tab-inner-content-wrapper vertical-scroll">
             {vestingContract && (
-                <div>
-                    <div className="font-size-110 font-bold">
-                        <span className="align-middle">{lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)} - {vestingContract.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'} vesting contract</span>
-                        {vestingContract.subCategory ? (
-                            <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>{getCategoryLabelByValue(vestingContract.subCategory)}</span>
-                        ) : null}
+                <div className="right-panel-two-column-layout">
+                    <div className="left">
+                        <div className="font-size-110 font-bold">
+                            <span className="align-middle">{lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)} - {vestingContract.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'} vesting contract</span>
+                            {vestingContract.subCategory ? (
+                                <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>{getCategoryLabelByValue(vestingContract.subCategory)}</span>
+                            ) : null}
+                        </div>
+                        <div className="font-size-100 font-extrabold text-uppercase mt-3 mb-2">Vesting Distribution</div>
+                        <div className="font-size-100">{isStartDateFuture(paymentStartDate) ? 'Streams start on' : 'Streams started on'} {getReadableDate(paymentStartDate, true)}</div>
+                        <div className="font-size-70 text-italic">{startRemainingTime}</div>
+                        <div className="font-size-100 mt-3">{cliffReleasePercentage}% unlocked on commencement date</div>
+                        <div className="font-size-100">{100 - cliffReleasePercentage}% of allocated funds streamed equally across {lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)}</div>
                     </div>
-                    <div className="font-size-100 font-extrabold text-uppercase mt-3 mb-2">Vesting Distribution</div>
-                    <div className="font-size-100">{isStartDateFuture(paymentStartDate) ? 'Streams start on' : 'Streams started on'} {getReadableDate(paymentStartDate, true)}</div>
-                    <div className="font-size-70 text-italic">{startRemainingTime}</div>
-                    <div className="font-size-100 mt-3">{cliffReleasePercentage}% unlocked on commencement date</div>
-                    <div className="font-size-100">{100 - cliffReleasePercentage}% of allocated funds streamed equally across {lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)}</div>
+                    <div className="right">
+                        <VestingProgressChartComponent
+                            vestedAmount={completedVestingPercentage}
+                            unvestedAmount={100 - completedVestingPercentage}
+                        />
+                    </div>
                 </div>
             )}
         </div>

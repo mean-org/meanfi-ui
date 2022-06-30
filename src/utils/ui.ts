@@ -610,6 +610,11 @@ export const isToday = (someDate: string): boolean => {
         inputDate.getFullYear() === today.getFullYear()
 }
 
+export const toTimestamp = (date: string): number => {
+    const dt = Date.parse(date);
+    return dt / 1000;
+}
+
 export function displayTimestamp(
     unixTimestamp: number,
     shortTimeZoneName = false
@@ -631,6 +636,15 @@ export function displayTimestamp(
     return `${dateString} at ${timeString}`;
 }
 
+/**
+ * Should I use this format?
+ * console.log(moment().endOf('day').fromNow());                // in 9 hours
+ * console.log(moment("2020-04-04 11:45:26.123").fromNow());    // 6 minutes ago
+ * console.log(moment().startOf('hour').fromNow());             // an hour ago
+ * console.log(moment().startOf('day').fromNow());              // 15 hours ago
+ * console.log(moment("20111031", "YYYYMMDD").fromNow());       // 10 years ago
+ */
+
 export const getTimeFromNow = (date: string, withoutSuffix = false): string => {
     const parsedDate = Date.parse(date);
     return moment(parsedDate).fromNow(withoutSuffix);
@@ -647,6 +661,26 @@ export function addMinutes(date: Date, minutes: number) {
 
 export function addHours(date: Date, hours: number) {
     return new Date(date.setUTCHours(date.getUTCHours() + hours));
+}
+
+export const getPercentageBetweenTwoDates = (starDate: string, endDate: string, todayDate?: string) => {
+    const start = Date.parse(starDate);
+    const end = Date.parse(endDate);
+    const today = todayDate
+        ? Date.parse(todayDate)
+        : Math.round(new Date().getTime());
+
+    const elapsed = Math.abs(today - start);
+    const remaining = Math.abs(end - start);
+    return (elapsed/remaining) * 100;
+}
+
+export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number) => {
+    const start = toTimestamp(starDate);
+    const end = toTimestamp(endDate);
+    const delta = Math.abs(end - start);
+    const pctTs = percentage(percent, delta);
+    return start + pctTs;
 }
 
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {

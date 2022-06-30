@@ -2207,6 +2207,29 @@ em {
   }
 }
 
+.right-panel-two-column-layout {
+  display: flex;
+  @media (max-width: 1199.98px) {
+    flex-direction: column;
+    > .left,
+    > .right {
+      padding: 0;
+      flex: 0 0 100%;
+    }
+  }
+  @media (min-width: 1200px) {
+    flex-direction: row;
+    > .left {
+      padding-right: 8px;
+      flex: 1 1 50%;
+    }
+    > .right {
+      flex: 1 1 50%;
+    }
+  }
+
+}
+
 .two-column-form-layout {
   display: flex;
   > .right {
