@@ -1774,7 +1774,7 @@ export const MoneyStreamsInfoView = (props: {
         subtitle={subtitle}
         amount={renderOutgoingAmoungOfStreams}
         resume="outgoing"
-        className="account-category-title pr-0 pt-2"
+        className="account-category-title no-border-top pr-0 pt-2"
         hasRightIcon={true}
         rightIconHasDropdown={true}
         rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
