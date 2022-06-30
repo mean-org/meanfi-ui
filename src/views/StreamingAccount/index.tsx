@@ -2871,7 +2871,7 @@ export const StreamingAccountView = (props: {
               <div 
                 key={index}
                 onClick={onSelectStream}
-                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ResumeItem
                   id={index}
