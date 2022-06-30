@@ -979,6 +979,19 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [t]);
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
+
   const goToIncomingTabHandler = () => {
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
 
@@ -1000,17 +1013,6 @@ export const MoneyStreamsInfoView = (props: {
 
     navigate(url);
   }
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
 
   const onTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
@@ -1099,7 +1101,7 @@ export const MoneyStreamsInfoView = (props: {
         }
       }
 
-        setWithdrawalBalance(totalWithdrawAmount);
+      setWithdrawalBalance(totalWithdrawAmount);
     }
   }, [
     getTokenByMintAddress,
@@ -1400,8 +1402,6 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
-  const param = getQueryAccountType();
-
   // Dropdown (three dots button) inside outgoing stream list
   const menu = (
     <Menu>
@@ -1423,12 +1423,6 @@ export const MoneyStreamsInfoView = (props: {
       )}
     </>
   );
-  
-  // useEffect(() => {
-  //   console.log("===============================");
-  //   console.log("Showing streamingAccountCombinedList", streamingAccountCombinedList);
-  //   console.log("Showing outgoingStreamList", outgoingStreamList);
-  // }, [outgoingStreamList, streamingAccountCombinedList]);
 
   // Outgoing streams list
   const renderListOfOutgoingStreams = (

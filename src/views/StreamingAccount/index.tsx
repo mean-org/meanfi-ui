@@ -2913,6 +2913,8 @@ export const StreamingAccountView = (props: {
     );
   }
 
+  const streamAccountTitle = getStreamingAccountName() ? getStreamingAccountName() : (streamingAccountSelected && shortenAddress(streamingAccountSelected.id as string, 8));
+
   return (
     <>
       <Spin spinning={loadingStreamingAccountDetails}>
@@ -2925,7 +2927,7 @@ export const StreamingAccountView = (props: {
 
         {streamingAccountSelected && (
           <ResumeItem
-            title={getStreamingAccountName()}
+            title={streamAccountTitle}
             subtitle={streamAccountSubtitle}
             content={streamAccountContent}
             resume={getStreamingAccountResume()}
