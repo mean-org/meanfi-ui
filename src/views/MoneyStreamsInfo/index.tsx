@@ -34,7 +34,7 @@ import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { INITIAL_TREASURIES_SUMMARY, TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
@@ -46,6 +46,7 @@ import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamOpenModal } from "../../components/StreamOpenModal";
 import { CreateStreamModal } from "../../components/CreateStreamModal";
 import { initialSummary, StreamsSummary } from "../../models/streams";
+import { Identicon } from "../../components/Identicon";
 
 const { TabPane } = Tabs;
 
@@ -1687,6 +1688,25 @@ export const MoneyStreamsInfoView = (props: {
               // Sends outgoing stream value to the parent component "Accounts"
               onSendFromIncomingStreamInfo(stream);
             };
+
+            const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+              event.currentTarget.src = FALLBACK_COIN_IMAGE;
+              event.currentTarget.className = "error";
+            };
+
+            const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+
+            let img;
+
+            if (stream.associatedToken) {
+              if (token) {
+                img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+              } else {
+                img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} />
+              }
+            } else {
+              img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} />
+            }
     
             const title = stream ? getStreamTitle(stream) : "Unknown incoming stream";
             const subtitle = getStreamSubtitle(stream);
@@ -1701,6 +1721,7 @@ export const MoneyStreamsInfoView = (props: {
               >
                 <ResumeItem
                   id={index}
+                  img={img}
                   title={title}
                   subtitle={subtitle}
                   resume={resume}
@@ -1769,6 +1790,25 @@ export const MoneyStreamsInfoView = (props: {
                   // Sends outgoing stream value to the parent component "Accounts"
                   onSendFromOutgoingStreamInfo(stream);
                 };
+
+                const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                  event.currentTarget.src = FALLBACK_COIN_IMAGE;
+                  event.currentTarget.className = "error";
+                };
+    
+                const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+    
+                let img;
+    
+                if (stream.associatedToken) {
+                  if (token) {
+                    img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                  } else {
+                    img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} />
+                  }
+                } else {
+                  img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} />
+                }
     
                 const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
                 const subtitle = getStreamSubtitle(stream);
@@ -1783,6 +1823,7 @@ export const MoneyStreamsInfoView = (props: {
                   >
                     <ResumeItem
                       id={index}
+                      img={img}
                       title={title}
                       subtitle={subtitle}
                       resume={resume}
