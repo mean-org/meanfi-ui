@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
@@ -11,6 +11,7 @@ import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { Treasury } from '@mean-dao/msp';
 import { AppStateContext } from '../../contexts/appstate';
+import { useSearchParams } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -27,6 +28,7 @@ export const TreasuryCloseModal = (props: {
   isBusy: boolean;
 }) => {
   const { t } = useTranslation('common');
+  const [searchParams] = useSearchParams();
   const {
     transactionStatus
   } = useContext(AppStateContext);
@@ -60,19 +62,23 @@ export const TreasuryCloseModal = (props: {
     props.transactionFees
   ]);
 
-  // const isError = (): boolean => {
-  //   return  props.transactionStatus === TransactionStatus.TransactionStartFailure ||
-  //           props.transactionStatus === TransactionStatus.InitTransactionFailure ||
-  //           props.transactionStatus === TransactionStatus.SignTransactionFailure ||
-  //           props.transactionStatus === TransactionStatus.SendTransactionFailure
-  //           ? true
-  //           : false;
-  // }
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
 
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('treasuries.close-account.modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Propose close account" : t('treasuries.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       visible={props.isVisible}
@@ -179,7 +185,7 @@ export const TreasuryCloseModal = (props: {
                     ? t('treasuries.close-account.cta-close-busy')
                     : isError(transactionStatus.currentOperation)
                       ? t('general.retry')
-                      : t('treasuries.close-account.cta-close')
+                      : (param === "multisig" ? "Submit proposal" : t('treasuries.close-account.cta-close'))
                   }
                 </Button>
               </div>
