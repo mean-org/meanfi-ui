@@ -442,7 +442,6 @@ export const VestingContractCreateForm = (props: {
                 vestingLockName &&
                 selectedToken &&
                 nativeBalance > 0 &&
-                tokenBalance > 0 &&
                 (!vestingLockFundingAmount || parseFloat(vestingLockFundingAmount) <= maxAmount)
             ? true
             : false;
@@ -482,8 +481,8 @@ export const VestingContractCreateForm = (props: {
             ? t('transactions.validation.not-connected')
             : !vestingLockName
                 ? 'Add contract name'
-                : !selectedToken || !nativeBalance
-                    ? t('transactions.validation.no-balance')
+                : !nativeBalance
+                    ? t('transactions.validation.amount-sol-low')
                     : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
                         ? t('transactions.validation.amount-high')
                         : t('transactions.validation.valid-continue');
@@ -504,8 +503,8 @@ export const VestingContractCreateForm = (props: {
             ? t('transactions.validation.not-connected')
             : !vestingLockName
                 ? 'Add contract name'
-                : !selectedToken || !nativeBalance
-                    ? t('transactions.validation.no-balance')
+                : !nativeBalance
+                    ? t('transactions.validation.amount-sol-low')
                     : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
                         ? t('transactions.validation.amount-high')
                         : !lockPeriodAmount
