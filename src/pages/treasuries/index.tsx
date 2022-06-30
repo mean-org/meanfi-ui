@@ -1591,7 +1591,7 @@ export const TreasuriesView = () => {
       openNotification({
         type: "info",
         description: t('treasuries.create-treasury.multisig-treasury-created-instructions', {treasuryName: options.treasuryName}),
-        duration: null,
+        duration: 10,
       });
       setHighLightableMultisigId(options.multisigId);
       navigate('/multisig');
