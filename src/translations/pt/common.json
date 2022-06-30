@@ -1371,7 +1371,8 @@
 			"total-funds-to-commit": "Total funds to commit",
 			"total-funds-to-stream": "Total funds to stream",
 			"vesting-stream-name-label": "Vesting stream name",
-			"vesting-stream-name-placeholder": "Name for this no-code vesting stream"
+			"vesting-stream-name-placeholder": "Name for this no-code vesting stream",
+			"verified-recipient-disclaimer-tooltip": "In order for the beneficiary to be able to withdraw funds from their stream, they must be the owner of the private keys to the address inputted. Please make sure the address supplied is correct and does not belong to a centralized exchange."
 		},
 		"vesting-account-details": {
 			"panel-title": "Vesting Account Details"

@@ -10,12 +10,13 @@ import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { useWallet } from '../../../../contexts/wallet';
-import { LoadingOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { isError } from '../../../../utils/transactions';
 import { IconEdit, IconWarning } from '../../../../Icons';
 import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME } from '../../../../constants';
+import { InfoIcon } from '../../../../components/InfoIcon';
 
 export const VestingContractCreateStreamModal = (props: {
     handleClose: any;
@@ -526,12 +527,12 @@ export const VestingContractCreateStreamModal = (props: {
     const renderVcName = () => {
         if (!vestingContract) { return null; }
         return (
-            <div className="flex-fixed-right px-1 mt-2 mb-2">
+            <div className="flex-fixed-right px-1 mt-2 mb-2 font-size-120">
                 <div className="left font-bold">
                     {vestingContract.name}
                 </div>
                 <div className="right">
-                    <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                    <span className={`badge large ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                         {treasuryOption === TreasuryType.Open ? 'Open' : 'Locked'}
                     </span>
                 </div>
@@ -745,12 +746,10 @@ export const VestingContractCreateStreamModal = (props: {
                         </div>
                     </div>
 
-                    <div className="mb-2 px-1">{t('treasuries.treasury-streams.add-stream-locked.panel3-text-one')} {vestingStreamName ? vestingStreamName : "--"}</div>
+                    <div className="px-1 font-size-100 font-bold">{vestingStreamName ? vestingStreamName : "--"}</div>
+                    <div className={`mb-2 px-1 ${isXsDevice ? 'font-size-80' : 'font-size-90'}`}>{recipientAddress ? recipientAddress : "--"}</div>
 
                     <Row className="mb-2 px-1">
-                        <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}</strong> {recipientAddress ? recipientAddress : "--"}
-                        </Col>
                         <Col span={24}>
                             <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}</strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), selectedToken?.decimals || 6)} ${selectedToken?.symbol}` : "--"}
                         </Col>
@@ -797,6 +796,11 @@ export const VestingContractCreateStreamModal = (props: {
 
                     <div className="ml-1">
                         <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
+                        <InfoIcon
+                            content={<span>{t('vesting.create-stream.verified-recipient-disclaimer-tooltip')}</span>}
+                            placement="top">
+                            <InfoCircleOutlined style={{ lineHeight: 0 }} />
+                        </InfoIcon>
                     </div>
 
                     {/* CTAs */}

@@ -758,6 +758,10 @@ footer.ant-layout-footer {
     height: 1.4em;
     margin-right: 3px;
   }
+  &.change-button {
+    color: var(--color-secondary-alpha-80);
+    text-transform: uppercase;
+  }
 }
 
 [data-theme="light"] {
@@ -3378,13 +3382,6 @@ main section {
   line-height: 1rem;
   color: var(--color-secondary-alpha-30);
   margin: 5px 0 -5px 1px;
-}
-.flat-button {
-  &.change-button {
-    font-size: 13px;
-    color: var(--color-orange-red);
-    text-transform: uppercase;
-  }
 }
 
 .swap-client-card {
@@ -6445,6 +6442,14 @@ code {
     height: auto;
     font-weight: 600;
   }
+  &.large {
+    font-size: 85%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    line-height: 1;
+    height: auto;
+    font-weight: 700;
+  }
 }
 
 // Youtube video embed
@@ -7705,6 +7710,7 @@ code {
 
 .warning-message {
   color: var(--color-notify-warning);
+  line-height: 1.3;
 }
 
 .account-category-title {
