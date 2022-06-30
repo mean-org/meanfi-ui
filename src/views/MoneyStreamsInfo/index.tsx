@@ -133,6 +133,7 @@ export const MoneyStreamsInfoView = (props: {
 
   const [withdrawalBalance, setWithdrawalBalance] = useState(0);
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
+  const [totalAccountBalance, setTotalAccountBalance] = useState(0);
   const [rateIncomingPerDay, setRateIncomingPerDay] = useState(0);
   const [rateOutgoingPerDay, setRateOutgoingPerDay] = useState(0);
 
@@ -1322,6 +1323,7 @@ export const MoneyStreamsInfoView = (props: {
     navigate(url);
   }, [accountAddress, getQueryAccountType, navigate]);
 
+  // Set the list of incoming and outgoing streams
   useEffect(() => {
     if (!connection || !publicKey || !streamList || !autocloseTreasuries) {
       setIncomingStreamList(undefined);
@@ -1342,6 +1344,7 @@ export const MoneyStreamsInfoView = (props: {
     isInboundStream,
   ]);
 
+  // Stop loading incoming and outgoing streams
   useEffect(() => {
     if (incomingStreamList && incomingStreamList.length >= 0) {
       setLoadingIncomingStreams(false);
@@ -1377,7 +1380,6 @@ export const MoneyStreamsInfoView = (props: {
 
   // Live data calculation
   useEffect(() => {
-
     if (!publicKey || !treasuryList) { return; }
 
     const timeout = setTimeout(() => {
@@ -1391,7 +1393,6 @@ export const MoneyStreamsInfoView = (props: {
   }, [publicKey, treasuryList]);
 
   useEffect(() => {
-
     if (!publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
 
     const timeout = setTimeout(() => {
@@ -1410,83 +1411,29 @@ export const MoneyStreamsInfoView = (props: {
     streamListv2,
   ]);
 
+  // Update incoming balance
   useEffect(() => {
-    // let totalWithdrawAmount = 0;
-
-    // if (incomingStreamList) {
-    //   for (const stream of incomingStreamList) {
-    //     const v1 = stream as StreamInfo;
-    //     const v2 = stream as Stream;
-
-    //     const isNew = v2.version && v2.version >= 2 ? true : false;
-
-    //     const token = getTokenByMintAddress(stream.associatedToken as string);
-        
-    //     if (token) {
-    //       const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-
-    //       const withdrawAmount = isNew ? toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6) : v1.escrowVestedAmount;
-
-    //       totalWithdrawAmount += withdrawAmount * tokenPrice;
-    //     }
-    //   }
-
-    //   setWithdrawalBalance(totalWithdrawAmount);
-    // }
+    if (!publicKey || !incomingStreamsSummary) { return; }
 
     setWithdrawalBalance(incomingStreamsSummary.totalNet);
-  }, [incomingStreamsSummary]);
+  }, [publicKey, incomingStreamsSummary]);
 
+  // Update outgoing balance
   useEffect(() => {
-    // let totalUnallocatedAmount = 0;
-
-    // if (outgoingStreamList) {
-    //   for (const stream of outgoingStreamList) {
-    //     const v1 = stream as StreamInfo;
-    //     const v2 = stream as Stream;
-
-    //     const isNew = v2.version && v2.version >= 2 ? true : false;
-
-    //     const token = getTokenByMintAddress(stream.associatedToken as string);
-        
-    //     if (token) {
-    //       const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-
-    //       const fundsLeftInStreamAmount = isNew ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount;
-
-    //       totalUnallocatedAmount += fundsLeftInStreamAmount * tokenPrice;
-    //     }
-    //   }
-    // }
-
-    // if (streamingAccountCombinedList) {
-    //   // eslint-disable-next-line array-callback-return
-    //   streamingAccountCombinedList.map(function(streaming) {
-    //     if (!streaming.streams) { return false; }
-
-    //     for (const stream of streaming.streams) {
-    //       const v1 = stream as StreamInfo;
-    //       const v2 = stream as Stream;
-
-    //       const isNew = v2.version && v2.version >= 2 ? true : false;
-
-    //       const token = getTokenByMintAddress(stream.associatedToken as string);
-
-    //       if (token) {
-    //         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-
-    //         const fundsLeftInStreamAmount = isNew ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount;
-
-    //         totalUnallocatedAmount += fundsLeftInStreamAmount * tokenPrice;
-    //       }
-    //     }
-    //   });
-    // }
+    if (!publicKey || !streamingAccountsSummary || !outgoingStreamsSummary) { return; }
 
     setUnallocatedBalance(outgoingStreamsSummary.totalNet + streamingAccountsSummary.totalNet);
 
-  }, [streamingAccountsSummary, outgoingStreamsSummary]);
+  }, [publicKey, streamingAccountsSummary, outgoingStreamsSummary]);
 
+  // Update total account balance
+  useEffect(() => {
+    if (!publicKey || !unallocatedBalance || !withdrawalBalance) { return; }
+
+    setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
+  }, [publicKey, unallocatedBalance, withdrawalBalance]);
+
+  // Calculate the rate per day for incoming streams
   useEffect(() => {
     if (incomingStreamList) {
       const runningIncomingStreams = incomingStreamList.filter((stream: Stream | StreamInfo) => getStreamStatus(stream) === "Running");
@@ -1512,7 +1459,6 @@ export const MoneyStreamsInfoView = (props: {
         setRateIncomingPerDay(totalRateAmountValue);
       }
     }
-
   }, [
     incomingStreamList,
     getDepositAmountDisplay,
@@ -1524,6 +1470,7 @@ export const MoneyStreamsInfoView = (props: {
     t,
   ]);
 
+  // Calculate the rate per day for outgoing streams
   useEffect(() => {
     if (outgoingStreamList) {
       const runningOutgoingStreams = outgoingStreamList.filter((stream: Stream | StreamInfo) => getStreamStatus(stream) === "Running");
@@ -1549,7 +1496,6 @@ export const MoneyStreamsInfoView = (props: {
         setRateOutgoingPerDay(totalRateAmountValue);
       }
     }
-
   }, [
     outgoingStreamList,
     getDepositAmountDisplay,
@@ -1585,7 +1531,7 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       name: "Balance (My TVL)",
-      value: (withdrawalBalance && unallocatedBalance) ? toUsCurrency(withdrawalBalance + unallocatedBalance) : "$0.00",
+      value: totalAccountBalance ? toUsCurrency(totalAccountBalance) : "$0.00",
       content: renderBalance
     }
   ];
