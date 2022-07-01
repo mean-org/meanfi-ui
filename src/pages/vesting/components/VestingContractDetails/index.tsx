@@ -61,7 +61,7 @@ export const VestingContractDetails = (props: {
         const vcType = item.treasuryType;
 
         return (
-            <div className="transaction-list-row no-pointer">
+            <div className="transaction-list-row h-auto">
                 <div className="icon-cell">
                     <div className="token-icon">
                         {selectedToken && selectedToken.logoURI ? (
@@ -114,19 +114,15 @@ export const VestingContractDetails = (props: {
         <>
             {vestingContract && (
                 <div className="details-panel-meta mb-2">
-
-                    <Row gutter={8}>
-                        <Col xs={24} sm={17} md={16} lg={17}>
+                    <div className="two-column-form-layout">
+                        <div className="left mb-2">
                             {renderStreamingAccount(vestingContract)}
-                        </Col>
-                        <Col xs={24} sm={7} md={8} lg={7}>
+                        </div>
+                        <div className="right mb-2">
                             <div className="info-label text-truncate line-height-110">
                                 Available for new streams
                             </div>
                             <div className="transaction-detail-row">
-                                {/* <span className="info-icon">
-                                    <IconBank className="mean-svg-icons" />
-                                </span> */}
                                 <span className="info-data line-height-110">
                                     {
                                         getAmountWithSymbol(
@@ -136,9 +132,9 @@ export const VestingContractDetails = (props: {
                                     }
                                 </span>
                             </div>
-                        </Col>
-                    </Row>
 
+                        </div>
+                    </div>
                 </div>
             )}
         </>

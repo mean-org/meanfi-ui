@@ -4819,7 +4819,6 @@ main section {
     height: 100%;
     flex-direction: column;
     justify-content: flex-start;
-    overflow: auto;
     max-height: calc(100% - 1rem);
     min-height: 346px;
     // margin-right: -0.5rem;
@@ -4830,6 +4829,7 @@ main section {
       height: 100%;
     }
     &:not(.details-open) {
+      overflow: auto;
       .meanfi-two-panel-left {
         z-index: 2;
       }
@@ -5625,6 +5625,9 @@ main section {
 }
 .w-100 {
   width: 100% !important;
+}
+.h-auto {
+  height: auto !important;
 }
 .h-25 {
   height: 25% !important;
