@@ -4072,9 +4072,9 @@ export const AccountsNewView = () => {
 
   const renderMoneyStreamsSummary = (
     <>
-      <Tooltip title={isInspectedAccountTheConnectedWallet()
+      {/* <Tooltip title={isInspectedAccountTheConnectedWallet()
           ? "See your Money Streams"
-          : "To see your Money Streams you need to connect your wallet"}>
+          : "To see your Money Streams you need to connect your wallet"}> */}
         <div key="streams" onClick={() => {
           if (userHasAccess()) {
             navigateToStreaming();
@@ -4132,7 +4132,7 @@ export const AccountsNewView = () => {
             )}
           </div>
         </div>
-      </Tooltip>
+      {/* </Tooltip> */}
     </>
   );
 
