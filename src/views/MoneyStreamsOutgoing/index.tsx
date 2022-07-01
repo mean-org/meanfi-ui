@@ -27,7 +27,7 @@ import { customLogger } from "../..";
 import { useWallet } from "../../contexts/wallet";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { StreamPauseModal } from "../../components/StreamPauseModal";
-import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { StreamResumeModal } from "../../components/StreamResumeModal";
@@ -42,6 +42,7 @@ export const MoneyStreamsOutgoingView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
   streamList?: Array<Stream | StreamInfo> | undefined;
   onSendFromOutgoingStreamDetails?: any;
+  multisigAccounts: MultisigInfo[] | undefined;
 }) => {
   const {
     splTokenList,
@@ -68,7 +69,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const { wallet, publicKey } = useWallet();
   const connection = useConnection();
 
-  const { streamSelected, streamList, onSendFromOutgoingStreamDetails } = props;
+  const { streamSelected, streamList, onSendFromOutgoingStreamDetails, multisigAccounts } = props;
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const { endpoint } = useConnectionConfig();
@@ -82,7 +83,6 @@ export const MoneyStreamsOutgoingView = (props: {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [multisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
 
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
@@ -129,22 +129,18 @@ export const MoneyStreamsOutgoingView = (props: {
   // Create and cache Multisig client instance
   const multisigClient = useMemo(() => {
 
-    const opts: ConfirmOptions = {
-      preflightCommitment: "confirmed",
-      commitment: "confirmed",
-    };
+    if (!connection || !publicKey || !endpoint) { return null; }
 
-    const provider = new AnchorProvider(connection, wallet as any, opts);
-
-    return new Program(
-      MultisigIdl,
-      MEAN_MULTISIG,
-      provider
+    return new MeanMultisig(
+      endpoint,
+      publicKey,
+      "confirmed"
     );
 
   }, [
-    connection, 
-    wallet
+    connection,
+    publicKey,
+    endpoint,
   ]);
     
   const resetTransactionStatus = useCallback(() => {
@@ -1007,36 +1003,19 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const ixData = Buffer.from(pauseStream.instructions[0].data);
       const ixAccounts = pauseStream.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1000;
-      const txSigners = [transaction];
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-      
-      const tx = multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP, 
-        OperationType.StreamPause,
-        ixAccounts as any,
-        ixData as any,
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: multisig.id,
-            transaction: transaction.publicKey,
-            proposer: publicKey as PublicKey,
-          },
-          preInstructions: [createIx],
-          signers: txSigners,
-        }
-      );
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...txSigners);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Pause Stream",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamPause,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     }
@@ -1462,36 +1441,19 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const ixData = Buffer.from(resumeStream.instructions[0].data);
       const ixAccounts = resumeStream.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1000;
-      const txSigners = [transaction];
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-      
-      const tx = multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP, 
-        OperationType.StreamResume,
-        ixAccounts as any,
-        ixData as any,
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: multisig.id,
-            transaction: transaction.publicKey,
-            proposer: publicKey as PublicKey,
-          },
-          preInstructions: [createIx],
-          signers: txSigners,
-        }
-      );
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...txSigners);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Resume Stream",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamResume,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     }
