@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { cutNumber, getAmountWithSymbol, getTokenBySymbol, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
+import { cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
 import { consoleOut, disabledDate, getLockPeriodOptionLabel, getRateIntervalInSeconds, isToday, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
@@ -441,7 +441,7 @@ export const VestingContractCreateForm = (props: {
         return  publicKey &&
                 vestingLockName &&
                 selectedToken &&
-                nativeBalance > 0 &&
+                nativeBalance > 0 && nativeBalance >= getMinSolBlanceRequired() &&
                 (!vestingLockFundingAmount || parseFloat(vestingLockFundingAmount) <= maxAmount)
             ? true
             : false;
@@ -481,7 +481,7 @@ export const VestingContractCreateForm = (props: {
             ? t('transactions.validation.not-connected')
             : !vestingLockName
                 ? 'Add contract name'
-                : !nativeBalance
+                : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
                     ? t('transactions.validation.amount-sol-low')
                     : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
                         ? t('transactions.validation.amount-high')
@@ -503,7 +503,7 @@ export const VestingContractCreateForm = (props: {
             ? t('transactions.validation.not-connected')
             : !vestingLockName
                 ? 'Add contract name'
-                : !nativeBalance
+                : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
                     ? t('transactions.validation.amount-sol-low')
                     : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
                         ? t('transactions.validation.amount-high')
@@ -748,7 +748,8 @@ export const VestingContractCreateForm = (props: {
                                     {`${tokenBalance && selectedToken
                                         ? getAmountWithSymbol(tokenBalance, selectedToken.address, true)
                                         : "0"
-                                        }`}
+                                        }`
+                                    }
                                 </span>
                             </div>
                             <div className="right inner-label">
@@ -766,7 +767,7 @@ export const VestingContractCreateForm = (props: {
                                 )}
                             </div>
                         </div>
-                        {selectedToken && selectedToken.address === NATIVE_SOL.address && (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+                        {nativeBalance < getMinSolBlanceRequired() && (
                             <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
                         )}
                     </div>
