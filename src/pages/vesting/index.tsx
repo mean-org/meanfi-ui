@@ -773,33 +773,52 @@ export const VestingView = () => {
       if (!multisig) { return null; }
 
       // Create Streaming account
-      const createTreasuryTx = await msp.createTreasury(
-        publicKey,                                        // payer
-        multisig.authority,                               // treasurer
-        new PublicKey(data.associatedTokenAddress),       // associatedToken
-        data.label,                                       // label
-        data.type,                                        // type
-        true,                                             // solFeePayedByTreasury = true
+      // const createTreasuryTx = await msp.createTreasury(
+      //   publicKey,                                        // payer
+      //   multisig.authority,                               // treasurer
+      //   new PublicKey(data.associatedTokenAddress),       // associatedToken
+      //   data.label,                                       // label
+      //   data.type,                                        // type
+      //   true,                                             // solFeePayedByTreasury = true
+      // );
+
+      const createTreasuryTx = await msp.createVestingTreasury(
+        publicKey,                                            // payer
+        multisig.authority,                                   // treasurer
+        data.label,                                           // label
+        data.type,                                            // type
+        solFeePayedByTreasury,                                // solFeePayedByTreasury
+        new PublicKey(data.associatedTokenAddress),           // treasuryAssociatedTokenMint
+        data.duration,                                        // duration
+        data.durationUnit,                                    // durationUnit
+        data.fundingAmount,                                   // fundingAmount
+        data.vestingCategory,                                 // vestingCategory
+        data.startUtc,                                        // startUtc
+        data.cliffVestPercent,                                // cliffVestPercent
+        data.feePayedByTreasurer,                             // feePayedByTreasurer
       );
 
-      const ixData = Buffer.from(createTreasuryTx.instructions[0].data);
-      const ixAccounts = createTreasuryTx.instructions[0].keys;
+      const ixData = Buffer.from(createTreasuryTx[0].instructions[0].data);
+      const ixAccounts = createTreasuryTx[0].instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      // TODO: I believe this would be changed to "Create vesting account"
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Create streaming account",
+        "Create Vesting Contract",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryCreate,
         multisig.id,
-        MSPV2Constants.MSP,
-        ixAccounts,
-        ixData
+        MSPV2Constants.MSP, // program
+        ixAccounts,         // keys o accounts of the Ix
+        ixData,             // data of the Ix
       );
 
-      return tx;
+      if (!tx) { return null; }
+
+      createTreasuryTx[0] = tx;
+
+      return createTreasuryTx;
     }
 
     const createTx = async () => {
@@ -1852,6 +1871,64 @@ export const VestingView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
+    const createStream = async (data: any): Promise<[Transaction, PublicKey] | null> => {
+
+      if (!connection || !msp || !publicKey) { return null; }
+
+      // const solFeePayedByTreasury = data.multisig ? true : false;
+
+      if (!data.multisig) {
+        return await msp.createStreamWithTemplate(
+          publicKey,                                                                // payer
+          publicKey,                                                                // treasurer
+          new PublicKey(data.treasury),                                             // treasury
+          new PublicKey(data.beneficiary),                                          // beneficiary
+          new PublicKey(data.treasuryAssociatedTokenMint),                          // treasuryAssociatedTokenMint
+          data.allocationAssigned,                                                  // allocationAssigned
+          data.streamName                                                           // streamName
+        );
+      }
+
+      if (!multisigClient || !multisigAccounts) { return null; }
+
+      const multisig = multisigAccounts.filter(m => m.id.toBase58() === data.multisig)[0];
+
+      if (!multisig) { return null; }
+
+      const createStreamTx = await msp.createStreamWithTemplate(
+        publicKey,                                                                // payer
+        multisig.authority,                                                       // treasurer
+        new PublicKey(data.treasury),                                             // treasury
+        new PublicKey(data.beneficiary),                                          // beneficiary
+        new PublicKey(data.treasuryAssociatedTokenMint),                          // treasuryAssociatedTokenMint
+        data.allocationAssigned,                                                  // allocationAssigned
+        data.streamName                                                           // streamName
+      );
+
+      const ixData = Buffer.from(createStreamTx[0].instructions[0].data);
+      const ixAccounts = createStreamTx[0].instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      // TODO: I believe this would be changed to "Create vesting account"
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Create Vesting Stream",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.TreasuryStreamCreate,
+        multisig.id,
+        MSPV2Constants.MSP, // program
+        ixAccounts,         // keys o accounts of the Ix
+        ixData,             // data of the Ix
+      );
+
+      if (!tx) { return null; }
+
+      createStreamTx[0] = tx;
+
+      return createStreamTx;
+    };
+
     const createTx = async (): Promise<boolean> => {
 
       if (!publicKey || !msp || !selectedVestingContract || !selectedToken) {
@@ -1938,15 +2015,7 @@ export const VestingView = () => {
         return false;
       }
 
-      const result = await msp.createStreamWithTemplate(
-        publicKey,                                // payer
-        publicKey,                                // treasurer
-        treasury,                                 // treasury
-        new PublicKey(params.beneficiaryAddress), // beneficiary
-        associatedToken,                          // treasuryAssociatedTokenMint
-        params.tokenAmount,                       // allocationAssigned
-        params.streamName                         // streamName
-      )
+      const result = await createStream(data)
         .then(values => {
           if (!values || !values.length) { return false; }
           setTransactionStatus({
