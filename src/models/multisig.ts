@@ -7,6 +7,7 @@ import { MEAN_MULTISIG_PROGRAM, MultisigTransaction } from "@mean-dao/mean-multi
 import { MeanSplTokenInstructionCoder } from "./spl-token-coder/instruction";
 import { MeanSystemInstructionCoder } from "./system-program-coder/instruction";
 
+export const NATIVE_LOADER = new PublicKey("NativeLoader1111111111111111111111111111111");
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
 export const LAMPORTS_PER_SIG = 5000;
 export const DEFAULT_EXPIRATION_TIME_SECONDS = 604800;

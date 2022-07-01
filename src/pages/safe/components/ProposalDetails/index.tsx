@@ -12,7 +12,7 @@ import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSA
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { useWallet } from '../../../../contexts/wallet';
-import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
+import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, NATIVE_LOADER, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { Idl } from '@project-serum/anchor';
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
@@ -37,6 +37,7 @@ export const ProposalDetailsView = (props: {
   onOperationStarted: any;
   multisigClient?: MeanMultisig | undefined;
   hasMultisigPendingProposal?: boolean;
+  
 }) => {
 
   const {
@@ -107,6 +108,7 @@ export const ProposalDetailsView = (props: {
   useEffect(() => {
 
     if (!selectedMultisig || !solanaApps || !appsProvider || !selectedProposal) { return; }
+
     const timeout = setTimeout(() => {
       // console.log('solanaApps',solanaApps);
       const proposalApp = solanaApps.filter((app: App) => app.id === selectedProposal.programId.toBase58())[0];
@@ -122,10 +124,13 @@ export const ProposalDetailsView = (props: {
             // console.log('ixInfo', ixInfo);
             setProposalIxInfo(ixInfo);
           });
-      } else if (proposalApp && proposalApp.id === SystemProgram.programId.toBase58() && proposalApp.folder !== "custom") {
+      } else if (proposalApp && proposalApp.id === SystemProgram.programId.toBase58()) {
         const ixInfo = parseMultisigSystemProposalIx(proposalSelected);
         setProposalIxInfo(ixInfo);
         // console.log('ixInfo', ixInfo);
+      } else if(proposalSelected.programId.equals(SystemProgram.programId)) {
+        const ixInfo = parseMultisigSystemProposalIx(proposalSelected);
+        setProposalIxInfo(ixInfo);
       } else {
         const ixInfo = parseMultisigProposalIx(proposalSelected);
         setProposalIxInfo(ixInfo);
@@ -628,7 +633,16 @@ export const ProposalDetailsView = (props: {
                     shape="round"
                     size="small"
                     className="thin-stroke d-flex justify-content-center align-items-center"
-                    disabled={hasMultisigPendingProposal || (!isProposer && !anyoneCanExecuteTx())}
+                    disabled={
+                      hasMultisigPendingProposal || 
+                      (
+                        !isProposer && 
+                        (
+                          !anyoneCanExecuteTx() || 
+                          !solanaApps.filter((app: App) => app.id === selectedProposal.programId.toBase58())[0]
+                        )
+                      )
+                    }
                     onClick={() => {
                       const operation = { transaction: selectedProposal }
                       onOperationStarted(operation)

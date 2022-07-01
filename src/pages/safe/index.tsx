@@ -80,7 +80,7 @@ import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
-import { MultisigTransactionWithId, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
+import { MultisigTransactionWithId, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 
 const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -1448,7 +1448,7 @@ export const SafeView = () => {
       let operation = 0;
       let proposalIx: TransactionInstruction | null = null;
 
-      if (data.appId === SystemProgram.programId.toBase58()) {
+      if (data.appId === NATIVE_LOADER.toBase58()) {
         const tx = await parseSerializedTx(connection, data.instruction.uiElements[0].value);
         if (!tx) { return null; }
         proposalIx = tx?.instructions[0];
