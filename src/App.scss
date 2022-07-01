@@ -1107,11 +1107,12 @@ footer.ant-layout-footer {
   outline: none;
   border: none;
   padding: 0;
-  font-size: 24px;
   font-weight: 500;
   @media (max-width: 575.98px) {
-    font-size: 20px !important;
-    letter-spacing: -0.5px;
+    font-size: 14px !important;
+  }
+  @media (min-width: 576px) {
+    font-size: 16px !important;
   }
 }
 
@@ -2192,15 +2193,22 @@ em {
 
 .two-column-layout {
   display: flex;
-  flex-direction: row;
-  @media (max-width: 409.98px) {
+  margin-bottom: 24px;
+  > .left,
+  > .right {
+    .well {
+      margin-bottom: 0;
+    }
+  }
+  @media (max-width: 399.98px) {
     flex-direction: column;
     > .left,
     > .right {
       flex: 0 0 100%;
+      margin-bottom: 4px;
     }
   }
-  @media (min-width: 410px) {
+  @media (min-width: 400px) {
     flex-direction: row;
     > .left {
       padding-right: 8px;
@@ -3216,20 +3224,24 @@ main section {
     }
   }
   .static-data-field {
-    font-size: 16px;
     font-weight: 500;
     line-height: 1.2;
     @media (max-width: 575.98px) {
-      font-size: 16px;
+      font-size: 14px !important;
+    }
+    @media (min-width: 576px) {
+      font-size: 16px !important;
     }
   }
   #payment-recipient-field,
   #payment-recipient-static-field {
     position: absolute;
-    font-size: 16px;
     line-height: 1.2rem;
     @media (max-width: 575.98px) {
-      font-size: 16px;
+      font-size: 14px !important;
+    }
+    @media (min-width: 576px) {
+      font-size: 16px !important;
     }
   }
   #payment-recipient-field,
@@ -3244,14 +3256,20 @@ main section {
     outline: none;
     border: none;
     background-color: transparent;
-    font-size: 16px;
-    line-height: 16px;
     vertical-align: middle;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 0px;
     appearance: textfield;
+    @media (max-width: 575.98px) {
+      font-size: 14px !important;
+      line-height: 14px;
+    }
+    @media (min-width: 576px) {
+      font-size: 16px !important;
+      line-height: 16px;
+    }
     &[readonly] {
       cursor: not-allowed;
     }
@@ -3288,10 +3306,12 @@ main section {
     min-height: 20px;
   }
   .dropdown-trigger.no-decoration {
-    font-size: 16px;
     line-height: 1.2;
     @media (max-width: 575.98px) {
-      font-size: 16px;
+      font-size: 14px !important;
+    }
+    @media (min-width: 576px) {
+      font-size: 16px !important;
     }
   }
   .well-divider {
@@ -3339,8 +3359,13 @@ main section {
   .suffix {
     color: var(--text-color);
     font-weight: 500;
-    font-size: 16px;
     margin-left: 0.25rem;
+    @media (max-width: 575.98px) {
+      font-size: 14px !important;
+    }
+    @media (min-width: 576px) {
+      font-size: 16px !important;
+    }
   }
 }
 [data-theme="light"] {
@@ -3513,17 +3538,24 @@ main section {
     display: inline-flex;
     margin: 2px 6px 0 0;
     @media (max-width: 575.98px) {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
+      margin: -1px 4px 0 0;
+    }
+    @media (min-width: 576px) {
+      width: 14px;
+      height: 14px;
       margin: 2px 4px 0 0;
     }
   }
   .token-symbol {
-    font-size: 16px;
     font-weight: 600;
     @media (max-width: 575.98px) {
-      font-size: 20px !important;
-      letter-spacing: -0.5px;
+      font-size: 14px !important;
+      letter-spacing: -0.25px;
+    }
+    @media (min-width: 576px) {
+      font-size: 16px !important;
     }
   }
   .token-name {

@@ -962,7 +962,7 @@ export const VestingContractCreateForm = (props: {
                                     )}
                                 </span>
                             </div>
-                            <div className="right flex-row justify-content-end">
+                            <div className="right flex-row justify-content-end align-items-center">
                                 <input
                                     className="general-text-input text-right"
                                     inputMode="decimal"
