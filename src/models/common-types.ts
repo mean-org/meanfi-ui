@@ -2,6 +2,12 @@ import { AllocationType } from "@mean-dao/msp";
 import { MetaInfoCtaAction } from "./enums";
 import { StreamTreasuryType } from "./treasuries";
 
+export interface RoutingInfo {
+    key: string;
+    path: string;
+    parent: string;
+}
+
 export interface SelectOption {
     key: number;
     value: number;
