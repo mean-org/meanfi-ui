@@ -534,12 +534,12 @@ export const MoneyStreamDetails = (props: {
 
     if (stream.associatedToken) {
       if (token) {
-        img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+        img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
       } else {
-        img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} />
+        img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
       }
     } else {
-      img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} />
+      img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
     }
   }
 
