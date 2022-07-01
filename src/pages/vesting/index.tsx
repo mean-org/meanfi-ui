@@ -193,8 +193,8 @@ export const VestingView = () => {
     if (activeTab) {
       consoleOut('Route param activeTab:', activeTab, 'crimson');
       setAccountDetailTab(activeTab as VestingAccountDetailTab);
-    } else {
-      setAccountDetailTab(undefined);
+    // } else {
+    //   setAccountDetailTab(undefined);
     }
 
     let accountTypeInQuery: string | null = null;
@@ -418,13 +418,16 @@ export const VestingView = () => {
   const navigateToVestingContract = useCallback((contractId: string) => {
     if (accountAddress && contractId) {
       let url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
+      if (accountDetailTab) {
+        url += `/${accountDetailTab}`
+      }
       const param = getQueryAccountType();
       if (param && param === "multisig") {
         url += '?account-type=multisig';
       }
       navigate(url);
     }
-  }, [accountAddress, getQueryAccountType, navigate]);
+  }, [accountAddress, accountDetailTab, getQueryAccountType, navigate]);
 
   const onSelectVestingContract = useCallback((item: Treasury | undefined) => {
     if (accountAddress && item) {

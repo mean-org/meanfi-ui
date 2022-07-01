@@ -7,7 +7,7 @@ import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { formatThousands } from '../../../../utils/utils';
 import { PublicKey } from '@solana/web3.js';
-import { consoleOut, delay, getReadableDate, isProd } from '../../../../utils/ui';
+import { delay, getReadableDate, isProd } from '../../../../utils/ui';
 import { IconLoading } from '../../../../Icons';
 
 export const VestingContractList = (props: {
