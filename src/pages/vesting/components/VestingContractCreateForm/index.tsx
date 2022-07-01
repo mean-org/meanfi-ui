@@ -842,7 +842,7 @@ export const VestingContractCreateForm = (props: {
 
                     {/* Vesting period */}
                     <div className="form-label">Vesting period</div>
-                    <div className="two-column-form-layout col60x40">
+                    <div className="two-column-layout">
                         <div className="left">
                             <div className="well">
                                 <div className="flex-fixed-right">
@@ -885,7 +885,7 @@ export const VestingContractCreateForm = (props: {
 
                     {/* Contract commencement date */}
                     <div className="form-label">Contract commencement date</div>
-                    <div className="two-column-form-layout col60x40">
+                    <div className="two-column-layout">
                         <div className="left">
                             <div className="well">
                                 <div className="flex-fixed-right">
