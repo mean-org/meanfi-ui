@@ -13,7 +13,7 @@ import {
   TransactionInstruction,
   TransactionSignature
 } from "@solana/web3.js";
-import { INPUT_AMOUNT_PATTERN, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
+import { CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -292,7 +292,7 @@ export const getTokenAmountAndSymbolByTokenAddress = (
     // TODO: Fair assumption but we should be able to work with either an address or a TokenInfo param
     const unkToken: TokenInfo = {
       address: address,
-      name: 'Unknown',
+      name: CUSTOM_TOKEN_NAME,
       chainId: 101,
       decimals: 6,
       symbol: shortenAddress(address),

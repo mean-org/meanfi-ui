@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, copyText, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -28,7 +28,7 @@ import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
 import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
-import { NO_FEES } from '../../constants';
+import { MIN_SOL_BALANCE_REQUIRED, NO_FEES } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
 import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
@@ -42,7 +42,7 @@ import { VestingContractOverview } from './components/VestingContractOverview';
 import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../utils/ids';
 import { appConfig, customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
@@ -66,7 +66,6 @@ export type VestingAccountDetailTab = "overview" | "streams" | "activity" | unde
 
 export const VestingView = () => {
   const {
-    tokenList,
     userTokens,
     splTokenList,
     selectedToken,
@@ -187,11 +186,15 @@ export const VestingView = () => {
     if (vestingContract) {
       consoleOut('Route param vestingContract:', vestingContract, 'crimson');
       setVestingContractAddress(vestingContract);
+    } else {
+      setVestingContractAddress('');
     }
 
     if (activeTab) {
       consoleOut('Route param activeTab:', activeTab, 'crimson');
       setAccountDetailTab(activeTab as VestingAccountDetailTab);
+    } else {
+      setAccountDetailTab(undefined);
     }
 
     let accountTypeInQuery: string | null = null;
@@ -204,6 +207,8 @@ export const VestingView = () => {
       } else {
         setInspectedAccountType(undefined);
       }
+    } else {
+      setInspectedAccountType(undefined);
     }
 
   }, [accountAddress, activeTab, address, isPageLoaded, publicKey, searchParams, vestingContract]);
@@ -452,7 +457,11 @@ export const VestingView = () => {
     getAllUserV2Accounts(accountAddress)
       .then(treasuries => {
         consoleOut('Streaming accounts:', treasuries, 'blue');
-        setTreasuryList(treasuries);
+        setTreasuryList(treasuries.map(vc => {
+          return Object.assign({}, vc, {
+            name: vc.name.trim()
+          })
+        }));
         if (treasuries.length > 0) {
           // /vesting/:address/contracts/:vestingContract
           if (reset) {
@@ -483,9 +492,13 @@ export const VestingView = () => {
     consoleOut('Executing getTreasuryStreams...', '', 'blue');
 
     msp.listStreams({treasury: treasuryPk })
-      .then((streams: any) => {
+      .then(streams => {
         consoleOut('treasuryStreams:', streams, 'blue');
-        setTreasuryStreams(streams);
+        setTreasuryStreams(streams.map(vc => {
+          return Object.assign({}, vc, {
+            name: vc.name.trim()
+          })
+        }));
       })
       .catch((err: any) => {
         console.error(err);
@@ -683,7 +696,6 @@ export const VestingView = () => {
     setIsVerifiedRecipient,
     setLockPeriodFrequency,
   ]);
-
 
   //////////////
   //  Modals  //
@@ -1779,12 +1791,12 @@ export const VestingView = () => {
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `${params.streamId ? 'Fund stream with' : 'Fund vesting account with'} ${formatThousands(
+              loadingMessage: `${params.streamId ? 'Fund stream with' : 'Fund vesting contract with'} ${formatThousands(
                 parseFloat(params.amount),
                 params.associatedToken?.decimals
               )} ${params.associatedToken?.symbol}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `${params.streamId ? 'Stream funded with' : 'Vesting account funded with'} ${formatThousands(
+              completedMessage: `${params.streamId ? 'Stream funded with' : 'Vesting contract funded with'} ${formatThousands(
                 parseFloat(params.amount),
                 params.associatedToken?.decimals
               )} ${params.associatedToken?.symbol}`,
@@ -2897,45 +2909,66 @@ export const VestingView = () => {
       return;
     }
 
-    if (!publicKey || !userTokens || !tokenList || !splTokenList || accounts.tokenAccounts.length === 0) {
+    if (!publicKey || !userTokens || !splTokenList || !accounts.tokenAccounts) {
       return;
     }
 
+    const meanTokensCopy = new Array<TokenInfo>();
+    const intersectedList = new Array<TokenInfo>();
+    const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
     const balancesMap: any = {};
+    balancesMap[userTokensCopy[0].address] = nativeBalance;
 
     fetchAccountTokens(connection, publicKey)
       .then(accTks => {
         if (accTks) {
-
-          const meanTokensCopy = new Array<TokenInfo>();
-          const intersectedList = new Array<TokenInfo>();
-          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
 
           // Build meanTokensCopy including the MeanFi pinned tokens
           userTokensCopy.forEach(item => {
             meanTokensCopy.push(item);
           });
 
-          // Now add all other items but excluding those in userTokens
-          splTokenList.forEach(item => {
-            if (!userTokens.includes(item)) {
-              meanTokensCopy.push(item);
-            }
-          });
+          // Now add all other items but excluding those in userTokens (only in prod)
+          if (isProd()) {
+            splTokenList.forEach(item => {
+              if (!userTokens.includes(item)) {
+                meanTokensCopy.push(item);
+              }
+            });
+          }
 
           // Create a list containing tokens for the user owned token accounts
+          // Code to only add owned tokens
+
+          // accTks.forEach(item => {
+          //   balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+          //   const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+          //   const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+          //   if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+          //     intersectedList.push(tokenFromMeanTokensCopy);
+          //   }
+          // });
+          // intersectedList.unshift(userTokensCopy[0]);
+          // intersectedList.sort((a, b) => {
+          //   if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+          //     return 1;
+          //   } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+          //     return -1;
+          //   }
+          //   return 0;
+          // });
+          // setSelectedList(intersectedList);
+          // if (!selectedToken) { setSelectedToken(intersectedList[0]); }
+
+
+
+
+          // Add owned token accounts to balances map
+          // Code to have all tokens sorted by balance
           accTks.forEach(item => {
             balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
-            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-              intersectedList.push(tokenFromMeanTokensCopy);
-            }
           });
-
-          intersectedList.unshift(userTokensCopy[0]);
-          balancesMap[userTokensCopy[0].address] = nativeBalance;
-          intersectedList.sort((a, b) => {
+          meanTokensCopy.sort((a, b) => {
             if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
               return 1;
             } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
@@ -2943,39 +2976,37 @@ export const VestingView = () => {
             }
             return 0;
           });
-
-          setSelectedList(intersectedList);
-          if (!selectedToken) { setSelectedToken(intersectedList[0]); }
+          setSelectedList(meanTokensCopy);
+          if (!selectedToken) { setSelectedToken(meanTokensCopy[0]); }
 
         } else {
-          for (const t of tokenList) {
+          for (const t of userTokensCopy) {
             balancesMap[t.address] = 0;
           }
           // set the list to the userTokens list
-          setSelectedList(tokenList);
-          if (!selectedToken) { setSelectedToken(tokenList[0]); }
+          setSelectedList(userTokensCopy);
+          if (!selectedToken) { setSelectedToken(userTokensCopy[0]); }
         }
       })
       .catch(error => {
         console.error(error);
-        for (const t of tokenList) {
+        for (const t of userTokensCopy) {
           balancesMap[t.address] = 0;
         }
-        setSelectedList(tokenList);
-        if (!selectedToken) { setSelectedToken(tokenList[0]); }
+        setSelectedList(userTokensCopy);
+        if (!selectedToken) { setSelectedToken(userTokensCopy[0]); }
       })
       .finally(() => setUserBalances(balancesMap));
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
-    tokenList,
     connection,
     userTokens,
     splTokenList,
     nativeBalance,
     selectedToken,
     accounts.tokenAccounts,
+    setSelectedToken
   ]);
 
   // Build CTAs
@@ -3354,6 +3385,38 @@ export const VestingView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountDetailTab, msp, publicKey, selectedVestingContract]);
 
+  // Get fees for multisig actions
+  useEffect(() => {
+
+    if (!multisigClient || !accountAddress || getQueryAccountType() !== "multisig") { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
+    .then(value => {
+      setMultisigTxFees(value);
+      consoleOut('Multisig transaction fees:', value, 'orange');
+    });
+  }, [accountAddress, getQueryAccountType, multisigClient]);
+
+  // Get min balance required for multisig actions
+  useEffect(() => {
+    if (accountAddress && selectedVestingContract) {
+      let minRequired = 0;
+      if (getQueryAccountType() === "multisig" && isMultisigTreasury(selectedVestingContract) && multisigTxFees) {
+        minRequired = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal fees
+      } else if (transactionFees) {
+        minRequired = transactionFees.blockchainFee + transactionFees.mspFlatFee;
+      }
+
+      if (minRequired > MIN_SOL_BALANCE_REQUIRED) {
+        setMinRequiredBalance(minRequired);
+        consoleOut('Min balance required:', minRequired, 'blue');
+      } else {
+        setMinRequiredBalance(MIN_SOL_BALANCE_REQUIRED);
+        consoleOut('Min balance required:', MIN_SOL_BALANCE_REQUIRED, 'blue');
+      }
+    }
+  }, [accountAddress, getQueryAccountType, isMultisigTreasury, multisigTxFees, selectedVestingContract, transactionFees]);
+
   // Hook on wallet connect/disconnect
   useEffect(() => {
 
@@ -3537,6 +3600,7 @@ export const VestingView = () => {
             multisigAccounts={multisigAccounts}
             multisigClient={multisigClient}
             nativeBalance={nativeBalance}
+            streamTemplate={streamTemplate}
             treasuryStreams={treasuryStreams}
             userBalances={userBalances}
             vestingContract={selectedVestingContract}
@@ -3660,7 +3724,12 @@ export const VestingView = () => {
                 {!publicKey ? (
                   <h3>Please connect your wallet to see your vesting contracts</h3>
                 ) : (
-                  <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
+                  <div className="text-center">
+                    <h3>You don't have access permission to view the vesting contracts for the wallet address specified.</h3>
+                    <p>Please reconnect with the authorized wallet ({shortenAddress(accountAddress)})<br/>or <span className="simplelink underline" onClick={() => {
+                      window.location.href = VESTING_ROUTE_BASE_PATH;
+                    }}>click here</span> to show the vesting contracts for the connected wallet.</p>
+                  </div>
                 )}
               </div>
             </div>
@@ -3813,17 +3882,19 @@ export const VestingView = () => {
 
         {isAddFundsModalVisible && (
           <VestingContractAddFundsModal
-            handleOk={(params: VestingContractTopupParams) => onAcceptAddFunds(params)}
-            handleClose={closeAddFundsModal}
-            nativeBalance={nativeBalance}
-            transactionFees={transactionFees}
-            withdrawTransactionFees={withdrawTransactionFees}
-            vestingContract={selectedVestingContract}
-            isVisible={isAddFundsModalVisible}
-            userBalances={userBalances}
-            treasuryStreams={treasuryStreams}
             associatedToken={selectedVestingContract ? selectedVestingContract.associatedToken as string : ''}
+            handleClose={closeAddFundsModal}
+            handleOk={(params: VestingContractTopupParams) => onAcceptAddFunds(params)}
             isBusy={isBusy}
+            isVisible={isAddFundsModalVisible}
+            nativeBalance={nativeBalance}
+            minRequiredBalance={minRequiredBalance}
+            streamTemplate={streamTemplate}
+            transactionFees={transactionFees}
+            treasuryStreams={treasuryStreams}
+            userBalances={userBalances}
+            vestingContract={selectedVestingContract}
+            withdrawTransactionFees={withdrawTransactionFees}
           />
         )}
 

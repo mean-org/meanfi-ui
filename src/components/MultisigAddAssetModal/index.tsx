@@ -6,7 +6,7 @@ import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connect
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
-import { MAX_TOKEN_LIST_ITEMS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { consoleOut, isProd, isValidAddress } from '../../utils/ui';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -257,7 +257,7 @@ export const MultisigAddAssetModal = (props: {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
@@ -298,7 +298,7 @@ export const MultisigAddAssetModal = (props: {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown token"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={async () => {
@@ -324,7 +324,7 @@ export const MultisigAddAssetModal = (props: {
               }
               const uknwnToken: TokenInfo = {
                 address,
-                name: 'Unknown token',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: getNetworkIdByEnvironment(environment),
                 decimals,
                 symbol: shortenAddress(address),
@@ -367,6 +367,7 @@ export const MultisigAddAssetModal = (props: {
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showCaretDown={true}
+                    showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                     fullTokenInfo={selectedToken}
                   />
                 ) : (

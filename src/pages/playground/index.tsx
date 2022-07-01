@@ -41,7 +41,7 @@ import { BN } from "bn.js";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { MAX_TOKEN_LIST_ITEMS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "../../constants";
 import { TokenListItem } from "../../components/TokenListItem";
 import { TextInput } from "../../components/TextInput";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
@@ -901,8 +901,10 @@ export const PlaygroundView = () => {
         {renderRouteLink('With NO specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets')}
         <div className="form-label">Preset a specific asset</div>
         {renderRouteLink('With specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets/FQPAweWDZZbKjDQk3MCx285dUeZosLzF2FacqfyegrGC')}
-        <div className="form-label">Vew a multisig account</div>
+        <div className="form-label">View a multisig account</div>
         {renderRouteLink('With specific asset preset', '/accounts/D9w3w6CQZvmAaqvQ9BsHSfg8vCa58dh3mXLND5dyDT1z/assets?account-type=multisig')}
+        <div className="form-label">View multisig vesting contracts</div>
+        {renderRouteLink('Send multisig to vesting', '/vesting/H2r15H4hFn7xV5PQtnatqJaHo6ybM8qd1i5WnaadE1aX/contracts?account-type=multisig')}
       </div>
     </>
   );
@@ -1170,7 +1172,7 @@ export const PlaygroundView = () => {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
@@ -1204,13 +1206,13 @@ export const PlaygroundView = () => {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={() => {
               const uknwnToken: TokenInfo = {
                 address: tokenFilter,
-                name: 'Unknown',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: 101,
                 decimals: 6,
                 symbol: '',

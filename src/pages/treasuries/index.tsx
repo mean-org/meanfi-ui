@@ -49,7 +49,8 @@ import {
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   HALF_MINUTE_REFRESH_TIMEOUT,
   VERBOSE_DATE_TIME_FORMAT,
-  WRAPPED_SOL_MINT_ADDRESS
+  WRAPPED_SOL_MINT_ADDRESS,
+  CUSTOM_TOKEN_NAME
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
@@ -372,7 +373,7 @@ export const TreasuriesView = () => {
     if (address && isValidAddress(address)) {
       const unkToken: TokenInfo = {
         address: address,
-        name: 'Unknown',
+        name: CUSTOM_TOKEN_NAME,
         chainId: 101,
         decimals: 6,
         symbol: shortenAddress(address),
@@ -1590,7 +1591,7 @@ export const TreasuriesView = () => {
       openNotification({
         type: "info",
         description: t('treasuries.create-treasury.multisig-treasury-created-instructions', {treasuryName: options.treasuryName}),
-        duration: null,
+        duration: 10,
       });
       setHighLightableMultisigId(options.multisigId);
       navigate('/multisig');

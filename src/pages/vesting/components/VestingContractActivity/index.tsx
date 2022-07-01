@@ -97,7 +97,7 @@ export const VestingContractActivity = (props: {
             case VestingTreasuryActivityAction.StreamClose:
             case VestingTreasuryActivityAction.StreamPause:
             case VestingTreasuryActivityAction.StreamResume:
-                message += item.stream ? shortenAddress(item.stream as any) : '--'; // TODO: correct type
+                message += item.stream ? shortenAddress(item.stream) : '--';
                 break;
             default:
                 message += 'Pending...';

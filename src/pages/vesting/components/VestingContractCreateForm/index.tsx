@@ -1,18 +1,18 @@
 import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { useConnection } from '../../../../contexts/connection';
+import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { cutNumber, getAmountWithSymbol, getTokenBySymbol, isValidNumber, slugify, toTokenAmount } from '../../../../utils/utils';
+import { cutNumber, getAmountWithSymbol, getTokenBySymbol, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
 import { consoleOut, disabledDate, getLockPeriodOptionLabel, getRateIntervalInSeconds, isToday, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
 import { TokenListItem } from '../../../../components/TokenListItem';
 import { TextInput } from '../../../../components/TextInput';
 import { useTranslation } from 'react-i18next';
 import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, TimePicker } from 'antd';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { TransactionFees, TreasuryType } from '@mean-dao/msp';
+import { SubCategory, TransactionFees, TreasuryType } from '@mean-dao/msp';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -25,6 +25,8 @@ import { IconCaretDown } from '../../../../Icons';
 import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from '../../../../models/vesting';
 import { isError } from '../../../../utils/transactions';
 import moment from 'moment';
+import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { environment } from '../../../../environments/environment';
 
 const timeFormat="HH:mm: A"
 
@@ -34,7 +36,7 @@ export const VestingContractCreateForm = (props: {
     nativeBalance: number;
     onStartTransaction: any;
     selectedList: TokenInfo[];
-    token?: TokenInfo;
+    token: TokenInfo | undefined;
     tokenChanged: any;
     transactionFees: TransactionFees;
     userBalances: any;
@@ -54,7 +56,6 @@ export const VestingContractCreateForm = (props: {
     const connection = useConnection();
     const { connected, publicKey } = useWallet();
     const {
-        tokenList,
         loadingPrices,
         lockPeriodAmount,
         paymentStartDate,
@@ -75,7 +76,7 @@ export const VestingContractCreateForm = (props: {
     const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
     const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
     const [vestingLockName, setVestingLockName] = useState<string>('');
-    const [vestingCategory, setVestingCategory] = useState<VestingContractCategory>(VESTING_CATEGORIES[0]);
+    const [vestingCategory, setVestingCategory] = useState<VestingContractCategory | undefined>(undefined);
     const [vestingLockFundingAmount, setVestingLockFundingAmount] = useState<string>('');
     const [currentStep, setCurrentStep] = useState(0);
     const percentages = [5, 10, 15, 20];
@@ -204,24 +205,10 @@ export const VestingContractCreateForm = (props: {
 
     // Process inputs
     useEffect(() => {
-        if (token && inModal) {
+        if (token) {
             setSelectedToken(token);
-            return;
-        } else {
-            let from: TokenInfo | undefined = undefined;
-            if (token) {
-                from = token
-                    ? token.symbol === 'SOL'
-                        ? getTokenBySymbol('wSOL')
-                        : getTokenBySymbol(token.symbol)
-                    : getTokenBySymbol('MEAN');
-
-                if (from) {
-                    setSelectedToken(from);
-                }
-            }
         }
-    }, [token, selectedToken, inModal]);
+    }, [token, inModal]);
 
     // Keep token balance updated
     useEffect(() => {
@@ -252,11 +239,11 @@ export const VestingContractCreateForm = (props: {
 
     // Reset results when the filter is cleared
     useEffect(() => {
-        if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+        if (selectedList && selectedList.length && filteredTokenList.length === 0 && !tokenFilter) {
             updateTokenListByFilter(tokenFilter);
         }
     }, [
-        tokenList,
+        selectedList,
         tokenFilter,
         filteredTokenList,
         updateTokenListByFilter
@@ -313,7 +300,7 @@ export const VestingContractCreateForm = (props: {
 
         const options: VestingContractCreateOptions = {
             vestingContractName: vestingLockName,
-            vestingCategory: vestingCategory.value,
+            vestingCategory: vestingCategory ? vestingCategory.value : SubCategory.default,
             vestingContractType: treasuryOption ? treasuryOption.type : TreasuryType.Lock,
             token: selectedToken as TokenInfo,
             amount: vestingLockFundingAmount,
@@ -455,7 +442,6 @@ export const VestingContractCreateForm = (props: {
                 vestingLockName &&
                 selectedToken &&
                 nativeBalance > 0 &&
-                tokenBalance > 0 &&
                 (!vestingLockFundingAmount || parseFloat(vestingLockFundingAmount) <= maxAmount)
             ? true
             : false;
@@ -480,6 +466,54 @@ export const VestingContractCreateForm = (props: {
             setContractTime(shortTime);
         }
     };
+
+    const getStepOneButtonLabel = () => {
+        let maxAmount = 0;
+        if (selectedToken) {
+            if (selectedToken.address === NATIVE_SOL.address) {
+                const amount = getMaxAmount();
+                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+            } else {
+                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+            }
+        }
+        return  !publicKey
+            ? t('transactions.validation.not-connected')
+            : !vestingLockName
+                ? 'Add contract name'
+                : !nativeBalance
+                    ? t('transactions.validation.amount-sol-low')
+                    : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
+                        ? t('transactions.validation.amount-high')
+                        : t('transactions.validation.valid-continue');
+
+    }
+
+    const getStepTwoButtonLabel = () => {
+        let maxAmount = 0;
+        if (selectedToken) {
+            if (selectedToken.address === NATIVE_SOL.address) {
+                const amount = getMaxAmount();
+                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+            } else {
+                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+            }
+        }
+        return  !publicKey
+            ? t('transactions.validation.not-connected')
+            : !vestingLockName
+                ? 'Add contract name'
+                : !nativeBalance
+                    ? t('transactions.validation.amount-sol-low')
+                    : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
+                        ? t('transactions.validation.amount-high')
+                        : !lockPeriodAmount
+                            ? 'Set vesting period'
+                            : !lockPeriodFrequency
+                                ? 'Set vesting period'
+                                : t('vesting.create-account.create-cta');
+
+    }
 
     ///////////////
     // Rendering //
@@ -531,13 +565,13 @@ export const VestingContractCreateForm = (props: {
                         return (
                             <TokenListItem
                                 key={t.address}
-                                name={t.name || 'Unknown'}
+                                name={t.name || CUSTOM_TOKEN_NAME}
                                 mintAddress={t.address}
                                 token={t}
-                                className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
+                                className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
                                 onClick={onClick}
                                 balance={balance}
-                                showZeroBalances={true}
+                                showZeroBalances={false}
                             />
                         );
                     } else {
@@ -558,6 +592,13 @@ export const VestingContractCreateForm = (props: {
                     extraClass="mb-2"
                     onInputClear={onInputCleared}
                     placeholder={t('token-selector.search-input-placeholder')}
+                    error={
+                        tokenFilter && selectedToken && selectedToken.decimals === -1
+                            ? 'Account not found'
+                            : tokenFilter && selectedToken && selectedToken.decimals === -2
+                                ? 'Account is not a token mint'
+                                : ''
+                    }
                     onInputChange={onTokenSearchInputChange} />
             </div>
             <div className="token-list">
@@ -565,21 +606,47 @@ export const VestingContractCreateForm = (props: {
                 {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
                     <TokenListItem
                         key={tokenFilter}
-                        name="Unknown"
+                        name={CUSTOM_TOKEN_NAME}
                         mintAddress={tokenFilter}
                         className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-                        onClick={() => {
-                            const uknwnToken: TokenInfo = {
-                                address: tokenFilter,
-                                name: 'Unknown',
-                                chainId: 101,
-                                decimals: 6,
-                                symbol: '',
+                        onClick={async () => {
+                            const address = tokenFilter;
+                            let decimals = -1;
+                            let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+                            try {
+                                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                                consoleOut('accountInfo:', accountInfo, 'blue');
+                            } catch (error) {
+                                console.error(error);
+                            }
+                            if (accountInfo) {
+                                if ((accountInfo as any).data["program"] &&
+                                    (accountInfo as any).data["program"] === "spl-token" &&
+                                    (accountInfo as any).data["parsed"] &&
+                                    (accountInfo as any).data["parsed"]["type"] &&
+                                    (accountInfo as any).data["parsed"]["type"] === "mint") {
+                                    decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+                                } else {
+                                    decimals = -2;
+                                }
+                            }
+                            const unknownToken: TokenInfo = {
+                                address,
+                                name: CUSTOM_TOKEN_NAME,
+                                chainId: getNetworkIdByEnvironment(environment),
+                                decimals,
+                                symbol: `[${shortenAddress(address)}]`,
                             };
-                            setSelectedToken(uknwnToken);
-                            consoleOut("token selected:", uknwnToken, 'blue');
-                            setEffectiveRate(0);
-                            onCloseTokenSelector();
+                            tokenChanged(unknownToken);
+                            setSelectedToken(unknownToken);
+                            if (userBalances && userBalances[address]) {
+                                setSelectedTokenBalance(userBalances[address]);
+                            }
+                            consoleOut("token selected:", unknownToken, 'blue');
+                            // Do not close on errors (-1 or -2)
+                            if (decimals >= 0) {
+                                onCloseTokenSelector();
+                            }
                         }}
                         balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
                     />
@@ -626,7 +693,10 @@ export const VestingContractCreateForm = (props: {
                     </div>
 
                     {/* Token to vest */}
-                    <div className="form-label">{t('vesting.create-account.vesting-contract-token-label')}</div>
+                    <FormLabelWithIconInfo
+                        label={t('vesting.create-account.vesting-contract-token-label')}
+                        tooltip_text={t('vesting.create-account.vesting-contract-token-tooltip')}
+                    />
                     <div className="well">
                         <div className="flex-fixed-left">
                             <div className="left">
@@ -636,6 +706,7 @@ export const VestingContractCreateForm = (props: {
                                             mintAddress={selectedToken.address}
                                             name={selectedToken.name}
                                             showCaretDown={true}
+                                            showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                             fullTokenInfo={selectedToken}
                                         />
                                     )}
@@ -735,7 +806,7 @@ export const VestingContractCreateForm = (props: {
                             className="thin-stroke"
                             disabled={!isStepOneValid()}
                             onClick={onContinueStepOneButtonClick}>
-                            Continue
+                            {getStepOneButtonLabel()}
                         </Button>
                     </div>
 
@@ -756,7 +827,11 @@ export const VestingContractCreateForm = (props: {
                             trigger={["click"]}>
                             <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                                 <div className="left">
-                                    <span>{vestingCategory.label}</span>
+                                    {vestingCategory ? (
+                                        <span>{vestingCategory.label}</span>
+                                    ) : (
+                                        <span className="placeholder-text">Please select a vesting category</span>
+                                    )}
                                 </div>
                                 <div className="right">
                                     <IconCaretDown className="mean-svg-icons" />
@@ -881,6 +956,7 @@ export const VestingContractCreateForm = (props: {
                                         <TokenDisplay onClick={() => { }}
                                             mintAddress={selectedToken.address}
                                             name={selectedToken.name}
+                                            showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                             fullTokenInfo={selectedToken}
                                         />
                                     )}
@@ -940,7 +1016,7 @@ export const VestingContractCreateForm = (props: {
                                     ? t('vesting.create-account.create-cta-busy')
                                     : isError(transactionStatus.currentOperation)
                                         ? t('general.retry')
-                                        : t('vesting.create-account.create-cta')
+                                        : getStepTwoButtonLabel()
                                 }
                             </Button>
                         </div>

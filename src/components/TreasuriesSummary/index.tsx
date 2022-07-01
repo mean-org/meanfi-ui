@@ -324,13 +324,13 @@ export const TreasuriesSummary = (props: {
 
     return (
         <>
-            {enabled ? (
+            {publicKey && enabled ? (
                 <>
-                    <Tooltip title={tooltipEnabled}>
-                        {renderContent}
-                    </Tooltip>
-                    {/* <Link to={targetPath || STREAMING_ACCOUNTS_ROUTE_BASE_PATH} state={{ previousPath: searchParams ? `${pathname}?${searchParams.toString()}` : pathname }}>
-                    </Link> */}
+                    <Link to={targetPath || STREAMING_ACCOUNTS_ROUTE_BASE_PATH} state={{ previousPath: searchParams ? `${pathname}?${searchParams.toString()}` : pathname }}>
+                        <Tooltip title={tooltipEnabled}>
+                            {renderContent}
+                        </Tooltip>
+                    </Link>
                 </>
             ) : (
                 <Tooltip title={tooltipDisabled}>

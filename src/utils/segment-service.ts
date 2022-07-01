@@ -92,6 +92,8 @@ export enum AppUsageEvent {
     RejectProposalFailed = "Reject Proposal Failed",
     ExecuteProposalCompleted = "Execute Proposal Completed",
     ExecuteProposalFailed = "Execute Proposal Failed",
+    CancelProposalCompleted = "Cancel Proposal Completed",
+    CancelProposalFailed = "Cancel Proposal Failed",
     // Streaming account
     CreateStreamingAccountFormButton = "Create Streaming Account form button click",
     CreateStreamingAccountSigned = "Create Streaming Account Signed",

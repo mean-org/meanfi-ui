@@ -22,7 +22,7 @@ import {
   toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
@@ -1212,7 +1212,7 @@ export const RepeatingPayment = (props: {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown token'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
@@ -1252,7 +1252,7 @@ export const RepeatingPayment = (props: {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown token"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={async () => {
@@ -1276,19 +1276,19 @@ export const RepeatingPayment = (props: {
                   decimals = -2;
                 }
               }
-              const uknwnToken: TokenInfo = {
+              const unknownToken: TokenInfo = {
                 address,
-                name: 'Unknown token',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: getNetworkIdByEnvironment(environment),
                 decimals,
                 symbol: `[${shortenAddress(address)}]`,
               };
-              tokenChanged(t);
-              setSelectedToken(uknwnToken);
+              tokenChanged(unknownToken);
+              setSelectedToken(unknownToken);
               if (userBalances && userBalances[address]) {
                 setSelectedTokenBalance(userBalances[address]);
               }
-              consoleOut("token selected:", uknwnToken, 'blue');
+              consoleOut("token selected:", unknownToken, 'blue');
               // Do not close on errors (-1 or -2)
               if (decimals >= 0) {
                 onCloseTokenSelector();
@@ -1388,8 +1388,8 @@ export const RepeatingPayment = (props: {
                       <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                         mintAddress={selectedToken.address}
                         name={selectedToken.name}
-                        showName={false}
                         showCaretDown={true}
+                        showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                         fullTokenInfo={selectedToken}
                       />
                     )}
@@ -1560,8 +1560,8 @@ export const RepeatingPayment = (props: {
                 <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
-                    showName={false}
                     showCaretDown={true}
+                    showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                     fullTokenInfo={selectedToken}
                   />
                 )}

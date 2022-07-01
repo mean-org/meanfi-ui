@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
-import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { getTransactionOperationDescription } from '../../../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -120,9 +120,11 @@ export const VestingContractCloseModal = (props: {
                   ) : (
                     <span>
                       {
-                        t('vesting.close-account.cannot-close-explanation', {
-                          numItems: vestingContract?.totalStreams
-                        })
+                        vestingContract?.totalStreams && vestingContract.totalStreams > 1
+                          ? t('vesting.close-account.cannot-close-explanation', {
+                              numItems: vestingContract?.totalStreams
+                            })
+                          : t('vesting.close-account.cannot-close-single-explanation')
                       }
                     </span>
                   )}

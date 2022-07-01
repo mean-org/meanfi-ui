@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { TransactionStatus } from '../../models/enums';
 import { isError } from '../../utils/transactions';
-import { FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { consoleOut, getTransactionOperationDescription } from '../../utils/ui';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -67,7 +67,7 @@ export const MultisigVaultDeleteModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.address as string, 6)}]`}</div>
+          <div className="title text-truncate">{token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.address as string, 6)}]`}</div>
           <div className="subtitle text-truncate">{shortenAddress(item.publicAddress as string, 8)}</div>
         </div>
         <div className="rate-cell">

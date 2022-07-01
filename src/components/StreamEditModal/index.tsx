@@ -16,6 +16,7 @@ import { isError } from "../../utils/transactions";
 import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from "@mean-dao/msp";
 import { NATIVE_SOL } from "../../utils/tokens";
+import { CUSTOM_TOKEN_NAME } from "../../constants";
 
 export const StreamEditModal = (props: {
   handleClose: any;
@@ -252,7 +253,7 @@ export const StreamEditModal = (props: {
           return (
             <TokenListItem
               key={token.address}
-              name={token.name || 'Unknown'}
+              name={token.name || CUSTOM_TOKEN_NAME}
               mintAddress={token.address}
               className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
               onClick={onClick}
@@ -454,13 +455,13 @@ export const StreamEditModal = (props: {
               {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
                 <TokenListItem
                   key={tokenFilter}
-                  name="Unknown"
+                  name={CUSTOM_TOKEN_NAME}
                   mintAddress={tokenFilter}
                   className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
                   onClick={() => {
                     const uknwnToken: TokenInfo = {
                       address: tokenFilter,
-                      name: 'Unknown',
+                      name: CUSTOM_TOKEN_NAME,
                       chainId: 101,
                       decimals: 6,
                       symbol: '',

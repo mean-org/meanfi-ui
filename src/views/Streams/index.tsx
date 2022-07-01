@@ -51,6 +51,7 @@ import {
 import { StreamOpenModal } from '../../components/StreamOpenModal';
 import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
 import {
+  CUSTOM_TOKEN_NAME,
   FALLBACK_COIN_IMAGE,
   NO_FEES,
   PERFORMANCE_THRESHOLD,
@@ -308,7 +309,7 @@ export const Streams = () => {
     if (address && isValidAddress(address)) {
       const unkToken: TokenInfo = {
         address: address,
-        name: 'Unknown',
+        name: CUSTOM_TOKEN_NAME,
         chainId: 101,
         decimals: 6,
         symbol: shortenAddress(address),

@@ -684,7 +684,7 @@
 		"account-address-copied-message": "Hesap adresi başarıyla kopyalandı",
 		"account-address-not-copied-message": "Hesap adresi kopyalanamıyor",
 		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction.",
-		"check-transaction-in-explorer": "",
+		"check-transaction-in-explorer": "View on Solana Explorer",
 		"create-money-stream-completed": "Para-aktarımınız oluşturuldu",
 		"create-money-stream-completed-wait-for-confirm": "İşlem onaylandıktan sonra listede gözükecek",
 		"error-cannot-faucet-mainnet-message": "Musluk mainnetde çalışmıyor",
@@ -1349,6 +1349,7 @@
 			"vesting-contract-type-label": "Vesting contract type",
 			"vesting-contract-type-tooltip": "This vesting contract can either be open or locked in nature. Open contracts allow you to have more flexibility in case you need to pause or cancel a stream. Locked streams are not able to be paused or cancelled and are perfect for token locks, and fixed investor token distributions.",
 			"vesting-contract-token-label": "Token to vest and initial funding",
+			"vesting-contract-token-tooltip": "Select the token you are going to vest from your wallet's token list. If the token is not in the list, please enter the mint address in the token selector pop up.",
 			"vesting-account-type-options": {
 				"vesting-account-type-locked-description": "Locked vesting contracts are perfect for investors and token locks as they can not be paused or cancelled.",
 				"vesting-account-type-locked-name": "Locked vesting contract",
@@ -1365,12 +1366,13 @@
 			"start-immediately": "Immediately after approval",
 			"step-one-label": "Stream details",
 			"step-one-validation-pass": "Next",
-			"step-two-label": "Stream summry",
+			"step-two-label": "Stream summary",
 			"stream-name-empty": "Stream name cannot be empty",
 			"total-funds-to-commit": "Total funds to commit",
 			"total-funds-to-stream": "Total funds to stream",
 			"vesting-stream-name-label": "Vesting stream name",
-			"vesting-stream-name-placeholder": "Name for this no-code vesting stream"
+			"vesting-stream-name-placeholder": "Name for this no-code vesting stream",
+			"verified-recipient-disclaimer-tooltip": "In order for the beneficiary to be able to withdraw funds from their stream, they must be the owner of the private keys to the address inputted. Please make sure the address supplied is correct and does not belong to a centralized exchange."
 		},
 		"vesting-account-details": {
 			"panel-title": "Vesting Account Details"
@@ -1383,7 +1385,8 @@
 		"close-account": {
 			"modal-title": "Close Contract",
 			"cannot-close-warn": "We're Sorry!",
-			"cannot-close-explanation": "There are still {{numItems}} streams that exist in this vesting contract. Please close all {{numItems}} streams and then you will be able to close this contract.",
+			"cannot-close-single-explanation": "There is still one stream that exists in this vesting contract. All streams must be closed before you can close the contract.",
+			"cannot-close-explanation": "There are still {{numItems}} streams that exist in this vesting contract. All streams must be closed before you can close the contract.",
 			"can-close-explanation": "Closing a vesting contract will remove it completely from the list of contracts. Upon closure, all funds left over in the account will be immediately sent back to the contract's treasurer.",
 			"funds-left-in-contract": "Funds left in the contract",
 			"close-cta": "Close contract",
