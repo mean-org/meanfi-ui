@@ -964,10 +964,9 @@ export const TreasuryStreamCreateModal = (props: {
       const txs: Transaction[] = [];
 
       for (const createTx of createStreams) {
-
         const ixData = Buffer.from(createTx.instructions[0].data);
         const ixAccounts = createTx.instructions[0].keys;
-        const streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
+        const streamSeedData = streamsBumps[createTx.instructions[0].keys[6].pubkey.toBase58()];
 
         const tx = await props.multisigClient.createMoneyStreamTransaction(
           publicKey,
