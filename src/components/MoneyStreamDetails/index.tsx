@@ -562,11 +562,11 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && "Funds will run out in:",
-      value: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && <Countdown className="align-middle" date={isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string } renderer={renderer} />
+      value: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && <Countdown className="align-middle" date={isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string} renderer={renderer} />
     },
     {
       label: stream && getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
-      value: stream && getStreamStatus(stream) === "Stopped" && "June 1, 2022 (6 days ago)"
+      value: stream && getStreamStatus(stream) === "Stopped" && moment(isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string).format("LLL").toLocaleString()
     },
   ];
 
