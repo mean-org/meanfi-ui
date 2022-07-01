@@ -122,7 +122,7 @@ export const ProposalDetailsView = (props: {
             // console.log('ixInfo', ixInfo);
             setProposalIxInfo(ixInfo);
           });
-      } else if (proposalApp && proposalApp.id === SystemProgram.programId.toBase58()) {
+      } else if (proposalApp && proposalApp.id === SystemProgram.programId.toBase58() && proposalApp.folder !== "custom") {
         const ixInfo = parseMultisigSystemProposalIx(proposalSelected);
         setProposalIxInfo(ixInfo);
         // console.log('ixInfo', ixInfo);

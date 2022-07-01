@@ -11,6 +11,7 @@ import {
   LAMPORTS_PER_SOL,
   MemcmpFilter,
   PublicKey,
+  SystemProgram,
   // Signer,
   // SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -1447,7 +1448,7 @@ export const SafeView = () => {
       let operation = 0;
       let proposalIx: TransactionInstruction | null = null;
 
-      if (data.appId === MEAN_MULTISIG_PROGRAM.toBase58()) {
+      if (data.appId === SystemProgram.programId.toBase58()) {
         const tx = await parseSerializedTx(connection, data.instruction.uiElements[0].value);
         if (!tx) { return null; }
         proposalIx = tx?.instructions[0];
