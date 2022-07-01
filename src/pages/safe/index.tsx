@@ -2764,7 +2764,6 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -3012,26 +3011,22 @@ export const SafeView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            resetTransactionStatus();
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.CancelTransaction,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Create proposal: ${data.transaction.details.title}`,
+              loadingMessage: `Cancel proposal: ${data.transaction.details.title}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully created proposal: ${data.transaction.details.title}`,
+              completedMessage: `Successfully cancelled proposal: ${data.transaction.details.title}`,
               extras: {
                 multisigId: data.transaction.multisig,
                 transactionId: data.transaction.id
               }
             });
+            resetTransactionStatus();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -3042,14 +3037,13 @@ export const SafeView = () => {
     publicKey,
     connection,
     nativeBalance,
+    multisigClient,
     selectedMultisig,
     transactionCancelled,
-    multisigClient,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
-    clearTxConfirmationContext,
     resetTransactionStatus,
-    setTransactionStatus
+    setTransactionStatus,
   ]);
 
   const parseSerumMultisigAccount = (info: any) => {
@@ -4207,6 +4201,7 @@ export const SafeView = () => {
                             appsProvider={appsProvider}
                             multisigClient={multisigClient}
                             hasMultisigPendingProposal={hasMultisigPendingProposal()}
+                            isBusy={isBusy}
                           />
                         ) : isProgramDetails ? (
                           <ProgramDetailsView

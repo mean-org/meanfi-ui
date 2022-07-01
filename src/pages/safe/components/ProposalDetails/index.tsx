@@ -1,27 +1,29 @@
 import './style.scss';
 import { Button, Col, Row, Tooltip } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus, IconThumbsDown, IconCheckedBox } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus, IconThumbsDown } from "../../../../Icons"
 
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../../../../components/Notifications';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { consoleOut, copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
-// import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
 import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { Idl } from '@project-serum/anchor';
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
-import { OperationType } from '../../../../models/enums';
+import { OperationType, TransactionStatus } from '../../../../models/enums';
 import moment from "moment";
 import { ResumeItem } from '../../../../components/ResumeItem';
+import { RejectCancelModal } from '../../../../components/RejectCancelModal';
+import { AppStateContext } from '../../../../contexts/appstate';
 
 export const ProposalDetailsView = (props: {
+  isBusy: boolean;
   onDataToSafeView: any;
   proposalSelected?: any;
   selectedMultisig?: any;
@@ -37,10 +39,14 @@ export const ProposalDetailsView = (props: {
   hasMultisigPendingProposal?: boolean;
 }) => {
 
-  // const { isWhitelisted } = useContext(AppStateContext);
+  const {
+    transactionStatus,
+    setTransactionStatus,
+  } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const { 
+  const {
+    isBusy,
     connection,
     solanaApps,
     appsProvider,
@@ -53,7 +59,7 @@ export const ProposalDetailsView = (props: {
     onProposalExecute,
     onProposalCancel,
     onOperationStarted,
-    hasMultisigPendingProposal
+    hasMultisigPendingProposal,
   } = props;
 
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
@@ -63,13 +69,29 @@ export const ProposalDetailsView = (props: {
   const [proposalActivity, setProposalActivity] = useState<MultisigTransactionActivityItem[]>([]);
   const [loadingActivity, setLoadingActivity] = useState<boolean>(true);
 
-  // useEffect(() => {
+  const [isCancelRejectModalVisible, setIsCancelRejectModalVisible] = useState(false);
 
-  //   setSelectedProposal(proposalSelected);
+  const resetTransactionStatus = useCallback(() => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }, [
+    setTransactionStatus
+  ]);
 
-  // }, [
-  //   proposalSelected
-  // ]);
+  const onAcceptCancelRejectProposalModal = () => {
+    consoleOut('cancel reject proposal');
+    const operation = { transaction: selectedProposal }
+    onOperationStarted(operation)
+    onProposalCancel(operation);
+  };
+
+  useEffect(() => {
+    if (transactionStatus.currentOperation === TransactionStatus.ConfirmTransaction) {
+      setIsCancelRejectModalVisible(false);
+    }
+  }, [transactionStatus.currentOperation]);
 
   useEffect(() => {
 
@@ -434,230 +456,232 @@ export const ProposalDetailsView = (props: {
   const resume = (selectedProposal.status === 0 && neededSigners() > 0) && `Needs ${neededSigners()} ${neededSigners() > 1 ? "approvals" : "approval"} to pass`;
 
   return (
-    <div className="safe-details-container">
-      <Row gutter={[8, 8]} className="safe-details-resume">
-        <div onClick={hideProposalDetailsHandler} className="back-button icon-button-container">
-          <IconArrowBack className="mean-svg-icons" />
-          <span className="ml-1">Back</span>
-        </div>
-      </Row>
-      <ResumeItem
-        id={selectedProposal.id}
-        // src={selectedProposal.src}
-        title={title}
-        expires={expirationDate}
-        executedOn={executedOnDate}
-        approved={approvedSigners}
-        rejected={rejectedSigners}
-        userSigned={selectedProposal.didSigned}
-        status={selectedProposal.status}
-        resume={resume}
-        isDetailsPanel={true}
-        isLink={false}
-      />
-      {selectedProposal.details.description && (
-        <Row className="safe-details-description pl-1">
-          {selectedProposal.details.description}
+    <>
+      <div className="safe-details-container">
+        <Row gutter={[8, 8]} className="safe-details-resume">
+          <div onClick={hideProposalDetailsHandler} className="back-button icon-button-container">
+            <IconArrowBack className="mean-svg-icons" />
+            <span className="ml-1">Back</span>
+          </div>
         </Row>
-      )}
+        <ResumeItem
+          id={selectedProposal.id}
+          // src={selectedProposal.src}
+          title={title}
+          expires={expirationDate}
+          executedOn={executedOnDate}
+          approved={approvedSigners}
+          rejected={rejectedSigners}
+          userSigned={selectedProposal.didSigned}
+          status={selectedProposal.status}
+          resume={resume}
+          isDetailsPanel={true}
+          isLink={false}
+        />
+        {selectedProposal.details.description && (
+          <Row className="safe-details-description pl-1">
+            {selectedProposal.details.description}
+          </Row>
+        )}
 
-      <Row gutter={[8, 8]} className="safe-details-proposal">
-        <>
-          {selectedProposal.status === MultisigTransactionStatus.Passed ? (
-            anyoneCanExecuteTx() ? (
+        <Row gutter={[8, 8]} className="safe-details-proposal">
+          <>
+            {selectedProposal.status === MultisigTransactionStatus.Passed ? (
+              anyoneCanExecuteTx() ? (
+                <Col className="safe-details-left-container">
+                  <IconUserClock className="user-image mean-svg-icons bg-yellow" />
+                  <div className="proposal-resume-left-text">
+                    <div className="info-label">Pending execution by</div>
+                    {publicKey && (
+                      <span>{proposedBy.name ? proposedBy.name : shortenAddress(publicKey.toBase58(), 4)}</span>
+                    )}
+                  </div>
+                </Col>
+              ) : (
+                <Col className="safe-details-left-container">
+                  <IconUserClock className="user-image mean-svg-icons bg-yellow" />
+                  <div className="proposal-resume-left-text">
+                    <div className="info-label">Pending execution by</div>
+                    <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                  </div>
+                </Col>
+              )
+            ) : selectedProposal.status === MultisigTransactionStatus.Executed ? (
               <Col className="safe-details-left-container">
-                <IconUserClock className="user-image mean-svg-icons bg-yellow" />
+                <IconLightning className="user-image mean-svg-icons bg-green" />
                 <div className="proposal-resume-left-text">
-                  <div className="info-label">Pending execution by</div>
-                  {publicKey && (
-                    <span>{proposedBy.name ? proposedBy.name : shortenAddress(publicKey.toBase58(), 4)}</span>
-                  )}
+                  <div className="info-label">Executed by</div>
+                  <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                 </div>
               </Col>
             ) : (
               <Col className="safe-details-left-container">
-                <IconUserClock className="user-image mean-svg-icons bg-yellow" />
+                <IconUser className="user-image mean-svg-icons" />
                 <div className="proposal-resume-left-text">
-                  <div className="info-label">Pending execution by</div>
+                  <div className="info-label">Proposed by</div>
                   <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                 </div>
               </Col>
-            )
-          ) : selectedProposal.status === MultisigTransactionStatus.Executed ? (
-            <Col className="safe-details-left-container">
-              <IconLightning className="user-image mean-svg-icons bg-green" />
-              <div className="proposal-resume-left-text">
-                <div className="info-label">Executed by</div>
-                <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
-              </div>
-            </Col>
-          ) : (
-            <Col className="safe-details-left-container">
-              <IconUser className="user-image mean-svg-icons" />
-              <div className="proposal-resume-left-text">
-                <div className="info-label">Proposed by</div>
-                <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
-              </div>
-            </Col>
-          )}
-        </>
-        <>
-          <Col className="safe-details-right-container btn-group mr-1">
-          {
-            (
+            )}
+          </>
+          <>
+            <Col className="safe-details-right-container btn-group mr-1">
+            {
               (
-                selectedProposal.status === MultisigTransactionStatus.Voided ||
-                selectedProposal.status === MultisigTransactionStatus.Failed ||
-                selectedProposal.status === MultisigTransactionStatus.Expired
+                (
+                  selectedProposal.status === MultisigTransactionStatus.Voided ||
+                  selectedProposal.status === MultisigTransactionStatus.Failed ||
+                  selectedProposal.status === MultisigTransactionStatus.Expired
 
-              ) && isProposer
+                ) && isProposer
 
-            ) && (
-              <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke d-flex justify-content-center align-items-center"
-                disabled={hasMultisigPendingProposal}
-                onClick={() => {
-                  const operation = { transaction: selectedProposal }
-                  onOperationStarted(operation)
-                  onProposalCancel(operation);
-                }}>
-                  <div className="btn-content">
-                    Close
-                  </div>
-              </Button>
-            )
-          }
-          {
-            selectedProposal.status === MultisigTransactionStatus.Active && (
-              <>
-                <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke"
-                  disabled={selectedProposal.didSigned === true || hasMultisigPendingProposal}
-                  onClick={() => {
-                    const operation = { transaction: selectedProposal };
-                    onOperationStarted(operation)
-                    onProposalApprove(operation);
-                  }}>
-                    {
-                      selectedProposal.didSigned !== true ? (
-                        <div className="btn-content">
-                          <IconThumbsUp className="mean-svg-icons" />
-                          Approve
-                        </div>
-                      ) : (
-                        <div className="btn-content">
-                          <IconApprove className="mean-svg-icons" />
-                          Approved
-                        </div>
-                      )
-                    }
-                </Button>
-                <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke"
-                  disabled={selectedProposal.didSigned === false || hasMultisigPendingProposal}
-                  onClick={() => {
-                    const operation = { transaction: selectedProposal };
-                    onOperationStarted(operation)
-                    onProposalReject(operation);
-                  }}>
-                    {
-                      selectedProposal.didSigned !== false ? (
-                        <div className="btn-content">
-                          <IconThumbsDown className="mean-svg-icons" />
-                          Reject
-                        </div>
-                      ) : (
-                        <div className="btn-content">
-                          <IconApprove className="mean-svg-icons" />
-                          Rejected
-                        </div>
-                      )
-                    }
-                </Button>
-                {
-                  isProposer && (
-                    <Button
-                      type="default"
-                      shape="round"
-                      size="small"
-                      className="thin-stroke d-flex justify-content-center align-items-center"
-                      disabled={hasMultisigPendingProposal}
-                      onClick={() => {
-                        const operation = { transaction: selectedProposal }
-                        onOperationStarted(operation)
-                        onProposalCancel(operation);
-                      }}>
-                        <div className="btn-content">
-                          Close
-                        </div>
-                    </Button>
-                  )
-                }
-              </>
-            )
-          }
-          {
-            selectedProposal.status === MultisigTransactionStatus.Passed && (
-              <>
+              ) && (
                 <Button
                   type="default"
                   shape="round"
                   size="small"
                   className="thin-stroke d-flex justify-content-center align-items-center"
-                  disabled={hasMultisigPendingProposal || (!isProposer && !anyoneCanExecuteTx())}
-                  onClick={() => {
-                    const operation = { transaction: selectedProposal }
-                    onOperationStarted(operation)
-                    onProposalExecute(operation);
-                  }}>
+                  disabled={hasMultisigPendingProposal}
+                  onClick={() => setIsCancelRejectModalVisible(true)}>
                     <div className="btn-content">
-                      Execute
+                      Cancel
                     </div>
                 </Button>
-                {
-                  isProposer && (
-                    <Button
-                      type="default"
-                      shape="round"
-                      size="small"
-                      className="thin-stroke d-flex justify-content-center align-items-center"
-                      disabled={hasMultisigPendingProposal}
-                      onClick={() => {
-                        const operation = { transaction: selectedProposal }
-                        onOperationStarted(operation)
-                        onProposalCancel(operation);
-                      }}>
-                        <div className="btn-content">
-                          Close
-                        </div>
-                    </Button>
-                  )
-                }
-              </>
-            )
-          }
-          </Col>
-        </>
-      </Row>
+              )
+            }
+            {
+              selectedProposal.status === MultisigTransactionStatus.Active && (
+                <>
+                  <Button
+                    type="default"
+                    shape="round"
+                    size="small"
+                    className="thin-stroke"
+                    disabled={selectedProposal.didSigned === true || hasMultisigPendingProposal}
+                    onClick={() => {
+                      const operation = { transaction: selectedProposal };
+                      onOperationStarted(operation)
+                      onProposalApprove(operation);
+                    }}>
+                      {
+                        selectedProposal.didSigned !== true ? (
+                          <div className="btn-content">
+                            <IconThumbsUp className="mean-svg-icons" />
+                            Approve
+                          </div>
+                        ) : (
+                          <div className="btn-content">
+                            <IconApprove className="mean-svg-icons" />
+                            Approved
+                          </div>
+                        )
+                      }
+                  </Button>
+                  <Button
+                    type="default"
+                    shape="round"
+                    size="small"
+                    className="thin-stroke"
+                    disabled={selectedProposal.didSigned === false || hasMultisigPendingProposal}
+                    onClick={() => {
+                      const operation = { transaction: selectedProposal };
+                      onOperationStarted(operation)
+                      onProposalReject(operation);
+                    }}>
+                      {
+                        selectedProposal.didSigned !== false ? (
+                          <div className="btn-content">
+                            <IconThumbsDown className="mean-svg-icons" />
+                            Reject
+                          </div>
+                        ) : (
+                          <div className="btn-content">
+                            <IconApprove className="mean-svg-icons" />
+                            Rejected
+                          </div>
+                        )
+                      }
+                  </Button>
+                  {
+                    isProposer && (
+                      <Button
+                        type="default"
+                        shape="round"
+                        size="small"
+                        className="thin-stroke d-flex justify-content-center align-items-center"
+                        disabled={hasMultisigPendingProposal}
+                        onClick={() => setIsCancelRejectModalVisible(true)}>
+                          <div className="btn-content">
+                            Cancel
+                          </div>
+                      </Button>
+                    )
+                  }
+                </>
+              )
+            }
+            {
+              selectedProposal.status === MultisigTransactionStatus.Passed && (
+                <>
+                  <Button
+                    type="default"
+                    shape="round"
+                    size="small"
+                    className="thin-stroke d-flex justify-content-center align-items-center"
+                    disabled={hasMultisigPendingProposal || (!isProposer && !anyoneCanExecuteTx())}
+                    onClick={() => {
+                      const operation = { transaction: selectedProposal }
+                      onOperationStarted(operation)
+                      onProposalExecute(operation);
+                    }}>
+                      <div className="btn-content">
+                        Execute
+                      </div>
+                  </Button>
+                  {
+                    isProposer && (
+                      <Button
+                        type="default"
+                        shape="round"
+                        size="small"
+                        className="thin-stroke d-flex justify-content-center align-items-center"
+                        disabled={hasMultisigPendingProposal}
+                        onClick={() => setIsCancelRejectModalVisible(true)}>
+                          <div className="btn-content">
+                            Cancel
+                          </div>
+                      </Button>
+                    )
+                  }
+                </>
+              )
+            }
+            </Col>
+          </>
+        </Row>
 
-      {/* <Row>
-        <h3 className="mt-1 proposal-instruction">Instruction</h3>
-        {renderInstructions}
-      </Row> */}
+        {/* <Row>
+          <h3 className="mt-1 proposal-instruction">Instruction</h3>
+          {renderInstructions}
+        </Row> */}
 
-      <TabsMean
-        tabs={tabs}
-        defaultTab="instruction"
-      />
-    </div>
+        <TabsMean
+          tabs={tabs}
+          defaultTab="instruction"
+        />
+      </div>
+
+      {isCancelRejectModalVisible && (
+        <RejectCancelModal 
+          handleClose={() => {
+            setIsCancelRejectModalVisible(false);
+            resetTransactionStatus();
+          }}
+          handleOk={onAcceptCancelRejectProposalModal}
+          isVisible={isCancelRejectModalVisible}
+          isBusy={isBusy}
+        />
+      )}
+    </>
   )
 };

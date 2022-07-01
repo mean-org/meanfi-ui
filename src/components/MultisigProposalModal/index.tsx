@@ -255,16 +255,6 @@ export const MultisigProposalModal = (props: {
     });
   }
 
-  // Preset fee amount
-  // useEffect(() => {
-  //   if (!feeAmount && props.transactionFees) {
-  //     setFeeAmount(props.transactionFees.mspFlatFee);
-  //   }
-  // }, [
-  //   feeAmount,
-  //   props.transactionFees
-  // ]);
-
   const isNumberInput = useCallback((uiElement: UiElement) => {
     return (uiElement.type === "inputNumber" || (typeof(uiElement.type) === "object" && "from" in uiElement.type)) ? true : false;
   }, []);
@@ -452,7 +442,6 @@ export const MultisigProposalModal = (props: {
                           <SelectMean
                             className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                             onChange={onProposalExpiresValueChange}
-                            // placeholder={expires[0].label}
                             values={expires.map((e: any) => {
                               return { key: e.value, label: e.label, value: e.value }
                             })}
@@ -540,7 +529,7 @@ export const MultisigProposalModal = (props: {
                                       />
                                     </Col>
                                   </>
-                                ) : (isNumberInput) ? (
+                                ) : (isNumberInput(element)) ? (
                                   <>
                                     <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
                                       <FormLabelWithIconInfo
@@ -878,7 +867,7 @@ export const MultisigProposalModal = (props: {
                           {key && (
                             <>
                               <Col span={8} className="text-right pr-1">
-                                <span className="info-label">{selectedUiIx?.uiElements.filter((e: any) => e.name === key)[0].label}:</span>
+                                <span className="info-label">{selectedUiIx && selectedUiIx.uiElements.filter((e: any) => e.name === key)[0].label}:</span>
                               </Col>
                               <Col span={16} className="text-left pl-1">
                                 <span>{inputState[key] === true ? "Yes" : inputState[key] === false ? "No" : inputState[key]}</span>
