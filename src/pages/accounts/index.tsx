@@ -162,6 +162,7 @@ export const AccountsNewView = () => {
     setAccountAddress,
     setSelectedToken,
     setSelectedAsset,
+    setActiveStream,
     setStreamDetail,
     setTransactions,
     setStreamList,
@@ -3647,6 +3648,7 @@ export const AccountsNewView = () => {
       consoleOut('item:', item, 'darkgreen');
       if (item) {
         setStreamDetail(item);
+        setActiveStream(item);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

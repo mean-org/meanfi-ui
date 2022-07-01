@@ -114,7 +114,7 @@ interface AppStateConfig {
   streamProgramAddress: string;
   streamV2ProgramAddress: string;
   loadingStreamActivity: boolean;
-  streamActivity: StreamActivity[];
+  streamActivity: StreamActivity[] | undefined;
   hasMoreStreamActivity: boolean;
   customStreamDocked: boolean;
   diagnosisInfo: AccountDetails | undefined;
@@ -189,11 +189,12 @@ interface AppStateConfig {
   setPrograms: (list: Array<ProgramAccounts> | undefined) => void;
   setMultisigTxs: (list: Array<MultisigTransaction> | undefined) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
+  setActiveStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
   setDeletedStream: (id: string) => void,
   setHighLightableStreamId: (id: string | undefined) => void,
   openStreamById: (streamId: string, dock: boolean) => void;
-  getStreamActivity: (streamId: string, version: number) => void;
+  getStreamActivity: (streamId: string, version: number, clearHistory?: boolean) => void;
   setCustomStreamDocked: (state: boolean) => void;
   setDiagnosisInfo: (info: AccountDetails | undefined) => void;
   // Accounts
@@ -274,7 +275,7 @@ const contextDefaultValues: AppStateConfig = {
   streamProgramAddress: '',
   streamV2ProgramAddress: '',
   loadingStreamActivity: false,
-  streamActivity: [],
+  streamActivity: undefined,
   hasMoreStreamActivity: true,
   customStreamDocked: false,
   diagnosisInfo: undefined,
@@ -349,6 +350,7 @@ const contextDefaultValues: AppStateConfig = {
   setPrograms: () => {},
   setMultisigTxs: () => {},
   setSelectedStream: () => {},
+  setActiveStream: () => {},
   setStreamDetail: () => {},
   setDeletedStream: () => {},
   setHighLightableStreamId: () => {},
@@ -429,7 +431,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
   const [loadingStreams, updateLoadingStreams] = useState(false);
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
-  const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
+  const [streamActivity, setStreamActivity] = useState<StreamActivity[] | undefined>(undefined);
   const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(contextDefaultValues.hasMoreStreamActivity);
   const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
   const [diagnosisInfo, setDiagnosisInfo] = useState<AccountDetails | undefined>(contextDefaultValues.diagnosisInfo);
@@ -711,7 +713,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const resetStreamsState = () => {
     setStreamList([]);
-    setStreamActivity([]);
+    setStreamActivity(undefined);
     setStreamDetail(undefined);
     setActiveStream(undefined);
     setLoadingStreamActivity(false);
@@ -759,9 +761,9 @@ const AppStateProvider: React.FC = ({ children }) => {
             setActiveStream(detail);
             if (dock) {
               setStreamList([detail]);
-              setStreamActivity([]);
-              setHasMoreStreamActivity(true);
-              getStreamActivity(streamId, detail.version, true);
+              // setStreamActivity([]);
+              // setHasMoreStreamActivity(true);
+              // getStreamActivity(streamId, detail.version, true);
               setCustomStreamDocked(true);
               openNotification({
                 description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
@@ -813,6 +815,11 @@ const AppStateProvider: React.FC = ({ children }) => {
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
 
+      if (clearHistory) {
+        setStreamActivity(undefined);
+        setHasMoreStreamActivity(true);
+      }
+
       if (version < 2) {
         ms.listStreamActivity(streamPublicKey)
           .then(value => {
@@ -821,7 +828,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           })
           .catch(err => {
             console.error(err);
-            setStreamActivity([]);
+            setStreamActivity(undefined);
           })
           .finally(() => {
             setHasMoreStreamActivity(false);
@@ -854,7 +861,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           })
           .catch(err => {
             console.error(err);
-            setStreamActivity([]);
+            setStreamActivity(undefined);
             setHasMoreStreamActivity(false);
           })
           .finally(() => setLoadingStreamActivity(false));
@@ -877,9 +884,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         .then((detail: Stream | StreamInfo) => {
           consoleOut('detail:', detail, 'blue');
           if (detail) {
-            setStreamActivity([]);
-            setHasMoreStreamActivity(true);
-            getStreamActivity(detail.id as string, detail.version, true);
+            // setStreamActivity([]);
+            // setHasMoreStreamActivity(true);
+            // getStreamActivity(detail.id as string, detail.version, true);
             updateStreamDetail(detail);
             setActiveStream(detail);
             if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
@@ -890,8 +897,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         })
         .catch((error: any) => {
           console.error(error);
-          setStreamActivity([]);
-          setHasMoreStreamActivity(false);
+          // setStreamActivity([]);
+          // setHasMoreStreamActivity(false);
         });
     }
   }
@@ -1262,12 +1269,12 @@ const AppStateProvider: React.FC = ({ children }) => {
                     const token = getTokenByMintAddress(detail.associatedToken as string);
                     setSelectedToken(token);
                   }
-                  setTimeout(() => {
-                    setStreamActivity([]);
-                    setHasMoreStreamActivity(true);
-                    setLoadingStreamActivity(true);
-                  });
-                  getStreamActivity(detail.id as string, detail.version, true);
+                  // setTimeout(() => {
+                  //   setStreamActivity([]);
+                  //   setHasMoreStreamActivity(true);
+                  //   setLoadingStreamActivity(true);
+                  // });
+                  // getStreamActivity(detail.id as string, detail.version, true);
                 } else if (item) {
                   updateStreamDetail(item);
                   setActiveStream(item);
@@ -1275,17 +1282,17 @@ const AppStateProvider: React.FC = ({ children }) => {
                     const token = getTokenByMintAddress(item.associatedToken as string);
                     setSelectedToken(token);
                   }
-                  setTimeout(() => {
-                    setStreamActivity([]);
-                    setHasMoreStreamActivity(true);
-                    setLoadingStreamActivity(true);
-                  });
-                  getStreamActivity(item.id as string, item.version, true);
+                  // setTimeout(() => {
+                  //   setStreamActivity([]);
+                  //   setHasMoreStreamActivity(true);
+                  //   setLoadingStreamActivity(true);
+                  // });
+                  // getStreamActivity(item.id as string, item.version, true);
                 }
               })
             } else {
-              setStreamActivity([]);
-              setHasMoreStreamActivity(false);
+              // setStreamActivity([]);
+              // setHasMoreStreamActivity(false);
               updateSelectedStream(undefined);
               updateStreamDetail(undefined);
               setActiveStream(undefined);
@@ -1315,7 +1322,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     highLightableStreamId,
     clearTxConfirmationContext,
     getTokenByMintAddress,
-    getStreamActivity
+    // getStreamActivity
   ]);
 
 
@@ -1640,6 +1647,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPrograms,
         setMultisigTxs,
         setSelectedStream,
+        setActiveStream,
         setStreamDetail,
         setDeletedStream,
         setHighLightableStreamId,

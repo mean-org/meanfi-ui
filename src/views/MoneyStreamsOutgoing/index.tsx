@@ -1416,7 +1416,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
     const resumeStream = async (data: any) => {
 
-      if (!msp) { return null; }
+      if (!msp || !multisigAccounts) { return null; }
 
       if (!isMultisigTreasury()) {
         return await msp.resumeStream(
@@ -1426,7 +1426,7 @@ export const MoneyStreamsOutgoingView = (props: {
         );
       }
 
-      if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+      if (!treasuryDetails || !multisigClient || !publicKey) { return null; }
 
       const treasury = treasuryDetails as Treasury;
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
@@ -2233,14 +2233,14 @@ export const MoneyStreamsOutgoingView = (props: {
 
   // Read treasury data
   useEffect(() => {
-    if (!publicKey || !ms || !msp || !streamSelected) { return; }
+    if (!publicKey || !ms || !msp || !activeStream) { return; }
 
     const timeout = setTimeout(() => {
-      const v1 = streamSelected as StreamInfo;
-      const v2 = streamSelected as Stream;
+      const v1 = activeStream as StreamInfo;
+      const v2 = activeStream as Stream;
       consoleOut('Reading treasury data...', '', 'blue');
       getTreasuryByTreasuryId(
-        streamSelected.version < 2 ? v1.treasuryAddress as string : v2.treasury as string, streamSelected.version
+        activeStream.version < 2 ? v1.treasuryAddress as string : v2.treasury as string, activeStream.version
       );
     });
 
@@ -2248,7 +2248,7 @@ export const MoneyStreamsOutgoingView = (props: {
       clearTimeout(timeout);
     }
 
-  }, [ms, msp, publicKey, streamSelected, getTreasuryByTreasuryId, treasuryId]);
+  }, [ms, msp, publicKey, activeStream, getTreasuryByTreasuryId, treasuryId]);
 
   useEffect(() => {
     if (!ms || !msp || !streamSelected) {return;}

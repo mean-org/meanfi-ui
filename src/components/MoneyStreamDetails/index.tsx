@@ -7,7 +7,7 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
 import moment from "moment";
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
 import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
@@ -35,7 +35,10 @@ export const MoneyStreamDetails = (props: {
   const {
     splTokenList,
     streamActivity,
+    hasMoreStreamActivity,
+    loadingStreamActivity,
     getTokenByMintAddress,
+    getStreamActivity,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -276,52 +279,79 @@ export const MoneyStreamDetails = (props: {
     }
   }
 
+  // Get stream activity
+  useEffect(() => {
+    if (!stream || !searchParams || !streamActivity) { return; }
+
+    if (searchParams.get('v') === "activity") {
+      getStreamActivity(stream.id as string, stream.version, true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, streamActivity]);
+
   const renderActivities = (streamVersion: number) => {
     return (
       <>
-        {streamActivity && streamActivity.length > 0 ? (
-          streamActivity.map((item, index) => {
+        {!loadingStreamActivity ? (
+          streamActivity !== undefined && streamActivity.length > 0 ? (
+            streamActivity.map((item, index) => {
 
-            const img = getActivityIcon(item);
-            const title = getActivityAction(item);
-            const subtitle = <CopyExtLinkGroup
-              content={item.signature}
-              number={8}
-              externalLink={false}
-            />
+              const img = getActivityIcon(item);
+              const title = getActivityAction(item);
+              const subtitle = <CopyExtLinkGroup
+                content={item.signature}
+                number={8}
+                externalLink={false}
+              />
 
-            const amount = getAmountWithSymbol(
-              getActivityAmount(item, streamVersion),
-              item.mint,
-              false,
-              splTokenList
-            );
+              const amount = getAmountWithSymbol(
+                getActivityAmount(item, streamVersion),
+                item.mint,
+                false,
+                splTokenList
+              );
 
-            const resume = getShortDate(item.utcDate as string, true);
+              const resume = getShortDate(item.utcDate as string, true);
 
-            return (
-              <a
-                key={index}
-                target="_blank" 
-                rel="noopener noreferrer"
-                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`} 
-                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-              >
-                <ResumeItem
-                  id={`${title} + ${index}`}
-                  img={img}
-                  title={title}
-                  subtitle={subtitle}
-                  amount={amount}
-                  resume={resume}
-                  hasRightIcon={true}
-                  rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
-                  isLink={true}
-                />
-              </a>
-          )})
+              return (
+                <a
+                  key={index}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`} 
+                  className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    id={`${title} + ${index}`}
+                    img={img}
+                    title={title}
+                    subtitle={subtitle}
+                    amount={amount}
+                    resume={resume}
+                    hasRightIcon={true}
+                    rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
+                    isLink={true}
+                  />
+                </a>
+            )})
+          ) : (
+            <span className="pl-1">This stream has no activity</span>
+          )
         ) : (
-          <span className="pl-1">This stream has no activity</span>
+          <span className="pl-1">Loading activity stream ...</span>
+        )}
+        {(streamActivity && streamActivity.length >= 5 && hasMoreStreamActivity) && (
+          <div className="mt-1 text-center">
+            <span className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
+                role="link"
+                onClick={() => {
+                if (stream) {
+                  getStreamActivity(stream.id as string, stream.version);
+                }
+              }}>
+              {t('general.cta-load-more')}
+            </span>
+          </div>
         )}
       </>
     );
