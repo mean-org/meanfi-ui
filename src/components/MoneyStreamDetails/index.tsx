@@ -8,7 +8,7 @@ import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-stream
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
 import moment from "moment";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
+import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
 import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
@@ -20,6 +20,7 @@ import { useWallet } from "../../contexts/wallet";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { Identicon } from "../Identicon";
+import Countdown from "react-countdown";
 
 const { TabPane } = Tabs;
 
@@ -33,7 +34,9 @@ export const MoneyStreamDetails = (props: {
 }) => {
   const { stream, hideDetailsHandler, infoData, isStreamIncoming, isStreamOutgoing, buttons } = props;
   const {
+    theme,
     splTokenList,
+    selectedToken,
     streamActivity,
     hasMoreStreamActivity,
     loadingStreamActivity,
@@ -279,6 +282,43 @@ export const MoneyStreamDetails = (props: {
     }
   }
 
+  const getDepletionLabel = useCallback((item: Stream | StreamInfo) => {
+    const decimals = selectedToken ? selectedToken.decimals : 6;
+    const v1 = item as StreamInfo;
+    const v2 = item as Stream;
+    const nowUtc = new Date().toUTCString();
+    // Get a date 3 hrs from now to compare against depletionDate
+    const added3hrs = new Date(nowUtc);
+    const threehoursFromNow = new Date(added3hrs.getTime()+(3*60*60*1000));
+    // Get a date 3 days from now to compare against depletionDate
+    const added72hrs = new Date(nowUtc);
+    const threeDaysFromNow = new Date(added72hrs.getTime()+(3*24*60*60*1000));
+
+    let depletionDate: Date;
+    let fundsLeft: string;
+    if (item.version >= 2) {
+      depletionDate = new Date(v2.estimatedDepletionDate);
+      const amount = toUiAmount(new BN(v2.fundsLeftInStream), decimals);
+      fundsLeft = formatThousands(amount, decimals, 4);
+    } else {
+      depletionDate = new Date(v1.escrowEstimatedDepletionUtc as string);
+      fundsLeft = formatThousands(v1.escrowUnvestedAmount, decimals, 4);
+    }
+
+    const colorClass = depletionDate < threehoursFromNow
+      ? 'font-bold fg-error'
+      : depletionDate >= threehoursFromNow && depletionDate < threeDaysFromNow
+        ? `font-bold ${theme === 'light' ? "fg-light-orange" : "fg-yellow"}`
+        : ''
+
+    return (
+      <span className={colorClass}>{fundsLeft}</span>
+    );
+  }, [
+    theme,
+    selectedToken,
+  ]);
+
   // Get stream activity
   useEffect(() => {
     if (!stream || !searchParams || !streamActivity) { return; }
@@ -467,6 +507,29 @@ export const MoneyStreamDetails = (props: {
     )
   }
 
+  // Random component
+  const Completionist = () => <span>--</span>;
+
+  // Renderer callback with condition
+  const renderer = ({ years, days, hours, minutes, seconds, completed }: any) => {
+    if (completed) {
+      // Render a completed state
+      return <Completionist />;
+    } else {
+      // Render a countdown
+      const showYears = years > 0 ? (years > 1 ? `${years} years` : `${years} year`) : "";
+      const showDays = days > 0 ? (days > 1 ? `${days} days` : `${days} day`) : "";
+      const showHours = hours > 0 ? (hours > 1 ? `${hours} hours` : `${hours} hour`) : "";
+      const showMinutes = minutes > 0 ? (minutes > 1 ? `${minutes} minutes` : `${minutes} minute`) : "";
+      const showSeconds = seconds > 0 ? (seconds > 1 ? `${seconds} seconds` : `${seconds} second`) : "";
+
+      return <span>{`${showYears} ${showDays} ${showHours} ${showMinutes} ${showSeconds}`}</span>;
+    }
+  };
+
+  const v1 = stream as StreamInfo;
+  const v2 = stream as Stream;
+
   // Tab details
   const detailsData = [
     {
@@ -499,7 +562,7 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && "Funds will run out in:",
-      value: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && "12 days and 23 hours"
+      value: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && <Countdown className="align-middle" date={isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string } renderer={renderer} />
     },
     {
       label: stream && getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
