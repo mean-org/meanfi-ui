@@ -901,8 +901,10 @@ export const PlaygroundView = () => {
         {renderRouteLink('With NO specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets')}
         <div className="form-label">Preset a specific asset</div>
         {renderRouteLink('With specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets/FQPAweWDZZbKjDQk3MCx285dUeZosLzF2FacqfyegrGC')}
-        <div className="form-label">Vew a multisig account</div>
+        <div className="form-label">View a multisig account</div>
         {renderRouteLink('With specific asset preset', '/accounts/D9w3w6CQZvmAaqvQ9BsHSfg8vCa58dh3mXLND5dyDT1z/assets?account-type=multisig')}
+        <div className="form-label">View multisig vesting contracts</div>
+        {renderRouteLink('Send multisig to vesting', '/vesting/H2r15H4hFn7xV5PQtnatqJaHo6ybM8qd1i5WnaadE1aX/contracts?account-type=multisig')}
       </div>
     </>
   );

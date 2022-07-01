@@ -1,5 +1,5 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
-import { PieChart, Pie, Sector, ResponsiveContainer } from "recharts";
+import React, { useCallback, useContext, useState } from "react";
+import { PieChart, Pie, Sector } from "recharts";
 import { AppStateContext } from "../../../../contexts/appstate";
 
 export const VestingProgressChartComponent = (props: {
@@ -18,8 +18,6 @@ export const VestingProgressChartComponent = (props: {
 
   const onPieEnter = useCallback(
     (_, index) => {
-      // if (unvestedAmount < 100) {
-      // }
       setActiveIndex(index);
     }, []);
 
@@ -92,12 +90,6 @@ export const VestingProgressChartComponent = (props: {
     );
   }, [theme]);
 
-  // useEffect(() => {
-  //   if (unvestedAmount === 100) {
-  //     setActiveIndex(1);
-  //   }
-  // }, [unvestedAmount]);
-
   return (
     <>
       <PieChart width={400} height={240} className="vesting-pie-chart">
@@ -115,8 +107,6 @@ export const VestingProgressChartComponent = (props: {
           onMouseEnter={onPieEnter}
         />
       </PieChart>
-      {/* <ResponsiveContainer width="100%" height="100%" className="text-center">
-      </ResponsiveContainer> */}
     </>
   );
 }
