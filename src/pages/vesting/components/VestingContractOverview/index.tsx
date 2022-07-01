@@ -151,8 +151,8 @@ export const VestingContractOverview = (props: {
     return (
         <div className="tab-inner-content-wrapper vertical-scroll">
             {vestingContract && (
-                <div className="right-panel-two-column-layout">
-                    <div className="left">
+                <>
+                    <div className="mb-1">
                         <div className="font-size-110 font-bold">
                             <span className="align-middle">{lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)} - {vestingContract.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'} vesting contract</span>
                             {vestingContract.subCategory ? (
@@ -165,13 +165,13 @@ export const VestingContractOverview = (props: {
                         <div className="font-size-100 mt-3">{cliffReleasePercentage}% unlocked on commencement date</div>
                         <div className="font-size-100">{100 - cliffReleasePercentage}% of allocated funds streamed equally across {lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)}</div>
                     </div>
-                    <div className="right">
+                    <div className="text-center">
                         <VestingProgressChartComponent
                             vestedAmount={completedVestingPercentage}
                             unvestedAmount={100 - completedVestingPercentage}
                         />
                     </div>
-                </div>
+                </>
             )}
         </div>
     );

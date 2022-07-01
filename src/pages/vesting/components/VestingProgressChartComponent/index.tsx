@@ -99,14 +99,14 @@ export const VestingProgressChartComponent = (props: {
   // }, [unvestedAmount]);
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart width={294} height={294} className="vesting-pie-chart">
+    <>
+      <PieChart width={400} height={240} className="vesting-pie-chart">
         <Pie
           activeIndex={activeIndex}
           activeShape={renderActiveShape}
           data={data}
-          cx="50%"
-          cy="50%"
+          cx="48%"
+          cy="44%"
           innerRadius={50}
           outerRadius={70}
           fill={pieFillColor}
@@ -115,6 +115,8 @@ export const VestingProgressChartComponent = (props: {
           onMouseEnter={onPieEnter}
         />
       </PieChart>
-    </ResponsiveContainer>
+      {/* <ResponsiveContainer width="100%" height="100%" className="text-center">
+      </ResponsiveContainer> */}
+    </>
   );
 }
