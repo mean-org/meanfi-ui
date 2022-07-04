@@ -60,6 +60,7 @@ export const MoneyStreamsInfoView = (props: {
   onSendFromOutgoingStreamInfo?: any;
   onSendFromStreamingAccountDetails?: any;
   onSendFromStreamingAccountOutgoingStreamInfo?: any;
+  loadingStreams: boolean;
   streamList: Array<Stream | StreamInfo> | undefined;
   accountAddress: string;
   selectedTab: string;
@@ -98,6 +99,7 @@ export const MoneyStreamsInfoView = (props: {
     multisigAccounts,
     selectedMultisig,
     accountAddress,
+    loadingStreams,
     treasuryList,
     selectedTab,
     streamList,
@@ -137,8 +139,8 @@ export const MoneyStreamsInfoView = (props: {
   const [rateIncomingPerDay, setRateIncomingPerDay] = useState(0);
   const [rateOutgoingPerDay, setRateOutgoingPerDay] = useState(0);
 
-  const [loadingIncomingStreams, setLoadingIncomingStreams] = useState(true);
-  const [loadingOutgoingStreams, setLoadingOutgoingStreams] = useState(true);
+  // const [loadingIncomingStreams, setLoadingIncomingStreams] = useState(true);
+  // const [loadingOutgoingStreams, setLoadingOutgoingStreams] = useState(true);
 
   const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
@@ -255,6 +257,9 @@ export const MoneyStreamsInfoView = (props: {
 
       return finalList;
     }
+
+    setLoadingCombinedStreamingList(true);
+    setStreamingAccountCombinedList([]);
 
     const sortedStreamingAccountList = treasuryList.map((streaming) => streaming).sort((a, b) => {
       const vA1 = a as TreasuryInfo;
@@ -1345,15 +1350,15 @@ export const MoneyStreamsInfoView = (props: {
   ]);
 
   // Stop loading incoming and outgoing streams
-  useEffect(() => {
-    if (incomingStreamList && incomingStreamList.length >= 0) {
-      setLoadingIncomingStreams(false);
-    }
+  // useEffect(() => {
+  //   if (incomingStreamList && incomingStreamList.length >= 0) {
+  //     setLoadingIncomingStreams(false);
+  //   }
 
-    if (outgoingStreamList && outgoingStreamList.length >= 0) {
-      setLoadingOutgoingStreams(false);
-    }
-  }, [incomingStreamList, outgoingStreamList]);
+  //   if (outgoingStreamList && outgoingStreamList.length >= 0) {
+  //     setLoadingOutgoingStreams(false);
+  //   }
+  // }, [incomingStreamList, outgoingStreamList]);
 
   // Incoming amount
   useEffect(() => {
@@ -1627,7 +1632,7 @@ export const MoneyStreamsInfoView = (props: {
   // Incoming streams list
   const renderListOfIncomingStreams = (
     <>
-      {!loadingIncomingStreams ? (
+      {!loadingStreams ? (
         (incomingStreamList !== undefined && incomingStreamList.length > 0) ? (
           incomingStreamList.map((stream, index) => {
             const onSelectStream = () => {
@@ -1727,7 +1732,7 @@ export const MoneyStreamsInfoView = (props: {
         dropdownMenu={menu}
         isLink={false}
       />
-      {(!loadingOutgoingStreams && !loadingCombinedStreamingList) ? (
+      {(!loadingStreams && !loadingCombinedStreamingList) ? (
         ((outgoingStreamList !== undefined && outgoingStreamList.length > 0) || (streamingAccountCombinedList !== undefined && streamingAccountCombinedList.length > 0)) ? (
           <>
             <>
@@ -1947,7 +1952,7 @@ export const MoneyStreamsInfoView = (props: {
 
   return (
     <>
-      <Spin spinning={loadingMoneyStreamsDetails}>
+      <Spin spinning={loadingMoneyStreamsDetails || loadingCombinedStreamingList}>
         <RightInfoDetails
           infoData={infoData}
         />

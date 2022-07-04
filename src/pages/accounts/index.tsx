@@ -2876,13 +2876,6 @@ export const AccountsNewView = () => {
     }
   }, [width]);
 
-  // Refresh treasuries when navigates from multisig
-  useEffect(() => {
-    if (previousRoute.startsWith("/multisig")) {
-      setTreasuryList([]);
-    }
-  }, [previousRoute])
-
   /**
    * - No CTAs if it is a custom token or we don't know the asset's token
    * - No Buy if the asset is wSOL
@@ -5118,6 +5111,7 @@ export const AccountsNewView = () => {
                                 onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
                                 onSendFromStreamingAccountDetails={goToStreamingAccountDetailsHandler}
                                 onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
+                                loadingStreams={loadingStreams}
                                 streamList={streamList}
                                 accountAddress={accountAddress}
                                 selectedTab={pathParamStreamingTab}
