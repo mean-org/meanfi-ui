@@ -1649,7 +1649,7 @@ export const MoneyStreamsInfoView = (props: {
     
             return (
               <div 
-                key={index}
+                key={`${index + 10}`}
                 onClick={onSelectStream}
                 className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
@@ -1751,7 +1751,7 @@ export const MoneyStreamsInfoView = (props: {
     
                 return (
                   <div 
-                    key={index}
+                    key={`${index + 20}`}
                     onClick={onSelectStream}
                     className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                   >
@@ -1812,7 +1812,7 @@ export const MoneyStreamsInfoView = (props: {
       
                   return (
                     <div 
-                      key={index}
+                      key={`${index + 30}`}
                     >
                       <ResumeItem
                         title={title}
@@ -1865,7 +1865,7 @@ export const MoneyStreamsInfoView = (props: {
       
                           return (
                             <div 
-                              key={index}
+                              key={`${index + 40}`}
                               onClick={onSelectStream}
                               className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                               >
