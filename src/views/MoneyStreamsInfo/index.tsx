@@ -207,6 +207,19 @@ export const MoneyStreamsInfoView = (props: {
     streamV2ProgramAddress
   ]);
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
+
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
@@ -1274,23 +1287,9 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [t]);
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = getQueryAccountType();
-
   const goToIncomingTabHandler = () => {
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
 
-    const param = getQueryAccountType();
     if (param) {
       url += `?account-type=${param}`;
     }
@@ -1301,7 +1300,6 @@ export const MoneyStreamsInfoView = (props: {
   const goToOutgoingTabHandler = () => {
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
 
-    const param = getQueryAccountType();
     if (param) {
       url += `?account-type=${param}`;
     }
@@ -1314,13 +1312,12 @@ export const MoneyStreamsInfoView = (props: {
     
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/${activeKey}`;
 
-    const param = getQueryAccountType();
     if (param) {
       url += `?account-type=${param}`;
     }
 
     navigate(url);
-  }, [accountAddress, getQueryAccountType, navigate]);
+  }, [accountAddress, navigate, param]);
 
   // Set the list of incoming and outgoing streams
   useEffect(() => {
@@ -1938,32 +1935,34 @@ export const MoneyStreamsInfoView = (props: {
           infoData={infoData}
         />
 
-        {selectedTab === "summary" && (
-          <Row gutter={[8, 8]} className="safe-btns-container mb-1">
-            <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
-              <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke"
-                onClick={showCreateMoneyStreamModal}>
-                  <div className="btn-content">
-                    {param === "multisig" ? "Initiate stream" : "Create stream"}
-                  </div>
-              </Button>
-              <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke"
-                onClick={showOpenStreamModal}>
-                  <div className="btn-content">
-                    Find money stream
-                  </div>
-              </Button>
-            </Col>
-          </Row>
-        )}
+        <Row gutter={[8, 8]} className="safe-btns-container mb-1">
+          <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={() => {
+                param === "multisig"
+                  ? showCreateStreamModal()
+                  : showCreateMoneyStreamModal()
+              }}>
+              <div className="btn-content">
+                {param === "multisig" ? "Initiate stream" : "Create stream"}
+              </div>
+            </Button>
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={showOpenStreamModal}>
+                <div className="btn-content">
+                  Find money stream
+                </div>
+            </Button>
+          </Col>
+        </Row>
 
         {renderTabset()}
       </Spin>
@@ -1985,7 +1984,14 @@ export const MoneyStreamsInfoView = (props: {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           withdrawTransactionFees={withdrawTransactionFees}
-          treasuryDetails={treasuryDetails}
+          treasuryDetails={
+            treasuryDetails
+              ? treasuryDetails
+              : treasuryList && treasuryList.length > 0
+                ? treasuryList[0]
+                : undefined
+          }
+          treasuryList={treasuryList}
           isMultisigTreasury={isMultisigTreasury()}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}

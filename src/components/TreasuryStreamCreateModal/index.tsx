@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import "./style.scss";
 import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
-  formatAmount,
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
@@ -60,17 +59,35 @@ export const TreasuryStreamCreateModal = (props: {
   connection: Connection;
   handleClose: any;
   handleOk: any;
+  isMultisigTreasury: boolean;
   isVisible: boolean;
+  minRequiredBalance: number;
+  multisigAddress: PublicKey;
+  multisigClient: MeanMultisig;
   nativeBalance: number;
   transactionFees: TransactionFees;
-  withdrawTransactionFees: TransactionFees;
+  treasuryList: (Treasury | TreasuryInfo)[] | undefined;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
-  isMultisigTreasury: boolean;
-  minRequiredBalance: number;
-  multisigClient: MeanMultisig;
-  multisigAddress: PublicKey;
   userBalances: any;
+  withdrawTransactionFees: TransactionFees;
 }) => {
+  const {
+    associatedToken,
+    connection,
+    handleClose,
+    handleOk,
+    isMultisigTreasury,
+    isVisible,
+    minRequiredBalance,
+    multisigAddress,
+    multisigClient,
+    nativeBalance,
+    transactionFees,
+    treasuryList,
+    treasuryDetails,
+    userBalances,
+    withdrawTransactionFees,
+  } = props;
   const { t } = useTranslation('common');
   const [searchParams] = useSearchParams();
   const { wallet, publicKey } = useWallet();
@@ -78,8 +95,6 @@ export const TreasuryStreamCreateModal = (props: {
   const { treasuryOption } = useContext(AppStateContext);
   const {
     tokenList,
-    selectedToken,
-    effectiveRate,
     loadingPrices,
     recipientNote,
     isWhitelisted,
@@ -96,16 +111,15 @@ export const TreasuryStreamCreateModal = (props: {
     setPaymentRateFrequency,
     setIsVerifiedRecipient,
     setLockPeriodFrequency,
-    getTokenByMintAddress,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
+    getTokenByMintAddress,
     setTransactionStatus,
     setPaymentRateAmount,
     setRecipientAddress,
     setPaymentStartDate,
     setLockPeriodAmount,
     setFromCoinAmount,
-    setSelectedToken,
-    setEffectiveRate,
     setRecipientNote,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -120,7 +134,7 @@ export const TreasuryStreamCreateModal = (props: {
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
-  const [enableMultipleStreamsOption, /*setEnableMultipleStreamsOption*/] = useState(false);
+  const [enableMultipleStreamsOption] = useState(false);
   const today = new Date().toLocaleDateString("en-US");
   const [csvFile, setCsvFile] = useState<any>();
   const [csvArray, setCsvArray] = useState<any>([]);
@@ -131,20 +145,23 @@ export const TreasuryStreamCreateModal = (props: {
   const percentages = [5, 10, 15, 20];
   const [percentageValue, setPercentageValue] = useState<number>(0);
   const [cliffRelease, setCliffRelease] = useState<string>("")
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+  const [workingTreasuryDetails, setWorkingTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
 
   const isNewTreasury = useCallback(() => {
-    if (props.treasuryDetails) {
-      const v2 = props.treasuryDetails as Treasury;
+    if (workingTreasuryDetails) {
+      const v2 = workingTreasuryDetails as Treasury;
       return v2.version >= 2 ? true : false;
     }
 
     return false;
-  }, [props.treasuryDetails]);
+  }, [workingTreasuryDetails]);
 
   const getMaxAmount = useCallback((preSetting = false) => {
-    if ((isFeePaidByTreasurer || preSetting) && props.withdrawTransactionFees) {
+    if ((isFeePaidByTreasurer || preSetting) && withdrawTransactionFees) {
       const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
-      const feeNumerator = props.withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
+      const feeNumerator = withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
       const feeDenaminator = 1000000;
       const badStreamMaxAllocation = unallocatedBalance
         .mul(new BN(feeDenaminator))
@@ -193,15 +210,50 @@ export const TreasuryStreamCreateModal = (props: {
     isWhitelisted,
     unallocatedBalance,
     isFeePaidByTreasurer,
-    props.withdrawTransactionFees,
+    withdrawTransactionFees,
     enableMultipleStreamsOption,
     listValidAddresses.length
   ]);
 
+  const getTokenPrice = useCallback((inputAmount: string) => {
+    if (!selectedToken) { return 0; }
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+
+    return parseFloat(inputAmount) * price;
+  }, [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken]);
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
+
+  const canCreateStream = useMemo(() => {
+    return isVisible &&
+           treasuryList && treasuryList.length > 0 &&
+           workingTreasuryDetails
+      ? true
+      : false;
+  }, [isVisible, workingTreasuryDetails, treasuryList]);
+
+  // Set working copy of the selected streaming account if passed-in
+  useEffect(() => {
+    if (isVisible && treasuryDetails) {
+      setWorkingTreasuryDetails(treasuryDetails);
+    }
+  }, [isVisible, treasuryDetails]);
+
   // Set treasury unalocated balance in BN
   useEffect(() => {
-    if (props.isVisible && props.treasuryDetails) {
-      const unallocated = props.treasuryDetails.balance - props.treasuryDetails.allocationAssigned;
+    if (isVisible && workingTreasuryDetails) {
+      const unallocated = workingTreasuryDetails.balance - workingTreasuryDetails.allocationAssigned;
       const ub = isNewTreasury()
         ? new BN(unallocated)
         : makeInteger(unallocated, selectedToken?.decimals || 6);
@@ -209,22 +261,22 @@ export const TreasuryStreamCreateModal = (props: {
       setUnallocatedBalance(ub);
     }
   }, [
-    props.isVisible,
-    props.treasuryDetails,
+    isVisible,
+    workingTreasuryDetails,
     selectedToken?.decimals,
     isNewTreasury,
   ]);
 
   // Set max amount allocatable to a stream in BN the first time
   useEffect(() => {
-    if (props.isVisible && props.treasuryDetails && props.withdrawTransactionFees && !isFeePaidByTreasurer) {
+    if (isVisible && workingTreasuryDetails && withdrawTransactionFees && !isFeePaidByTreasurer) {
       getMaxAmount();
     }
   }, [
-    props.isVisible,
+    isVisible,
     isFeePaidByTreasurer,
-    props.treasuryDetails,
-    props.withdrawTransactionFees,
+    workingTreasuryDetails,
+    withdrawTransactionFees,
     getMaxAmount
   ]);
 
@@ -360,7 +412,7 @@ export const TreasuryStreamCreateModal = (props: {
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
-      : props.nativeBalance < getMinBalanceRequired()
+      : nativeBalance < getMinBalanceRequired()
         ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
         : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
   };
@@ -390,7 +442,7 @@ export const TreasuryStreamCreateModal = (props: {
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
-      : props.nativeBalance < getMinBalanceRequired()
+      : nativeBalance < getMinBalanceRequired()
         ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
         : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
   };
@@ -441,10 +493,9 @@ export const TreasuryStreamCreateModal = (props: {
     };
     setSelectedToken(unkToken);
     consoleOut("token selected:", unkToken, 'blue');
-    setEffectiveRate(0);
     toggleOverflowEllipsisMiddle(true);
+    return unkToken;
   }, [
-    setEffectiveRate,
     setSelectedToken,
     toggleOverflowEllipsisMiddle
   ]);
@@ -469,26 +520,21 @@ export const TreasuryStreamCreateModal = (props: {
 
   // When modal goes visible, use the treasury associated token or use the default from the appState
   useEffect(() => {
-    if (props.isVisible && props.associatedToken) {
-      const token = getTokenByMintAddress(props.associatedToken);
+    if (isVisible && associatedToken) {
+      const token = getTokenByMintAddress(associatedToken);
       if (token) {
-        const price = getTokenPriceBySymbol(token.symbol);
-        if (!selectedToken || selectedToken.address !== token.address) {
-          setSelectedToken(token);
-          setEffectiveRate(price);
-        }
-      } else if (!selectedToken || selectedToken.address !== props.associatedToken) {
-        setCustomToken(props.associatedToken);
+        setSelectedToken(token);
+        consoleOut('Treasury associatedToken:', token, 'blue');
+      } else if (!selectedToken || selectedToken.address !== associatedToken) {
+        setCustomToken(associatedToken);
       }
     }
   }, [
+    isVisible,
     selectedToken,
-    props.isVisible,
-    props.associatedToken,
+    associatedToken,
     getTokenByMintAddress,
-    getTokenPriceBySymbol,
     setSelectedToken,
-    setEffectiveRate,
     setCustomToken,
   ]);
 
@@ -613,7 +659,6 @@ export const TreasuryStreamCreateModal = (props: {
     const token = getTokenByMintAddress(e);
     if (token) {
       setSelectedToken(token as TokenInfo);
-      setEffectiveRate(getTokenPriceBySymbol(token.symbol));
     }
   }
 
@@ -702,7 +747,7 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const onCloseModal = () => {
-    props.handleClose();
+    handleClose();
     onAfterClose();
   }
 
@@ -761,14 +806,14 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const getMinBalanceRequired = useCallback(() => {
-    if (!props.transactionFees) { return 0; }
+    if (!transactionFees) { return 0; }
 
-    const bf = props.transactionFees.blockchainFee;       // Blockchain fee
-    const ff = props.transactionFees.mspFlatFee;          // Flat fee (protocol)
-    const minRequired = props.isMultisigTreasury ? props.minRequiredBalance : bf + ff;
+    const bf = transactionFees.blockchainFee;       // Blockchain fee
+    const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+    const minRequired = isMultisigTreasury ? minRequiredBalance : bf + ff;
     return minRequired;
 
-  }, [props.isMultisigTreasury, props.minRequiredBalance, props.transactionFees]);
+  }, [isMultisigTreasury, minRequiredBalance, transactionFees]);
 
   useEffect(() => {
     if (!csvFile) { return; }
@@ -810,7 +855,7 @@ export const TreasuryStreamCreateModal = (props: {
 
       const validAddressesSingleSigner = validAddresses.filter((csvItem: any) => wallet && !(csvItem.address === `${publicKey.toBase58()}`));
 
-      if (!props.isMultisigTreasury) {
+      if (!isMultisigTreasury) {
         setListValidAddresses(validAddressesSingleSigner);
         if ((validAddresses.length - validAddressesSingleSigner.length) > 0) {
           setHasIsOwnWallet(true);
@@ -828,7 +873,7 @@ export const TreasuryStreamCreateModal = (props: {
     wallet,
     csvArray,
     publicKey,
-    props.isMultisigTreasury,
+    isMultisigTreasury,
   ]);
 
   useEffect(() => {
@@ -861,6 +906,24 @@ export const TreasuryStreamCreateModal = (props: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cliffRelease, lockPeriodAmount]);
 
+  // Keep token balance updated
+  useEffect(() => {
+
+    if (!connection || !publicKey || !userBalances || !selectedToken) {
+      setSelectedTokenBalance(0);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setSelectedTokenBalance(userBalances[selectedToken.address]);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [connection, publicKey, selectedToken, userBalances]);
+
   ////////////////////////
   // Transaction start  //
   ////////////////////////
@@ -880,11 +943,11 @@ export const TreasuryStreamCreateModal = (props: {
 
     const createStreams = async (data: any) => {
 
-      consoleOut('Is Multisig Treasury: ', props.isMultisigTreasury, 'blue');
+      consoleOut('Is Multisig Treasury: ', isMultisigTreasury, 'blue');
       consoleOut('Starting create streams using MSP V2...', '', 'blue');
       const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
-      if (!props.isMultisigTreasury) {
+      if (!isMultisigTreasury) {
 
         const beneficiaries: Beneficiary[] = data.beneficiaries.map((b: any) => {
           return {
@@ -909,10 +972,10 @@ export const TreasuryStreamCreateModal = (props: {
         );
       }
 
-      if (!props.treasuryDetails || !props.multisigClient || !props.multisigAddress || !publicKey) { return null; }
+      if (!workingTreasuryDetails || !multisigClient || !multisigAddress || !publicKey) { return null; }
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
-        [props.multisigAddress.toBuffer()],
+        [multisigAddress.toBuffer()],
         MEAN_MULTISIG_PROGRAM
       );
 
@@ -926,7 +989,7 @@ export const TreasuryStreamCreateModal = (props: {
         
         const timeStampCounter = new u64(timeStamp + seedCounter);
         const [stream, streamBump] = await PublicKey.findProgramAddress(
-          [props.multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
+          [multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
           MEAN_MULTISIG_PROGRAM
         );
 
@@ -968,7 +1031,7 @@ export const TreasuryStreamCreateModal = (props: {
         const ixAccounts = createTx.instructions[0].keys;
         const streamSeedData = streamsBumps[createTx.instructions[0].keys[6].pubkey.toBase58()];
 
-        const tx = await props.multisigClient.createMoneyStreamTransaction(
+        const tx = await multisigClient.createMoneyStreamTransaction(
           publicKey,
           "Create Stream",
           "", // description
@@ -976,7 +1039,7 @@ export const TreasuryStreamCreateModal = (props: {
           streamSeedData.timeStamp.toNumber(),
           streamSeedData.bump,
           OperationType.StreamCreate,
-          props.multisigAddress,
+          multisigAddress,
           MSPV2Constants.MSP,
           ixAccounts,
           ixData
@@ -992,7 +1055,7 @@ export const TreasuryStreamCreateModal = (props: {
 
     const createTxs = async (): Promise<boolean> => {
 
-      if (!publicKey || !props.treasuryDetails || !selectedToken) {
+      if (!publicKey || !workingTreasuryDetails || !selectedToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -1012,8 +1075,8 @@ export const TreasuryStreamCreateModal = (props: {
         ? [{ streamName: recipientNote ? recipientNote.trim() : '', address: recipientAddress as string }]
         : csvArray;
 
-      const associatedToken = new PublicKey(selectedToken?.address as string);
-      const treasury = new PublicKey(props.treasuryDetails.id as string);
+      const assocToken = new PublicKey(selectedToken?.address as string);
+      const treasury = new PublicKey(workingTreasuryDetails.id as string);
       const amount = tokenAmount.div(new BN(beneficiaries.length)).toNumber();
       const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
       const now = new Date();
@@ -1046,7 +1109,7 @@ export const TreasuryStreamCreateModal = (props: {
         treasurer: publicKey.toBase58(),                                            // treasurer
         treasury: treasury.toBase58(),                                              // treasury
         beneficiaries: beneficiaries,                                               // beneficiaries
-        associatedToken: associatedToken.toBase58(),                                // associatedToken
+        associatedToken: assocToken.toBase58(),                                     // associatedToken
         allocationAssigned: amount,                                                 // allocationAssigned
         rateAmount: rateAmount,                                                     // rateAmount
         rateIntervalInSeconds: isLockedTreasury
@@ -1091,9 +1154,9 @@ export const TreasuryStreamCreateModal = (props: {
 
       const minRequired = getMinBalanceRequired();
       consoleOut('Min balance required:', minRequired, 'blue');
-      consoleOut('nativeBalance:', props.nativeBalance, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
 
-      if (props.nativeBalance < minRequired) {
+      if (nativeBalance < minRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
@@ -1101,7 +1164,7 @@ export const TreasuryStreamCreateModal = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(props.nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
             getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
@@ -1226,7 +1289,7 @@ export const TreasuryStreamCreateModal = (props: {
       const promises: Promise<string>[] = [];
 
       for (const tx of encodedTxs) {
-        promises.push(props.connection.sendEncodedTransaction(tx));
+        promises.push(connection.sendEncodedTransaction(tx));
       }
 
       const result = await Promise.all(promises)
@@ -1275,7 +1338,7 @@ export const TreasuryStreamCreateModal = (props: {
               startFetchTxSignatureInfo(s, "confirmed", OperationType.TreasuryStreamCreate);
             });
             setIsBusy(false);
-            props.handleOk();
+            handleOk();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1352,27 +1415,14 @@ export const TreasuryStreamCreateModal = (props: {
     </Menu>
   );
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = getQueryAccountType();
-
   return (
     <Modal
       className="mean-modal treasury-stream-create-modal"
       title={(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (<div className="modal-title">{param === "multisig" ? "Propose stream to the account" : t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
-      onOk={props.handleOk}
+      visible={isVisible}
+      onOk={handleOk}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
       width={480}>
@@ -1503,7 +1553,7 @@ export const TreasuryStreamCreateModal = (props: {
                       <div className="left">
                         <span className="add-on">
                           {(selectedToken && tokenList) && (
-                            <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
+                            <Select className={`token-selector-dropdown ${associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                               {tokenList.map((option) => {
                                 if (option.address === NATIVE_SOL.address) {
                                   return null;
@@ -1514,11 +1564,11 @@ export const TreasuryStreamCreateModal = (props: {
                                       <TokenDisplay onClick={() => {}}
                                         mintAddress={option.address}
                                         name={option.name}
-                                        showCaretDown={props.associatedToken ? false : true}
+                                        showCaretDown={associatedToken ? false : true}
                                       />
                                       <div className="balance">
-                                        {props.userBalances && props.userBalances[option.address] > 0 && (
-                                          <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
+                                        {userBalances && userBalances[option.address] > 0 && (
+                                          <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
                                         )}
                                       </div>
                                     </div>
@@ -1578,7 +1628,7 @@ export const TreasuryStreamCreateModal = (props: {
                   <div className="left">
                     <span className="add-on">
                       {(selectedToken && tokenList) && (
-                        <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
+                        <Select className={`token-selector-dropdown ${associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                           {tokenList.map((option) => {
                             if (option.address === NATIVE_SOL.address) {
                               return null;
@@ -1589,11 +1639,11 @@ export const TreasuryStreamCreateModal = (props: {
                                   <TokenDisplay onClick={() => {}}
                                     mintAddress={option.address}
                                     name={option.name}
-                                    showCaretDown={props.associatedToken ? false : true}
+                                    showCaretDown={associatedToken ? false : true}
                                   />
                                   <div className="balance">
-                                    {props.userBalances && props.userBalances[option.address] > 0 && (
-                                      <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
+                                    {userBalances && userBalances[option.address] > 0 && (
+                                      <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
                                     )}
                                   </div>
                                 </div>
@@ -1755,7 +1805,7 @@ export const TreasuryStreamCreateModal = (props: {
 
                   {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
                     <>
-                      {!props.isMultisigTreasury && (
+                      {!isMultisigTreasury && (
                         hasIsOwnWallet && (
                           <span className="form-field-error text-uppercase">
                             <p>{t("treasuries.treasury-streams.message-warning")}</p>
@@ -1831,7 +1881,7 @@ export const TreasuryStreamCreateModal = (props: {
                   <div className="left">
                     <span className="add-on">
                       {(selectedToken && tokenList) && (
-                        <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
+                        <Select className={`token-selector-dropdown ${associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                           {tokenList.map((option) => {
                             if (option.address === NATIVE_SOL.address) {
                               return null;
@@ -1842,11 +1892,11 @@ export const TreasuryStreamCreateModal = (props: {
                                   <TokenDisplay onClick={() => {}}
                                     mintAddress={option.address}
                                     name={option.name}
-                                    showCaretDown={props.associatedToken ? false : true}
+                                    showCaretDown={associatedToken ? false : true}
                                   />
                                   <div className="balance">
-                                    {props.userBalances && props.userBalances[option.address] > 0 && (
-                                      <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
+                                    {userBalances && userBalances[option.address] > 0 && (
+                                      <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
                                     )}
                                   </div>
                                 </div>
@@ -1909,11 +1959,14 @@ export const TreasuryStreamCreateModal = (props: {
                     </span>
                   </div>
                   <div className="right inner-label">
-                    <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                      ~${fromCoinAmount && effectiveRate
-                        ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                        : "0.00"}
-                    </span>
+                    <>
+                      <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                      ~{fromCoinAmount
+                        ? toUsCurrency(getTokenPrice(fromCoinAmount))
+                        : "$0.00"
+                      }
+                      </span>
+                    </>
                   </div>
                 </div>
               </div>
@@ -2079,11 +2132,14 @@ export const TreasuryStreamCreateModal = (props: {
                     <span>{t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-inner-label')}</span>
                   </div>
                   <div className="right inner-label">
-                    <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                      ~${cliffRelease && effectiveRate
-                        ? formatAmount(parseFloat(cliffRelease) * effectiveRate, 2)
-                        : "0.00"}
-                    </span>
+                    <>
+                        <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                        ~{cliffRelease
+                            ? toUsCurrency(getTokenPrice(cliffRelease))
+                            : "$0.00"
+                        }
+                        </span>
+                    </>
                   </div>
                 </div>
               </div>
@@ -2216,7 +2272,7 @@ export const TreasuryStreamCreateModal = (props: {
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
             !isVerifiedRecipient ||
-            props.nativeBalance < getMinBalanceRequired()
+            nativeBalance < getMinBalanceRequired()
           )}>
           {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
             isBusy && (
@@ -2253,7 +2309,7 @@ export const TreasuryStreamCreateModal = (props: {
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
             !isVerifiedRecipient ||
-            props.nativeBalance < getMinBalanceRequired()
+            nativeBalance < getMinBalanceRequired()
           }>
           {getTransactionStartButtonLabelInLocked()}
         </Button>

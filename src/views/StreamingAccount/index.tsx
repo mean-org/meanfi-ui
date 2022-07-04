@@ -16,7 +16,6 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
-import { TabsMean } from "../../components/TabsMean";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
@@ -49,6 +48,7 @@ export const StreamingAccountView = (props: {
   streamingAccountSelected: Treasury | TreasuryInfo | undefined;
   onSendFromStreamingAccountDetails?: any;
   onSendFromStreamingAccountOutgoingStreamInfo?: any;
+  treasuryList: (Treasury | TreasuryInfo)[] | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
 }) => {
   const {
@@ -3071,7 +3071,14 @@ export const StreamingAccountView = (props: {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           withdrawTransactionFees={withdrawTransactionFees}
-          treasuryDetails={streamingAccountSelected}
+          treasuryDetails={
+            streamingAccountSelected
+              ? streamingAccountSelected
+              : props.treasuryList && props.treasuryList.length > 0
+                ? props.treasuryList[0]
+                : undefined
+          }
+          treasuryList={props.treasuryList}
           isMultisigTreasury={isMultisigTreasury()}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}

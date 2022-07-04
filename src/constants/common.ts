@@ -25,7 +25,7 @@ export const DEFAULT_SLIPPAGE_PERCENT = 1;
 export const MAX_SLIPPAGE_VALUE = 20;
 export const MAX_TOKEN_LIST_ITEMS = 100;
 export const MAX_MULTISIG_PARTICIPANTS = 10;
-
+export const CUSTOM_TOKEN_NAME = 'Custom token';
 export const INPUT_AMOUNT_PATTERN = /^[0-9]*[.,]?[0-9]*$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
 export const TIMEPICKER_FORMAT = 'h:mm a';

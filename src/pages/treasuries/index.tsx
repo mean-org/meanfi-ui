@@ -5928,7 +5928,14 @@ export const TreasuriesView = () => {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           withdrawTransactionFees={withdrawTransactionFees}
-          treasuryDetails={treasuryDetails}
+          treasuryDetails={
+            treasuryDetails
+              ? treasuryDetails
+              : treasuryList && treasuryList.length > 0
+                ? treasuryList[0]
+                : undefined
+          }
+          treasuryList={treasuryList}
           isMultisigTreasury={isMultisigTreasury()}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}
