@@ -1812,8 +1812,8 @@ export const MoneyStreamsInfoView = (props: {
                   return (
                     <div 
                       key={index}
-                      // onClick={onSelectedStreamingAccount}
-                      // className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                      onClick={onSelectedStreamingAccount}
+                      className="simplelink"
                     >
                       <ResumeItem
                         title={title}
@@ -1827,6 +1827,10 @@ export const MoneyStreamsInfoView = (props: {
                         rightIcon={<IconArrowForward className="mean-svg-icons" />}
                         isLink={true}
                         onClick={onSelectedStreamingAccount}
+                        xs={12}
+                        sm={18}
+                        md={12}
+                        lg={18}
                       />
       
                       {(streaming.streams && streaming.streams.length > 0) && (
