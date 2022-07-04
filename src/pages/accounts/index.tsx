@@ -5125,7 +5125,6 @@ export const AccountsNewView = () => {
                                 streamSelected={streamDetail}
                                 accountAddress={accountAddress}
                                 multisigAccounts={multisigAccounts}
-                                selectedMultisig={selectedMultisig}
                                 onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
