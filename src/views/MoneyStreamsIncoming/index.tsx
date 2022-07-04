@@ -45,7 +45,6 @@ export const MoneyStreamsIncomingView = (props: {
   onSendFromIncomingStreamDetails?: any;
   accountAddress: string;
   multisigAccounts: MultisigInfo[] | undefined;
-  selectedMultisig: MultisigInfo | undefined;
 }) => {
   const {
     deletedStreams,
@@ -67,7 +66,6 @@ export const MoneyStreamsIncomingView = (props: {
     onSendFromIncomingStreamDetails,
     accountAddress,
     multisigAccounts,
-    selectedMultisig
   } = props;
 
   const connectionConfig = useConnectionConfig();
@@ -249,72 +247,121 @@ export const MoneyStreamsIncomingView = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createTx = async (): Promise<boolean> => {
-      if (publicKey && streamSelected && selectedToken && msp) {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
+    const transferOwnership = async (address: string) => {
+      if (!msp || !publicKey || !streamSelected) { return null; }
 
-        const stream = new PublicKey(streamSelected.id as string);
-        const newBeneficiary = new PublicKey(address);
-        const data = {
-          beneficiary: publicKey.toBase58(),                              // beneficiary
-          newBeneficiary: newBeneficiary.toBase58(),                      // newBeneficiary
-          stream: stream.toBase58()                                       // stream
-        }
-        consoleOut('Transfer stream data:', data);
-
-        // Report event to Segment analytics
-        const segmentData: SegmentStreamTransferOwnershipData = {
-          stream: data.stream,
-          beneficiary: data.beneficiary,
-          newBeneficiary: data.newBeneficiary
-        };
-        consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferOwnershipFormButton, segmentData);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
-          return false;
-        }
-
-        consoleOut('Starting transferStream using MSP V2...', '', 'blue');
-        // Create a transaction
+      if (!isIncomingMultisigStream()) {
         return await msp.transferStream(
-          publicKey,
-          newBeneficiary,
-          stream
-        )
+          publicKey,                                       // beneficiary,
+          new PublicKey(address),                          // newBeneficiary,
+          new PublicKey(streamSelected.id as string),      // stream,
+        );
+      }
+
+      if (!streamSelected || !multisigClient || !multisigAccounts) { return null; }
+
+      const stream = streamSelected as Stream;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === stream.beneficiary)[0];
+
+      if (!multisig) { return null; }
+
+      const transferOwnership = await msp.transferStream(
+        multisig.authority,                              // beneficiary,
+        new PublicKey(address),                          // newBeneficiary,
+        new PublicKey(streamSelected.id as string),      // stream,
+      );
+
+      const ixData = Buffer.from(transferOwnership.instructions[0].data);
+      const ixAccounts = transferOwnership.instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Transfer stream ownership",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamTransferBeneficiary,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
+
+      return tx;
+    }
+
+    const createTx = async (): Promise<boolean> => {
+      if (!publicKey || !streamSelected || !msp || !selectedToken) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
+        return false;
+      }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      const stream = new PublicKey(streamSelected.id as string);
+      const newBeneficiary = new PublicKey(address);
+      const data = {
+        beneficiary: publicKey.toBase58(),                              // beneficiary
+        newBeneficiary: newBeneficiary.toBase58(),                      // newBeneficiary
+        stream: stream.toBase58()                                       // stream
+      }
+      consoleOut('Transfer stream data:', data);
+
+      // Report event to Segment analytics
+      const segmentData: SegmentStreamTransferOwnershipData = {
+        stream: data.stream,
+        beneficiary: data.beneficiary,
+        newBeneficiary: data.newBeneficiary
+      };
+      consoleOut('segment data:', segmentData, 'brown');
+      segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferOwnershipFormButton, segmentData);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Starting transferStream using MSP V2...', '', 'blue');
+
+      const result = await transferOwnership(address)
         .then(value => {
+          if (!value) { return false; }
           consoleOut('transferStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -341,15 +388,8 @@ export const MoneyStreamsIncomingView = (props: {
           segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
           return false;
         });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
-        return false;
-      }
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {

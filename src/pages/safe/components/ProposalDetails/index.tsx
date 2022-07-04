@@ -428,6 +428,7 @@ export const ProposalDetailsView = (props: {
         selectedProposal.operation !== OperationType.SetMultisigAuthority &&
         selectedProposal.operation !== OperationType.SetAssetAuthority &&
         selectedProposal.operation !== OperationType.DeleteAsset &&
+        selectedProposal.operation !== OperationType.StreamTransferBeneficiary &&
         selectedProposal.operation !== OperationType.CredixDepositFunds &&
         selectedProposal.operation !== OperationType.CredixWithdrawFunds) {
       return false;
