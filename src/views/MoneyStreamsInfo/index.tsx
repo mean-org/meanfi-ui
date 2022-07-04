@@ -1793,9 +1793,20 @@ export const MoneyStreamsInfoView = (props: {
                     onSendFromStreamingAccountDetails(streaming.treasury);
                   }
       
-                  const state = isNewTreasury
+                  const type = isNewTreasury
                     ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
                     : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+
+                  const category = isNewTreasury
+                    && v2.category === 1 ? 'Payroll' : '';
+
+                  let badges = [];
+
+                  category ? (
+                    badges = [category, type]
+                  ) : (
+                    badges = [type]
+                  )
       
                   const title = isNewTreasury ? v2.name : v1.label;
       
@@ -1817,7 +1828,7 @@ export const MoneyStreamsInfoView = (props: {
                     >
                       <ResumeItem
                         title={title}
-                        extraTitle={state}
+                        extraTitle={badges}
                         classNameTitle="text-uppercase"
                         subtitle={subtitle}
                         amount={amount}

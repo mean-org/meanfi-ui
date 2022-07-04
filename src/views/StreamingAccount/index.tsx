@@ -1,5 +1,5 @@
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
-import { Stream, STREAM_STATUS, TransactionFees, Treasury, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, Constants as MSPV2Constants } from "@mean-dao/msp";
+import { Stream, STREAM_STATUS, TransactionFees, Treasury, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, Constants as MSPV2Constants, TreasuryType } from "@mean-dao/msp";
 import { 
   MSP_ACTIONS, 
   calculateActionFees,
@@ -2936,6 +2936,25 @@ export const StreamingAccountView = (props: {
 
   const streamAccountTitle = getStreamingAccountName() ? getStreamingAccountName() : (streamingAccountSelected && shortenAddress(streamingAccountSelected.id as string, 8));
 
+  const v1 = streamingAccountSelected as unknown as TreasuryInfo;
+  const v2 = streamingAccountSelected as Treasury;
+  const isNewTreasury = streamingAccountSelected && streamingAccountSelected.version >= 2 ? true : false;
+
+  const type = isNewTreasury
+  ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+  : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+
+  const category = isNewTreasury
+    && v2.category === 1 ? 'Payroll' : '';
+
+  let badges = [];
+
+  category ? (
+    badges = [category, type]
+  ) : (
+    badges = [type]
+  )
+
   return (
     <>
       <Spin spinning={loadingStreamingAccountDetails}>
@@ -2949,6 +2968,7 @@ export const StreamingAccountView = (props: {
         {streamingAccountSelected && (
           <ResumeItem
             title={streamAccountTitle}
+            extraTitle={badges}
             subtitle={streamAccountSubtitle}
             content={streamAccountContent}
             resume={getStreamingAccountResume()}

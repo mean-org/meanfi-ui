@@ -192,9 +192,11 @@ export const ResumeItem = (props: {
             <div className={`resume-title ${isDetailsPanel ? "big-title" : ""} ${classNameTitle}`}>
               {title}
               {extraTitle && (
-                <span className="ml-1 badge darken small text-uppercase">
-                  {extraTitle}
-                </span>
+                extraTitle.map((badge: any) => (
+                  <span className="ml-1 badge darken small text-uppercase">
+                    {badge}
+                  </span>
+                ))
               )}
             </div>
 
