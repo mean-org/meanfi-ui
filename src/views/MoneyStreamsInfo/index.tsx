@@ -1649,7 +1649,7 @@ export const MoneyStreamsInfoView = (props: {
     
             return (
               <div 
-                key={`${index + 10}`}
+                key={`incoming-stream-${index}`}
                 onClick={onSelectStream}
                 className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
@@ -1751,7 +1751,7 @@ export const MoneyStreamsInfoView = (props: {
     
                 return (
                   <div 
-                    key={`${index + 20}`}
+                    key={`outgoing-stream-${index}}`}
                     onClick={onSelectStream}
                     className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                   >
@@ -1771,7 +1771,7 @@ export const MoneyStreamsInfoView = (props: {
                 )
               })}
 
-              {(streamingAccountCombinedList && streamingAccountCombinedList.map((streaming, index) => {
+              {(streamingAccountCombinedList && streamingAccountCombinedList.map((streaming, outerIndex) => {
                   const v1 = streaming.treasury as unknown as TreasuryInfo;
                   const v2 = streaming.treasury as Treasury;
                   const isNewTreasury = streaming && streaming.treasury.version >= 2 ? true : false;
@@ -1818,9 +1818,7 @@ export const MoneyStreamsInfoView = (props: {
                   const resume = amount > 1 ? "streams" : "stream";
       
                   return (
-                    <div 
-                      key={`${index + 30}`}
-                    >
+                    <div key={`streaming-account-${outerIndex}`}>
                       <ResumeItem
                         title={title}
                         extraTitle={badges}
@@ -1840,7 +1838,7 @@ export const MoneyStreamsInfoView = (props: {
                       />
       
                       {(streaming.streams && streaming.streams.length > 0) && (
-                        streaming.streams.map((stream, index) => {
+                        streaming.streams.map((stream, innerIndex) => {
                           const onSelectStream = () => {
                             // Sends outgoing stream value to the parent component "Accounts"
                             onSendFromStreamingAccountOutgoingStreamInfo(stream, streaming.treasury);
@@ -1872,12 +1870,12 @@ export const MoneyStreamsInfoView = (props: {
       
                           return (
                             <div 
-                              key={`${index + 40}`}
+                              key={`streaming-account-stream-${innerIndex}`}
                               onClick={onSelectStream}
-                              className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                              className={`d-flex w-100 align-items-center simplelink hover-list ${(innerIndex + 1) % 2 === 0 ? '' : 'background-gray'}`}
                               >
                                 <ResumeItem
-                                  id={index}
+                                  id={innerIndex}
                                   img={img}
                                   title={title}
                                   status={status}

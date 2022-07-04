@@ -6,10 +6,9 @@ import "./style.scss";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
-import moment from "moment";
 import { useCallback, useContext, useEffect } from "react";
 import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
-import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from "../../utils/ui";
+import { getFormattedNumberToLocale, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
@@ -228,7 +227,6 @@ export const MoneyStreamDetails = (props: {
     }
   }, [t]);
 
-
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
     if (item && publicKey) {
       const v1 = item as StreamInfo;
@@ -241,6 +239,16 @@ export const MoneyStreamDetails = (props: {
     }
     return false;
   }, [publicKey]);
+
+  const isStartDateFuture = useCallback((date: string): boolean => {
+    const now = new Date().toUTCString();
+    const nowUtc = new Date(now);
+    const comparedDate = new Date(date);
+    if (comparedDate > nowUtc) {
+      return true;
+    }
+    return false;
+  }, []);
 
   const getActivityIcon = (item: StreamActivity) => {
     if (isInboundStream(stream as StreamInfo)) {
@@ -291,6 +299,16 @@ export const MoneyStreamDetails = (props: {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, streamActivity]);
+
+
+  ///////////////
+  // Rendering //
+  ///////////////
+
+  const getRelativeDate = (utcDate: string) => {
+    const reference = new Date(utcDate);
+    return relativeTimeFromDates(reference);
+  }
 
   const renderActivities = (streamVersion: number) => {
     return (
@@ -496,8 +514,8 @@ export const MoneyStreamDetails = (props: {
   // Tab details
   const detailsData = [
     {
-      label: "Started on:",
-      value: stream ? moment(stream.startUtc).format("LLL").toLocaleString() : "--"
+      label: stream ? isStartDateFuture(stream.startUtc as string) ? "Starting on:" : "Started on:" : "--",
+      value: stream ? getReadableDate(stream.startUtc as string, true) : "--"
     },
     {
       label: isStreamIncoming && "Receiving from:",
@@ -529,7 +547,7 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: stream && getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
-      value: stream && getStreamStatus(stream) === "Stopped" && moment(isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string).format("LLL").toLocaleString()
+      value: stream && getStreamStatus(stream) === "Stopped" && getRelativeDate(isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string)
     },
   ];
 

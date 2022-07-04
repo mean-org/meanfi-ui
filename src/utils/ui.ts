@@ -7,6 +7,7 @@ import { formatAmount } from "./utils";
 import { environment } from "../environments/environment";
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
 import dateFormat from "dateformat";
+import { TimeData } from "../models/common-types";
 
 export const isDev = (): boolean => {
     return environment === 'development';
@@ -250,6 +251,38 @@ export function msToTime(ms: number) {
     else return days + " Days"
 }
 
+export function getTimeRemaining(endtime: string): TimeData {
+    const total = Date.parse(endtime) - Date.now();
+    const seconds = Math.floor((total / 1000) % 60);
+    const minutes = Math.floor((total / 1000 / 60) % 60);
+    const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(total / (1000 * 60 * 60 * 24));
+
+    return {
+        total,
+        days,
+        hours,
+        minutes,
+        seconds
+    };
+}
+
+export function getTimeEllapsed(endtime: string): TimeData {
+    const total = Date.now() - Date.parse(endtime);
+    const seconds = Math.floor((total / 1000) % 60);
+    const minutes = Math.floor((total / 1000 / 60) % 60);
+    const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(total / (1000 * 60 * 60 * 24));
+
+    return {
+        total,
+        days,
+        hours,
+        minutes,
+        seconds
+    };
+}
+
 export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: any): string => {
     let result = '';
     switch (val) {
@@ -347,6 +380,44 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
             break;
     }
     return value;
+}
+
+export const getPaymentIntervalFromSeconds = (value: number): PaymentRateType => {
+    switch (value) {
+        case 60:
+            return PaymentRateType.PerMinute;
+        case 3600:
+            return PaymentRateType.PerHour;
+        case 86400:
+            return PaymentRateType.PerDay;
+        case 604800:
+            return PaymentRateType.PerWeek;
+        case 2629750:
+            return PaymentRateType.PerMonth;
+        case 31557000:
+            return PaymentRateType.PerYear;
+        default:
+            return PaymentRateType.PerMonth;    // Default
+    }
+}
+
+export const getDurationUnitFromSeconds = (value: number, trans?: any): string => {
+    switch (value) {
+        case 60:
+            return trans ? trans('general.minute') : 'minute';
+        case 3600:
+            return trans ? trans('general.hour') : 'hour';
+        case 86400:
+            return trans ? trans('general.day') : 'day';
+        case 604800:
+            return trans ? trans('general.week') : 'week';
+        case 2629750:
+            return trans ? trans('general.month') : 'month';
+        case 31557000:
+            return trans ? trans('general.year') : 'year';
+        default:
+            return trans ? trans('general.month') : 'month';
+    }
 }
 
 export const getTransactionOperationDescription = (status: TransactionStatus | undefined, trans?: any): string => {
@@ -565,6 +636,11 @@ export const isToday = (someDate: string): boolean => {
         inputDate.getFullYear() === today.getFullYear()
 }
 
+export const toTimestamp = (date: string): number => {
+    const dt = Date.parse(date);
+    return dt / 1000;
+}
+
 export function displayTimestamp(
     unixTimestamp: number,
     shortTimeZoneName = false
@@ -586,12 +662,51 @@ export function displayTimestamp(
     return `${dateString} at ${timeString}`;
 }
 
+/**
+ * Should I use this format?
+ * console.log(moment().endOf('day').fromNow());                // in 9 hours
+ * console.log(moment("2020-04-04 11:45:26.123").fromNow());    // 6 minutes ago
+ * console.log(moment().startOf('hour').fromNow());             // an hour ago
+ * console.log(moment().startOf('day').fromNow());              // 15 hours ago
+ * console.log(moment("20111031", "YYYYMMDD").fromNow());       // 10 years ago
+ */
+
+export const getTimeFromNow = (date: string, withoutSuffix = false): string => {
+    const parsedDate = Date.parse(date);
+    return moment(parsedDate).fromNow(withoutSuffix);
+}
+
+export const getTimeToNow = (date: string): string => {
+    const parsedDate = Date.parse(date);
+    return moment(parsedDate).toNow(true);
+}
+
 export function addMinutes(date: Date, minutes: number) {
     return new Date(date.getTime() + minutes * 60000);
 }
 
 export function addHours(date: Date, hours: number) {
     return new Date(date.setUTCHours(date.getUTCHours() + hours));
+}
+
+export const getPercentageBetweenTwoDates = (starDate: string, endDate: string, todayDate?: string) => {
+    const start = Date.parse(starDate);
+    const end = Date.parse(endDate);
+    const today = todayDate
+        ? Date.parse(todayDate)
+        : Math.round(new Date().getTime());
+
+    const elapsed = Math.abs(today - start);
+    const remaining = Math.abs(end - start);
+    return (elapsed/remaining) * 100;
+}
+
+export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number) => {
+    const start = toTimestamp(starDate);
+    const end = toTimestamp(endDate);
+    const delta = Math.abs(end - start);
+    const pctTs = percentage(percent, delta);
+    return start + pctTs;
 }
 
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {

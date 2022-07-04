@@ -1,4 +1,4 @@
-import { useCallback, useContext } from 'react';
+import { useCallback, useContext, useReducer, useState } from 'react';
 import './style.scss';
 import { Button, Col, Dropdown, Row } from "antd"
 import { useTranslation } from 'react-i18next';
@@ -78,6 +78,7 @@ export const ResumeItem = (props: {
   } = props;
 
   const { t } = useTranslation('common');
+  const [counterKey] = useState(new Date().getTime());
 
   const getTransactionStatusAction = useCallback((status: number) => {
 
@@ -177,135 +178,133 @@ export const ResumeItem = (props: {
   };
 
   return (
-    <>
-      <Row gutter={[8, 8]} key="resume-item" onClick={onClick} className={`resume-item-container ${className} ${isLink ? "" : "align-items-end"} ${isDetailsPanel ? "pl-1 pr-2" : ""}`}>
-        <Col xs={xs || 12} sm={sm || 12} md={md || 12} lg={lg || 12} className="resume-left-container">
-          {(src || img) && (
-            <div className="img-container">
-              {src && (
-                <img src={src} alt={title} width={35} height={35} style={{borderRadius: "0.25em !important"}} />
-              )}
-              {img && img}
-            </div>
-          )}
-          <div className={`resume-left-text ${isDetailsPanel ? "pb-1" : ""}`}>
-            <div className={`resume-title ${isDetailsPanel ? "big-title" : ""} ${classNameTitle}`}>
-              {title}
-              {extraTitle && (
-                extraTitle.map((badge: any) => (
-                  <span className="ml-1 badge darken small text-uppercase">
-                    {badge}
-                  </span>
-                ))
-              )}
-            </div>
-
-            {version !== 0 && (
-              subtitle ? (
-                <div className="info-label">
-                  <span className="subtitle">{subtitle}</span>
-                </div>
-              ) : (
-                expires ? (
-                  <div className="info-label">
-                    {(executedOn || status === 2) ? (
-                      <span>Executed on {executedOn}</span>
-                    ) : (
-                      (status === 0 || status === 1) ? (
-                        <Countdown className="align-middle" date={expires.toString()} renderer={renderer} />
-                      ) : status === 4 ? (
-                        <span>Voided</span>
-                      ) : status === 5 ? (
-                        <span>Expired on {expires.toDateString()}</span>
-                      ) : null 
-                    )}
-                  </div>
-                ) : (
-                  <div className="info-label">
-                    <span className="subtitle">Does not expire</span>
-                  </div>
-                )
-              )
+    <Row gutter={[8, 8]} key={`resume-item-${counterKey}`} onClick={onClick} className={`resume-item-container ${className} ${isLink ? "" : "align-items-end"} ${isDetailsPanel ? "pl-1 pr-2" : ""}`}>
+      <Col xs={xs || 12} sm={sm || 12} md={md || 12} lg={lg || 12} className="resume-left-container">
+        {(src || img) && (
+          <div className="img-container">
+            {src && (
+              <img src={src} alt={title} width={35} height={35} style={{borderRadius: "0.25em !important"}} />
+            )}
+            {img && img}
+          </div>
+        )}
+        <div className={`resume-left-text ${isDetailsPanel ? "pb-1" : ""}`}>
+          <div className={`resume-title ${isDetailsPanel ? "big-title" : ""} ${classNameTitle}`}>
+            {title}
+            {extraTitle && (
+              extraTitle.map((badge: any, index: number) => (
+                <span key={`badge-${index}`} className="ml-1 badge darken small text-uppercase">
+                  {badge}
+                </span>
+              ))
             )}
           </div>
-        </Col>
-        <Col className={`resume-right-container ${isDetailsPanel ? "mr-3" : "mr-1"}`}>
-          <div className="resume-right-text">
-            <>
-              <div className={`resume-right-text-up`}>
-                {approved > 0 && (
-                  <div className="thumbs-up" title={userSigned === true ? "You approved this proposal" : ""}>
-                    <span>{approved}</span>
-                    <IconThumbsUp className="mean-svg-icons" />
-                  </div>
-                )}
-                {rejected > 0 && (
-                  version !== 0 && (
-                  <div className="thumbs-down" title={userSigned === false ? "You rejected this proposal" : ""}>
-                    <IconThumbsDown className="mean-svg-icons" />
-                    <span>{rejected}</span>
-                  </div>
-                  )
-                )}
-                {status !== undefined && (
-                  (!isStream) ? (
-                    <div className={`badge-container ${getTransactionStatusBackgroundColor(status as number)}`}>
-                      <span className="badge darken small text-uppercase">{getTransactionStatusAction(status as number)}</span>
-                    </div>
-                  ) : (
-                    <div className={`badge-container ${getStreamStatusBackgroundColor(status as string)}`}>
-                      <span className="badge darken small text-uppercase">
-                        {status}
-                      </span>
-                    </div>
-                  )
-                )}
-                {amount && (
-                  <div className="rate-amount">
-                    {amount}
-                  </div>
-                )}
-                {content && (
-                  <div className="info-label">
-                    {content}
-                  </div>
-                )}
+
+          {version !== 0 && (
+            subtitle ? (
+              <div className="info-label">
+                <span className="subtitle">{subtitle}</span>
               </div>
-              {resume && (
-                <div className={`${!isStreamingAccount ? "info-label" : ""} mb-0`}>{resume}</div>
-              )}
-            </>
-          </div>
-          {hasRightIcon ? (
-            rightIconHasDropdown ? (
-              <Dropdown
-                overlay={dropdownMenu}
-                placement="bottomRight"
-                trigger={["click"]}>
-                <span className="ellipsis-icon icon-button-container">
-                  <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={rightIcon}
-                    onClick={(e) => e.preventDefault()}
-                  />
-                </span>
-              </Dropdown>
             ) : (
-              <span className="icon-button-container">
+              expires ? (
+                <div className="info-label">
+                  {(executedOn || status === 2) ? (
+                    <span>Executed on {executedOn}</span>
+                  ) : (
+                    (status === 0 || status === 1) ? (
+                      <Countdown className="align-middle" date={expires.toString()} renderer={renderer} />
+                    ) : status === 4 ? (
+                      <span>Voided</span>
+                    ) : status === 5 ? (
+                      <span>Expired on {expires.toDateString()}</span>
+                    ) : null 
+                  )}
+                </div>
+              ) : (
+                <div className="info-label">
+                  <span className="subtitle">Does not expire</span>
+                </div>
+              )
+            )
+          )}
+        </div>
+      </Col>
+      <Col className={`resume-right-container ${isDetailsPanel ? "mr-3" : "mr-1"}`}>
+        <div className="resume-right-text">
+          <>
+            <div className={`resume-right-text-up`}>
+              {approved > 0 && (
+                <div className="thumbs-up" title={userSigned === true ? "You approved this proposal" : ""}>
+                  <span>{approved}</span>
+                  <IconThumbsUp className="mean-svg-icons" />
+                </div>
+              )}
+              {rejected > 0 && (
+                version !== 0 && (
+                <div className="thumbs-down" title={userSigned === false ? "You rejected this proposal" : ""}>
+                  <IconThumbsDown className="mean-svg-icons" />
+                  <span>{rejected}</span>
+                </div>
+                )
+              )}
+              {status !== undefined && (
+                (!isStream) ? (
+                  <div className={`badge-container ${getTransactionStatusBackgroundColor(status as number)}`}>
+                    <span className="badge darken small text-uppercase">{getTransactionStatusAction(status as number)}</span>
+                  </div>
+                ) : (
+                  <div className={`badge-container ${getStreamStatusBackgroundColor(status as string)}`}>
+                    <span className="badge darken small text-uppercase">
+                      {status}
+                    </span>
+                  </div>
+                )
+              )}
+              {amount && (
+                <div className="rate-amount">
+                  {amount}
+                </div>
+              )}
+              {content && (
+                <div className="info-label">
+                  {content}
+                </div>
+              )}
+            </div>
+            {resume && (
+              <div className={`${!isStreamingAccount ? "info-label" : ""} mb-0`}>{resume}</div>
+            )}
+          </>
+        </div>
+        {hasRightIcon ? (
+          rightIconHasDropdown ? (
+            <Dropdown
+              overlay={dropdownMenu}
+              placement="bottomRight"
+              trigger={["click"]}>
+              <span className="ellipsis-icon icon-button-container">
                 <Button
                   type="default"
                   shape="circle"
                   size="middle"
                   icon={rightIcon}
-                  onClick={onClick}
+                  onClick={(e) => e.preventDefault()}
                 />
               </span>
-            )
-          ) : null}
-        </Col>
-      </Row>
-    </>
+            </Dropdown>
+          ) : (
+            <span className="icon-button-container">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={rightIcon}
+                onClick={onClick}
+              />
+            </span>
+          )
+        ) : null}
+      </Col>
+    </Row>
   )
 }
