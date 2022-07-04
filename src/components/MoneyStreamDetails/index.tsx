@@ -7,7 +7,7 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
 import moment from "moment";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
 import { getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";

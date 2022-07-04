@@ -138,16 +138,10 @@ export const MoneyStreamsInfoView = (props: {
   const [totalAccountBalance, setTotalAccountBalance] = useState(0);
   const [rateIncomingPerDay, setRateIncomingPerDay] = useState(0);
   const [rateOutgoingPerDay, setRateOutgoingPerDay] = useState(0);
-
-  // const [loadingIncomingStreams, setLoadingIncomingStreams] = useState(true);
-  // const [loadingOutgoingStreams, setLoadingOutgoingStreams] = useState(true);
-
   const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
-
   const [incomingAmount, setIncomingAmount] = useState<number | undefined>(undefined);
   const [outgoingAmount, setOutgoingAmount] = useState<number | undefined>(undefined);
-
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -1348,17 +1342,6 @@ export const MoneyStreamsInfoView = (props: {
     getQueryAccountType,
     isInboundStream,
   ]);
-
-  // Stop loading incoming and outgoing streams
-  // useEffect(() => {
-  //   if (incomingStreamList && incomingStreamList.length >= 0) {
-  //     setLoadingIncomingStreams(false);
-  //   }
-
-  //   if (outgoingStreamList && outgoingStreamList.length >= 0) {
-  //     setLoadingOutgoingStreams(false);
-  //   }
-  // }, [incomingStreamList, outgoingStreamList]);
 
   // Incoming amount
   useEffect(() => {
