@@ -1,4 +1,4 @@
-import { useCallback, useContext } from 'react';
+import { useCallback, useContext, useReducer, useState } from 'react';
 import './style.scss';
 import { Button, Col, Dropdown, Row } from "antd"
 import { useTranslation } from 'react-i18next';
@@ -78,6 +78,7 @@ export const ResumeItem = (props: {
   } = props;
 
   const { t } = useTranslation('common');
+  const [counterKey] = useState(new Date().getTime());
 
   const getTransactionStatusAction = useCallback((status: number) => {
 
@@ -177,7 +178,7 @@ export const ResumeItem = (props: {
   };
 
   return (
-    <Row gutter={[8, 8]} key="resume-item" onClick={onClick} className={`resume-item-container ${className} ${isLink ? "" : "align-items-end"} ${isDetailsPanel ? "pl-1 pr-2" : ""}`}>
+    <Row gutter={[8, 8]} key={`resume-item-${counterKey}`} onClick={onClick} className={`resume-item-container ${className} ${isLink ? "" : "align-items-end"} ${isDetailsPanel ? "pl-1 pr-2" : ""}`}>
       <Col xs={xs || 12} sm={sm || 12} md={md || 12} lg={lg || 12} className="resume-left-container">
         {(src || img) && (
           <div className="img-container">
@@ -191,8 +192,8 @@ export const ResumeItem = (props: {
           <div className={`resume-title ${isDetailsPanel ? "big-title" : ""} ${classNameTitle}`}>
             {title}
             {extraTitle && (
-              extraTitle.map((badge: any) => (
-                <span className="ml-1 badge darken small text-uppercase">
+              extraTitle.map((badge: any, index: number) => (
+                <span key={`badge-${index}`} className="ml-1 badge darken small text-uppercase">
                   {badge}
                 </span>
               ))

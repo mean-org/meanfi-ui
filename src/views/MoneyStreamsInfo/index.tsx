@@ -1649,7 +1649,7 @@ export const MoneyStreamsInfoView = (props: {
     
             return (
               <div 
-                key={index}
+                key={`incoming-stream-${index}`}
                 onClick={onSelectStream}
                 className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
@@ -1751,7 +1751,7 @@ export const MoneyStreamsInfoView = (props: {
     
                 return (
                   <div 
-                    key={`${index}}`}
+                    key={`outgoing-stream-${index}}`}
                     onClick={onSelectStream}
                     className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                   >
@@ -1811,8 +1811,7 @@ export const MoneyStreamsInfoView = (props: {
                   const resume = amount > 1 ? "streams" : "stream";
       
                   return (
-                    <div key={`${outerIndex}`}
-                    >
+                    <div key={`streaming-account-${outerIndex}`}>
                       <ResumeItem
                         title={title}
                         extraTitle={badges}
@@ -1864,7 +1863,7 @@ export const MoneyStreamsInfoView = (props: {
       
                           return (
                             <div 
-                              key={`${innerIndex}`}
+                              key={`streaming-account-stream-${innerIndex}`}
                               onClick={onSelectStream}
                               className={`d-flex w-100 align-items-center simplelink hover-list ${(innerIndex + 1) % 2 === 0 ? '' : 'background-gray'}`}
                               >
