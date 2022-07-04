@@ -918,7 +918,7 @@ export const StreamingAccountView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Withdraw Treasury Funds",
+        "Withdraw treasury funds",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryWithdraw,
