@@ -4923,7 +4923,7 @@ export const AccountsNewView = () => {
                             </span>
                           )}
                           <span className="icon-button-container">
-                            <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+                            <Tooltip placement="top" title={t('assets.account-address-copy-cta')}>
                               <Button
                                 type="default"
                                 shape="circle"
