@@ -1800,12 +1800,14 @@ export const MoneyStreamsInfoView = (props: {
                   const category = isNewTreasury
                     && v2.category === 1 ? 'Payroll' : '';
 
-                  let badges = [];
+                  let badges;
 
-                  category ? (
-                    badges = [category, type]
-                  ) : (
-                    badges = [type]
+                  type && (
+                    category ? (
+                      badges = [category, type]
+                    ) : (
+                      badges = [type]
+                    )
                   )
       
                   const title = isNewTreasury ? v2.name : v1.label;

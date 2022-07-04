@@ -2936,24 +2936,32 @@ export const StreamingAccountView = (props: {
 
   const streamAccountTitle = getStreamingAccountName() ? getStreamingAccountName() : (streamingAccountSelected && shortenAddress(streamingAccountSelected.id as string, 8));
 
-  const v1 = streamingAccountSelected as unknown as TreasuryInfo;
-  const v2 = streamingAccountSelected as Treasury;
-  const isNewTreasury = streamingAccountSelected && streamingAccountSelected.version >= 2 ? true : false;
+  const renderBadges = () => {
+    if (!streamingAccountSelected) { return; }
 
-  const type = isNewTreasury
-  ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-  : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+    const v1 = streamingAccountSelected as unknown as TreasuryInfo;
+    const v2 = streamingAccountSelected as Treasury;
+    const isNewTreasury = streamingAccountSelected && streamingAccountSelected.version >= 2 ? true : false;
 
-  const category = isNewTreasury
-    && v2.category === 1 ? 'Payroll' : '';
+    const type = isNewTreasury
+      ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+      : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
 
-  let badges = [];
+    const category = isNewTreasury
+      && v2.category === 1 ? 'Payroll' : '';
 
-  category ? (
-    badges = [category, type]
-  ) : (
-    badges = [type]
-  )
+    let badges;
+
+    type && (
+      category ? (
+        badges = [category, type]
+      ) : (
+        badges = [type]
+      )
+    )
+
+    return badges;
+  }
 
   return (
     <>
@@ -2968,7 +2976,7 @@ export const StreamingAccountView = (props: {
         {streamingAccountSelected && (
           <ResumeItem
             title={streamAccountTitle}
-            extraTitle={badges}
+            extraTitle={renderBadges()}
             subtitle={streamAccountSubtitle}
             content={streamAccountContent}
             resume={getStreamingAccountResume()}
