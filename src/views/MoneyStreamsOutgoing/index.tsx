@@ -2,7 +2,7 @@ import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
 import { IconEllipsisVertical } from "../../Icons";
 import { MoneyStreamDetails } from "../../components/MoneyStreamDetails";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Stream, STREAM_STATUS, TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, AllocationType, Treasury,   Constants as MSPV2Constants, TreasuryType } from "@mean-dao/msp";
+import { Stream, STREAM_STATUS, TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, AllocationType, Treasury, Constants as MSPV2Constants, TreasuryType } from "@mean-dao/msp";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
@@ -1034,6 +1034,7 @@ export const MoneyStreamsOutgoingView = (props: {
         lastOperation: TransactionStatus.TransactionStart,
         currentOperation: TransactionStatus.InitTransaction
       });
+      
       const streamPublicKey = new PublicKey(streamSelected.id as string);
 
       const data = {
