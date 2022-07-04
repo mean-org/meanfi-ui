@@ -3115,13 +3115,20 @@ export const StreamingAccountView = (props: {
       : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
 
     const category = isNewTreasury
-      && v2.category === 1 ? (v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '') : '';
+      && v2.category === 1 ? "Vesting" : "";
+
+    const subCategory = isNewTreasury
+      && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
 
     let badges;
 
     type && (
       category ? (
-        badges = [category, type]
+        subCategory ? (
+          badges = [category, subCategory, type]
+        ) : (
+          badges = [category, type]
+        )
       ) : (
         badges = [type]
       )

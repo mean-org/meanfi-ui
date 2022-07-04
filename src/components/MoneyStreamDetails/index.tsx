@@ -282,43 +282,6 @@ export const MoneyStreamDetails = (props: {
     }
   }
 
-  const getDepletionLabel = useCallback((item: Stream | StreamInfo) => {
-    const decimals = selectedToken ? selectedToken.decimals : 6;
-    const v1 = item as StreamInfo;
-    const v2 = item as Stream;
-    const nowUtc = new Date().toUTCString();
-    // Get a date 3 hrs from now to compare against depletionDate
-    const added3hrs = new Date(nowUtc);
-    const threehoursFromNow = new Date(added3hrs.getTime()+(3*60*60*1000));
-    // Get a date 3 days from now to compare against depletionDate
-    const added72hrs = new Date(nowUtc);
-    const threeDaysFromNow = new Date(added72hrs.getTime()+(3*24*60*60*1000));
-
-    let depletionDate: Date;
-    let fundsLeft: string;
-    if (item.version >= 2) {
-      depletionDate = new Date(v2.estimatedDepletionDate);
-      const amount = toUiAmount(new BN(v2.fundsLeftInStream), decimals);
-      fundsLeft = formatThousands(amount, decimals, 4);
-    } else {
-      depletionDate = new Date(v1.escrowEstimatedDepletionUtc as string);
-      fundsLeft = formatThousands(v1.escrowUnvestedAmount, decimals, 4);
-    }
-
-    const colorClass = depletionDate < threehoursFromNow
-      ? 'font-bold fg-error'
-      : depletionDate >= threehoursFromNow && depletionDate < threeDaysFromNow
-        ? `font-bold ${theme === 'light' ? "fg-light-orange" : "fg-yellow"}`
-        : ''
-
-    return (
-      <span className={colorClass}>{fundsLeft}</span>
-    );
-  }, [
-    theme,
-    selectedToken,
-  ]);
-
   // Get stream activity
   useEffect(() => {
     if (!stream || !searchParams || !streamActivity) { return; }
