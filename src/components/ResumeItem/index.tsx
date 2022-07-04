@@ -178,7 +178,7 @@ export const ResumeItem = (props: {
 
   return (
     <>
-      <Row gutter={[8, 8]} key="resume-item" className={`resume-item-container ${className} ${isLink ? "" : "align-items-end"} ${isDetailsPanel ? "pl-1 pr-2" : ""}`}>
+      <Row gutter={[8, 8]} key="resume-item" onClick={onClick} className={`resume-item-container ${className} ${isLink ? "" : "align-items-end"} ${isDetailsPanel ? "pl-1 pr-2" : ""}`}>
         <Col xs={xs || 12} sm={sm || 12} md={md || 12} lg={lg || 12} className="resume-left-container">
           {(src || img) && (
             <div className="img-container">

@@ -1825,8 +1825,6 @@ export const MoneyStreamsInfoView = (props: {
                   return (
                     <div 
                       key={index}
-                      onClick={onSelectedStreamingAccount}
-                      className="simplelink"
                     >
                       <ResumeItem
                         title={title}
@@ -1835,7 +1833,7 @@ export const MoneyStreamsInfoView = (props: {
                         subtitle={subtitle}
                         amount={amount}
                         resume={resume}
-                        className="account-category-title"
+                        className="account-category-title simplelink"
                         hasRightIcon={true}
                         rightIcon={<IconArrowForward className="mean-svg-icons" />}
                         isLink={true}

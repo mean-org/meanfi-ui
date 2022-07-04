@@ -2825,11 +2825,11 @@ export const StreamingAccountView = (props: {
           <span className="menu-item-text">Refresh account data</span>
         </Menu.Item>
       )}
-      {isMultisigTreasury() && (
+      {/* {isMultisigTreasury() && (
         <Menu.Item key="ms-02" disabled={hasStreamingAccountPendingTx() || !isTreasurer()} onClick={() => {}}>
           <span className="menu-item-text">SOL balance</span>
         </Menu.Item>
-      )}
+      )} */}
     </Menu>
   );
 

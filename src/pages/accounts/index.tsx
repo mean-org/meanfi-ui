@@ -884,6 +884,8 @@ export const AccountsNewView = () => {
         softReloadStreams();
       } else if (item.operationType === OperationType.StreamResume) {
         softReloadStreams();
+      } else if (item.operationType === OperationType.StreamCreate) {
+        softReloadStreams();
       } else if (item.operationType === OperationType.StreamClose) {
         hardReloadStreams();
         const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
