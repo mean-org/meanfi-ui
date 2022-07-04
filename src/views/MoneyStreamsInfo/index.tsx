@@ -10,7 +10,7 @@ import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowForward, IconLoading, IconVerticalEllipsis } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { OperationType, TransactionStatus } from "../../models/enums";
+import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import { PieChartComponent } from "./PieChart";
 import "./style.scss";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
@@ -1786,7 +1786,7 @@ export const MoneyStreamsInfoView = (props: {
                     : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
 
                   const category = isNewTreasury
-                    && v2.category === 1 ? 'Payroll' : '';
+                    && v2.category === 1 ? (v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '') : '';
 
                   let badges;
 

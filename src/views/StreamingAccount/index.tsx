@@ -24,7 +24,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical } from "../../Icons";
-import { OperationType, TransactionStatus } from "../../models/enums";
+import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
 import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
@@ -2948,7 +2948,7 @@ export const StreamingAccountView = (props: {
       : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
 
     const category = isNewTreasury
-      && v2.category === 1 ? 'Payroll' : '';
+      && v2.category === 1 ? (v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '') : '';
 
     let badges;
 
