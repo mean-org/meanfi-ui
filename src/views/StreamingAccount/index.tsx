@@ -1,5 +1,5 @@
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
-import { Stream, STREAM_STATUS, TransactionFees, Treasury, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, Constants as MSPV2Constants, TreasuryType } from "@mean-dao/msp";
+import { Stream, STREAM_STATUS, TransactionFees, Treasury, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, Constants as MSPV2Constants, TreasuryType, VestingTreasuryActivity, VestingTreasuryActivityAction } from "@mean-dao/msp";
 import { 
   MSP_ACTIONS, 
   calculateActionFees,
@@ -17,12 +17,12 @@ import { useTranslation } from "react-i18next";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
-import { FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { FALLBACK_COIN_IMAGE, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
-import { useConnectionConfig } from "../../contexts/connection";
+import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { IconArrowBack, IconArrowForward, IconEllipsisVertical } from "../../Icons";
+import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
@@ -113,6 +113,9 @@ export const StreamingAccountView = (props: {
     rentExempt: 0
   } as MultisigTransactionFees);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+  const [streamingAccountActivity, setStreamingAccountActivity] = useState<VestingTreasuryActivity[]>([]);
+  const [loadingStreamingAccountActivity, setLoadingStreamingAccountActivity] = useState(false);
+  const [hasMoreStreamingAccountActivity, setHasMoreStreamingAccountActivity] = useState<boolean>(true);
 
   const V1_TREASURY_ID = useMemo(() => { return new PublicKey("DVhWHsWSybDD8n5P6ep7rP4bg7yj55MoeZGQrbLGpQtQ"); }, []);
 
@@ -281,7 +284,103 @@ export const StreamingAccountView = (props: {
     multisigAccounts, 
     publicKey, 
     streamingAccountSelected
-  ])
+  ]);
+
+  const getStreamingAccountActivity = useCallback((streamingAccountSelectedId: string, clearHistory = false) => {
+    if (!streamingAccountSelectedId || !msp || loadingStreamingAccountActivity) {
+      return;
+    }
+  
+    consoleOut('Loading streaming account activity...', '', 'crimson');
+  
+    setLoadingStreamingAccountActivity(true);
+    const streamingAccountPublicKey = new PublicKey(streamingAccountSelectedId);
+  
+    const before = clearHistory
+      ? ''
+      : streamingAccountActivity && streamingAccountActivity.length > 0
+        ? streamingAccountActivity[streamingAccountActivity.length - 1].signature
+        : '';
+    consoleOut('before:', before, 'crimson');
+    msp.listVestingTreasuryActivity(streamingAccountPublicKey, before, 5)
+      .then(value => {
+        consoleOut('Streaming Account activity:', value);
+        const activities = clearHistory
+          ? []
+          : streamingAccountActivity && streamingAccountActivity.length > 0
+            ? JSON.parse(JSON.stringify(streamingAccountActivity))
+            : [];
+  
+        if (value && value.length > 0) {
+          activities.push(...value);
+          setHasMoreStreamingAccountActivity(true);
+        } else {
+          setHasMoreStreamingAccountActivity(false);
+        }
+        setStreamingAccountActivity(activities);
+      })
+      .catch(err => {
+        console.error(err);
+        setStreamingAccountActivity([]);
+        setHasMoreStreamingAccountActivity(false);
+      })
+      .finally(() => setLoadingStreamingAccountActivity(false));
+  
+  }, [loadingStreamingAccountActivity, msp, streamingAccountActivity]);
+
+  const getStreamingAccountActivityAction = (item: VestingTreasuryActivity): string => {
+    let message = '';
+    switch (item.action) {
+        case VestingTreasuryActivityAction.TreasuryAddFunds:
+            message += "Deposit funds in the streaming account";
+            break;
+        case VestingTreasuryActivityAction.TreasuryWithdraw:
+            message += "Withdraw funds from streaming account";
+            break;
+        case VestingTreasuryActivityAction.TreasuryRefresh:
+            message += "Refresh streaming account data";
+            break;
+        case VestingTreasuryActivityAction.StreamCreate:
+            message += "Create stream";
+            break;
+        case VestingTreasuryActivityAction.StreamWithdraw:
+            message += "Withdraw funds from the stream";
+            break;
+        case VestingTreasuryActivityAction.StreamClose:
+            message += "Close stream";
+            break;
+        case VestingTreasuryActivityAction.StreamPause:
+            message += "Pause stream"
+            break;
+        case VestingTreasuryActivityAction.StreamResume:
+            message += "Resume stream"
+            break;
+        default:
+            message += 'Pending...';
+            break;
+    }
+    return message;
+  }
+
+  const getStreamingAccountActivityAssociatedToken = (item: VestingTreasuryActivity) => {
+    const amount = item.amount ? makeDecimal(new BN(item.amount), selectedToken?.decimals || 6) : 0;
+    let message = '';
+    switch (item.action) {
+        case VestingTreasuryActivityAction.TreasuryAddFunds:
+        case VestingTreasuryActivityAction.TreasuryWithdraw:
+            message += `${amount} ${selectedToken?.symbol}`;
+            break;
+        case VestingTreasuryActivityAction.StreamCreate:
+        case VestingTreasuryActivityAction.StreamAllocateFunds:
+        case VestingTreasuryActivityAction.StreamWithdraw:
+            message += `${amount} ${selectedToken?.symbol}`;
+            break;
+        default:
+            message = '';
+            break;
+    }
+    return message;
+  }
 
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
@@ -2814,6 +2913,14 @@ export const StreamingAccountView = (props: {
     }
   }, [ms, publicKey, streamingAccountSelected, getStreamingAccountStreams, treasuryId]);
 
+  // Get the Streeaming Account activity while in "activity" tab
+  useEffect(() => {
+    if (publicKey && msp && streamingAccountSelected && searchParams.get('v') === "activity" && streamingAccountActivity.length < 5) {
+      getStreamingAccountActivity(streamingAccountSelected.id as string);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, msp, publicKey, streamingAccountSelected]);
+
   // Dropdown (three dots button)
   const menu = (
     <Menu>
@@ -2897,6 +3004,66 @@ export const StreamingAccountView = (props: {
     </>
   );
 
+  const renderStreamingAccountActivity = (
+    <>
+      {!loadingStreamingAccountActivity ? (
+        streamingAccountActivity !== undefined && streamingAccountActivity.length > 0 ? (
+          streamingAccountActivity.map((item, index) => {
+
+            // const img = getActivityIcon(item);
+            const title = getStreamingAccountActivityAction(item);
+            const subtitle = <CopyExtLinkGroup
+              content={item.signature}
+              number={8}
+              externalLink={false}
+            />
+
+            const amount = getStreamingAccountActivityAssociatedToken(item);
+            const resume = getShortDate(item.utcDate as string, true);
+
+            return (
+              <a
+                key={index}
+                target="_blank" 
+                rel="noopener noreferrer"
+                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`} 
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              >
+                <ResumeItem
+                  id={`${index}`}
+                  // img={img}
+                  title={title}
+                  subtitle={subtitle}
+                  amount={amount}
+                  resume={resume}
+                  hasRightIcon={true}
+                  rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
+                  isLink={true}
+                />
+              </a>
+          )})
+        ) : (
+          <span className="pl-1">This streaming account has no activity</span>
+        )
+      ) : (
+        <span className="pl-1">Loading streaming account activity ...</span>
+      )}
+      {(streamingAccountActivity && streamingAccountActivity.length >= 5 && hasMoreStreamingAccountActivity) && (
+        <div className="mt-1 text-center">
+          <span className={loadingStreamingAccountActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
+              role="link"
+              onClick={() => {
+              if (streamingAccountSelected) {
+                getStreamingAccountActivity(streamingAccountSelected.id as string);
+              }
+            }}>
+            {t('general.cta-load-more')}
+          </span>
+        </div>
+      )}
+    </>
+  );
+
   // Tabs
   const tabs = [
     {
@@ -2907,7 +3074,7 @@ export const StreamingAccountView = (props: {
     {
       id: "activity",
       name: "Activity",
-      render: ""
+      render: renderStreamingAccountActivity
     }
   ];
 
@@ -2948,13 +3115,20 @@ export const StreamingAccountView = (props: {
       : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
 
     const category = isNewTreasury
-      && v2.category === 1 ? (v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '') : '';
+      && v2.category === 1 ? "Vesting" : "";
+
+    const subCategory = isNewTreasury
+      && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
 
     let badges;
 
     type && (
       category ? (
-        badges = [category, type]
+        subCategory ? (
+          badges = [category, subCategory, type]
+        ) : (
+          badges = [category, type]
+        )
       ) : (
         badges = [type]
       )
