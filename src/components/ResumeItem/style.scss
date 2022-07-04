@@ -84,11 +84,11 @@
         .badge-container {
           margin: 0.25em 0 0.25em 0.25em;
           display: flex;
-          border-radius: 0.25em;
+          border-radius: 0.4em;
           .badge {
             width: 6.8em !important;
-            font-size: 8px !important;
-            padding: 1px !important;
+            // font-size: 8px !important;
+            // padding: 1px !important;
             font-weight: 600 !important;
           }
         }
