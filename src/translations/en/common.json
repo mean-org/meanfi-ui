@@ -1157,7 +1157,7 @@
 			"main-cta-busy": "Creating account",
 			"modal-title": "Create streaming account",
 			"multisig-selector-label": "Multisig account",
-			"multisig-treasury-created-info": "To complete the streaming account setup, the other Multisig signers need to approve it.",
+			"multisig-treasury-created-info": "To complete the streaming account setup, the other multisig owners need to approve it.",
 			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this streaming account creation transaction.",
 			"multisig-treasury-switch-label": "Is this treasury for a Multisig account?",
 			"success-message": "Your new streaming account was created successfully.",
