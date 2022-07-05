@@ -1,5 +1,6 @@
-import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { AnchorProvider, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
+import { IDL as SplTokenIdl } from "@project-serum/anchor/dist/cjs/spl/token";
 import { OperationType } from "./enums";
 import bs58 from "bs58";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -7,6 +8,7 @@ import { MEAN_MULTISIG_PROGRAM, MultisigTransaction } from "@mean-dao/mean-multi
 import { MeanSplTokenInstructionCoder } from "./spl-token-coder/instruction";
 import { MeanSystemInstructionCoder } from "./system-program-coder/instruction";
 
+export const NATIVE_LOADER = new PublicKey("NativeLoader1111111111111111111111111111111");
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
 export const LAMPORTS_PER_SIG = 5000;
 export const DEFAULT_EXPIRATION_TIME_SECONDS = 604800;
@@ -202,6 +204,10 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
   }
 
   switch(transaction.operation) {
+    // System Program
+    case OperationType.Transfer:
+      ix = "transfer";
+      break;
     // MEan Multisig
     case OperationType.EditMultisig:
       ix = programIdl.instructions.filter(ix => ix.name === "editMultisig")[0];
@@ -262,6 +268,10 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
       ix = programIdl.instructions.filter(ix => ix.name === "withdrawFunds")[0];
       break;
     default: ix = undefined;
+  }
+
+  if (typeof(ix) === "string") {
+    return ix.length ? ix : "";
   }
 
   return ix ? ix.name : "";
@@ -328,7 +338,7 @@ export const parseMultisigProposalIx = (
     }
 
     const ixName = getIxNameFromMultisigTransaction(transaction, program.idl);
-    // console.log('ixName', ixName);
+    console.log('ixName', ixName);
 
     if (!ixName) {
       return getMultisigInstructionSummary(ix);
@@ -409,7 +419,7 @@ export const parseMultisigProposalIx = (
       dataIndex ++;
     }
 
-    const nameArray = (program.idl.name as string).split("_");
+    const nameArray = (program?.idl.name as string).split("_");
     const ixInfo = {
       programId: ix.programId.toBase58(),
       programName: nameArray.map(i => `${i[0].toUpperCase()}${i.substring(1)}`).join(" "),
