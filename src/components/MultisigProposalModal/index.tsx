@@ -90,7 +90,7 @@ export const MultisigProposalModal = (props: {
     } else {
       openNotification({
         description: t('notifications.account-address-not-copied-message'),
-        type: "error"
+        type: "error",
       });
     }
 

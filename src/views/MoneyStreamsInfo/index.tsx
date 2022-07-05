@@ -47,6 +47,7 @@ import { StreamOpenModal } from "../../components/StreamOpenModal";
 import { CreateStreamModal } from "../../components/CreateStreamModal";
 import { initialSummary, StreamsSummary } from "../../models/streams";
 import { Identicon } from "../../components/Identicon";
+import { openNotification } from "../../components/Notifications";
 
 const { TabPane } = Tabs;
 
@@ -758,6 +759,12 @@ export const MoneyStreamsInfoView = (props: {
     closeCreateTreasuryModal();
     refreshTokenBalance();
     resetTransactionStatus();
+
+    openNotification({
+      description: `Navigate to outgoing tab to checkout streaming account: ${createOptions.treasuryName}`,
+      type: "info",
+      duration: 20,
+    });
   }, [closeCreateTreasuryModal, refreshTokenBalance, resetTransactionStatus]);
 
   const onExecuteCreateTreasuryTx = async (createOptions: TreasuryCreateOptions) => {
