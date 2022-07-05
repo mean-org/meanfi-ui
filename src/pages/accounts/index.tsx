@@ -2690,13 +2690,13 @@ export const AccountsNewView = () => {
 
     const pk = new PublicKey(accountAddress);
 
-    const treasuries: any[] = await msp.listTreasuries(pk);
+    const treasuries = await msp.listTreasuries(pk);
 
-    const autoclosables = treasuries.filter((t: any) => t.autoClose);
+    const autoclosables = treasuries.filter(t => t.autoClose);
 
     setAutocloseTreasuries(autoclosables);
 
-    return treasuries.filter((t: any) => !t.autoClose);
+    return treasuries.filter(t => !t.autoClose && t.category === 0);
 
   }, [
     msp,
@@ -3154,6 +3154,8 @@ export const AccountsNewView = () => {
     searchParams,
     accountAddress,
     location.pathname,
+    autoOpenDetailsPanel,
+    setDtailsPanelOpen,
     setAccountAddress,
   ]);
 
