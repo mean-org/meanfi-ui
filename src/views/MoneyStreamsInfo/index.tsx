@@ -1506,15 +1506,21 @@ export const MoneyStreamsInfoView = (props: {
     <>
       {totalAccountBalance ? (
         <>
-          <span>{toUsCurrency(totalAccountBalance)}</span>
-          {(withdrawalBalance > unallocatedBalance) ? (
-            <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
+          {totalAccountBalance > 0 ? (
+            <span>{toUsCurrency(totalAccountBalance)}</span>
           ) : (
-            <ArrowUpOutlined className="mean-svg-icons outgoing bounce ml-1" />
+            <span>$0.00</span>
+          )}
+          {totalAccountBalance > 0 && (
+            (withdrawalBalance > unallocatedBalance) ? (
+              <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
+            ) : (
+              <ArrowUpOutlined className="mean-svg-icons outgoing bounce ml-1" />
+            )
           )}
         </>
       ) : (
-        <span>$0.00</span>
+        <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
       )}
     </>
   )
