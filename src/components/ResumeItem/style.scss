@@ -17,6 +17,9 @@
   padding-bottom: 0.5em;
   padding-left: 0.5em !important;
   width: 100% !important;
+  &.no-icon-right {
+    padding-right: 3rem;
+  }
   .resume-left-container {
     display: flex;
     align-items: center;
