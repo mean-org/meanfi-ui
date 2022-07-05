@@ -902,11 +902,7 @@ export const VestingContractCreateForm = (props: {
                         <div className="left">
                             <div className="well">
                                 <div className="flex-fixed-right">
-                                    <div className="left static-data-field">
-                                        {isToday(paymentStartDate || '')
-                                            ? `${paymentStartDate} (${t('common:general.now')})`
-                                            : `${paymentStartDate}`}
-                                    </div>
+                                    <div className="left static-data-field">{paymentStartDate}</div>
                                     <div className="right">
                                         <div className="add-on simplelink">
                                             <>
