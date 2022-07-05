@@ -1963,6 +1963,16 @@ export const MoneyStreamsInfoView = (props: {
               shape="round"
               size="small"
               className="thin-stroke"
+              onClick={showCreateTreasuryModal}>
+                <div className="btn-content">
+                  {param === "multisig" ? "Initiate streaming account" : "Create streaming account"}
+                </div>
+            </Button>
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
               onClick={showOpenStreamModal}>
                 <div className="btn-content">
                   Find money stream
