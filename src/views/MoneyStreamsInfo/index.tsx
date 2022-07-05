@@ -1605,8 +1605,8 @@ export const MoneyStreamsInfoView = (props: {
 
       {((incomingAmount && incomingAmount > 0) || (outgoingAmount && outgoingAmount > 0)) ? (
         <PieChartComponent
-          incomingAmount={incomingAmount}
-          outgoingAmount={outgoingAmount}
+          incomingAmount={incomingAmount as number}
+          outgoingAmount={outgoingAmount as number}
         />
       ) : null}
     </>
