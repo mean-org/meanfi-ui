@@ -91,6 +91,8 @@ export enum OperationType {
     DeleteAsset = 43,
     CreateTransaction = 44,
     RejectTransaction = 45,
+    UpdateSettings = 46,
+    Custom = 49,
     // Tools
     Wrap = 50,
     Unwrap = 51,
