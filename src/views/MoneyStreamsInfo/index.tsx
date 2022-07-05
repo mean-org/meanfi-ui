@@ -1497,20 +1497,20 @@ export const MoneyStreamsInfoView = (props: {
 
   const renderProtocol = (
     <>
-      <div className="badge-container">
-        {listOfBadges.map((badge, index) => (
-          <span key={`${badge}+${index}`} className="badge darken small text-uppercase mr-1">{badge}</span>
-        ))}
-      </div>
       {accountAddress && (
         <CopyExtLinkGroup
           content={accountAddress}
           number={8}
           externalLink={true}
           isTx={false}
-          classNameContainer="mt-2"
+          classNameContainer="mb-1"
         />
       )}
+      <div className="badge-container">
+        {listOfBadges.map((badge, index) => (
+          <span key={`${badge}+${index}`} className="badge darken small text-uppercase mr-1">{badge}</span>
+        ))}
+      </div>
     </>
   );
 
