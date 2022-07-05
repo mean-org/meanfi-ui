@@ -1636,34 +1636,38 @@ export const TreasuryStreamCreateModal = (props: {
 
               {!enableMultipleStreamsOption && (
                 <>
-                  <div className="form-label">{t('treasuries.add-funds.select-streaming-account-label')}</div>
-                  <div className="well">
-                    <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                      <div className="left mr-0">
-                        <AutoComplete
-                          bordered={false}
-                          style={{ width: '100%' }}
-                          dropdownClassName="stream-select-dropdown"
-                          options={renderStreamingAccountsSelectOptions()}
-                          placeholder={t('treasuries.add-funds.search-streams-placeholder')}
-                          onChange={(inputValue, option) => {
-                            setSelectedStreamingAccountId(inputValue);
-                          }}
-                          filterOption={(inputValue, option) => {
-                            if (!treasuryList || treasuryList.length === 0) { return false; }
-                            const originalItem = treasuryList.find(i => {
-                              const trsryName = i.version < 2
-                                ? (i as TreasuryInfo).label
-                                : (i as Treasury).name;
-                              return trsryName === option!.key ? true : false;
-                            });
-                            return option!.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
-                          }}
-                          onSelect={onStreamingAccountSelected}
-                        />
+                  {param === "multisig" && multisigAddress && (
+                    <>
+                      <div className="form-label">{t('treasuries.add-funds.select-streaming-account-label')}</div>
+                      <div className="well">
+                        <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                          <div className="left mr-0">
+                            <AutoComplete
+                              bordered={false}
+                              style={{ width: '100%' }}
+                              dropdownClassName="stream-select-dropdown"
+                              options={renderStreamingAccountsSelectOptions()}
+                              placeholder={t('treasuries.add-funds.search-streams-placeholder')}
+                              onChange={(inputValue, option) => {
+                                setSelectedStreamingAccountId(inputValue);
+                              }}
+                              filterOption={(inputValue, option) => {
+                                if (!treasuryList || treasuryList.length === 0) { return false; }
+                                const originalItem = treasuryList.find(i => {
+                                  const trsryName = i.version < 2
+                                    ? (i as TreasuryInfo).label
+                                    : (i as Treasury).name;
+                                  return trsryName === option!.key ? true : false;
+                                });
+                                return option!.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
+                              }}
+                              onSelect={onStreamingAccountSelected}
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
 
                   <div className="form-label">{t('transactions.memo2.label')}</div>
                   <div className="well">
