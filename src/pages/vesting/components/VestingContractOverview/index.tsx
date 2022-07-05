@@ -118,8 +118,10 @@ export const VestingContractOverview = (props: {
     }, [t, paymentStartDate, isStartDateFuture]);
 
     useEffect(() => {
-        if (paymentStartDate) {
-            if (isStartDateFuture(paymentStartDate)) {
+        if (vestingContract && paymentStartDate) {
+            if (vestingContract.totalStreams === 0) {
+                setCompletedVestingPercentage(0);
+            } else if (isStartDateFuture(paymentStartDate)) {
                 setCompletedVestingPercentage(0);
             } else {
                 // consoleOut('paymentStartDate:', paymentStartDate, 'indianred');
@@ -146,7 +148,7 @@ export const VestingContractOverview = (props: {
         } else {
             setCompletedVestingPercentage(0);
         }
-    }, [cliffReleasePercentage, isStartDateFuture, lockPeriodAmount, lockPeriodUnits, paymentStartDate]);
+    }, [cliffReleasePercentage, isStartDateFuture, lockPeriodAmount, lockPeriodUnits, paymentStartDate, vestingContract]);
 
     return (
         <div className="tab-inner-content-wrapper vertical-scroll">
