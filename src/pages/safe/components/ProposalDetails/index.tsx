@@ -21,6 +21,8 @@ import moment from "moment";
 import { ResumeItem } from '../../../../components/ResumeItem';
 import { RejectCancelModal } from '../../../../components/RejectCancelModal';
 import { AppStateContext } from '../../../../contexts/appstate';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { IDL as SplTokenIdl } from '@project-serum/anchor/dist/cjs/spl/token';
 
 export const ProposalDetailsView = (props: {
   isBusy: boolean;
@@ -110,33 +112,38 @@ export const ProposalDetailsView = (props: {
     if (!selectedMultisig || !solanaApps || !appsProvider || !selectedProposal) { return; }
 
     const timeout = setTimeout(() => {
-      // console.log('solanaApps',solanaApps);
-      const proposalApp = solanaApps.filter((app: App) => app.id === selectedProposal.programId.toBase58())[0];
-      // console.log('proposalApp', proposalApp);
-      if (proposalApp && proposalApp.id !== SystemProgram.programId.toBase58()) {
-        appsProvider
+
+      if (proposalSelected.programId.equals(SystemProgram.programId)) {
+        const ixInfo = parseMultisigSystemProposalIx(proposalSelected);
+        setProposalIxInfo(ixInfo);
+        // console.log('ixInfo', ixInfo);
+      } else if (proposalSelected.programId.equals(TOKEN_PROGRAM_ID)) {
+        setSelectedProposalIdl(SplTokenIdl);
+        const program = createAnchorProgram(connection, TOKEN_PROGRAM_ID, SplTokenIdl);
+        const ixInfo = parseMultisigProposalIx(proposalSelected, program);
+        setProposalIxInfo(ixInfo);
+        // console.log('ixInfo', ixInfo);
+      } else {
+        const proposalApp = solanaApps.filter((app: App) => app.id === selectedProposal.programId.toBase58())[0];
+        if (proposalApp) {
+          appsProvider
           .getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl)
           .then((config: AppConfig) => {
-            // console.log('definition', config.definition);
-            setSelectedProposalIdl(config ? config.definition : undefined);
-            const program = config ? createAnchorProgram(connection, new PublicKey(proposalApp.id), config.definition) : undefined;
+            const idl = config ? config.definition : undefined;
+            setSelectedProposalIdl(idl);
+            const program = idl ? createAnchorProgram(connection, new PublicKey(proposalApp.id), idl) : undefined;
             const ixInfo = parseMultisigProposalIx(proposalSelected, program);
-            // console.log('ixInfo', ixInfo);
             setProposalIxInfo(ixInfo);
+            // console.log('ixInfo', ixInfo);
           });
-      } else if (proposalApp && proposalApp.id === SystemProgram.programId.toBase58()) {
-        const ixInfo = parseMultisigSystemProposalIx(proposalSelected);
-        setProposalIxInfo(ixInfo);
-        // console.log('ixInfo', ixInfo);
-      } else if(proposalSelected.programId.equals(SystemProgram.programId)) {
-        const ixInfo = parseMultisigSystemProposalIx(proposalSelected);
-        setProposalIxInfo(ixInfo);
-      } else {
-        const ixInfo = parseMultisigProposalIx(proposalSelected);
-        setProposalIxInfo(ixInfo);
-        // console.log('ixInfo', ixInfo);
+        } else {
+          const ixInfo = parseMultisigProposalIx(proposalSelected);
+          setProposalIxInfo(ixInfo);
+          // console.log('ixInfo', ixInfo);
+        }
       }
     });
+
     return () => clearTimeout(timeout);
 
   }, [
@@ -427,7 +434,7 @@ export const ProposalDetailsView = (props: {
   const anyoneCanExecuteTx = () => {
     if (selectedProposal.operation !== OperationType.StreamWithdraw &&
         selectedProposal.operation !== OperationType.EditMultisig &&
-        selectedProposal.operation !== OperationType.Transfer &&
+        // selectedProposal.operation !== OperationType.Transfer &&
         selectedProposal.operation !== OperationType.TransferTokens &&
         selectedProposal.operation !== OperationType.UpgradeProgram &&
         selectedProposal.operation !== OperationType.SetMultisigAuthority &&
@@ -636,11 +643,7 @@ export const ProposalDetailsView = (props: {
                     disabled={
                       hasMultisigPendingProposal || 
                       (
-                        !isProposer && 
-                        (
-                          !anyoneCanExecuteTx() || 
-                          !solanaApps.filter((app: App) => app.id === selectedProposal.programId.toBase58())[0]
-                        )
+                        !isProposer && !anyoneCanExecuteTx()
                       )
                     }
                     onClick={() => {

@@ -1451,23 +1451,26 @@ export const SafeView = () => {
       if (data.appId === NATIVE_LOADER.toBase58()) {
         const tx = await parseSerializedTx(connection, data.instruction.uiElements[0].value);
         if (!tx) { return null; }
-        proposalIx = tx?.instructions[0];
+        operation = OperationType.Custom;
+        // TODO: Implement GetOperationFromProposal
+        // operation = getProposalOperation(data);
+        proposalIx = tx.instructions[0];
       } else if (data.appId === CREDIX_PROGRAM.toBase58()) { //
         if (data.instruction.name === "depositFunds") {
-          operation = 110;
+          operation = OperationType.CredixDepositFunds;
           proposalIx = await createCredixDepositIx(
             new PublicKey(data.instruction.uiElements[0].value),
             parseFloat(data.instruction.uiElements[1].value)
           );
         } else if (data.instruction.name === "withdrawFunds") {
-          operation = 111;
-          console.log('WITHDRAW');
+          operation = OperationType.CredixWithdrawFunds;
           proposalIx = await createCredixWithdrawIx(
             new PublicKey(data.instruction.uiElements[0].value),
             parseFloat(data.instruction.uiElements[1].value)
           );
         }
-      } else {
+      } else { // TODO: Implement GetOperationFromProposal
+        // operation = getProposalOperation(data);
         proposalIx = await createProposalIx(
           new PublicKey(data.appId),
           data.config,
