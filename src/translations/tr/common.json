@@ -1125,6 +1125,7 @@
 			"modal-title-fund-stream": "Para aktarımına fon ekle",
 			"money-stream-to-topup-label": "Para Aktarımını tamamla",
 			"search-streams-placeholder": "İsimle ve ya adresle aktarım arayın",
+			"select-streaming-account-label": "Streaming account",
 			"success-message": ""
 		},
 		"back-to-treasuries-cta": "",

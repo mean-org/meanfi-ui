@@ -1107,6 +1107,7 @@
 			"modal-title-fund-stream": "اضافه کردن وجوه به یک مانی استریم",
 			"money-stream-to-topup-label": "مانی استریم برای شارژ",
 			"search-streams-placeholder": "استریم را بر اساس نام یا آدرس جستجو کنید",
+			"select-streaming-account-label": "Streaming account",
 			"success-message": "Your streaming account was funded successfully."
 		},
 		"back-to-treasuries-cta": "Back to Streaming Accounts",

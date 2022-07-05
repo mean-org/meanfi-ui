@@ -1125,6 +1125,7 @@
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "按名称或地址搜索流",
+			"select-streaming-account-label": "Streaming account",
 			"success-message": "您的资金已成功筹措。"
 		},
 		"back-to-treasuries-cta": "返回国库",

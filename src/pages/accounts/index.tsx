@@ -4844,13 +4844,13 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">selectedCategory:</span><span className="ml-1 font-bold fg-dark-active">{selectedCategory || '-'}</span>
           <span className="ml-1">pathParamStreamingTab:</span><span className="ml-1 font-bold fg-dark-active">{pathParamStreamingTab || '-'}</span>
           <span className="ml-1">previousRoute:</span><span className="ml-1 font-bold fg-dark-active">{previousRoute || '-'}</span>
         </div>
-      )}
+      )} */}
 
       <div className="container main-container accounts">
 
@@ -5137,6 +5137,7 @@ export const AccountsNewView = () => {
                             ) : pathParamTreasuryId && pathParamStreamingTab === "outgoing" ? (
                               <StreamingAccountView
                                 streamSelected={streamDetail}
+                                treasuryList={treasuryList}
                                 multisigAccounts={multisigAccounts}
                                 streamingAccountSelected={treasuryDetail}
                                 onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}

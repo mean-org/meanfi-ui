@@ -1125,6 +1125,7 @@
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Search stream by name or address",
+			"select-streaming-account-label": "Streaming account",
 			"success-message": "Your streaming account was funded successfully."
 		},
 		"back-to-treasuries-cta": "Back to Streaming Accounts",
