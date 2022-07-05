@@ -1672,6 +1672,8 @@ export const MoneyStreamsInfoView = (props: {
                   rightIcon={<IconArrowForward className="mean-svg-icons" />}
                   isLink={true}
                   isStream={true}
+                  xs={24}
+                  md={24}
                 />
               </div>
             )
@@ -1774,6 +1776,8 @@ export const MoneyStreamsInfoView = (props: {
                       rightIcon={<IconArrowForward className="mean-svg-icons" />}
                       isLink={true}
                       isStream={true}
+                      xs={24}
+                      md={24}
                     />
                   </div>
                 )
@@ -1839,9 +1843,9 @@ export const MoneyStreamsInfoView = (props: {
                         rightIcon={<IconArrowForward className="mean-svg-icons" />}
                         isLink={true}
                         onClick={onSelectedStreamingAccount}
-                        xs={12}
+                        xs={24}
                         sm={18}
-                        md={12}
+                        md={18}
                         lg={18}
                       />
       
@@ -1893,6 +1897,8 @@ export const MoneyStreamsInfoView = (props: {
                                   rightIcon={<IconArrowForward className="mean-svg-icons" />}
                                   isLink={true}
                                   isStream={true}
+                                  xs={24}
+                                  md={24}
                                 />
                             </div>
                           )

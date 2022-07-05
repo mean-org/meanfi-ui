@@ -3,13 +3,17 @@ import "./style.scss";
 
 export const RightInfoDetails = (props: {
   infoData: Array<any>;
+  xs?: number;
+  sm?: number;
+  md?: number;
+  lg?: number;
 }) => {
-  const { infoData } = props;
+  const { infoData, xs, sm, md, lg } = props;
 
   return (
     <Row gutter={[8, 8]} className="right-info-container">
       {infoData.map((info, index) => (
-        <Col xs={12} sm={12} md={12} lg={12} key={index}>
+        <Col xs={xs || 12} sm={sm || 12} md={md || 12} lg={lg || 12} key={index}>
           <div className="right-info-group">
             <span className="info-label">
               {info.name}

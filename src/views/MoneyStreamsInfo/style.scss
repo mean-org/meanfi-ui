@@ -35,3 +35,15 @@
     color: #e02020;
   }
 }
+@media (max-width: 575px) {
+  .ant-row.resume-item-container {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+@media (min-width: 767px) and (max-width: 991px) {
+  .ant-row.resume-item-container {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
