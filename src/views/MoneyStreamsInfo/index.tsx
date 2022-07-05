@@ -1509,7 +1509,7 @@ export const MoneyStreamsInfoView = (props: {
   const infoData = [
     {
       name: "Protocol",
-      value: "Money Streams",
+      value: t('account-area.money-streams'),
       content: renderProtocol
     },
     {
