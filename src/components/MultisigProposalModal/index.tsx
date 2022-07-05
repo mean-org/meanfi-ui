@@ -22,7 +22,7 @@ import { getMultisigInstructionSummary, parseSerializedTx } from '../../models/m
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { openNotification } from '../Notifications';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -46,12 +46,12 @@ export const MultisigProposalModal = (props: {
   selectedMultisig?: any;
 }) => {
   const navigate = useNavigate();
+  const { address } = useParams();
   const { publicKey } = useWallet();
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const {
     theme,
-    accountAddress,
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
@@ -103,7 +103,7 @@ export const MultisigProposalModal = (props: {
   const onContinueStepOneButtonClick = () => {
     if (selectedApp?.name === "Money Streaming") {
       setIsModalVisible(false);
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/summary?account-type=multisig`;
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/summary?account-type=multisig`;
   
       navigate(url);
     } else {
