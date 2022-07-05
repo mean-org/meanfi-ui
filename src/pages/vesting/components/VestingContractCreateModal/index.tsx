@@ -6,6 +6,7 @@ import { VestingContractCreateForm } from '../VestingContractCreateForm';
 import { TransactionFees } from '@mean-dao/msp';
 
 export const VestingContractCreateModal = (props: {
+  accountAddress: string | null;
   handleClose: any;
   handleOk: any;
   isBusy: boolean;
@@ -18,6 +19,7 @@ export const VestingContractCreateModal = (props: {
   userBalances: any;
 }) => {
   const {
+    accountAddress,
     handleClose,
     handleOk,
     isBusy,
@@ -49,6 +51,7 @@ export const VestingContractCreateModal = (props: {
           inModal={true}
           token={token}
           isBusy={isBusy}
+          accountAddress={accountAddress}
           isMultisigContext={isMultisigContext}
           transactionFees={transactionFees}
           onStartTransaction={handleOk}

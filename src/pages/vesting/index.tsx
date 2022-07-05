@@ -3964,6 +3964,7 @@ export const VestingView = () => {
 
         {isVestingContractCreateModalVisible && (
           <VestingContractCreateModal
+            accountAddress={accountAddress}
             isBusy={isBusy}
             isMultisigContext={isMultisigContext}
             isVisible={isVestingContractCreateModalVisible}
