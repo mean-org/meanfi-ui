@@ -624,7 +624,19 @@ export const MoneyStreamDetails = (props: {
 
   return (
     <>
-      <div className="">
+      <div className="stream-fields-container">
+        {/* Background animation */}
+        {(stream && getStreamStatus(stream) === "Running") ? (
+          <div className="stream-background">
+            {isInboundStream(stream) ? (
+              <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
+            ) : (
+              <img className="inbound" src="/assets/outgoing-crypto.svg" alt="" />
+            )}
+          </div>
+          ) : null
+        }
+        
         <Row gutter={[8, 8]} className="safe-details-resume">
           <div onClick={hideDetailsHandler} className="back-button icon-button-container">
             <IconArrowBack className="mean-svg-icons" />
