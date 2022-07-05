@@ -606,9 +606,9 @@ export const VestingView = () => {
 
   const getMultisigIdFromContext = useCallback(() => {
 
-    if (!multisigAccounts || !selectedMultisig || !selectedVestingContract) { return ''; }
+    if (!multisigAccounts || !selectedMultisig || !accountAddress) { return ''; }
 
-    if (accountAddress && getQueryAccountType() === "multisig") {
+    if (getQueryAccountType() === "multisig") {
       const multisig = multisigAccounts.find(t => t.authority.toBase58() === accountAddress);
       if (multisig) {
         return multisig.id.toBase58();
@@ -617,7 +617,7 @@ export const VestingView = () => {
 
     return '';
 
-  }, [accountAddress, getQueryAccountType, multisigAccounts, selectedMultisig, selectedVestingContract])
+  }, [accountAddress, getQueryAccountType, multisigAccounts, selectedMultisig])
 
   const getSelectedTreasuryMultisigId = useCallback(() => {
 
