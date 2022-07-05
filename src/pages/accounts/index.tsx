@@ -3154,6 +3154,8 @@ export const AccountsNewView = () => {
     searchParams,
     accountAddress,
     location.pathname,
+    autoOpenDetailsPanel,
+    setDtailsPanelOpen,
     setAccountAddress,
   ]);
 

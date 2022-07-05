@@ -23,7 +23,7 @@ import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contex
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { openNotification } from '../Notifications';
 import { useNavigate } from 'react-router-dom';
-import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -51,6 +51,7 @@ export const MultisigProposalModal = (props: {
   const connectionConfig = useConnectionConfig();
   const {
     theme,
+    accountAddress,
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
@@ -102,7 +103,9 @@ export const MultisigProposalModal = (props: {
   const onContinueStepOneButtonClick = () => {
     if (selectedApp?.name === "Money Streaming") {
       setIsModalVisible(false);
-      navigate(`${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?multisig=${selectedMultisig.authority.toBase58()}`);
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/summary?account-type=multisig`;
+  
+      navigate(url);
     } else {
       setCurrentStep(1);  // Go to step 2
     }
