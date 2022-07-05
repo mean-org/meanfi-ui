@@ -1503,7 +1503,24 @@ export const MoneyStreamsInfoView = (props: {
 
   // Balance
   const renderBalance = (
-    <a href="https://docs.meanfi.com/products/developers/smart-contracts"  target="_blank" rel="noopener noreferrer" className="simplelink underline-on-hover">Tracking 2 smart contracts</a>
+    <>
+      {totalAccountBalance ? (
+        <>
+          <span>{toUsCurrency(totalAccountBalance)}</span>
+          {(withdrawalBalance > unallocatedBalance) ? (
+            <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
+          ) : (
+            <ArrowUpOutlined className="mean-svg-icons outgoing bounce ml-1" />
+          )}
+        </>
+      ) : (
+        <span>$0.00</span>
+      )}
+    </>
+  )
+
+  const renderBalanceContracts = (
+    <a href="https://docs.meanfi.com/products/developers/smart-contracts" target="_blank" rel="noopener noreferrer" className="simplelink underline-on-hover">Tracking 2 smart contracts</a>
   );
 
   const infoData = [
@@ -1514,8 +1531,8 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       name: "Balance (My TVL)",
-      value: totalAccountBalance ? toUsCurrency(totalAccountBalance) : "$0.00",
-      content: renderBalance
+      value: renderBalance,
+      content: renderBalanceContracts
     }
   ];
 
