@@ -1495,12 +1495,23 @@ export const MoneyStreamsInfoView = (props: {
   // Protocol
   const listOfBadges = ["MSP", "DEFI", "Money Streams"];
 
-  const renderBadges = (
-    <div className="badge-container">
-      {listOfBadges.map((badge, index) => (
-        <span key={`${badge}+${index}`} className="badge darken small text-uppercase mr-1">{badge}</span>
-      ))}
+  const renderProtocol = (
+    <>
+      <div className="badge-container">
+        {listOfBadges.map((badge, index) => (
+          <span key={`${badge}+${index}`} className="badge darken small text-uppercase mr-1">{badge}</span>
+        ))}
       </div>
+      {accountAddress && (
+        <CopyExtLinkGroup
+          content={accountAddress}
+          number={8}
+          externalLink={true}
+          isTx={false}
+          classNameContainer="mt-2"
+        />
+      )}
+    </>
   );
 
   // Balance
@@ -1512,7 +1523,7 @@ export const MoneyStreamsInfoView = (props: {
     {
       name: "Protocol",
       value: "Money Streams",
-      content: renderBadges
+      content: renderProtocol
     },
     {
       name: "Balance (My TVL)",
@@ -1601,13 +1612,13 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
-  const subtitle = accountAddress && (
-    <CopyExtLinkGroup
-      content={accountAddress}
-      number={8}
-      externalLink={true}
-    />
-  );
+  // const subtitle = accountAddress && (
+  //   <CopyExtLinkGroup
+  //     content={accountAddress}
+  //     number={8}
+  //     externalLink={true}
+  //   />
+  // );
 
   // Incoming streams list
   const renderListOfIncomingStreams = (
@@ -1675,31 +1686,31 @@ export const MoneyStreamsInfoView = (props: {
   );
 
   // Dropdown (three dots button) inside outgoing stream list
-  const menu = (
-    <Menu>
-      <Menu.Item key="00" onClick={showCreateMoneyStreamModal}>
-        <span className="menu-item-text">{param === "multisig" ? "Initiate outgoing stream" : "Add outgoing stream"}</span>
-      </Menu.Item>
-      <Menu.Item key="01" onClick={showCreateTreasuryModal}>
-        <span className="menu-item-text">{param === "multisig" ? "Initiate streaming account" : "Add streaming account"}</span>
-      </Menu.Item>
-    </Menu>
-  );
+  // const menu = (
+  //   <Menu>
+  //     <Menu.Item key="00" onClick={showCreateMoneyStreamModal}>
+  //       <span className="menu-item-text">{param === "multisig" ? "Initiate outgoing stream" : "Add outgoing stream"}</span>
+  //     </Menu.Item>
+  //     <Menu.Item key="01" onClick={showCreateTreasuryModal}>
+  //       <span className="menu-item-text">{param === "multisig" ? "Initiate streaming account" : "Add streaming account"}</span>
+  //     </Menu.Item>
+  //   </Menu>
+  // );
 
-  const renderOutgoingAmoungOfStreams = (
-    <>
-      {outgoingAmount === undefined ? (
-        <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
-      ) : (
-        outgoingAmount
-      )}
-    </>
-  );
+  // const renderOutgoingAmoungOfStreams = (
+  //   <>
+  //     {outgoingAmount === undefined ? (
+  //       <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+  //     ) : (
+  //       outgoingAmount
+  //     )}
+  //   </>
+  // );
 
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
     <>
-      <ResumeItem
+      {/* <ResumeItem
         title="Outflows"
         classNameTitle="text-uppercase"
         subtitle={subtitle}
@@ -1711,7 +1722,7 @@ export const MoneyStreamsInfoView = (props: {
         rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
         dropdownMenu={menu}
         isLink={false}
-      />
+      /> */}
       {(!loadingStreams && !loadingCombinedStreamingList) ? (
         ((outgoingStreamList !== undefined && outgoingStreamList.length > 0) || (streamingAccountCombinedList !== undefined && streamingAccountCombinedList.length > 0)) ? (
           <>
@@ -1957,6 +1968,16 @@ export const MoneyStreamsInfoView = (props: {
               <div className="btn-content">
                 {param === "multisig" ? "Initiate stream" : "Create stream"}
               </div>
+            </Button>
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={showCreateTreasuryModal}>
+                <div className="btn-content">
+                  {param === "multisig" ? "Initiate streaming account" : "Create streaming account"}
+                </div>
             </Button>
             <Button
               type="default"
