@@ -11,6 +11,7 @@ import {
   LAMPORTS_PER_SOL,
   MemcmpFilter,
   PublicKey,
+  SystemProgram,
   // Signer,
   // SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -79,7 +80,7 @@ import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
-import { MultisigTransactionWithId, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
+import { MultisigTransactionWithId, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 
 const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -1447,26 +1448,29 @@ export const SafeView = () => {
       let operation = 0;
       let proposalIx: TransactionInstruction | null = null;
 
-      if (data.appId === MEAN_MULTISIG_PROGRAM.toBase58()) {
+      if (data.appId === NATIVE_LOADER.toBase58()) {
         const tx = await parseSerializedTx(connection, data.instruction.uiElements[0].value);
         if (!tx) { return null; }
-        proposalIx = tx?.instructions[0];
+        operation = OperationType.Custom;
+        // TODO: Implement GetOperationFromProposal
+        // operation = getProposalOperation(data);
+        proposalIx = tx.instructions[0];
       } else if (data.appId === CREDIX_PROGRAM.toBase58()) { //
         if (data.instruction.name === "depositFunds") {
-          operation = 110;
+          operation = OperationType.CredixDepositFunds;
           proposalIx = await createCredixDepositIx(
             new PublicKey(data.instruction.uiElements[0].value),
             parseFloat(data.instruction.uiElements[1].value)
           );
         } else if (data.instruction.name === "withdrawFunds") {
-          operation = 111;
-          console.log('WITHDRAW');
+          operation = OperationType.CredixWithdrawFunds;
           proposalIx = await createCredixWithdrawIx(
             new PublicKey(data.instruction.uiElements[0].value),
             parseFloat(data.instruction.uiElements[1].value)
           );
         }
-      } else {
+      } else { // TODO: Implement GetOperationFromProposal
+        // operation = getProposalOperation(data);
         proposalIx = await createProposalIx(
           new PublicKey(data.appId),
           data.config,
