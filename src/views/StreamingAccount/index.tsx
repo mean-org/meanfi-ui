@@ -39,6 +39,8 @@ import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreate
 import { useParams, useSearchParams } from "react-router-dom";
 import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
 import { Identicon } from "../../components/Identicon";
+import { SolBalanceModal } from "../../components/SolBalanceModal";
+import { NATIVE_SOL } from "../../utils/tokens";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -50,11 +52,13 @@ export const StreamingAccountView = (props: {
   onSendFromStreamingAccountOutgoingStreamInfo?: any;
   treasuryList: (Treasury | TreasuryInfo)[] | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
+  selectedMultisig: MultisigInfo | undefined;
 }) => {
   const {
     tokenList,
     tokenBalance,
     selectedToken,
+    accountAddress,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
@@ -79,8 +83,10 @@ export const StreamingAccountView = (props: {
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const { treasuryId } = useParams();
+  const { address } = useParams();
   
   const { 
+    selectedMultisig,
     multisigAccounts,
     streamingAccountSelected,
     onSendFromStreamingAccountDetails,
@@ -426,6 +432,11 @@ export const StreamingAccountView = (props: {
   ////////////////
   ///  MODALS  ///
   ////////////////
+
+  // SOL Balance Modal
+  const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
+  const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
+  const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
 
   // Create Stream modal
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
@@ -2932,11 +2943,11 @@ export const StreamingAccountView = (props: {
           <span className="menu-item-text">Refresh account data</span>
         </Menu.Item>
       )}
-      {/* {isMultisigTreasury() && (
-        <Menu.Item key="ms-02" disabled={hasStreamingAccountPendingTx() || !isTreasurer()} onClick={() => {}}>
+      {isMultisigTreasury() && (
+        <Menu.Item key="ms-02" disabled={hasStreamingAccountPendingTx() || !isTreasurer()} onClick={showSolBalanceModal}>
           <span className="menu-item-text">SOL balance</span>
         </Menu.Item>
-      )} */}
+      )}
     </Menu>
   );
 
@@ -3312,6 +3323,19 @@ export const StreamingAccountView = (props: {
           content={getTreasuryClosureMessage()}
           transactionStatus={transactionStatus.currentOperation}
           isBusy={isBusy}
+        />
+      )}
+
+      {isSolBalanceModalOpen && (
+        <SolBalanceModal
+          address={NATIVE_SOL.address || ''}
+          accountAddress={accountAddress}
+          multisigAddress={address as string}
+          isVisible={isSolBalanceModalOpen}
+          handleClose={hideSolBalanceModal}
+          tokenSymbol={NATIVE_SOL.symbol}
+          nativeBalance={nativeBalance}
+          selectedMultisig={selectedMultisig}
         />
       )}
 

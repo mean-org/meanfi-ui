@@ -5139,6 +5139,7 @@ export const AccountsNewView = () => {
                                 streamSelected={streamDetail}
                                 treasuryList={treasuryList}
                                 multisigAccounts={multisigAccounts}
+                                selectedMultisig={selectedMultisig}
                                 streamingAccountSelected={treasuryDetail}
                                 onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
                                 onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
