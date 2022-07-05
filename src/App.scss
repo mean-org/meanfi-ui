@@ -2924,6 +2924,21 @@ main section {
   font-size: 16px;
   &.ant-select-single.ant-select-show-arrow.ant-select-borderless,
   &.ant-select-auto-complete.ant-select-borderless {
+    .ant-select-clear {
+      right: 0;
+      background: var(--color-black);
+      width: 24px;
+      height: 24px;
+      top: 12px;
+      color: var(--color-secondary);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 7px;
+      &:hover {
+        color: var(--color-secondary-alpha-70);
+      }
+    }
     .ant-select-selector {
       padding: 0;
       .ant-select-selection-search {

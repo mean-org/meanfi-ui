@@ -1705,8 +1705,8 @@ export const MoneyStreamsInfoView = (props: {
         subtitle={subtitle}
         amount={renderOutgoingAmoungOfStreams}
         resume="outgoing"
-        className="account-category-title no-border-top pr-0 pt-2"
-        hasRightIcon={true}
+        className="account-category-title no-border-top pt-2 no-icon-right"
+        hasRightIcon={false}
         rightIconHasDropdown={true}
         rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
         dropdownMenu={menu}
@@ -1998,7 +1998,7 @@ export const MoneyStreamsInfoView = (props: {
                 ? treasuryList[0]
                 : undefined
           }
-          treasuryList={treasuryList}
+          treasuryList={props.treasuryList?.filter(t => t.version >= 2)}
           isMultisigTreasury={isMultisigTreasury()}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}
