@@ -16,9 +16,9 @@ import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
 import { InputTextAreaMean } from '../InputTextAreaMean';
 import { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
-import { Connection, PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js';
+import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 // import { Identicon } from '../../components/Identicon';
-import { getMultisigInstructionSummary, parseSerializedTx } from '../../models/multisig';
+import { getMultisigInstructionSummary, NATIVE_LOADER, parseSerializedTx } from '../../models/multisig';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { openNotification } from '../Notifications';
@@ -269,6 +269,7 @@ export const MultisigProposalModal = (props: {
       selectedApp.defUrl
     )
     .then((config: any) => {
+      console.log('selected app config', config);
       setSelectedAppConfig(config);
     })
     .catch((err: any) => {
@@ -301,6 +302,7 @@ export const MultisigProposalModal = (props: {
       {solanaApps.length > 0 && (
         solanaApps.map((app, index) => {
           const onSelectApp = () => {
+            console.log('selected app', app);
             setSelectedApp(app);
             setProposalTitleValue("");
             setProposalExpiresValue(expires[0]);
@@ -310,7 +312,7 @@ export const MultisigProposalModal = (props: {
           return (
             <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
               <div className={`select-app-item simplelink ${selectedApp && selectedApp.id === app.id ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
-                {app.id === SystemProgram.programId.toBase58() ? (
+                {app.id === NATIVE_LOADER.toBase58() ? (
                   <img src={app.logoUri} width={65} height={65} alt={app.name} />
                   // <Identicon address={PublicKey.default} style={{ width:"65", height:"65", display: "inline-flex" }} />
                   // <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
@@ -804,7 +806,7 @@ export const MultisigProposalModal = (props: {
                     </Row>
 
                     {/* Data from selected instruction */}
-                    {(selectedApp && (selectedApp.id === SystemProgram.programId.toBase58())) ? (
+                    {(selectedApp && (selectedApp.id === NATIVE_LOADER.toBase58())) ? (
                       <>
                         {isSerializedTxValid && (
                           Object.keys(inputState).map((key, index) => (
