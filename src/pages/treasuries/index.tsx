@@ -489,7 +489,7 @@ export const TreasuriesView = () => {
       treasuries = multisigTreasuries;
     } 
 
-    return treasuries.filter((t: any) => !t.autoClose);
+    return treasuries.filter(t => !t.autoClose && t.category === 0);
 
   }, [
     connection, 

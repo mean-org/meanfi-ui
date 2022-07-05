@@ -65,7 +65,7 @@ export const TreasuriesSummary = (props: {
 
         const treasuries = await msp.listTreasuries(new PublicKey(address));
 
-        return treasuries.filter((t: any) => !t.autoClose);
+        return treasuries.filter(t => !t.autoClose && t.category === 0);
 
     }, [address, connection, loadingTreasuries, msp]);
 
