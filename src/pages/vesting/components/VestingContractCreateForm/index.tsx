@@ -716,7 +716,7 @@ export const VestingContractCreateForm = (props: {
                                             fullTokenInfo={selectedToken}
                                         />
                                     )}
-                                    {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
+                                    {!isMultisigContext && selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
                                         <div className="token-max simplelink" onClick={() => {
                                             if (selectedToken.address === NATIVE_SOL.address) {
                                                 const amount = getMaxAmount();
