@@ -3115,6 +3115,9 @@ export const AccountsNewView = () => {
       if (!streamId) {
         setPathParamStreamId('');
       }
+      if (autoOpenDetailsPanel) {
+        setDtailsPanelOpen(true);
+      }
     } else {
       setSelectedCategory("other-assets");
     }
