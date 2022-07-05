@@ -35,7 +35,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { INITIAL_TREASURIES_SUMMARY, TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
 import { customLogger } from "../..";
@@ -112,6 +112,7 @@ export const MoneyStreamsInfoView = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const { address } = useParams();
   const navigate = useNavigate();
 
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
@@ -553,26 +554,6 @@ export const MoneyStreamsInfoView = (props: {
 
     consoleOut('=========== Block start ===========', '', 'orange');
 
-
-        // if (outgoingStreamList) {
-    //   for (const stream of outgoingStreamList) {
-    //     const v1 = stream as StreamInfo;
-    //     const v2 = stream as Stream;
-
-    //     const isNew = v2.version && v2.version >= 2 ? true : false;
-
-    //     const token = getTokenByMintAddress(stream.associatedToken as string);
-        
-    //     if (token) {
-    //       const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-
-    //       const fundsLeftInStreamAmount = isNew ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount;
-
-    //       totalUnallocatedAmount += fundsLeftInStreamAmount * tokenPrice;
-    //     }
-    //   }
-    // }
-
     for (const stream of updatedStreamsv1) {
 
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
@@ -635,7 +616,6 @@ export const MoneyStreamsInfoView = (props: {
 
     // Update state
     setOutgoingStreamsSummary(resume);
-
   }, [
     ms,
     msp,
@@ -1372,7 +1352,7 @@ export const MoneyStreamsInfoView = (props: {
 
   // Live data calculation
   useEffect(() => {
-    if (!publicKey || !treasuryList) { return; }
+    if (!publicKey || !treasuryList || !address) { return; }
 
     const timeout = setTimeout(() => {
       refreshTreasuriesSummary();
@@ -1382,10 +1362,10 @@ export const MoneyStreamsInfoView = (props: {
       clearTimeout(timeout);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey, treasuryList]);
+  }, [publicKey, treasuryList, address]);
 
   useEffect(() => {
-    if (!publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
+    if (!publicKey || !streamList || (!streamListv1 && !streamListv2) || !address) { return; }
 
     const timeout = setTimeout(() => {
       refreshIncomingStreamSummary();
@@ -1397,6 +1377,7 @@ export const MoneyStreamsInfoView = (props: {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    address,
     publicKey,
     streamList,
     streamListv1,
@@ -1405,25 +1386,24 @@ export const MoneyStreamsInfoView = (props: {
 
   // Update incoming balance
   useEffect(() => {
-    if (!publicKey || !incomingStreamsSummary) { return; }
+    if (!publicKey || !incomingStreamsSummary || !address) { return; }
 
     setWithdrawalBalance(incomingStreamsSummary.totalNet);
-  }, [publicKey, incomingStreamsSummary]);
+  }, [publicKey, incomingStreamsSummary, address]);
 
   // Update outgoing balance
   useEffect(() => {
-    if (!publicKey || !streamingAccountsSummary || !outgoingStreamsSummary) { return; }
+    if (!publicKey || !streamingAccountsSummary || !outgoingStreamsSummary || !address) { return; }
 
     setUnallocatedBalance(outgoingStreamsSummary.totalNet + streamingAccountsSummary.totalNet);
-
-  }, [publicKey, streamingAccountsSummary, outgoingStreamsSummary]);
+  }, [publicKey, streamingAccountsSummary, outgoingStreamsSummary, address]);
 
   // Update total account balance
   useEffect(() => {
-    if (!publicKey || !unallocatedBalance || !withdrawalBalance) { return; }
+    if (!publicKey || (!unallocatedBalance && !withdrawalBalance) || !address) { return; }
 
     setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
-  }, [publicKey, unallocatedBalance, withdrawalBalance]);
+  }, [publicKey, unallocatedBalance, withdrawalBalance, address]);
 
   // Calculate the rate per day for incoming streams
   useEffect(() => {
