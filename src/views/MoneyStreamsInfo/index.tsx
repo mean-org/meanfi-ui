@@ -1992,7 +1992,7 @@ export const MoneyStreamsInfoView = (props: {
               className="thin-stroke"
               onClick={showOpenStreamModal}>
                 <div className="btn-content">
-                  Find money stream
+                  Find stream
                 </div>
             </Button>
           </Col>

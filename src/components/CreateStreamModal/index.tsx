@@ -23,7 +23,7 @@ export const CreateStreamModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t("transfers.create-money-stream-modal-title")}</div>}
+      title={<div className="modal-title">Create outgoing stream</div>}
       footer={null}
       visible={isVisible}
       onOk={handleClose}
