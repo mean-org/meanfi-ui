@@ -118,7 +118,7 @@ export const VestingContractDetails = (props: {
                         <div className="left mb-2">
                             {renderStreamingAccount(vestingContract)}
                         </div>
-                        <div className="right mb-2">
+                        <div className="right text-right mb-2">
                             <div className="info-label text-truncate line-height-110">
                                 Available for new streams
                             </div>
