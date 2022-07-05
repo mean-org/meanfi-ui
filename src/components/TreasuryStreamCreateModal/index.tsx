@@ -30,7 +30,7 @@ import {
   toUsCurrency,
 } from '../../utils/ui';
 import { NATIVE_SOL } from '../../utils/tokens';
-import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
 import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
@@ -238,12 +238,13 @@ export const TreasuryStreamCreateModal = (props: {
 
   const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
-  const canCreateStream = useMemo(() => {
-    return isVisible &&
-           treasuryList && treasuryList.length > 0
+  const hasNoStreamingAccounts = useMemo(() => {
+    return  param === "multisig" &&
+            multisigAddress &&
+            (!treasuryList || treasuryList.length === 0)
       ? true
       : false;
-  }, [isVisible, treasuryList]);
+  }, [multisigAddress, param, treasuryList]);
 
   /////////////////
   //   Getters   //
@@ -498,30 +499,33 @@ export const TreasuryStreamCreateModal = (props: {
   }, [isVisible, treasuryDetails]);
 
   useEffect(() => {
-    if (canCreateStream && !workingAssociatedToken) {
-      let tokenAddress = '';
-      let token: TokenInfo | undefined = undefined;
-      if (workingTreasuryDetails) {
-        const v1 = workingTreasuryDetails as TreasuryInfo;
-        const v2 = workingTreasuryDetails as Treasury;
-        tokenAddress = workingTreasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-        token = getTokenByMintAddress(tokenAddress);
-      } else if (treasuryList && treasuryList.length > 0) {
-        const item = treasuryList[0];
-        const v1 = item as TreasuryInfo;
-        const v2 = item as Treasury;
-        tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-        token = getTokenByMintAddress(tokenAddress);
-      }
-
-      if (token) {
-        setSelectedToken(token);
-        consoleOut('Treasury workingAssociatedToken:', token, 'blue');
-      } else {
-        setCustomToken(tokenAddress);
-      }
+    if (hasNoStreamingAccounts || workingAssociatedToken) {
+      return;
     }
-  }, [canCreateStream, getTokenByMintAddress, setCustomToken, treasuryList, workingAssociatedToken, workingTreasuryDetails]);
+
+    let tokenAddress = '';
+    let token: TokenInfo | undefined = undefined;
+    if (workingTreasuryDetails) {
+      const v1 = workingTreasuryDetails as TreasuryInfo;
+      const v2 = workingTreasuryDetails as Treasury;
+      tokenAddress = workingTreasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
+      token = getTokenByMintAddress(tokenAddress);
+    } else if (treasuryList && treasuryList.length > 0) {
+      const item = treasuryList[0];
+      const v1 = item as TreasuryInfo;
+      const v2 = item as Treasury;
+      tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
+      token = getTokenByMintAddress(tokenAddress);
+    }
+
+    if (token) {
+      consoleOut('Treasury workingAssociatedToken:', token, 'blue');
+      setSelectedToken(token);
+    } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
+      setCustomToken(tokenAddress);
+    }
+    setWorkingAssociatedToken(tokenAddress)
+  }, [getTokenByMintAddress, hasNoStreamingAccounts, selectedToken, setCustomToken, treasuryList, workingAssociatedToken, workingTreasuryDetails]);
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
@@ -565,7 +569,6 @@ export const TreasuryStreamCreateModal = (props: {
       }
     }
   }, [
-    isVisible,
     selectedToken,
     workingAssociatedToken,
     getTokenByMintAddress,
@@ -1472,6 +1475,17 @@ export const TreasuryStreamCreateModal = (props: {
     consoleOut('item:', item, 'blue');
     if (item) {
       setWorkingTreasuryDetails(item);
+      const v1 = item as TreasuryInfo;
+      const v2 = item as Treasury;
+      const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
+      const token = getTokenByMintAddress(tokenAddress);
+      if (token) {
+        consoleOut('Treasury workingAssociatedToken:', token, 'blue');
+        setSelectedToken(token);
+      } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
+        setCustomToken(tokenAddress);
+      }
+      setWorkingAssociatedToken(tokenAddress)
     }
   }
 
@@ -1585,156 +1599,244 @@ export const TreasuryStreamCreateModal = (props: {
       afterClose={onAfterClose}
       width={480}>
 
-      <div className="scrollable-content">
-        <StepSelector step={currentStep} steps={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? 3 : 2} onValueSelected={onStepperChange} />
-
-        <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
-
-          {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
-            <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel1-name')}</div>
-          )}
-
-          {/* Create multi-recipient stream checkbox */}
-          {/* {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
-            <div className="mb-2 flex-row align-items-start">
-              <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-multi-recipient-checkbox-label')}</span>
-              <Radio.Group className="ml-2 d-flex" 
-                onChange={onCloseMultipleStreamsChanged} 
-                value={enableMultipleStreamsOption}
-              >
-                <Radio value={true}>{t('general.yes')}</Radio>
-                <Radio value={false}>{t('general.no')}</Radio>
-              </Radio.Group>
-            </div>
-          )} */}
-
-          {!enableMultipleStreamsOption && (
-            <>
-              <div className="form-label">{t('treasuries.add-funds.select-streaming-account-label')}</div>
-              <div className="well">
-                <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                  <div className="left mr-0">
-                    <AutoComplete
-                      bordered={false}
-                      style={{ width: '100%' }}
-                      dropdownClassName="stream-select-dropdown"
-                      options={renderStreamingAccountsSelectOptions()}
-                      placeholder={t('treasuries.add-funds.search-streams-placeholder')}
-                      onChange={(inputValue, option) => {
-                        setSelectedStreamingAccountId(inputValue);
-                      }}
-                      filterOption={(inputValue, option) => {
-                        if (!treasuryList || treasuryList.length === 0) { return false; }
-                        const originalItem = treasuryList.find(i => {
-                          const trsryName = i.version < 2
-                            ? (i as TreasuryInfo).label
-                            : (i as Treasury).name;
-                          return trsryName === option!.key ? true : false;
-                        });
-                        return option!.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
-                      }}
-                      onSelect={onStreamingAccountSelected}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="form-label">{t('transactions.memo2.label')}</div>
-              <div className="well">
-                <div className="flex-fixed-right">
-                  <div className="left">
-                    <input
-                      id="payment-memo-field"
-                      className="w-100 general-text-input"
-                      autoComplete="on"
-                      autoCorrect="off"
-                      type="text"
-                      maxLength={32}
-                      onChange={handleRecipientNoteChange}
-                      placeholder={t('transactions.memo2.placeholder')}
-                      spellCheck="false"
-                      value={recipientNote}
-                    />
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          <div className="form-label icon-label">
-            {!enableMultipleStreamsOption ? t('transactions.recipient.label') : t('treasuries.treasury-streams.multiple-address-list')}
-            {enableMultipleStreamsOption && (
-              <Tooltip placement="top" title={t("treasuries.treasury-streams.multiple-address-question-mark-tooltip")}>
-                <span>
-                  <IconHelpCircle className="mean-svg-icons" />
-                </span>
-              </Tooltip>
-            )}
-          </div>
-
-          {!enableMultipleStreamsOption ? (
-            <div className="well">
-              <div className="flex-fixed-right">
-                <div className="left position-relative">
-                  <span className="recipient-field-wrapper">
-                    <input id="payment-recipient-field"
-                      className="general-text-input"
-                      autoComplete="on"
-                      autoCorrect="off"
-                      type="text"
-                      onFocus={handleRecipientAddressFocusIn}
-                      onChange={handleRecipientAddressChange}
-                      onBlur={handleRecipientAddressFocusOut}
-                      placeholder={t('transactions.recipient.placeholder')}
-                      required={true}
-                      spellCheck="false"
-                      value={recipientAddress}/>
-                    <span 
-                      id="payment-recipient-static-field" 
-                      className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                      {recipientAddress ? recipientAddress : t('transactions.recipient.placeholder')}
-                    </span>
-                  </span>
-                </div>
-              </div>
-              {
-                recipientAddress && !isValidAddress(recipientAddress) && (
-                  <span className="form-field-error">
-                    {t('transactions.validation.address-validation')}
-                  </span>
-                )
-              }
-            </div>
+      {hasNoStreamingAccounts ? (
+        <div className="text-center px-4 py-4">
+          {theme === 'light' ? (
+            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-error" />
           ) : (
-            <div className="well">
-              <div className="flex-fixed-right">
-                <div className="left position-relative">
-                  <span className="recipient-field-wrapper">
-                    <input
-                      type='file'
-                      accept='.csv'
-                      id='csvFile'
-                      onChange={selectCsvHandler}
-                    />
-                  </span>
-                </div>
-              </div>
-              {
-                (!validMultiRecipientsList && (isCsvSelected && listValidAddresses.length === 0)) && (
-                  <span className="form-field-error">
-                    {t('transactions.validation.multi-recipient-invalid-list')}
-                  </span>
-                )
-              }
-            </div>
+            <WarningOutlined style={{ fontSize: 48 }} className={`icon mt-0 mb-3 ${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`} />
           )}
+          <h2 className={`mb-3 ${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`}>No streaming accounts</h2>
+          <p>Your super safe needs a streaming account to set up and fund payment streams. To get started, create and fund a streaming account and then you can proceed with creating a payment stream.</p>
+        </div>
+      ) : (
+        <>
+          <div className="scrollable-content">
+            <StepSelector step={currentStep} steps={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? 3 : 2} onValueSelected={onStepperChange} />
 
-          {/* Payment rate */}
-          {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (
-            <>
-              <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
-              <div className="two-column-form-layout col60x40 mb-3">
-                <div className="left">
+            <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
+
+              {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel1-name')}</div>
+              )}
+
+              {/* Create multi-recipient stream checkbox */}
+              {/* {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+                <div className="mb-2 flex-row align-items-start">
+                  <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-multi-recipient-checkbox-label')}</span>
+                  <Radio.Group className="ml-2 d-flex" 
+                    onChange={onCloseMultipleStreamsChanged} 
+                    value={enableMultipleStreamsOption}
+                  >
+                    <Radio value={true}>{t('general.yes')}</Radio>
+                    <Radio value={false}>{t('general.no')}</Radio>
+                  </Radio.Group>
+                </div>
+              )} */}
+
+              {!enableMultipleStreamsOption && (
+                <>
+                  <div className="form-label">{t('treasuries.add-funds.select-streaming-account-label')}</div>
+                  <div className="well">
+                    <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                      <div className="left mr-0">
+                        <AutoComplete
+                          bordered={false}
+                          style={{ width: '100%' }}
+                          dropdownClassName="stream-select-dropdown"
+                          options={renderStreamingAccountsSelectOptions()}
+                          placeholder={t('treasuries.add-funds.search-streams-placeholder')}
+                          onChange={(inputValue, option) => {
+                            setSelectedStreamingAccountId(inputValue);
+                          }}
+                          filterOption={(inputValue, option) => {
+                            if (!treasuryList || treasuryList.length === 0) { return false; }
+                            const originalItem = treasuryList.find(i => {
+                              const trsryName = i.version < 2
+                                ? (i as TreasuryInfo).label
+                                : (i as Treasury).name;
+                              return trsryName === option!.key ? true : false;
+                            });
+                            return option!.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
+                          }}
+                          onSelect={onStreamingAccountSelected}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="form-label">{t('transactions.memo2.label')}</div>
+                  <div className="well">
+                    <div className="flex-fixed-right">
+                      <div className="left">
+                        <input
+                          id="payment-memo-field"
+                          className="w-100 general-text-input"
+                          autoComplete="on"
+                          autoCorrect="off"
+                          type="text"
+                          maxLength={32}
+                          onChange={handleRecipientNoteChange}
+                          placeholder={t('transactions.memo2.placeholder')}
+                          spellCheck="false"
+                          value={recipientNote}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="form-label icon-label">
+                {!enableMultipleStreamsOption ? t('transactions.recipient.label') : t('treasuries.treasury-streams.multiple-address-list')}
+                {enableMultipleStreamsOption && (
+                  <Tooltip placement="top" title={t("treasuries.treasury-streams.multiple-address-question-mark-tooltip")}>
+                    <span>
+                      <IconHelpCircle className="mean-svg-icons" />
+                    </span>
+                  </Tooltip>
+                )}
+              </div>
+
+              {!enableMultipleStreamsOption ? (
+                <div className="well">
+                  <div className="flex-fixed-right">
+                    <div className="left position-relative">
+                      <span className="recipient-field-wrapper">
+                        <input id="payment-recipient-field"
+                          className="general-text-input"
+                          autoComplete="on"
+                          autoCorrect="off"
+                          type="text"
+                          onFocus={handleRecipientAddressFocusIn}
+                          onChange={handleRecipientAddressChange}
+                          onBlur={handleRecipientAddressFocusOut}
+                          placeholder={t('transactions.recipient.placeholder')}
+                          required={true}
+                          spellCheck="false"
+                          value={recipientAddress}/>
+                        <span 
+                          id="payment-recipient-static-field" 
+                          className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                          {recipientAddress ? recipientAddress : t('transactions.recipient.placeholder')}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  {
+                    recipientAddress && !isValidAddress(recipientAddress) && (
+                      <span className="form-field-error">
+                        {t('transactions.validation.address-validation')}
+                      </span>
+                    )
+                  }
+                </div>
+              ) : (
+                <div className="well">
+                  <div className="flex-fixed-right">
+                    <div className="left position-relative">
+                      <span className="recipient-field-wrapper">
+                        <input
+                          type='file'
+                          accept='.csv'
+                          id='csvFile'
+                          onChange={selectCsvHandler}
+                        />
+                      </span>
+                    </div>
+                  </div>
+                  {
+                    (!validMultiRecipientsList && (isCsvSelected && listValidAddresses.length === 0)) && (
+                      <span className="form-field-error">
+                        {t('transactions.validation.multi-recipient-invalid-list')}
+                      </span>
+                    )
+                  }
+                </div>
+              )}
+
+              {/* Payment rate */}
+              {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (
+                <>
+                  <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
+                  <div className="two-column-form-layout col60x40 mb-3">
+                    <div className="left">
+                      <div className="well mb-1">
+                        <div className="flex-fixed-left">
+                          <div className="left">
+                            <span className="add-on">
+                              {(selectedToken && tokenList) && (
+                                <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
+                                  {tokenList.map((option) => {
+                                    if (option.address === NATIVE_SOL.address) {
+                                      return null;
+                                    }
+                                    return (
+                                      <Option key={option.address} value={option.address}>
+                                        <div className="option-container">
+                                          <TokenDisplay onClick={() => {}}
+                                            mintAddress={option.address}
+                                            name={option.name}
+                                            showCaretDown={workingAssociatedToken ? false : true}
+                                            fullTokenInfo={selectedToken}
+                                          />
+                                          <div className="balance">
+                                            {userBalances && userBalances[option.address] > 0 && (
+                                              <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </Option>
+                                    );
+                                  })}
+                                </Select>
+                              )}
+                            </span>
+                          </div>
+                          <div className="right">
+                            <input
+                              className="general-text-input text-right"
+                              inputMode="decimal"
+                              autoComplete="off"
+                              autoCorrect="off"
+                              type="text"
+                              onChange={handlePaymentRateAmountChange}
+                              pattern="^[0-9]*[.,]?[0-9]*$"
+                              placeholder="0.0"
+                              minLength={1}
+                              maxLength={79}
+                              spellCheck="false"
+                              value={paymentRateAmount}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="right">
+                      <div className="well mb-0">
+                        <div className="flex-fixed-left">
+                          <div className="left">
+                            <Dropdown
+                              overlay={paymentRateOptionsMenu}
+                              trigger={["click"]}>
+                              <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                                <div className="left">
+                                  <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+                                </div>
+                                <div className="right">
+                                  <IconCaretDown className="mean-svg-icons" />
+                                </div>
+                              </span>
+                            </Dropdown>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-label">TOTAL FUNDS TO COMMIT</div>
                   <div className="well mb-1">
                     <div className="flex-fixed-left">
                       <div className="left">
@@ -1752,7 +1854,6 @@ export const TreasuryStreamCreateModal = (props: {
                                         mintAddress={option.address}
                                         name={option.name}
                                         showCaretDown={workingAssociatedToken ? false : true}
-                                        fullTokenInfo={selectedToken}
                                       />
                                       <div className="balance">
                                         {userBalances && userBalances[option.address] > 0 && (
@@ -1765,6 +1866,28 @@ export const TreasuryStreamCreateModal = (props: {
                               })}
                             </Select>
                           )}
+                          {
+                            selectedToken && unallocatedBalance ? (
+                              <div
+                                className="token-max simplelink"
+                                onClick={() => {
+                                  const decimals = selectedToken ? selectedToken.decimals : 6;
+                                  if (isFeePaidByTreasurer) {
+                                    const maxAmount = getMaxAmount(true);
+                                    consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
+                                    consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+                                    setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                    setTokenAmount(new BN(maxAmount));
+                                  } else {
+                                    const maxAmount = getMaxAmount();
+                                    setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                    setTokenAmount(new BN(maxAmount));
+                                  }
+                                }}>
+                                MAX
+                              </div>
+                            ) : null
+                          }
                         </span>
                       </div>
                       <div className="right">
@@ -1774,734 +1897,640 @@ export const TreasuryStreamCreateModal = (props: {
                           autoComplete="off"
                           autoCorrect="off"
                           type="text"
-                          onChange={handlePaymentRateAmountChange}
+                          onChange={handleFromCoinAmountChange}
                           pattern="^[0-9]*[.,]?[0-9]*$"
                           placeholder="0.0"
                           minLength={1}
                           maxLength={79}
                           spellCheck="false"
-                          value={paymentRateAmount}
+                          value={fromCoinAmount}
                         />
                       </div>
                     </div>
-                  </div>
-                </div>
-                <div className="right">
-                  <div className="well mb-0">
-                    <div className="flex-fixed-left">
-                      <div className="left">
-                        <Dropdown
-                          overlay={paymentRateOptionsMenu}
-                          trigger={["click"]}>
-                          <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                            <div className="left">
-                              <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
-                            </div>
-                            <div className="right">
-                              <IconCaretDown className="mean-svg-icons" />
-                            </div>
-                          </span>
-                        </Dropdown>
+                    <div className="flex-fixed-right">
+                      <div className="left inner-label">
+                        <span>{t('transactions.send-amount.label-right')}:</span>
+                        <span>
+                          {unallocatedBalance && selectedToken
+                            ? getAmountWithSymbol(
+                                makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
+                                selectedToken.address,
+                                true
+                              )
+                            : "0"
+                          }
+                        </span>
                       </div>
+                      <div className="right inner-label">&nbsp;</div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="form-label">TOTAL FUNDS TO COMMIT</div>
-              <div className="well mb-1">
-                <div className="flex-fixed-left">
-                  <div className="left">
-                    <span className="add-on">
-                      {(selectedToken && tokenList) && (
-                        <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
-                          {tokenList.map((option) => {
-                            if (option.address === NATIVE_SOL.address) {
-                              return null;
-                            }
-                            return (
-                              <Option key={option.address} value={option.address}>
-                                <div className="option-container">
-                                  <TokenDisplay onClick={() => {}}
-                                    mintAddress={option.address}
-                                    name={option.name}
-                                    showCaretDown={workingAssociatedToken ? false : true}
-                                  />
-                                  <div className="balance">
-                                    {userBalances && userBalances[option.address] > 0 && (
-                                      <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
-                                    )}
-                                  </div>
-                                </div>
-                              </Option>
-                            );
-                          })}
-                        </Select>
-                      )}
-                      {
-                        selectedToken && unallocatedBalance ? (
-                          <div
-                            className="token-max simplelink"
-                            onClick={() => {
-                              const decimals = selectedToken ? selectedToken.decimals : 6;
-                              if (isFeePaidByTreasurer) {
-                                const maxAmount = getMaxAmount(true);
-                                consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-                                consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                                setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                                setTokenAmount(new BN(maxAmount));
-                              } else {
-                                const maxAmount = getMaxAmount();
-                                setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                                setTokenAmount(new BN(maxAmount));
-                              }
-                            }}>
-                            MAX
-                          </div>
-                        ) : null
-                      }
-                    </span>
-                  </div>
-                  <div className="right">
-                    <input
-                      className="general-text-input text-right"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      type="text"
-                      onChange={handleFromCoinAmountChange}
-                      pattern="^[0-9]*[.,]?[0-9]*$"
-                      placeholder="0.0"
-                      minLength={1}
-                      maxLength={79}
-                      spellCheck="false"
-                      value={fromCoinAmount}
-                    />
-                  </div>
-                </div>
-                <div className="flex-fixed-right">
-                  <div className="left inner-label">
-                    <span>{t('transactions.send-amount.label-right')}:</span>
-                    <span>
-                      {unallocatedBalance && selectedToken
-                        ? getAmountWithSymbol(
-                            makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
-                            selectedToken.address,
-                            true
-                          )
-                        : "0"
-                      }
-                    </span>
-                  </div>
-                  <div className="right inner-label">&nbsp;</div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Send date */}
-          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
-            <>
-              <div className="form-label">{t('transactions.send-date.label')}</div>
-              <div className="well">
-                <div className="flex-fixed-right">
-                  <div className="left static-data-field">
-                    {isToday(paymentStartDate || '')
-                      ? `${paymentStartDate} (${t('common:general.now')})`
-                      : `${paymentStartDate}`}
-                  </div>
-                  <div className="right">
-                    <div className="add-on simplelink">
-                      <>
-                        {
-                          <DatePicker
-                            size="middle"
-                            bordered={false}
-                            className="addon-date-picker"
-                            aria-required={true}
-                            allowClear={false}
-                            disabledDate={disabledDate}
-                            placeholder={t('transactions.send-date.placeholder')}
-                            onChange={(value: any, date: string) => handleDateChange(date)}
-                            defaultValue={moment(
-                              paymentStartDate,
-                              DATEPICKER_FORMAT
-                            )}
-                            format={DATEPICKER_FORMAT}
-                          />
-                        }
-                      </>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
-
-          {treasuryOption && treasuryOption.type === TreasuryType.Open ? (
-            <>
-              {publicKey && (
-                <>
-                  {(recipientAddress && !enableMultipleStreamsOption) && (
-                    <>
-                      <div className="flex-fixed-right">
-                        <div className="left">
-                          <div className="form-label">{t('transactions.resume')}</div>
-                        </div>
-                        <div className="right">
-                          <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                            <IconEdit className="mean-svg-icons" />
-                            <span>{t('general.cta-change')}</span>
-                          </span>
-                        </div>
-                      </div>
-                      <div className="well">
-                        <div className="three-col-flexible-middle">
-                          <div className="left flex-row">
-                            <div className="flex-center">
-                              <Identicon
-                                address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
-                                style={{ width: "30", display: "inline-flex" }} />
-                            </div>
-                            <div className="flex-column pl-3">
-                              <div className="address">
-                                {publicKey && isValidAddress(recipientAddress)
-                                  ? shortenAddress(recipientAddress)
-                                  : t('transactions.validation.no-recipient')}
-                              </div>
-                              <div className="inner-label mt-0">{recipientNote || '-'}</div>
-                            </div>
-                          </div>
-                          <div className="middle flex-center">
-                            <div className="vertical-bar"></div>
-                          </div>
-                          <div className="right flex-column">
-                            <div className="rate">
-                              {getPaymentRateAmount()}
-                            </div>
-                            <div className="inner-label mt-0">{paymentStartDate}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
-                    <>
-                      {!isMultisigTreasury && (
-                        hasIsOwnWallet && (
-                          <span className="form-field-error text-uppercase">
-                            <p>{t("treasuries.treasury-streams.message-warning")}</p>
-                          </span>
-                        )
-                      )}
-                      <div className="flex-fixed-right">
-                        <div className="left">
-                          <div className="form-label">{t('transactions.resume')}</div>
-                        </div>
-                        <div className="right">
-                          <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                            <IconEdit className="mean-svg-icons" />
-                            <span>{t('general.cta-change')}</span>
-                          </span>
-                        </div>
-                      </div>
-                      {listValidAddresses.map((csvItem: any, index: number) => (
-                        <div key={index} className="well">
-                          <div className="three-col-flexible-middle">
-                            <div className="left flex-row">
-                              <div className="flex-center">
-                                <Identicon
-                                  address={isValidAddress(csvItem.address) ? csvItem.address : NATIVE_SOL_MINT.toBase58()}
-                                  style={{ width: "30", display: "inline-flex" }} />
-                              </div>
-                              <div className="flex-column pl-3">
-                                <div className="address">
-                                  {publicKey && isValidAddress(csvItem.address)
-                                    ? shortenAddress(csvItem.address)
-                                    : t('transactions.validation.no-recipient')}
-                                </div>
-                                <div className="inner-label mt-0">{csvItem.streamName.substring(0, 15) || '-'}</div>
-                              </div>
-                            </div>
-                            <div className="middle flex-center">
-                              <div className="vertical-bar"></div>
-                            </div>
-                            <div className="right flex-column">
-                              <div className="rate">
-                                {getPaymentRateAmount()}
-                              </div>
-                              <div className="inner-label mt-0">{paymentStartDate}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </>
-                  )}
                 </>
               )}
 
-              <div className="mb-3 text-center">
-                <div>{t('treasuries.treasury-streams.minimum-allocation-advice', {
-                  tokenSymbol: selectedToken?.symbol,
-                  rateInterval: getPaymentRateAmount()
-                })}</div>
-              </div>
-
-              {/* Amount to stream */}
-              <div className="form-label">
-                <span className="align-middle">{t('treasuries.treasury-streams.allocate-funds-label')}</span>
-                <span className="align-middle">
-                  <InfoIcon content={<span>This is the total amount of funds that will be streamed to the recipient at the payment rate selected. You can add more funds at any time by topping up the stream.</span>}
-                            placement="top">
-                    <InfoCircleOutlined />
-                  </InfoIcon>
-                </span>
-              </div>
-
-              <div className="well">
-                <div className="flex-fixed-left">
-                  <div className="left">
-                    <span className="add-on">
-                      {(selectedToken && tokenList) && (
-                        <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
-                          {tokenList.map((option) => {
-                            if (option.address === NATIVE_SOL.address) {
-                              return null;
-                            }
-                            return (
-                              <Option key={option.address} value={option.address}>
-                                <div className="option-container">
-                                  <TokenDisplay onClick={() => {}}
-                                    mintAddress={option.address}
-                                    name={option.name}
-                                    showCaretDown={workingAssociatedToken ? false : true}
-                                  />
-                                  <div className="balance">
-                                    {userBalances && userBalances[option.address] > 0 && (
-                                      <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
-                                    )}
-                                  </div>
-                                </div>
-                              </Option>
-                            );
-                          })}
-                        </Select>
-                      )}
-                      {selectedToken && unallocatedBalance ? (
-                        <div
-                          className="token-max simplelink"
-                          onClick={() => {
-                            const decimals = selectedToken ? selectedToken.decimals : 6;
-                            if (isFeePaidByTreasurer) {
-                              const maxAmount = getMaxAmount(true);
-                              consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-                              consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                              setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                              setTokenAmount(new BN(maxAmount));
-                            } else {
-                              const maxAmount = getMaxAmount();
-                              setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                              setTokenAmount(new BN(maxAmount));
-                            }
-                          }}>
-                          MAX
-                        </div>
-                      ) : null}
-                    </span>
-                  </div>
-                  <div className="right">
-                    <input
-                      className="general-text-input text-right"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      type="text"
-                      onChange={handleFromCoinAmountChange}
-                      pattern="^[0-9]*[.,]?[0-9]*$"
-                      placeholder="0.0"
-                      minLength={1}
-                      maxLength={79}
-                      spellCheck="false"
-                      value={fromCoinAmount}
-                    />
-                  </div>
-                </div>
-                <div className="flex-fixed-right">
-                  <div className="left inner-label">
-                    <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
-                    <span>
-                      {`${unallocatedBalance && selectedToken
-                          ? getAmountWithSymbol(
-                              makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
-                              selectedToken.address,
-                              true
-                            )
-                          : "0"
-                      }`}
-                    </span>
-                  </div>
-                  <div className="right inner-label">
-                    <>
-                      <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                      ~{fromCoinAmount
-                        ? toUsCurrency(getTokenPrice(fromCoinAmount))
-                        : "$0.00"
-                      }
-                      </span>
-                    </>
-                  </div>
-                </div>
-              </div>
-
-              {/* {treasuryOption && treasuryOption.type === TreasuryType.Lock && (
-                <div className="mb-2 flex-fixed-right">
-                  <div className="left form-label flex-row align-items-center">
-                    {t('treasuries.treasury-streams.allocation-reserved-label')}
-                    <a className="simplelink" href="https://docs.meanfi.com/platform/specifications/money-streaming-protocol#treasuries-and-streams"
-                        target="_blank" rel="noopener noreferrer">
-                      <Button
-                        className="info-icon-button"
-                        type="default"
-                        shape="circle">
-                        <InfoCircleOutlined />
-                      </Button>
-                    </a>
-                  </div>
-                  <div className="right">
-                    <Radio.Group onChange={onAllocationReservedChanged} value={isAllocationReserved}>
-                      <Radio value={true}>{t('general.yes')}</Radio>
-                      <Radio value={false}>{t('general.no')}</Radio>
-                    </Radio.Group>
-                  </div>
-                </div>
-              )} */}
-
-              <div className="ml-1 mb-3">
-                <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>
-              </div>
-
-              <div className="ml-1">
-                <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
-              </div>
-            </>
-          ) : (
-            <>
-              {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
-                <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel2-name')}</div>
-              )}
-
-              {(recipientNote && recipientAddress && fromCoinAmount && selectedToken) && (
-                <div className="flex-fixed-right">
-                  <div className="left">
-                    <div className="mb-3">{t('treasuries.treasury-streams.add-stream-locked.panel2-summary', { recipientNote: recipientNote, fromCoinAmount: fromCoinAmount, selectedTokenName: selectedToken && selectedToken.name, recipientShortenAddress: shortenAddress(recipientAddress)})}</div>
-                  </div>
-                </div>
-              )}
-
-              <div className="form-label">{t('treasuries.treasury-streams.add-stream-locked.panel2-lock-period-label')}</div>
-              <div className="d-flex">
-                <div className="well w-25 mr-1">
-                  <div className="flex-fixed-right">
-                    <div className="left">
-                      <input
-                        id="plock-period-field"
-                        className="w-100 general-text-input"
-                        autoComplete="on"
-                        autoCorrect="off"
-                        type="number"
-                        onChange={handleLockPeriodAmountChange}
-                        placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
-                        spellCheck="false"
-                        min={0}
-                        max={12}
-                        maxLength={2}
-                        value={lockPeriodAmount}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="well w-75 ml-1">
-                  <Dropdown
-                    overlay={lockPeriodOptionsMenu}
-                    trigger={["click"]}>
-                    <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                      <div className="left">
-                        <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)}{" "}</span>
+              {/* Send date */}
+              {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+                <>
+                  <div className="form-label">{t('transactions.send-date.label')}</div>
+                  <div className="well">
+                    <div className="flex-fixed-right">
+                      <div className="left static-data-field">
+                        {isToday(paymentStartDate || '')
+                          ? `${paymentStartDate} (${t('common:general.now')})`
+                          : `${paymentStartDate}`}
                       </div>
                       <div className="right">
-                        <IconCaretDown className="mean-svg-icons" />
+                        <div className="add-on simplelink">
+                          <>
+                            {
+                              <DatePicker
+                                size="middle"
+                                bordered={false}
+                                className="addon-date-picker"
+                                aria-required={true}
+                                allowClear={false}
+                                disabledDate={disabledDate}
+                                placeholder={t('transactions.send-date.placeholder')}
+                                onChange={(value: any, date: string) => handleDateChange(date)}
+                                defaultValue={moment(
+                                  paymentStartDate,
+                                  DATEPICKER_FORMAT
+                                )}
+                                format={DATEPICKER_FORMAT}
+                              />
+                            }
+                          </>
+                        </div>
                       </div>
-                    </span>
-                  </Dropdown>
-                </div>
-              </div>
-
-              <div className="form-label">{t('treasuries.treasury-streams.add-stream-locked.panel2-commencement-date-label')}</div>
-              <div className="well">
-                <div className="flex-fixed-right">
-                  <div className="left static-data-field">
-                    {isToday(paymentStartDate || '')
-                      ? `${paymentStartDate} (${t('common:general.now')})`
-                      : `${paymentStartDate}`}
-                  </div>
-                  <div className="right">
-                    <div className="add-on simplelink">
-                      <>
-                        {
-                          <DatePicker
-                            size="middle"
-                            bordered={false}
-                            className="addon-date-picker"
-                            aria-required={true}
-                            allowClear={false}
-                            disabledDate={disabledDate}
-                            placeholder={t('transactions.send-date.placeholder')}
-                            onChange={(value: any, date: string) => handleDateChange(date)}
-                            defaultValue={moment(
-                              paymentStartDate,
-                              DATEPICKER_FORMAT
-                            )}
-                            format={DATEPICKER_FORMAT}
-                          />
-                        }
-                      </>
                     </div>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
+            </div>
 
-              <div className="form-label mt-2">{t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-label')}</div>
-              <div className="well">
-                <div className="flexible-right mb-1">
-                  <div className="token-group">
-                    {percentages.map((percentage, index) => (
-                      <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                        <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>{percentage}%</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex-fixed-left">
-                  <div className="left">
-                    <span className="add-on simplelink">
-                      {selectedToken && (
-                        <TokenDisplay onClick={() => {}}
-                          mintAddress={selectedToken.address}
-                          name={selectedToken.name}
-                        />
+            <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
+
+              {treasuryOption && treasuryOption.type === TreasuryType.Open ? (
+                <>
+                  {publicKey && (
+                    <>
+                      {(recipientAddress && !enableMultipleStreamsOption) && (
+                        <>
+                          <div className="flex-fixed-right">
+                            <div className="left">
+                              <div className="form-label">{t('transactions.resume')}</div>
+                            </div>
+                            <div className="right">
+                              <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                                <IconEdit className="mean-svg-icons" />
+                                <span>{t('general.cta-change')}</span>
+                              </span>
+                            </div>
+                          </div>
+                          <div className="well">
+                            <div className="three-col-flexible-middle">
+                              <div className="left flex-row">
+                                <div className="flex-center">
+                                  <Identicon
+                                    address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
+                                    style={{ width: "30", display: "inline-flex" }} />
+                                </div>
+                                <div className="flex-column pl-3">
+                                  <div className="address">
+                                    {publicKey && isValidAddress(recipientAddress)
+                                      ? shortenAddress(recipientAddress)
+                                      : t('transactions.validation.no-recipient')}
+                                  </div>
+                                  <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                                </div>
+                              </div>
+                              <div className="middle flex-center">
+                                <div className="vertical-bar"></div>
+                              </div>
+                              <div className="right flex-column">
+                                <div className="rate">
+                                  {getPaymentRateAmount()}
+                                </div>
+                                <div className="inner-label mt-0">{paymentStartDate}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </>
                       )}
+
+                      {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
+                        <>
+                          {!isMultisigTreasury && (
+                            hasIsOwnWallet && (
+                              <span className="form-field-error text-uppercase">
+                                <p>{t("treasuries.treasury-streams.message-warning")}</p>
+                              </span>
+                            )
+                          )}
+                          <div className="flex-fixed-right">
+                            <div className="left">
+                              <div className="form-label">{t('transactions.resume')}</div>
+                            </div>
+                            <div className="right">
+                              <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                                <IconEdit className="mean-svg-icons" />
+                                <span>{t('general.cta-change')}</span>
+                              </span>
+                            </div>
+                          </div>
+                          {listValidAddresses.map((csvItem: any, index: number) => (
+                            <div key={index} className="well">
+                              <div className="three-col-flexible-middle">
+                                <div className="left flex-row">
+                                  <div className="flex-center">
+                                    <Identicon
+                                      address={isValidAddress(csvItem.address) ? csvItem.address : NATIVE_SOL_MINT.toBase58()}
+                                      style={{ width: "30", display: "inline-flex" }} />
+                                  </div>
+                                  <div className="flex-column pl-3">
+                                    <div className="address">
+                                      {publicKey && isValidAddress(csvItem.address)
+                                        ? shortenAddress(csvItem.address)
+                                        : t('transactions.validation.no-recipient')}
+                                    </div>
+                                    <div className="inner-label mt-0">{csvItem.streamName.substring(0, 15) || '-'}</div>
+                                  </div>
+                                </div>
+                                <div className="middle flex-center">
+                                  <div className="vertical-bar"></div>
+                                </div>
+                                <div className="right flex-column">
+                                  <div className="rate">
+                                    {getPaymentRateAmount()}
+                                  </div>
+                                  <div className="inner-label mt-0">{paymentStartDate}</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  )}
+
+                  <div className="mb-3 text-center">
+                    <div>{t('treasuries.treasury-streams.minimum-allocation-advice', {
+                      tokenSymbol: selectedToken?.symbol,
+                      rateInterval: getPaymentRateAmount()
+                    })}</div>
+                  </div>
+
+                  {/* Amount to stream */}
+                  <div className="form-label">
+                    <span className="align-middle">{t('treasuries.treasury-streams.allocate-funds-label')}</span>
+                    <span className="align-middle">
+                      <InfoIcon content={<span>This is the total amount of funds that will be streamed to the recipient at the payment rate selected. You can add more funds at any time by topping up the stream.</span>}
+                                placement="top">
+                        <InfoCircleOutlined />
+                      </InfoIcon>
                     </span>
                   </div>
-                  <div className="right">
-                    <input
-                      className="general-text-input text-right"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      type="text"
-                      onChange={handleCliffReleaseAmountChange}
-                      pattern="^[0-9]*[.,]?[0-9]*$"
-                      placeholder="0.0"
-                      minLength={1}
-                      maxLength={79}
-                      spellCheck="false"
-                      value={cliffRelease}
-                    />
-                  </div>
-                </div>
-                <div className="flex-fixed-right">
-                  <div className="left inner-label">
-                    <span>{t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-inner-label')}</span>
-                  </div>
-                  <div className="right inner-label">
-                    <>
-                        <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                        ~{cliffRelease
-                            ? toUsCurrency(getTokenPrice(cliffRelease))
-                            : "$0.00"
-                        }
+
+                  <div className="well">
+                    <div className="flex-fixed-left">
+                      <div className="left">
+                        <span className="add-on">
+                          {(selectedToken && tokenList) && (
+                            <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
+                              {tokenList.map((option) => {
+                                if (option.address === NATIVE_SOL.address) {
+                                  return null;
+                                }
+                                return (
+                                  <Option key={option.address} value={option.address}>
+                                    <div className="option-container">
+                                      <TokenDisplay onClick={() => {}}
+                                        mintAddress={option.address}
+                                        name={option.name}
+                                        showCaretDown={workingAssociatedToken ? false : true}
+                                      />
+                                      <div className="balance">
+                                        {userBalances && userBalances[option.address] > 0 && (
+                                          <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </Option>
+                                );
+                              })}
+                            </Select>
+                          )}
+                          {selectedToken && unallocatedBalance ? (
+                            <div
+                              className="token-max simplelink"
+                              onClick={() => {
+                                const decimals = selectedToken ? selectedToken.decimals : 6;
+                                if (isFeePaidByTreasurer) {
+                                  const maxAmount = getMaxAmount(true);
+                                  consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
+                                  consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+                                  setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  setTokenAmount(new BN(maxAmount));
+                                } else {
+                                  const maxAmount = getMaxAmount();
+                                  setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  setTokenAmount(new BN(maxAmount));
+                                }
+                              }}>
+                              MAX
+                            </div>
+                          ) : null}
                         </span>
-                    </>
+                      </div>
+                      <div className="right">
+                        <input
+                          className="general-text-input text-right"
+                          inputMode="decimal"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          type="text"
+                          onChange={handleFromCoinAmountChange}
+                          pattern="^[0-9]*[.,]?[0-9]*$"
+                          placeholder="0.0"
+                          minLength={1}
+                          maxLength={79}
+                          spellCheck="false"
+                          value={fromCoinAmount}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-fixed-right">
+                      <div className="left inner-label">
+                        <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
+                        <span>
+                          {`${unallocatedBalance && selectedToken
+                              ? getAmountWithSymbol(
+                                  makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
+                                  selectedToken.address,
+                                  true
+                                )
+                              : "0"
+                          }`}
+                        </span>
+                      </div>
+                      <div className="right inner-label">
+                        <>
+                          <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                          ~{fromCoinAmount
+                            ? toUsCurrency(getTokenPrice(fromCoinAmount))
+                            : "$0.00"
+                          }
+                          </span>
+                        </>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
 
-        <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
+                  {/* {treasuryOption && treasuryOption.type === TreasuryType.Lock && (
+                    <div className="mb-2 flex-fixed-right">
+                      <div className="left form-label flex-row align-items-center">
+                        {t('treasuries.treasury-streams.allocation-reserved-label')}
+                        <a className="simplelink" href="https://docs.meanfi.com/platform/specifications/money-streaming-protocol#treasuries-and-streams"
+                            target="_blank" rel="noopener noreferrer">
+                          <Button
+                            className="info-icon-button"
+                            type="default"
+                            shape="circle">
+                            <InfoCircleOutlined />
+                          </Button>
+                        </a>
+                      </div>
+                      <div className="right">
+                        <Radio.Group onChange={onAllocationReservedChanged} value={isAllocationReserved}>
+                          <Radio value={true}>{t('general.yes')}</Radio>
+                          <Radio value={false}>{t('general.no')}</Radio>
+                        </Radio.Group>
+                      </div>
+                    </div>
+                  )} */}
 
-          {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
-            <>
-              <div className="flex-fixed-right">
-                <div className="left">
-                  <div className="text-uppercase mb-2">{t('transactions.resume')}</div>
-                </div>
-                <div className="right">
-                  <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                    <IconEdit className="mean-svg-icons" />
-                    <span>{t('general.cta-change')}</span>
+                  <div className="ml-1 mb-3">
+                    <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>
+                  </div>
+
+                  <div className="ml-1">
+                    <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                    <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel2-name')}</div>
+                  )}
+
+                  {(recipientNote && recipientAddress && fromCoinAmount && selectedToken) && (
+                    <div className="flex-fixed-right">
+                      <div className="left">
+                        <div className="mb-3">{t('treasuries.treasury-streams.add-stream-locked.panel2-summary', { recipientNote: recipientNote, fromCoinAmount: fromCoinAmount, selectedTokenName: selectedToken && selectedToken.name, recipientShortenAddress: shortenAddress(recipientAddress)})}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="form-label">{t('treasuries.treasury-streams.add-stream-locked.panel2-lock-period-label')}</div>
+                  <div className="d-flex">
+                    <div className="well w-25 mr-1">
+                      <div className="flex-fixed-right">
+                        <div className="left">
+                          <input
+                            id="plock-period-field"
+                            className="w-100 general-text-input"
+                            autoComplete="on"
+                            autoCorrect="off"
+                            type="number"
+                            onChange={handleLockPeriodAmountChange}
+                            placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
+                            spellCheck="false"
+                            min={0}
+                            max={12}
+                            maxLength={2}
+                            value={lockPeriodAmount}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="well w-75 ml-1">
+                      <Dropdown
+                        overlay={lockPeriodOptionsMenu}
+                        trigger={["click"]}>
+                        <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                          <div className="left">
+                            <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)}{" "}</span>
+                          </div>
+                          <div className="right">
+                            <IconCaretDown className="mean-svg-icons" />
+                          </div>
+                        </span>
+                      </Dropdown>
+                    </div>
+                  </div>
+
+                  <div className="form-label">{t('treasuries.treasury-streams.add-stream-locked.panel2-commencement-date-label')}</div>
+                  <div className="well">
+                    <div className="flex-fixed-right">
+                      <div className="left static-data-field">
+                        {isToday(paymentStartDate || '')
+                          ? `${paymentStartDate} (${t('common:general.now')})`
+                          : `${paymentStartDate}`}
+                      </div>
+                      <div className="right">
+                        <div className="add-on simplelink">
+                          <>
+                            {
+                              <DatePicker
+                                size="middle"
+                                bordered={false}
+                                className="addon-date-picker"
+                                aria-required={true}
+                                allowClear={false}
+                                disabledDate={disabledDate}
+                                placeholder={t('transactions.send-date.placeholder')}
+                                onChange={(value: any, date: string) => handleDateChange(date)}
+                                defaultValue={moment(
+                                  paymentStartDate,
+                                  DATEPICKER_FORMAT
+                                )}
+                                format={DATEPICKER_FORMAT}
+                              />
+                            }
+                          </>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="form-label mt-2">{t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-label')}</div>
+                  <div className="well">
+                    <div className="flexible-right mb-1">
+                      <div className="token-group">
+                        {percentages.map((percentage, index) => (
+                          <div key={index} className="mb-1 d-flex flex-column align-items-center">
+                            <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>{percentage}%</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex-fixed-left">
+                      <div className="left">
+                        <span className="add-on simplelink">
+                          {selectedToken && (
+                            <TokenDisplay onClick={() => {}}
+                              mintAddress={selectedToken.address}
+                              name={selectedToken.name}
+                            />
+                          )}
+                        </span>
+                      </div>
+                      <div className="right">
+                        <input
+                          className="general-text-input text-right"
+                          inputMode="decimal"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          type="text"
+                          onChange={handleCliffReleaseAmountChange}
+                          pattern="^[0-9]*[.,]?[0-9]*$"
+                          placeholder="0.0"
+                          minLength={1}
+                          maxLength={79}
+                          spellCheck="false"
+                          value={cliffRelease}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-fixed-right">
+                      <div className="left inner-label">
+                        <span>{t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-inner-label')}</span>
+                      </div>
+                      <div className="right inner-label">
+                        <>
+                            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                            ~{cliffRelease
+                                ? toUsCurrency(getTokenPrice(cliffRelease))
+                                : "$0.00"
+                            }
+                            </span>
+                        </>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
+
+              {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                <>
+                  <div className="flex-fixed-right">
+                    <div className="left">
+                      <div className="text-uppercase mb-2">{t('transactions.resume')}</div>
+                    </div>
+                    <div className="right">
+                      <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                        <IconEdit className="mean-svg-icons" />
+                        <span>{t('general.cta-change')}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-2">{t('treasuries.treasury-streams.add-stream-locked.panel3-text-one')} {recipientNote ? recipientNote : "--"}</div>
+
+                  <Row className="mb-2">
+                    <Col span={24}>
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), 6)} ${selectedToken && selectedToken.symbol}` : "--"}
+                    </Col>
+                    <Col span={24}>
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}  </strong> {recipientAddress ? recipientAddress : "--"}
+                    </Col>
+                    <Col span={24}>
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}  </strong> {paymentStartDate}
+                    </Col>
+                    <Col span={24}>
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.symbol} (on commencement)`) : "--"}
+                    </Col>
+                    <Col span={24}>
+                      <strong>Amount to be streamed: </strong>
+                      <span>
+                      {
+                        (cliffRelease && lockPeriodAmount && selectedToken)
+                          ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.symbol} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`)
+                          : "--"
+                      }
+                      </span>
+                    </Col>
+                    <Col span={24}>
+                      <strong>Release rate: </strong>
+                      <span>
+                        {
+                          (cliffRelease && lockPeriodAmount && selectedToken)
+                            ? (`${paymentRateAmount} ${selectedToken.symbol} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`)
+                            : "--"
+                        }
+                      </span>
+                    </Col>
+                  </Row>
+
+                  <span className="warning-message icon-label mb-3">
+                    <IconWarning className="mean-svg-icons" />
+                    {t('treasuries.treasury-streams.add-stream-locked.panel3-warning-message')}
                   </span>
-                </div>
-              </div>
 
-              <div className="mb-2">{t('treasuries.treasury-streams.add-stream-locked.panel3-text-one')} {recipientNote ? recipientNote : "--"}</div>
+                  <div className="ml-1 mb-3">
+                    <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>
+                  </div>
 
-              <Row className="mb-2">
-                <Col span={24}>
-                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), 6)} ${selectedToken && selectedToken.symbol}` : "--"}
-                </Col>
-                <Col span={24}>
-                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}  </strong> {recipientAddress ? recipientAddress : "--"}
-                </Col>
-                <Col span={24}>
-                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}  </strong> {paymentStartDate}
-                </Col>
-                <Col span={24}>
-                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.symbol} (on commencement)`) : "--"}
-                </Col>
-                <Col span={24}>
-                  <strong>Amount to be streamed: </strong>
-                  <span>
-                  {
-                    (cliffRelease && lockPeriodAmount && selectedToken)
-                      ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.symbol} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`)
-                      : "--"
-                  }
-                  </span>
-                </Col>
-                <Col span={24}>
-                  <strong>Release rate: </strong>
-                  <span>
-                    {
-                      (cliffRelease && lockPeriodAmount && selectedToken)
-                        ? (`${paymentRateAmount} ${selectedToken.symbol} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`)
-                        : "--"
-                    }
-                  </span>
-                </Col>
-              </Row>
+                  <div className="ml-1">
+                    <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
 
-              <span className="warning-message icon-label mb-3">
-                <IconWarning className="mean-svg-icons" />
-                {t('treasuries.treasury-streams.add-stream-locked.panel3-warning-message')}
-              </span>
+          <Divider plain/>
 
-              <div className="ml-1 mb-3">
-                <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>
-              </div>
+          <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
+            <Button
+              className="main-cta"
+              block
+              type="primary"
+              shape="round"
+              size="large"
+              onClick={onContinueStepOneButtonClick}
+              disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
+                !publicKey ||
+                !isMemoValid() ||
+                !isValidAddress(recipientAddress) ||
+                (!selectedToken || unallocatedBalance.toNumber() === 0) ||
+                (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
+                !arePaymentSettingsValid()
+              ) : (
+                !publicKey ||
+                (!enableMultipleStreamsOption && !isMemoValid()) ||
+                ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
+                (!paymentRateAmount || unallocatedBalance.toNumber() === 0) ||
+                (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
+                !arePaymentSettingsValid()
+              )}>
+              {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? getStepOneContinueButtonLabel() : getStepOneContinueButtonLabelInLocked()}
+            </Button>
+          </div>
 
-              <div className="ml-1">
-                <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+          <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
+            <Button
+              className={`main-cta ${isBusy ? 'inactive' : ''}`}
+              block
+              type="primary"
+              shape="round"
+              size="large"
+              onClick={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? onContinueStepTwoButtonClick : onTransactionStart}
+              disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
+                !publicKey ||
+                !isMemoValid() ||
+                !isValidAddress(recipientAddress) ||
+                (!selectedToken || unallocatedBalance.toNumber() === 0) ||
+                (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
+                (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
+                !cliffRelease ||
+                (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals))
+              ) : (
+                !publicKey ||
+                (!enableMultipleStreamsOption && !isMemoValid()) ||
+                ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : !validMultiRecipientsList)) ||
+                (!paymentRateAmount || unallocatedBalance.toNumber() === 0) ||
+                (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
+                !arePaymentSettingsValid() ||
+                !areSendAmountSettingsValid() ||
+                !isVerifiedRecipient ||
+                nativeBalance < getMinBalanceRequired()
+              )}>
+              {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+                isBusy && (
+                  <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                )
+              )}
+              {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (isBusy
+                // ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
+                ? t('streams.create-new-stream-cta-busy')
+                : getTransactionStartButtonLabel()
+              )}
 
-      <Divider plain/>
+              {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && getStepTwoContinueButtonLabel()}
+            </Button>
+          </div>
 
-      <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
-        <Button
-          className="main-cta"
-          block
-          type="primary"
-          shape="round"
-          size="large"
-          onClick={onContinueStepOneButtonClick}
-          disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
-            !publicKey ||
-            !isMemoValid() ||
-            !isValidAddress(recipientAddress) ||
-            (!selectedToken || unallocatedBalance.toNumber() === 0) ||
-            (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
-            !arePaymentSettingsValid()
-          ) : (
-            !publicKey ||
-            (!enableMultipleStreamsOption && !isMemoValid()) ||
-            ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
-            (!paymentRateAmount || unallocatedBalance.toNumber() === 0) ||
-            (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
-            !arePaymentSettingsValid()
-          )}>
-          {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? getStepOneContinueButtonLabel() : getStepOneContinueButtonLabelInLocked()}
-        </Button>
-      </div>
+          <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
+            <Button
+              className="main-cta"
+              block
+              type="primary"
+              shape="round"
+              size="large"
+              onClick={onTransactionStart}
+              disabled={
+                !publicKey ||
+                !isMemoValid() ||
+                !isValidAddress(recipientAddress) ||
+                (!selectedToken || unallocatedBalance.toNumber() === 0) ||
+                (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) ||
+                (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
+                !cliffRelease ||
+                (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
+                !arePaymentSettingsValid() ||
+                !areSendAmountSettingsValid() ||
+                !isVerifiedRecipient ||
+                nativeBalance < getMinBalanceRequired()
+              }>
+              {getTransactionStartButtonLabelInLocked()}
+            </Button>
+          </div>
+        </>
+      )}
 
-      <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
-        <Button
-          className={`main-cta ${isBusy ? 'inactive' : ''}`}
-          block
-          type="primary"
-          shape="round"
-          size="large"
-          onClick={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? onContinueStepTwoButtonClick : onTransactionStart}
-          disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
-            !publicKey ||
-            !isMemoValid() ||
-            !isValidAddress(recipientAddress) ||
-            (!selectedToken || unallocatedBalance.toNumber() === 0) ||
-            (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
-            (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
-            !cliffRelease ||
-            (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals))
-          ) : (
-            !publicKey ||
-            (!enableMultipleStreamsOption && !isMemoValid()) ||
-            ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : !validMultiRecipientsList)) ||
-            (!paymentRateAmount || unallocatedBalance.toNumber() === 0) ||
-            (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
-            !arePaymentSettingsValid() ||
-            !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient ||
-            nativeBalance < getMinBalanceRequired()
-          )}>
-          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
-            isBusy && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-            )
-          )}
-          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (isBusy
-            // ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
-            ? t('streams.create-new-stream-cta-busy')
-            : getTransactionStartButtonLabel()
-          )}
-
-          {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && getStepTwoContinueButtonLabel()}
-        </Button>
-      </div>
-
-      <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
-        <Button
-          className="main-cta"
-          block
-          type="primary"
-          shape="round"
-          size="large"
-          onClick={onTransactionStart}
-          disabled={
-            !publicKey ||
-            !isMemoValid() ||
-            !isValidAddress(recipientAddress) ||
-            (!selectedToken || unallocatedBalance.toNumber() === 0) ||
-            (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) ||
-            (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
-            !cliffRelease ||
-            (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
-            !arePaymentSettingsValid() ||
-            !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient ||
-            nativeBalance < getMinBalanceRequired()
-          }>
-          {getTransactionStartButtonLabelInLocked()}
-        </Button>
-      </div>
     </Modal>
   );
 };

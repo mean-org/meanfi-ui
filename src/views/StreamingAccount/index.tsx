@@ -3252,7 +3252,7 @@ export const StreamingAccountView = (props: {
                 ? props.treasuryList[0]
                 : undefined
           }
-          treasuryList={props.treasuryList}
+          treasuryList={props.treasuryList?.filter(t => t.version >= 2)}
           isMultisigTreasury={isMultisigTreasury()}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}

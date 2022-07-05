@@ -1998,7 +1998,7 @@ export const MoneyStreamsInfoView = (props: {
                 ? treasuryList[0]
                 : undefined
           }
-          treasuryList={treasuryList}
+          treasuryList={props.treasuryList?.filter(t => t.version >= 2)}
           isMultisigTreasury={isMultisigTreasury()}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}
