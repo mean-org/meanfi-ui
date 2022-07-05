@@ -238,6 +238,7 @@ export const AccountsNewView = () => {
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
+  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
 
   // Streaming account
   const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
@@ -4010,6 +4011,15 @@ export const AccountsNewView = () => {
     refreshTreasuries(false);
   };
 
+  //////////////
+  //  Events  //
+  //////////////
+
+  const onBackButtonClicked = () => {
+    setDtailsPanelOpen(false);
+    setAutoOpenDetailsPanel(false);
+  }
+
   ///////////////
   // Rendering //
   ///////////////
@@ -4075,6 +4085,7 @@ export const AccountsNewView = () => {
         <div key="streams" onClick={() => {
           if (userHasAccess()) {
             navigateToStreaming();
+            setAutoOpenDetailsPanel(true);
           }
         }} className={`transaction-list-row ${selectedCategory === "streaming" ? 'selected' : ''}`}>
           <div className="icon-cell">
@@ -4851,6 +4862,15 @@ export const AccountsNewView = () => {
           <span className="ml-1">previousRoute:</span><span className="ml-1 font-bold fg-dark-active">{previousRoute || '-'}</span>
         </div>
       )} */}
+
+      {detailsPanelOpen && (
+        <Button
+          id="back-button"
+          type="default"
+          shape="circle"
+          icon={<ArrowLeftOutlined />}
+          onClick={onBackButtonClicked}/>
+      )}
 
       <div className="container main-container accounts">
 
