@@ -46,7 +46,7 @@ import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
@@ -70,6 +70,7 @@ export const RepeatingPayment = (props: {
 }) => {
   const { inModal, transferCompleted, token, tokenChanged } = props;
   const connection = useConnection();
+  const [searchParams] = useSearchParams();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
@@ -1111,7 +1112,7 @@ export const RepeatingPayment = (props: {
               loadingTitle: "Confirming transaction",
               loadingMessage: `Send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Stream to send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} has been created.`
+              completedMessage: `${location.pathname.includes("streaming") ? "Outgoing stream" : "Stream"} to send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} has been created.`
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
