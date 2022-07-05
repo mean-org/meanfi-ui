@@ -1699,7 +1699,7 @@ export const MoneyStreamsInfoView = (props: {
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
     <>
-      <ResumeItem
+      {/* <ResumeItem
         title="Outflows"
         classNameTitle="text-uppercase"
         subtitle={subtitle}
@@ -1711,7 +1711,7 @@ export const MoneyStreamsInfoView = (props: {
         rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
         dropdownMenu={menu}
         isLink={false}
-      />
+      /> */}
       {(!loadingStreams && !loadingCombinedStreamingList) ? (
         ((outgoingStreamList !== undefined && outgoingStreamList.length > 0) || (streamingAccountCombinedList !== undefined && streamingAccountCombinedList.length > 0)) ? (
           <>
