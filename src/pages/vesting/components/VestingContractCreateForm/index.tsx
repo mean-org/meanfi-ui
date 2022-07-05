@@ -28,7 +28,7 @@ import moment from 'moment';
 import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { environment } from '../../../../environments/environment';
 
-const timeFormat="HH:mm: A"
+const timeFormat="hh:mm A"
 
 export const VestingContractCreateForm = (props: {
     inModal: boolean;
@@ -85,7 +85,7 @@ export const VestingContractCreateForm = (props: {
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("");
     const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
     const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption>(VESTING_ACCOUNT_TYPE_OPTIONS[0]);
-    const [contractTime, setContractTime] = useState<string>('');
+    const [contractTime, setContractTime] = useState<string | undefined>(undefined);
 
     const getFeeAmount = useCallback(() => {
         return transactionFees.blockchainFee + transactionFees.mspFlatFee;
@@ -190,7 +190,7 @@ export const VestingContractCreateForm = (props: {
     }
 
     const get15MinutesAhead = useCallback(() => {
-        const time =  moment().add(15, 'minutes').format('HH:mm');
+        const time =  moment().add(15, 'minutes').format('hh:mm');
         setContractTime(time);
     }, []);
 
@@ -200,7 +200,7 @@ export const VestingContractCreateForm = (props: {
 
     // Set an initial time for creating a contract
     useEffect(() => {
-        if (!contractTime) {
+        if (contractTime === undefined) {
             get15MinutesAhead();
         }
     }, [contractTime, get15MinutesAhead]);
@@ -294,7 +294,7 @@ export const VestingContractCreateForm = (props: {
     const onAccountCreateClick = () => {
         const parsedDate = Date.parse(paymentStartDate as string);
         const startUtc = new Date(parsedDate);
-        const shortTime = moment(contractTime, "HH:mm");
+        const shortTime = moment(contractTime, "hh:mm");
         startUtc.setHours(shortTime.hour());
         startUtc.setMinutes(shortTime.minute());
         startUtc.setSeconds(shortTime.second());
@@ -464,7 +464,7 @@ export const VestingContractCreateForm = (props: {
 
     const onChange = (time: moment.Moment | null, timeString: string) => {
         if (time) {
-            const shortTime = time.format("HH:mm");
+            const shortTime = time.format("hh:mm");
             setContractTime(shortTime);
         }
     };
