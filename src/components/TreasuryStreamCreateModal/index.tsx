@@ -289,128 +289,138 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : (!enableMultipleStreamsOption && !recipientNote)
-        ? 'Memo cannot be empty'
-        : (!enableMultipleStreamsOption && !recipientAddress)
-          ? t('transactions.validation.select-recipient') 
-          : (enableMultipleStreamsOption && !validMultiRecipientsList)
-            ? t('transactions.validation.select-address-list')
-            : !selectedToken || unallocatedBalance.toNumber() === 0
-              ? t('transactions.validation.no-balance')
-                : (!paymentRateAmount || parseFloat(paymentRateAmount) === 0)
-                ? t('transactions.validation.no-amount')
-                  : !paymentStartDate
-                    ? t('transactions.validation.no-valid-date')
-                    : !arePaymentSettingsValid()
-                      ? getPaymentSettingsButtonLabel()
-                      : t('transactions.validation.valid-continue');
+      : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
+        ? 'Select streaming account'
+        : (!enableMultipleStreamsOption && !recipientNote)
+          ? 'Set stream name'
+          : (!enableMultipleStreamsOption && !recipientAddress)
+            ? t('transactions.validation.select-recipient') 
+            : (enableMultipleStreamsOption && !validMultiRecipientsList)
+              ? t('transactions.validation.select-address-list')
+              : !selectedToken || unallocatedBalance.toNumber() === 0
+                ? t('transactions.validation.no-balance')
+                  : (!paymentRateAmount || parseFloat(paymentRateAmount) === 0)
+                  ? t('transactions.validation.no-amount')
+                    : !paymentStartDate
+                      ? t('transactions.validation.no-valid-date')
+                      : !arePaymentSettingsValid()
+                        ? getPaymentSettingsButtonLabel()
+                        : t('transactions.validation.valid-continue');
   };
 
   const getStepOneContinueButtonLabelInLocked = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : (!enableMultipleStreamsOption && !recipientNote)
-        ? 'Memo cannot be empty'
-        : (!enableMultipleStreamsOption && !recipientAddress)
-          ? t('transactions.validation.select-recipient') 
-          : (enableMultipleStreamsOption && !validMultiRecipientsList)
-            ? t('transactions.validation.select-address-list')
+      : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
+        ? 'Select streaming account'
+        : (!enableMultipleStreamsOption && !recipientNote)
+          ? 'Set stream name'
+          : (!enableMultipleStreamsOption && !recipientAddress)
+            ? t('transactions.validation.select-recipient') 
+            : (enableMultipleStreamsOption && !validMultiRecipientsList)
+              ? t('transactions.validation.select-address-list')
+              : !selectedToken || unallocatedBalance.toNumber() === 0
+                ? t('transactions.validation.no-balance')
+                : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
+                  ? t('transactions.validation.no-amount')
+                  : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
+                    ? t('Invalid amount')
+                    : !paymentStartDate
+                      ? t('transactions.validation.no-valid-date')
+                      : !arePaymentSettingsValid()
+                        ? getPaymentSettingsButtonLabel()
+                        : t('transactions.validation.valid-continue');
+  };
+
+  const getStepTwoContinueButtonLabel = (): string => {
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
+        ? 'Select streaming account'
+        : !recipientNote
+          ? 'Set stream name'
+          : !recipientAddress
+            ? t('transactions.validation.select-recipient')
             : !selectedToken || unallocatedBalance.toNumber() === 0
               ? t('transactions.validation.no-balance')
               : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
                 ? t('transactions.validation.no-amount')
                 : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
                   ? t('Invalid amount')
-                  : !paymentStartDate
-                    ? t('transactions.validation.no-valid-date')
-                    : !arePaymentSettingsValid()
-                      ? getPaymentSettingsButtonLabel()
-                      : t('transactions.validation.valid-continue');
-  };
-
-  const getStepTwoContinueButtonLabel = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : !recipientNote
-      ? 'Memo cannot be empty'
-      : !recipientAddress
-      ? t('transactions.validation.select-recipient') 
-      : !selectedToken || unallocatedBalance.toNumber() === 0
-      ? t('transactions.validation.no-balance')
-      : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
-      ? t('transactions.validation.no-amount')
-      : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
-      ? t('Invalid amount')
-      : (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0)
-      ? 'Lock period cannot be empty'
-      : !cliffRelease
-      ? 'Add cliff to release'
-      :  (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals))
-      ? 'Invalid cliff amount'
-      : !selectedToken || unallocatedBalance.toNumber() === 0
-      ? t('transactions.validation.no-balance')
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : !areSendAmountSettingsValid()
-      ? getPaymentSettingsButtonLabel()
-      : t('transactions.validation.valid-continue');
+                  : (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0)
+                    ? 'Lock period cannot be empty'
+                    : !cliffRelease
+                      ? 'Add cliff to release'
+                      : (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals))
+                        ? 'Invalid cliff amount'
+                        : !selectedToken || unallocatedBalance.toNumber() === 0
+                          ? t('transactions.validation.no-balance')
+                          : !paymentStartDate
+                            ? t('transactions.validation.no-valid-date')
+                            : !areSendAmountSettingsValid()
+                              ? getPaymentSettingsButtonLabel()
+                              : t('transactions.validation.valid-continue');
   }
 
   const getTransactionStartButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : (!enableMultipleStreamsOption && !recipientNote)
-      ? 'Memo cannot be empty'
-      : (!enableMultipleStreamsOption && !recipientAddress)
-      ? t('transactions.validation.select-recipient') 
-      : (enableMultipleStreamsOption && !validMultiRecipientsList)
-      ? t('transactions.validation.select-address-list')
-      : !selectedToken || unallocatedBalance.isZero()
-      ? t('transactions.validation.no-balance')
-      : !tokenAmount || tokenAmount.isZero()
-      ? t('transactions.validation.no-amount')
-      : (isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
-        (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))
-      ? t('transactions.validation.amount-high')
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : !arePaymentSettingsValid()
-      ? getPaymentSettingsButtonLabel()
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : nativeBalance < getMinBalanceRequired()
-        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-        : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
+      : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
+        ? 'Select streaming account'
+        : (!enableMultipleStreamsOption && !recipientNote)
+          ? 'Set stream name'
+          : (!enableMultipleStreamsOption && !recipientAddress)
+            ? t('transactions.validation.select-recipient') 
+            : (enableMultipleStreamsOption && !validMultiRecipientsList)
+              ? t('transactions.validation.select-address-list')
+              : !selectedToken || unallocatedBalance.isZero()
+                ? t('transactions.validation.no-balance')
+                : !tokenAmount || tokenAmount.isZero()
+                  ? t('transactions.validation.no-amount')
+                  : (isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
+                    (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))
+                    ? t('transactions.validation.amount-high')
+                    : !paymentStartDate
+                      ? t('transactions.validation.no-valid-date')
+                      : !arePaymentSettingsValid()
+                        ? getPaymentSettingsButtonLabel()
+                        : !isVerifiedRecipient
+                          ? t('transactions.validation.verified-recipient-unchecked')
+                          : nativeBalance < getMinBalanceRequired()
+                            ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
+                            : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
   };
 
   const getTransactionStartButtonLabelInLocked = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : !recipientNote
-      ? 'Memo cannot be empty'
-      : !recipientAddress
-      ? t('transactions.validation.select-recipient') 
-      : !selectedToken || unallocatedBalance.toNumber() === 0
-      ? t('transactions.validation.no-balance')
-      : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
-      ? t('transactions.validation.no-amount')
-      : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
-      ? t('Invalid amount')
-      : !lockPeriodAmount || parseFloat(lockPeriodAmount) === 0
-      ? 'Lock period cannot be empty'
-      : (!cliffRelease || parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, 6))
-      ? 'Add cliff to release'
-      :  (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals))
-      ? 'Invalid cliff amount'
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : !arePaymentSettingsValid()
-      ? getPaymentSettingsButtonLabel()
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : nativeBalance < getMinBalanceRequired()
-        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-        : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
+      : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
+        ? 'Select streaming account'
+        : !recipientNote
+          ? 'Set stream name'
+          : !recipientAddress
+            ? t('transactions.validation.select-recipient') 
+            : !selectedToken || unallocatedBalance.toNumber() === 0
+              ? t('transactions.validation.no-balance')
+              : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
+                ? t('transactions.validation.no-amount')
+                : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
+                  ? t('Invalid amount')
+                  : !lockPeriodAmount || parseFloat(lockPeriodAmount) === 0
+                    ? 'Lock period cannot be empty'
+                    : (!cliffRelease || parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, 6))
+                      ? 'Add cliff to release'
+                      :  (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals))
+                        ? 'Invalid cliff amount'
+                        : !paymentStartDate
+                          ? t('transactions.validation.no-valid-date')
+                          : !arePaymentSettingsValid()
+                            ? getPaymentSettingsButtonLabel()
+                            : !isVerifiedRecipient
+                              ? t('transactions.validation.verified-recipient-unchecked')
+                              : nativeBalance < getMinBalanceRequired()
+                                ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
+                                : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
   };
 
   const getPaymentSettingsButtonLabel = (): string => {
@@ -495,6 +505,7 @@ export const TreasuryStreamCreateModal = (props: {
   useEffect(() => {
     if (isVisible && treasuryDetails) {
       setWorkingTreasuryDetails(treasuryDetails);
+      setSelectedStreamingAccountId(treasuryDetails.id as string);
     }
   }, [isVisible, treasuryDetails]);
 
@@ -1397,6 +1408,13 @@ export const TreasuryStreamCreateModal = (props: {
   //  Validation  //
   //////////////////
 
+  const isStreamingAccountSelected = (): boolean => {
+    const isMultisig = param === "multisig" && multisigAddress ? true : false;
+    return !isMultisig || (isMultisig && selectedStreamingAccountId && isValidAddress(selectedStreamingAccountId))
+      ? true
+      : false;
+  }
+
   const isMemoValid = (): boolean => {
     return recipientNote && recipientNote.length <= 32
       ? true
@@ -1475,6 +1493,7 @@ export const TreasuryStreamCreateModal = (props: {
     consoleOut('item:', item, 'blue');
     if (item) {
       setWorkingTreasuryDetails(item);
+      setSelectedStreamingAccountId(item.id as string);
       const v1 = item as TreasuryInfo;
       const v2 = item as Treasury;
       const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
@@ -1526,15 +1545,18 @@ export const TreasuryStreamCreateModal = (props: {
     return (
       <>
         {(isV2Treasury && item ? v2.name : v1.label) ? (
-          <div className="title text-truncate">
-            {isV2Treasury ? v2.name : v1.label}
-            <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-              {isV2Treasury
-                ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-                : v1.type === TreasuryType.Open ? 'Open' : 'Locked'
-              }
-            </span>
-          </div>
+          <>
+            <div className="title text-truncate">
+              {isV2Treasury ? v2.name : v1.label}
+              <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                {isV2Treasury
+                  ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+                  : v1.type === TreasuryType.Open ? 'Open' : 'Locked'
+                }
+              </span>
+            </div>
+            <div className="subtitle text-truncate">{shortenAddress(item.id as string, 8)}</div>
+          </>
         ) : (
           <div className="title text-truncate">{shortenAddress(item.id as string, 8)}</div>
         )}
@@ -1645,9 +1667,10 @@ export const TreasuryStreamCreateModal = (props: {
                             <AutoComplete
                               bordered={false}
                               style={{ width: '100%' }}
+                              allowClear={true}
                               dropdownClassName="stream-select-dropdown"
                               options={renderStreamingAccountsSelectOptions()}
-                              placeholder={t('treasuries.add-funds.search-streams-placeholder')}
+                              placeholder={selectedStreamingAccountId || t('treasuries.add-funds.search-streams-placeholder')}
                               onChange={(inputValue, option) => {
                                 setSelectedStreamingAccountId(inputValue);
                               }}
@@ -1665,6 +1688,13 @@ export const TreasuryStreamCreateModal = (props: {
                             />
                           </div>
                         </div>
+                        {
+                          selectedStreamingAccountId && !isValidAddress(selectedStreamingAccountId) && (
+                            <span className="form-field-error">
+                              {t('transactions.validation.address-validation')}
+                            </span>
+                          )
+                        }
                       </div>
                     </>
                   )}
@@ -2448,6 +2478,7 @@ export const TreasuryStreamCreateModal = (props: {
               disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
                 !publicKey ||
                 !isMemoValid() ||
+                !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
                 (!selectedToken || unallocatedBalance.toNumber() === 0) ||
                 (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
@@ -2455,6 +2486,7 @@ export const TreasuryStreamCreateModal = (props: {
               ) : (
                 !publicKey ||
                 (!enableMultipleStreamsOption && !isMemoValid()) ||
+                !isStreamingAccountSelected() ||
                 ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
                 (!paymentRateAmount || unallocatedBalance.toNumber() === 0) ||
                 (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
@@ -2475,6 +2507,7 @@ export const TreasuryStreamCreateModal = (props: {
               disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
                 !publicKey ||
                 !isMemoValid() ||
+                !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
                 (!selectedToken || unallocatedBalance.toNumber() === 0) ||
                 (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
@@ -2484,6 +2517,7 @@ export const TreasuryStreamCreateModal = (props: {
               ) : (
                 !publicKey ||
                 (!enableMultipleStreamsOption && !isMemoValid()) ||
+                !isStreamingAccountSelected() ||
                 ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : !validMultiRecipientsList)) ||
                 (!paymentRateAmount || unallocatedBalance.toNumber() === 0) ||
                 (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
@@ -2518,6 +2552,7 @@ export const TreasuryStreamCreateModal = (props: {
               disabled={
                 !publicKey ||
                 !isMemoValid() ||
+                !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
                 (!selectedToken || unallocatedBalance.toNumber() === 0) ||
                 (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) ||
