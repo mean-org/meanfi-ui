@@ -27,10 +27,12 @@ import { isError } from '../../../../utils/transactions';
 import moment from 'moment';
 import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { environment } from '../../../../environments/environment';
+import { PendingProposalsComponent } from '../PendingProposalsComponent';
 
 const timeFormat="hh:mm A"
 
 export const VestingContractCreateForm = (props: {
+    accountAddress: string | null;
     inModal: boolean;
     isBusy: boolean;
     isMultisigContext: boolean;
@@ -43,6 +45,7 @@ export const VestingContractCreateForm = (props: {
     userBalances: any;
 }) => {
     const {
+        accountAddress,
         inModal,
         isBusy,
         isMultisigContext,
@@ -63,6 +66,7 @@ export const VestingContractCreateForm = (props: {
         paymentStartDate,
         transactionStatus,
         lockPeriodFrequency,
+        pendingMultisigTxCount,
         setLockPeriodFrequency,
         getTokenPriceBySymbol,
         setLockPeriodAmount,
@@ -659,6 +663,11 @@ export const VestingContractCreateForm = (props: {
 
     return (
         <>
+            <PendingProposalsComponent
+                accountAddress={accountAddress}
+                extraClasses="no-pointer justify-content-center shift-up-3 mb-2"
+                pendingMultisigTxCount={pendingMultisigTxCount}
+            />
 
             <div className={`${inModal ? 'scrollable-content pl-5 pr-4 py-2' : 'elastic-form-container'}`}>
 

@@ -59,6 +59,7 @@ import { VestingContractActivity } from './components/VestingContractActivity';
 import { AccountLayout } from '@solana/spl-token';
 import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import { BN } from 'bn.js';
+import { PendingProposalsComponent } from './components/PendingProposalsComponent';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -3754,6 +3755,7 @@ export const VestingView = () => {
             <>
               <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
               <VestingContractCreateForm
+                accountAddress={accountAddress}
                 inModal={false}
                 isBusy={isBusy}
                 isMultisigContext={isMultisigContext}
@@ -3778,6 +3780,7 @@ export const VestingView = () => {
     userBalances,
     nativeBalance,
     selectedToken,
+    accountAddress,
     isMultisigContext,
     createVestingContractTxFees,
     onAcceptCreateVestingContract,
@@ -3884,6 +3887,13 @@ export const VestingView = () => {
                   </div>
 
                   <div className="inner-container">
+                    {isMultisigContext && (
+                      <PendingProposalsComponent
+                        accountAddress={accountAddress}
+                        extraClasses="no-pointer shift-up-1"
+                        pendingMultisigTxCount={pendingMultisigTxCount}
+                      />
+                    )}
                     <div className="item-block vertical-scroll">
 
                       <div className="asset-category flex-column">
