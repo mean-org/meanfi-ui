@@ -33,6 +33,7 @@ const timeFormat="HH:mm: A"
 export const VestingContractCreateForm = (props: {
     inModal: boolean;
     isBusy: boolean;
+    isMultisigContext: boolean;
     nativeBalance: number;
     onStartTransaction: any;
     selectedList: TokenInfo[];
@@ -44,6 +45,7 @@ export const VestingContractCreateForm = (props: {
     const {
         inModal,
         isBusy,
+        isMultisigContext,
         nativeBalance,
         onStartTransaction,
         selectedList,
@@ -694,7 +696,11 @@ export const VestingContractCreateForm = (props: {
 
                     {/* Token to vest */}
                     <FormLabelWithIconInfo
-                        label={t('vesting.create-account.vesting-contract-token-label')}
+                        label={
+                            isMultisigContext
+                                ? t('vesting.create-account.multisig-vesting-contract-token-label')
+                                : t('vesting.create-account.vesting-contract-token-label')
+                        }
                         tooltip_text={t('vesting.create-account.vesting-contract-token-tooltip')}
                     />
                     <div className="well">
@@ -725,20 +731,24 @@ export const VestingContractCreateForm = (props: {
                                 </span>
                             </div>
                             <div className="right">
-                                <input
-                                    className="general-text-input text-right"
-                                    inputMode="decimal"
-                                    autoComplete="off"
-                                    autoCorrect="off"
-                                    type="text"
-                                    onChange={onVestingLockFundingAmountChange}
-                                    pattern="^[0-9]*[.,]?[0-9]*$"
-                                    placeholder="0.0"
-                                    minLength={1}
-                                    maxLength={79}
-                                    spellCheck="false"
-                                    value={vestingLockFundingAmount}
-                                />
+                                {isMultisigContext ? (
+                                    <span>&nbsp;</span>
+                                ) : (
+                                    <input
+                                        className="general-text-input text-right"
+                                        inputMode="decimal"
+                                        autoComplete="off"
+                                        autoCorrect="off"
+                                        type="text"
+                                        onChange={onVestingLockFundingAmountChange}
+                                        pattern="^[0-9]*[.,]?[0-9]*$"
+                                        placeholder="0.0"
+                                        minLength={1}
+                                        maxLength={79}
+                                        spellCheck="false"
+                                        value={vestingLockFundingAmount}
+                                    />
+                                )}
                             </div>
                         </div>
                         <div className="flex-fixed-right">
@@ -752,20 +762,22 @@ export const VestingContractCreateForm = (props: {
                                     }
                                 </span>
                             </div>
-                            <div className="right inner-label">
-                                {publicKey ? (
-                                    <>
-                                        <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                                        ~{vestingLockFundingAmount
-                                            ? toUsCurrency(getTokenPrice())
-                                            : "$0.00"
-                                        }
-                                        </span>
-                                    </>
-                                ) : (
-                                    <span>~$0.00</span>
-                                )}
-                            </div>
+                            {!isMultisigContext && (
+                                <div className="right inner-label">
+                                    {publicKey ? (
+                                        <>
+                                            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                                            ~{vestingLockFundingAmount
+                                                ? toUsCurrency(getTokenPrice())
+                                                : "$0.00"
+                                            }
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span>~$0.00</span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         {nativeBalance < getMinSolBlanceRequired() && (
                             <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>

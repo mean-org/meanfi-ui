@@ -9,6 +9,7 @@ export const VestingContractCreateModal = (props: {
   handleClose: any;
   handleOk: any;
   isBusy: boolean;
+  isMultisigContext: boolean;
   isVisible: boolean;
   nativeBalance: number;
   selectedList: TokenInfo[];
@@ -20,6 +21,7 @@ export const VestingContractCreateModal = (props: {
     handleClose,
     handleOk,
     isBusy,
+    isMultisigContext,
     isVisible,
     nativeBalance,
     selectedList,
@@ -47,6 +49,7 @@ export const VestingContractCreateModal = (props: {
           inModal={true}
           token={token}
           isBusy={isBusy}
+          isMultisigContext={isMultisigContext}
           transactionFees={transactionFees}
           onStartTransaction={handleOk}
           tokenChanged={(t: TokenInfo) => setToken(t)}

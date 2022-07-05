@@ -276,6 +276,18 @@ export const VestingView = () => {
     streamV2ProgramAddress
   ]);
 
+  const isMultisigContext = useMemo(() => {
+    let accountTypeInQuery: string | null = null;
+    if (address && searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery && accountTypeInQuery === "multisig") {
+        return true;
+      }
+    }
+    return false;
+  }, [address, searchParams]);
+
+
   const selectedVestingContractRef = useRef(selectedVestingContract);
   useEffect(() => {
     selectedVestingContractRef.current = selectedVestingContract;
@@ -3744,6 +3756,7 @@ export const VestingView = () => {
               <VestingContractCreateForm
                 inModal={false}
                 isBusy={isBusy}
+                isMultisigContext={isMultisigContext}
                 token={selectedToken}
                 selectedList={selectedList}
                 userBalances={userBalances}
@@ -3765,6 +3778,7 @@ export const VestingView = () => {
     userBalances,
     nativeBalance,
     selectedToken,
+    isMultisigContext,
     createVestingContractTxFees,
     onAcceptCreateVestingContract,
     refreshVestingContracts,
@@ -3941,6 +3955,7 @@ export const VestingView = () => {
         {isVestingContractCreateModalVisible && (
           <VestingContractCreateModal
             isBusy={isBusy}
+            isMultisigContext={isMultisigContext}
             isVisible={isVestingContractCreateModalVisible}
             handleOk={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
             transactionFees={createVestingContractTxFees}

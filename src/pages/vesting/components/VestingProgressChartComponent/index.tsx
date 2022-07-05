@@ -22,8 +22,8 @@ export const VestingProgressChartComponent = (props: {
     }, []);
 
   const data = [
-    { name: 'total vested', value: vestedAmount },
-    { name: 'left to vest', value: unvestedAmount }
+    { name: 'Total vested', value: vestedAmount },
+    { name: 'Left to vest', value: unvestedAmount }
   ];
 
   const renderActiveShape = useCallback((props: any) => {
@@ -50,6 +50,7 @@ export const VestingProgressChartComponent = (props: {
     const ey = my;
     const textAnchor = cos >= 0 ? "start" : "end";
     const textFill = theme === 'light' ? '#424242' : '#FFFFFF';
+    const activeColor = theme === 'light' ? '#797d8b' : '#818cab';
 
     return (
       <g>
@@ -63,7 +64,7 @@ export const VestingProgressChartComponent = (props: {
           outerRadius={outerRadius}
           startAngle={startAngle}
           endAngle={endAngle}
-          fill={fill}
+          fill={activeColor}
         />
         <Sector
           cx={cx}
@@ -72,14 +73,14 @@ export const VestingProgressChartComponent = (props: {
           endAngle={endAngle}
           innerRadius={outerRadius + 6}
           outerRadius={outerRadius + 10}
-          fill={fill}
+          fill={activeColor}
         />
         <path
           d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
-          stroke="#818cab"
+          stroke={activeColor}
           fill="none"
         />
-        <circle cx={ex} cy={ey} r={2} fill={fill} stroke="#818cab" />
+        <circle cx={ex} cy={ey} r={2} fill={fill} stroke={activeColor} />
         <text
           x={ex + (cos >= 0 ? 1 : -1) * 12}
           y={ey}
@@ -102,7 +103,7 @@ export const VestingProgressChartComponent = (props: {
           innerRadius={50}
           outerRadius={70}
           fill={pieFillColor}
-          stroke="#818cab"
+          stroke="none"
           dataKey="value"
           onMouseEnter={onPieEnter}
         />
