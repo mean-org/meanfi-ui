@@ -222,20 +222,20 @@ export const MoneyStreamsInfoView = (props: {
 
   const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
-  const getMultisigIdFromContext = useCallback((asPublicKey = false) => {
+  // const getMultisigIdFromContext = useCallback((asPublicKey = false) => {
 
-    if (!multisigAccounts || !selectedMultisig) { return ''; }
+  //   if (!multisigAccounts || !selectedMultisig) { return ''; }
 
-    if (accountAddress && getQueryAccountType() === "multisig") {
-      const multisig = multisigAccounts.find(t => t.authority.toBase58() === accountAddress);
-      if (multisig) {
-        return asPublicKey ? multisig.id : multisig.id.toBase58();
-      }
-    }
+  //   if (accountAddress && getQueryAccountType() === "multisig") {
+  //     const multisig = multisigAccounts.find(t => t.authority.toBase58() === accountAddress);
+  //     if (multisig) {
+  //       return asPublicKey ? multisig.id : multisig.id.toBase58();
+  //     }
+  //   }
 
-    return '';
+  //   return '';
 
-  }, [accountAddress, getQueryAccountType, multisigAccounts, selectedMultisig])
+  // }, [accountAddress, getQueryAccountType, multisigAccounts, selectedMultisig])
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -1072,27 +1072,26 @@ export const MoneyStreamsInfoView = (props: {
     }
   };
 
-  // TODO: Here the multisig ID is returned
-  const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
+  // const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
 
-    const treasuryInfo: any = treasury ?? treasuryDetails;
+  //   const treasuryInfo: any = treasury ?? treasuryDetails;
 
-    if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
-      return PublicKey.default;
-    }
+  //   if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
+  //     return PublicKey.default;
+  //   }
 
-    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
+  //   const treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
-    if (!multisigAccounts || !treasuryDetails) { return PublicKey.default; }
-    const multisig = multisigAccounts.filter(a => a.authority.equals(treasurer))[0];
-    if (!multisig) { return PublicKey.default; }
-    return multisig.id;
+  //   if (!multisigAccounts || !treasuryDetails) { return PublicKey.default; }
+  //   const multisig = multisigAccounts.filter(a => a.authority.equals(treasurer))[0];
+  //   if (!multisig) { return PublicKey.default; }
+  //   return multisig.id;
 
-  }, [
-    multisigAccounts, 
-    publicKey, 
-    treasuryDetails
-  ])
+  // }, [
+  //   multisigAccounts, 
+  //   publicKey, 
+  //   treasuryDetails
+  // ])
 
   // confirmationHistory
   const hasMoneyStreamPendingTx = useCallback(() => {
@@ -2051,10 +2050,9 @@ export const MoneyStreamsInfoView = (props: {
                 : undefined
           }
           treasuryList={props.treasuryList?.filter(t => t.version >= 2)}
-          isMultisigTreasury={isMultisigTreasury()}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}
-          multisigAddress={getMultisigIdFromContext(true) as PublicKey}
+          selectedMultisig={selectedMultisig}
           userBalances={userBalances}
         />
       )}

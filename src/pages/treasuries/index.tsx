@@ -5936,10 +5936,9 @@ export const TreasuriesView = () => {
                 : undefined
           }
           treasuryList={treasuryList?.filter(t => t.version >= 2)}
-          isMultisigTreasury={isMultisigTreasury()}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}
-          multisigAddress={getSelectedTreasuryMultisig()}
+          selectedMultisig={selectedMultisig}
           userBalances={userBalances}
         />
       )}

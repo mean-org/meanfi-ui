@@ -48,7 +48,7 @@ import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM, DEFAULT_EXPIRATION_TIME_SECONDS } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MEAN_MULTISIG_PROGRAM, DEFAULT_EXPIRATION_TIME_SECONDS, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { InfoIcon } from '../InfoIcon';
 import { useSearchParams } from 'react-router-dom';
 
@@ -59,10 +59,9 @@ export const TreasuryStreamCreateModal = (props: {
   connection: Connection;
   handleClose: any;
   handleOk: any;
-  isMultisigTreasury: boolean;
   isVisible: boolean;
   minRequiredBalance: number;
-  multisigAddress: PublicKey;
+  selectedMultisig: MultisigInfo | undefined;
   multisigClient: MeanMultisig;
   nativeBalance: number;
   transactionFees: TransactionFees;
@@ -76,10 +75,9 @@ export const TreasuryStreamCreateModal = (props: {
     connection,
     handleClose,
     handleOk,
-    isMultisigTreasury,
     isVisible,
     minRequiredBalance,
-    multisigAddress,
+    selectedMultisig,
     multisigClient,
     nativeBalance,
     transactionFees,
@@ -240,15 +238,31 @@ export const TreasuryStreamCreateModal = (props: {
 
   const hasNoStreamingAccounts = useMemo(() => {
     return  param === "multisig" &&
-            multisigAddress &&
+            selectedMultisig &&
             (!treasuryList || treasuryList.length === 0)
       ? true
       : false;
-  }, [multisigAddress, param, treasuryList]);
+  }, [param, selectedMultisig, treasuryList]);
 
   /////////////////
   //   Getters   //
   /////////////////
+
+  const isSelectedStreamingAccountMultisigTreasury = useMemo(() => {
+
+    if (!publicKey || !workingTreasuryDetails || !selectedMultisig) {
+      return false;
+    }
+
+    const treasury = workingTreasuryDetails as Treasury;
+    const treasurer = new PublicKey(treasury.treasurer as string);
+
+    if (treasurer.equals(selectedMultisig.authority)) {
+      return true;
+    }
+    return false;
+
+  }, [publicKey, selectedMultisig, workingTreasuryDetails]);
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
@@ -494,6 +508,19 @@ export const TreasuryStreamCreateModal = (props: {
   // Data management //
   /////////////////////
 
+  // Debug some startup params
+  // useEffect(() => {
+  //   if (workingTreasuryDetails) {
+  //     consoleOut('workingTreasuryDetails:', workingTreasuryDetails, 'blue');
+  //     if (selectedMultisig) {
+  //       consoleOut('multisigAddress:', selectedMultisig.id.toBase58(), 'blue');
+  //     } else {
+  //       consoleOut('multisigAddress not available:', '', 'blue');
+  //     }
+  //     consoleOut('isMultisigTreasury:', isSelectedStreamingAccountMultisigTreasury, 'blue');
+  //   }
+  // }, [isSelectedStreamingAccountMultisigTreasury, selectedMultisig, workingTreasuryDetails]);
+
   // Set working copy of the associated token if passed-in
   useEffect(() => {
     if (isVisible && associatedToken) {
@@ -503,9 +530,14 @@ export const TreasuryStreamCreateModal = (props: {
 
   // Set working copy of the selected streaming account if passed-in
   useEffect(() => {
-    if (isVisible && treasuryDetails) {
-      setWorkingTreasuryDetails(treasuryDetails);
-      // setSelectedStreamingAccountId(treasuryDetails.id as string);
+    if (isVisible) {
+      if (treasuryDetails) {
+        consoleOut('treasuryDetails aquired:', treasuryDetails, 'blue');
+        setWorkingTreasuryDetails(treasuryDetails);
+        setSelectedStreamingAccountId(treasuryDetails.id as string);
+      } else {
+        consoleOut('treasuryDetails not set!', '', 'blue');
+      }
     }
   }, [isVisible, treasuryDetails]);
 
@@ -859,10 +891,10 @@ export const TreasuryStreamCreateModal = (props: {
 
     const bf = transactionFees.blockchainFee;       // Blockchain fee
     const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-    const minRequired = isMultisigTreasury ? minRequiredBalance : bf + ff;
+    const minRequired = isSelectedStreamingAccountMultisigTreasury ? minRequiredBalance : bf + ff;
     return minRequired;
 
-  }, [isMultisigTreasury, minRequiredBalance, transactionFees]);
+  }, [isSelectedStreamingAccountMultisigTreasury, minRequiredBalance, transactionFees]);
 
   const getStreamingAccountName = useCallback((item: Treasury | TreasuryInfo | undefined) => {
     if (item) {
@@ -914,7 +946,7 @@ export const TreasuryStreamCreateModal = (props: {
 
       const validAddressesSingleSigner = validAddresses.filter((csvItem: any) => wallet && !(csvItem.address === `${publicKey.toBase58()}`));
 
-      if (!isMultisigTreasury) {
+      if (!isSelectedStreamingAccountMultisigTreasury) {
         setListValidAddresses(validAddressesSingleSigner);
         if ((validAddresses.length - validAddressesSingleSigner.length) > 0) {
           setHasIsOwnWallet(true);
@@ -932,7 +964,7 @@ export const TreasuryStreamCreateModal = (props: {
     wallet,
     csvArray,
     publicKey,
-    isMultisigTreasury,
+    isSelectedStreamingAccountMultisigTreasury,
   ]);
 
   useEffect(() => {
@@ -1002,11 +1034,12 @@ export const TreasuryStreamCreateModal = (props: {
 
     const createStreams = async (data: any) => {
 
-      consoleOut('Is Multisig Treasury: ', isMultisigTreasury, 'blue');
+      consoleOut('Is Multisig Treasury: ', isSelectedStreamingAccountMultisigTreasury, 'blue');
+      consoleOut('Multisig address: ', selectedMultisig ? selectedMultisig.id.toBase58() : '--', 'blue');
       consoleOut('Starting create streams using MSP V2...', '', 'blue');
       const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
-      if (!isMultisigTreasury) {
+      if (!isSelectedStreamingAccountMultisigTreasury) {
 
         const beneficiaries: Beneficiary[] = data.beneficiaries.map((b: any) => {
           return {
@@ -1031,10 +1064,10 @@ export const TreasuryStreamCreateModal = (props: {
         );
       }
 
-      if (!workingTreasuryDetails || !multisigClient || !multisigAddress || !publicKey) { return null; }
+      if (!workingTreasuryDetails || !multisigClient || !selectedMultisig || !publicKey) { return null; }
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
-        [multisigAddress.toBuffer()],
+        [selectedMultisig.id.toBuffer()],
         MEAN_MULTISIG_PROGRAM
       );
 
@@ -1048,7 +1081,7 @@ export const TreasuryStreamCreateModal = (props: {
 
         const timeStampCounter = new u64(timeStamp + seedCounter);
         const [stream, streamBump] = await PublicKey.findProgramAddress(
-          [multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
+          [selectedMultisig.id.toBuffer(), timeStampCounter.toBuffer()],
           MEAN_MULTISIG_PROGRAM
         );
 
@@ -1098,7 +1131,7 @@ export const TreasuryStreamCreateModal = (props: {
           streamSeedData.timeStamp.toNumber(),
           streamSeedData.bump,
           OperationType.StreamCreate,
-          multisigAddress,
+          selectedMultisig.id,
           MSPV2Constants.MSP,
           ixAccounts,
           ixData
@@ -1136,6 +1169,9 @@ export const TreasuryStreamCreateModal = (props: {
 
       const assocToken = new PublicKey(selectedToken?.address as string);
       const treasury = new PublicKey(workingTreasuryDetails.id as string);
+      const treasurer = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
+        ? selectedMultisig.id
+        : publicKey;
       const amount = tokenAmount.div(new BN(beneficiaries.length)).toNumber();
       const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
       const now = new Date();
@@ -1165,7 +1201,7 @@ export const TreasuryStreamCreateModal = (props: {
       // Create a transaction
       const data = {
         payer: publicKey.toBase58(),                                                // initializer
-        treasurer: publicKey.toBase58(),                                            // treasurer
+        treasurer: treasurer.toBase58(),                                            // treasurer
         treasury: treasury.toBase58(),                                              // treasury
         beneficiaries: beneficiaries,                                               // beneficiaries
         associatedToken: assocToken.toBase58(),                                     // associatedToken
@@ -1409,7 +1445,7 @@ export const TreasuryStreamCreateModal = (props: {
   //////////////////
 
   const isStreamingAccountSelected = (): boolean => {
-    const isMultisig = param === "multisig" && multisigAddress ? true : false;
+    const isMultisig = param === "multisig" && selectedMultisig ? true : false;
     return !isMultisig || (isMultisig && selectedStreamingAccountId && isValidAddress(selectedStreamingAccountId))
       ? true
       : false;
@@ -1658,7 +1694,7 @@ export const TreasuryStreamCreateModal = (props: {
 
               {!enableMultipleStreamsOption && (
                 <>
-                  {param === "multisig" && multisigAddress && (
+                  {param === "multisig" && selectedMultisig && !treasuryDetails && (
                     <>
                       <div className="form-label">{t('treasuries.add-funds.select-streaming-account-label')}</div>
                       <div className="well">
@@ -2053,7 +2089,7 @@ export const TreasuryStreamCreateModal = (props: {
 
                       {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
                         <>
-                          {!isMultisigTreasury && (
+                          {!isSelectedStreamingAccountMultisigTreasury && (
                             hasIsOwnWallet && (
                               <span className="form-field-error text-uppercase">
                                 <p>{t("treasuries.treasury-streams.message-warning")}</p>
