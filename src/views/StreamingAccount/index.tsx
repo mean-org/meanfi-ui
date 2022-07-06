@@ -82,8 +82,7 @@ export const StreamingAccountView = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
-  const { treasuryId } = useParams();
-  const { address } = useParams();
+  const { address, treasuryId } = useParams();
   
   const { 
     selectedMultisig,
