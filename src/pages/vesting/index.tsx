@@ -64,6 +64,7 @@ import { PendingProposalsComponent } from './components/PendingProposalsComponen
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingAccountDetailTab = "overview" | "streams" | "activity" | undefined;
+let isWorkflowLocked = false;
 
 export const VestingView = () => {
   const {
@@ -379,15 +380,19 @@ export const VestingView = () => {
       }
     };
 
+    const turnOffLockWorkflow = () => {
+      isWorkflowLocked = false;
+    }
+
     const notifyVestingContractCreated = async (item: TxConfirmationInfo) => {
       const options = item.extras as VestingContractCreateOptions;
       if (options && options.multisig) {
         openNotification({
           type: "info",
           description: 'To complete the vesting contract setup, the other Multisig owners need to approve the proposal.',
-          duration: 6,
+          duration: 8,
         });
-        await delay(5500);
+        await delay(8000);
         openNotification({
           type: "info",
           description: (
@@ -402,13 +407,14 @@ export const VestingView = () => {
               </span>
             </>
           ),
-          duration: 6,
+          duration: 8,
         });
-        await delay(5500);
+        await delay(8000);
         openNotification({
           type: "info",
           description: 'After the proposal has been approved and executed, you will then be able to set up vesting streams within the contract.',
-          duration: 6
+          duration: 8,
+          handleClose: turnOffLockWorkflow
         });
       }
     }
@@ -429,14 +435,18 @@ export const VestingView = () => {
         break;
       case OperationType.TreasuryClose:
       case OperationType.TreasuryCreate:
-        notifyVestingContractCreated(item);
+        if (!isWorkflowLocked) {
+          isWorkflowLocked = true;
+          notifyVestingContractCreated(item);
+        }
         hardReloadContracts();
         break;
       default:
         break;
     }
 
-  }, [navigate, recordTxConfirmation, setHighLightableMultisigId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
