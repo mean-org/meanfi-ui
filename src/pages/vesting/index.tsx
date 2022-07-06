@@ -461,11 +461,10 @@ export const VestingView = () => {
     recordTxConfirmation,
   ]);
 
-  const isInspectedAccountTheConnectedWallet = useCallback(() => {
-    return accountAddress && publicKey && publicKey.toBase58() === accountAddress
-      ? true
-      : false
-  }, [accountAddress, publicKey]);
+  const canPerformAnyAction = useCallback(() => {
+    const itsMe = accountAddress && publicKey && publicKey.toBase58() === accountAddress ? true : false;
+    return itsMe || isMultisigContext ? true : false;
+  }, [accountAddress, isMultisigContext, publicKey]);
 
   const navigateToVestingContract = useCallback((contractId: string) => {
     if (accountAddress && contractId) {
@@ -3208,7 +3207,7 @@ export const VestingView = () => {
       action: MetaInfoCtaAction.VestingContractCreateStreamOnce,
       isVisible: true,
       caption: 'Create stream',
-      disabled: !getAvailableStreamingBalance(),
+      disabled: !canPerformAnyAction() || !getAvailableStreamingBalance(),
       uiComponentType: 'button',
       uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamOnce}`,
       tooltip: '',
@@ -3221,7 +3220,7 @@ export const VestingView = () => {
     //   action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
     //   isVisible: true,
     //   caption: 'Bulk create',
-    //   disabled: false,
+    //   disabled: !isInspectedAccountTheConnectedWallet(),
     //   uiComponentType: 'button',
     //   uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
     //   tooltip: '',
@@ -3249,7 +3248,7 @@ export const VestingView = () => {
         caption: 'View SOL Balance',
         isVisible: true,
         uiComponentType: 'menuitem',
-        disabled: !isInspectedAccountTheConnectedWallet(),
+        disabled: !canPerformAnyAction(),
         uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
         tooltip: '',
         callBack: showVestingContractSolBalanceModal
@@ -3263,7 +3262,7 @@ export const VestingView = () => {
       caption: 'Refresh account data',
       isVisible: true,
       uiComponentType: 'menuitem',
-      disabled: !isInspectedAccountTheConnectedWallet(),
+      disabled: !canPerformAnyAction(),
       uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractRefreshAccount}`,
       tooltip: '',
       callBack: onExecuteRefreshVestingContractBalance
@@ -3276,7 +3275,7 @@ export const VestingView = () => {
       caption: 'Withdraw funds',
       isVisible: true,
       uiComponentType: 'menuitem',
-      disabled: !isInspectedAccountTheConnectedWallet(),
+      disabled: !canPerformAnyAction(),
       uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractWithdrawFunds}`,
       tooltip: '',
       callBack: showVestingContractTransferFundsModal
@@ -3289,7 +3288,7 @@ export const VestingView = () => {
       caption: 'Close Contract',
       isVisible: true,
       uiComponentType: 'menuitem',
-      disabled: !isInspectedAccountTheConnectedWallet(),
+      disabled: !canPerformAnyAction(),
       uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractClose}`,
       tooltip: '',
       callBack: showVestingContractCloseModal
@@ -3303,7 +3302,7 @@ export const VestingView = () => {
     selectedVestingContract,
     onExecuteRefreshVestingContractBalance,
     showVestingContractTransferFundsModal,
-    isInspectedAccountTheConnectedWallet,
+    canPerformAnyAction,
     showVestingContractSolBalanceModal,
     showVestingContractCloseModal,
     getAvailableStreamingBalance,
