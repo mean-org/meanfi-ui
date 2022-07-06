@@ -61,7 +61,7 @@ export const VestingContractDetails = (props: {
         const vcType = item.treasuryType;
 
         return (
-            <div className="transaction-list-row h-auto">
+            <div className="transaction-list-row h-auto no-pointer">
                 <div className="icon-cell">
                     <div className="token-icon">
                         {selectedToken && selectedToken.logoURI ? (

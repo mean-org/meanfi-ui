@@ -106,13 +106,12 @@ export const VestingContractCloseModal = (props: {
             <>
               <div className="text-center">
                 {theme === 'light' ? (
-                  <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-error" />
+                  <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
                 ) : (
-                  <WarningOutlined style={{ fontSize: 48 }} className={`icon mt-0 mb-3 ${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`} />
+                  <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
                 )}
-                {/* <WarningFilled style={{ fontSize: 48 }} className={`icon mt-0 mb-3 ${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`} /> */}
                 {!canClose() && (
-                  <h2 className={`mb-3 ${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`}>{t('vesting.close-account.cannot-close-warn')}</h2>
+                  <h2 className="mb-3 fg-warning">{t('vesting.close-account.cannot-close-warn')}</h2>
                 )}
                 <div className="mb-2">
                   {canClose() ? (

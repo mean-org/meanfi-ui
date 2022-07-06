@@ -39,7 +39,7 @@ export const VestingContractSolBalanceModal = (props: {
             }
           </div>
           {treasuryBalance < MIN_SOL_BALANCE_REQUIRED && (
-            <p className={`${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`}>{t('vesting.sol-balance.contract-balance-low-warning')}</p>
+            <p className="fg-warning">{t('vesting.sol-balance.contract-balance-low-warning')}</p>
           )}
 
           <h3 className="mb-2">{t('vesting.sol-balance.qrcode-scan-label')}</h3>

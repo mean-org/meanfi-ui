@@ -6,7 +6,16 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { TimeData } from '../../../../models/common-types';
 import { PaymentRateType } from '../../../../models/enums';
 import { getCategoryLabelByValue } from '../../../../models/vesting';
-import { getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getReadableDate, getTimeEllapsed, getTimeRemaining, getPercentageBetweenTwoDates, toTimestamp, consoleOut, getPercentualTsBetweenTwoDates } from '../../../../utils/ui';
+import {
+    getLockPeriodOptionLabel,
+    getPaymentIntervalFromSeconds,
+    getReadableDate,
+    getTimeEllapsed,
+    getTimeRemaining,
+    getPercentageBetweenTwoDates,
+    toTimestamp,
+    getPercentualTsBetweenTwoDates
+} from '../../../../utils/ui';
 import { makeDecimal } from '../../../../utils/utils';
 import { VestingProgressChartComponent } from '../VestingProgressChartComponent';
 
