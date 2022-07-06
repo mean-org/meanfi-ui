@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isLocal, isProd } from '../../utils/ui';
+import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -659,23 +659,6 @@ export const VestingView = () => {
     return '';
 
   }, [accountAddress, getQueryAccountType, multisigAccounts, selectedMultisig])
-
-  const getSelectedTreasuryMultisigId = useCallback(() => {
-
-    if (!multisigAccounts || !selectedVestingContract) { return ''; }
-
-    const treasurer = new PublicKey(selectedVestingContract.treasurer as string);
-
-    if (accountAddress && getQueryAccountType() === "multisig") {
-      const multisig = multisigAccounts.find(t => t.authority.equals(treasurer));
-      if (multisig) {
-        return multisig.id;
-      }
-    }
-
-    return '';
-
-  }, [accountAddress, getQueryAccountType, multisigAccounts, selectedVestingContract])
 
   const getAvailableStreamingBalance = useCallback(() => {
     if (!selectedVestingContract) { return 0; }
@@ -3225,7 +3208,7 @@ export const VestingView = () => {
       action: MetaInfoCtaAction.VestingContractCreateStreamOnce,
       isVisible: true,
       caption: 'Create stream',
-      disabled: !isInspectedAccountTheConnectedWallet() || !getAvailableStreamingBalance(),
+      disabled: !getAvailableStreamingBalance(),
       uiComponentType: 'button',
       uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamOnce}`,
       tooltip: '',
@@ -3238,7 +3221,7 @@ export const VestingView = () => {
     //   action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
     //   isVisible: true,
     //   caption: 'Bulk create',
-    //   disabled: !isInspectedAccountTheConnectedWallet(),
+    //   disabled: false,
     //   uiComponentType: 'button',
     //   uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
     //   tooltip: '',
@@ -3364,7 +3347,11 @@ export const VestingView = () => {
         } else {
           // /vesting/:address/contracts/:vestingContract
           const contractId = treasuryList[0].id.toString();
-          const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
+          const param = getQueryAccountType();
+          let url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
+          if (param) {
+            url += `?account-type=${param}`;
+          }
           navigate(url);
         }
       } else if (vestingContractAddress && hasNoVestingAccounts()) {
@@ -3419,10 +3406,14 @@ export const VestingView = () => {
   useEffect(() => {
     if (publicKey && accountAddress && vestingContractAddress && !accountDetailTab) {
       // /vesting/:address/contracts/:vestingContract/:activeTab
-      const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${vestingContractAddress}/overview`;
+      const param = getQueryAccountType();
+      let url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${vestingContractAddress}/overview`;
+      if (param) {
+        url += `?account-type=${param}`;
+      }
       navigate(url);
     }
-  }, [accountAddress, accountDetailTab, navigate, publicKey, vestingContractAddress]);
+  }, [accountAddress, accountDetailTab, getQueryAccountType, navigate, publicKey, vestingContractAddress]);
 
   // Reload streams whenever the selected vesting contract changes
   useEffect(() => {
@@ -3635,9 +3626,13 @@ export const VestingView = () => {
   const onTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
     // /vesting/:address/contracts/:vestingContract/:activeTab
-    const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${vestingContractAddress}/${activeKey}`;
+    const param = getQueryAccountType();
+    let url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${vestingContractAddress}/${activeKey}`;
+    if (param) {
+      url += `?account-type=${param}`;
+    }
     navigate(url);
-  }, [accountAddress, navigate, vestingContractAddress]);
+  }, [accountAddress, getQueryAccountType, navigate, vestingContractAddress]);
 
   const loadMoreActivity = () => {
     if (!vestingContractAddress) { return; }
@@ -3803,13 +3798,13 @@ export const VestingView = () => {
   const renderCreateFirstVestingAccount = useCallback(() => {
     return (
       <>
-        {isLocal() && (
+        {/* {isLocal() && (
           <div className="debug-bar">
             <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
             <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
             <span className="ml-1">needReloadMultisigs:</span><span className="ml-1 font-bold fg-dark-active">{needReloadMultisigs ? 'true' : 'false'}</span>
           </div>
-        )}
+        )} */}
       <div className="container main-container">
         <div className="interaction-area">
           <div className="title-and-subtitle mb-2">
@@ -3835,6 +3830,7 @@ export const VestingView = () => {
                 isMultisigContext={isMultisigContext}
                 token={selectedToken}
                 selectedList={selectedList}
+                selectedMultisig={selectedMultisig}
                 userBalances={userBalances}
                 nativeBalance={nativeBalance}
                 onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
@@ -3855,10 +3851,8 @@ export const VestingView = () => {
     nativeBalance,
     selectedToken,
     accountAddress,
+    selectedMultisig,
     isMultisigContext,
-    treasuriesLoaded,
-    loadingTreasuries,
-    needReloadMultisigs,
     createVestingContractTxFees,
     onAcceptCreateVestingContract,
     refreshVestingContracts,
@@ -3912,13 +3906,13 @@ export const VestingView = () => {
     // Render normal UI
     return (
       <>
-        {isLocal() && (
+        {/* {isLocal() && (
           <div className="debug-bar">
             <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
             <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
             <span className="ml-1">needReloadMultisigs:</span><span className="ml-1 font-bold fg-dark-active">{needReloadMultisigs ? 'true' : 'false'}</span>
           </div>
-        )}
+        )} */}
 
         {detailsPanelOpen && (
           <Button
@@ -4043,16 +4037,17 @@ export const VestingView = () => {
         {isVestingContractCreateModalVisible && (
           <VestingContractCreateModal
             accountAddress={accountAddress}
+            handleClose={closeVestingContractCreateModal}
+            handleOk={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
             isBusy={isBusy}
             isMultisigContext={isMultisigContext}
             isVisible={isVestingContractCreateModalVisible}
-            handleOk={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
-            transactionFees={createVestingContractTxFees}
-            handleClose={closeVestingContractCreateModal}
-            selectedToken={selectedToken}
             nativeBalance={nativeBalance}
-            userBalances={userBalances}
             selectedList={selectedList}
+            selectedMultisig={selectedMultisig}
+            selectedToken={selectedToken}
+            transactionFees={createVestingContractTxFees}
+            userBalances={userBalances}
           />
         )}
 

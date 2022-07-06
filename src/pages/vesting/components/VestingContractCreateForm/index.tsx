@@ -28,6 +28,8 @@ import moment from 'moment';
 import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { environment } from '../../../../environments/environment';
 import { PendingProposalsComponent } from '../PendingProposalsComponent';
+import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { Identicon } from '../../../../components/Identicon';
 
 const timeFormat="hh:mm A"
 
@@ -39,6 +41,7 @@ export const VestingContractCreateForm = (props: {
     nativeBalance: number;
     onStartTransaction: any;
     selectedList: TokenInfo[];
+    selectedMultisig: MultisigInfo | undefined;
     token: TokenInfo | undefined;
     tokenChanged: any;
     transactionFees: TransactionFees;
@@ -52,6 +55,7 @@ export const VestingContractCreateForm = (props: {
         nativeBalance,
         onStartTransaction,
         selectedList,
+        selectedMultisig,
         token,
         tokenChanged,
         transactionFees,
@@ -662,6 +666,31 @@ export const VestingContractCreateForm = (props: {
         </div>
     );
 
+    const renderSelectedMultisig = () => {
+        return (
+            selectedMultisig && (
+                <div className={`transaction-list-row w-100 no-pointer`}>
+                    <div className="icon-cell">
+                        <Identicon address={selectedMultisig.id} style={{ width: "30", display: "inline-flex" }} />
+                    </div>
+                    <div className="description-cell">
+                        <div className="title text-truncate">{selectedMultisig.label}</div>
+                        <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id.toBase58(), 8)}</div>
+                    </div>
+                    <div className="rate-cell">
+                        <div className="rate-amount">
+                            {
+                                t('multisig.multisig-accounts.pending-transactions', {
+                                    txs: selectedMultisig.pendingTxsAmount
+                                })
+                            }
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+    }
+
     return (
         <>
             <PendingProposalsComponent
@@ -682,6 +711,15 @@ export const VestingContractCreateForm = (props: {
                 <div className={`panel1 ${currentStep === 0 ? 'show' : 'hide'}`}>
 
                     <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
+
+                    {isMultisigContext && selectedMultisig && (
+                        <>
+                            <div className="form-label">Multisig account</div>
+                            <div className="well">
+                                {renderSelectedMultisig()}
+                            </div>
+                        </>
+                    )}
 
                     {/* Vesting Lock name */}
                     <div className="form-label">{t('vesting.create-account.vesting-contract-name-label')}</div>

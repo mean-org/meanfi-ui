@@ -4,9 +4,10 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { UserTokenAccount } from '../../../../models/transactions';
 import { VestingContractCreateForm } from '../VestingContractCreateForm';
 import { TransactionFees } from '@mean-dao/msp';
+import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
 export const VestingContractCreateModal = (props: {
-  accountAddress: string | null;
+  accountAddress: string;
   handleClose: any;
   handleOk: any;
   isBusy: boolean;
@@ -14,6 +15,7 @@ export const VestingContractCreateModal = (props: {
   isVisible: boolean;
   nativeBalance: number;
   selectedList: TokenInfo[];
+  selectedMultisig: MultisigInfo | undefined;
   selectedToken: UserTokenAccount | undefined;
   transactionFees: TransactionFees;
   userBalances: any;
@@ -27,6 +29,7 @@ export const VestingContractCreateModal = (props: {
     isVisible,
     nativeBalance,
     selectedList,
+    selectedMultisig,
     selectedToken,
     transactionFees,
     userBalances,
@@ -59,6 +62,7 @@ export const VestingContractCreateModal = (props: {
           userBalances={userBalances}
           nativeBalance={nativeBalance}
           selectedList={selectedList}
+          selectedMultisig={selectedMultisig}
         />
 
     </Modal>
