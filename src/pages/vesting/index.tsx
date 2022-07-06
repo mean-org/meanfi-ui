@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd } from '../../utils/ui';
+import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isLocal, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -760,7 +760,9 @@ export const VestingView = () => {
       return;
     }
 
-    setLoadingMultisigAccounts(true);
+    setTimeout(() => {
+      setLoadingMultisigAccounts(true);
+    });
 
     multisigSerumClient
       .account
@@ -807,13 +809,17 @@ export const VestingView = () => {
             console.error(err);
             setPendingMultisigTxCount(undefined);
           })
-          .finally(() => setLoadingMultisigAccounts(false));
+          .finally(() => {
+            console.log('multisigClient.getMultisigs finished running');
+            setLoadingMultisigAccounts(false);
+          });
       })
       .catch((err: any) => {
         console.error(err);
         setPendingMultisigTxCount(undefined);
-      })
-      .finally(() => setLoadingMultisigAccounts(false));
+        setLoadingMultisigAccounts(false);
+        console.error('multisigSerumClient.account.multisig.all finished running with failure');
+      });
 
   }, [
     publicKey,
@@ -3819,43 +3825,43 @@ export const VestingView = () => {
             <span className="ml-1">needReloadMultisigs:</span><span className="ml-1 font-bold fg-dark-active">{needReloadMultisigs ? 'true' : 'false'}</span>
           </div>
         )} */}
-      <div className="container main-container">
-        <div className="interaction-area">
-          <div className="title-and-subtitle mb-2">
-            <div className="title">
-              <IconMoneyTransfer className="mean-svg-icons" />
-              <div>{t('vesting.screen-title')}</div>
+        <div className="container main-container">
+          <div className="interaction-area">
+            <div className="title-and-subtitle mb-2">
+              <div className="title">
+                <IconMoneyTransfer className="mean-svg-icons" />
+                <div>{t('vesting.screen-title')}</div>
+              </div>
+              <div className="subtitle mt-1">
+                {t('vesting.screen-subtitle')}
+              </div>
+              <h3 className="mb-0">
+                {t('vesting.user-instruction-headline')}
+              </h3>
             </div>
-            <div className="subtitle mb-3">
-              {t('vesting.screen-subtitle')}
+            <div className="place-transaction-box flat mb-0">
+              <>
+                <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
+                <VestingContractCreateForm
+                  accountAddress={accountAddress}
+                  inModal={false}
+                  isBusy={isBusy}
+                  isMultisigContext={isMultisigContext}
+                  loadingMultisigAccounts={loadingMultisigAccounts || loadingTreasuries}
+                  token={selectedToken}
+                  selectedList={selectedList}
+                  selectedMultisig={selectedMultisig}
+                  userBalances={userBalances}
+                  nativeBalance={nativeBalance}
+                  onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
+                  transactionFees={createVestingContractTxFees}
+                  tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
+                />
+              </>
             </div>
-            <div className="subtitle">
-              {t('vesting.screen-subtitle2')}
-            </div>
-            <h3 className="user-instruction-headline">{t('vesting.user-instruction-headline')}</h3>
-          </div>
-          <div className="place-transaction-box flat mb-0">
-            <>
-              <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
-              <VestingContractCreateForm
-                accountAddress={accountAddress}
-                inModal={false}
-                isBusy={isBusy}
-                isMultisigContext={isMultisigContext}
-                token={selectedToken}
-                selectedList={selectedList}
-                selectedMultisig={selectedMultisig}
-                userBalances={userBalances}
-                nativeBalance={nativeBalance}
-                onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
-                transactionFees={createVestingContractTxFees}
-                tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
-              />
-            </>
           </div>
         </div>
-      </div>
-      <PreFooter />
+        <PreFooter />
       </>
     );
   }, [
@@ -3867,6 +3873,8 @@ export const VestingView = () => {
     accountAddress,
     selectedMultisig,
     isMultisigContext,
+    loadingTreasuries,
+    loadingMultisigAccounts,
     createVestingContractTxFees,
     onAcceptCreateVestingContract,
     refreshVestingContracts,
@@ -3920,13 +3928,14 @@ export const VestingView = () => {
     // Render normal UI
     return (
       <>
-        {/* {isLocal() && (
+        {isLocal() && (
           <div className="debug-bar">
             <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
             <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
             <span className="ml-1">needReloadMultisigs:</span><span className="ml-1 font-bold fg-dark-active">{needReloadMultisigs ? 'true' : 'false'}</span>
+            <span className="ml-1">loadingMultisigAccounts:</span><span className="ml-1 font-bold fg-dark-active">{loadingMultisigAccounts ? 'true' : 'false'}</span>
           </div>
-        )} */}
+        )}
 
         {detailsPanelOpen && (
           <Button
@@ -4079,6 +4088,7 @@ export const VestingView = () => {
             isBusy={isBusy}
             isMultisigContext={isMultisigContext}
             isVisible={isVestingContractCreateModalVisible}
+            loadingMultisigAccounts={loadingMultisigAccounts}
             nativeBalance={nativeBalance}
             selectedList={selectedList}
             selectedMultisig={selectedMultisig}

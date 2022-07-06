@@ -10,7 +10,7 @@ import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BAL
 import { TokenListItem } from '../../../../components/TokenListItem';
 import { TextInput } from '../../../../components/TextInput';
 import { useTranslation } from 'react-i18next';
-import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, TimePicker } from 'antd';
+import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, Spin, TimePicker } from 'antd';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { SubCategory, TransactionFees, TreasuryType } from '@mean-dao/msp';
 import { NATIVE_SOL } from '../../../../utils/tokens';
@@ -38,6 +38,7 @@ export const VestingContractCreateForm = (props: {
     inModal: boolean;
     isBusy: boolean;
     isMultisigContext: boolean;
+    loadingMultisigAccounts: boolean;
     nativeBalance: number;
     onStartTransaction: any;
     selectedList: TokenInfo[];
@@ -52,6 +53,7 @@ export const VestingContractCreateForm = (props: {
         inModal,
         isBusy,
         isMultisigContext,
+        loadingMultisigAccounts,
         nativeBalance,
         onStartTransaction,
         selectedList,
@@ -693,422 +695,425 @@ export const VestingContractCreateForm = (props: {
 
     return (
         <>
-            <PendingProposalsComponent
-                accountAddress={accountAddress}
-                extraClasses="no-pointer justify-content-center shift-up-3 mb-2"
-                pendingMultisigTxCount={pendingMultisigTxCount}
-            />
+            <Spin spinning={loadingMultisigAccounts}>
 
-            <div className={`${inModal ? 'scrollable-content pl-5 pr-4 py-2' : 'elastic-form-container'}`}>
-
-                <WizardStepSelector
-                    step={currentStep}
-                    steps={2}
-                    extraClass="px-1 mb-2"
-                    onValueSelected={onStepperChange}
+                <PendingProposalsComponent
+                    accountAddress={accountAddress}
+                    extraClasses="no-pointer justify-content-center shift-up-3 mb-2"
+                    pendingMultisigTxCount={pendingMultisigTxCount}
                 />
 
-                <div className={`panel1 ${currentStep === 0 ? 'show' : 'hide'}`}>
+                <div className={`${inModal ? 'scrollable-content pl-5 pr-4 py-2' : 'elastic-form-container'}`}>
 
-                    <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
+                    <WizardStepSelector
+                        step={currentStep}
+                        steps={2}
+                        extraClass="px-1 mb-2"
+                        onValueSelected={onStepperChange}
+                    />
 
-                    {isMultisigContext && selectedMultisig && (
-                        <>
-                            <div className="form-label">Multisig account</div>
-                            <div className="well">
-                                {renderSelectedMultisig()}
-                            </div>
-                        </>
-                    )}
+                    <div className={`panel1 ${currentStep === 0 ? 'show' : 'hide'}`}>
 
-                    {/* Vesting Lock name */}
-                    <div className="form-label">{t('vesting.create-account.vesting-contract-name-label')}</div>
-                    <div className="well">
-                        <div className="flex-fixed-right">
-                            <div className="left">
-                                <input
-                                    id="vesting-lock-name-input"
-                                    className="w-100 general-text-input"
-                                    autoComplete="on"
-                                    autoCorrect="off"
-                                    type="text"
-                                    maxLength={32}
-                                    onChange={handleVestingLockNameChange}
-                                    placeholder="Name for this no-code vesting lock account"
-                                    spellCheck="false"
-                                    value={vestingLockName}
-                                />
+                        <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
+
+                        {isMultisigContext && selectedMultisig && (
+                            <>
+                                <div className="form-label">Multisig account</div>
+                                <div className="well">
+                                    {renderSelectedMultisig()}
+                                </div>
+                            </>
+                        )}
+
+                        {/* Vesting Lock name */}
+                        <div className="form-label">{t('vesting.create-account.vesting-contract-name-label')}</div>
+                        <div className="well">
+                            <div className="flex-fixed-right">
+                                <div className="left">
+                                    <input
+                                        id="vesting-lock-name-input"
+                                        className="w-100 general-text-input"
+                                        autoComplete="on"
+                                        autoCorrect="off"
+                                        type="text"
+                                        maxLength={32}
+                                        onChange={handleVestingLockNameChange}
+                                        placeholder="Name for this no-code vesting lock account"
+                                        spellCheck="false"
+                                        value={vestingLockName}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Token to vest */}
-                    <FormLabelWithIconInfo
-                        label={
-                            isMultisigContext
-                                ? t('vesting.create-account.multisig-vesting-contract-token-label')
-                                : t('vesting.create-account.vesting-contract-token-label')
-                        }
-                        tooltip_text={t('vesting.create-account.vesting-contract-token-tooltip')}
-                    />
-                    <div className="well">
-                        <div className="flex-fixed-left">
-                            <div className="left">
-                                <span className="add-on simplelink">
-                                    {selectedToken && (
-                                        <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
-                                            mintAddress={selectedToken.address}
-                                            name={selectedToken.name}
-                                            showCaretDown={true}
-                                            showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
-                                            fullTokenInfo={selectedToken}
+                        {/* Token to vest */}
+                        <FormLabelWithIconInfo
+                            label={
+                                isMultisigContext
+                                    ? t('vesting.create-account.multisig-vesting-contract-token-label')
+                                    : t('vesting.create-account.vesting-contract-token-label')
+                            }
+                            tooltip_text={t('vesting.create-account.vesting-contract-token-tooltip')}
+                        />
+                        <div className="well">
+                            <div className="flex-fixed-left">
+                                <div className="left">
+                                    <span className="add-on simplelink">
+                                        {selectedToken && (
+                                            <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
+                                                mintAddress={selectedToken.address}
+                                                name={selectedToken.name}
+                                                showCaretDown={true}
+                                                showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                                                fullTokenInfo={selectedToken}
+                                            />
+                                        )}
+                                        {!isMultisigContext && selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
+                                            <div className="token-max simplelink" onClick={() => {
+                                                if (selectedToken.address === NATIVE_SOL.address) {
+                                                    const amount = getMaxAmount();
+                                                    setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                                                } else {
+                                                    setVestingLockFundingAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                                                }
+                                            }}>
+                                                MAX
+                                            </div>
+                                        ) : null}
+                                    </span>
+                                </div>
+                                <div className="right">
+                                    {isMultisigContext ? (
+                                        <span>&nbsp;</span>
+                                    ) : (
+                                        <input
+                                            className="general-text-input text-right"
+                                            inputMode="decimal"
+                                            autoComplete="off"
+                                            autoCorrect="off"
+                                            type="text"
+                                            onChange={onVestingLockFundingAmountChange}
+                                            pattern="^[0-9]*[.,]?[0-9]*$"
+                                            placeholder="0.0"
+                                            minLength={1}
+                                            maxLength={79}
+                                            spellCheck="false"
+                                            value={vestingLockFundingAmount}
                                         />
                                     )}
-                                    {!isMultisigContext && selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
-                                        <div className="token-max simplelink" onClick={() => {
-                                            if (selectedToken.address === NATIVE_SOL.address) {
-                                                const amount = getMaxAmount();
-                                                setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-                                            } else {
-                                                setVestingLockFundingAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                                </div>
+                            </div>
+                            <div className="flex-fixed-right">
+                                <div className="left inner-label">
+                                    <span>{t('transactions.send-amount.label-right')}:</span>
+                                    <span>
+                                        {`${tokenBalance && selectedToken
+                                            ? getAmountWithSymbol(tokenBalance, selectedToken.address, true)
+                                            : "0"
+                                            }`
+                                        }
+                                    </span>
+                                </div>
+                                {!isMultisigContext && (
+                                    <div className="right inner-label">
+                                        {publicKey ? (
+                                            <>
+                                                <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                                                ~{vestingLockFundingAmount
+                                                    ? toUsCurrency(getTokenPrice())
+                                                    : "$0.00"
+                                                }
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span>~$0.00</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            {nativeBalance < getMinSolBlanceRequired() && (
+                                <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+                            )}
+                        </div>
+
+                        {/* Treasury type selector */}
+                        <FormLabelWithIconInfo
+                            label={t('vesting.create-account.vesting-contract-type-label')}
+                            tooltip_text={t('vesting.create-account.vesting-contract-type-tooltip')}
+                        />
+                        <div className="items-card-list vertical-scroll">
+                            {VESTING_ACCOUNT_TYPE_OPTIONS.map((option: TreasuryTypeOption, index) => {
+                                return (
+                                    <div key={`${option.translationId}`} className={
+                                        `item-card ${index === VESTING_ACCOUNT_TYPE_OPTIONS.length - 1 ? 'mb-0' : 'mb-1'}${option.type === treasuryOption?.type ? ' selected' : ''}${option.disabled ? ' disabled': ''}`
+                                        }
+                                        onClick={() => {
+                                            if (!option.disabled) {
+                                                handleVestingAccountTypeSelection(option);
                                             }
                                         }}>
-                                            MAX
+                                        <div className="checkmark"><CheckOutlined /></div>
+                                        <div className="item-meta">
+                                            <div className="item-name">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-name`)}</div>
+                                            <div className="item-description">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-description`)}</div>
                                         </div>
-                                    ) : null}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* CTA */}
+                        <div className="cta-container">
+                            <Button
+                                type="primary"
+                                shape="round"
+                                size="large"
+                                className="thin-stroke"
+                                disabled={!isStepOneValid()}
+                                onClick={onContinueStepOneButtonClick}>
+                                {getStepOneButtonLabel()}
+                            </Button>
+                        </div>
+
+                    </div>
+
+                    <div className={`panel2 ${currentStep === 1 ? 'show' : 'hide'}`}>
+
+                        <h2 className="form-group-label">{t('vesting.create-account.step-two-label')}</h2>
+
+                        {/* Vesting category */}
+                        <FormLabelWithIconInfo
+                            label="Vesting category"
+                            tooltip_text="This vesting category helps identify the type of streams in this contract. Some examples are seed round, investor, marketing, token lock."
+                        />
+                        <div className="well">
+                            <Dropdown
+                                overlay={vestingCategoriesMenu}
+                                trigger={["click"]}>
+                                <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                                    <div className="left">
+                                        {vestingCategory ? (
+                                            <span>{vestingCategory.label}</span>
+                                        ) : (
+                                            <span className="placeholder-text">Please select a vesting category</span>
+                                        )}
+                                    </div>
+                                    <div className="right">
+                                        <IconCaretDown className="mean-svg-icons" />
+                                    </div>
                                 </span>
+                            </Dropdown>
+                        </div>
+
+                        {/* Vesting period */}
+                        <div className="form-label">Vesting period</div>
+                        <div className="two-column-layout">
+                            <div className="left">
+                                <div className="well">
+                                    <div className="flex-fixed-right">
+                                        <div className="left">
+                                            <input
+                                                id="plock-period-field"
+                                                className="w-100 general-text-input"
+                                                autoComplete="on"
+                                                autoCorrect="off"
+                                                type="number"
+                                                onChange={handleLockPeriodAmountChange}
+                                                placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
+                                                spellCheck="false"
+                                                min={0}
+                                                max={12}
+                                                maxLength={2}
+                                                value={lockPeriodAmount}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div className="right">
-                                {isMultisigContext ? (
-                                    <span>&nbsp;</span>
-                                ) : (
+                                <div className="well">
+                                    <Dropdown
+                                        overlay={lockPeriodOptionsMenu}
+                                        trigger={["click"]}>
+                                        <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                                            <div className="left">
+                                                <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)}{" "}</span>
+                                            </div>
+                                            <div className="right">
+                                                <IconCaretDown className="mean-svg-icons" />
+                                            </div>
+                                        </span>
+                                    </Dropdown>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Contract commencement date */}
+                        <div className="form-label">Contract commencement date</div>
+                        <div className="two-column-layout">
+                            <div className="left">
+                                <div className="well">
+                                    <div className="flex-fixed-right">
+                                        <div className="left static-data-field">{paymentStartDate}</div>
+                                        <div className="right">
+                                            <div className="add-on simplelink">
+                                                <>
+                                                    {
+                                                        <DatePicker
+                                                            size="middle"
+                                                            bordered={false}
+                                                            className="addon-date-picker"
+                                                            aria-required={true}
+                                                            allowClear={false}
+                                                            disabledDate={disabledDate}
+                                                            placeholder="Pick a date"
+                                                            onChange={(value: any, date: string) => handleDateChange(date)}
+                                                            value={moment(
+                                                                paymentStartDate,
+                                                                DATEPICKER_FORMAT
+                                                            ) as any}
+                                                            format={DATEPICKER_FORMAT}
+                                                        />
+                                                    }
+                                                </>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="right">
+                                <div className="well time-picker">
+                                    <TimePicker
+                                        defaultValue={moment().add(15, 'minutes')}
+                                        bordered={false}
+                                        allowClear={false}
+                                        size="middle"
+                                        use12Hours
+                                        format={timeFormat}
+                                        onChange={onChange} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Cliff release */}
+                        <FormLabelWithIconInfo
+                            label="Cliff release (On commencement date)"
+                            tooltip_text="This is the amount (percentage) of the funds release at the end of the cliff period of the vesting contract."
+                        />
+                        <div className="well">
+                            <div className="flexible-right mb-1">
+                                <div className="token-group">
+                                    {percentages.map((percentage, index) => (
+                                        <div key={index} className="mb-1 d-flex flex-column align-items-center">
+                                            <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>{percentage}%</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="flex-fixed-left">
+                                <div className="left">
+                                    <span className="add-on simplelink">
+                                        {selectedToken && (
+                                            <TokenDisplay onClick={() => { }}
+                                                mintAddress={selectedToken.address}
+                                                name={selectedToken.name}
+                                                showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                                                fullTokenInfo={selectedToken}
+                                            />
+                                        )}
+                                    </span>
+                                </div>
+                                <div className="right flex-row justify-content-end align-items-center">
                                     <input
                                         className="general-text-input text-right"
                                         inputMode="decimal"
                                         autoComplete="off"
                                         autoCorrect="off"
                                         type="text"
-                                        onChange={onVestingLockFundingAmountChange}
+                                        onChange={handleCliffReleaseAmountChange}
                                         pattern="^[0-9]*[.,]?[0-9]*$"
                                         placeholder="0.0"
                                         minLength={1}
                                         maxLength={79}
                                         spellCheck="false"
-                                        value={vestingLockFundingAmount}
+                                        value={cliffReleasePercentage}
                                     />
-                                )}
+                                    <span className="suffix">%</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex-fixed-right">
-                            <div className="left inner-label">
-                                <span>{t('transactions.send-amount.label-right')}:</span>
-                                <span>
-                                    {`${tokenBalance && selectedToken
-                                        ? getAmountWithSymbol(tokenBalance, selectedToken.address, true)
-                                        : "0"
-                                        }`
-                                    }
-                                </span>
+
+                        {/* Streaming fees will be paid from the vesting contract's funds */}
+                        <div className="ml-1 mb-3">
+                            <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('vesting.create-account.fee-paid-by-treasury')}</Checkbox>
+                        </div>
+
+                        {/* CTAs */}
+                        <div className={`two-column-form-layout${inModal || isXsDevice ? ' reverse' : ''}`}>
+                            <div className={`left ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}>
+                                <Button
+                                    block
+                                    type="default"
+                                    shape="round"
+                                    size="large"
+                                    className="thin-stroke"
+                                    onClick={onBackClick}>
+                                    Back
+                                </Button>
                             </div>
-                            {!isMultisigContext && (
-                                <div className="right inner-label">
-                                    {publicKey ? (
-                                        <>
-                                            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                                            ~{vestingLockFundingAmount
-                                                ? toUsCurrency(getTokenPrice())
-                                                : "$0.00"
-                                            }
-                                            </span>
-                                        </>
-                                    ) : (
-                                        <span>~$0.00</span>
+                            <div className={`right ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}>
+                                <Button
+                                    block
+                                    type="primary"
+                                    shape="round"
+                                    size="large"
+                                    className="thin-stroke"
+                                    disabled={isBusy || !isStepTwoValid()}
+                                    onClick={onAccountCreateClick}>
+                                    {isBusy && (
+                                        <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                                     )}
-                                </div>
-                            )}
-                        </div>
-                        {nativeBalance < getMinSolBlanceRequired() && (
-                            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
-                        )}
-                    </div>
-
-                    {/* Treasury type selector */}
-                    <FormLabelWithIconInfo
-                        label={t('vesting.create-account.vesting-contract-type-label')}
-                        tooltip_text={t('vesting.create-account.vesting-contract-type-tooltip')}
-                    />
-                    <div className="items-card-list vertical-scroll">
-                        {VESTING_ACCOUNT_TYPE_OPTIONS.map((option: TreasuryTypeOption, index) => {
-                            return (
-                                <div key={`${option.translationId}`} className={
-                                    `item-card ${index === VESTING_ACCOUNT_TYPE_OPTIONS.length - 1 ? 'mb-0' : 'mb-1'}${option.type === treasuryOption?.type ? ' selected' : ''}${option.disabled ? ' disabled': ''}`
+                                    {isBusy
+                                        ? t('vesting.create-account.create-cta-busy')
+                                        : isError(transactionStatus.currentOperation)
+                                            ? t('general.retry')
+                                            : getStepTwoButtonLabel()
                                     }
-                                    onClick={() => {
-                                        if (!option.disabled) {
-                                            handleVestingAccountTypeSelection(option);
-                                        }
-                                    }}>
-                                    <div className="checkmark"><CheckOutlined /></div>
-                                    <div className="item-meta">
-                                        <div className="item-name">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-name`)}</div>
-                                        <div className="item-description">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-description`)}</div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                </Button>
+                            </div>
+                        </div>
 
-                    {/* CTA */}
-                    <div className="cta-container">
-                        <Button
-                            type="primary"
-                            shape="round"
-                            size="large"
-                            className="thin-stroke"
-                            disabled={!isStepOneValid()}
-                            onClick={onContinueStepOneButtonClick}>
-                            {getStepOneButtonLabel()}
-                        </Button>
                     </div>
 
                 </div>
 
-                <div className={`panel2 ${currentStep === 1 ? 'show' : 'hide'}`}>
+                {inModal && (
+                    <Drawer
+                        title={t('token-selector.modal-title')}
+                        placement="bottom"
+                        closable={true}
+                        onClose={onCloseTokenSelector}
+                        visible={isTokenSelectorVisible}
+                        getContainer={false}
+                        style={{ position: 'absolute' }}>
+                        {renderTokenSelectorInner}
+                    </Drawer>
+                )}
 
-                    <h2 className="form-group-label">{t('vesting.create-account.step-two-label')}</h2>
+                {/* Token selection modal */}
+                {!inModal && isTokenSelectorModalVisible && (
+                    <Modal
+                        className="mean-modal unpadded-content"
+                        visible={isTokenSelectorModalVisible}
+                        title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+                        onCancel={onCloseTokenSelector}
+                        width={450}
+                        footer={null}>
+                        {renderTokenSelectorInner}
+                    </Modal>
+                )}
 
-                    {/* Vesting category */}
-                    <FormLabelWithIconInfo
-                        label="Vesting category"
-                        tooltip_text="This vesting category helps identify the type of streams in this contract. Some examples are seed round, investor, marketing, token lock."
-                    />
-                    <div className="well">
-                        <Dropdown
-                            overlay={vestingCategoriesMenu}
-                            trigger={["click"]}>
-                            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                                <div className="left">
-                                    {vestingCategory ? (
-                                        <span>{vestingCategory.label}</span>
-                                    ) : (
-                                        <span className="placeholder-text">Please select a vesting category</span>
-                                    )}
-                                </div>
-                                <div className="right">
-                                    <IconCaretDown className="mean-svg-icons" />
-                                </div>
-                            </span>
-                        </Dropdown>
-                    </div>
-
-                    {/* Vesting period */}
-                    <div className="form-label">Vesting period</div>
-                    <div className="two-column-layout">
-                        <div className="left">
-                            <div className="well">
-                                <div className="flex-fixed-right">
-                                    <div className="left">
-                                        <input
-                                            id="plock-period-field"
-                                            className="w-100 general-text-input"
-                                            autoComplete="on"
-                                            autoCorrect="off"
-                                            type="number"
-                                            onChange={handleLockPeriodAmountChange}
-                                            placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
-                                            spellCheck="false"
-                                            min={0}
-                                            max={12}
-                                            maxLength={2}
-                                            value={lockPeriodAmount}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="right">
-                            <div className="well">
-                                <Dropdown
-                                    overlay={lockPeriodOptionsMenu}
-                                    trigger={["click"]}>
-                                    <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                                        <div className="left">
-                                            <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)}{" "}</span>
-                                        </div>
-                                        <div className="right">
-                                            <IconCaretDown className="mean-svg-icons" />
-                                        </div>
-                                    </span>
-                                </Dropdown>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Contract commencement date */}
-                    <div className="form-label">Contract commencement date</div>
-                    <div className="two-column-layout">
-                        <div className="left">
-                            <div className="well">
-                                <div className="flex-fixed-right">
-                                    <div className="left static-data-field">{paymentStartDate}</div>
-                                    <div className="right">
-                                        <div className="add-on simplelink">
-                                            <>
-                                                {
-                                                    <DatePicker
-                                                        size="middle"
-                                                        bordered={false}
-                                                        className="addon-date-picker"
-                                                        aria-required={true}
-                                                        allowClear={false}
-                                                        disabledDate={disabledDate}
-                                                        placeholder="Pick a date"
-                                                        onChange={(value: any, date: string) => handleDateChange(date)}
-                                                        value={moment(
-                                                            paymentStartDate,
-                                                            DATEPICKER_FORMAT
-                                                        ) as any}
-                                                        format={DATEPICKER_FORMAT}
-                                                    />
-                                                }
-                                            </>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="right">
-                            <div className="well time-picker">
-                                <TimePicker
-                                    defaultValue={moment().add(15, 'minutes')}
-                                    bordered={false}
-                                    allowClear={false}
-                                    size="middle"
-                                    use12Hours
-                                    format={timeFormat}
-                                    onChange={onChange} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Cliff release */}
-                    <FormLabelWithIconInfo
-                        label="Cliff release (On commencement date)"
-                        tooltip_text="This is the amount (percentage) of the funds release at the end of the cliff period of the vesting contract."
-                    />
-                    <div className="well">
-                        <div className="flexible-right mb-1">
-                            <div className="token-group">
-                                {percentages.map((percentage, index) => (
-                                    <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                                        <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>{percentage}%</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="flex-fixed-left">
-                            <div className="left">
-                                <span className="add-on simplelink">
-                                    {selectedToken && (
-                                        <TokenDisplay onClick={() => { }}
-                                            mintAddress={selectedToken.address}
-                                            name={selectedToken.name}
-                                            showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
-                                            fullTokenInfo={selectedToken}
-                                        />
-                                    )}
-                                </span>
-                            </div>
-                            <div className="right flex-row justify-content-end align-items-center">
-                                <input
-                                    className="general-text-input text-right"
-                                    inputMode="decimal"
-                                    autoComplete="off"
-                                    autoCorrect="off"
-                                    type="text"
-                                    onChange={handleCliffReleaseAmountChange}
-                                    pattern="^[0-9]*[.,]?[0-9]*$"
-                                    placeholder="0.0"
-                                    minLength={1}
-                                    maxLength={79}
-                                    spellCheck="false"
-                                    value={cliffReleasePercentage}
-                                />
-                                <span className="suffix">%</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Streaming fees will be paid from the vesting contract's funds */}
-                    <div className="ml-1 mb-3">
-                        <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('vesting.create-account.fee-paid-by-treasury')}</Checkbox>
-                    </div>
-
-                    {/* CTAs */}
-                    <div className={`two-column-form-layout${inModal || isXsDevice ? ' reverse' : ''}`}>
-                        <div className={`left ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}>
-                            <Button
-                                block
-                                type="default"
-                                shape="round"
-                                size="large"
-                                className="thin-stroke"
-                                onClick={onBackClick}>
-                                Back
-                            </Button>
-                        </div>
-                        <div className={`right ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}>
-                            <Button
-                                block
-                                type="primary"
-                                shape="round"
-                                size="large"
-                                className="thin-stroke"
-                                disabled={isBusy || !isStepTwoValid()}
-                                onClick={onAccountCreateClick}>
-                                {isBusy && (
-                                    <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-                                )}
-                                {isBusy
-                                    ? t('vesting.create-account.create-cta-busy')
-                                    : isError(transactionStatus.currentOperation)
-                                        ? t('general.retry')
-                                        : getStepTwoButtonLabel()
-                                }
-                            </Button>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-            {inModal && (
-                <Drawer
-                    title={t('token-selector.modal-title')}
-                    placement="bottom"
-                    closable={true}
-                    onClose={onCloseTokenSelector}
-                    visible={isTokenSelectorVisible}
-                    getContainer={false}
-                    style={{ position: 'absolute' }}>
-                    {renderTokenSelectorInner}
-                </Drawer>
-            )}
-
-            {/* Token selection modal */}
-            {!inModal && isTokenSelectorModalVisible && (
-                <Modal
-                    className="mean-modal unpadded-content"
-                    visible={isTokenSelectorModalVisible}
-                    title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
-                    onCancel={onCloseTokenSelector}
-                    width={450}
-                    footer={null}>
-                    {renderTokenSelectorInner}
-                </Modal>
-            )}
-
+            </Spin>
         </>
     );
 };

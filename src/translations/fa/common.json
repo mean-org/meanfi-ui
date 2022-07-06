@@ -1315,9 +1315,8 @@
 		"add-funds": {
 			"modal-title": "Add funds to the vesting contract"
 		},
-		"screen-subtitle": "Welcome to the future of safe and secure token locks",
+		"screen-subtitle": "Realize the power of no-code token locks on Solana",
 		"screen-title": "Mean Vesting",
-		"screen-subtitle2": "Realize the power of no-code token locks on Solana.",
 		"user-instruction-headline": "Get started by creating a vesting contract below",
 		"create-account": {
 			"create-cta": "Create vesting contract",
