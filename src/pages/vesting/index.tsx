@@ -165,6 +165,7 @@ export const VestingView = () => {
     if (!address) {
       const url = `${VESTING_ROUTE_BASE_PATH}/${publicKey.toBase58()}/contracts`;
       consoleOut('No address, redirecting to:', url, 'orange');
+      setTreasuriesLoaded(false);
       navigate(url, { replace: true });
     }
     // In any case, set the flag isPageLoaded a bit later

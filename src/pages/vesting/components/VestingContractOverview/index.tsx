@@ -159,6 +159,29 @@ export const VestingContractOverview = (props: {
         }
     }, [cliffReleasePercentage, isStartDateFuture, lockPeriodAmount, lockPeriodUnits, paymentStartDate, vestingContract]);
 
+    const getVestingDistributionStatus = () => {
+
+        if (!paymentStartDate || !vestingContract || vestingContract.totalStreams === 0) {
+            return null;
+        }
+
+        let bgClass = '';
+        let content = '';
+
+        if (isStartDateFuture(paymentStartDate)) {
+            bgClass = 'bg-purple';
+            content = t('streams.status.status-scheduled');
+        } else {
+            bgClass = 'bg-green';
+            content = t('streams.status.status-running');
+        }
+
+        return (
+            <span className={`badge medium font-bold text-uppercase fg-white ${bgClass}`}>{content}</span>
+        );
+
+    };
+
     return (
         <div className="tab-inner-content-wrapper vertical-scroll">
             {vestingContract && (
@@ -170,7 +193,10 @@ export const VestingContractOverview = (props: {
                                 <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>{getCategoryLabelByValue(vestingContract.subCategory)}</span>
                             ) : null}
                         </div>
-                        <div className="font-size-100 font-extrabold text-uppercase mt-3 mb-2">Vesting Distribution</div>
+                        <div className="font-size-100 font-extrabold text-uppercase mt-3 mb-2">
+                            <span className="mr-1 align-middle">Vesting Distribution</span>
+                            {getVestingDistributionStatus()}
+                        </div>
                         <div className="font-size-100">{isStartDateFuture(paymentStartDate) ? 'Streams start on' : 'Streams started on'} {getReadableDate(paymentStartDate, true)}</div>
                         <div className="font-size-70 text-italic">{startRemainingTime}</div>
                         <div className="font-size-100 mt-3">{cliffReleasePercentage}% unlocked on commencement date</div>
