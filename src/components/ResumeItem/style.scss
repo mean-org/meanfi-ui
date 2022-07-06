@@ -11,6 +11,7 @@
       }
     }
   }
+  .header-details-row,
   .resume-stream-row,
   .resume-streaming-row {
     width: 100%;
@@ -23,6 +24,10 @@
         margin-left: 0.5em;
       }
     }
+  }
+  .header-details-row,
+  .header-details-info-group {
+    margin-left: 2.5em;
   }
 }
 @media (min-width: 576px) {

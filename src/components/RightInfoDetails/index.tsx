@@ -7,14 +7,15 @@ export const RightInfoDetails = (props: {
   sm?: number;
   md?: number;
   lg?: number;
+  classNameInfoGroup?: string;
 }) => {
-  const { infoData, xs, sm, md, lg } = props;
+  const { infoData, xs, sm, md, lg, classNameInfoGroup } = props;
 
   return (
     <Row gutter={[8, 8]} className="right-info-container">
       {infoData.map((info, index) => (
         <Col xs={xs || 12} sm={sm || 12} md={md || 12} lg={lg || 12} key={index}>
-          <div className="right-info-group">
+          <div className={`right-info-group ${classNameInfoGroup}`}>
             <span className="info-label">
               {info.name}
             </span>

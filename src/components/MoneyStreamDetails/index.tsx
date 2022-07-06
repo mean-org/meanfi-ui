@@ -655,7 +655,8 @@ export const MoneyStreamDetails = (props: {
             isDetailsPanel={true}
             isLink={false}
             isStream={true}
-            classNameRightContent="resume-right-content"
+            // classNameRightContent="resume-right-content"
+            classNameRightContent="header-details-row resume-right-content"
             xs={24}
             md={24}
           />
@@ -664,6 +665,7 @@ export const MoneyStreamDetails = (props: {
         {infoData && (
           <RightInfoDetails
             infoData={infoData}
+            classNameInfoGroup="header-details-info-group"
             xs={24}
             sm={24}
             md={24}
