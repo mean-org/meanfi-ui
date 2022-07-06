@@ -1871,9 +1871,11 @@ export const MoneyStreamsInfoView = (props: {
                         rightIcon={<IconArrowForward className="mean-svg-icons" />}
                         isLink={true}
                         onClick={onSelectedStreamingAccount}
+                        classNameRightContent="resume-streaming-row"
+                        classNameIcon="icon-streaming-row"
                         xs={24}
                         sm={18}
-                        md={18}
+                        md={24}
                         lg={18}
                       />
       
