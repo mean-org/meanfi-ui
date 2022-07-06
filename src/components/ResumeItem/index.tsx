@@ -15,6 +15,7 @@ export const ResumeItem = (props: {
   title?: string;
   extraTitle?: any;
   classNameTitle?: string;
+  classNameRightHeader?: string;
   subtitle?: any;
   amount?: any;
   expires?: any;
@@ -51,6 +52,7 @@ export const ResumeItem = (props: {
     title,
     extraTitle,
     classNameTitle,
+    classNameRightHeader,
     subtitle,
     amount,
     expires,
@@ -229,7 +231,7 @@ export const ResumeItem = (props: {
           )}
         </div>
       </Col>
-      <Col className={`resume-right-container ${isDetailsPanel ? "mr-3" : "mr-1"}`}>
+      <Col className={`resume-right-container ${isDetailsPanel ? "mr-2" : "mr-1"} ${classNameRightHeader}`}>
         <div className="resume-right-text">
           <>
             <div className={`resume-right-text-up`}>

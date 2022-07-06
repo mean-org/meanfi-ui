@@ -352,6 +352,7 @@ export const MoneyStreamDetails = (props: {
                     hasRightIcon={true}
                     rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
                     isLink={true}
+                    className="resume-activity-item"
                   />
                 </a>
             )})
@@ -654,12 +655,19 @@ export const MoneyStreamDetails = (props: {
             isDetailsPanel={true}
             isLink={false}
             isStream={true}
+            classNameRightHeader="resume-right-header"
+            xs={24}
+            md={24}
           />
         )}
 
         {infoData && (
           <RightInfoDetails
             infoData={infoData}
+            xs={24}
+            sm={24}
+            md={24}
+            lg={24}
           /> 
         )}
 

@@ -3002,6 +3002,8 @@ export const StreamingAccountView = (props: {
                   rightIcon={<IconArrowForward className="mean-svg-icons" />}
                   isLink={true}
                   isStream={true}
+                  xs={24}
+                  md={24}
                 />
               </div>
             )
@@ -3168,6 +3170,9 @@ export const StreamingAccountView = (props: {
             isDetailsPanel={true}
             isLink={false}
             isStreamingAccount={true}
+            classNameRightHeader="resume-right-header"
+            xs={24}
+            md={24}
           />
         )}
 

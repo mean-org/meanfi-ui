@@ -383,7 +383,7 @@ export const ProposalDetailsView = (props: {
             return (
               <div 
                 key={`${activity.index + 1}`}
-                className={`d-flex w-100 align-items-center activities-list ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                className={`d-flex w-100 align-items-center activities-list mr-1 pr-4 ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                 >
                   <div className="resume-item-container">
                     <span className="mr-2">
@@ -490,6 +490,7 @@ export const ProposalDetailsView = (props: {
           resume={resume}
           isDetailsPanel={true}
           isLink={false}
+          classNameRightHeader="resume-right-header"
         />
         {selectedProposal.details.description && (
           <Row className="safe-details-description pl-1">
