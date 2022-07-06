@@ -655,7 +655,7 @@ export const MoneyStreamDetails = (props: {
             isDetailsPanel={true}
             isLink={false}
             isStream={true}
-            classNameRightHeader="resume-right-header"
+            classNameRightContent="resume-right-content"
             xs={24}
             md={24}
           />

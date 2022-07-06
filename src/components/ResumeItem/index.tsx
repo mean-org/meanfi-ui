@@ -15,7 +15,8 @@ export const ResumeItem = (props: {
   title?: string;
   extraTitle?: any;
   classNameTitle?: string;
-  classNameRightHeader?: string;
+  classNameRightContent?: string;
+  classNameIcon?: string;
   subtitle?: any;
   amount?: any;
   expires?: any;
@@ -52,7 +53,8 @@ export const ResumeItem = (props: {
     title,
     extraTitle,
     classNameTitle,
-    classNameRightHeader,
+    classNameRightContent,
+    classNameIcon,
     subtitle,
     amount,
     expires,
@@ -231,7 +233,7 @@ export const ResumeItem = (props: {
           )}
         </div>
       </Col>
-      <Col className={`resume-right-container ${isDetailsPanel ? "mr-2" : "mr-1"} ${classNameRightHeader}`}>
+      <Col className={`resume-right-container ${isDetailsPanel ? "mr-2" : "mr-1"} ${classNameRightContent}`}>
         <div className="resume-right-text">
           <>
             <div className={`resume-right-text-up`}>
@@ -302,6 +304,7 @@ export const ResumeItem = (props: {
                 size="middle"
                 icon={rightIcon}
                 onClick={onClick}
+                className={classNameIcon}
               />
             </span>
           )

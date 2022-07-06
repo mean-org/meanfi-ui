@@ -2,6 +2,25 @@
   .resume-item-container {
     row-gap: 0px !important;
     padding-bottom: 0em;
+    .icon-stream-row {
+      svg.mean-svg-icons {
+        width: 4em;
+        height: 4em;
+        margin-bottom: 2.5em;
+      }
+    }
+  }
+  .resume-stream-row {
+    width: 100%;
+    justify-content: space-between;
+    .resume-right-text {
+      display: flex;
+      align-items: center !important;
+      flex-direction: row-reverse !important;
+      .resume-right-text-up {
+        margin-left: 0.5em;
+      }
+    }
   }
 }
 @media (min-width: 576px) {
@@ -105,7 +124,7 @@
       margin: auto 0.5em;
     }
   }
-  .resume-right-header {
+  .resume-right-content {
     margin-bottom: 0.35em;
   }
   .resume-activity-item {

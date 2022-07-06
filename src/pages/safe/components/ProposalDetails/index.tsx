@@ -490,7 +490,7 @@ export const ProposalDetailsView = (props: {
           resume={resume}
           isDetailsPanel={true}
           isLink={false}
-          classNameRightHeader="resume-right-header"
+          classNameRightContent="resume-right-content"
         />
         {selectedProposal.details.description && (
           <Row className="safe-details-description pl-1">
