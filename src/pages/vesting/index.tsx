@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isLocal, isProd } from '../../utils/ui';
+import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isLocal, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -75,6 +75,7 @@ export const VestingView = () => {
     streamV2ProgramAddress,
     pendingMultisigTxCount,
     previousWalletConnectState,
+    setHighLightableMultisigId,
     setPendingMultisigTxCount,
     setHighLightableStreamId,
     setIsVerifiedRecipient,
@@ -288,7 +289,6 @@ export const VestingView = () => {
     return false;
   }, [address, searchParams]);
 
-
   const selectedVestingContractRef = useRef(selectedVestingContract);
   useEffect(() => {
     selectedVestingContractRef.current = selectedVestingContract;
@@ -345,6 +345,10 @@ export const VestingView = () => {
         event = success ? AppUsageEvent.StreamStatusChangeCompleted : AppUsageEvent.StreamStatusChangeFailed;
         segmentAnalytics.recordEvent(event, { signature: signature });
         break;
+      case OperationType.TreasuryWithdraw:
+        event = success ? AppUsageEvent.VestingContractWithdrawFundsCompleted : AppUsageEvent.VestingContractWithdrawFundsFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
       case OperationType.StreamClose:
         event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
         segmentAnalytics.recordEvent(event, { signature: signature });
@@ -371,6 +375,40 @@ export const VestingView = () => {
       }
     };
 
+    const notifyVestingContractCreated = async (item: TxConfirmationInfo) => {
+      const options = item.extras as VestingContractCreateOptions;
+      if (options && options.multisig) {
+        openNotification({
+          type: "info",
+          description: 'To complete the vesting contract setup, the other Multisig owners need to approve the proposal.',
+          duration: 6,
+        });
+        await delay(5500);
+        openNotification({
+          type: "info",
+          description: (
+            <>
+              <div>The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
+              <span className="secondary-link" onClick={() => {
+                  const url = `/multisig/${options.multisig}?v=proposals`;
+                  setHighLightableMultisigId(options.multisig);
+                  navigate(url);
+                }}>
+                See proposals &gt;
+              </span>
+            </>
+          ),
+          duration: 6,
+        });
+        await delay(5500);
+        openNotification({
+          type: "info",
+          description: 'After the proposal has been approved and executed, you will then be able to set up vesting streams within the contract.',
+          duration: 6
+        });
+      }
+    }
+
     consoleOut("onTxConfirmed event handled:", item, 'crimson');
     recordTxConfirmation(item.signature, item.operationType, true);
 
@@ -387,13 +425,14 @@ export const VestingView = () => {
         break;
       case OperationType.TreasuryClose:
       case OperationType.TreasuryCreate:
+        notifyVestingContractCreated(item);
         hardReloadContracts();
         break;
       default:
         break;
     }
 
-  }, [recordTxConfirmation]);
+  }, [navigate, recordTxConfirmation, setHighLightableMultisigId]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -1181,7 +1220,7 @@ export const VestingView = () => {
               : `Create vesting contract ${createOptions.vestingContractName}${extraAmountMessage}`;
             const completedMessage = isMultisigContext
               ? `Proposal to create the vesting contract ${createOptions.vestingContractName} was submitted for Multisig approval.`
-              : `Vesting contract ${createOptions.vestingContractName} created successfully${extraAmountMessage}`;
+              : `Vesting contract ${createOptions.vestingContractName} created successfully`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryCreate,
@@ -2315,7 +2354,7 @@ export const VestingView = () => {
 
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryCreate);
+    setOngoingOperation(OperationType.TreasuryWithdraw);
     setRetryOperationPayload(params);
     setIsBusy(true);
 

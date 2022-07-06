@@ -10,7 +10,6 @@ import {
   TRANSACTION_STATUS_RETRY_TIMEOUT
 } from "../constants";
 import { useTranslation } from "react-i18next";
-import { shortenAddress } from "../utils/utils";
 import { openNotification } from "../components/Notifications";
 import { notification } from "antd";
 

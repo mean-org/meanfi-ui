@@ -32,7 +32,7 @@ import { PendingProposalsComponent } from '../PendingProposalsComponent';
 const timeFormat="hh:mm A"
 
 export const VestingContractCreateForm = (props: {
-    accountAddress: string | null;
+    accountAddress: string;
     inModal: boolean;
     isBusy: boolean;
     isMultisigContext: boolean;
@@ -315,6 +315,7 @@ export const VestingContractCreateForm = (props: {
             durationUnit: getRateIntervalInSeconds(lockPeriodFrequency),
             cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
             startDate: startUtc,
+            multisig: isMultisigContext ? accountAddress : '',
             fundingAmount: toTokenAmount(parseFloat(vestingLockFundingAmount), (selectedToken as TokenInfo).decimals)
         };
         onStartTransaction(options);

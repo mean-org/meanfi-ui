@@ -82,6 +82,7 @@ export interface VestingContractCreateOptions {
     durationUnit: TimeUnit;
     cliffVestPercent: number;
     startDate: Date;
+    multisig: string;
     fundingAmount: number;
 }
 
