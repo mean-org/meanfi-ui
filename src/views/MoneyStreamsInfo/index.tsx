@@ -2004,7 +2004,8 @@ export const MoneyStreamsInfoView = (props: {
                   : showCreateMoneyStreamModal()
               }}>
               <div className="btn-content">
-                {param === "multisig" ? "Initiate stream" : "Create stream"}
+                {/* {param === "multisig" ? "Initiate stream" : "Create stream"} */}
+                Create stream
               </div>
             </Button>
             <Button
@@ -2014,7 +2015,8 @@ export const MoneyStreamsInfoView = (props: {
               className="thin-stroke"
               onClick={showCreateTreasuryModal}>
                 <div className="btn-content">
-                  {param === "multisig" ? "Initiate streaming account" : "Create streaming account"}
+                  Create streaming account
+                  {/* {param === "multisig" ? "Initiate streaming account" : "Create streaming account"} */}
                 </div>
             </Button>
             <Button
