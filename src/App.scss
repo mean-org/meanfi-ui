@@ -2924,9 +2924,13 @@ main section {
   font-size: 16px;
   &.ant-select-single.ant-select-show-arrow.ant-select-borderless,
   &.ant-select-auto-complete.ant-select-borderless {
+    &.ant-select-allow-clear {
+      padding-right: 32px;
+    }
     .ant-select-clear {
+      opacity: 1;
       right: 0;
-      background: var(--color-black);
+      background: var(--darken-30);
       width: 24px;
       height: 24px;
       top: 12px;
@@ -2946,6 +2950,9 @@ main section {
         right: 0;
         bottom: 0;
         left: 0;
+      }
+      .ant-select-selection-placeholder {
+        color: var(--color-secondary-alpha-25);
       }
     }
   }

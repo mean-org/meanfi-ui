@@ -1,5 +1,5 @@
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Menu, Row, Spin, Tabs } from "antd";
+import { Button, Col, Row, Spin, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
@@ -8,7 +8,7 @@ import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreate
 import { AppStateContext } from "../../contexts/appstate";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { IconArrowForward, IconLoading, IconVerticalEllipsis } from "../../Icons";
+import { IconArrowForward, IconLoading } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import { PieChartComponent } from "./PieChart";
@@ -221,6 +221,21 @@ export const MoneyStreamsInfoView = (props: {
   }, [searchParams]);
 
   const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
+
+  const getMultisigIdFromContext = useCallback((asPublicKey = false) => {
+
+    if (!multisigAccounts || !selectedMultisig) { return ''; }
+
+    if (accountAddress && getQueryAccountType() === "multisig") {
+      const multisig = multisigAccounts.find(t => t.authority.toBase58() === accountAddress);
+      if (multisig) {
+        return asPublicKey ? multisig.id : multisig.id.toBase58();
+      }
+    }
+
+    return '';
+
+  }, [accountAddress, getQueryAccountType, multisigAccounts, selectedMultisig])
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -2039,7 +2054,7 @@ export const MoneyStreamsInfoView = (props: {
           isMultisigTreasury={isMultisigTreasury()}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}
-          multisigAddress={getSelectedTreasuryMultisig()}
+          multisigAddress={getMultisigIdFromContext(true) as PublicKey}
           userBalances={userBalances}
         />
       )}

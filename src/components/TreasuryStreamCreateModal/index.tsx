@@ -505,7 +505,7 @@ export const TreasuryStreamCreateModal = (props: {
   useEffect(() => {
     if (isVisible && treasuryDetails) {
       setWorkingTreasuryDetails(treasuryDetails);
-      setSelectedStreamingAccountId(treasuryDetails.id as string);
+      // setSelectedStreamingAccountId(treasuryDetails.id as string);
     }
   }, [isVisible, treasuryDetails]);
 
@@ -1045,7 +1045,7 @@ export const TreasuryStreamCreateModal = (props: {
       const timeStamp = parseInt((Date.now() / 1000).toString());
 
       for (const beneficiary of data.beneficiaries) {
-        
+
         const timeStampCounter = new u64(timeStamp + seedCounter);
         const [stream, streamBump] = await PublicKey.findProgramAddress(
           [multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
@@ -1624,11 +1624,11 @@ export const TreasuryStreamCreateModal = (props: {
       {hasNoStreamingAccounts ? (
         <div className="text-center px-4 py-4">
           {theme === 'light' ? (
-            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-error" />
+            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
           ) : (
-            <WarningOutlined style={{ fontSize: 48 }} className={`icon mt-0 mb-3 ${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`} />
+            <WarningOutlined style={{ fontSize: 48 }} className={`icon mt-0 mb-3 fg-warning`} />
           )}
-          <h2 className={`mb-3 ${theme === 'light' ? 'fg-error' : 'fg-orange-red'}`}>No streaming accounts</h2>
+          <h2 className={`mb-3 fg-warning`}>No streaming accounts</h2>
           <p>Your super safe needs a streaming account to set up and fund payment streams. To get started, create and fund a streaming account and then you can proceed with creating a payment stream.</p>
         </div>
       ) : (
@@ -1670,7 +1670,7 @@ export const TreasuryStreamCreateModal = (props: {
                               allowClear={true}
                               dropdownClassName="stream-select-dropdown"
                               options={renderStreamingAccountsSelectOptions()}
-                              placeholder={selectedStreamingAccountId || t('treasuries.add-funds.search-streams-placeholder')}
+                              placeholder={t('treasuries.add-funds.search-streams-placeholder')}
                               onChange={(inputValue, option) => {
                                 setSelectedStreamingAccountId(inputValue);
                               }}
