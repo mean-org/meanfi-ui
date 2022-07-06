@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd } from '../../utils/ui';
+import { consoleOut, copyText, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isLocal, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -138,12 +138,12 @@ export const VestingView = () => {
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
-  const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
+  const [needReloadMultisigs, setNeedReloadMultisigs] = useState(true);
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [vestingContractFlowRate, setVestingContractFlowRate] = useState<VestingFlowRateInfo | undefined>(undefined);
   const [loadingVestingContractFlowRate, setLoadingVestingContractFlowRate] = useState(false);
   const [loadingContractActivity, setLoadingContractActivity] = useState(false);
@@ -469,6 +469,7 @@ export const VestingView = () => {
 
     // Before fetching the list of vesting contracts, clear the cache of flow rates
     vestingFlowRatesCache.clear();
+    setNeedReloadMultisigs(true);
 
     getAllUserV2Accounts(accountAddress)
       .then(treasuries => {
@@ -711,6 +712,81 @@ export const VestingView = () => {
     setRecipientAddress,
     setIsVerifiedRecipient,
     setLockPeriodFrequency,
+  ]);
+
+  const refreshMultisigs = useCallback(() => {
+
+    if (!publicKey ||
+        !multisigClient ||
+        !multisigSerumClient ||
+        !accountAddress ||
+        loadingMultisigAccounts) {
+      return;
+    }
+
+    setLoadingMultisigAccounts(true);
+
+    multisigSerumClient
+      .account
+      .multisig
+      .all()
+      .then((accs: any) => {
+        const filteredSerumAccs = accs.filter((a: any) => {
+          if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) {
+            return true;
+          }
+          return false;
+        });
+
+        const parsedSerumAccs: MultisigInfo[] = [];
+
+        for (const acc of filteredSerumAccs) {
+          parseSerumMultisigAccount(acc)
+            .then((parsed: any) => {
+              if (parsed) {
+                parsedSerumAccs.push(parsed);
+              }
+            })
+            .catch((err: any) => console.error(err));
+        }
+
+        multisigClient
+          .getMultisigs(publicKey)
+          .then((allInfo: MultisigInfo[]) => {
+            allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+            const allAccounts = [...allInfo, ...parsedSerumAccs];
+            consoleOut('multisigAccounts:', allAccounts, 'crimson');
+            setMultisigAccounts(allAccounts);
+            const item = allInfo.find(m => m.authority.equals(new PublicKey(accountAddress)));
+            if (item) {
+              consoleOut('selectedMultisig:', item, 'crimson');
+              setSelectedMultisig(item);
+              setPendingMultisigTxCount(item.pendingTxsAmount);
+            } else {
+              setSelectedMultisig(undefined);
+              setPendingMultisigTxCount(undefined);
+            }
+          })
+          .catch((err: any) => {
+            console.error(err);
+            setPendingMultisigTxCount(undefined);
+          })
+          .finally(() => setLoadingMultisigAccounts(false));
+      })
+      .catch((err: any) => {
+        console.error(err);
+        setPendingMultisigTxCount(undefined);
+      })
+      .finally(() => setLoadingMultisigAccounts(false));
+
+  }, [
+    publicKey,
+    accountAddress,
+    multisigClient,
+    multisigSerumClient,
+    loadingMultisigAccounts,
+    parseSerumMultisigAccount,
+    setPendingMultisigTxCount,
   ]);
 
   //////////////
@@ -1094,24 +1170,32 @@ export const VestingView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const extraAmountMessage = createOptions.amount
+              ? ` with ${formatThousands(
+                  parseFloat(createOptions.amount),
+                  createOptions.token.decimals
+                )} ${createOptions.token.symbol}`
+              : '';
+            const loadingMessage = isMultisigContext
+              ? `Send proposal to create the vesting contract ${createOptions.vestingContractName}`
+              : `Create vesting contract ${createOptions.vestingContractName}${extraAmountMessage}`;
+            const completedMessage = isMultisigContext
+              ? `Proposal to create the vesting contract ${createOptions.vestingContractName} was submitted for Multisig approval.`
+              : `Vesting contract ${createOptions.vestingContractName} created successfully${extraAmountMessage}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryCreate,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Create vesting contract ${createOptions.vestingContractName} with ${formatThousands(
-                parseFloat(createOptions.amount),
-                createOptions.token.decimals
-              )} ${createOptions.token.symbol}`,
+              loadingMessage,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Vesting contract ${createOptions.vestingContractName} created successfully`,
+              completedMessage,
               extras: createOptions
             });
             setIsBusy(false);
             resetTransactionStatus();
             onVestingContractCreated();
-            setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1125,6 +1209,7 @@ export const VestingView = () => {
     nativeBalance,
     multisigClient,
     multisigAccounts,
+    isMultisigContext,
     transactionCancelled,
     multisigTxFees.networkFee,
     multisigTxFees.rentExempt,
@@ -1468,7 +1553,6 @@ export const VestingView = () => {
               extras: selectedVestingContract.id as string
             });
             setIsBusy(false);
-            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
             onCloseTreasuryTransactionFinished();
           } else { setIsBusy(false); }
@@ -1839,7 +1923,6 @@ export const VestingView = () => {
             });
             setIsBusy(false);
             closeAddFundsModal();
-            setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2193,7 +2276,6 @@ export const VestingView = () => {
             });
             setIsBusy(false);
             closeCreateStreamModal();
-            setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2556,7 +2638,6 @@ export const VestingView = () => {
             });
             setIsBusy(false);
             closeVestingContractTransferFundsModal();
-            setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2914,7 +2995,6 @@ export const VestingView = () => {
             });
             setIsBusy(false);
             onRefreshTreasuryBalanceTransactionFinished();
-            setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2999,7 +3079,7 @@ export const VestingView = () => {
     }
 
     const meanTokensCopy = new Array<TokenInfo>();
-    const intersectedList = new Array<TokenInfo>();
+    // const intersectedList = new Array<TokenInfo>();
     const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
     const balancesMap: any = {};
     balancesMap[userTokensCopy[0].address] = nativeBalance;
@@ -3365,7 +3445,7 @@ export const VestingView = () => {
         !multisigClient ||
         !multisigSerumClient ||
         !accountAddress ||
-        !loadingMultisigAccounts) {
+        !needReloadMultisigs) {
       return;
     }
 
@@ -3375,59 +3455,9 @@ export const VestingView = () => {
     }
 
     const timeout = setTimeout(() => {
-
-      multisigSerumClient
-      .account
-      .multisig
-      .all()
-      .then((accs: any) => {
-        const filteredSerumAccs = accs.filter((a: any) => {
-          if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) {
-            return true;
-          }
-          return false;
-        });
-
-        const parsedSerumAccs: MultisigInfo[] = [];
-
-        for (const acc of filteredSerumAccs) {
-          parseSerumMultisigAccount(acc)
-            .then((parsed: any) => {
-              if (parsed) {
-                parsedSerumAccs.push(parsed);
-              }
-            })
-            .catch((err: any) => console.error(err));
-        }
-
-        multisigClient
-        .getMultisigs(publicKey)
-        .then((allInfo: MultisigInfo[]) => {
-          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-          const allAccounts = [...allInfo, ...parsedSerumAccs];
-          consoleOut('multisigAccounts:', allAccounts, 'crimson');
-          setMultisigAccounts(allAccounts);
-          const item = allInfo.find(m => m.authority.equals(new PublicKey(accountAddress)));
-          if (item) {
-            consoleOut('selectedMultisig:', item, 'crimson');
-            setSelectedMultisig(item);
-            setPendingMultisigTxCount(item.pendingTxsAmount);
-          } else {
-            setSelectedMultisig(undefined);
-            setPendingMultisigTxCount(undefined);
-          }
-        })
-        .catch((err: any) => {
-          console.error(err);
-          setPendingMultisigTxCount(undefined);
-        })
-        .finally(() => setLoadingMultisigAccounts(false));
-      })
-      .catch((err: any) => {
-        console.error(err);
-        setPendingMultisigTxCount(undefined);
-      })
-      .finally(() => setLoadingMultisigAccounts(false));
+      consoleOut('Loading multisig accounts...', '', 'crimson');
+      setNeedReloadMultisigs(false);
+      refreshMultisigs();
     });
 
     return () => {
@@ -3441,12 +3471,14 @@ export const VestingView = () => {
     publicKey,
     accountAddress,
     multisigClient,
+    needReloadMultisigs,
     multisigSerumClient,
     inspectedAccountType,
     pendingMultisigTxCount,
     loadingMultisigAccounts,
     parseSerumMultisigAccount,
     setPendingMultisigTxCount,
+    refreshMultisigs,
   ]);
 
   // Get the Vesting contract settings template
@@ -3567,10 +3599,6 @@ export const VestingView = () => {
     const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${vestingContractAddress}/${activeKey}`;
     navigate(url);
   }, [accountAddress, navigate, vestingContractAddress]);
-
-  const onNeedReloadMultisigs = () => {
-    setNeedReloadMultisig(true);
-  }
 
   const loadMoreActivity = () => {
     if (!vestingContractAddress) { return; }
@@ -3736,6 +3764,13 @@ export const VestingView = () => {
   const renderCreateFirstVestingAccount = useCallback(() => {
     return (
       <>
+        {isLocal() && (
+          <div className="debug-bar">
+            <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
+            <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
+            <span className="ml-1">needReloadMultisigs:</span><span className="ml-1 font-bold fg-dark-active">{needReloadMultisigs ? 'true' : 'false'}</span>
+          </div>
+        )}
       <div className="container main-container">
         <div className="interaction-area">
           <div className="title-and-subtitle mb-2">
@@ -3782,6 +3817,9 @@ export const VestingView = () => {
     selectedToken,
     accountAddress,
     isMultisigContext,
+    treasuriesLoaded,
+    loadingTreasuries,
+    needReloadMultisigs,
     createVestingContractTxFees,
     onAcceptCreateVestingContract,
     refreshVestingContracts,
@@ -3835,12 +3873,13 @@ export const VestingView = () => {
     // Render normal UI
     return (
       <>
-        {/* {isLocal() && (
+        {isLocal() && (
           <div className="debug-bar">
             <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
             <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
+            <span className="ml-1">needReloadMultisigs:</span><span className="ml-1 font-bold fg-dark-active">{needReloadMultisigs ? 'true' : 'false'}</span>
           </div>
-        )} */}
+        )}
 
         {detailsPanelOpen && (
           <Button
