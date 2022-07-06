@@ -23,10 +23,10 @@ export const VESTING_ACCOUNT_TYPE_OPTIONS: TreasuryTypeOption[] = [
         translationId: 'vesting-account-type-locked',
         disabled: false,
     },
-    {
-        name: 'Open vesting contract',
-        type: TreasuryType.Open,
-        translationId: 'vesting-account-type-open',
-        disabled: false,
-    },
+    // {
+    //     name: 'Open vesting contract',
+    //     type: TreasuryType.Open,
+    //     translationId: 'vesting-account-type-open',
+    //     disabled: false,
+    // },
 ];

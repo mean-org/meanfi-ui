@@ -371,6 +371,7 @@ export const VestingView = () => {
       const contractsRefreshCta = document.getElementById("soft-refresh-contracts-cta");
       if (contractsRefreshCta) {
         contractsRefreshCta.click();
+        isWorkflowLocked = false;
       }
     };
 
@@ -420,30 +421,30 @@ export const VestingView = () => {
       }
     }
 
-    consoleOut("onTxConfirmed event handled:", item, 'crimson');
-    recordTxConfirmation(item.signature, item.operationType, true);
-
-    switch (item.operationType) {
-      case OperationType.TreasuryAddFunds:
-      case OperationType.TreasuryRefreshBalance:
-      case OperationType.TreasuryWithdraw:
-      case OperationType.TreasuryStreamCreate:
-      case OperationType.StreamClose:
-      case OperationType.StreamAddFunds:
-      case OperationType.StreamPause:
-      case OperationType.StreamResume:
-        softReloadContracts();
-        break;
-      case OperationType.TreasuryClose:
-      case OperationType.TreasuryCreate:
-        if (!isWorkflowLocked) {
-          isWorkflowLocked = true;
+    if (!isWorkflowLocked) {
+      isWorkflowLocked = true;
+      consoleOut("onTxConfirmed event handled:", item, 'crimson');
+      recordTxConfirmation(item.signature, item.operationType, true);
+  
+      switch (item.operationType) {
+        case OperationType.TreasuryAddFunds:
+        case OperationType.TreasuryRefreshBalance:
+        case OperationType.TreasuryWithdraw:
+        case OperationType.TreasuryStreamCreate:
+        case OperationType.StreamClose:
+        case OperationType.StreamAddFunds:
+        case OperationType.StreamPause:
+        case OperationType.StreamResume:
+          softReloadContracts();
+          break;
+        case OperationType.TreasuryClose:
+        case OperationType.TreasuryCreate:
           notifyVestingContractCreated(item);
-        }
-        hardReloadContracts();
-        break;
-      default:
-        break;
+          hardReloadContracts();
+          break;
+        default:
+          break;
+      }
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -830,6 +831,21 @@ export const VestingView = () => {
     parseSerumMultisigAccount,
     setPendingMultisigTxCount,
   ]);
+
+  const isStartDateGone = useCallback((date: string): boolean => {
+    const now = new Date().toUTCString();
+    const nowUtc = new Date(now);
+    const comparedDate = new Date(date);
+    if (comparedDate < nowUtc) {
+        return true;
+    }
+    return false;
+  }, []);
+
+  const isContractLocked = useCallback(() => {
+    if (!publicKey || !selectedVestingContract || !streamTemplate) { return true; }
+    return isStartDateGone(streamTemplate.startUtc as string);
+  }, [isStartDateGone, publicKey, selectedVestingContract, streamTemplate]);
 
   //////////////
   //  Modals  //
@@ -3219,48 +3235,55 @@ export const VestingView = () => {
   // Build CTAs
   useEffect(() => {
 
-    const numMaxCtas = isXsDevice ? 2 : 5;
+    // const numMaxCtas = isXsDevice ? 2 : 3;
+    const numMaxCtas = 2;
     const actions: MetaInfoCta[] = [];
     let ctaItems = 0;
 
     // Create Stream
-    actions.push({
-      action: MetaInfoCtaAction.VestingContractCreateStreamOnce,
-      isVisible: true,
-      caption: 'Create stream',
-      disabled: !canPerformAnyAction() || !getAvailableStreamingBalance(),
-      uiComponentType: 'button',
-      uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamOnce}`,
-      tooltip: '',
-      callBack: showCreateStreamModal
-    });
-    ctaItems++;
+    if (canPerformAnyAction() && !isContractLocked()) {
+      actions.push({
+        action: MetaInfoCtaAction.VestingContractCreateStreamOnce,
+        isVisible: true,
+        caption: 'Create stream',
+        disabled: !getAvailableStreamingBalance(),
+        uiComponentType: 'button',
+        uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamOnce}`,
+        tooltip: '',
+        callBack: showCreateStreamModal
+      });
+      ctaItems++;
+    }
 
     // Bulk create
-    // actions.push({
-    //   action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
-    //   isVisible: true,
-    //   caption: 'Bulk create',
-    //   disabled: !isInspectedAccountTheConnectedWallet(),
-    //   uiComponentType: 'button',
-    //   uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
-    //   tooltip: '',
-    //   callBack: () => { }
-    // });
-    // ctaItems++;
+    // if (canPerformAnyAction() && !isContractLocked()) {
+    //   actions.push({
+    //     action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
+    //     isVisible: true,
+    //     caption: 'Bulk create',
+    //     disabled: !getAvailableStreamingBalance(),
+    //     uiComponentType: 'button',
+    //     uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
+    //     tooltip: '',
+    //     callBack: () => { }
+    //   });
+    //   ctaItems++;
+    // }
 
     // Add funds
-    actions.push({
-      action: MetaInfoCtaAction.VestingContractAddFunds,
-      caption: 'Add funds',
-      isVisible: true,
-      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractAddFunds}`,
-      tooltip: '',
-      callBack: showAddFundsModal
-    });
-    ctaItems++;   // Last increment. It seems all other items will go inside the vellipsis menu anyways
+    if (canPerformAnyAction() && !isContractLocked()) {
+      actions.push({
+        action: MetaInfoCtaAction.VestingContractAddFunds,
+        caption: 'Add funds',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractAddFunds}`,
+        tooltip: '',
+        callBack: showAddFundsModal
+      });
+      ctaItems++;
+    }
 
     // View SOL Balance
     if (selectedVestingContract && isMultisigTreasury(selectedVestingContract)) {
@@ -3268,36 +3291,23 @@ export const VestingView = () => {
         action: MetaInfoCtaAction.VestingContractViewSolBalance,
         caption: 'View SOL Balance',
         isVisible: true,
-        uiComponentType: 'menuitem',
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: !canPerformAnyAction(),
-        uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
         tooltip: '',
         callBack: showVestingContractSolBalanceModal
       });
       ctaItems++;
     }
 
-    // Refresh Account Data
-    actions.push({
-      action: MetaInfoCtaAction.VestingContractRefreshAccount,
-      caption: 'Refresh account data',
-      isVisible: true,
-      uiComponentType: 'menuitem',
-      disabled: !canPerformAnyAction(),
-      uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractRefreshAccount}`,
-      tooltip: '',
-      callBack: onExecuteRefreshVestingContractBalance
-    });
-    ctaItems++;
-
     // Withdraw funds
     actions.push({
       action: MetaInfoCtaAction.VestingContractWithdrawFunds,
       caption: 'Withdraw funds',
       isVisible: true,
-      uiComponentType: 'menuitem',
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: !canPerformAnyAction(),
-      uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractWithdrawFunds}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractWithdrawFunds}`,
       tooltip: '',
       callBack: showVestingContractTransferFundsModal
     });
@@ -3308,28 +3318,41 @@ export const VestingView = () => {
       action: MetaInfoCtaAction.VestingContractClose,
       caption: 'Close Contract',
       isVisible: true,
-      uiComponentType: 'menuitem',
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: !canPerformAnyAction(),
-      uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractClose}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractClose}`,
       tooltip: '',
       callBack: showVestingContractCloseModal
+    });
+    ctaItems++;
+
+    // Refresh Account Data
+    actions.push({
+      action: MetaInfoCtaAction.VestingContractRefreshAccount,
+      caption: 'Refresh account data',
+      isVisible: true,
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+      disabled: !canPerformAnyAction(),
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractRefreshAccount}`,
+      tooltip: '',
+      callBack: onExecuteRefreshVestingContractBalance
     });
     ctaItems++;
 
     setAssetCtas(actions);
 
   }, [
-    isXsDevice,
     selectedVestingContract,
     onExecuteRefreshVestingContractBalance,
     showVestingContractTransferFundsModal,
-    canPerformAnyAction,
     showVestingContractSolBalanceModal,
     showVestingContractCloseModal,
     getAvailableStreamingBalance,
     showCreateStreamModal,
+    canPerformAnyAction,
     isMultisigTreasury,
     showAddFundsModal,
+    isContractLocked,
   ]);
 
   // Load vesting account once per page access
@@ -3928,14 +3951,14 @@ export const VestingView = () => {
     // Render normal UI
     return (
       <>
-        {isLocal() && (
+        {/* {isLocal() && (
           <div className="debug-bar">
             <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
             <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
             <span className="ml-1">needReloadMultisigs:</span><span className="ml-1 font-bold fg-dark-active">{needReloadMultisigs ? 'true' : 'false'}</span>
             <span className="ml-1">loadingMultisigAccounts:</span><span className="ml-1 font-bold fg-dark-active">{loadingMultisigAccounts ? 'true' : 'false'}</span>
           </div>
-        )}
+        )} */}
 
         {detailsPanelOpen && (
           <Button

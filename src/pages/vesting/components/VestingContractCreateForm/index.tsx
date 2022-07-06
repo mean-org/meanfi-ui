@@ -4,7 +4,7 @@ import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/c
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
-import { consoleOut, disabledDate, getLockPeriodOptionLabel, getRateIntervalInSeconds, isToday, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
+import { consoleOut, disabledDate, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
 import { TokenListItem } from '../../../../components/TokenListItem';
@@ -693,6 +693,23 @@ export const VestingContractCreateForm = (props: {
         )
     }
 
+    const renderTreasuryOption = (option: TreasuryTypeOption) => {
+        return (
+            <div key={`${option.translationId}`} className="item-card mb-0 selected"
+                onClick={() => {
+                    if (!option.disabled) {
+                        handleVestingAccountTypeSelection(option);
+                    }
+                }}>
+                <div className="checkmark"><CheckOutlined /></div>
+                <div className="item-meta">
+                    <div className="item-name">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-name`)}</div>
+                    <div className="item-description">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-description`)}</div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <>
             <Spin spinning={loadingMultisigAccounts}>
@@ -715,6 +732,11 @@ export const VestingContractCreateForm = (props: {
                     <div className={`panel1 ${currentStep === 0 ? 'show' : 'hide'}`}>
 
                         <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
+
+                        {/* Treasury type */}
+                        <div className="items-card-list click-disabled mt-2 mb-3">
+                            {renderTreasuryOption(treasuryOption)}
+                        </div>
 
                         {isMultisigContext && selectedMultisig && (
                             <>
@@ -834,32 +856,6 @@ export const VestingContractCreateForm = (props: {
                             {nativeBalance < getMinSolBlanceRequired() && (
                                 <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
                             )}
-                        </div>
-
-                        {/* Treasury type selector */}
-                        <FormLabelWithIconInfo
-                            label={t('vesting.create-account.vesting-contract-type-label')}
-                            tooltip_text={t('vesting.create-account.vesting-contract-type-tooltip')}
-                        />
-                        <div className="items-card-list vertical-scroll">
-                            {VESTING_ACCOUNT_TYPE_OPTIONS.map((option: TreasuryTypeOption, index) => {
-                                return (
-                                    <div key={`${option.translationId}`} className={
-                                        `item-card ${index === VESTING_ACCOUNT_TYPE_OPTIONS.length - 1 ? 'mb-0' : 'mb-1'}${option.type === treasuryOption?.type ? ' selected' : ''}${option.disabled ? ' disabled': ''}`
-                                        }
-                                        onClick={() => {
-                                            if (!option.disabled) {
-                                                handleVestingAccountTypeSelection(option);
-                                            }
-                                        }}>
-                                        <div className="checkmark"><CheckOutlined /></div>
-                                        <div className="item-meta">
-                                            <div className="item-name">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-name`)}</div>
-                                            <div className="item-description">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-description`)}</div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
                         </div>
 
                         {/* CTA */}
