@@ -9,16 +9,21 @@ import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { VestingFlowRateInfo } from '../../../../models/vesting';
 import BN from 'bn.js';
-import { Col, Row } from 'antd';
 import { IconLoading } from '../../../../Icons';
 import { getIntervalFromSeconds } from '../../../../utils/ui';
 
 export const VestingContractDetails = (props: {
-    vestingContract: Treasury | undefined;
+    isXsDevice: boolean;
     loadingVestingContractFlowRate: boolean;
+    vestingContract: Treasury | undefined;
     vestingContractFlowRate: VestingFlowRateInfo | undefined;
 }) => {
-    const { vestingContract, loadingVestingContractFlowRate, vestingContractFlowRate } = props;
+    const {
+        isXsDevice,
+        loadingVestingContractFlowRate,
+        vestingContract,
+        vestingContractFlowRate,
+    } = props;
     const {
         theme,
         splTokenList,
@@ -118,7 +123,7 @@ export const VestingContractDetails = (props: {
                         <div className="left mb-2">
                             {renderStreamingAccount(vestingContract)}
                         </div>
-                        <div className="right text-right mb-2">
+                        <div className={`right mb-2 ${isXsDevice ? 'text-left' : 'text-right'}`}>
                             <div className="info-label text-truncate line-height-110">
                                 Available for new streams
                             </div>

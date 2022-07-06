@@ -3405,7 +3405,8 @@ export const SafeView = () => {
   
             if (highLightableMultisigId) {
               // Select a multisig that was instructed to highlight when entering this feature
-              item = allInfo.find(m => m.id.toBase58() === highLightableMultisigId);
+              // either by its ID or by its authority
+              item = allInfo.find(m => m.id.toBase58() === highLightableMultisigId || m.authority.toBase58() === highLightableMultisigId);
             } else if (selectedMultisig) {
               // Or re-select the one active
               item = selectedMultisig.id ? allInfo.find(m => m.id.equals(selectedMultisig.id)) : undefined;
@@ -3777,7 +3778,7 @@ export const SafeView = () => {
 
     // consoleOut('Try to scroll multisig into view...', '', 'green');
     const timeout = setTimeout(() => {
-      const highlightTarget = document.getElementById(highLightableMultisigId);
+      const highlightTarget = document.getElementById(selectedMultisig.id.toBase58());
       if (highlightTarget) {
         highlightTarget.scrollIntoView({ behavior: 'smooth' });
       }

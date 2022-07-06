@@ -166,7 +166,7 @@ export const VestingView = () => {
       const url = `${VESTING_ROUTE_BASE_PATH}/${publicKey.toBase58()}/contracts`;
       consoleOut('No address, redirecting to:', url, 'orange');
       setTreasuriesLoaded(false);
-      navigate(url, { replace: true });
+      navigate(url);
     }
     // In any case, set the flag isPageLoaded a bit later
     setTimeout(() => {
@@ -3946,6 +3946,28 @@ export const VestingView = () => {
                 <div className="meanfi-two-panel-left">
   
                   <div className="meanfi-panel-heading">
+                    {isMultisigContext ? (
+                      <div className="back-button">
+                        <span className="icon-button-container">
+                          <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<ArrowLeftOutlined />}
+                              onClick={() => {
+                                if (selectedMultisig) {
+                                  const multisig = selectedMultisig.authority.toBase58();
+                                  const url = `/multisig/${multisig}?v=proposals`;
+                                  setHighLightableMultisigId(multisig);
+                                  navigate(url);
+                                }
+                              }}
+                            />
+                          </Tooltip>
+                        </span>
+                      </div>
+                    ) : null}
                     <span className="title">{t('vesting.screen-title')} ({treasuryList.length})</span>
 
                     <div className="user-address">
@@ -4018,8 +4040,9 @@ export const VestingView = () => {
                     <div className="flexible-column-bottom">
                       <div className="top">
                         <VestingContractDetails
-                          vestingContract={selectedVestingContract}
+                          isXsDevice={isXsDevice}
                           loadingVestingContractFlowRate={loadingVestingContractFlowRate}
+                          vestingContract={selectedVestingContract}
                           vestingContractFlowRate={vestingContractFlowRate}
                         />
                         {/* Render CTAs row here */}
