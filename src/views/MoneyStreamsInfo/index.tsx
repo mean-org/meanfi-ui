@@ -2052,13 +2052,7 @@ export const MoneyStreamsInfoView = (props: {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           withdrawTransactionFees={withdrawTransactionFees}
-          treasuryDetails={
-            treasuryDetails
-              ? treasuryDetails
-              : treasuryList && treasuryList.length > 0
-                ? treasuryList[0]
-                : undefined
-          }
+          treasuryDetails={undefined}
           treasuryList={props.treasuryList?.filter(t => t.version >= 2)}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}

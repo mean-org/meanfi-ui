@@ -2705,7 +2705,7 @@ export const AccountsNewView = () => {
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
-    
+
     if (!connection || !publicKey || loadingTreasuries) { return; }
 
     if (msp && ms) {
@@ -2720,7 +2720,8 @@ export const AccountsNewView = () => {
       getAllUserV2Treasuries()
         .then(async (treasuriesv2) => {
           treasuryAccumulator.push(...treasuriesv2);
-          if (!selectedMultisig) {
+          const param = getQueryAccountType();
+          if (!param || param !== "multisig") {
             try {
               treasuriesv1 = await ms.listTreasuries(publicKey);
             } catch (error) {
@@ -2736,16 +2737,16 @@ export const AccountsNewView = () => {
         })
         .finally(() => setLoadingTreasuries(false));
     }
- 
+
   }, [
     ms,
     msp,
     publicKey,
     connection,
-    selectedMultisig,
     loadingTreasuries,
-    getAllUserV2Treasuries,
     clearTxConfirmationContext,
+    getAllUserV2Treasuries,
+    getQueryAccountType,
   ]);
 
   const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
