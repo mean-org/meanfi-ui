@@ -2,6 +2,7 @@
   .resume-item-container {
     row-gap: 0px !important;
     padding-bottom: 0em;
+    .icon-proposal-row,
     .icon-stream-row,
     .icon-streaming-row {
       svg.mean-svg-icons {
@@ -11,7 +12,7 @@
       }
     }
   }
-  .header-details-row,
+  .header-stream-details-row,
   .resume-stream-row,
   .resume-streaming-row {
     width: 100%;
@@ -25,7 +26,13 @@
       }
     }
   }
-  .header-details-row,
+  .header-streaming-details-row {
+    width: 100%;
+    .resume-right-text {
+      align-items: flex-start !important;
+    }
+  }
+  .header-stream-details-row,
   .header-details-info-group {
     margin-left: 2.5em;
   }

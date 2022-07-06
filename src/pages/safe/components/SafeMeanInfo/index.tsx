@@ -596,6 +596,10 @@ export const SafeMeanInfo = (props: {
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
                     isLink={true}
+                    classNameRightContent="resume-stream-row"
+                    classNameIcon="icon-proposal-row"
+                    xs={24}
+                    md={24}
                   />
               </div>
             )

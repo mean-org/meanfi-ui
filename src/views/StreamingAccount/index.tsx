@@ -3172,7 +3172,7 @@ export const StreamingAccountView = (props: {
             isDetailsPanel={true}
             isLink={false}
             isStreamingAccount={true}
-            classNameRightContent="resume-right-content"
+            classNameRightContent="header-streaming-details-row resume-right-content"
             xs={24}
             md={24}
           />
