@@ -1843,9 +1843,9 @@ export const MoneyStreamsInfoView = (props: {
                     ) : (
                       badges = [type]
                     )
-                  )
+                  );
       
-                  const title = isNewTreasury ? v2.name : v1.label;
+                  const title = isNewTreasury ? v2.name : (v1.label ? v1.label : shortenAddress(v1.id as string, 8));
       
                   const subtitle = <CopyExtLinkGroup
                     content={streaming.treasury.id as string}
