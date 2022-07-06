@@ -370,7 +370,13 @@ export const VestingContractCreateStreamModal = (props: {
     // Events & validation //
     /////////////////////////
 
-    const getStreamTxDescription = () => {
+    const getStreamTxConfirmDescription = () => {
+        const cliff = `${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol}`;
+        const rate = `${paymentRateAmount} ${selectedToken?.symbol} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
+        return `Create stream to send ${rate} with ${cliff} released on commencement.`;
+    }
+
+    const getStreamTxConfirmedDescription = () => {
         const cliff = `${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol}`;
         const rate = `${paymentRateAmount} ${selectedToken?.symbol} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
         return `Stream to send ${rate} with ${cliff} released on commencement has been scheduled.`;
@@ -378,14 +384,14 @@ export const VestingContractCreateStreamModal = (props: {
 
     const onStreamCreateClick = () => {
         const options: VestingContractStreamCreateOptions = {
-            streamName: vestingStreamName,
             beneficiaryAddress: recipientAddress,
-            tokenAmount: tokenAmount.toNumber(),
-            sendRate: getPaymentRateLabel(lockPeriodFrequency, lockPeriodAmount),
             feePayedByTreasurer: isFeePaidByTreasurer,
-            rateAmount: parseFloat(paymentRateAmount),
             interval: getPaymentRateOptionLabel(lockPeriodFrequency, t),
-            txDescription: getStreamTxDescription()
+            rateAmount: parseFloat(paymentRateAmount),
+            streamName: vestingStreamName,
+            tokenAmount: tokenAmount.toNumber(),
+            txConfirmDescription: getStreamTxConfirmDescription(),
+            txConfirmedDescription: getStreamTxConfirmedDescription()
         };
         handleOk(options);
     }

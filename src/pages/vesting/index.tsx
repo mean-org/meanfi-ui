@@ -340,6 +340,10 @@ export const VestingView = () => {
         event = success ? AppUsageEvent.VestingContractCreateCompleted : AppUsageEvent.VestingContractCreateFailed;
         segmentAnalytics.recordEvent(event, { signature: signature });
         break;
+      case OperationType.TreasuryStreamCreate:
+        event = success ? AppUsageEvent.StreamCreateCompleted : AppUsageEvent.StreamCreateFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
       case OperationType.StreamPause:
       case OperationType.StreamResume:
         event = success ? AppUsageEvent.StreamStatusChangeCompleted : AppUsageEvent.StreamStatusChangeFailed;
@@ -2290,9 +2294,9 @@ export const VestingView = () => {
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Create stream to send ${params.sendRate} on vesting contract ${selectedVestingContract.name}`,
+              loadingMessage: params.txConfirmDescription,
               completedTitle: "Transaction confirmed",
-              completedMessage: params.txDescription,
+              completedMessage: params.txConfirmedDescription,
               extras: params
             });
             setIsBusy(false);

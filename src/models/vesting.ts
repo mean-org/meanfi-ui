@@ -94,14 +94,14 @@ export interface VestingContractWithdrawOptions {
 }
 
 export interface VestingContractStreamCreateOptions {
-    streamName: string;
     beneficiaryAddress: string;
-    tokenAmount: number;
-    sendRate: string;
     feePayedByTreasurer: boolean;
-    rateAmount: number;
     interval: string;
-    txDescription: string;
+    rateAmount: number;
+    streamName: string;
+    tokenAmount: number;
+    txConfirmDescription: string;
+    txConfirmedDescription: string;
 }
 
 export interface CreateVestingStreamParams {
