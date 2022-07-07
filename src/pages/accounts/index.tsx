@@ -3913,14 +3913,14 @@ export const AccountsNewView = () => {
   useEffect(() => {
     if (!publicKey || !incomingStreamsSummary || !address) { return; }
 
-    setWithdrawalBalance(incomingStreamsSummary.totalNet);
+    setWithdrawalBalance(parseFloat(incomingStreamsSummary.totalNet.toFixed(2)));
   }, [publicKey, incomingStreamsSummary, address]);
 
   // Update outgoing balance
   useEffect(() => {
     if (!publicKey || !streamingAccountsSummary || !outgoingStreamsSummary || !address) { return; }
 
-    setUnallocatedBalance(outgoingStreamsSummary.totalNet + streamingAccountsSummary.totalNet);
+    setUnallocatedBalance(parseFloat(outgoingStreamsSummary.totalNet.toFixed(2)) + parseFloat(streamingAccountsSummary.totalNet.toFixed(2)));
   }, [publicKey, streamingAccountsSummary, outgoingStreamsSummary, address]);
 
   // Update total account balance
