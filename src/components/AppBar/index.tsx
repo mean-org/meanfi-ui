@@ -43,14 +43,14 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
     parent: 'root'
   },
   {
-    key: 'multisig',
-    path: '/multisig',
+    key: 'vesting',
+    path: '/vesting',
     parent: 'root'
   },
   {
-    key: 'vesting',
-    path: '/vesting',
-    parent: 'services'
+    key: 'multisig',
+    path: '/multisig',
+    parent: 'root'
   },
   {
     key: 'custody',
@@ -184,13 +184,13 @@ export const AppBar = (props: {
       <Menu.Item key="invest">
         <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
       </Menu.Item>
+      <Menu.Item key="vesting">
+        <Link to="/vesting">{t('ui-menus.main-menu.services.vesting')}</Link>
+      </Menu.Item>
       <Menu.Item key="multisig">
         <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
       </Menu.Item>
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
-        <Menu.Item key="vesting">
-          <Link to="/vesting">{t('ui-menus.main-menu.services.vesting')}</Link>
-        </Menu.Item>
         <Menu.Item key="custody">
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
         </Menu.Item>
@@ -262,11 +262,11 @@ export const AppBar = (props: {
                 <li key="invest" className={selectedItems.includes("invest") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
                   <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
                 </li>
-                <li key="multisig" className={selectedItems.includes("multisig") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
-                  <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
-                </li>
-                <li key="vesting" className={selectedItems.includes("vesting") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
+                <li key="vesting" className={selectedItems.includes("vesting") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                   <Link to="/vesting">{t('ui-menus.main-menu.services.vesting')}</Link>
+                </li>
+                <li key="multisig" className={selectedItems.includes("multisig") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
+                  <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
                 </li>
                 <li key="custody" className={selectedItems.includes("custody") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
                   <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>

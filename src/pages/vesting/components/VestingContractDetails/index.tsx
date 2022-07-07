@@ -119,7 +119,7 @@ export const VestingContractDetails = (props: {
         <>
             {vestingContract && (
                 <div className="details-panel-meta mb-2">
-                    <div className="two-column-form-layout">
+                    <div className="two-column-form-layout col60x40">
                         <div className="left mb-2">
                             {renderStreamingAccount(vestingContract)}
                         </div>
