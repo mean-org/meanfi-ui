@@ -257,8 +257,8 @@ export const AccountsNewView = () => {
   const [totalAccountBalance, setTotalAccountBalance] = useState(0);
   const [incomingStreamsSummary, setIncomingStreamsSummary] = useState<StreamsSummary>(initialSummary);
   const [outgoingStreamsSummary, setOutgoingStreamsSummary] = useState<StreamsSummary>(initialSummary);
-  const [incomingAmount, setIncomingAmount] = useState<number | undefined>(undefined);
-  const [outgoingAmount, setOutgoingAmount] = useState<number | undefined>(undefined);
+  const [incomingAmount, setIncomingAmount] = useState(0);
+  const [outgoingAmount, setOutgoingAmount] = useState(0);
   const [totalStreamsAmount, setTotalStreamsAmount] = useState<number | undefined>(undefined);
   const [streamingAccountsSummary, setStreamingAccountsSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
   const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
@@ -3868,11 +3868,9 @@ export const AccountsNewView = () => {
 
   // Total streams amount
   useEffect(() => {
-    if (!incomingAmount || !outgoingAmount) { return; }
+    if (!incomingAmount && !outgoingAmount) { return; }
 
-    if (incomingAmount && outgoingAmount) {
-      setTotalStreamsAmount(incomingAmount + outgoingAmount);
-    }
+    setTotalStreamsAmount((incomingAmount + outgoingAmount) as number);
   }, [incomingAmount, outgoingAmount])
 
   // Live data calculation
@@ -3911,24 +3909,24 @@ export const AccountsNewView = () => {
 
   // Update incoming balance
   useEffect(() => {
-    if (!publicKey || !incomingStreamsSummary || !address) { return; }
+    if (!incomingStreamsSummary) { return; }
 
     setWithdrawalBalance(parseFloat(incomingStreamsSummary.totalNet.toFixed(2)));
-  }, [publicKey, incomingStreamsSummary, address]);
+  }, [incomingStreamsSummary]);
 
   // Update outgoing balance
   useEffect(() => {
-    if (!publicKey || !streamingAccountsSummary || !outgoingStreamsSummary || !address) { return; }
+    if (!streamingAccountsSummary || !outgoingStreamsSummary) { return; }
 
     setUnallocatedBalance(parseFloat(outgoingStreamsSummary.totalNet.toFixed(2)) + parseFloat(streamingAccountsSummary.totalNet.toFixed(2)));
-  }, [publicKey, streamingAccountsSummary, outgoingStreamsSummary, address]);
+  }, [ streamingAccountsSummary, outgoingStreamsSummary]);
 
   // Update total account balance
   useEffect(() => {
-    if (!publicKey || (!unallocatedBalance && !withdrawalBalance) || !address) { return; }
+    if (!unallocatedBalance && !withdrawalBalance) { return; }
 
-    setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
-  }, [publicKey, unallocatedBalance, withdrawalBalance, address]);
+      setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
+  }, [unallocatedBalance, withdrawalBalance]);
 
   // Live data calculation - NetWorth
   useEffect(() => {

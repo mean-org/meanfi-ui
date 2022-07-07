@@ -137,13 +137,13 @@ export const MoneyStreamsInfoView = (props: {
 
   const [withdrawalBalance, setWithdrawalBalance] = useState(0);
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
-  const [totalAccountBalance, setTotalAccountBalance] = useState(0);
+  const [totalAccountBalance, setTotalAccountBalance] = useState<number | undefined>(undefined);
   const [rateIncomingPerDay, setRateIncomingPerDay] = useState(0);
   const [rateOutgoingPerDay, setRateOutgoingPerDay] = useState(0);
   const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
-  const [incomingAmount, setIncomingAmount] = useState<number | undefined>(undefined);
-  const [outgoingAmount, setOutgoingAmount] = useState<number | undefined>(undefined);
+  const [incomingAmount, setIncomingAmount] = useState(0);
+  const [outgoingAmount, setOutgoingAmount] = useState(0);
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -1384,26 +1384,24 @@ export const MoneyStreamsInfoView = (props: {
 
   // Update incoming balance
   useEffect(() => {
-    if (!publicKey || !incomingStreamsSummary || !address) { return; }
+    if (!incomingStreamsSummary) { return; }
 
     setWithdrawalBalance(parseFloat(incomingStreamsSummary.totalNet.toFixed(2)));
-  }, [publicKey, incomingStreamsSummary, address]);
+  }, [incomingStreamsSummary]);
 
   // Update outgoing balance
   useEffect(() => {
-    if (!publicKey || !streamingAccountsSummary || !outgoingStreamsSummary || !address) { return; }
+    if (!streamingAccountsSummary || !outgoingStreamsSummary) { return; }
 
     setUnallocatedBalance(parseFloat(outgoingStreamsSummary.totalNet.toFixed(2)) + parseFloat(streamingAccountsSummary.totalNet.toFixed(2)));
-  }, [publicKey, streamingAccountsSummary, outgoingStreamsSummary, address]);
+  }, [ streamingAccountsSummary, outgoingStreamsSummary]);
 
   // Update total account balance
   useEffect(() => {
-    if (!publicKey || !unallocatedBalance || !withdrawalBalance || !address) { return; }
+    if (!unallocatedBalance && !withdrawalBalance) { return; }
 
-    if (withdrawalBalance && unallocatedBalance) {
-      setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
-    }
-  }, [publicKey, unallocatedBalance, withdrawalBalance, address]);
+      setTotalAccountBalance((withdrawalBalance + unallocatedBalance) as number);
+  }, [unallocatedBalance, withdrawalBalance]);
 
   // Calculate the rate per day for incoming streams
   useEffect(() => {
