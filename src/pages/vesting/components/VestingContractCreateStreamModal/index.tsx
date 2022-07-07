@@ -260,6 +260,14 @@ export const VestingContractCreateStreamModal = (props: {
     // Data management //
     /////////////////////
 
+    // Set max allocatable amount
+    useEffect(() => {
+        if (withdrawTransactionFees && unallocatedBalance) {
+            const maxAmount = getMaxAmount();
+            consoleOut('maxAmount:', maxAmount, 'blue');
+        }
+    }, [getMaxAmount, unallocatedBalance, withdrawTransactionFees]);
+
     // Set treasury unalocated balance in BN
     useEffect(() => {
         if (isVisible && vestingContract) {
