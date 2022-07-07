@@ -1541,79 +1541,95 @@ export const MoneyStreamsInfoView = (props: {
     <>
       <Row gutter={[8, 8]}>
         <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
-          <div className="incoming-stream-amount">
-            <div className="d-flex align-items-center">
-              <h3>Incoming Streams</h3>
-              <span className="info-icon">
-                {incomingAmount ? (
-                  <ArrowDownOutlined className="mean-svg-icons incoming bounce" />
-                ) : (
-                  <ArrowDownOutlined className="mean-svg-icons incoming" />
-                )}
-              </span>
-            </div>
-            <span className="incoming-amount">{rateIncomingPerDay ? `+ ${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
+        {/* Background animation */}
+        {rateIncomingPerDay !== 0 ? (
+          <div className="stream-background stream-background-incoming">
+            <img
+              className="inbound"
+              src="/assets/incoming-crypto.svg"
+              alt=""
+            />
           </div>
-          <div className="card-row">
-            <div className="card-column">
-              <div className="info-label">
-                Balance
+          ) : null}
+          <div className="incoming-stream-amount">
+            <div className="incoming-stream-running">
+              <div className="d-flex align-items-center">
+                <h4>Incoming streams</h4>
+                <span className="info-icon">
+                  {incomingAmount ? (
+                    <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
+                  ) : (
+                    <ArrowDownOutlined className="mean-svg-icons incoming ml-1" />
+                  )}
+                </span>
               </div>
-              <div className="info-value">
-                {withdrawalBalance ? toUsCurrency(withdrawalBalance) : "$0.00"}
-              </div>
+              <span className="incoming-amount">{rateIncomingPerDay ? `+ ${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
-            <div className="card-column">
-              <div className="info-label">
-                Total streams
-              </div>
-              <div className="info-value">
-                {incomingAmount ? `${incomingAmount} ${(incomingAmount > 1) ? "streams" : "stream"}` : "--"}
-              </div>
+            <div className="info-value">
+              {`Total streams: ${incomingAmount ? incomingAmount : "0"}`}
             </div>
+          </div>
+          <div className="stream-balance">
+            <div className="info-label">
+              Available to withdraw:
+            </div>
+            <div className="info-value">
+              {withdrawalBalance ? toUsCurrency(withdrawalBalance) : "$0.00"}
+            </div>
+          </div>
+          <div className="waves-box">
+            <div className="wave wave-green"></div>
           </div>
         </Col>
         <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
+          {/* Background animation */}
+          {rateIncomingPerDay !== 0 ? (
+            <div className="stream-background stream-background-outgoing">
+              <img
+                className="inbound"
+                src="/assets/outgoing-crypto.svg"
+                alt=""
+              />
+            </div>
+          ) : null}
           <div className="outgoing-stream-amount">
-            <div className="d-flex align-items-center">
-              <h3>Outgoing Streams</h3>
-              <span className="info-icon">
-                {outgoingAmount ? (
-                  <ArrowUpOutlined className="mean-svg-icons outgoing bounce" />
-                ) : (
-                  <ArrowUpOutlined className="mean-svg-icons outgoing" />
-                )}
-              </span>
+            <div className="outgoing-stream-running">
+              <div className="d-flex align-items-center">
+                <h4>Outgoing streams</h4>
+                <span className="info-icon">
+                  {outgoingAmount ? (
+                    <ArrowUpOutlined className="mean-svg-icons outgoing bounce ml-1" />
+                  ) : (
+                    <ArrowUpOutlined className="mean-svg-icons outgoing ml-1" />
+                  )}
+                </span>
+              </div>
+              <span className="outgoing-amount">{rateOutgoingPerDay ? `- ${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
-            <span className="outgoing-amount">{rateOutgoingPerDay ? `- ${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
+            <div className="info-value">
+              {`Total streams: ${outgoingAmount ? outgoingAmount : "0"}`}
+            </div>
           </div>
-          <div className="card-row">
-            <div className="card-column">
-              <div className="info-label">
-                Balance
-              </div>
-              <div className="info-value">
-                {unallocatedBalance ? toUsCurrency(unallocatedBalance) : "$0.00"}
-              </div>
+          <div className="stream-balance">
+            <div className="info-label">
+              Remaining balance:
             </div>
-            <div className="card-column">
-              <div className="info-label">
-                Total streams
-              </div>
-              <div className="info-value">
-                {outgoingAmount ? `${outgoingAmount} ${(outgoingAmount > 1) ? "streams" : "stream"}` : "--"}
-              </div>
+            <div className="info-value">
+              {unallocatedBalance ? toUsCurrency(unallocatedBalance) : "$0.00"}
             </div>
+          </div>
+          <div className="waves-box">
+            <div className="wave wave-red"></div>
           </div>
         </Col>
       </Row>
 
-      {((incomingAmount && incomingAmount > 0) || (outgoingAmount && outgoingAmount > 0)) ? (
+      {/* {((incomingAmount && incomingAmount > 0) || (outgoingAmount && outgoingAmount > 0)) ? (
         <PieChartComponent
           incomingAmount={incomingAmount || 0}
           outgoingAmount={outgoingAmount || 0}
         />
-      ) : null}
+      ) : null} */}
     </>
   );
 
