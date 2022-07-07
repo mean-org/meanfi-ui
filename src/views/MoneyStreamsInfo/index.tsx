@@ -480,10 +480,6 @@ export const MoneyStreamsInfoView = (props: {
         ? true
         : false;
 
-      // if (isIncoming) {
-      //   resume['incomingAmount'] = resume['incomingAmount'] + 1;
-      // }
-
       // Get refreshed data
       const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
@@ -506,10 +502,6 @@ export const MoneyStreamsInfoView = (props: {
       const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
         ? true
         : false;
-
-      // if (isIncoming) {
-      //   resume['incomingAmount'] = resume['incomingAmount'] + 1;
-      // }
 
       // Get refreshed data
       const freshStream = await msp.refreshStream(stream) as Stream;
@@ -575,10 +567,6 @@ export const MoneyStreamsInfoView = (props: {
         ? true
         : false;
 
-      // if (!isIncoming) {
-      //   resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
-      // }
-
       // Get refreshed data
       const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
@@ -601,10 +589,6 @@ export const MoneyStreamsInfoView = (props: {
       const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
         ? true
         : false;
-
-      // if (!isIncoming) {
-      //   resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
-      // }
 
       // Get refreshed data
       const freshStream = await msp.refreshStream(stream) as Stream;
@@ -1414,9 +1398,11 @@ export const MoneyStreamsInfoView = (props: {
 
   // Update total account balance
   useEffect(() => {
-    if (!publicKey || (!unallocatedBalance && !withdrawalBalance) || !address) { return; }
+    if (!publicKey || !unallocatedBalance || !withdrawalBalance || !address) { return; }
 
-    setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
+    if (withdrawalBalance && unallocatedBalance) {
+      setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
+    }
   }, [publicKey, unallocatedBalance, withdrawalBalance, address]);
 
   // Calculate the rate per day for incoming streams
