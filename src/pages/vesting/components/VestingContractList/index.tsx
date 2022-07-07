@@ -7,7 +7,7 @@ import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { formatThousands, makeDecimal } from '../../../../utils/utils';
 import { PublicKey } from '@solana/web3.js';
-import { delay, getPaymentIntervalFromSeconds, getPercentageBetweenTwoDates, getPercentualTsBetweenTwoDates, getReadableDate, isProd, toTimestamp } from '../../../../utils/ui';
+import { delay, getPercentageBetweenTwoDates, getPercentualTsBetweenTwoDates, getReadableDate, isProd, toTimestamp } from '../../../../utils/ui';
 import { IconLoading } from '../../../../Icons';
 import BN from 'bn.js';
 

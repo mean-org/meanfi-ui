@@ -304,11 +304,22 @@ export const VestingContractCreateForm = (props: {
     const onAccountCreateClick = () => {
         const parsedDate = Date.parse(paymentStartDate as string);
         const startUtc = new Date(parsedDate);
-        const shortTime = moment(contractTime, "hh:mm");
+        const shortTime = moment(contractTime, "HH:mm");
         startUtc.setHours(shortTime.hour());
         startUtc.setMinutes(shortTime.minute());
         startUtc.setSeconds(shortTime.second());
-        consoleOut('startUtc modified:', startUtc.toUTCString(), 'darkorange');
+        const startDatePlusOffset = new Date(startUtc.getTime() + startUtc.getTimezoneOffset() * 60000);
+        consoleOut('start date modified:', startDatePlusOffset, 'darkorange');
+        const startDateInUtc = Date.UTC(
+            startDatePlusOffset.getUTCFullYear(),
+            startDatePlusOffset.getUTCMonth(),
+            startDatePlusOffset.getUTCDate(),
+            startDatePlusOffset.getUTCHours(),
+            startDatePlusOffset.getUTCMinutes(),
+            startDatePlusOffset.getUTCSeconds()
+        );
+        const timeShiftedStartUtc = new Date(startDateInUtc);
+        consoleOut('start date in UTC:', startDateInUtc, 'darkorange');
 
         const options: VestingContractCreateOptions = {
             vestingContractName: vestingLockName,
@@ -320,7 +331,7 @@ export const VestingContractCreateForm = (props: {
             duration: parseFloat(lockPeriodAmount),
             durationUnit: getRateIntervalInSeconds(lockPeriodFrequency),
             cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
-            startDate: startUtc,
+            startDate: timeShiftedStartUtc,
             multisig: isMultisigContext ? accountAddress : '',
             fundingAmount: toTokenAmount(parseFloat(vestingLockFundingAmount), (selectedToken as TokenInfo).decimals)
         };

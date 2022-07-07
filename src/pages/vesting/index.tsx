@@ -854,6 +854,7 @@ export const VestingView = () => {
   //  Modals  //
   //////////////
 
+
   // Create vesting contract modal
   const [isVestingContractCreateModalVisible, setIsVestingContractCreateModalVisibility] = useState(false);
   const showVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(true), []);
@@ -902,6 +903,7 @@ export const VestingView = () => {
       const solFeePayedByTreasury = data.multisig ? true : false;
 
       if (!data.multisig) {
+        consoleOut('received data:', data, 'blue');
         return await msp.createVestingTreasury(
           new PublicKey(data.treasurer),                        // payer
           new PublicKey(data.treasurer),                        // treasurer
