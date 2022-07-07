@@ -847,7 +847,9 @@ export const VestingView = () => {
 
   const isContractLocked = useCallback(() => {
     if (!publicKey || !selectedVestingContract || !streamTemplate) { return true; }
-    return isStartDateGone(streamTemplate.startUtc as string);
+    const localDate = new Date(streamTemplate.startUtc as string);
+    const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+    return isStartDateGone(dateWithoutOffset.toUTCString());
   }, [isStartDateGone, publicKey, selectedVestingContract, streamTemplate]);
 
   //////////////

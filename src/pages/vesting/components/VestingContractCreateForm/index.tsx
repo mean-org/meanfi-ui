@@ -200,7 +200,7 @@ export const VestingContractCreateForm = (props: {
     }
 
     const get15MinutesAhead = useCallback(() => {
-        const time =  moment().add(15, 'minutes').format('hh:mm');
+        const time =  moment().add(15, 'minutes').format(timeFormat);
         setContractTime(time);
     }, []);
 
@@ -304,13 +304,14 @@ export const VestingContractCreateForm = (props: {
     const onAccountCreateClick = () => {
         const parsedDate = Date.parse(paymentStartDate as string);
         const startUtc = new Date(parsedDate);
-        const shortTime = moment(contractTime, "HH:mm");
-        startUtc.setHours(shortTime.hour());
-        startUtc.setMinutes(shortTime.minute());
-        startUtc.setSeconds(shortTime.second());
+        const shortTime = moment(contractTime, timeFormat).format("HH:mm");
+        const to24hTime = moment(shortTime, "HH:mm");
+        startUtc.setHours(to24hTime.hours());
+        startUtc.setMinutes(to24hTime.minutes());
+        startUtc.setSeconds(to24hTime.seconds());
         const startDatePlusOffset = new Date(startUtc.getTime() + startUtc.getTimezoneOffset() * 60000);
-        consoleOut('Start date in UTC:', startDatePlusOffset, 'darkorange');
-
+        const timeShiftedStartUtc = new Date(startDatePlusOffset);
+        consoleOut('start date in UTC:', startDatePlusOffset, 'darkorange');
         const options: VestingContractCreateOptions = {
             vestingContractName: vestingLockName,
             vestingCategory: vestingCategory ? vestingCategory.value : SubCategory.default,
@@ -321,7 +322,7 @@ export const VestingContractCreateForm = (props: {
             duration: parseFloat(lockPeriodAmount),
             durationUnit: getRateIntervalInSeconds(lockPeriodFrequency),
             cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
-            startDate: startDatePlusOffset,
+            startDate: timeShiftedStartUtc,
             multisig: isMultisigContext ? accountAddress : '',
             fundingAmount: toTokenAmount(parseFloat(vestingLockFundingAmount), (selectedToken as TokenInfo).decimals)
         };
@@ -476,7 +477,7 @@ export const VestingContractCreateForm = (props: {
 
     const onChange = (time: moment.Moment | null, timeString: string) => {
         if (time) {
-            const shortTime = time.format("hh:mm");
+            const shortTime = time.format(timeFormat);
             setContractTime(shortTime);
         }
     };

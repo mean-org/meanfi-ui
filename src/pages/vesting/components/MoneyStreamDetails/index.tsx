@@ -1,5 +1,4 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import moment from 'moment';
 import BN from 'bn.js';
 import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
@@ -56,7 +55,8 @@ export const MoneyStreamDetails = (props: {
     const now = new Date().toUTCString();
     const nowUtc = new Date(now);
     const comparedDate = new Date(date);
-    if (comparedDate > nowUtc) {
+    const dateWithoutOffset = new Date(comparedDate.getTime() - (comparedDate.getTimezoneOffset() * 60000));
+    if (dateWithoutOffset > nowUtc) {
       return true;
     }
     return false;
@@ -158,24 +158,24 @@ export const MoneyStreamDetails = (props: {
           title = t('streams.stream-list.subtitle-scheduled-inbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string)}`;
+          title += ` ${getShortDate(item.startUtc as string, false, true)}`;
         } else {
           title = t('streams.stream-list.subtitle-running-inbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string)}`;
+          title += ` ${getShortDate(item.startUtc as string, false, true)}`;
         }
       } else {
         if (item.status === STREAM_STATUS.Schedule) {
           title = t('streams.stream-list.subtitle-scheduled-outbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string)}`;
+          title += ` ${getShortDate(item.startUtc as string, false, true)}`;
         } else {
           title = t('streams.stream-list.subtitle-running-outbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string)}`;
+          title += ` ${getShortDate(item.startUtc as string, false, true)}`;
         }
       }
     }
@@ -237,7 +237,7 @@ export const MoneyStreamDetails = (props: {
     if (item) {
       switch (item.status) {
         case STREAM_STATUS.Schedule:
-          return t('streams.status.scheduled', { date: getShortDate(item.startUtc as string) });
+          return t('streams.status.scheduled', { date: getShortDate(item.startUtc as string, false, true) });
         case STREAM_STATUS.Paused:
           if (item.isManuallyPaused) {
             return t('streams.status.stopped-manually');
@@ -470,7 +470,7 @@ export const MoneyStreamDetails = (props: {
   const detailsData = [
     {
       label: stream ? isStartDateFuture(stream.startUtc as string) ? "Starting on:" : "Started on:" : "--",
-      value: stream ? getReadableDate(stream.startUtc as string, true) : "--"
+      value: stream ? getReadableDate(stream.startUtc as string, true, true) : "--"
     },
     {
       label: isInboundStream && "Receiving from:",

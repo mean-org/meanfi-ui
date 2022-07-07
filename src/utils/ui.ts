@@ -559,22 +559,42 @@ export const toUsCurrency = (value: any) => {
     return formatted || '';
 }
 
-export const getShortDate = (date: string, includeTime = false): string => {
+export const getShortDate = (date: string, includeTime = false, isUtc = false): string => {
     if (!date) { return ''; }
+
     const localDate = new Date(date);
-    return dateFormat(
-        localDate,
-        includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
-    );
+    if (isUtc) {
+        const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+        const displayDate = dateWithoutOffset.toUTCString();
+        return dateFormat(
+            displayDate,
+            includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
+        );
+    } else {
+        return dateFormat(
+            localDate,
+            includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
+        );
+    }
 }
 
-export const getReadableDate = (date: string, includeTime = false): string => {
+export const getReadableDate = (date: string, includeTime = false, isUtc = false): string => {
     if (!date) { return ''; }
+
     const localDate = new Date(date);
-    return dateFormat(
-        localDate,
-        includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
-    );
+    if (isUtc) {
+        const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+        const displayDate = dateWithoutOffset.toUTCString();
+        return dateFormat(
+            displayDate,
+            includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
+        );
+    } else {
+        return dateFormat(
+            localDate,
+            includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
+        );
+    }
 }
 
 export const getOrdinalDay = (date: Date): string => {

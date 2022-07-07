@@ -321,7 +321,9 @@ export const VestingContractCreateStreamModal = (props: {
             if (currentStep === 1) {
                 const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
                 setCliffReleasePercentage(formatPercent(cliffPercent, 4));
-                setPaymentStartDate(streamTemplate.startUtc as string);
+                const localDate = new Date(streamTemplate.startUtc as string);
+                const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+                setPaymentStartDate(dateWithoutOffset.toUTCString());
                 updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
                 const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
                 setLockPeriodFrequency(periodFrequency);

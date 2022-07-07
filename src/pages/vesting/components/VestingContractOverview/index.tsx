@@ -49,7 +49,9 @@ export const VestingContractOverview = (props: {
             const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
             setCliffReleasePercentage(cliffPercent);
             setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
-            setPaymentStartDate(streamTemplate.startUtc as string);
+            const localDate = new Date(streamTemplate.startUtc as string);
+            const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+            setPaymentStartDate(dateWithoutOffset.toUTCString());
             updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
             setLockPeriodUnits(streamTemplate.rateIntervalInSeconds);
             const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);

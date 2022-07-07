@@ -79,6 +79,9 @@ export const VestingContractList = (props: {
                     try {
                         const pk = new PublicKey(contract.id as string);
                         const templateData = await msp.getStreamTemplate(pk);
+                        const localDate = new Date(templateData.startUtc as string);
+                        const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+                        templateData.startUtc = dateWithoutOffset.toUTCString();
                         compiledTemplates[contract.id as string] = templateData;
                     } catch (error) {
                         console.error('Error fetching template data:', error);
@@ -117,7 +120,9 @@ export const VestingContractList = (props: {
 
             if (vcTemplates && vcTemplates[contract.id as string] && vcTemplates[contract.id as string].startUtc) {
                 streamTemplate = vcTemplates[contract.id as string];
-                startDate = vcTemplates[contract.id as string].startUtc as string;
+                const localDate = new Date(vcTemplates[contract.id as string].startUtc);
+                const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+                startDate = dateWithoutOffset.toUTCString();
             }
 
             let completedVestingPercentage = 0;
@@ -192,7 +197,7 @@ export const VestingContractList = (props: {
                                         <span className="mr-1">
                                             {
                                                 isStartDateFuture(vcTemplates[item.id as string].startUtc)
-                                                    ? `Contract starts on ${getReadableDate(vcTemplates[item.id as string].startUtc)}`
+                                                    ? `Contract starts on ${getReadableDate(vcTemplates[item.id as string].startUtc, true)}`
                                                     : <Progress
                                                         percent={vcCompleteness[item.id as string] || 0}
                                                         showInfo={vcCompleteness[item.id as string] < 100 ? false : true}
