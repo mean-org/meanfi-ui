@@ -192,4 +192,12 @@
             padding: 0 !important;
         }
     }
+
+    .vesting-list-progress-bar {
+        .ant-progress-bg {
+            // background-color: var(--color-green);
+            background-color: var(--color-notify-success);
+            height: 3px !important;
+        }
+    }
 }

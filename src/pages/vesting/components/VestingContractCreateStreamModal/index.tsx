@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useContext, useState } from 'react';
+import React, { useCallback, useEffect, useContext, useState, useMemo } from 'react';
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
@@ -76,11 +76,10 @@ export const VestingContractCreateStreamModal = (props: {
     const [vestingStreamName, setVestingStreamName] = useState<string>('');
     const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
     const [tokenAmount, setTokenAmount] = useState(new BN(0));
-    const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
+    const [maxAllocatableAmount, setMaxAllocatableAmount] = useState(new BN(0));
 
     // Setting from the vesting contract
     const [treasuryOption, setTreasuryOption] = useState<TreasuryType | undefined>(undefined);
-    const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
     const [paymentStartDate, setPaymentStartDate] = useState<string>("");
     const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
@@ -88,6 +87,11 @@ export const VestingContractCreateStreamModal = (props: {
     const [cliffRelease, setCliffRelease] = useState<string>("")
     const [paymentRateAmount, setPaymentRateAmount] = useState<string>("");
 
+    const isFeePaidByTreasurer = useMemo(() => {
+        return streamTemplate
+            ? streamTemplate.feePayedByTreasurer
+            : false;
+    }, [streamTemplate]);
 
     /////////////////
     //  Callbacks  //
@@ -312,11 +316,11 @@ export const VestingContractCreateStreamModal = (props: {
     // When modal goes visible, set template data
     useEffect(() => {
         if (isVisible && vestingContract && streamTemplate) {
+            consoleOut('this one I received:', streamTemplate, 'orange');
             setTreasuryOption(vestingContract.treasuryType);
             if (currentStep === 1) {
                 const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
                 setCliffReleasePercentage(formatPercent(cliffPercent, 4));
-                setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
                 setPaymentStartDate(streamTemplate.startUtc as string);
                 updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
                 const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
@@ -373,6 +377,27 @@ export const VestingContractCreateStreamModal = (props: {
     /////////////////////////
     // Events & validation //
     /////////////////////////
+
+    const setMaxValue = useCallback(() => {
+
+        consoleOut('clicked the MAX motherfkr!', '', 'blue');
+        const decimals = selectedToken ? selectedToken.decimals : 6;
+        consoleOut('decimals:', decimals, 'blue');
+        consoleOut('isFeePaidByTreasurer?', isFeePaidByTreasurer, 'blue');
+
+        if (isFeePaidByTreasurer) {
+            const maxAmount = getMaxAmount();
+            consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
+            consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+            setTokenAmount(new BN(maxAmount));
+        } else {
+            const maxAmount = getMaxAmount();
+            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+            setTokenAmount(new BN(maxAmount));
+        }
+
+    }, [getMaxAmount, selectedToken, setFromCoinAmount, isFeePaidByTreasurer, tokenAmount]);
 
     const getStreamTxConfirmDescription = () => {
         const cliff = `${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol}`;
@@ -447,7 +472,7 @@ export const VestingContractCreateStreamModal = (props: {
             setFromCoinAmount(".");
         } else if (isValidNumber(newValue)) {
             setFromCoinAmount(newValue);
-            setTokenAmount(makeInteger(newValue, selectedToken?.decimals || 6));
+            setTokenAmount(makeInteger(newValue, decimals));
         }
     };
 
@@ -480,6 +505,8 @@ export const VestingContractCreateStreamModal = (props: {
     }
 
     const isStepOneValid = (): boolean => {
+        const mAa = new BN(maxAllocatableAmount || 0);
+        const ub = new BN(unallocatedBalance || 0);
         return  publicKey &&
                 selectedToken &&
                 vestingStreamName && vestingStreamName.length <= 32 &&
@@ -488,8 +515,8 @@ export const VestingContractCreateStreamModal = (props: {
                 !isAddressOwnAccount() &&
                 nativeBalance > 0 &&
                 tokenAmount && tokenAmount.toNumber() > 0 &&
-                ((isFeePaidByTreasurer && tokenAmount.lte(maxAllocatableAmount)) ||
-                 (!isFeePaidByTreasurer && tokenAmount.lte(unallocatedBalance)))
+                ((isFeePaidByTreasurer && tokenAmount.lte(mAa)) ||
+                 (!isFeePaidByTreasurer && tokenAmount.lte(ub)))
         ? true
         : false;
     }
@@ -502,6 +529,8 @@ export const VestingContractCreateStreamModal = (props: {
     };
 
     const getStepOneButtonLabel = (): string => {
+        const mAa = new BN(maxAllocatableAmount || 0);
+        const ub = new BN(unallocatedBalance || 0);
         return  !publicKey
             ? t('transactions.validation.not-connected')
             : !vestingStreamName || vestingStreamName.length > 32
@@ -514,8 +543,8 @@ export const VestingContractCreateStreamModal = (props: {
                             ? t('transactions.validation.no-balance')
                             : !tokenAmount || tokenAmount.isZero()
                                 ? t('transactions.validation.no-amount')
-                                : (isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
-                                (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))
+                                : (isFeePaidByTreasurer && tokenAmount.gt(mAa)) ||
+                                  (!isFeePaidByTreasurer && tokenAmount.gt(ub))
                                     ? t('transactions.validation.amount-high')
                                     : nativeBalance < getMinBalanceRequired()
                                         ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
@@ -560,6 +589,15 @@ export const VestingContractCreateStreamModal = (props: {
             visible={isVisible}
             onCancel={handleClose}
             width={480}>
+
+            {isLocal() && (
+            <div className="debug-bar">
+                <span className="ml-1">tokenAmount:</span><span className="ml-1 font-bold fg-dark-active">{tokenAmount.toNumber() || '--'}</span>
+                <span className="ml-1">maxAllocatableAmount:</span><span className="ml-1 font-bold fg-dark-active">{maxAllocatableAmount.toNumber() || '--'}</span>
+                <span className="ml-1">unallocatedBalance:</span><span className="ml-1 font-bold fg-dark-active">{unallocatedBalance.toNumber() || '--'}</span>
+            </div>
+            )}
+
             <div className="scrollable-content pl-5 pr-4 py-2">
 
                 <WizardStepSelector
@@ -656,22 +694,7 @@ export const VestingContractCreateStreamModal = (props: {
                                     )}
                                     {
                                         selectedToken && unallocatedBalance ? (
-                                            <div
-                                                className="token-max simplelink"
-                                                onClick={() => {
-                                                    const decimals = selectedToken ? selectedToken.decimals : 6;
-                                                    if (isFeePaidByTreasurer) {
-                                                        const maxAmount = getMaxAmount(true);
-                                                        consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-                                                        consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                                                        setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                                                        setTokenAmount(new BN(maxAmount));
-                                                    } else {
-                                                        const maxAmount = getMaxAmount();
-                                                        setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                                                        setTokenAmount(new BN(maxAmount));
-                                                    }
-                                                }}>
+                                            <div className="token-max simplelink" onClick={setMaxValue}>
                                                 MAX
                                             </div>
                                         ) : null

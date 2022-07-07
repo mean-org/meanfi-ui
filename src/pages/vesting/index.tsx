@@ -379,6 +379,7 @@ export const VestingView = () => {
       const contractsRefreshCta = document.getElementById("hard-refresh-contracts-cta");
       if (contractsRefreshCta) {
         contractsRefreshCta.click();
+        isWorkflowLocked = false;
       }
     };
 
@@ -438,6 +439,8 @@ export const VestingView = () => {
           softReloadContracts();
           break;
         case OperationType.TreasuryClose:
+          hardReloadContracts();
+          break;
         case OperationType.TreasuryCreate:
           notifyVestingContractCreated(item);
           hardReloadContracts();
@@ -1299,6 +1302,7 @@ export const VestingView = () => {
   const [isVestingContractCloseModalOpen, setIsVestingContractCloseModalOpen] = useState(false);
   const hideVestingContractCloseModal = useCallback(() => setIsVestingContractCloseModalOpen(false), []);
   const showVestingContractCloseModal = useCallback(() => {
+    setIsBusy(false);
     resetTransactionStatus();
     getTransactionFees(MSP_ACTIONS.closeTreasury).then(value => {
       setTransactionFees(value);
@@ -1324,7 +1328,6 @@ export const VestingView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryClose);
     setIsBusy(true);

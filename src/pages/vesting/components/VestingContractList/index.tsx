@@ -193,7 +193,22 @@ export const VestingContractList = (props: {
                                             {
                                                 isStartDateFuture(vcTemplates[item.id as string].startUtc)
                                                     ? `Contract starts on ${getReadableDate(vcTemplates[item.id as string].startUtc)}`
-                                                    : <Progress percent={vcCompleteness[item.id as string] || 0} showInfo={false} status="active" />
+                                                    : <Progress
+                                                        percent={vcCompleteness[item.id as string] || 0}
+                                                        showInfo={vcCompleteness[item.id as string] < 100 ? false : true}
+                                                        status={
+                                                            vcCompleteness[item.id as string] === 0
+                                                                ? "normal"
+                                                                : vcCompleteness[item.id as string] === 100
+                                                                    ? "success"
+                                                                    : "active"
+                                                        }
+                                                        size="small"
+                                                        type="line"
+                                                        className="vesting-list-progress-bar"
+                                                        trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                                        style={{ width: 200 }}
+                                                        />
                                             }
                                         </span>
                                     ) : (
