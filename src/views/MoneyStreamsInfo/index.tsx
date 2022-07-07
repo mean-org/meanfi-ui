@@ -437,10 +437,7 @@ export const MoneyStreamsInfoView = (props: {
 
     resume['totalAmount'] += treasuryList.length;
 
-    consoleOut('openAmount in right part:', resume['openAmount'], 'blue');
-    consoleOut('lockedAmount in right part:', resume['lockedAmount'], 'blue');
-    consoleOut('totalAmount in right part:', resume['totalAmount'], 'blue');
-    consoleOut('totalNet in right part:', resume['totalNet'], 'blue');
+    consoleOut('totalNet in streaming accounts:', resume['totalNet'], 'blue');
     consoleOut('=========== Block ends ===========', '', 'orange');
 
     // Update state
@@ -599,11 +596,11 @@ export const MoneyStreamsInfoView = (props: {
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         const decimals = token.decimals || 6;
-        const amount = freshStream.withdrawableAmount;
+        const amount = freshStream.fundsLeftInStream;
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (!isIncoming) {
-          resume['totalNet'] -= amountChange;
+          resume['totalNet'] += amountChange;
         }
       }
     }

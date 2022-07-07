@@ -991,178 +991,6 @@ export const AccountsNewView = () => {
     resetTransactionStatus();
   }, [recordTxConfirmation, resetTransactionStatus]);
 
-  const refreshIncomingStreamSummary = useCallback(async () => {
-
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) { return; }
-
-    const resume: StreamsSummary = {
-      totalNet: 0,
-      incomingAmount: 0,
-      outgoingAmount: 0,
-      totalAmount: 0
-    };
-
-    const treasurer = accountAddress
-      ? new PublicKey(accountAddress)
-      : publicKey;
-
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-
-    consoleOut('=========== Block start ===========', '', 'orange');
-
-    for (const stream of updatedStreamsv1) {
-
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
-        ? true
-        : false;
-
-      // Get refreshed data
-      const freshStream = await ms.refreshStream(stream) as StreamInfo;
-      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
-
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
-
-      if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-
-        if (isIncoming) {
-          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * tokenPrice);
-        }
-      }
-    }
-
-    resume['totalAmount'] = updatedStreamsv1.length;
-
-    for (const stream of updatedStreamsv2) {
-
-      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
-        ? true
-        : false;
-
-      // Get refreshed data
-      const freshStream = await msp.refreshStream(stream) as Stream;
-      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
-
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
-
-      if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 6;
-        const amount = freshStream.withdrawableAmount;
-        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
-
-        if (isIncoming) {
-          resume['totalNet'] += amountChange;
-        }
-      }
-    }
-
-    resume['totalAmount'] += updatedStreamsv2.length;
-
-    consoleOut('totalNet in incoming streams:', resume['totalNet'], 'blue');
-    consoleOut('=========== Block ends ===========', '', 'orange');
-
-    // Update state
-    setIncomingStreamsSummary(resume);
-  }, [
-    ms,
-    msp,
-    publicKey,
-    streamListv1,
-    streamListv2,
-    accountAddress,
-    getTokenByMintAddress,
-    getTokenPriceBySymbol,
-    getTokenPriceByAddress,
-  ]);
-
-  const refreshOutgoingStreamSummary = useCallback(async () => {
-
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) { return; }
-
-    const resume: StreamsSummary = {
-      totalNet: 0,
-      incomingAmount: 0,
-      outgoingAmount: 0,
-      totalAmount: 0
-    };
-
-    const treasurer = accountAddress
-      ? new PublicKey(accountAddress)
-      : publicKey;
-
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-
-    consoleOut('=========== Block start ===========', '', 'orange');
-
-    for (const stream of updatedStreamsv1) {
-
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
-        ? true
-        : false;
-
-      // Get refreshed data
-      const freshStream = await ms.refreshStream(stream) as StreamInfo;
-      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
-
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
-
-      if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-
-        if (!isIncoming) {
-          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * tokenPrice);
-        }
-      }
-    }
-
-    resume['totalAmount'] = updatedStreamsv1.length;
-
-    for (const stream of updatedStreamsv2) {
-
-      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
-        ? true
-        : false;
-
-      // Get refreshed data
-      const freshStream = await msp.refreshStream(stream) as Stream;
-      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
-
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
-
-      if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 6;
-        const amount = freshStream.withdrawableAmount;
-        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
-
-        if (!isIncoming) {
-          resume['totalNet'] -= amountChange;
-        }
-      }
-    }
-
-    resume['totalAmount'] += updatedStreamsv2.length;
-
-    consoleOut('totalNet in outgoing streams:', resume['totalNet'], 'blue');
-    consoleOut('=========== Block ends ===========', '', 'orange');
-
-    // Update state
-    setOutgoingStreamsSummary(resume);
-  }, [
-    ms,
-    msp,
-    publicKey, 
-    streamListv1, 
-    streamListv2,
-    accountAddress, 
-    getTokenPriceBySymbol,
-    getTokenByMintAddress,
-    getTokenPriceByAddress,
-  ]);
-
   // Filter only useful Txs for the SOL account and return count
   const getSolAccountItems = useCallback((txs: MappedTransaction[]): number => {
 
@@ -2916,10 +2744,7 @@ export const AccountsNewView = () => {
 
     resume['totalAmount'] += treasuryList.length;
 
-    consoleOut('openAmount in right part:', resume['openAmount'], 'blue');
-    consoleOut('lockedAmount in right part:', resume['lockedAmount'], 'blue');
-    consoleOut('totalAmount in right part:', resume['totalAmount'], 'blue');
-    consoleOut('totalNet in right part:', resume['totalNet'], 'blue');
+    consoleOut('totalNet in streaming accounts:', resume['totalNet'], 'blue');
     consoleOut('=========== Block ends ===========', '', 'orange');
 
     // Update state
@@ -2931,6 +2756,179 @@ export const AccountsNewView = () => {
       getTokenByMintAddress,
       getTreasuryUnallocatedBalance,
       treasuryList
+  ]);
+
+  const refreshIncomingStreamSummary = useCallback(async () => {
+
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) { return; }
+
+    const resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0
+    };
+
+    const treasurer = accountAddress
+      ? new PublicKey(accountAddress)
+      : publicKey;
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+
+    consoleOut('=========== Block start ===========', '', 'orange');
+
+    for (const stream of updatedStreamsv1) {
+
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
+        ? true
+        : false;
+
+      // Get refreshed data
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+        if (isIncoming) {
+          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * tokenPrice);
+        }
+      }
+    }
+
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    for (const stream of updatedStreamsv2) {
+
+      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+        ? true
+        : false;
+
+      // Get refreshed data
+      const freshStream = await msp.refreshStream(stream) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const decimals = token.decimals || 6;
+        const amount = freshStream.withdrawableAmount;
+        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+
+        if (isIncoming) {
+          resume['totalNet'] += amountChange;
+        }
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+
+    consoleOut('totalNet in incoming streams:', resume['totalNet'], 'blue');
+    consoleOut('=========== Block ends ===========', '', 'orange');
+
+    // Update state
+    setIncomingStreamsSummary(resume);
+
+  }, [
+    ms,
+    msp,
+    publicKey,
+    streamListv1,
+    streamListv2,
+    accountAddress,
+    getTokenByMintAddress,
+    getTokenPriceBySymbol,
+    getTokenPriceByAddress,
+  ]);
+
+  const refreshOutgoingStreamSummary = useCallback(async () => {
+
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) { return; }
+
+    const resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0
+    };
+
+    const treasurer = accountAddress
+      ? new PublicKey(accountAddress)
+      : publicKey;
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+
+    consoleOut('=========== Block start ===========', '', 'orange');
+
+    for (const stream of updatedStreamsv1) {
+
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
+        ? true
+        : false;
+
+      // Get refreshed data
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+        if (!isIncoming) {
+          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * tokenPrice);
+        }
+      }
+    }
+
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    for (const stream of updatedStreamsv2) {
+
+      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+        ? true
+        : false;
+
+      // Get refreshed data
+      const freshStream = await msp.refreshStream(stream) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const decimals = token.decimals || 6;
+        const amount = freshStream.fundsLeftInStream;
+        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+
+        if (!isIncoming) {
+          resume['totalNet'] += amountChange;
+        }
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+
+    consoleOut('totalNet in outgoing streams:', resume['totalNet'], 'blue');
+    consoleOut('=========== Block ends ===========', '', 'orange');
+
+    // Update state
+    setOutgoingStreamsSummary(resume);
+  }, [
+    ms,
+    msp,
+    publicKey, 
+    streamListv1, 
+    streamListv2,
+    accountAddress, 
+    getTokenPriceBySymbol,
+    getTokenByMintAddress,
+    getTokenPriceByAddress,
   ]);
 
   /////////////////////
