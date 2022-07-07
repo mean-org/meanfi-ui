@@ -1537,6 +1537,48 @@ export const MoneyStreamsInfoView = (props: {
     }
   ];
 
+  const [withdrawalScale, setWithdrawalScale] = useState<number>();
+  const [unallocatedScale, setUnallocatedsetScale] = useState<number>();
+
+  useEffect(() => {
+    if (!totalAccountBalance && !withdrawalBalance) { return; }
+
+    const calculateScaleBalanceIncoming = (withdrawalBalance * 100) / (totalAccountBalance as number);
+
+    setWithdrawalScale(Math.ceil((calculateScaleBalanceIncoming * 60) / 100));
+
+  }, [totalAccountBalance, withdrawalBalance]);
+
+  useEffect(() => {
+    if (!totalAccountBalance && !unallocatedBalance) { return; }
+
+    const calculateScaleBalanceOutgoing = (unallocatedBalance * 100) / (totalAccountBalance as number);
+
+    setUnallocatedsetScale(Math.ceil((calculateScaleBalanceOutgoing * 60) / 100));
+
+  }, [totalAccountBalance, unallocatedBalance]);
+
+  const setHeightGreenWave = (newHeight: string) => {
+    document.documentElement.style.setProperty('--heigth-green-wave', newHeight);
+  }
+
+  const setHeightRedWave = (newHeight: string) => {
+    document.documentElement.style.setProperty('--heigth-red-wave', newHeight);
+  }
+
+  useEffect(() => {
+    getComputedStyle(document.documentElement).getPropertyValue('--heigth-green-wave');
+
+    getComputedStyle(document.documentElement).getPropertyValue('--heigth-red-wave');
+
+    setHeightGreenWave(`${withdrawalScale}vh`);
+    setHeightRedWave(`${unallocatedScale}vh`);
+
+    consoleOut("Height green withdrawal scale", withdrawalScale);
+    consoleOut("Height red withdrawal scale", unallocatedScale);
+
+  }, [unallocatedScale, withdrawalScale]);
+
   const renderSummary = (
     <>
       <Row gutter={[8, 8]}>
@@ -1577,7 +1619,7 @@ export const MoneyStreamsInfoView = (props: {
               {withdrawalBalance ? toUsCurrency(withdrawalBalance) : "$0.00"}
             </div>
           </div>
-          <div className="waves-box">
+          <div className="wave-container">
             <div className="wave wave-green"></div>
           </div>
         </Col>
@@ -1618,7 +1660,7 @@ export const MoneyStreamsInfoView = (props: {
               {unallocatedBalance ? toUsCurrency(unallocatedBalance) : "$0.00"}
             </div>
           </div>
-          <div className="waves-box">
+          <div className="wave-container">
             <div className="wave wave-red"></div>
           </div>
         </Col>

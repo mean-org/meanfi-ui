@@ -40,20 +40,23 @@
   margin-top: -5em;
   position: relative;
   height: 100%;
+  z-index: 0;
 }
 .stream-background-outgoing {
   margin-bottom: -5em;
   position: relative;
   height: 100%;
+  z-index: 0;
 }
 .stream-balance {
-  z-index: 1;
+  z-index: 2;
   position: absolute;
   display: flex;
   justify-content: center;
   flex-direction: column;
   align-items: center;
   width: 100%;
+  max-height: 30vh;
   bottom: 1em;
   .info-label {
     width: auto;
@@ -75,37 +78,39 @@
     justify-content: flex-end;
   }
 }
-
-.waves-box { 
-  width:100%;
-  position:absolute;
-  bottom:0;
-  left:0;
-}
-.wave.wave-green {
-  background: url("../../../public/assets/wave-green.svg") repeat-x; 
-  position: absolute;
-  top: -198px;
-  width: 6400px;
-  height: 198px;
-  animation: wave 3s cubic-bezier( 0.36, 0.45, 0.63, 0.53) 2s;
-  transform: translate3d(0, 0, 0);
-}
-.wave.wave-red {
-  background: url("../../../public/assets/wave-red.svg") repeat-x; 
-  position: absolute;
-  top: -198px;
-  width: 6400px;
-  height: 198px;
-  animation: wave 7s cubic-bezier( 0.36, 0.45, 0.63, 0.53) 2s;
-  transform: translate3d(0, 0, 0);
+:root{
+  --heigth-green-wave: 0vh;
+  --heigth-red-wave: 0vh;
 }
 
-@keyframes wave {
-  0% {
-    margin-left: 0;
-  }
-  100% {
-    margin-left: -1600px;
-  }
+.wave-container {
+  position: absolute;
+  bottom: 0 !important;
+  left: 0;
+  width: 100%;
+}
+
+.wave-green {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-height: 30vh;
+  height: var(--heigth-green-wave);
+  background: url("../../../public/assets/wave-green.svg") repeat-x;
+  background: linear-gradient(180deg, rgba(0,104,32,1) 0%, rgba(24,26,42,1) 100%);
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.wave-red {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-height: 30vh;
+  height: var(--heigth-red-wave);
+  background: url("../../../public/assets/wave-red.svg");
+  background: linear-gradient(180deg, rgba(183,0,28,1) 0%, rgba(24,26,42,1) 100%);
+  background-size: cover;
+  background-repeat: no-repeat;
 }
