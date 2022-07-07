@@ -17,6 +17,7 @@ import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME } from '../../../../constants';
 import { InfoIcon } from '../../../../components/InfoIcon';
+import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
 export const VestingContractCreateStreamModal = (props: {
     handleClose: any;
@@ -27,6 +28,7 @@ export const VestingContractCreateStreamModal = (props: {
     isXsDevice: boolean;
     minRequiredBalance: number;
     nativeBalance: number;
+    selectedMultisig: MultisigInfo | undefined;
     streamTemplate: StreamTemplate | undefined;
     transactionFees: TransactionFees;
     vestingContract: Treasury | undefined;
@@ -41,6 +43,7 @@ export const VestingContractCreateStreamModal = (props: {
         isXsDevice,
         minRequiredBalance,
         nativeBalance,
+        selectedMultisig,
         streamTemplate,
         transactionFees,
         vestingContract,
@@ -366,6 +369,7 @@ export const VestingContractCreateStreamModal = (props: {
         }
     }, []);
 
+
     /////////////////////////
     // Events & validation //
     /////////////////////////
@@ -391,7 +395,8 @@ export const VestingContractCreateStreamModal = (props: {
             streamName: vestingStreamName,
             tokenAmount: tokenAmount.toNumber(),
             txConfirmDescription: getStreamTxConfirmDescription(),
-            txConfirmedDescription: getStreamTxConfirmedDescription()
+            txConfirmedDescription: getStreamTxConfirmedDescription(),
+            multisig: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
         };
         handleOk(options);
     }

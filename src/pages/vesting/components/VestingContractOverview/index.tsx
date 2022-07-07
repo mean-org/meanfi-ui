@@ -60,6 +60,7 @@ export const VestingContractOverview = (props: {
         vestingContract,
     ]);
 
+    // Create a tick every second
     useEffect(() => {
 
         const timeout = setTimeout(() => {

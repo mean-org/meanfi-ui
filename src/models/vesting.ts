@@ -102,6 +102,7 @@ export interface VestingContractStreamCreateOptions {
     tokenAmount: number;
     txConfirmDescription: string;
     txConfirmedDescription: string;
+    multisig: string;
 }
 
 export interface CreateVestingStreamParams {

@@ -1,14 +1,15 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Empty } from 'antd';
-import { MSP, Treasury, TreasuryType } from '@mean-dao/msp';
+import { Empty, Progress } from 'antd';
+import { MSP, StreamTemplate, Treasury, TreasuryType } from '@mean-dao/msp';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../../../components/Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { formatThousands } from '../../../../utils/utils';
+import { formatThousands, makeDecimal } from '../../../../utils/utils';
 import { PublicKey } from '@solana/web3.js';
-import { delay, getReadableDate, isProd } from '../../../../utils/ui';
+import { delay, getPaymentIntervalFromSeconds, getPercentageBetweenTwoDates, getPercentualTsBetweenTwoDates, getReadableDate, isProd, toTimestamp } from '../../../../utils/ui';
 import { IconLoading } from '../../../../Icons';
+import BN from 'bn.js';
 
 export const VestingContractList = (props: {
     loadingVestingAccounts: boolean;
@@ -29,8 +30,9 @@ export const VestingContractList = (props: {
         theme,
         getTokenByMintAddress,
     } = useContext(AppStateContext);
-    const [today] = useState(new Date());
-    const [vcStartDates, setVcStartDates] = useState<any>({});
+    const [today, setToday] = useState(new Date());
+    const [vcTemplates, setVcTemplates] = useState<any>({});
+    const [vcCompleteness, setVcCompleteness] = useState<any>({});
     const [loadingTemplates, setLoadingTemplates] = useState(false);
 
     const isStartDateFuture = useCallback((date: string): boolean => {
@@ -52,7 +54,7 @@ export const VestingContractList = (props: {
 
         (async () => {
             if (streamingAccounts) {
-                const compiledStartDates: any = {};
+                const compiledTemplates: any = {};
                 // consoleOut('loading of streamTemplates: ', 'STARTS', 'darkred');
                 for (const contract of streamingAccounts) {
                     if (loadingVestingAccounts) {
@@ -77,20 +79,75 @@ export const VestingContractList = (props: {
                     try {
                         const pk = new PublicKey(contract.id as string);
                         const templateData = await msp.getStreamTemplate(pk);
-                        compiledStartDates[contract.id as string] = templateData.startUtc as string;
+                        compiledTemplates[contract.id as string] = templateData;
                     } catch (error) {
                         console.error('Error fetching template data:', error);
                     }
                 }
-                // consoleOut('compiledStartDates:', compiledStartDates, 'blue');
+                // consoleOut('compiledTemplates:', compiledTemplates, 'blue');
                 // consoleOut('loading of streamTemplates: ', 'ENDS', 'darkred');
-                setVcStartDates(compiledStartDates);
+                setVcTemplates(compiledTemplates);
             }
             setLoadingTemplates(false);
         })();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [msp, streamingAccounts]);
+
+    // Create a tick every second
+    useEffect(() => {
+
+        const timeout = setTimeout(() => {
+            setToday(new Date());
+        }, 1000);
+
+        return () => {
+            clearTimeout(timeout);
+        }
+
+    });
+
+    useEffect(() => {
+        if (loadingVestingAccounts || loadingTemplates || !streamingAccounts || !vcTemplates) { return; }
+
+        const completedPercentages: any = {};
+        for (const contract of streamingAccounts) {
+            let streamTemplate: StreamTemplate | undefined = undefined;
+            let startDate: string | undefined = undefined;
+
+            if (vcTemplates && vcTemplates[contract.id as string] && vcTemplates[contract.id as string].startUtc) {
+                streamTemplate = vcTemplates[contract.id as string];
+                startDate = vcTemplates[contract.id as string].startUtc as string;
+            }
+
+            let completedVestingPercentage = 0;
+            if (contract && streamTemplate && startDate) {
+                if (contract.totalStreams === 0) {
+                    completedVestingPercentage = 0;
+                } else if (isStartDateFuture(startDate)) {
+                    completedVestingPercentage = 0;
+                } else {
+                    const lockPeriodAmount = streamTemplate.durationNumberOfUnits;
+                    const lockPeriodUnits = streamTemplate.rateIntervalInSeconds;
+                    const cliffReleasePercentage = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
+                    const sdTimestamp = toTimestamp(startDate);
+                    const lockPeriod = lockPeriodAmount * lockPeriodUnits;
+                    const finishDate = new Date((sdTimestamp + lockPeriod) * 1000).toUTCString();
+                    const cliffPcsTs = cliffReleasePercentage > 0
+                        ? getPercentualTsBetweenTwoDates(startDate, finishDate, cliffReleasePercentage)
+                        : sdTimestamp;
+                    const cliffBasedStartDate = new Date(cliffPcsTs * 1000).toUTCString();
+                    const todayPct = Math.abs(getPercentageBetweenTwoDates(cliffBasedStartDate, finishDate));
+                    completedVestingPercentage = todayPct;
+                }
+            } else {
+                completedVestingPercentage = 0;
+            }
+            completedPercentages[contract.id as string] = completedVestingPercentage;
+        }
+        setVcCompleteness(completedPercentages);
+
+    }, [isStartDateFuture, loadingTemplates, loadingVestingAccounts, streamingAccounts, vcTemplates]);
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
         event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -131,12 +188,12 @@ export const VestingContractList = (props: {
                                     </span>
                                 </div>
                                 <div className="subtitle text-truncate">
-                                    {item && vcStartDates[item.id as string] && !loadingTemplates ? (
+                                    {item && vcTemplates && vcTemplates[item.id as string] && vcTemplates[item.id as string].startUtc && !loadingTemplates ? (
                                         <span className="mr-1">
                                             {
-                                                isStartDateFuture(vcStartDates[item.id as string])
-                                                    ? `Contract starts on ${getReadableDate(vcStartDates[item.id as string])}`
-                                                    : `Contract started on ${getReadableDate(vcStartDates[item.id as string])}`
+                                                isStartDateFuture(vcTemplates[item.id as string].startUtc)
+                                                    ? `Contract starts on ${getReadableDate(vcTemplates[item.id as string].startUtc)}`
+                                                    : <Progress percent={vcCompleteness[item.id as string] || 0} showInfo={false} status="active" />
                                             }
                                         </span>
                                     ) : (

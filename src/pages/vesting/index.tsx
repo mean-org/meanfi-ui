@@ -42,7 +42,7 @@ import { VestingContractOverview } from './components/VestingContractOverview';
 import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigParticipant, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../utils/ids';
 import { appConfig, customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
@@ -2032,7 +2032,7 @@ export const VestingView = () => {
 
       if (!connection || !msp || !publicKey) { return null; }
 
-      // const solFeePayedByTreasury = data.multisig ? true : false;
+      consoleOut('createStream received data:', data, 'blue');
 
       if (!data.multisig) {
         return await msp.createStreamWithTemplate(
@@ -2048,9 +2048,28 @@ export const VestingView = () => {
 
       if (!multisigClient || !multisigAccounts) { return null; }
 
-      const multisig = multisigAccounts.filter(m => m.id.toBase58() === data.multisig)[0];
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === data.multisig)[0];
+      consoleOut('createStream filtered multisig:', multisig.authority.toBase58(), 'blue');
 
       if (!multisig) { return null; }
+
+      // const timestampTostring = (Date.now() / 1000).toString();
+      // const timeStampCounter = new BN(parseInt(timestampTostring));
+      // const [stream, streamBump] = await PublicKey.findProgramAddress(
+      //   [multisig.id.toBuffer(), timeStampCounter.toBuffer()],
+      //   MEAN_MULTISIG_PROGRAM
+      // );
+
+      // const streamFromPda = await msp.createStreamFromPda(
+      //   publicKey,                                                                // payer
+      //   multisig.authority,                                                       // treasurer
+      //   new PublicKey(data.treasury),                                             // treasury
+      //   new PublicKey(data.beneficiary),                                          // beneficiary
+      //   new PublicKey(data.treasuryAssociatedTokenMint),                          // treasuryAssociatedTokenMint
+      //   stream,                                                                   // stream
+      //   data.streamName,                                                          // streamName
+      //   data.allocationAssigned,                                                  // allocationAssigned
+      // );
 
       const createStreamTx = await msp.createStreamWithTemplate(
         publicKey,                                                                // payer
@@ -2106,18 +2125,23 @@ export const VestingView = () => {
 
       const associatedToken = new PublicKey(selectedToken?.address as string);
       const treasury = new PublicKey(selectedVestingContract.id as string);
+      // const treasurer = new PublicKey(selectedVestingContract.treasurer as string);
+      const treasurer = isMultisigContext && selectedMultisig
+        ? selectedMultisig.authority
+        : publicKey;
       const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
       const amount = makeDecimal(new BN(params.tokenAmount), selectedToken.decimals);
 
       // Create a transaction
       const data = {
         payer: publicKey.toBase58(),                                    // payer
-        treasurer: publicKey.toBase58(),                                // treasurer
+        treasurer: treasurer.toBase58(),                                // treasurer
         treasury: treasury.toBase58(),                                  // treasury
         beneficiary: params.beneficiaryAddress,                         // beneficiary
         treasuryAssociatedTokenMint: associatedToken,                   // treasuryAssociatedTokenMint
         allocationAssigned: params.tokenAmount,                         // allocationAssigned
-        streamName: params.streamName                                   // streamName
+        streamName: params.streamName,                                  // streamName
+        multisig: params.multisig                                       // expose multisig if present
       };
       consoleOut('data:', data);
 
@@ -4152,16 +4176,17 @@ export const VestingView = () => {
           <VestingContractCreateStreamModal
             handleClose={closeCreateStreamModal}
             handleOk={(options: VestingContractStreamCreateOptions) => onAcceptCreateStream(options)}
-            isVisible={isCreateStreamModalVisible}
-            nativeBalance={nativeBalance}
-            minRequiredBalance={minRequiredBalance}
+            isBusy={isBusy}
             isMultisigTreasury={isMultisigTreasury()}
+            isVisible={isCreateStreamModalVisible}
+            isXsDevice={isXsDevice}
+            minRequiredBalance={minRequiredBalance}
+            nativeBalance={nativeBalance}
+            selectedMultisig={selectedMultisig}
             streamTemplate={streamTemplate}
             transactionFees={transactionFees}
             vestingContract={selectedVestingContract}
             withdrawTransactionFees={withdrawTransactionFees}
-            isBusy={isBusy}
-            isXsDevice={isXsDevice}
           />
         )}
 
