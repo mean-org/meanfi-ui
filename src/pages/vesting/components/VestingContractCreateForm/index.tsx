@@ -309,17 +309,7 @@ export const VestingContractCreateForm = (props: {
         startUtc.setMinutes(shortTime.minute());
         startUtc.setSeconds(shortTime.second());
         const startDatePlusOffset = new Date(startUtc.getTime() + startUtc.getTimezoneOffset() * 60000);
-        consoleOut('start date modified:', startDatePlusOffset, 'darkorange');
-        const startDateInUtc = Date.UTC(
-            startDatePlusOffset.getUTCFullYear(),
-            startDatePlusOffset.getUTCMonth(),
-            startDatePlusOffset.getUTCDate(),
-            startDatePlusOffset.getUTCHours(),
-            startDatePlusOffset.getUTCMinutes(),
-            startDatePlusOffset.getUTCSeconds()
-        );
-        const timeShiftedStartUtc = new Date(startDateInUtc);
-        consoleOut('start date in UTC:', startDateInUtc, 'darkorange');
+        consoleOut('Start date in UTC:', startDatePlusOffset, 'darkorange');
 
         const options: VestingContractCreateOptions = {
             vestingContractName: vestingLockName,
@@ -331,7 +321,7 @@ export const VestingContractCreateForm = (props: {
             duration: parseFloat(lockPeriodAmount),
             durationUnit: getRateIntervalInSeconds(lockPeriodFrequency),
             cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
-            startDate: timeShiftedStartUtc,
+            startDate: startDatePlusOffset,
             multisig: isMultisigContext ? accountAddress : '',
             fundingAmount: toTokenAmount(parseFloat(vestingLockFundingAmount), (selectedToken as TokenInfo).decimals)
         };
