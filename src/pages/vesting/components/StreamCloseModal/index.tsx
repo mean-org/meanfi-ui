@@ -300,25 +300,11 @@ export const StreamCloseModal = (props: {
           <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
           <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
         </div>
-      ) : streamTreasuryType === "locked" && streamState !== STREAM_STATUS.Paused ? (
+      ) : streamTreasuryType === "locked" && streamState === STREAM_STATUS.Running ? (
         // The user can't close the stream
         <div className="transaction-progress p-0">
           <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-          <h4 className="operation">{t('close-stream.cant-close-message')}</h4>
-
-          {/* Only if the user is on streams offer navigating to the treasury */}
-          {location.pathname === STREAMS_ROUTE_BASE_PATH && treasuryDetails && (
-            <div className="mt-3">
-              <span className="mr-1">{t('treasuries.treasury-detail.treasury-name-label')}:</span>
-              <span className="mr-1 font-bold">{getTreasuryName()}</span>
-              <span className="simplelink underline-on-hover" onClick={() => {
-                props.handleClose();
-                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?treasury=${treasuryDetails.id}`;
-                navigate(url);
-              }}>{t('close-stream.see-details-cta')}</span>
-            </div>
-          )}
-
+          <h4 className="operation">{t('vesting.close-account.cant-close-stream-message')}</h4>
           <div className="mt-3">
             <Button
                 type="primary"

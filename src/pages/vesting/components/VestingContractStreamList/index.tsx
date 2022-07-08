@@ -1464,9 +1464,8 @@ export const VestingContractStreamList = (props: {
                         </Menu.Item>
                     </>
                 )}
-                {(!isNewTreasury ||
-                    (isNewTreasury && vestingContract.treasuryType === TreasuryType.Open) ||
-                    (isNewTreasury && vestingContract.treasuryType === TreasuryType.Lock && item.status === STREAM_STATUS.Paused)) && (
+                {(vestingContract.treasuryType === TreasuryType.Open ||
+                 (vestingContract.treasuryType === TreasuryType.Lock && item.status !== STREAM_STATUS.Running)) && (
                     <Menu.Item key="4" onClick={showCloseStreamModal}>
                         <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
                     </Menu.Item>

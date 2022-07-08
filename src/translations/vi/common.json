@@ -318,7 +318,8 @@
 			"funds-left-in-contract": "Funds left in the contract",
 			"close-cta": "Close contract",
 			"close-cta-busy": "Closing contract",
-			"close-stream-also-closes-account-label": "Also close the vesting contract"
+			"close-stream-also-closes-account-label": "Also close the vesting contract",
+			"cant-close-stream-message": "You cannot close a vesting stream once started"
 		},
 		"sol-balance": {
 			"modal-title": "SOL Balance",
