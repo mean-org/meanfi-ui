@@ -201,10 +201,6 @@ export const SafeInfo = (props: {
     `);
   }
 
-  const goToVesting = () => {
-    navigate(`${VESTING_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/contracts?account-type=multisig`);
-  }
-
   // Dropdown (three dots button)
   const menu = (
     <Menu>
@@ -250,16 +246,6 @@ export const SafeInfo = (props: {
             onClick={onGoToAccounts}>
               <div className="btn-content">
                 View assets
-              </div>
-          </Button>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={() => goToVesting()}>
-              <div className="btn-content">
-                Vesting
               </div>
           </Button>
         </Col>

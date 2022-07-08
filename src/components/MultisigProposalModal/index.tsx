@@ -24,6 +24,7 @@ import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { openNotification } from '../Notifications';
 import { useNavigate } from 'react-router-dom';
 import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
+import { VESTING_ROUTE_BASE_PATH } from '../../pages/vesting';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -100,9 +101,12 @@ export const MultisigProposalModal = (props: {
   }
 
   const onContinueStepOneButtonClick = () => {
-    if (selectedApp?.name === "Money Streaming") {
+    if (selectedApp?.name === "Payment Streaming") {
       setIsModalVisible(false);
       navigate(`${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?multisig=${selectedMultisig.authority.toBase58()}`);
+    } else if (selectedApp?.name === "Token Vesting") {
+      setIsModalVisible(false);
+      navigate(`${VESTING_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/contracts?account-type=multisig`);
     } else {
       setCurrentStep(1);  // Go to step 2
     }
