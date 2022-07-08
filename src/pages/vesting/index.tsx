@@ -56,7 +56,7 @@ import { ZERO_FEES } from '../../models/multisig';
 import { VestingContractCreateStreamModal } from './components/VestingContractCreateStreamModal';
 import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
 import { VestingContractActivity } from './components/VestingContractActivity';
-import { AccountLayout } from '@solana/spl-token';
+import { AccountLayout, u64 } from '@solana/spl-token';
 import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import { BN } from 'bn.js';
 import { PendingProposalsComponent } from './components/PendingProposalsComponent';
@@ -2059,21 +2059,37 @@ export const VestingView = () => {
       if (!multisig) { return null; }
 
       const timestampTostring = (Date.now() / 1000).toString();
-      const timeStampCounter = new BN(parseInt(timestampTostring));
+      const timeStampCounter = new u64(parseInt(timestampTostring));
+      consoleOut('timeStampCounter:', timeStampCounter.toString(), 'blue');
       const [stream, streamBump] = await PublicKey.findProgramAddress(
         [multisig.id.toBuffer(), timeStampCounter.toBuffer()],
         MEAN_MULTISIG_PROGRAM
       );
 
+      consoleOut('data.treasury:', data.treasury, 'blue');
+      consoleOut('data.treasuryAssociatedTokenMint:', data.treasuryAssociatedTokenMint, 'blue');
+      consoleOut('selectedVestingContract:', selectedVestingContract, 'blue');
+      consoleOut('associatedToken == treasuryAssociatedTokenMint?', selectedVestingContract?.associatedToken === data.treasuryAssociatedTokenMint ? 'true' : 'false', 'blue');
+
+      /**
+       * payer: PublicKey
+       * treasurer: PublicKey
+       * treasury: PublicKey
+       * stream: PublicKey
+       * beneficiary: PublicKey
+       * treasuryAssociatedTokenMint: PublicKey
+       * allocationAssigned: number
+       * streamName?: string | undefined
+       */
       const createStreamTx = await msp.createStreamWithTemplateFromPda(
         publicKey,                                                                // payer
         multisig.authority,                                                       // treasurer
         new PublicKey(data.treasury),                                             // treasury
+        stream,                                                                   // stream
         new PublicKey(data.beneficiary),                                          // beneficiary
         new PublicKey(data.treasuryAssociatedTokenMint),                          // treasuryAssociatedTokenMint
-        stream,                                                                   // stream
-        data.streamName,                                                          // streamName
         data.allocationAssigned,                                                  // allocationAssigned
+        data.streamName,                                                          // streamName
       );
 
       const ixData = Buffer.from(createStreamTx.instructions[0].data);
@@ -2133,7 +2149,7 @@ export const VestingView = () => {
         treasurer: treasurer.toBase58(),                                // treasurer
         treasury: treasury.toBase58(),                                  // treasury
         beneficiary: params.beneficiaryAddress,                         // beneficiary
-        treasuryAssociatedTokenMint: associatedToken,                   // treasuryAssociatedTokenMint
+        treasuryAssociatedTokenMint: associatedToken.toBase58(),        // treasuryAssociatedTokenMint
         allocationAssigned: params.tokenAmount,                         // allocationAssigned
         streamName: params.streamName,                                  // streamName
         multisig: params.multisig                                       // expose multisig if present

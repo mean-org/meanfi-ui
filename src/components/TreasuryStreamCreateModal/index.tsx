@@ -920,8 +920,8 @@ export const TreasuryStreamCreateModal = (props: {
       const timeStamp = parseInt((Date.now() / 1000).toString());
 
       for (const beneficiary of data.beneficiaries) {
-        
-        const timeStampCounter = new u64(timeStamp + seedCounter);
+
+        const timeStampCounter = new BN(timeStamp + seedCounter);
         const [stream, streamBump] = await PublicKey.findProgramAddress(
           [props.multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
           MEAN_MULTISIG_PROGRAM
