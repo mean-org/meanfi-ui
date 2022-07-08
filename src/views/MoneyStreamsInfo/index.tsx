@@ -1545,8 +1545,13 @@ export const MoneyStreamsInfoView = (props: {
     if (!totalAccountBalance && !withdrawalBalance) { return; }
 
     const calculateScaleBalanceIncoming = (withdrawalBalance * 100) / (totalAccountBalance as number);
+    const calculateScaleInHeightIncoming = (calculateScaleBalanceIncoming * 30) / 100;
 
-    setWithdrawalScale(Math.ceil((calculateScaleBalanceIncoming * 30) / 100));
+    if (calculateScaleInHeightIncoming > 0 && calculateScaleInHeightIncoming <= 3) {
+      setWithdrawalScale(3);
+    } else {
+      setWithdrawalScale(Math.ceil(calculateScaleInHeightIncoming));
+    }
 
   }, [totalAccountBalance, withdrawalBalance]);
 
@@ -1554,8 +1559,13 @@ export const MoneyStreamsInfoView = (props: {
     if (!totalAccountBalance && !unallocatedBalance) { return; }
 
     const calculateScaleBalanceOutgoing = (unallocatedBalance * 100) / (totalAccountBalance as number);
+    const calculateScaleInHeightOutgoing = (calculateScaleBalanceOutgoing * 30) / 100;
 
-    setUnallocatedsetScale(Math.ceil((calculateScaleBalanceOutgoing * 30) / 100));
+    if (calculateScaleInHeightOutgoing > 0 && calculateScaleInHeightOutgoing <= 3) {
+      setUnallocatedsetScale(3);
+    } else {
+      setUnallocatedsetScale(Math.ceil(calculateScaleInHeightOutgoing));
+    }
 
   }, [totalAccountBalance, unallocatedBalance]);
 
