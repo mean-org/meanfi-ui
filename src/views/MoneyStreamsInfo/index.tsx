@@ -14,6 +14,7 @@ import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../..
 import { PieChartComponent } from "./PieChart";
 import "./style.scss";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
+import Wave from 'react-wavify'
 import {
   TransactionFees,
   MSP_ACTIONS as MSP_ACTIONS_V2,
@@ -27,7 +28,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
+import { consoleOut, delay, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
@@ -1545,7 +1546,7 @@ export const MoneyStreamsInfoView = (props: {
 
     const calculateScaleBalanceIncoming = (withdrawalBalance * 100) / (totalAccountBalance as number);
 
-    setWithdrawalScale(Math.ceil((calculateScaleBalanceIncoming * 60) / 100));
+    setWithdrawalScale(Math.ceil((calculateScaleBalanceIncoming * 30) / 100));
 
   }, [totalAccountBalance, withdrawalBalance]);
 
@@ -1554,7 +1555,7 @@ export const MoneyStreamsInfoView = (props: {
 
     const calculateScaleBalanceOutgoing = (unallocatedBalance * 100) / (totalAccountBalance as number);
 
-    setUnallocatedsetScale(Math.ceil((calculateScaleBalanceOutgoing * 60) / 100));
+    setUnallocatedsetScale(Math.ceil((calculateScaleBalanceOutgoing * 30) / 100));
 
   }, [totalAccountBalance, unallocatedBalance]);
 
@@ -1578,6 +1579,20 @@ export const MoneyStreamsInfoView = (props: {
     consoleOut("Height red withdrawal scale", unallocatedScale);
 
   }, [unallocatedScale, withdrawalScale]);
+
+  const [isPaused, setIsPaused] = useState(true);
+
+  useEffect(() => {
+    if (!address) { return; }
+
+    const timeout = setTimeout(() => {
+      setIsPaused(false);
+    }, 5000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [address]);
 
   const renderSummary = (
     <>
@@ -1619,8 +1634,24 @@ export const MoneyStreamsInfoView = (props: {
               {withdrawalBalance ? toUsCurrency(withdrawalBalance) : "$0.00"}
             </div>
           </div>
-          <div className="wave-container">
-            <div className="wave wave-green"></div>
+          <div className="wave-container wave-green" id="wave">
+            {/* <div className="wave wave-green"></div> */}
+            <Wave fill="url(#gradient1)"
+              paused={isPaused}
+              className="svg-container"
+              style={{ height: `${withdrawalScale}vh`, position: "absolute", bottom: 0 }}
+              options={{
+                amplitude: 6,
+                speed: 0.25,
+                points: 6
+              }}>
+              <defs>
+                <linearGradient id="gradient1" gradientTransform="rotate(180)">
+                  <stop offset="10%"  stopColor="#006820" />
+                  <stop offset="100%" stopColor="#181a2a" />
+                </linearGradient>
+              </defs>
+            </Wave>
           </div>
         </Col>
         <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
@@ -1660,8 +1691,24 @@ export const MoneyStreamsInfoView = (props: {
               {unallocatedBalance ? toUsCurrency(unallocatedBalance) : "$0.00"}
             </div>
           </div>
-          <div className="wave-container">
-            <div className="wave wave-red"></div>
+          <div className="wave-container wave-red" id="wave">
+            {/* <div className="wave wave-red"></div> */}
+            <Wave fill="url(#gradient2)"
+              paused={isPaused}
+              className="svg-container"
+              style={{ height: `${unallocatedScale}vh`, position: "absolute", bottom: 0 }}
+              options={{
+                amplitude: 6,
+                speed: 0.25,
+                points: 6
+              }}>
+              <defs>
+                <linearGradient id="gradient2" gradientTransform="rotate(180)">
+                  <stop offset="10%"  stopColor="#b7001c" />
+                  <stop offset="100%" stopColor="#181a2a" />
+                </linearGradient>
+              </defs>
+            </Wave>
           </div>
         </Col>
       </Row>

@@ -90,27 +90,13 @@
   width: 100%;
 }
 
-.wave-green {
-  position: absolute;
-  bottom: 0;
-  left: 0;
+#wave {
+  top: 0px;
+  left: 0px;
   width: 100%;
-  max-height: 30vh;
-  height: var(--heigth-green-wave);
-  background: url("../../../public/assets/wave-green.svg") repeat-x;
-  background: linear-gradient(180deg, rgba(0,104,32,1) 0%, rgba(24,26,42,1) 100%);
-  background-size: cover;
-  background-repeat: no-repeat;
-}
-.wave-red {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  max-height: 30vh;
-  height: var(--heigth-red-wave);
-  background: url("../../../public/assets/wave-red.svg");
-  background: linear-gradient(180deg, rgba(183,0,28,1) 0%, rgba(24,26,42,1) 100%);
-  background-size: cover;
-  background-repeat: no-repeat;
+  background: transparent;
+  margin: 0px;
+  animation-iteration-count: 2s;
+  animation-delay: 0s;
 }
