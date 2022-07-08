@@ -3341,6 +3341,18 @@ export const AccountsNewView = () => {
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   //////////////////
   // Transactions //
   //////////////////

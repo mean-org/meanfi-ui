@@ -7,7 +7,7 @@ import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { formatThousands, makeDecimal } from '../../../../utils/utils';
 import { PublicKey } from '@solana/web3.js';
-import { consoleOut, delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../utils/ui';
+import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../utils/ui';
 import { IconLoading } from '../../../../Icons';
 import BN from 'bn.js';
 
@@ -34,7 +34,6 @@ export const VestingContractList = (props: {
     const [vcTemplates, setVcTemplates] = useState<any>({});
     const [vcCompleteness, setVcCompleteness] = useState<any>({});
     const [loadingTemplates, setLoadingTemplates] = useState(false);
-    const [shouldOutputLogs, setShouldOutputLogs] = useState(true);
 
     const isStartDateFuture = useCallback((date: string): boolean => {
         const now = today.toUTCString();
@@ -112,7 +111,6 @@ export const VestingContractList = (props: {
         if (loadingVestingAccounts || loadingTemplates || !streamingAccounts || !vcTemplates) { return; }
 
         const completedPercentages: any = {};
-        let doLogsOnce = true;
         for (const contract of streamingAccounts) {
             let streamTemplate: StreamTemplate | undefined = undefined;
             let startDate: string | undefined = undefined;
@@ -136,22 +134,8 @@ export const VestingContractList = (props: {
                     const cliffReleasePercentage = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
                     const sdTimestamp = toTimestamp(startDate);
                     const finishDate = new Date((sdTimestamp + lockPeriod) * 1000).toUTCString();
-                    const finishDateTimestamp = toTimestamp(finishDate);
-                    const nowTimestamp = toTimestamp(today.toUTCString());
                     const todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
                     completedVestingPercentage = todayPct > cliffReleasePercentage ? todayPct : cliffReleasePercentage;
-                    if (doLogsOnce && shouldOutputLogs) {
-                        consoleOut('lockPeriod(s):', lockPeriod, 'darkorange');
-                        consoleOut('cliffReleasePercentage:', cliffReleasePercentage, 'darkorange');
-                        consoleOut('sdTimestamp:', sdTimestamp, 'darkorange');
-                        consoleOut('nowTimestamp:', nowTimestamp, 'darkorange');
-                        consoleOut('finishDateTimestamp:', finishDateTimestamp, 'darkorange');
-                        consoleOut('startDate:', startDate, 'darkorange');
-                        consoleOut('finishDate:', finishDate, 'darkorange');
-                        consoleOut('todayPct:', todayPct, 'darkorange');
-                        setShouldOutputLogs(false);
-                        doLogsOnce = false;
-                    }
                 }
             } else {
                 completedVestingPercentage = 0;
@@ -160,7 +144,7 @@ export const VestingContractList = (props: {
         }
         setVcCompleteness(completedPercentages);
 
-    }, [isStartDateFuture, loadingTemplates, loadingVestingAccounts, shouldOutputLogs, streamingAccounts, today, vcTemplates]);
+    }, [isStartDateFuture, loadingTemplates, loadingVestingAccounts, streamingAccounts, today, vcTemplates]);
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
         event.currentTarget.src = FALLBACK_COIN_IMAGE;

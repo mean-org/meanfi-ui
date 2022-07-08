@@ -1090,33 +1090,33 @@ export const VestingContractCreateForm = (props: {
 
                 </div>
 
-                {inModal && (
-                    <Drawer
-                        title={t('token-selector.modal-title')}
-                        placement="bottom"
-                        closable={true}
-                        onClose={onCloseTokenSelector}
-                        visible={isTokenSelectorVisible}
-                        getContainer={false}
-                        style={{ position: 'absolute' }}>
-                        {renderTokenSelectorInner}
-                    </Drawer>
-                )}
-
-                {/* Token selection modal */}
-                {!inModal && isTokenSelectorModalVisible && (
-                    <Modal
-                        className="mean-modal unpadded-content"
-                        visible={isTokenSelectorModalVisible}
-                        title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
-                        onCancel={onCloseTokenSelector}
-                        width={450}
-                        footer={null}>
-                        {renderTokenSelectorInner}
-                    </Modal>
-                )}
-
             </Spin>
+
+            {inModal && (
+                <Drawer
+                    title={t('token-selector.modal-title')}
+                    placement="bottom"
+                    closable={true}
+                    onClose={onCloseTokenSelector}
+                    visible={isTokenSelectorVisible}
+                    getContainer={false}
+                    style={{ position: 'absolute' }}>
+                    {renderTokenSelectorInner}
+                </Drawer>
+            )}
+
+            {/* Token selection modal */}
+            {!inModal && isTokenSelectorModalVisible && (
+                <Modal
+                    className="mean-modal unpadded-content"
+                    visible={isTokenSelectorModalVisible}
+                    title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+                    onCancel={onCloseTokenSelector}
+                    width={450}
+                    footer={null}>
+                    {renderTokenSelectorInner}
+                </Modal>
+            )}
         </>
     );
 };

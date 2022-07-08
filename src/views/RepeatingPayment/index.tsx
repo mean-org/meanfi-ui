@@ -62,6 +62,7 @@ import { InfoIcon } from '../../components/InfoIcon';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { STREAMS_ROUTE_BASE_PATH } from '../Streams';
 import { environment } from '../../environments/environment';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -388,7 +389,13 @@ export const RepeatingPayment = (props: {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
-    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+
+    const path = window.location.pathname;
+    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
+      return;
+    }
+
+    console.log("onTxConfirmed event executed:", item);
     setIsBusy(false);
     resetTransactionStatus();
     // If we have the item, record success and remove it from the list
@@ -407,7 +414,7 @@ export const RepeatingPayment = (props: {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
-    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    console.log("onTxTimedout event executed:", item);
     // If we have the item, record failure and remove it from the list
     if (item) {
       recordTxConfirmation(item.signature, false);
@@ -673,6 +680,18 @@ export const RepeatingPayment = (props: {
     onTxConfirmed,
     onTxTimedout,
   ]);
+
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   //////////////////
   //  Validation  //

@@ -11,7 +11,6 @@ import {
   LAMPORTS_PER_SOL,
   MemcmpFilter,
   PublicKey,
-  SystemProgram,
   // Signer,
   // SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -57,7 +56,6 @@ import './style.scss';
 // MULTISIG
 import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
 import { MultisigEditModal } from '../../components/MultisigEditModal';
-// import { TransactionFees } from '@mean-dao/msp';
 import { customLogger } from '../..';
 import { openNotification } from '../../components/Notifications';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
@@ -69,7 +67,6 @@ import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MultisigTransactionSummary, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk/';
-// import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { UserTokenAccount } from '../../models/transactions';
@@ -82,6 +79,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
 import { MultisigTransactionWithId, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 
+export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -351,10 +349,6 @@ export const SafeView = () => {
     t,
     resetTransactionStatus
   ])
-
-  const onTxExecuted = useCallback(() => {
-    
-  },[]);
 
   const onExecuteCreateMultisigTx = useCallback(async (data: any) => {
 
@@ -3128,6 +3122,11 @@ export const SafeView = () => {
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
+    const path = window.location.pathname;
+    if (!path.startsWith(MULTISIG_ROUTE_BASE_PATH)) {
+      return;
+    }
+
     const reloadMultisigs = () => {
       const refreshCta = document.getElementById("multisig-refresh-cta");
       if (refreshCta) {
@@ -3151,7 +3150,7 @@ export const SafeView = () => {
       }
     }
 
-    consoleOut("onTxConfirmed event handled:", item, 'crimson');
+    console.log("onTxConfirmed event handled:", item);
     recordTxConfirmation(item.signature, item.operationType, true);
 
     switch (item.operationType) {
@@ -3175,8 +3174,8 @@ export const SafeView = () => {
     }
 
   }, [
-    multisigClient, 
-    publicKey, 
+    publicKey,
+    multisigClient,
     recordTxConfirmation
   ]);
 
@@ -3803,7 +3802,7 @@ export const SafeView = () => {
 
     if (!address && multisigAccounts && multisigAccounts.length > 0) {
       const firstMultisig = multisigAccounts[0].authority.toBase58();
-      const url = `/multisig/${firstMultisig}?v=proposals`;
+      const url = `${MULTISIG_ROUTE_BASE_PATH}/${firstMultisig}?v=proposals`;
       navigate(url);
     } else if (address && multisigAccounts && multisigAccounts.length > 0 && id) {
       const param = getQueryParamV();
@@ -3811,7 +3810,7 @@ export const SafeView = () => {
       const isProgramsFork = param === "programs" || param === "transactions" || param === "anchor-idl" ? true : false;
       const isValidParam = isProposalsFork || isProgramsFork ? true : false;
       if (!isValidParam) {
-        const url = `/multisig`;
+        const url = MULTISIG_ROUTE_BASE_PATH;
         navigate(url, { replace: true });
       }
     }
@@ -3889,6 +3888,18 @@ export const SafeView = () => {
 
   }, [id, address, multisigTxs, programs, getQueryParamV, selectedMultisig, publicKey, multisigClient]);
 
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   ///////////////
   // Rendering //
   ///////////////
@@ -3907,7 +3918,7 @@ export const SafeView = () => {
             setTotalSafeBalance(undefined);
 
             // Need refresh Txs happens inmediately after selecting a multisig
-            const url = `/multisig/${item.authority.toBase58()}?v=proposals`;
+            const url = `${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`;
             navigate(url);
           };
 
@@ -4005,7 +4016,7 @@ export const SafeView = () => {
   }
 
   const goToProposalDetailsHandler = (selectedProposal: any) => {
-    const url = `/multisig/${address}/proposals/${selectedProposal.id.toBase58()}?v=instruction`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}/proposals/${selectedProposal.id.toBase58()}?v=instruction`;
     navigate(url);
   }
 
@@ -4014,7 +4025,7 @@ export const SafeView = () => {
   // }
 
   const goToProgramDetailsHandler = (selectedProgram: any) => {
-    const url = `/multisig/${address}/programs/${selectedProgram.pubkey.toBase58()}?v=transactions`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}/programs/${selectedProgram.pubkey.toBase58()}?v=transactions`;
     navigate(url);
   }
 
@@ -4024,7 +4035,7 @@ export const SafeView = () => {
       setHighLightableMultisigId(selectedMultisig.id.toBase58());
     }
     setNeedRefreshTxs(true);
-    const url = `/multisig/${address}?v=proposals`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}?v=proposals`;
     navigate(url);
   }
 
@@ -4033,7 +4044,7 @@ export const SafeView = () => {
     if (selectedMultisig) {
       setHighLightableMultisigId(selectedMultisig.id.toBase58());
     }
-    const url = `/multisig/${address}?v=programs`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}?v=programs`;
     navigate(url);
   }
 

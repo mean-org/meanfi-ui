@@ -375,7 +375,13 @@ export const InvestView = () => {
 
   // If any Stake/Unstake Tx finished and confirmed refresh the StakePoolInfo
   const onStakeTxConfirmed = useCallback((value: any) => {
-    consoleOut("onStakeTxConfirmed event executed:", value, 'crimson');
+
+    const path = window.location.pathname;
+    if (!path.startsWith(INVEST_ROUTE_BASE_PATH)) {
+      return;
+    }
+
+    console.log("onStakeTxConfirmed event executed:", value, 'crimson');
     if (stakeClient && meanPrice) {
       consoleOut('calling getStakePoolInfo...', '', 'orange');
       refreshStakePoolInfo(meanPrice);
@@ -896,6 +902,17 @@ export const InvestView = () => {
     stakeClient,
     pageInitialized,
   ]);
+
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onStakeTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      setCanSubscribe(true);
+      setPageInitialized(false);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const renderMeanBonds = (
     <>

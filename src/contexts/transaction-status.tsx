@@ -413,9 +413,9 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
       confirmationEvents.emit(EventType.TxConfirmTimeout, data);
       rebuildHistoryFromCache();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     t,
-    fetchTxStatus,
   ]);
 
   return (

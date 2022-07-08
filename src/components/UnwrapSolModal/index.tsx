@@ -211,6 +211,16 @@ export const UnwrapSolModal = (props: {
     }
   }, [connection, pageInitialized, publicKey]);
 
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onUnwrapConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      setPageInitialized(false);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Events and actions
 
   const isSuccess = useCallback(() => {

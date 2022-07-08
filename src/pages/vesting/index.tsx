@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isLocal, isProd } from '../../utils/ui';
+import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -70,7 +70,6 @@ export const VestingView = () => {
   const {
     userTokens,
     splTokenList,
-    selectedToken,
     detailsPanelOpen,
     transactionStatus,
     streamV2ProgramAddress,
@@ -126,6 +125,7 @@ export const VestingView = () => {
   const [assetCtas, setAssetCtas] = useState<MetaInfoCta[]>([]);
   // Source token list
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
+  const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   // Balances
   const [nativeBalance, setNativeBalance] = useState(0);
   const [userBalances, setUserBalances] = useState<any>();
@@ -355,6 +355,10 @@ export const VestingView = () => {
         event = success ? AppUsageEvent.VestingContractWithdrawFundsCompleted : AppUsageEvent.VestingContractWithdrawFundsFailed;
         segmentAnalytics.recordEvent(event, { signature: signature });
         break;
+      case OperationType.TreasuryRefreshBalance:
+        event = success ? AppUsageEvent.RefreshAccountBalanceCompleted : AppUsageEvent.RefreshAccountBalanceFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
       case OperationType.StreamClose:
         event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
         segmentAnalytics.recordEvent(event, { signature: signature });
@@ -367,11 +371,17 @@ export const VestingView = () => {
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
+    const path = window.location.pathname;
+    if (!path.startsWith(VESTING_ROUTE_BASE_PATH)) {
+      return;
+    }
+
     const softReloadContracts = () => {
       const contractsRefreshCta = document.getElementById("soft-refresh-contracts-cta");
       if (contractsRefreshCta) {
         contractsRefreshCta.click();
-        isWorkflowLocked = false;
+      } else {
+        console.log('element not found:', '#soft-refresh-contracts-cta', 'red');
       }
     };
 
@@ -379,6 +389,8 @@ export const VestingView = () => {
       const contractsRefreshCta = document.getElementById("hard-refresh-contracts-cta");
       if (contractsRefreshCta) {
         contractsRefreshCta.click();
+      } else {
+        console.log('element not found:', '#hard-refresh-contracts-cta', 'red');
       }
     };
 
@@ -418,38 +430,46 @@ export const VestingView = () => {
           duration: 8,
           handleClose: turnOffLockWorkflow
         });
+      } else {
+        turnOffLockWorkflow();
       }
     }
 
-    if (!isWorkflowLocked) {
-      isWorkflowLocked = true;
-      consoleOut("onTxConfirmed event handled:", item, 'crimson');
-      recordTxConfirmation(item.signature, item.operationType, true);
-  
-      switch (item.operationType) {
-        case OperationType.TreasuryAddFunds:
-        case OperationType.TreasuryRefreshBalance:
-        case OperationType.TreasuryWithdraw:
-        case OperationType.TreasuryStreamCreate:
-        case OperationType.StreamClose:
-        case OperationType.StreamAddFunds:
-        case OperationType.StreamPause:
-        case OperationType.StreamResume:
-          softReloadContracts();
-          break;
-        case OperationType.TreasuryClose:
-          hardReloadContracts();
-          break;
-        case OperationType.TreasuryCreate:
+    switch (item.operationType) {
+      case OperationType.TreasuryAddFunds:
+      case OperationType.TreasuryRefreshBalance:
+      case OperationType.TreasuryWithdraw:
+      case OperationType.TreasuryStreamCreate:
+      case OperationType.StreamClose:
+      case OperationType.StreamAddFunds:
+      case OperationType.StreamPause:
+      case OperationType.StreamResume:
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.StreamResume]}`, item, 'crimson');
+        recordTxConfirmation(item.signature, item.operationType, true);
+        softReloadContracts();
+        break;
+      case OperationType.TreasuryClose:
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryClose]}`, item, 'crimson');
+        recordTxConfirmation(item.signature, item.operationType, true);
+        hardReloadContracts();
+        break;
+      case OperationType.TreasuryCreate:
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryCreate]}`, item, 'crimson');
+        recordTxConfirmation(item.signature, item.operationType, true);
+        if (!isWorkflowLocked) {
+          isWorkflowLocked = true;
           notifyVestingContractCreated(item);
+        }
+        setTimeout(() => {
           hardReloadContracts();
-          break;
-        default:
-          break;
-      }
+        }, 20);
+        break;
+      default:
+        break;
     }
 
-  }, [navigate, recordTxConfirmation, setHighLightableMultisigId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -740,6 +760,7 @@ export const VestingView = () => {
     setRecipientAddress('');
     setLockPeriodAmount('');
     setFromCoinAmount('');
+    setWorkingToken(selectedList[0]);
     setSelectedToken(selectedList[0]);
   }, [
     selectedList,
@@ -995,7 +1016,7 @@ export const VestingView = () => {
 
       const multisigId = getMultisigIdFromContext();
       const associatedToken = createOptions.token;
-      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
+      const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
 
       const payload: CreateVestingTreasuryParams = {
         payer: publicKey,                                                       // payer
@@ -1266,7 +1287,7 @@ export const VestingView = () => {
     wallet,
     publicKey,
     connection,
-    selectedToken,
+    workingToken,
     nativeBalance,
     multisigClient,
     multisigAccounts,
@@ -2116,7 +2137,7 @@ export const VestingView = () => {
 
     const createTx = async (): Promise<boolean> => {
 
-      if (!publicKey || !msp || !selectedVestingContract || !selectedToken) {
+      if (!publicKey || !msp || !selectedVestingContract || !workingToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -2132,14 +2153,14 @@ export const VestingView = () => {
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      const associatedToken = new PublicKey(selectedToken?.address as string);
+      const associatedToken = new PublicKey(workingToken?.address as string);
       const treasury = new PublicKey(selectedVestingContract.id as string);
       // const treasurer = new PublicKey(selectedVestingContract.treasurer as string);
       const treasurer = isMultisigContext && selectedMultisig
         ? selectedMultisig.authority
         : publicKey;
-      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
-      const amount = makeDecimal(new BN(params.tokenAmount), selectedToken.decimals);
+      const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
+      const amount = makeDecimal(new BN(params.tokenAmount), workingToken.decimals);
 
       // Create a transaction
       const data = {
@@ -2156,7 +2177,7 @@ export const VestingView = () => {
 
       // Report event to Segment analytics
       const segmentData: SegmentStreamCreateData = {
-        asset: selectedToken.symbol,
+        asset: workingToken.symbol,
         assetPrice: price,
         treasury: selectedVestingContract.id as string,
         beneficiary: params.beneficiaryAddress,
@@ -2343,7 +2364,7 @@ export const VestingView = () => {
       }
     }
 
-    if (wallet && selectedToken && selectedVestingContract) {
+    if (wallet && workingToken && selectedVestingContract) {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -3170,7 +3191,6 @@ export const VestingView = () => {
     }
 
     const meanTokensCopy = new Array<TokenInfo>();
-    // const intersectedList = new Array<TokenInfo>();
     const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
     const balancesMap: any = {};
     balancesMap[userTokensCopy[0].address] = nativeBalance;
@@ -3193,32 +3213,6 @@ export const VestingView = () => {
             });
           }
 
-          // Create a list containing tokens for the user owned token accounts
-          // Code to only add owned tokens
-
-          // accTks.forEach(item => {
-          //   balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
-          //   const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-          //   const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-          //   if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-          //     intersectedList.push(tokenFromMeanTokensCopy);
-          //   }
-          // });
-          // intersectedList.unshift(userTokensCopy[0]);
-          // intersectedList.sort((a, b) => {
-          //   if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
-          //     return 1;
-          //   } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
-          //     return -1;
-          //   }
-          //   return 0;
-          // });
-          // setSelectedList(intersectedList);
-          // if (!selectedToken) { setSelectedToken(intersectedList[0]); }
-
-
-
-
           // Add owned token accounts to balances map
           // Code to have all tokens sorted by balance
           accTks.forEach(item => {
@@ -3233,7 +3227,10 @@ export const VestingView = () => {
             return 0;
           });
           setSelectedList(meanTokensCopy);
-          if (!selectedToken) { setSelectedToken(meanTokensCopy[0]); }
+          if (!workingToken) {
+            setWorkingToken(meanTokensCopy[0]);
+            setSelectedToken(meanTokensCopy[0]);
+          }
 
         } else {
           for (const t of userTokensCopy) {
@@ -3241,7 +3238,10 @@ export const VestingView = () => {
           }
           // set the list to the userTokens list
           setSelectedList(userTokensCopy);
-          if (!selectedToken) { setSelectedToken(userTokensCopy[0]); }
+          if (!workingToken) {
+            setWorkingToken(userTokensCopy[0]);
+            setSelectedToken(userTokensCopy[0]);
+          }
         }
       })
       .catch(error => {
@@ -3250,7 +3250,10 @@ export const VestingView = () => {
           balancesMap[t.address] = 0;
         }
         setSelectedList(userTokensCopy);
-        if (!selectedToken) { setSelectedToken(userTokensCopy[0]); }
+        if (!workingToken) {
+          setWorkingToken(userTokensCopy[0]);
+          setSelectedToken(userTokensCopy[0]);
+        }
       })
       .finally(() => setUserBalances(balancesMap));
 
@@ -3260,7 +3263,7 @@ export const VestingView = () => {
     userTokens,
     splTokenList,
     nativeBalance,
-    selectedToken,
+    workingToken,
     accounts.tokenAccounts,
     setSelectedToken
   ]);
@@ -3449,7 +3452,7 @@ export const VestingView = () => {
     if (!publicKey || !msp) { return; }
 
     if (vestingContractAddress && selectedVestingContract &&
-        vestingContractAddress === selectedVestingContract.id && selectedToken) {
+        vestingContractAddress === selectedVestingContract.id && workingToken) {
       // First check if there is already a value for this key in the cache
       // Just get the value from cache if already exists and push it to the state
       // Otherwise fetch it, add it to the cache and push it to the state
@@ -3466,7 +3469,7 @@ export const VestingView = () => {
       msp.getVestingFlowRate(treasuryPk)
       .then(value => {
         const freshFlowRate: VestingFlowRateInfo = {
-          amount: makeDecimal(new BN(value[0]), selectedToken.decimals || 6),
+          amount: makeDecimal(new BN(value[0]), workingToken.decimals || 6),
           durationUnit: new BN(value[1]).toNumber()
         };
         consoleOut('flowRate:', freshFlowRate, 'darkgreen');
@@ -3476,7 +3479,7 @@ export const VestingView = () => {
       .catch(error => console.error('', error))
       .finally(() => setLoadingVestingContractFlowRate(false));
     }
-  }, [msp, publicKey, selectedToken, selectedVestingContract, vestingContractAddress]);
+  }, [msp, publicKey, workingToken, selectedVestingContract, vestingContractAddress]);
 
   // Set a tab if none already set
   useEffect(() => {
@@ -3689,6 +3692,18 @@ export const VestingView = () => {
     onTxConfirmed,
     onTxTimedout
   ]);
+
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   ////////////////////////////
   //   Events and actions   //
@@ -3904,14 +3919,17 @@ export const VestingView = () => {
                   isBusy={isBusy}
                   isMultisigContext={isMultisigContext}
                   loadingMultisigAccounts={loadingMultisigAccounts || loadingTreasuries}
-                  token={selectedToken}
+                  token={workingToken}
                   selectedList={selectedList}
                   selectedMultisig={selectedMultisig}
                   userBalances={userBalances}
                   nativeBalance={nativeBalance}
                   onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
                   transactionFees={createVestingContractTxFees}
-                  tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
+                  tokenChanged={(token: TokenInfo | undefined) => {
+                    setWorkingToken(token);
+                    setSelectedToken(token);
+                  }}
                 />
               </>
             </div>
@@ -3925,7 +3943,7 @@ export const VestingView = () => {
     selectedList,
     userBalances,
     nativeBalance,
-    selectedToken,
+    workingToken,
     accountAddress,
     selectedMultisig,
     isMultisigContext,
@@ -4148,7 +4166,7 @@ export const VestingView = () => {
             nativeBalance={nativeBalance}
             selectedList={selectedList}
             selectedMultisig={selectedMultisig}
-            selectedToken={selectedToken}
+            selectedToken={workingToken}
             transactionFees={createVestingContractTxFees}
             userBalances={userBalances}
           />

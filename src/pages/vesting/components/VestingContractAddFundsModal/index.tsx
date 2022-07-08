@@ -517,16 +517,6 @@ export const VestingContractAddFundsModal = (props: {
     highLightableStreamId,
   ]);
 
-  // When modal goes visible, output userBalances to the console
-  useEffect(() => {
-    if (isVisible && userBalances) {
-      consoleOut('userBalances:', userBalances, 'blue');
-    }
-  }, [
-    isVisible,
-    userBalances
-  ]);
-
   // When modal goes visible, set template data
   useEffect(() => {
     if (isVisible && streamTemplate) {
