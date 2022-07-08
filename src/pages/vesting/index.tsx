@@ -379,7 +379,6 @@ export const VestingView = () => {
       const contractsRefreshCta = document.getElementById("hard-refresh-contracts-cta");
       if (contractsRefreshCta) {
         contractsRefreshCta.click();
-        isWorkflowLocked = false;
       }
     };
 
@@ -450,8 +449,7 @@ export const VestingView = () => {
       }
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigate, recordTxConfirmation, setHighLightableMultisigId]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
