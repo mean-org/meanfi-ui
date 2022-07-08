@@ -314,8 +314,8 @@ export const MultisigProposalModal = (props: {
           }
 
           return (
-            <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
-              <div className={`select-app-item simplelink ${selectedApp && selectedApp.id === app.id ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
+            <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={`app-${index}`}>
+              <div className={`select-app-item simplelink ${selectedApp && selectedApp.name === app.name ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
                 {app.id === NATIVE_LOADER.toBase58() ? (
                   <img src={app.logoUri} width={65} height={65} alt={app.name} />
                   // <Identicon address={PublicKey.default} style={{ width:"65", height:"65", display: "inline-flex" }} />

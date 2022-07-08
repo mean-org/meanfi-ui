@@ -40,6 +40,7 @@ export const SafeMeanInfo = (props: {
   onRefreshRequested: any;
   loadingProposals: boolean;
   loadingPrograms: boolean;
+  vestingAccountsCount: number;
 }) => {
   const { 
     programs,
@@ -73,6 +74,7 @@ export const SafeMeanInfo = (props: {
     onRefreshRequested,
     loadingProposals,
     loadingPrograms,
+    vestingAccountsCount,
   } = props;
   const navigate = useNavigate();
   const location = useLocation();
@@ -701,6 +703,7 @@ export const SafeMeanInfo = (props: {
         tabs={tabs}
         selectedTab={selectedTab}
         isTxInProgress={isTxInProgress}
+        vestingAccountsCount={vestingAccountsCount}
       />
     </>
   )

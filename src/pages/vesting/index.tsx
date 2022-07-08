@@ -3391,7 +3391,7 @@ export const VestingView = () => {
     isContractLocked,
   ]);
 
-  // Load vesting account once per page access
+  // Load vesting accounts once per page access
   useEffect(() => {
 
     if (!publicKey || !accountAddress || treasuriesLoaded) { return; }

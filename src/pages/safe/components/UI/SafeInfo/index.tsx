@@ -1,3 +1,4 @@
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -16,15 +17,16 @@ import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
 import { VESTING_ROUTE_BASE_PATH } from "../../../../vesting";
 
 export const SafeInfo = (props: {
-  selectedMultisig?: any;
+  isTxInProgress?: any;
+  onEditMultisigClick?: any;
+  onNewProposalMultisigClick?: any;
+  onRefreshTabsInfo?: any;
   safeNameImg?: string;
   safeNameImgAlt?: string;
-  onNewProposalMultisigClick?: any;
-  onEditMultisigClick?: any;
-  onRefreshTabsInfo?: any;
-  tabs?: Array<any>;
+  selectedMultisig?: MultisigInfo;
   selectedTab?: any;
-  isTxInProgress?: any;
+  tabs?: Array<any>;
+  vestingAccountsCount: number;
 }) => {
   const {
     coinPrices,
@@ -37,7 +39,18 @@ export const SafeInfo = (props: {
     getTokenByMintAddress,
   } = useContext(AppStateContext);
 
-  const { selectedMultisig, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onEditMultisigClick, onRefreshTabsInfo, tabs, selectedTab, isTxInProgress } = props;
+  const {
+    isTxInProgress,
+    onEditMultisigClick,
+    onNewProposalMultisigClick,
+    onRefreshTabsInfo,
+    safeNameImg,
+    safeNameImgAlt,
+    selectedMultisig,
+    selectedTab,
+    tabs,
+    vestingAccountsCount,
+  } = props;
 
   // const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -48,15 +61,17 @@ export const SafeInfo = (props: {
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
   }
-  
+
   // Safe Name
   useEffect(() => {
-    (selectedMultisig.label) ? (
-      setSelectedLabelName(selectedMultisig.label)
-    ) : (
-      setSelectedLabelName(shortenAddress(selectedMultisig.id.toBase58(), 4))
-    )
-  }, [selectedMultisig.id, selectedMultisig.label]);
+    if (selectedMultisig) {
+      if (selectedMultisig.label) {
+        setSelectedLabelName(selectedMultisig.label)
+      } else {
+        setSelectedLabelName(shortenAddress(selectedMultisig.id.toBase58(), 4))
+      }
+    }
+  }, [selectedMultisig]);
 
   const renderSafeName = (
     <Row className="d-flex align-items-center">
@@ -73,7 +88,7 @@ export const SafeInfo = (props: {
   const renderSecurity = (
     <>
       <span>Security</span>
-      <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig.owners || []} />
+      <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig ? selectedMultisig.owners : []} />
     </>
   );
   
@@ -166,11 +181,11 @@ export const SafeInfo = (props: {
       </>
     )
   );
-    
+
   // Deposit Address
   const renderDepositAddress = (
     <CopyExtLinkGroup
-      content={selectedMultisig.authority.toBase58()}
+      content={selectedMultisig ? selectedMultisig.authority.toBase58() : ''}
       number={4}
       externalLink={true}
     />
@@ -197,8 +212,16 @@ export const SafeInfo = (props: {
 
   // View assets
   const onGoToAccounts = () => {
-    navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/assets?account-type=multisig
-    `);
+    if (selectedMultisig) {
+      navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/assets?account-type=multisig`);
+    }
+  }
+
+  // Go to vesting
+  const goToVesting = () => {
+    if (selectedMultisig) {
+      navigate(`${VESTING_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/contracts?account-type=multisig`);
+    }
   }
 
   // Dropdown (three dots button)
@@ -248,6 +271,20 @@ export const SafeInfo = (props: {
                 View assets
               </div>
           </Button>
+
+          {vestingAccountsCount > 0 && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={() => goToVesting()}>
+                <div className="btn-content">
+                  Vesting
+                </div>
+            </Button>
+          )}
+
         </Col>
         
         <Col xs={4} sm={6} md={4} lg={6}>

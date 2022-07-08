@@ -78,6 +78,7 @@ import { segmentAnalytics } from "../../App";
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
 import { MultisigTransactionWithId, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
+import { Category, MSP, Treasury } from '@mean-dao/msp';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
@@ -88,8 +89,7 @@ const proposalLoadStatusRegister = new Map<string, boolean>();
 export const SafeView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { address, id } = useParams();
   const {
     programs,
@@ -98,6 +98,7 @@ export const SafeView = () => {
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
+    streamV2ProgramAddress,
     highLightableMultisigId,
     previousWalletConnectState,
     setHighLightableMultisigId,
@@ -175,6 +176,9 @@ export const SafeView = () => {
   const [selectedTab, setSelectedTab] = useState<number>();
   const [multisigUsdValues, setMultisigUsdValues] = useState<Map<string, number> | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
+  // Vesting contracts
+  const [loadingTreasuries, setLoadingTreasuries] = useState(true);
+  const [treasuryList, setTreasuryList] = useState<Treasury[]>([]);
   
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -242,6 +246,23 @@ export const SafeView = () => {
     wallet
   ]);
 
+  // Create and cache Money Streaming Program V2 instance
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from safes');
+      return new MSP(
+        connectionConfig.endpoint,
+        streamV2ProgramAddress,
+        "confirmed"
+      );
+    }
+    return undefined;
+  }, [
+    connectionConfig.endpoint,
+    publicKey,
+    streamV2ProgramAddress
+  ]);
+
   // Live reference to the selected multisig
   const selectedMultisigRef = useRef(selectedMultisig);
   useEffect(() => {
@@ -258,6 +279,40 @@ export const SafeView = () => {
   }, [
     setTransactionStatus
   ]);
+
+  const getAllUserV2Accounts = useCallback(async (account: string) => {
+
+    if (!msp) { return []; }
+
+    setTimeout(() => {
+      setLoadingTreasuries(true);
+    });
+
+    const pk = new PublicKey(account);
+
+    return await msp.listTreasuries(pk, true, true, Category.vesting);
+
+  }, [msp]);
+
+  const refreshVestingContracts = useCallback((address: string) => {
+
+    if (!publicKey || !msp || !address) { return; }
+
+    getAllUserV2Accounts(address)
+      .then(treasuries => {
+        consoleOut('Vesting contracts:', treasuries, 'blue');
+        setTreasuryList(treasuries.map(vc => {
+          return Object.assign({}, vc, {
+            name: vc.name.trim()
+          })
+        }));
+      })
+      .catch(error => {
+        console.error(error);
+      })
+      .finally(() => setLoadingTreasuries(false));
+
+  }, [getAllUserV2Accounts, msp, publicKey]);
 
   const setProposalsLoading = useCallback((loading: boolean) => {
     const multisigId = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.id.toBase58() : '';
@@ -3888,6 +3943,19 @@ export const SafeView = () => {
 
   }, [id, address, multisigTxs, programs, getQueryParamV, selectedMultisig, publicKey, multisigClient]);
 
+  // Load vesting contracs based on selected multisig
+  useEffect(() => {
+
+    if (!publicKey || !selectedMultisig || !msp || !address) { return; }
+
+    if (selectedMultisig.authority.toBase58() === address) {
+      consoleOut('Calling refreshTreasuries...', '', 'blue');
+      refreshVestingContracts(address);
+    }
+
+  }, [address, msp, publicKey, refreshVestingContracts, selectedMultisig]);
+
+
   useEffect(() => {
     // Do unmounting stuff here
     return () => {
@@ -4175,6 +4243,7 @@ export const SafeView = () => {
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
                               multisigClient={multisigSerumClient}
                               multisigTxs={serumMultisigTxs}
+                              vestingAccountsCount={treasuryList ? treasuryList.length : 0}
                             />
                           ) : (
                             <SafeMeanInfo
@@ -4195,6 +4264,7 @@ export const SafeView = () => {
                               selectedTab={selectedTab}
                               proposalSelected={proposalSelected}
                               assetSelected={assetSelected}
+                              vestingAccountsCount={treasuryList ? treasuryList.length : 0}
                             />
                           )
                         ) : isProposalDetails ? (
