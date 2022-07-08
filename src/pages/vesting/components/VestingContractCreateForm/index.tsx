@@ -716,11 +716,13 @@ export const VestingContractCreateForm = (props: {
         <>
             <Spin spinning={loadingMultisigAccounts}>
 
-                <PendingProposalsComponent
-                    accountAddress={accountAddress}
-                    extraClasses="no-pointer justify-content-center shift-up-3 mb-2"
-                    pendingMultisigTxCount={pendingMultisigTxCount}
-                />
+                {!inModal && (
+                    <PendingProposalsComponent
+                        accountAddress={accountAddress}
+                        extraClasses="no-pointer justify-content-center shift-up-3 mb-2"
+                        pendingMultisigTxCount={pendingMultisigTxCount}
+                    />
+                )}
 
                 <div className={`${inModal ? 'scrollable-content pl-5 pr-4 py-2' : 'elastic-form-container'}`}>
 
