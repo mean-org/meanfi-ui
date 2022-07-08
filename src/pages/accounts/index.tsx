@@ -4361,19 +4361,19 @@ export const AccountsNewView = () => {
             )}
           </div>
           <div className="rate-cell">
-            {totalAccountBalance ? (
+            {!loadingStreams ? (
               <>
-              {totalAccountBalance > 0 ? (
-                <>
-                  <div className="rate-amount">
-                    {toUsCurrency(totalAccountBalance)}
-                  </div>
-                  <div className="interval">{t('streams.streaming-balance')}</div>
-                </>
-              ) : (
-                <span className="rate-amount">$0.00</span>
-              )}
-            </>
+                {totalAccountBalance > 0 ? (
+                  <>
+                    <div className="rate-amount">
+                      {toUsCurrency(totalAccountBalance)}
+                    </div>
+                    <div className="interval">{t('streams.streaming-balance')}</div>
+                  </>
+                ) : (
+                  <span className="rate-amount">$0.00</span>
+                )}
+              </>
             //   <>
             //     <div className="rate-amount">
             //       <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
