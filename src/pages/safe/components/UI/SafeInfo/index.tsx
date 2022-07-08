@@ -244,7 +244,7 @@ export const SafeInfo = (props: {
             disabled={isTxInProgress()}
             onClick={onGoToAccounts}>
               <div className="btn-content">
-                View assets
+                View account
               </div>
           </Button>
         </Col>
