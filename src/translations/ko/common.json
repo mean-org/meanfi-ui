@@ -319,7 +319,10 @@
 			"close-cta": "Close contract",
 			"close-cta-busy": "Closing contract",
 			"close-stream-also-closes-account-label": "Also close the vesting contract",
-			"cant-close-stream-message": "You cannot close a vesting stream once started"
+			"cant-close-stream-message": "You cannot close a vesting stream once started",
+			"option-close-stream": "Close stream",
+			"option-copy-stream-id": "Copy stream ID",
+			"option-show-stream": "Show stream"
 		},
 		"sol-balance": {
 			"modal-title": "SOL Balance",

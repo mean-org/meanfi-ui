@@ -1467,14 +1467,14 @@ export const VestingContractStreamList = (props: {
                 {(vestingContract.treasuryType === TreasuryType.Open ||
                  (vestingContract.treasuryType === TreasuryType.Lock && item.status !== STREAM_STATUS.Running)) && (
                     <Menu.Item key="4" onClick={showCloseStreamModal}>
-                        <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
+                        <span className="menu-item-text">{t('vesting.close-account.option-close-stream')}</span>
                     </Menu.Item>
                 )}
                 <Menu.Item key="5" onClick={() => copyAddressToClipboard(item.id)}>
-                    <span className="menu-item-text">Copy Stream ID</span>
+                    <span className="menu-item-text">{t('vesting.close-account.option-copy-stream-id')}</span>
                 </Menu.Item>
                 <Menu.Item key="6" onClick={showVestingContractStreamDetailModal}>
-                    <span className="menu-item-text">Show stream</span>
+                    <span className="menu-item-text">{t('vesting.close-account.option-show-stream')}</span>
                 </Menu.Item>
                 <Menu.Item key="7">
                     <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
