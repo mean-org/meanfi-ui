@@ -847,9 +847,7 @@ export const VestingView = () => {
 
   const isContractLocked = useCallback(() => {
     if (!publicKey || !selectedVestingContract || !streamTemplate) { return true; }
-    const localDate = new Date(streamTemplate.startUtc as string);
-    const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
-    return isStartDateGone(dateWithoutOffset.toUTCString());
+    return isStartDateGone(streamTemplate.startUtc as string);
   }, [isStartDateGone, publicKey, selectedVestingContract, streamTemplate]);
 
   //////////////
@@ -2060,44 +2058,36 @@ export const VestingView = () => {
 
       if (!multisig) { return null; }
 
-      // const timestampTostring = (Date.now() / 1000).toString();
-      // const timeStampCounter = new BN(parseInt(timestampTostring));
-      // const [stream, streamBump] = await PublicKey.findProgramAddress(
-      //   [multisig.id.toBuffer(), timeStampCounter.toBuffer()],
-      //   MEAN_MULTISIG_PROGRAM
-      // );
+      const timestampTostring = (Date.now() / 1000).toString();
+      const timeStampCounter = new BN(parseInt(timestampTostring));
+      const [stream, streamBump] = await PublicKey.findProgramAddress(
+        [multisig.id.toBuffer(), timeStampCounter.toBuffer()],
+        MEAN_MULTISIG_PROGRAM
+      );
 
-      // const streamFromPda = await msp.createStreamFromPda(
-      //   publicKey,                                                                // payer
-      //   multisig.authority,                                                       // treasurer
-      //   new PublicKey(data.treasury),                                             // treasury
-      //   new PublicKey(data.beneficiary),                                          // beneficiary
-      //   new PublicKey(data.treasuryAssociatedTokenMint),                          // treasuryAssociatedTokenMint
-      //   stream,                                                                   // stream
-      //   data.streamName,                                                          // streamName
-      //   data.allocationAssigned,                                                  // allocationAssigned
-      // );
-
-      const createStreamTx = await msp.createStreamWithTemplate(
+      const createStreamTx = await msp.createStreamWithTemplateFromPda(
         publicKey,                                                                // payer
         multisig.authority,                                                       // treasurer
         new PublicKey(data.treasury),                                             // treasury
         new PublicKey(data.beneficiary),                                          // beneficiary
         new PublicKey(data.treasuryAssociatedTokenMint),                          // treasuryAssociatedTokenMint
+        stream,                                                                   // stream
+        data.streamName,                                                          // streamName
         data.allocationAssigned,                                                  // allocationAssigned
-        data.streamName                                                           // streamName
       );
 
-      const ixData = Buffer.from(createStreamTx[0].instructions[0].data);
-      const ixAccounts = createStreamTx[0].instructions[0].keys;
+      const ixData = Buffer.from(createStreamTx.instructions[0].data);
+      const ixAccounts = createStreamTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       // TODO: I believe this would be changed to "Create vesting account"
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.createMoneyStreamTransaction(
         publicKey,
         "Create Vesting Stream",
         "", // description
         new Date(expirationTime * 1_000),
+        timeStampCounter.toNumber(),
+        streamBump,
         OperationType.TreasuryStreamCreate,
         multisig.id,
         MSPV2Constants.MSP, // program
@@ -2107,9 +2097,7 @@ export const VestingView = () => {
 
       if (!tx) { return null; }
 
-      createStreamTx[0] = tx;
-
-      return createStreamTx;
+      return [tx, stream];
     };
 
     const createTx = async (): Promise<boolean> => {

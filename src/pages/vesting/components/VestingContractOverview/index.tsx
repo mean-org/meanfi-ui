@@ -12,9 +12,8 @@ import {
     getReadableDate,
     getTimeEllapsed,
     getTimeRemaining,
-    getPercentageBetweenTwoDates,
     toTimestamp,
-    getPercentualTsBetweenTwoDates
+    getTodayPercentualBetweenTwoDates
 } from '../../../../utils/ui';
 import { makeDecimal } from '../../../../utils/utils';
 import { VestingProgressChartComponent } from '../VestingProgressChartComponent';
@@ -49,9 +48,7 @@ export const VestingContractOverview = (props: {
             const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
             setCliffReleasePercentage(cliffPercent);
             setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
-            const localDate = new Date(streamTemplate.startUtc as string);
-            const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
-            setPaymentStartDate(dateWithoutOffset.toUTCString());
+            setPaymentStartDate(streamTemplate.startUtc as string);
             updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
             setLockPeriodUnits(streamTemplate.rateIntervalInSeconds);
             const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
@@ -146,16 +143,10 @@ export const VestingContractOverview = (props: {
                 // Final date = Start date + lockPeriod
                 const finishDate = new Date((sdTimestamp + lockPeriod) * 1000).toUTCString();
                 // consoleOut('finishDate:', finishDate, 'indianred');
-                const cliffPcsTs = cliffReleasePercentage > 0
-                    ? getPercentualTsBetweenTwoDates(paymentStartDate, finishDate, cliffReleasePercentage)
-                    : sdTimestamp;
-                // consoleOut('cliffPcsTs:', cliffPcsTs, 'indianred');
-                const cliffBasedStartDate = new Date(cliffPcsTs * 1000).toUTCString();
-                // consoleOut('cliffBasedStartDate:', cliffBasedStartDate, 'indianred');
                 // Find today's percentage between Start date and Finish date
-                const todayPct = Math.abs(getPercentageBetweenTwoDates(cliffBasedStartDate, finishDate));
+                const todayPct = getTodayPercentualBetweenTwoDates(paymentStartDate, finishDate);
                 // consoleOut('todayPct:', todayPct, 'indianred');
-                setCompletedVestingPercentage(todayPct);
+                setCompletedVestingPercentage(todayPct > cliffReleasePercentage ? todayPct : cliffReleasePercentage);
             }
         } else {
             setCompletedVestingPercentage(0);

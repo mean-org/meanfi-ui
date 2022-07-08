@@ -4,7 +4,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { cutNumber, formatPercent, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isLocal, isValidAddress, toUsCurrency } from '../../../../utils/ui';
+import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, toUsCurrency } from '../../../../utils/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
 import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
@@ -218,42 +218,6 @@ export const VestingContractCreateStreamModal = (props: {
         }
         return false;
     }, [today]);
-
-    const getPaymentRateLabel = useCallback((
-        rate: PaymentRateType,
-        amount: string | undefined
-    ): string => {
-        let label = '';
-
-        if (!selectedToken || !amount) {
-            return label;
-        }
-
-        label = getAmountWithSymbol(parseFloat(amount || '0'), selectedToken.address, false, tokenList);
-        switch (rate) {
-            case PaymentRateType.PerMinute:
-                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-minute')}`;
-                break;
-            case PaymentRateType.PerHour:
-                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-hour')}`;
-                break;
-            case PaymentRateType.PerDay:
-                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-day')}`;
-                break;
-            case PaymentRateType.PerWeek:
-                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-week')}`;
-                break;
-            case PaymentRateType.PerMonth:
-                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-month')}`;
-                break;
-            case PaymentRateType.PerYear:
-                label += ` ${t('transactions.rate-and-frequency.payment-rates.per-year')}`;
-                break;
-            default:
-                break;
-        }
-        return label;
-    }, [selectedToken, t, tokenList]);
 
 
     /////////////////////
@@ -599,14 +563,6 @@ export const VestingContractCreateStreamModal = (props: {
             visible={isVisible}
             onCancel={handleClose}
             width={480}>
-
-            {isLocal() && (
-            <div className="debug-bar">
-                <span className="ml-1">tokenAmount:</span><span className="ml-1 font-bold fg-dark-active">{tokenAmount.toNumber() || '--'}</span>
-                <span className="ml-1">maxAllocatableAmount:</span><span className="ml-1 font-bold fg-dark-active">{maxAllocatableAmount.toNumber() || '--'}</span>
-                <span className="ml-1">unallocatedBalance:</span><span className="ml-1 font-bold fg-dark-active">{unallocatedBalance.toNumber() || '--'}</span>
-            </div>
-            )}
 
             <div className="scrollable-content pl-5 pr-4 py-2">
 

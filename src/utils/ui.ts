@@ -630,9 +630,16 @@ export const isToday = (someDate: string): boolean => {
         inputDate.getFullYear() === today.getFullYear()
 }
 
-export const toTimestamp = (date: string): number => {
-    const dt = Date.parse(date);
-    return dt / 1000;
+/**
+ * Get timestamp in seconds from a date string
+ * @param {string} date  - A parseable date string using Date.parse()
+ * @returns {number} - The number of seconds for a timestamp
+ */
+export const toTimestamp = (date?: string): number => {
+    const dt = date
+        ? Date.parse(date)
+        : Date.now();
+    return Math.floor(dt / 1000);
 }
 
 export function displayTimestamp(
@@ -683,16 +690,13 @@ export function addHours(date: Date, hours: number) {
     return new Date(date.setUTCHours(date.getUTCHours() + hours));
 }
 
-export const getPercentageBetweenTwoDates = (starDate: string, endDate: string, todayDate?: string) => {
-    const start = Date.parse(starDate);
-    const end = Date.parse(endDate);
-    const today = todayDate
-        ? Date.parse(todayDate)
-        : Math.round(new Date().getTime());
-
-    const elapsed = Math.abs(today - start);
-    const remaining = Math.abs(end - start);
-    return (elapsed/remaining) * 100;
+export const getTodayPercentualBetweenTwoDates = (starDate: string, endDate: string) => {
+    const start = toTimestamp(starDate);
+    const end = toTimestamp(endDate);
+    const delta = Math.abs(end - start);
+    const today = toTimestamp();
+    const todayPartial = Math.abs(today - start);
+    return percentual(todayPartial, delta);
 }
 
 export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number) => {

@@ -362,7 +362,7 @@ export const StreamCloseModal = (props: {
           {props.canCloseTreasury && treasuryDetails && !treasuryDetails.autoClose && (
             <div className="mt-3 flex-fixed-right">
               <div className="form-label left m-0 p-0">
-                {t('treasuries.treasury-streams.close-stream-also-closes-treasury-label')}
+                {t('vesting.close-account.close-stream-also-closes-account-label')}
               </div>
               <div className="right">
                 <Radio.Group onChange={onCloseTreasuryOptionChanged} value={closeTreasuryOption}>

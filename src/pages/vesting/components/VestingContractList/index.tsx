@@ -7,7 +7,7 @@ import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { formatThousands, makeDecimal } from '../../../../utils/utils';
 import { PublicKey } from '@solana/web3.js';
-import { delay, getPercentageBetweenTwoDates, getPercentualTsBetweenTwoDates, getReadableDate, isProd, toTimestamp } from '../../../../utils/ui';
+import { consoleOut, delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../utils/ui';
 import { IconLoading } from '../../../../Icons';
 import BN from 'bn.js';
 
@@ -34,6 +34,7 @@ export const VestingContractList = (props: {
     const [vcTemplates, setVcTemplates] = useState<any>({});
     const [vcCompleteness, setVcCompleteness] = useState<any>({});
     const [loadingTemplates, setLoadingTemplates] = useState(false);
+    const [shouldOutputLogs, setShouldOutputLogs] = useState(true);
 
     const isStartDateFuture = useCallback((date: string): boolean => {
         const now = today.toUTCString();
@@ -79,9 +80,6 @@ export const VestingContractList = (props: {
                     try {
                         const pk = new PublicKey(contract.id as string);
                         const templateData = await msp.getStreamTemplate(pk);
-                        const localDate = new Date(templateData.startUtc as string);
-                        const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
-                        templateData.startUtc = dateWithoutOffset.toUTCString();
                         compiledTemplates[contract.id as string] = templateData;
                     } catch (error) {
                         console.error('Error fetching template data:', error);
@@ -114,6 +112,7 @@ export const VestingContractList = (props: {
         if (loadingVestingAccounts || loadingTemplates || !streamingAccounts || !vcTemplates) { return; }
 
         const completedPercentages: any = {};
+        let doLogsOnce = true;
         for (const contract of streamingAccounts) {
             let streamTemplate: StreamTemplate | undefined = undefined;
             let startDate: string | undefined = undefined;
@@ -121,8 +120,7 @@ export const VestingContractList = (props: {
             if (vcTemplates && vcTemplates[contract.id as string] && vcTemplates[contract.id as string].startUtc) {
                 streamTemplate = vcTemplates[contract.id as string];
                 const localDate = new Date(vcTemplates[contract.id as string].startUtc);
-                const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
-                startDate = dateWithoutOffset.toUTCString();
+                startDate = localDate.toUTCString();
             }
 
             let completedVestingPercentage = 0;
@@ -134,16 +132,26 @@ export const VestingContractList = (props: {
                 } else {
                     const lockPeriodAmount = streamTemplate.durationNumberOfUnits;
                     const lockPeriodUnits = streamTemplate.rateIntervalInSeconds;
+                    const lockPeriod = lockPeriodAmount * lockPeriodUnits;
                     const cliffReleasePercentage = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
                     const sdTimestamp = toTimestamp(startDate);
-                    const lockPeriod = lockPeriodAmount * lockPeriodUnits;
                     const finishDate = new Date((sdTimestamp + lockPeriod) * 1000).toUTCString();
-                    const cliffPcsTs = cliffReleasePercentage > 0
-                        ? getPercentualTsBetweenTwoDates(startDate, finishDate, cliffReleasePercentage)
-                        : sdTimestamp;
-                    const cliffBasedStartDate = new Date(cliffPcsTs * 1000).toUTCString();
-                    const todayPct = Math.abs(getPercentageBetweenTwoDates(cliffBasedStartDate, finishDate));
-                    completedVestingPercentage = todayPct;
+                    const finishDateTimestamp = toTimestamp(finishDate);
+                    const nowTimestamp = toTimestamp(today.toUTCString());
+                    const todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
+                    completedVestingPercentage = todayPct > cliffReleasePercentage ? todayPct : cliffReleasePercentage;
+                    if (doLogsOnce && shouldOutputLogs) {
+                        consoleOut('lockPeriod(s):', lockPeriod, 'darkorange');
+                        consoleOut('cliffReleasePercentage:', cliffReleasePercentage, 'darkorange');
+                        consoleOut('sdTimestamp:', sdTimestamp, 'darkorange');
+                        consoleOut('nowTimestamp:', nowTimestamp, 'darkorange');
+                        consoleOut('finishDateTimestamp:', finishDateTimestamp, 'darkorange');
+                        consoleOut('startDate:', startDate, 'darkorange');
+                        consoleOut('finishDate:', finishDate, 'darkorange');
+                        consoleOut('todayPct:', todayPct, 'darkorange');
+                        setShouldOutputLogs(false);
+                        doLogsOnce = false;
+                    }
                 }
             } else {
                 completedVestingPercentage = 0;
@@ -152,7 +160,7 @@ export const VestingContractList = (props: {
         }
         setVcCompleteness(completedPercentages);
 
-    }, [isStartDateFuture, loadingTemplates, loadingVestingAccounts, streamingAccounts, vcTemplates]);
+    }, [isStartDateFuture, loadingTemplates, loadingVestingAccounts, shouldOutputLogs, streamingAccounts, today, vcTemplates]);
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
         event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -200,7 +208,7 @@ export const VestingContractList = (props: {
                                                     ? `Contract starts on ${getReadableDate(vcTemplates[item.id as string].startUtc, true)}`
                                                     : <Progress
                                                         percent={vcCompleteness[item.id as string] || 0}
-                                                        showInfo={vcCompleteness[item.id as string] < 100 ? false : true}
+                                                        showInfo={false}
                                                         status={
                                                             vcCompleteness[item.id as string] === 0
                                                                 ? "normal"

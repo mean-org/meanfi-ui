@@ -235,33 +235,30 @@ export const VestingContractStreamList = (props: {
             if (item.rateAmount > 0) {
                 rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, false, t);
             }
-            const localDate = new Date(item.startUtc as string);
-            const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
-            const displayDate = dateWithoutOffset.toUTCString();
 
             if (isInbound) {
                 if (item.status === STREAM_STATUS.Schedule) {
                     title = t('streams.stream-list.subtitle-scheduled-inbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(displayDate as string, true)}`;
+                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 } else {
                     title = t('streams.stream-list.subtitle-running-inbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(displayDate as string, true)}`;
+                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 }
             } else {
                 if (item.status === STREAM_STATUS.Schedule) {
                     title = t('streams.stream-list.subtitle-scheduled-outbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(displayDate as string, true)}`;
+                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 } else {
                     title = t('streams.stream-list.subtitle-running-outbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(displayDate as string, true)}`;
+                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 }
             }
         }
@@ -307,7 +304,7 @@ export const VestingContractStreamList = (props: {
         if (item) {
             switch (item.status) {
                 case STREAM_STATUS.Schedule:
-                    return t('streams.status.scheduled', { date: getShortDate(item.startUtc as string, false, true) });
+                    return t('streams.status.scheduled', { date: getShortDate(item.startUtc as string) });
                 case STREAM_STATUS.Paused:
                     if (item.isManuallyPaused) {
                         return t('streams.status.stopped-manually');

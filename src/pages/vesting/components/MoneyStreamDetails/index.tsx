@@ -158,24 +158,24 @@ export const MoneyStreamDetails = (props: {
           title = t('streams.stream-list.subtitle-scheduled-inbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string, false, true)}`;
+          title += ` ${getShortDate(item.startUtc as string, false)}`;
         } else {
           title = t('streams.stream-list.subtitle-running-inbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string, false, true)}`;
+          title += ` ${getShortDate(item.startUtc as string, false)}`;
         }
       } else {
         if (item.status === STREAM_STATUS.Schedule) {
           title = t('streams.stream-list.subtitle-scheduled-outbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string, false, true)}`;
+          title += ` ${getShortDate(item.startUtc as string, false)}`;
         } else {
           title = t('streams.stream-list.subtitle-running-outbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string, false, true)}`;
+          title += ` ${getShortDate(item.startUtc as string, false)}`;
         }
       }
     }
@@ -237,7 +237,7 @@ export const MoneyStreamDetails = (props: {
     if (item) {
       switch (item.status) {
         case STREAM_STATUS.Schedule:
-          return t('streams.status.scheduled', { date: getShortDate(item.startUtc as string, false, true) });
+          return t('streams.status.scheduled', { date: getShortDate(item.startUtc as string, false) });
         case STREAM_STATUS.Paused:
           if (item.isManuallyPaused) {
             return t('streams.status.stopped-manually');
@@ -470,7 +470,7 @@ export const MoneyStreamDetails = (props: {
   const detailsData = [
     {
       label: stream ? isStartDateFuture(stream.startUtc as string) ? "Starting on:" : "Started on:" : "--",
-      value: stream ? getReadableDate(stream.startUtc as string, true, true) : "--"
+      value: stream ? getReadableDate(stream.startUtc as string, true) : "--"
     },
     {
       label: isInboundStream && "Receiving from:",

@@ -317,7 +317,8 @@
 			"can-close-explanation": "Closing a vesting contract will remove it completely from the list of contracts. Upon closure, all funds left over in the account will be immediately sent back to the contract's treasurer.",
 			"funds-left-in-contract": "Funds left in the contract",
 			"close-cta": "Close contract",
-			"close-cta-busy": "Closing contract"
+			"close-cta-busy": "Closing contract",
+			"close-stream-also-closes-account-label": "Also close the vesting contract"
 		},
 		"sol-balance": {
 			"modal-title": "SOL Balance",
