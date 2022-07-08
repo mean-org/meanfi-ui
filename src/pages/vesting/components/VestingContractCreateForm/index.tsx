@@ -949,7 +949,10 @@ export const VestingContractCreateForm = (props: {
                         </div>
 
                         {/* Contract commencement date */}
-                        <div className="form-label">Contract commencement date</div>
+                        <FormLabelWithIconInfo
+                            label="Contract commencement date"
+                            tooltip_text="This the the contract start date and time and establishes when vesting will begin for all recipients. No additional streams can be created once the vesting contract has started."
+                        />
                         <div className="two-column-layout">
                             <div className="left">
                                 <div className="well">
