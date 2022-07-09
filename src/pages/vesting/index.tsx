@@ -3968,12 +3968,12 @@ export const VestingView = () => {
                 <IconMoneyTransfer className="mean-svg-icons" />
                 <div>{t('vesting.screen-title')}</div>
               </div>
-              <div className="subtitle mb-3">
+              <div className="subtitle mt-1">
                 {t('vesting.screen-subtitle')}
               </div>
-              <div className="subtitle">
-                {t('vesting.screen-subtitle2')}
-              </div>
+              <h3 className="mb-0">
+                {t('vesting.user-instruction-headline')}
+              </h3>
               <div className="w-50 h-100 p-5 text-center flex-column flex-center">
                 <div className="text-center mb-2">
                   <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
