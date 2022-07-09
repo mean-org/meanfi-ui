@@ -22,7 +22,7 @@ import BN from 'bn.js';
 import { Progress } from 'antd';
 import { TokenIcon } from '../../../../components/TokenIcon';
 import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons';
-import { IconClock } from '../../../../Icons';
+import { IconClock, IconInfoCircle } from '../../../../Icons';
 
 export const VestingContractOverview = (props: {
     isXsDevice: boolean;
@@ -51,6 +51,7 @@ export const VestingContractOverview = (props: {
     const [completedVestingPercentage, setCompletedVestingPercentage] = useState(0);
     const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
     const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+    const [isContractRunning, setIsContractRunning] = useState(false);
 
     /////////////////
     //  Callbacks  //
@@ -97,6 +98,7 @@ export const VestingContractOverview = (props: {
         }
         return false;
     }, [getContractFinishDate]);
+
 
     /////////////////////
     // Data management //
@@ -214,6 +216,19 @@ export const VestingContractOverview = (props: {
         return () => { }
     }, [getTokenByMintAddress, vestingContract])
 
+    // Set isContractRunning flag based on completed percentage
+    useEffect(() => {
+        if (paymentStartDate) {
+            if (completedVestingPercentage > 0 && completedVestingPercentage < 100) {
+                setIsContractRunning(true);
+            } else {
+                setIsContractRunning(false);
+            }
+        } else {
+            setIsContractRunning(false);
+        }
+    }, [completedVestingPercentage, paymentStartDate]);
+
     ///////////////
     // Rendering //
     ///////////////
@@ -318,6 +333,22 @@ export const VestingContractOverview = (props: {
                             </div>
                         </div>
                     </div>
+
+                    {isContractRunning ? (
+                        <div className="mt-3 pr-2">
+                            <div className="flex-row align-items-center font-size-85 fg-secondary-50">
+                                <IconInfoCircle className="mean-svg-icons" style={{ width: 18, height: 18, marginRight: 2 }} />
+                                <span className="align-middle">As this contract has started vesting, no additional streams can be added.</span>
+                            </div>
+                        </div>
+                    ) : isContractFinished() ? (
+                        <div className="mt-3 pr-2">
+                            <div className="flex-row align-items-center font-size-85 fg-secondary-50">
+                                <IconInfoCircle className="mean-svg-icons" style={{ width: 18, height: 18, marginRight: 2 }} />
+                                <span className="align-middle">As this contract has finished vesting, no additional streams can be added.</span>
+                            </div>
+                        </div>
+                    ) : null}
                 </div>
             )}
         </div>
