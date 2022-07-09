@@ -86,9 +86,9 @@ export const VestingContractDetails = (props: {
         return false;
     }, [getContractFinishDate]);
 
-    const getVestingDistributionStatus = () => {
+    const getVestingDistributionStatus = useCallback(() => {
 
-        if (!paymentStartDate || !vestingContract || vestingContract.totalStreams === 0) {
+        if (!paymentStartDate || !vestingContract) {
             return null;
         }
 
@@ -110,7 +110,7 @@ export const VestingContractDetails = (props: {
             <span className={`badge medium font-bold text-uppercase fg-white ${bgClass}`}>{content}</span>
         );
 
-    };
+    }, [isContractFinished, isDateInTheFuture, paymentStartDate, t, vestingContract]);
 
     // Set a working token based on the Vesting Contract's Associated Token
     useEffect(() => {

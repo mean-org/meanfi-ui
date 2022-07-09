@@ -3342,7 +3342,7 @@ export const VestingView = () => {
       caption: 'Claim unallocated tokens',
       isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: !canPerformAnyAction(),
+      disabled: !canPerformAnyAction() || getAvailableStreamingBalance() === 0,
       uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractWithdrawFunds}`,
       tooltip: '',
       callBack: showVestingContractTransferFundsModal
