@@ -242,10 +242,9 @@ export const VestingContractDetails = (props: {
                         <div className="left mb-2">
                             {renderStreamingAccount(vestingContract)}
                         </div>
-
-                        <div className={`right mb-2 pr-2 ${isXsDevice ? 'text-left' : 'text-right'}`}>
+                        <div className={`right mb-2 pr-2 font-size-100 line-height-100 ${isXsDevice ? 'text-left' : 'text-right'}`}>
                             {getVestingDistributionStatus()}
-                            <div className="font-size-85 fg-secondary-50">
+                            <div className="font-size-85 line-height-140 fg-secondary-50">
                                 20,000,000 USDT vested
                             </div>
                             <div className="vesting-progress shift-up-1">
