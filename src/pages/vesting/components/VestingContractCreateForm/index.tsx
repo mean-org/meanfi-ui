@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
+import { addDays, cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
 import { consoleOut, disabledDate, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
@@ -199,10 +199,12 @@ export const VestingContractCreateForm = (props: {
         setIsFeePaidByTreasurer(e.target.checked);
     }
 
-    const get15MinutesAhead = useCallback(() => {
-        const time =  moment().add(15, 'minutes').format(timeFormat);
+    const getOneDayAhead = useCallback(() => {
+        const time =  moment().format(timeFormat);
         setContractTime(time);
-    }, []);
+        const date = addDays(new Date(), 1).toLocaleDateString("en-US");
+        setPaymentStartDate(date);
+    }, [setPaymentStartDate]);
 
     /////////////////////
     // Data management //
@@ -211,9 +213,9 @@ export const VestingContractCreateForm = (props: {
     // Set an initial time for creating a contract
     useEffect(() => {
         if (contractTime === undefined) {
-            get15MinutesAhead();
+            getOneDayAhead();
         }
-    }, [contractTime, get15MinutesAhead]);
+    }, [contractTime, getOneDayAhead]);
 
     // Process inputs
     useEffect(() => {
@@ -530,6 +532,16 @@ export const VestingContractCreateForm = (props: {
 
     }
 
+    const todayAndPriorDatesDisabled = (current: any) => {
+        // Can not select neither today nor days before today
+        return current && current < moment().add(1, 'days').endOf('day');
+    }
+
+    const onResetDate = () => {
+        const date = addDays(new Date(), 1).toLocaleDateString("en-US");
+        setPaymentStartDate(date);
+    }
+
     ///////////////
     // Rendering //
     ///////////////
@@ -669,6 +681,14 @@ export const VestingContractCreateForm = (props: {
             </div>
         </div>
     );
+
+    const renderDatePickerExtraPanel = () => {
+        return (
+            <span className="flat-button tiny stroked primary" onClick={onResetDate}>
+                <span className="mx-1">Reset</span>
+            </span>
+        );
+    }
 
     const renderSelectedMultisig = () => {
         return (
@@ -968,7 +988,7 @@ export const VestingContractCreateForm = (props: {
                                                             className="addon-date-picker"
                                                             aria-required={true}
                                                             allowClear={false}
-                                                            disabledDate={disabledDate}
+                                                            disabledDate={todayAndPriorDatesDisabled}
                                                             placeholder="Pick a date"
                                                             onChange={(value: any, date: string) => handleDateChange(date)}
                                                             value={moment(
@@ -976,6 +996,9 @@ export const VestingContractCreateForm = (props: {
                                                                 DATEPICKER_FORMAT
                                                             ) as any}
                                                             format={DATEPICKER_FORMAT}
+                                                            showNow={false}
+                                                            showToday={false}
+                                                            renderExtraFooter={renderDatePickerExtraPanel}
                                                         />
                                                     }
                                                 </>
@@ -987,7 +1010,7 @@ export const VestingContractCreateForm = (props: {
                             <div className="right">
                                 <div className="well time-picker">
                                     <TimePicker
-                                        defaultValue={moment().add(15, 'minutes')}
+                                        defaultValue={moment()}
                                         bordered={false}
                                         allowClear={false}
                                         size="middle"
