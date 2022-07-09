@@ -281,7 +281,7 @@ export const VestingContractOverview = (props: {
                     <div className="two-column-form-layout col70x30">
                         <div className="left mb-2">
                             <span className="font-bold font-size-100 fg-secondary-75">
-                                {`${isDateInTheFuture(paymentStartDate) ? 'Streams start on' : 'Streams started on'} ${getReadableDate(paymentStartDate, true)}`}
+                                {`${isDateInTheFuture(paymentStartDate) ? 'Contract start on' : 'Contract started on'} ${getReadableDate(paymentStartDate, true)}`}
                             </span>
                             {isContractFinished() ? (
                                 <div className="font-size-100 fg-secondary-50 text-italic">Vesting finished {getRelativeFinishDate()}</div>
