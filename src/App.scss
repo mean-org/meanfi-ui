@@ -2624,6 +2624,7 @@ main section {
       display: inline-flex;
       justify-content: flex-start;
       align-items: center;
+      text-align: center;
       .mean-svg-icons {
         margin-right: 6px;
         color: var(--color-primary-highlight);
@@ -2632,8 +2633,12 @@ main section {
       }
     }
     .subtitle {
+      text-align: center;
       font-size: 1.2rem;
       color: var(--color-secondary-alpha-60);
+      @media (max-width: 575.98px) {
+        font-size: 1.1rem;
+      }
     }
   }
   .user-instruction-headline {

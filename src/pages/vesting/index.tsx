@@ -3907,7 +3907,7 @@ export const VestingView = () => {
               <div className="subtitle mt-1">
                 {t('vesting.screen-subtitle')}
               </div>
-              <h3 className="mb-0">
+              <h3 className="text-center mb-0">
                 {t('vesting.user-instruction-headline')}
               </h3>
             </div>
@@ -3963,7 +3963,7 @@ export const VestingView = () => {
       <>
         <div className="container main-container">
           <div className="interaction-area">
-            <div className="title-and-subtitle w-75 h-75">
+            <div className={`title-and-subtitle ${isXsDevice ? 'w-100' : 'w-75 h-75'}`}>
               <div className="title">
                 <IconMoneyTransfer className="mean-svg-icons" />
                 <div>{t('vesting.screen-title')}</div>
@@ -3971,18 +3971,18 @@ export const VestingView = () => {
               <div className="subtitle mt-1">
                 {t('vesting.screen-subtitle')}
               </div>
-              <h3 className="mb-0">
+              <h3 className="text-center mb-0">
                 {t('vesting.user-instruction-headline')}
               </h3>
-              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
+              <div className={`text-center flex-column flex-center ${isXsDevice ? 'w-100 h-100 p-2 mt-4' : 'w-50 h-100 p-4'}`}>
                 <div className="text-center mb-2">
                   <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
                 </div>
                 {!publicKey ? (
-                  <h3>Please connect your wallet to see your vesting contracts</h3>
+                  <h3 className="text-center">Please connect your wallet to see your vesting contracts</h3>
                 ) : (
                   <div className="text-center">
-                    <h3>You don't have access permission to view the vesting contracts for the wallet address specified.</h3>
+                    <h3 className="mb-3">You don't have access permission to view the vesting contracts for the wallet address specified.</h3>
                     <p>Please reconnect with the authorized wallet ({shortenAddress(accountAddress)})<br/>or <span className="simplelink underline" onClick={() => {
                       window.location.href = VESTING_ROUTE_BASE_PATH;
                     }}>click here</span> to show the vesting contracts for the connected wallet.</p>
