@@ -1024,7 +1024,7 @@ export const VestingContractCreateForm = (props: {
                         {/* Cliff release */}
                         <FormLabelWithIconInfo
                             label="Cliff release (On commencement date)"
-                            tooltip_text="This is the amount (percentage) of the funds release at the end of the cliff period of the vesting contract."
+                            tooltip_text="The percentage of allocated funds released to each recipient once the vesting contract starts."
                         />
                         <div className="well">
                             <div className="flexible-right mb-1">
