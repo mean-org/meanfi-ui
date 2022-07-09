@@ -1390,6 +1390,11 @@
 		"withdraw-funds": {
 			"modal-title": "Withdraw vesting contract funds",
 			"from-vesting-contract": "From vesting contract"
+		},
+		"status": {
+			"status-running": "Running",
+			"status-scheduled": "Scheduled",
+			"status-stopped": "Completed"
 		}
 	},
 	"wallet-selector": {

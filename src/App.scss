@@ -29,6 +29,7 @@
   --bg-color: #ffffff;
   --color-purple: #4b00a6;
   --color-gray-light: #5c5c5c;
+  --color-gray-dark: #757575;
   
   /* Grays */
   --color-dark: #313131;
@@ -132,6 +133,7 @@
   --text-color: #e1e1ff;
   --bg-color: #181a2a;
   --color-purple: #7402ff;
+  --color-gray-light: #5c5c5c;
   --color-gray-dark: #363636;
   
   /* Grays */
@@ -4638,8 +4640,8 @@ main section {
     .token-icon {
       border-radius: 50%;
       overflow: hidden;
-      width: 26px;
-      height: 26px;
+      width: 30px;
+      height: 30px;
       justify-content: center;
       align-items: center;
       display: inline-flex;
@@ -5311,7 +5313,7 @@ main section {
         }
         .info-data {
           font-weight: 600;
-          color: var(--color-white);
+          color: var(--color-secondary-alpha-85);
         }
         .info-extra {
           font-weight: 400;
@@ -5830,32 +5832,32 @@ main section {
   margin-right: 0 !important;
 }
 .mr-1 {
-  margin-right: 0.5rem;
+  margin-right: 0.5rem !important;
 }
 .mr-2 {
-  margin-right: 1rem;
+  margin-right: 1rem !important;
 }
 .mr-3 {
-  margin-right: 1.5rem;
+  margin-right: 1.5rem !important;
 }
 .mr-4 {
-  margin-right: 2rem;
+  margin-right: 2rem !important;
 }
 .mx-0 {
-  margin-left: 0;
-  margin-right: 0;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 .mx-1 {
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
+  margin-left: 0.5rem !important;
+  margin-right: 0.5rem !important;
 }
 .mx-2 {
-  margin-left: 1rem;
-  margin-right: 1rem;
+  margin-left: 1rem !important;
+  margin-right: 1rem !important;
 }
 .my-0 {
-  margin-top: 0;
-  margin-bottom: 0;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 .mt-1 {
   margin-top: 0.5rem !important;

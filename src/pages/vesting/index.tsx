@@ -3339,7 +3339,7 @@ export const VestingView = () => {
     // Withdraw funds
     actions.push({
       action: MetaInfoCtaAction.VestingContractWithdrawFunds,
-      caption: 'Withdraw funds',
+      caption: 'Claim unallocated tokens',
       isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: !canPerformAnyAction(),
@@ -3824,6 +3824,7 @@ export const VestingView = () => {
       <Tabs activeKey={accountDetailTab} onChange={onTabChange} className="neutral stretch-content">
         <TabPane tab="Overview" key={"overview"}>
           <VestingContractOverview
+            isXsDevice={isXsDevice}
             vestingContract={selectedVestingContract}
             streamTemplate={streamTemplate}
           />
@@ -4125,6 +4126,7 @@ export const VestingView = () => {
                         <VestingContractDetails
                           isXsDevice={isXsDevice}
                           loadingVestingContractFlowRate={loadingVestingContractFlowRate}
+                          streamTemplate={streamTemplate}
                           vestingContract={selectedVestingContract}
                           vestingContractFlowRate={vestingContractFlowRate}
                         />

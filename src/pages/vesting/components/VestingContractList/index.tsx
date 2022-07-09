@@ -180,9 +180,6 @@ export const VestingContractList = (props: {
                             <div className="description-cell">
                                 <div className="title text-truncate">
                                     {item.name}
-                                    <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                                        {vcType === TreasuryType.Open ? 'Open' : 'Locked'}
-                                    </span>
                                 </div>
                                 <div className="subtitle text-truncate">
                                     {item && vcTemplates && vcTemplates[item.id as string] && vcTemplates[item.id as string].startUtc && !loadingTemplates ? (
@@ -202,7 +199,7 @@ export const VestingContractList = (props: {
                                                         }
                                                         size="small"
                                                         type="line"
-                                                        className="vesting-list-progress-bar"
+                                                        className="vesting-list-progress-bar small"
                                                         trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
                                                         style={{ width: 200 }}
                                                         />
