@@ -259,12 +259,12 @@ export const VestingContractOverview = (props: {
                 <div className="details-panel-meta">
                     <div className="two-column-form-layout col70x30">
                         <div className="left mb-2">
-                            <span className="font-bold font-size-110 fg-secondary-75">{lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)} vesting contract</span>
+                            <span className="font-bold font-size-100 fg-secondary-75">{lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)} vesting contract</span>
                             <div className="font-size-100 fg-secondary-50">{cliffReleasePercentage}% unlocked on commencement date</div>
                             <div className="font-size-100 fg-secondary-50">{100 - cliffReleasePercentage}% of allocated funds streamed equally across {lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)}</div>
                         </div>
                         <div className={`right mb-2 pr-2 ${isXsDevice ? 'text-left' : 'text-right'}`}>
-                            <div className="font-bold font-size-110 fg-secondary-75">
+                            <div className="font-bold font-size-100 fg-secondary-75">
                                 Unallocated tokens
                             </div>
                             <div className="font-size-100 fg-secondary-50">
@@ -280,7 +280,7 @@ export const VestingContractOverview = (props: {
 
                     <div className="two-column-form-layout col70x30">
                         <div className="left mb-2">
-                            <span className="font-bold font-size-110 fg-secondary-75">
+                            <span className="font-bold font-size-100 fg-secondary-75">
                                 {`${isDateInTheFuture(paymentStartDate) ? 'Streams start on' : 'Streams started on'} ${getReadableDate(paymentStartDate, true)}`}
                             </span>
                             {isContractFinished() ? (
@@ -290,7 +290,7 @@ export const VestingContractOverview = (props: {
                             )}
                         </div>
                         <div className={`right mb-2 pr-2 ${isXsDevice ? 'text-left' : 'text-right'}`}>
-                            <div className="font-bold font-size-110 fg-secondary-75">
+                            <div className="font-bold font-size-100 fg-secondary-75">
                                 {getContractFinishDateLabel()}
                             </div>
                             <div className="font-size-100 fg-secondary-50">
