@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
-import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
+import { Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
 import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd, toTimestamp } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
@@ -414,6 +414,7 @@ export const VestingView = () => {
           duration: 8,
         });
         await delay(8000);
+        const myNotifyKey = `notify-${Date.now()}`;
         openNotification({
           type: "info",
           description: (
@@ -428,6 +429,7 @@ export const VestingView = () => {
                   const url = `/multisig/${item.extras.multisig}?v=proposals`;
                   setHighLightableMultisigId(item.extras.multisig);
                   navigate(url);
+                  notification.close(myNotifyKey);
                 }}>
                 See proposals
               </Button>
