@@ -2170,6 +2170,7 @@ export const MoneyStreamsInfoView = (props: {
           multisigClient={multisigClient}
           selectedMultisig={selectedMultisig}
           userBalances={userBalances}
+          showNotificationByType={() => showNotificationByType("info")}
         />
       )}
 

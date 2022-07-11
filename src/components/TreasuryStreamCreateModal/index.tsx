@@ -69,6 +69,7 @@ export const TreasuryStreamCreateModal = (props: {
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   userBalances: any;
   withdrawTransactionFees: TransactionFees;
+  showNotificationByType?: any;
 }) => {
   const {
     associatedToken,
@@ -85,6 +86,7 @@ export const TreasuryStreamCreateModal = (props: {
     treasuryDetails,
     userBalances,
     withdrawTransactionFees,
+    showNotificationByType
   } = props;
   const { t } = useTranslation('common');
   const [searchParams] = useSearchParams();
@@ -158,6 +160,13 @@ export const TreasuryStreamCreateModal = (props: {
 
     return false;
   }, [workingTreasuryDetails]);
+
+  const resetTransactionStatus = useCallback(() => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }, [setTransactionStatus]);
 
   const getMaxAmount = useCallback((preSetting = false) => {
     if ((isFeePaidByTreasurer || preSetting) && withdrawTransactionFees) {
@@ -1432,6 +1441,8 @@ export const TreasuryStreamCreateModal = (props: {
             signatures.forEach(s => {
               startFetchTxSignatureInfo(s, "confirmed", OperationType.TreasuryStreamCreate);
             });
+            param === "multisig" && showNotificationByType("info");
+            resetTransactionStatus();
             setIsBusy(false);
             handleOk();
           } else { setIsBusy(false); }
