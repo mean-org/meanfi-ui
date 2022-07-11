@@ -477,7 +477,7 @@ export const VestingView = () => {
           isWorkflowLocked = true;
           notifyMultisigVestingContractActionFollowup(
             'To complete the vesting contract setup, the other Multisig owners need to approve the proposal.',
-            'After the proposal has been approved and executed, you will then be able to set up vesting streams within the contract.',
+            'After the proposal has been approved and executed, you will then be able to create vesting streams within the contract.',
             item
           );
         }
