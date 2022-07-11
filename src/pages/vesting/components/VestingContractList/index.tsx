@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Empty, Progress } from 'antd';
-import { MSP, StreamTemplate, Treasury, TreasuryType } from '@mean-dao/msp';
+import { MSP, StreamTemplate, Treasury } from '@mean-dao/msp';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../../../components/Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../../../constants';
@@ -159,7 +159,6 @@ export const VestingContractList = (props: {
                     const token = associatedToken
                         ? getTokenByMintAddress(associatedToken as string)
                         : undefined;
-                    const vcType = item.treasuryType;
                     const onTreasuryClick = () => {
                         onAccountSelected(item);
                     };
@@ -193,9 +192,9 @@ export const VestingContractList = (props: {
                                                         status={
                                                             vcCompleteness[item.id as string] === 0
                                                                 ? "normal"
-                                                                : vcCompleteness[item.id as string] === 100
-                                                                    ? "success"
-                                                                    : "active"
+                                                                : vcCompleteness[item.id as string] < 100
+                                                                    ? "active"
+                                                                    : "success"
                                                         }
                                                         size="small"
                                                         type="line"

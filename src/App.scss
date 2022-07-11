@@ -1301,6 +1301,29 @@ footer.ant-layout-footer {
   color: var(--color-notify-info) !important;
 }
 
+// Aleft info messages
+.alert-info-message {
+  .ant-alert-info {
+    color: var(--color-secondary-alpha-60);
+    background-color: var(--color-secondary-alpha-05);
+    border: 1px solid var(--color-secondary-alpha-02);
+    display: flex;
+    align-items: flex-start;
+  }
+  .ant-alert-message {
+    color: inherit;
+  }
+  .ant-alert-info .ant-alert-icon {
+    margin: 0.25rem 0.4rem 0 0;
+  }
+  button.ant-alert-close-icon {
+    margin-top: 0.4em !important;
+  }
+  .anticon svg {
+    color: var(--color-secondary-alpha-60);
+  }
+}
+
 .contract-heading {
   font-size: 24px;
   font-weight: 500;
@@ -3541,8 +3564,6 @@ main section {
   .token-icon {
     border-radius: 50%;
     overflow: hidden;
-    width: 20px;
-    height: 20px;
     justify-content: center;
     align-items: center;
     display: inline-flex;
@@ -3553,9 +3574,9 @@ main section {
       margin: -1px 4px 0 0;
     }
     @media (min-width: 576px) {
-      width: 14px;
-      height: 14px;
-      margin: 2px 4px 0 0;
+      width: 18px;
+      height: 18px;
+      margin: 0px 4px 0 0;
     }
   }
   .token-symbol {

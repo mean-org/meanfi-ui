@@ -15,24 +15,29 @@ import {
     toTimestamp,
     getTodayPercentualBetweenTwoDates,
     getlllDate,
-    relativeTimeFromDates
+    relativeTimeFromDates,
+    friendlyDisplayDecimalPlaces,
+    percentage
 } from '../../../../utils/ui';
-import { getAmountWithSymbol, makeDecimal } from '../../../../utils/utils';
+import { formatThousands, getAmountWithSymbol, makeDecimal } from '../../../../utils/utils';
 import BN from 'bn.js';
-import { Progress } from 'antd';
+import { Alert, Progress } from 'antd';
 import { TokenIcon } from '../../../../components/TokenIcon';
 import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons';
 import { IconInfoCircle } from '../../../../Icons';
+import { VestingFlowRateInfo } from '../../../../models/vesting';
 
 export const VestingContractOverview = (props: {
     isXsDevice: boolean;
-    vestingContract: Treasury | undefined;
     streamTemplate: StreamTemplate | undefined;
+    vestingContract: Treasury | undefined;
+    vestingContractFlowRate: VestingFlowRateInfo | undefined;
 }) => {
     const {
         isXsDevice,
+        streamTemplate,
         vestingContract,
-        streamTemplate
+        vestingContractFlowRate,
     } = props;
     const { t } = useTranslation('common');
     const {
@@ -42,8 +47,6 @@ export const VestingContractOverview = (props: {
     const [today, setToday] = useState(new Date());
     const [startRemainingTime, setStartRemainingTime] = useState('');
     // Setting from the vesting contract
-    const [treasuryOption, setTreasuryOption] = useState<TreasuryType | undefined>(undefined);
-    const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
     const [paymentStartDate, setPaymentStartDate] = useState<string>("");
     const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
@@ -107,10 +110,8 @@ export const VestingContractOverview = (props: {
     // Set template data
     useEffect(() => {
         if (vestingContract && streamTemplate) {
-            setTreasuryOption(vestingContract.treasuryType);
             const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
             setCliffReleasePercentage(cliffPercent);
-            setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
             setPaymentStartDate(streamTemplate.startUtc as string);
             updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
             setLockPeriodUnits(streamTemplate.rateIntervalInSeconds);
@@ -233,6 +234,64 @@ export const VestingContractOverview = (props: {
     // Rendering //
     ///////////////
 
+    const renderVestedAmountChart = useCallback(() => {
+        if (!vestingContract || !vestingContractFlowRate || !selectedToken) { return null; }
+
+        const percentageOfStreamableAmount = percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount);
+        return (
+            <>
+                {vestingContract.totalStreams > 0 && !isDateInTheFuture(paymentStartDate) && (
+                    <div className="mt-3 pr-2">
+                        <div className="flex-row align-items-center">
+                            <TokenIcon
+                                mintAddress={selectedToken.address}
+                                size={24}
+                            />
+                            <span className="font-size-100 font-bold fg-secondary-75 pl-2">
+                                {
+                                    formatThousands(
+                                        percentageOfStreamableAmount,
+                                        friendlyDisplayDecimalPlaces(percentageOfStreamableAmount)
+                                    )
+                                } of {
+                                    formatThousands(
+                                        vestingContractFlowRate.streamableAmount,
+                                        friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount)
+                                    )
+                                } {selectedToken.symbol} vested
+                            </span>
+                        </div>
+                        <div className="flex-fixed-right">
+                            <div className="left mr-1">
+                                <Progress
+                                    percent={completedVestingPercentage}
+                                    showInfo={false}
+                                    status={completedVestingPercentage === 0
+                                            ? "normal"
+                                            : completedVestingPercentage === 100
+                                                ? "success"
+                                                : "active"
+                                    }
+                                    type="line"
+                                    className="vesting-list-progress-bar large"
+                                    trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                    style={{ width: "100%" }}
+                                />
+                            </div>
+                            <div className="right progress-status-icon">
+                                {isContractFinished() ? (
+                                    <span className="fg-green"><CheckCircleFilled /></span>
+                                ) : (
+                                    <span><ClockCircleOutlined /></span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </>
+        );
+    }, [completedVestingPercentage, isContractFinished, isDateInTheFuture, paymentStartDate, selectedToken, theme, vestingContract, vestingContractFlowRate]);
+
     const getRelativeFinishDate = () => {
         const finishDate = getContractFinishDate();
         if (!finishDate) {
@@ -257,6 +316,11 @@ export const VestingContractOverview = (props: {
         <div className="tab-inner-content-wrapper vertical-scroll">
             {vestingContract && (
                 <div className="details-panel-meta">
+                    {vestingContract.totalStreams === 0 && !isDateInTheFuture(paymentStartDate) && (
+                        <div className="alert-info-message mb-2">
+                            <Alert message="This contract started without any streams and is unable to vest any tokens. Please claim any unallocated tokens and close it." type="info" showIcon closable />
+                        </div>
+                    )}
                     <div className="two-column-form-layout col70x30">
                         <div className="left mb-2">
                             <span className="font-bold font-size-100 fg-secondary-75">{lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)} vesting contract</span>
@@ -299,40 +363,7 @@ export const VestingContractOverview = (props: {
                         </div>
                     </div>
 
-                    <div className="mt-3 pr-2">
-                        <div className="flex-row align-items-center">
-                            <TokenIcon
-                                mintAddress={selectedToken?.address}
-                                size={24}
-                            />
-                            <span className="font-size-100 font-bold fg-secondary-75 pl-2">5,500,000 of 20,000,000 USDT vested</span>
-                        </div>
-                        <div className="flex-fixed-right">
-                            <div className="left mr-1">
-                                <Progress
-                                    percent={completedVestingPercentage}
-                                    showInfo={false}
-                                    status={completedVestingPercentage === 0
-                                            ? "normal"
-                                            : completedVestingPercentage === 100
-                                                ? "success"
-                                                : "active"
-                                    }
-                                    type="line"
-                                    className="vesting-list-progress-bar large"
-                                    trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
-                                    style={{ width: "100%" }}
-                                />
-                            </div>
-                            <div className="right progress-status-icon">
-                                {isContractFinished() ? (
-                                    <span className="fg-green"><CheckCircleFilled /></span>
-                                ) : (
-                                    <span><ClockCircleOutlined /></span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    {renderVestedAmountChart()}
 
                     {isContractRunning ? (
                         <div className="mt-3 pr-2">

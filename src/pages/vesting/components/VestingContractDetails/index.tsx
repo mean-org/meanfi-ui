@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { StreamTemplate, Treasury } from '@mean-dao/msp';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
-import { getAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../utils/utils';
 import { Identicon } from '../../../../components/Identicon';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
@@ -11,7 +11,7 @@ import { getCategoryLabelByValue, VestingFlowRateInfo } from '../../../../models
 import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
 import { IconLoading } from '../../../../Icons';
-import { getIntervalFromSeconds, getPaymentIntervalFromSeconds, getTodayPercentualBetweenTwoDates, toTimestamp } from '../../../../utils/ui';
+import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getTodayPercentualBetweenTwoDates, toTimestamp } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { Progress } from 'antd';
 
@@ -244,9 +244,16 @@ export const VestingContractDetails = (props: {
                         </div>
                         <div className={`right mb-2 pr-2 font-size-100 line-height-120 ${isXsDevice ? 'text-left' : 'text-right'}`}>
                             {getVestingDistributionStatus()}
-                            <div className="vested-amount">
-                                20,000,000 USDT vested
-                            </div>
+                            {vestingContractFlowRate && vestingContract && selectedToken && vestingContract.totalStreams > 0 && !isDateInTheFuture(paymentStartDate) && (
+                                <div className="vested-amount">
+                                    {
+                                        formatThousands(
+                                            vestingContractFlowRate.streamableAmount,
+                                            friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount)
+                                        )
+                                    } {selectedToken.symbol} vested
+                                </div>
+                            )}
                             <div className="vesting-progress">
                                 <Progress
                                     percent={completedVestingPercentage}

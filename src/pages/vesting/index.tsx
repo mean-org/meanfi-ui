@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd } from '../../utils/ui';
+import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd, toTimestamp } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -151,6 +151,7 @@ export const VestingView = () => {
   const [loadingContractActivity, setLoadingContractActivity] = useState(false);
   const [contractActivity, setContractActivity] = useState<VestingTreasuryActivity[]>([]);
   const [hasMoreContractActivity, setHasMoreContractActivity] = useState<boolean>(true);
+
 
   /////////////////////////
   //  Setup & Init code  //
@@ -435,11 +436,47 @@ export const VestingView = () => {
       }
     }
 
+    const notifyVestingStreamCreated = async (item: TxConfirmationInfo) => {
+      const options = item.extras as VestingContractStreamCreateOptions;
+      if (options && options.multisig) {
+        openNotification({
+          type: "info",
+          description: 'To complete the vesting stream set up, the other Multisig owners need to approve the proposal.',
+          duration: 8,
+        });
+        await delay(8000);
+        openNotification({
+          type: "info",
+          description: (
+            <>
+              <div>The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
+              <span className="secondary-link" onClick={() => {
+                  const url = `/multisig/${options.multisig}?v=proposals`;
+                  setHighLightableMultisigId(options.multisig);
+                  navigate(url);
+                }}>
+                See proposals &gt;
+              </span>
+            </>
+          ),
+          duration: 8,
+        });
+        await delay(8000);
+        openNotification({
+          type: "info",
+          description: 'After the proposal has been approved and executed, the vesting stream will be scheduled.',
+          duration: 8,
+          handleClose: turnOffLockWorkflow
+        });
+      } else {
+        turnOffLockWorkflow();
+      }
+    }
+
     switch (item.operationType) {
       case OperationType.TreasuryAddFunds:
       case OperationType.TreasuryRefreshBalance:
       case OperationType.TreasuryWithdraw:
-      case OperationType.TreasuryStreamCreate:
       case OperationType.StreamClose:
       case OperationType.StreamAddFunds:
       case OperationType.StreamPause:
@@ -459,6 +496,17 @@ export const VestingView = () => {
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
           notifyVestingContractCreated(item);
+        }
+        setTimeout(() => {
+          hardReloadContracts();
+        }, 20);
+        break;
+      case OperationType.TreasuryStreamCreate:
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryCreate]}`, item, 'crimson');
+        recordTxConfirmation(item.signature, item.operationType, true);
+        if (!isWorkflowLocked) {
+          isWorkflowLocked = true;
+          notifyVestingStreamCreated(item);
         }
         setTimeout(() => {
           hardReloadContracts();
@@ -516,6 +564,35 @@ export const VestingView = () => {
       navigate(url);
     }
   }, [accountAddress, accountDetailTab, getQueryAccountType, navigate]);
+
+  const getContractFinishDate = useCallback(() => {
+    if (streamTemplate) {
+      // Payment start date
+      const startDate = streamTemplate.startUtc as string;
+      const periodUnits = streamTemplate.durationNumberOfUnits;
+      const periodAmount = streamTemplate.rateIntervalInSeconds;
+      // Start date timestamp
+      const sdTimestamp = toTimestamp(startDate);
+      // Total length of vesting period in seconds
+      const lockPeriod = periodAmount * periodUnits;
+      // Final date = Start date + lockPeriod
+      const finishDate = new Date((sdTimestamp + lockPeriod) * 1000);
+      return finishDate;
+    }
+    return null;
+  }, [streamTemplate]);
+
+  const isContractRunning = useCallback((): boolean => {
+    if (streamTemplate) {
+      const now = new Date();
+      const startDate = new Date(streamTemplate.startUtc as string);
+      const finishDate = getContractFinishDate();
+      const hastStarted = now > startDate ? true : false;
+      const hasFinished = finishDate && finishDate > now ? true : false;
+      return hastStarted && !hasFinished ? true : false;
+    }
+    return false;
+  }, [getContractFinishDate, streamTemplate]);
 
   const onSelectVestingContract = useCallback((item: Treasury | undefined) => {
     if (accountAddress && item) {
@@ -3291,21 +3368,6 @@ export const VestingView = () => {
       ctaItems++;
     }
 
-    // Bulk create
-    // if (canPerformAnyAction() && !isContractLocked()) {
-    //   actions.push({
-    //     action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
-    //     isVisible: true,
-    //     caption: 'Bulk create',
-    //     disabled: !getAvailableStreamingBalance(),
-    //     uiComponentType: 'button',
-    //     uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
-    //     tooltip: '',
-    //     callBack: () => { }
-    //   });
-    //   ctaItems++;
-    // }
-
     // Add funds
     if (canPerformAnyAction() && !isContractLocked()) {
       actions.push({
@@ -3321,20 +3383,20 @@ export const VestingView = () => {
       ctaItems++;
     }
 
-    // View SOL Balance
-    if (selectedVestingContract && isMultisigTreasury(selectedVestingContract)) {
-      actions.push({
-        action: MetaInfoCtaAction.VestingContractViewSolBalance,
-        caption: 'View SOL Balance',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: !canPerformAnyAction(),
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
-        tooltip: '',
-        callBack: showVestingContractSolBalanceModal
-      });
-      ctaItems++;
-    }
+    // Bulk create
+    // if (canPerformAnyAction() && !isContractLocked()) {
+    //   actions.push({
+    //     action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
+    //     isVisible: true,
+    //     caption: 'Bulk create',
+    //     disabled: !getAvailableStreamingBalance(),
+    //     uiComponentType: 'button',
+    //     uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
+    //     tooltip: '',
+    //     callBack: () => { }
+    //   });
+    //   ctaItems++;
+    // }
 
     // Withdraw funds
     actions.push({
@@ -3352,7 +3414,7 @@ export const VestingView = () => {
     // Close Contract
     actions.push({
       action: MetaInfoCtaAction.VestingContractClose,
-      caption: 'Close Contract',
+      caption: 'Close contract',
       isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: !canPerformAnyAction(),
@@ -3361,6 +3423,21 @@ export const VestingView = () => {
       callBack: showVestingContractCloseModal
     });
     ctaItems++;
+
+    // View SOL balance
+    if (selectedVestingContract && isMultisigTreasury(selectedVestingContract) && !isContractRunning()) {
+      actions.push({
+        action: MetaInfoCtaAction.VestingContractViewSolBalance,
+        caption: 'View SOL balance',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: !canPerformAnyAction(),
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
+        tooltip: '',
+        callBack: showVestingContractSolBalanceModal
+      });
+      ctaItems++;
+    }
 
     // Refresh Account Data
     actions.push({
@@ -3387,6 +3464,7 @@ export const VestingView = () => {
     showCreateStreamModal,
     canPerformAnyAction,
     isMultisigTreasury,
+    isContractRunning,
     showAddFundsModal,
     isContractLocked,
   ]);
@@ -3470,7 +3548,8 @@ export const VestingView = () => {
       .then(value => {
         const freshFlowRate: VestingFlowRateInfo = {
           amount: makeDecimal(new BN(value[0]), workingToken.decimals || 6),
-          durationUnit: new BN(value[1]).toNumber()
+          durationUnit: new BN(value[1]).toNumber(),
+          streamableAmount: makeDecimal(new BN(value[2]), workingToken.decimals || 6),
         };
         consoleOut('flowRate:', freshFlowRate, 'darkgreen');
         vestingFlowRatesCache.add(selectedVestingContract.id as string, freshFlowRate);
@@ -3825,8 +3904,9 @@ export const VestingView = () => {
         <TabPane tab="Overview" key={"overview"}>
           <VestingContractOverview
             isXsDevice={isXsDevice}
-            vestingContract={selectedVestingContract}
             streamTemplate={streamTemplate}
+            vestingContract={selectedVestingContract}
+            vestingContractFlowRate={vestingContractFlowRate}
           />
         </TabPane>
         <TabPane tab={`Streams (${selectedVestingContract.totalStreams})`} key={"streams"}>

@@ -373,19 +373,20 @@ export const VestingContractCreateStreamModal = (props: {
 
     }, [getMaxAmount, selectedToken, setFromCoinAmount, isFeePaidByTreasurer, tokenAmount]);
 
-    const getStreamTxConfirmDescription = () => {
+    const getStreamTxConfirmDescription = (multisig: string) => {
         const cliff = `${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol}`;
         const rate = `${paymentRateAmount} ${selectedToken?.symbol} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
         return `Create stream to send ${rate} with ${cliff} released on commencement.`;
     }
 
-    const getStreamTxConfirmedDescription = () => {
+    const getStreamTxConfirmedDescription = (multisig: string) => {
         const cliff = `${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol}`;
         const rate = `${paymentRateAmount} ${selectedToken?.symbol} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
-        return `Stream to send ${rate} with ${cliff} released on commencement has been scheduled.`;
+        return `Stream to send ${rate} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
     }
 
     const onStreamCreateClick = () => {
+        const multisig = selectedMultisig ? selectedMultisig.authority.toBase58() : '';
         const options: VestingContractStreamCreateOptions = {
             beneficiaryAddress: recipientAddress,
             feePayedByTreasurer: isFeePaidByTreasurer,
@@ -393,9 +394,9 @@ export const VestingContractCreateStreamModal = (props: {
             rateAmount: parseFloat(paymentRateAmount),
             streamName: vestingStreamName,
             tokenAmount: tokenAmount.toNumber(),
-            txConfirmDescription: getStreamTxConfirmDescription(),
-            txConfirmedDescription: getStreamTxConfirmedDescription(),
-            multisig: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+            txConfirmDescription: getStreamTxConfirmDescription(multisig),
+            txConfirmedDescription: getStreamTxConfirmedDescription(multisig),
+            multisig
         };
         handleOk(options);
     }
