@@ -812,9 +812,17 @@ footer.ant-layout-footer {
     background-color: var(--color-secondary-alpha-10);
   }
 }
-.ant-btn.ant-btn-ghost.ant-btn-round.extra-small {
-  height: 24px;
-  border-radius: 24px;
+// .ant-btn.ant-btn-ghost.ant-btn-round.extra-small {
+//   height: 24px;
+//   border-radius: 24px;
+// }
+button.ant-btn.ant-btn-round.ant-btn-default.extra-small.mt-1
+.ant-btn.ant-btn-primary.ant-btn-round.ant-btn-sm.extra-small,
+.ant-btn.ant-btn-primary.ant-btn-round.ant-btn-ghost.extra-small {
+  padding: 2px 8px;
+  height: auto;
+  min-height: auto;
+  border-radius: 5px;
 }
 .ant-btn.ant-btn-default.ant-btn-round {
   background-color: inherit;
@@ -829,6 +837,12 @@ footer.ant-layout-footer {
   }
   &.no-stroke {
     border-width: 0;
+  }
+  &.extra-small {
+    padding: 2px 8px !important;
+    height: auto !important;
+    min-height: auto !important;
+    border-radius: 5px;
   }
   &.ant-btn-sm {
     height: 32px;

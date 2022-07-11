@@ -59,7 +59,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { AccountAssetAction, EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, delay, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -93,6 +93,7 @@ import { MoneyStreamsOutgoingView } from '../../views/MoneyStreamsOutgoing';
 import { StreamingAccountView } from '../../views/StreamingAccount';
 import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
+import { IconType } from 'antd/lib/notification';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -389,6 +390,35 @@ export const AccountsNewView = () => {
     }
     return undefined;
   }, [searchParams]);
+
+  const showNotificationByType = useCallback(async (type: IconType) => {
+    await delay(1500);
+    openNotification({
+      type,
+      title: 'Review proposal',
+      duration: 20,
+      description: (
+        <>
+          <div className="mb-2">The proposal's status can be reviewed in the Multisig Safe's proposal list.</div>
+          <Button
+            type="primary"
+            shape="round"
+            size="small"
+            className="extra-small"
+            onClick={() => {
+              const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
+              if (multisigAuthority) {
+                setHighLightableMultisigId(multisigAuthority);
+              }
+              navigate(`/multisig/${multisigAuthority}?v=proposals`);
+            }}
+          >
+              Review proposal
+          </Button>
+        </>
+      ),
+    });
+  }, [navigate, setHighLightableMultisigId]);
 
   // Token Merger Modal
   const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
@@ -915,13 +945,15 @@ export const AccountsNewView = () => {
         recordTxConfirmation(item, true);
         setShouldLoadTokens(true);
         reloadSwitch();
+      } else if (item.operationType === OperationType.SetAssetAuthority) {
+        recordTxConfirmation(item, true);
       } else if (item.operationType === OperationType.TransferTokens) {
         recordTxConfirmation(item, true);
-        const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
-        if (multisigAuthority) {
-          setHighLightableMultisigId(multisigAuthority);
-        }
-        navigate(`/multisig/${multisigAuthority}?v=proposals`);
+        // const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
+        // if (multisigAuthority) {
+        //   setHighLightableMultisigId(multisigAuthority);
+        // }
+        // navigate(`/multisig/${multisigAuthority}?v=proposals`);
       } else if (item.operationType === OperationType.StreamAddFunds) {
         softReloadStreams();
       } else if (item.operationType === OperationType.StreamPause) {
@@ -969,7 +1001,6 @@ export const AccountsNewView = () => {
     address,
     inspectedAccountType,
     isSelectedAssetNativeAccount, 
-    setHighLightableMultisigId, 
     resetTransactionStatus, 
     recordTxConfirmation, 
     setShouldLoadTokens,
@@ -1939,6 +1970,7 @@ export const AccountsNewView = () => {
                 currentOperation: TransactionStatus.TransactionFinished
               });
               setIsTransferTokenModalVisible(false);
+              showNotificationByType("info");
             } else {
               openNotification({
                 title: t('notifications.error-title'),
@@ -5395,6 +5427,7 @@ export const AccountsNewView = () => {
                                 treasuryList={treasuryList}
                                 multisigAccounts={multisigAccounts}
                                 selectedMultisig={selectedMultisig}
+                                showNotificationByType={() => showNotificationByType("info")}
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                               <MoneyStreamsIncomingView

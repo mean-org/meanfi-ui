@@ -70,6 +70,7 @@ export const MoneyStreamsInfoView = (props: {
   treasuryList: (Treasury | TreasuryInfo)[];
   multisigAccounts: MultisigInfo[] | undefined;
   selectedMultisig: MultisigInfo | undefined;
+  showNotificationByType?: any;
 }) => {
   const {
     tokenList,
@@ -97,6 +98,7 @@ export const MoneyStreamsInfoView = (props: {
     onSendFromStreamingAccountDetails,
     onSendFromIncomingStreamInfo,
     onSendFromOutgoingStreamInfo,
+    showNotificationByType,
     autocloseTreasuries,
     multisigAccounts,
     selectedMultisig,
