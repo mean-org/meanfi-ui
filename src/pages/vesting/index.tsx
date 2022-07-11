@@ -400,18 +400,17 @@ export const VestingView = () => {
       isWorkflowLocked = false;
     }
 
-    const notifyVestingContractCreated = async (item: TxConfirmationInfo) => {
-      const options = item.extras as VestingContractCreateOptions;
-      if (options && options.multisig) {
+    const notifyMultisigVestingContractActionFollowup = async (message1: string, message2: string, item: TxConfirmationInfo) => {
+      if (item.extras && item.extras.multisig) {
         openNotification({
           type: "info",
-          description: 'To complete the vesting contract setup, the other Multisig owners need to approve the proposal.',
+          description: (<span>{message1}</span>),
           duration: 8,
         });
         await delay(8000);
         openNotification({
           type: "info",
-          description: 'After the proposal has been approved and executed, you will then be able to set up vesting streams within the contract.',
+          description: (<span>{message1}</span>),
           duration: 8,
         });
         await delay(8000);
@@ -421,8 +420,8 @@ export const VestingView = () => {
             <>
               <div>The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
               <span className="secondary-link" onClick={() => {
-                  const url = `/multisig/${options.multisig}?v=proposals`;
-                  setHighLightableMultisigId(options.multisig);
+                  const url = `/multisig/${item.extras.multisig}?v=proposals`;
+                  setHighLightableMultisigId(item.extras.multisig);
                   navigate(url);
                 }}>
                 See proposals &gt;
@@ -437,52 +436,9 @@ export const VestingView = () => {
       }
     }
 
-    const notifyVestingStreamCreated = async (item: TxConfirmationInfo) => {
-      const options = item.extras as VestingContractStreamCreateOptions;
-      if (options && options.multisig) {
-        openNotification({
-          type: "info",
-          description: 'To complete the vesting stream set up, the other Multisig owners need to approve the proposal.',
-          duration: 8,
-        });
-        await delay(8000);
-        openNotification({
-          type: "info",
-          description: 'After the proposal has been approved and executed, the vesting stream will be scheduled.',
-          duration: 8,
-        });
-        await delay(8000);
-        openNotification({
-          type: "info",
-          description: (
-            <>
-              <div>The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
-              <Button
-                type="primary"
-                size="small"
-                shape="round"
-                className="extra-small"
-                onClick={() => {
-                  const url = `/multisig/${options.multisig}?v=proposals`;
-                  setHighLightableMultisigId(options.multisig);
-                  navigate(url);
-                }}>
-                See proposals
-              </Button>
-            </>
-          ),
-          duration: 30,
-          handleClose: turnOffLockWorkflow
-        });
-      } else {
-        turnOffLockWorkflow();
-      }
-    }
-
     switch (item.operationType) {
       case OperationType.TreasuryAddFunds:
       case OperationType.TreasuryRefreshBalance:
-      case OperationType.TreasuryWithdraw:
       case OperationType.StreamClose:
       case OperationType.StreamAddFunds:
       case OperationType.StreamPause:
@@ -501,18 +457,41 @@ export const VestingView = () => {
         recordTxConfirmation(item.signature, item.operationType, true);
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
-          notifyVestingContractCreated(item);
+          notifyMultisigVestingContractActionFollowup(
+            'To complete the vesting contract setup, the other Multisig owners need to approve the proposal.',
+            'After the proposal has been approved and executed, you will then be able to set up vesting streams within the contract.',
+            item
+          );
         }
         setTimeout(() => {
           hardReloadContracts();
         }, 20);
         break;
       case OperationType.TreasuryStreamCreate:
-        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryCreate]}`, item, 'crimson');
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryStreamCreate]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, true);
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
-          notifyVestingStreamCreated(item);
+          notifyMultisigVestingContractActionFollowup(
+            'To complete the vesting stream set up, the other Multisig owners need to approve the proposal.',
+            'After the proposal has been approved and executed, the vesting stream will be scheduled.',
+            item
+          );
+        }
+        setTimeout(() => {
+          hardReloadContracts();
+        }, 20);
+        break;
+      case OperationType.TreasuryWithdraw:
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryWithdraw]}`, item, 'crimson');
+        recordTxConfirmation(item.signature, item.operationType, true);
+        if (!isWorkflowLocked) {
+          isWorkflowLocked = true;
+          notifyMultisigVestingContractActionFollowup(
+            'To complete the unallocated vesting funds withdrawal, the other Multisig owners need to approve the proposal.',
+            'After the proposal has been approved and executed, the vesting stream will be scheduled.',
+            item
+          );
         }
         setTimeout(() => {
           hardReloadContracts();
@@ -2817,21 +2796,27 @@ export const VestingView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const completedMessage = params.multisig
+              ? `Withdrawal of ${formatThousands(
+                parseFloat(params.amount),
+                params.associatedToken?.decimals
+              )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name} has been proposed`
+              : `Successful withdrawal of ${formatThousands(
+                parseFloat(params.amount),
+                params.associatedToken?.decimals
+              )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryWithdraw,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Withdraw ${formatThousands(
+              loadingMessage: `${params.multisig ? 'Proposal to withdraw' : 'Withdraw'} ${formatThousands(
                 parseFloat(params.amount),
                 params.associatedToken?.decimals
               )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Successful withdrawal of ${formatThousands(
-                parseFloat(params.amount),
-                params.associatedToken?.decimals
-              )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name}`,
+              completedMessage,
               extras: params
             });
             setIsBusy(false);
@@ -4312,27 +4297,28 @@ export const VestingView = () => {
           <VestingContractCloseModal
             handleClose={hideVestingContractCloseModal}
             handleOk={onAcceptCloseVestingContractModal}
+            isBusy={isBusy}
+            isVisible={isVestingContractCloseModalOpen}
             nativeBalance={nativeBalance}
+            transactionFees={transactionFees}
             treasuryBalance={treasuryEffectiveBalance}
             vestingContract={selectedVestingContract}
-            isVisible={isVestingContractCloseModalOpen}
-            transactionFees={transactionFees}
-            isBusy={isBusy}
           />
         )}
 
         {isVestingContractTransferFundsModalVisible && (
           <VestingContractWithdrawFundsModal
+            handleClose={closeVestingContractTransferFundsModal}
+            handleOk={(options: VestingContractWithdrawOptions) => onAcceptVestingContractTransferFunds(options)}
+            isBusy={isBusy}
+            isMultisigTreasury={isMultisigTreasury()}
             isVisible={isVestingContractTransferFundsModalVisible}
+            minRequiredBalance={minRequiredBalance}
+            multisigAccounts={multisigAccounts}
             nativeBalance={nativeBalance}
+            selectedMultisig={selectedMultisig}
             transactionFees={transactionFees}
             vestingContract={selectedVestingContract}
-            isMultisigTreasury={isMultisigTreasury()}
-            multisigAccounts={multisigAccounts}
-            minRequiredBalance={minRequiredBalance}
-            handleOk={(options: VestingContractWithdrawOptions) => onAcceptVestingContractTransferFunds(options)}
-            handleClose={closeVestingContractTransferFundsModal}
-            isBusy={isBusy}
           />
         )}
 

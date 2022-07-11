@@ -26,26 +26,28 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const VestingContractWithdrawFundsModal = (props: {
   handleClose: any;
   handleOk: any;
-  isVisible: boolean;
   isBusy: boolean;
-  nativeBalance: number;
+  isMultisigTreasury: boolean;
+  isVisible: boolean;
   minRequiredBalance: number;
+  multisigAccounts: MultisigInfo[] | undefined;
+  nativeBalance: number;
+  selectedMultisig: MultisigInfo | undefined;
   transactionFees: TransactionFees;
   vestingContract: Treasury | undefined;
-  multisigAccounts: MultisigInfo[] | undefined;
-  isMultisigTreasury: boolean;
 }) => {
   const {
     handleClose,
     handleOk,
-    isVisible,
     isBusy,
-    nativeBalance,
+    isMultisigTreasury,
+    isVisible,
     minRequiredBalance,
+    multisigAccounts,
+    nativeBalance,
+    selectedMultisig,
     transactionFees,
     vestingContract,
-    multisigAccounts,
-    isMultisigTreasury,
   } = props;
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
@@ -89,11 +91,15 @@ export const VestingContractWithdrawFundsModal = (props: {
   }, [vestingContract]);
 
   const onAcceptWithdrawTreasuryFunds = () => {
+    const multisig = isMultisigTreasury && selectedMultisig
+      ? selectedMultisig.authority.toBase58()
+      : '';
     const options: VestingContractWithdrawOptions = {
       amount: withdrawAmount,
       tokenAmount: tokenAmount,
       destinationAccount: to,
-      associatedToken: selectedToken
+      associatedToken: selectedToken,
+      multisig
     };
     handleOk(options);
   }

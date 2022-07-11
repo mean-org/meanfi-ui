@@ -460,7 +460,6 @@ export const Streams = () => {
         break;
     }
   }, [
-    location.pathname,
     customStreamDocked,
     recordTxConfirmation,
     setDeletedStream,

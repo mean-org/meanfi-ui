@@ -92,6 +92,7 @@ export interface VestingContractWithdrawOptions {
     tokenAmount: any;
     destinationAccount: string;
     associatedToken: TokenInfo | undefined;
+    multisig: string;
 }
 
 export interface VestingContractStreamCreateOptions {

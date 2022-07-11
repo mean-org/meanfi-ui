@@ -386,7 +386,9 @@ export const VestingContractCreateStreamModal = (props: {
     }
 
     const onStreamCreateClick = () => {
-        const multisig = selectedMultisig ? selectedMultisig.authority.toBase58() : '';
+        const multisig = isMultisigTreasury && selectedMultisig
+            ? selectedMultisig.authority.toBase58()
+            : '';
         const options: VestingContractStreamCreateOptions = {
             associatedToken: selectedToken,
             beneficiaryAddress: recipientAddress,
