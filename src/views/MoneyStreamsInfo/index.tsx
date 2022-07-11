@@ -1061,9 +1061,9 @@ export const MoneyStreamsInfoView = (props: {
                 description: t('notifications.error-sending-transaction'),
                 type: "error"
               });
-              setIsBusy(false);
             }
             resetTransactionStatus();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }

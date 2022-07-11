@@ -37,6 +37,7 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } f
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../contexts/accounts";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { useSearchParams } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -45,6 +46,7 @@ export const MoneyStreamsIncomingView = (props: {
   onSendFromIncomingStreamDetails?: any;
   accountAddress: string;
   multisigAccounts: MultisigInfo[] | undefined;
+  showNotificationByType?: any;
 }) => {
   const {
     deletedStreams,
@@ -66,11 +68,13 @@ export const MoneyStreamsIncomingView = (props: {
     onSendFromIncomingStreamDetails,
     accountAddress,
     multisigAccounts,
+    showNotificationByType,
   } = props;
 
   const connectionConfig = useConnectionConfig();
   const { endpoint } = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
 
@@ -86,6 +90,19 @@ export const MoneyStreamsIncomingView = (props: {
   const hideDetailsHandler = () => {
     onSendFromIncomingStreamDetails();
   }
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -531,8 +548,16 @@ export const MoneyStreamsIncomingView = (props: {
               completedMessage: `Stream transferred to: ${shortenAddress(address)}`,
               extras: streamSelected.id as string
             });
-            onTransferStreamTransactionFinished();
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+
+            setIsTransferStreamModalVisibility(false);
             setLoadingStreamDetails(true);
+            param === "multisig" && showNotificationByType("info");
+            onTransferStreamTransactionFinished();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1023,9 +1048,17 @@ export const MoneyStreamsIncomingView = (props: {
               )} ${token.symbol}`,
               extras: streamSelected.id as string
             });
-            setIsBusy(false);
-            onWithdrawFundsTransactionFinished();
+
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+
+            setIsWithdrawModalVisibility(false);
             setLoadingStreamDetails(true);
+            param === "multisig" && showNotificationByType("info");
+            onWithdrawFundsTransactionFinished();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }

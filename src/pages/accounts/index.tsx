@@ -1980,8 +1980,9 @@ export const AccountsNewView = () => {
                 description: t('notifications.error-sending-transaction'),
                 type: "error"
               });
-              setIsBusy(false);
             }
+            resetTransactionStatus();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2304,9 +2305,9 @@ export const AccountsNewView = () => {
                 description: t('notifications.error-sending-transaction'),
                 type: "error"
               });
-              setIsBusy(false);
             }
             resetTransactionStatus();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2657,9 +2658,9 @@ export const AccountsNewView = () => {
                 description: t('notifications.error-sending-transaction'),
                 type: "error"
               });
-              setIsBusy(false);
             }
             resetTransactionStatus();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -5471,6 +5472,7 @@ export const AccountsNewView = () => {
                                 accountAddress={accountAddress}
                                 multisigAccounts={multisigAccounts}
                                 onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
+                                showNotificationByType={() => showNotificationByType("info")}
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
                               <MoneyStreamsOutgoingView
