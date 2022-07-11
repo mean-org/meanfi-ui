@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { StreamTemplate, Treasury, TreasuryType } from '@mean-dao/msp';
+import { StreamTemplate, Treasury } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { useTranslation } from 'react-i18next';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
@@ -7,7 +7,7 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { TimeData } from '../../../../models/common-types';
 import { PaymentRateType } from '../../../../models/enums';
 import {
-    getLockPeriodOptionLabel,
+    getLockPeriodOptionLabelByAmount,
     getPaymentIntervalFromSeconds,
     getReadableDate,
     getTimeEllapsed,
@@ -323,9 +323,9 @@ export const VestingContractOverview = (props: {
                     )}
                     <div className="two-column-form-layout col70x30">
                         <div className="left mb-2">
-                            <span className="font-bold font-size-100 fg-secondary-75">{lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)} vesting contract</span>
+                            <span className="font-bold font-size-100 fg-secondary-75">{lockPeriodAmount} {getLockPeriodOptionLabelByAmount(lockPeriodFrequency, parseFloat(lockPeriodAmount), t)} vesting contract</span>
                             <div className="font-size-100 fg-secondary-50">{cliffReleasePercentage}% unlocked on commencement date</div>
-                            <div className="font-size-100 fg-secondary-50">{100 - cliffReleasePercentage}% of allocated funds streamed over {lockPeriodAmount} {getLockPeriodOptionLabel(lockPeriodFrequency, t)}</div>
+                            <div className="font-size-100 fg-secondary-50">{100 - cliffReleasePercentage}% of allocated funds streamed over {lockPeriodAmount} {getLockPeriodOptionLabelByAmount(lockPeriodFrequency, parseFloat(lockPeriodAmount), t)}</div>
                         </div>
                         <div className={`right mb-2 pr-2 ${isXsDevice ? 'text-left' : 'text-right'}`}>
                             <div className="font-bold font-size-100 fg-secondary-75">

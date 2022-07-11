@@ -313,6 +313,72 @@ export const getLockPeriodOptionLabel = (val: PaymentRateType, trans?: any): str
     return result;
 }
 
+export const getLockPeriodOptionLabelByAmount = (val: PaymentRateType, periodAmount: number, trans?: any): string => {
+    let result = '';
+    switch (val) {
+        case PaymentRateType.PerMinute:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.minute')
+                    : trans('general.minutes')
+                : periodAmount === 1
+                    ? 'minute'
+                    : 'minutes';
+            break;
+        case PaymentRateType.PerHour:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.hour')
+                    : trans('general.hours')
+                : periodAmount === 1
+                    ? 'hour'
+                    : 'hours';
+            break;
+        case PaymentRateType.PerDay:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.day')
+                    : trans('general.days')
+                : periodAmount === 1
+                    ? 'day'
+                    : 'days';
+
+            break;
+        case PaymentRateType.PerWeek:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.week')
+                    : trans('general.weeks')
+                : periodAmount === 1
+                    ? 'week'
+                    : 'weeks';
+
+            break;
+        case PaymentRateType.PerMonth:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.month')
+                    : trans('general.months')
+                : periodAmount === 1
+                    ? 'month'
+                    : 'months';
+            break;
+        case PaymentRateType.PerYear:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.year')
+                    : trans('general.years')
+                : periodAmount === 1
+                    ? 'year'
+                    : 'years';
+
+            break;
+        default:
+            break;
+    }
+    return result;
+}
+
 export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOption, trans?: any): string => {
     let result = '';
     switch (val) {
