@@ -244,15 +244,28 @@ export const VestingContractDetails = (props: {
                         </div>
                         <div className={`right mb-2 pr-2 font-size-100 line-height-120 ${isXsDevice ? 'text-left' : 'text-right'}`}>
                             {getVestingDistributionStatus()}
-                            {vestingContractFlowRate && vestingContract && selectedToken && vestingContract.totalStreams > 0 && !isDateInTheFuture(paymentStartDate) && (
-                                <div className="vested-amount">
-                                    {
-                                        formatThousands(
-                                            percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount),
-                                            friendlyDisplayDecimalPlaces(percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount)) || selectedToken.decimals
-                                        )
-                                    } {selectedToken.symbol} vested
-                                </div>
+                            {vestingContractFlowRate && vestingContract && selectedToken && vestingContract.totalStreams > 0 && (
+                                <>
+                                    {isDateInTheFuture(paymentStartDate) ? (
+                                        <div className="vested-amount">
+                                            {
+                                                formatThousands(
+                                                    vestingContractFlowRate.streamableAmount,
+                                                    friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount) || selectedToken.decimals
+                                                )
+                                            } {selectedToken.symbol} to be vested
+                                        </div>
+                                    ) : (
+                                        <div className="vested-amount">
+                                            {
+                                                formatThousands(
+                                                    percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount),
+                                                    friendlyDisplayDecimalPlaces(percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount)) || selectedToken.decimals
+                                                )
+                                            } {selectedToken.symbol} vested
+                                        </div>
+                                    )}
+                                </>
                             )}
                             <div className="vesting-progress">
                                 <Progress
