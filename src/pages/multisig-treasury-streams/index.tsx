@@ -29,7 +29,6 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import {
     formatAmount,
-    formatThousands,
     getAmountWithSymbol,
     getTokenAmountAndSymbolByTokenAddress,
     getTokenSymbol,
@@ -39,12 +38,12 @@ import {
 import {
     consoleOut,
     copyText,
-    friendlyDisplayDecimalPlaces,
     getFormattedNumberToLocale,
     getIntervalFromSeconds,
     getReadableDate,
     getShortDate,
     isValidAddress,
+    toUsCurrency,
 } from "../../utils/ui";
 import {
     FALLBACK_COIN_IMAGE,
@@ -1124,15 +1123,7 @@ export const MultisigTreasuryStreams = () => {
                                 <span className="rate-amount">--</span>
                             ) : (
                                 <>
-                                    <div className="rate-amount">$
-                                        {
-                                            formatThousands(
-                                            Math.abs(streamsSummary.totalNet),
-                                            friendlyDisplayDecimalPlaces(streamsSummary.totalNet),
-                                            friendlyDisplayDecimalPlaces(streamsSummary.totalNet)
-                                            )
-                                        }
-                                    </div>
+                                    <div className="rate-amount">{toUsCurrency(streamsSummary.totalNet)}</div>
                                     <div className="interval">{t('streams.streaming-balance')}</div>
                                 </>
                             )}

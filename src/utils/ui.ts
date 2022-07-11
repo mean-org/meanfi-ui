@@ -76,7 +76,9 @@ export class LockPeriodTypeOption {
 
 export const friendlyDisplayDecimalPlaces = (amount: number) => {
     const value = Math.abs(amount);
-    if (value < 1000) {
+    if (value < 1) {
+        return null;
+    } else if (value < 1000) {
         return 5;
     } else if (value >= 1000 && value < 1000000) {
         return 4;

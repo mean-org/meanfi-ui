@@ -11,7 +11,7 @@ import { getCategoryLabelByValue, VestingFlowRateInfo } from '../../../../models
 import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
 import { IconLoading } from '../../../../Icons';
-import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getTodayPercentualBetweenTwoDates, toTimestamp } from '../../../../utils/ui';
+import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getTodayPercentualBetweenTwoDates, percentage, toTimestamp } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { Progress } from 'antd';
 
@@ -248,8 +248,8 @@ export const VestingContractDetails = (props: {
                                 <div className="vested-amount">
                                     {
                                         formatThousands(
-                                            vestingContractFlowRate.streamableAmount,
-                                            friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount)
+                                            percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount),
+                                            friendlyDisplayDecimalPlaces(percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount)) || selectedToken.decimals
                                         )
                                     } {selectedToken.symbol} vested
                                 </div>

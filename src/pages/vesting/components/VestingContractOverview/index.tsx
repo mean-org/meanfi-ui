@@ -251,12 +251,12 @@ export const VestingContractOverview = (props: {
                                 {
                                     formatThousands(
                                         percentageOfStreamableAmount,
-                                        friendlyDisplayDecimalPlaces(percentageOfStreamableAmount)
+                                        friendlyDisplayDecimalPlaces(percentageOfStreamableAmount) || selectedToken.decimals
                                     )
                                 } of {
                                     formatThousands(
                                         vestingContractFlowRate.streamableAmount,
-                                        friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount)
+                                        friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount) || selectedToken.decimals
                                     )
                                 } {selectedToken.symbol} vested
                             </span>
