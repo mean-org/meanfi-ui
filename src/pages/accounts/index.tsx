@@ -5490,6 +5490,7 @@ export const AccountsNewView = () => {
                                 streamingAccountSelected={treasuryDetail}
                                 onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
                                 onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
+                                showNotificationByType={() => showNotificationByType("info")}
                               />
                             ) : null}
                           </div>

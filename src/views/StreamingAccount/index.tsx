@@ -53,6 +53,7 @@ export const StreamingAccountView = (props: {
   treasuryList: (Treasury | TreasuryInfo)[] | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
   selectedMultisig: MultisigInfo | undefined;
+  showNotificationByType?: any;
 }) => {
   const {
     tokenList,
@@ -87,6 +88,7 @@ export const StreamingAccountView = (props: {
   const { 
     selectedMultisig,
     multisigAccounts,
+    showNotificationByType,
     streamingAccountSelected,
     onSendFromStreamingAccountDetails,
     onSendFromStreamingAccountOutgoingStreamInfo,
@@ -127,6 +129,19 @@ export const StreamingAccountView = (props: {
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
   }
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const getQueryTabOption = useCallback(() => {
 
@@ -951,6 +966,7 @@ export const StreamingAccountView = (props: {
             onAddFundsTransactionFinished();
             setOngoingOperation(undefined);
             setLoadingStreamingAccountDetails(true);
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -973,10 +989,10 @@ export const StreamingAccountView = (props: {
     onExecuteTreasuryTransferFundsTx(params);
   };
 
-  const onTreasuryFundsTransferred = () => {
-    setIsTransferFundsModalVisible(false);
-    resetTransactionStatus();
-  };
+  // const onTreasuryFundsTransferred = () => {
+  //   setIsTransferFundsModalVisible(false);
+  //   resetTransactionStatus();
+  // };
 
   const onExecuteTreasuryTransferFundsTx = async (data: any) => {
     let transaction: Transaction;
@@ -1295,9 +1311,18 @@ export const StreamingAccountView = (props: {
               )} ${selectedToken.symbol}`,
               extras: streamingAccountSelected.id as string
             });
-            onTreasuryFundsTransferred();
-            setOngoingOperation(undefined);
+
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            
+            setIsTransferFundsModalVisible(false);
             setLoadingStreamingAccountDetails(true);
+            param === "multisig" && showNotificationByType("info");
+            setOngoingOperation(undefined);
+            resetTransactionStatus();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1344,7 +1369,6 @@ export const StreamingAccountView = (props: {
   const onCloseTreasuryTransactionFinished = () => {
     hideCloseTreasuryModal();
     refreshTokenBalance();
-    resetTransactionStatus();
   };
 
   const onExecuteCloseTreasuryTransaction = async () => {
@@ -1739,9 +1763,18 @@ export const StreamingAccountView = (props: {
               completedMessage: `Successfully closed streaming account: ${streamingAccountName}`,
               extras: streamingAccountSelected.id as string
             });
-            onCloseTreasuryTransactionFinished();
-            setOngoingOperation(undefined);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            
+            setIsCloseTreasuryModalVisibility(false);
             setLoadingStreamingAccountDetails(true);
+            param === "multisig" && showNotificationByType("info");
+            setOngoingOperation(undefined);
+            onCloseTreasuryTransactionFinished();
+            resetTransactionStatus();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
