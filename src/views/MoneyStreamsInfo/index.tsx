@@ -735,16 +735,14 @@ export const MoneyStreamsInfoView = (props: {
   };
 
   const onTreasuryCreated = useCallback((createOptions: TreasuryCreateOptions) => {
-    closeCreateTreasuryModal();
     refreshTokenBalance();
-    resetTransactionStatus();
 
     openNotification({
       description: `Navigate to outgoing tab to checkout streaming account: ${createOptions.treasuryName}`,
       type: "info",
       duration: 20,
     });
-  }, [closeCreateTreasuryModal, refreshTokenBalance, resetTransactionStatus]);
+  }, [refreshTokenBalance]);
 
   const onExecuteCreateTreasuryTx = async (createOptions: TreasuryCreateOptions) => {
     let transaction: Transaction;
@@ -1036,20 +1034,36 @@ export const MoneyStreamsInfoView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.TreasuryCreate,
-              finality: "finalized",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: `Create streaming account: ${createOptions.treasuryName}`,
-              completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully streaming account creation: ${createOptions.treasuryName}`,
-              extras: createOptions.multisigId as string
-            });
-            setIsBusy(false);
-            onTreasuryCreated(createOptions);
-            setLoadingMoneyStreamsDetails(true);
+            if (sent) {
+              enqueueTransactionConfirmation({
+                signature: signature,
+                operationType: OperationType.TreasuryCreate,
+                finality: "finalized",
+                txInfoFetchStatus: "fetching",
+                loadingTitle: "Confirming transaction",
+                loadingMessage: `Create streaming account: ${createOptions.treasuryName}`,
+                completedTitle: "Transaction confirmed",
+                completedMessage: `Successfully streaming account creation: ${createOptions.treasuryName}`,
+                extras: createOptions.multisigId as string
+              });
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished
+              });
+
+              setIsCreateTreasuryModalVisibility(false);
+              setLoadingMoneyStreamsDetails(true);
+              param === "multisig" && showNotificationByType("info");
+              param !== "multisig" && onTreasuryCreated(createOptions);
+            } else {
+              openNotification({
+                title: t('notifications.error-title'),
+                description: t('notifications.error-sending-transaction'),
+                type: "error"
+              });
+              setIsBusy(false);
+            }
+            resetTransactionStatus();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }

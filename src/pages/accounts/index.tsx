@@ -1973,7 +1973,7 @@ export const AccountsNewView = () => {
                 currentOperation: TransactionStatus.TransactionFinished
               });
               setIsTransferTokenModalVisible(false);
-              showNotificationByType("info");
+              param === "multisig" && showNotificationByType("info");
             } else {
               openNotification({
                 title: t('notifications.error-title'),
@@ -1988,6 +1988,7 @@ export const AccountsNewView = () => {
     }
 
   }, [
+    param,
     wallet,
     publicKey,
     connection,
@@ -2296,7 +2297,7 @@ export const AccountsNewView = () => {
               });
 
               setIsTransferVaultAuthorityModalVisible(false);
-              showNotificationByType("info");
+              param === "multisig" && showNotificationByType("info");
             } else {
               openNotification({
                 title: t('notifications.error-title'),
@@ -2312,6 +2313,7 @@ export const AccountsNewView = () => {
     }
 
   }, [
+    param,
     wallet,
     publicKey,
     connection,
@@ -2648,7 +2650,7 @@ export const AccountsNewView = () => {
               });
 
               setIsDeleteVaultModalVisible(false);
-              showNotificationByType("info");
+              param === "multisig" && showNotificationByType("info");
             } else {
               openNotification({
                 title: t('notifications.error-title'),
@@ -2664,6 +2666,7 @@ export const AccountsNewView = () => {
     }
 
   }, [
+    param,
     wallet,
     publicKey,
     connection,
