@@ -97,7 +97,17 @@ export const VestingContractStreamList = (props: {
     const [transactionCancelled, setTransactionCancelled] = useState(false);
     const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
     const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
+    // const [paymentStartDate, setPaymentStartDate] = useState<string>("");
 
+    const isDateInTheFuture = useCallback((date: string): boolean => {
+        const now = new Date().toUTCString();
+        const nowUtc = new Date(now);
+        const comparedDate = new Date(date);
+        if (comparedDate > nowUtc) {
+            return true;
+        }
+        return false;
+    }, []);
 
     const resetTransactionStatus = useCallback(() => {
 
@@ -162,6 +172,18 @@ export const VestingContractStreamList = (props: {
         }
         return value;
     }, [getTokenByMintAddress]);
+
+    const getNoStreamsMessage = useCallback(() => {
+        if (vestingContract && streamTemplate) {
+            const paymentStartDate = streamTemplate.startUtc as string;
+            // When a contract has started with 0 streams, say it
+            if (!isDateInTheFuture(paymentStartDate) && vestingContract.totalStreams === 0) {
+                return 'As this contract has started, no streams are able to be added to it.';
+            }
+        }
+
+        return t('vesting.vesting-account-streams.no-streams');
+    }, [isDateInTheFuture, streamTemplate, t, vestingContract]);
 
     // const getStreamTypeIcon = useCallback((item: Stream) => {
     //     if (isInboundStream(item)) {
@@ -1572,7 +1594,7 @@ export const VestingContractStreamList = (props: {
                                 <p>{t('treasuries.treasury-streams.loading-streams')}</p>
                             ) : (
                                 <>
-                                    <p>{t('vesting.vesting-account-streams.no-streams')}</p>
+                                    <p>{getNoStreamsMessage()}</p>
                                 </>
                             )}
                         </>

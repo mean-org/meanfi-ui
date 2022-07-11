@@ -494,7 +494,7 @@ export const VestingView = () => {
           isWorkflowLocked = true;
           notifyMultisigVestingContractActionFollowup(
             'To complete the unallocated vesting funds withdrawal, the other Multisig owners need to approve the proposal.',
-            'After the proposal has been approved and executed, the vesting stream will be scheduled.',
+            'After the proposal has been approved and executed, the vesting funds will be sent to the address specified.',
             item
           );
         }

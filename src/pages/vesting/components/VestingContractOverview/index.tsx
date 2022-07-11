@@ -290,7 +290,7 @@ export const VestingContractOverview = (props: {
                 )}
             </>
         );
-    }, [completedVestingPercentage, isContractFinished, isDateInTheFuture, paymentStartDate, selectedToken, theme, vestingContract, vestingContractFlowRate]);
+    }, [completedVestingPercentage, isContractFinished, selectedToken, theme, vestingContract, vestingContractFlowRate]);
 
     const getRelativeFinishDate = () => {
         const finishDate = getContractFinishDate();
