@@ -417,6 +417,7 @@ export const VestingView = () => {
         const myNotifyKey = `notify-${Date.now()}`;
         openNotification({
           type: "info",
+          key: myNotifyKey,
           description: (
             <>
               <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
