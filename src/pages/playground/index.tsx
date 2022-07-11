@@ -58,6 +58,8 @@ const NUMBER_OF_ITEMS: number[] = [
   0, 1, 99, 157, 679, 1000, 1300, 1550, 99600, 154350, 600000, 1200000
 ];
 
+const sampleMultisig = 'H2r15H4hFn7xV5PQtnatqJaHo6ybM8qd1i5WnaadE1aX';
+
 export const PlaygroundView = () => {
   const { t } = useTranslation("common");
   const location = useLocation();
@@ -70,6 +72,7 @@ export const PlaygroundView = () => {
     userTokens,
     splTokenList,
     recipientAddress,
+    setHighLightableMultisigId,
     getTokenPriceBySymbol,
     setRecipientAddress,
     setEffectiveRate,
@@ -359,12 +362,37 @@ export const PlaygroundView = () => {
     }, 5000);
   };
 
-  const showNotificationByType = (type: IconType) => {
+  const showNotificationByType = (type: IconType, hasCta = false) => {
+    if (!hasCta) {
+      openNotification({
+        type,
+        title: 'Notification Title',
+        duration: 0,
+        description: <span>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Natus, ullam perspiciatis accusamus, sunt ipsum asperiores similique cupiditate autem veniam explicabo earum voluptates!</span>
+      });
+      return;
+    }
     openNotification({
       type,
       title: 'Notification Title',
       duration: 0,
-      description: <span>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Natus, ullam perspiciatis accusamus, sunt ipsum asperiores similique cupiditate autem veniam explicabo earum voluptates!</span>
+      description: (
+        <>
+          <div className="mb-1">This notification is meant to have an additional CTA to perform another action!</div>
+          <Button
+            type="primary"
+            size="small"
+            shape="round"
+            className="extra-small"
+            onClick={() => {
+              const url = `/multisig/${sampleMultisig}?v=proposals`;
+              setHighLightableMultisigId(sampleMultisig);
+              navigate(url);
+            }}>
+            See proposals
+          </Button>
+        </>
+      ),
     });
   };
 
@@ -904,7 +932,7 @@ export const PlaygroundView = () => {
         <div className="form-label">View a multisig account</div>
         {renderRouteLink('With specific asset preset', '/accounts/D9w3w6CQZvmAaqvQ9BsHSfg8vCa58dh3mXLND5dyDT1z/assets?account-type=multisig')}
         <div className="form-label">View multisig vesting contracts</div>
-        {renderRouteLink('Send multisig to vesting', '/vesting/H2r15H4hFn7xV5PQtnatqJaHo6ybM8qd1i5WnaadE1aX/contracts?account-type=multisig')}
+        {renderRouteLink('Send multisig to vesting', `/vesting/${sampleMultisig}/contracts?account-type=multisig`)}
       </div>
     </>
   );
@@ -966,6 +994,11 @@ export const PlaygroundView = () => {
             onClick={() => showNotificationByType("error")}>
             <span>Error</span>
           </span>
+          <span
+            className="flat-button stroked"
+            onClick={() => showNotificationByType("info", true)}>
+            <span>With CTA</span>
+          </span>
         </Space>
       </div>
 
@@ -979,29 +1012,56 @@ export const PlaygroundView = () => {
 
       <h3>Primary, Secondary and Terciary buttons</h3>
       <div className="mb-2">
-        <Space wrap={true} size="middle">
-          <Button
-            type="primary"
-            shape="round"
-            size="small"
-            className="thin-stroke">
-            Primary
-          </Button>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke">
-            Default
-          </Button>
-          <Button
-            type="ghost"
-            shape="round"
-            size="small"
-            className="thin-stroke">
-            Ghost
-          </Button>
-        </Space>
+        <div className="mb-1">
+          <Space wrap={true} size="middle">
+            <Button
+              type="primary"
+              shape="round"
+              size="small"
+              className="extra-small">
+              Primary
+            </Button>
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="extra-small">
+              Default
+            </Button>
+            <Button
+              type="ghost"
+              shape="round"
+              size="small"
+              className="extra-small">
+              Ghost
+            </Button>
+          </Space>
+        </div>
+        <div className="mb-1">
+          <Space wrap={true} size="middle">
+            <Button
+              type="primary"
+              shape="round"
+              size="middle"
+              className="thin-stroke">
+              Primary
+            </Button>
+            <Button
+              type="default"
+              shape="round"
+              size="middle"
+              className="thin-stroke">
+              Default
+            </Button>
+            <Button
+              type="ghost"
+              shape="round"
+              size="middle"
+              className="thin-stroke">
+              Ghost
+            </Button>
+          </Space>
+        </div>
       </div>
       <h3>Primary, Secondary and Terciary buttons disabled</h3>
       <div className="mb-2">

@@ -28,7 +28,7 @@ import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
 import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
-import { MIN_SOL_BALANCE_REQUIRED, NO_FEES } from '../../constants';
+import { MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
 import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
@@ -60,6 +60,7 @@ import { AccountLayout, u64 } from '@solana/spl-token';
 import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import { BN } from 'bn.js';
 import { PendingProposalsComponent } from './components/PendingProposalsComponent';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -410,6 +411,12 @@ export const VestingView = () => {
         await delay(8000);
         openNotification({
           type: "info",
+          description: 'After the proposal has been approved and executed, you will then be able to set up vesting streams within the contract.',
+          duration: 8,
+        });
+        await delay(8000);
+        openNotification({
+          type: "info",
           description: (
             <>
               <div>The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
@@ -422,13 +429,7 @@ export const VestingView = () => {
               </span>
             </>
           ),
-          duration: 8,
-        });
-        await delay(8000);
-        openNotification({
-          type: "info",
-          description: 'After the proposal has been approved and executed, you will then be able to set up vesting streams within the contract.',
-          duration: 8,
+          duration: 30,
           handleClose: turnOffLockWorkflow
         });
       } else {
@@ -447,25 +448,30 @@ export const VestingView = () => {
         await delay(8000);
         openNotification({
           type: "info",
-          description: (
-            <>
-              <div>The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
-              <span className="secondary-link" onClick={() => {
-                  const url = `/multisig/${options.multisig}?v=proposals`;
-                  setHighLightableMultisigId(options.multisig);
-                  navigate(url);
-                }}>
-                See proposals &gt;
-              </span>
-            </>
-          ),
+          description: 'After the proposal has been approved and executed, the vesting stream will be scheduled.',
           duration: 8,
         });
         await delay(8000);
         openNotification({
           type: "info",
-          description: 'After the proposal has been approved and executed, the vesting stream will be scheduled.',
-          duration: 8,
+          description: (
+            <>
+              <div>The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
+              <Button
+                type="primary"
+                size="small"
+                shape="round"
+                className="extra-small"
+                onClick={() => {
+                  const url = `/multisig/${options.multisig}?v=proposals`;
+                  setHighLightableMultisigId(options.multisig);
+                  navigate(url);
+                }}>
+                See proposals
+              </Button>
+            </>
+          ),
+          duration: 30,
           handleClose: turnOffLockWorkflow
         });
       } else {
@@ -2214,7 +2220,7 @@ export const VestingView = () => {
 
     const createTx = async (): Promise<boolean> => {
 
-      if (!publicKey || !msp || !selectedVestingContract || !workingToken) {
+      if (!publicKey || !msp || !selectedVestingContract || !params.associatedToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -2230,14 +2236,17 @@ export const VestingView = () => {
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      const associatedToken = new PublicKey(workingToken?.address as string);
+      const associatedToken = params.associatedToken.address === WRAPPED_SOL_MINT_ADDRESS
+        ? NATIVE_SOL
+        : params.associatedToken;
+      consoleOut('associatedToken:', associatedToken.toString(), 'blue');
       const treasury = new PublicKey(selectedVestingContract.id as string);
       // const treasurer = new PublicKey(selectedVestingContract.treasurer as string);
       const treasurer = isMultisigContext && selectedMultisig
         ? selectedMultisig.authority
         : publicKey;
-      const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
-      const amount = makeDecimal(new BN(params.tokenAmount), workingToken.decimals);
+      const price = associatedToken ? getTokenPriceByAddress(associatedToken.address) || getTokenPriceBySymbol(associatedToken.symbol) : 0;
+      const amount = makeDecimal(new BN(params.tokenAmount), associatedToken.decimals);
 
       // Create a transaction
       const data = {
@@ -2245,7 +2254,7 @@ export const VestingView = () => {
         treasurer: treasurer.toBase58(),                                // treasurer
         treasury: treasury.toBase58(),                                  // treasury
         beneficiary: params.beneficiaryAddress,                         // beneficiary
-        treasuryAssociatedTokenMint: associatedToken.toBase58(),        // treasuryAssociatedTokenMint
+        treasuryAssociatedTokenMint: associatedToken.address,           // treasuryAssociatedTokenMint
         allocationAssigned: params.tokenAmount,                         // allocationAssigned
         streamName: params.streamName,                                  // streamName
         multisig: params.multisig                                       // expose multisig if present
@@ -2254,7 +2263,7 @@ export const VestingView = () => {
 
       // Report event to Segment analytics
       const segmentData: SegmentStreamCreateData = {
-        asset: workingToken.symbol,
+        asset: associatedToken.symbol,
         assetPrice: price,
         treasury: selectedVestingContract.id as string,
         beneficiary: params.beneficiaryAddress,

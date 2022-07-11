@@ -95,15 +95,16 @@ export interface VestingContractWithdrawOptions {
 }
 
 export interface VestingContractStreamCreateOptions {
+    associatedToken: TokenInfo | undefined;
     beneficiaryAddress: string;
     feePayedByTreasurer: boolean;
     interval: string;
+    multisig: string;
     rateAmount: number;
     streamName: string;
     tokenAmount: number;
     txConfirmDescription: string;
     txConfirmedDescription: string;
-    multisig: string;
 }
 
 export interface CreateVestingStreamParams {

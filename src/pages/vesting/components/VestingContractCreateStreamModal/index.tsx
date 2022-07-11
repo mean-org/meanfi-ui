@@ -388,15 +388,16 @@ export const VestingContractCreateStreamModal = (props: {
     const onStreamCreateClick = () => {
         const multisig = selectedMultisig ? selectedMultisig.authority.toBase58() : '';
         const options: VestingContractStreamCreateOptions = {
+            associatedToken: selectedToken,
             beneficiaryAddress: recipientAddress,
             feePayedByTreasurer: isFeePaidByTreasurer,
             interval: getPaymentRateOptionLabel(lockPeriodFrequency, t),
+            multisig,
             rateAmount: parseFloat(paymentRateAmount),
             streamName: vestingStreamName,
             tokenAmount: tokenAmount.toNumber(),
             txConfirmDescription: getStreamTxConfirmDescription(multisig),
             txConfirmedDescription: getStreamTxConfirmedDescription(multisig),
-            multisig
         };
         handleOk(options);
     }

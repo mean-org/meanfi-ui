@@ -240,7 +240,7 @@ export const VestingContractOverview = (props: {
         const percentageOfStreamableAmount = percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount);
         return (
             <>
-                {vestingContract.totalStreams > 0 && !isDateInTheFuture(paymentStartDate) && (
+                {vestingContract.totalStreams > 0 && (
                     <div className="mt-3 pr-2">
                         <div className="flex-row align-items-center">
                             <TokenIcon
