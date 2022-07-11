@@ -2021,13 +2021,6 @@ export const AccountsNewView = () => {
     onExecuteTransferOwnershipTx (selectedAuthority);
   };
 
-  const onVaultAuthorityTransfered = useCallback(() => {
-    // refreshVaults();
-    resetTransactionStatus();
-  },[
-    resetTransactionStatus
-  ]);
-
   const onExecuteTransferOwnershipTx  = useCallback(async (data: any) => {
 
     let transaction: Transaction;
@@ -2309,16 +2302,7 @@ export const AccountsNewView = () => {
               });
               setIsBusy(false);
             }
-
-            // startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetAssetAuthority);
-            // setIsBusy(false);
-            // setTransactionStatus({
-            //   lastOperation: transactionStatus.currentOperation,
-            //   currentOperation: TransactionStatus.TransactionFinished
-            // });
-            // onVaultAuthorityTransfered();
-            // setIsTransferVaultAuthorityModalVisible(false);
-            // showNotificationByType("info");
+            resetTransactionStatus();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2384,11 +2368,6 @@ export const AccountsNewView = () => {
 
     onExecuteCloseAssetTx(data);
   };
-
-  const onVaultDeleted = useCallback(() => {
-    setIsDeleteVaultModalVisible(false);
-    resetTransactionStatus();
-  },[resetTransactionStatus]);
 
   const onExecuteCloseAssetTx = useCallback(async (data: any) => {
 
@@ -2638,7 +2617,7 @@ export const AccountsNewView = () => {
       }
     }
 
-    if (wallet) {
+    if (wallet && data) {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -2649,13 +2628,33 @@ export const AccountsNewView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DeleteAsset);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            onVaultDeleted();
+            if (sent) {
+              enqueueTransactionConfirmation({
+                signature: signature,
+                operationType: OperationType.DeleteAsset,
+                finality: "confirmed",
+                txInfoFetchStatus: "fetching",
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: "Deleting asset",
+                completedTitle: 'Transaction confirmed',
+                completedMessage: 'Asset successfully deleted'
+              });
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished
+              });
+
+              setIsDeleteVaultModalVisible(false);
+              showNotificationByType("info");
+            } else {
+              openNotification({
+                title: t('notifications.error-title'),
+                description: t('notifications.error-sending-transaction'),
+                type: "error"
+              });
+              setIsBusy(false);
+            }
+            resetTransactionStatus();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2665,19 +2664,20 @@ export const AccountsNewView = () => {
     wallet,
     publicKey,
     connection,
-    selectedAsset,
     nativeBalance,
+    selectedAsset,
+    multisigClient,
     selectedMultisig,
     transactionCancelled,
-    multisigClient,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
     clearTxConfirmationContext,
-    startFetchTxSignatureInfo,
+    showNotificationByType,
     resetTransactionStatus,
     setTransactionStatus,
-    onVaultDeleted
+    t
   ]);
 
   const getAllUserV2Treasuries = useCallback(async () => {
