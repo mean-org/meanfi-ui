@@ -1998,6 +1998,7 @@ export const AccountsNewView = () => {
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
     clearTxConfirmationContext,
+    showNotificationByType,
     resetTransactionStatus,
     setTransactionStatus,
     t
@@ -2271,7 +2272,7 @@ export const AccountsNewView = () => {
       }
     }
 
-    if (wallet) {
+    if (wallet && selectedAsset) {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -2282,36 +2283,65 @@ export const AccountsNewView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetAssetAuthority);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            onVaultAuthorityTransfered();
-            setIsTransferVaultAuthorityModalVisible(false);
+            if (sent) {
+              enqueueTransactionConfirmation({
+                signature: signature,
+                operationType: OperationType.SetAssetAuthority,
+                finality: "confirmed",
+                txInfoFetchStatus: "fetching",
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: "Transferring ownership",
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Asset ${selectedAsset.name} successfully transferred to ${shortenAddress(data.selectedAuthority)}`
+              });
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished
+              });
+
+              setIsTransferVaultAuthorityModalVisible(false);
+              showNotificationByType("info");
+            } else {
+              openNotification({
+                title: t('notifications.error-title'),
+                description: t('notifications.error-sending-transaction'),
+                type: "error"
+              });
+              setIsBusy(false);
+            }
+
+            // startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetAssetAuthority);
+            // setIsBusy(false);
+            // setTransactionStatus({
+            //   lastOperation: transactionStatus.currentOperation,
+            //   currentOperation: TransactionStatus.TransactionFinished
+            // });
+            // onVaultAuthorityTransfered();
+            // setIsTransferVaultAuthorityModalVisible(false);
+            // showNotificationByType("info");
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
   }, [
+    wallet,
+    publicKey,
+    connection,
+    selectedAsset,
+    nativeBalance,
+    multisigClient,
+    selectedMultisig,
+    transactionCancelled,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
     clearTxConfirmationContext,
-    resetTransactionStatus, 
-    wallet, 
-    publicKey, 
-    selectedAsset, 
-    selectedMultisig, 
-    multisigClient, 
-    connection, 
-    setTransactionStatus, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    nativeBalance, 
-    transactionStatus.currentOperation, 
-    transactionCancelled, 
-    startFetchTxSignatureInfo, 
-    onVaultAuthorityTransfered
+    resetTransactionStatus,
+    showNotificationByType,
+    setTransactionStatus,
+    t
   ]);
 
   // Delete asset modal
