@@ -1034,6 +1034,7 @@ export const MultisigProposalModal = (props: {
                       NATIVE_SOL_MINT.toBase58()
                     )})
                   } */}
+                  { transactionStatus.customError }
                 </h4>
               ) : (
                 <h4 className="font-bold mb-3">

@@ -7,12 +7,9 @@ import {
   Account,
   ConfirmOptions,
   Connection,
-  // Keypair,
   LAMPORTS_PER_SOL,
   MemcmpFilter,
   PublicKey,
-  // Signer,
-  // SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
   TransactionInstruction
@@ -30,7 +27,6 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   shortenAddress,
-  // tabNameFormat
 } from '../../utils/utils';
 
 import { Button, Dropdown, Empty, Menu, Spin, Tooltip } from 'antd';
@@ -675,19 +671,21 @@ export const SafeView = () => {
     }
 
   }, [
-    wallet,
-    publicKey,
-    connection,
-    nativeBalance,
-    transactionFees,
-    transactionCancelled,
-    multisigClient,
-    transactionStatus.currentOperation,
-    clearTxConfirmationContext,
-    startFetchTxSignatureInfo,
-    resetTransactionStatus,
-    setTransactionStatus,
-    onMultisigCreated,
+    clearTxConfirmationContext, 
+    connection, 
+    multisigClient, 
+    nativeBalance, 
+    onMultisigCreated, 
+    publicKey, 
+    resetTransactionStatus, 
+    setTransactionStatus, 
+    startFetchTxSignatureInfo, 
+    transactionCancelled, 
+    transactionFees.multisigFee, 
+    transactionFees.networkFee, 
+    transactionFees.rentExempt, 
+    transactionStatus.currentOperation, 
+    wallet
   ]);
 
   const onExecuteCreateSerumMultisigTx = useCallback(async (data: any) => {
@@ -1027,9 +1025,19 @@ export const SafeView = () => {
 
   // New Proposal
   const onNewProposalMultisigClick = useCallback(() => {
+
+    if (!multisigClient) { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
+      .then(value => {
+        setTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
+
     resetTransactionStatus();
     setMultisigProposalModalVisible(true);
-  }, [resetTransactionStatus]);
+
+  }, [multisigClient, resetTransactionStatus]);
 
   const onEditMultisigClick = useCallback(() => {
 
@@ -1475,6 +1483,9 @@ export const SafeView = () => {
     connectionConfig
   ]);
 
+  const [isMultisigTxResultModalVisible, setIsMultisigTxResultModalVisible] = useState(false);
+  const showMultisigTxResultModal = useCallback(() => setIsMultisigTxResultModalVisible(true), []);
+
   const onExecuteCreateTransactionProposal = useCallback(async (data: any) => {
 
     let transaction: Transaction;
@@ -1550,89 +1561,7 @@ export const SafeView = () => {
 
     const createTx = async (): Promise<boolean> => {
 
-      if (publicKey && data) {
-        consoleOut("Start transaction for create multisig", '', 'blue');
-        consoleOut('Wallet address:', publicKey.toBase58());
-
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
-
-        // Data
-        consoleOut('data:', data);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        consoleOut('networkFee:', transactionFees.networkFee, 'blue');
-        consoleOut('rentExempt:', transactionFees.rentExempt, 'blue');
-        consoleOut('multisigFee:', transactionFees.multisigFee, 'blue');
-        const minRequired = transactionFees.multisigFee + transactionFees.rentExempt + transactionFees.networkFee;
-        consoleOut('Min required balance:', minRequired, 'blue');
-
-        setMinRequiredBalance(minRequired);
-
-        if (nativeBalance < minRequired) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
-                minRequired, 
-                NATIVE_SOL_MINT.toBase58()
-              )
-            })`
-          });
-          customLogger.logWarning('Edit multisig transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        return await createTransactionProposal(data)
-          .then((value: any) => {
-            consoleOut('createTransactionProposal returned transaction:', value);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-              result: getTxIxResume(value)
-            });
-            transaction = value;
-            return true;
-          })
-          .catch((error: any) => {
-            console.error('createTransactionProposal error:', error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-              result: `${error}`
-            });
-            customLogger.logError('createTransactionProposal failed', { transcript: transactionLog });
-            return false;
-          });
-
-      } else {
+      if (!publicKey || !data || !multisigClient) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -1640,6 +1569,91 @@ export const SafeView = () => {
         customLogger.logError('createTransactionProposal failed', { transcript: transactionLog });
         return false;
       }
+
+      consoleOut("Start transaction for create multisig", '', 'blue');
+      consoleOut('Wallet address:', publicKey.toBase58());
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      // Data
+      consoleOut('data:', data);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+      consoleOut('networkFee:', transactionFees.networkFee, 'blue');
+      consoleOut('rentExempt:', transactionFees.rentExempt, 'blue');
+      consoleOut('multisigFee:', transactionFees.multisigFee, 'blue');
+      const minRequired = transactionFees.multisigFee + transactionFees.rentExempt + transactionFees.networkFee;
+      consoleOut('Min required balance:', minRequired, 'blue');
+      setMinRequiredBalance(minRequired);
+
+      if (nativeBalance < minRequired) {
+        const txStatusMsg = `Not enough balance ${
+          getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+        } to pay for network fees ${
+          getTokenAmountAndSymbolByTokenAddress(
+            minRequired, 
+            NATIVE_SOL_MINT.toBase58()
+          )
+        }`;
+        const txStatus = {
+          customError: txStatusMsg,
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        } as TransactionStatusInfo;
+        setTransactionStatus(txStatus);
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: txStatusMsg
+        });
+        customLogger.logWarning('Create Transaction Proposal failed', { transcript: transactionLog });
+        return false;
+      }
+
+      const result = await createTransactionProposal(data)
+        .then((value: any) => {
+          consoleOut('createTransactionProposal returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch((error: any) => {
+          console.error('createTransactionProposal error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('createTransactionProposal failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {
@@ -1706,35 +1720,6 @@ export const SafeView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
-            });
-            customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
         console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
@@ -1747,6 +1732,37 @@ export const SafeView = () => {
         customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
         return false;
       }
+
+      const result = await connection
+        .sendEncodedTransaction(encodedTx)
+        .then(sig => {
+          consoleOut('sendEncodedTransaction returned a signature:', sig);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransactionSuccess,
+            currentOperation: TransactionStatus.ConfirmTransaction
+          });
+          signature = sig;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+            result: `signature: ${signature}`
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransaction,
+            currentOperation: TransactionStatus.SendTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+            result: { error, encodedTx }
+          });
+          customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
     }
 
     if (wallet) {
@@ -1780,9 +1796,15 @@ export const SafeView = () => {
               completedMessage: `Successfully created proposal: ${data.title}`,
               extras: data.multisigId
             });
-          } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
+          } else { 
+            setIsBusy(false); 
+          }
+        } else {
+          setIsBusy(false); 
+        }
+      } else { 
+        setIsBusy(false); 
+      }
     }
   }, [
     clearTxConfirmationContext, 
@@ -1806,8 +1828,6 @@ export const SafeView = () => {
     enqueueTransactionConfirmation
   ]);
 
-  const [isMultisigTxResultModalVisible, setIsMultisigTxResultModalVisible] = useState(false);
-  const showMultisigTxResultModal = useCallback(() => setIsMultisigTxResultModalVisible(true), []);
   const closeMultisigTxResultModal = useCallback(() => {
     setIsMultisigTxResultModalVisible(false);
     resetTransactionStatus();
@@ -4380,6 +4400,8 @@ export const SafeView = () => {
                 onExecuteApproveTx(operationPayload);
               } else if (operationPayload.operation === OperationType.RejectTransaction) {
                 onExecuteRejectTx(operationPayload);
+              } else if (operationPayload.operation === OperationType.CreateTransaction) {
+                onExecuteCreateTransactionProposal(operationPayload);
               }
             }
           }}

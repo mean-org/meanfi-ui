@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { AppStateContext } from '../../contexts/appstate';
+import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import {
@@ -2716,29 +2716,26 @@ export const TreasuriesView = () => {
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-
-      const bf = transactionFees.blockchainFee;       // Blockchain fee
-      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
-
+      const minRequired = transactionFees.blockchainFee + transactionFees.mspFlatFee;
       setMinRequiredBalance(minRequired);
-
       consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
-        setTransactionStatus({
+        const txStatusMsg = `Not enough balance ${
+          getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+        } to pay for network fees ${
+          getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+        }`;
+        const txStatus = {
+          customError: txStatusMsg,
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
-        });
+        } as TransactionStatusInfo;
+        setTransactionStatus(txStatus);
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-          }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
-          })`
+          result: txStatusMsg
         });
         customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
         return false;
