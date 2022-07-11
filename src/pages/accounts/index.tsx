@@ -93,7 +93,7 @@ import { MoneyStreamsOutgoingView } from '../../views/MoneyStreamsOutgoing';
 import { StreamingAccountView } from '../../views/StreamingAccount';
 import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
-import { IconType } from 'antd/lib/notification';
+import notification, { IconType } from 'antd/lib/notification';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -393,8 +393,10 @@ export const AccountsNewView = () => {
 
   const showNotificationByType = useCallback(async (type: IconType) => {
     await delay(1500);
+    const myNotifyKey = `notify-${Date.now()}`;
     openNotification({
       type,
+      key: myNotifyKey,
       title: 'Review proposal',
       duration: 20,
       description: (
@@ -411,6 +413,7 @@ export const AccountsNewView = () => {
                 setHighLightableMultisigId(multisigAuthority);
               }
               navigate(`/multisig/${multisigAuthority}?v=proposals`);
+              notification.close(myNotifyKey);
             }}
           >
               Review proposal
