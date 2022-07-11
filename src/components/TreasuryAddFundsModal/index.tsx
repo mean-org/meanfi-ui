@@ -1005,7 +1005,7 @@ export const TreasuryAddFundsModal = (props: {
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
+                  {/* {t('transactions.status.tx-start-failure', {
                     accountBalance: getTokenAmountAndSymbolByTokenAddress(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
@@ -1014,7 +1014,8 @@ export const TreasuryAddFundsModal = (props: {
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})
-                  }
+                  } */}
+                  { transactionStatus.customError }
                 </h4>
               ) : (
                 <h4 className="font-bold mb-3">
