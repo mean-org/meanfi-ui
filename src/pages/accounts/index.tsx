@@ -5480,6 +5480,7 @@ export const AccountsNewView = () => {
                                 streamList={streamList}
                                 multisigAccounts={multisigAccounts}
                                 onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
+                                showNotificationByType={() => showNotificationByType("info")}
                               />
                             ) : pathParamTreasuryId && pathParamStreamingTab === "outgoing" ? (
                               <StreamingAccountView

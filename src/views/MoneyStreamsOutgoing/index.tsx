@@ -32,7 +32,7 @@ import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -41,6 +41,7 @@ export const MoneyStreamsOutgoingView = (props: {
   streamList?: Array<Stream | StreamInfo> | undefined;
   onSendFromOutgoingStreamDetails?: any;
   multisigAccounts: MultisigInfo[] | undefined;
+  showNotificationByType?: any;
 }) => {
   const {
     splTokenList,
@@ -64,10 +65,11 @@ export const MoneyStreamsOutgoingView = (props: {
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
 
+  const [searchParams] = useSearchParams();
   const { wallet, publicKey } = useWallet();
   const connection = useConnection();
 
-  const { streamSelected, streamList, onSendFromOutgoingStreamDetails, multisigAccounts } = props;
+  const { streamSelected, streamList, onSendFromOutgoingStreamDetails, multisigAccounts, showNotificationByType } = props;
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const { endpoint } = useConnectionConfig();
@@ -85,6 +87,19 @@ export const MoneyStreamsOutgoingView = (props: {
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
@@ -1248,9 +1263,16 @@ export const MoneyStreamsOutgoingView = (props: {
               completedMessage: `Successfully paused stream: ${streamName}`,
               extras: streamSelected.id as string
             });
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            
+            setIsPauseStreamModalVisibility(false);
+            setLoadingStreamDetails(true);
+            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             onTransactionFinished();
-            setLoadingStreamDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1684,9 +1706,16 @@ export const MoneyStreamsOutgoingView = (props: {
               completedMessage: `Successfully resumed stream: ${streamName}`,
               extras: streamSelected.id as string
             });
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            
+            setIsResumeStreamModalVisibility(false);
+            setLoadingStreamDetails(true);
+            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             onTransactionFinished();
-            setLoadingStreamDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2132,8 +2161,17 @@ export const MoneyStreamsOutgoingView = (props: {
               completedMessage: `Successfully closed stream: ${streamName}`,
               extras: streamSelected.id as string
             });
-            onCloseStreamTransactionFinished();
+
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            
+            setCloseStreamTransactionModalVisibility(false);
             setLoadingStreamDetails(true);
+            param === "multisig" && showNotificationByType("info");
+            setOngoingOperation(undefined);
+            onCloseStreamTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
