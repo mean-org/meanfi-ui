@@ -410,7 +410,7 @@ export const VestingView = () => {
         await delay(8000);
         openNotification({
           type: "info",
-          description: (<span>{message1}</span>),
+          description: (<span>{message2}</span>),
           duration: 8,
         });
         await delay(8000);
@@ -418,14 +418,19 @@ export const VestingView = () => {
           type: "info",
           description: (
             <>
-              <div>The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
-              <span className="secondary-link" onClick={() => {
+              <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
+              <Button
+                type="primary"
+                size="small"
+                shape="round"
+                className="extra-small"
+                onClick={() => {
                   const url = `/multisig/${item.extras.multisig}?v=proposals`;
                   setHighLightableMultisigId(item.extras.multisig);
                   navigate(url);
                 }}>
-                See proposals &gt;
-              </span>
+                See proposals
+              </Button>
             </>
           ),
           duration: 30,
