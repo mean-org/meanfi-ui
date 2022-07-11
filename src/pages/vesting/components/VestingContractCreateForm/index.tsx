@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
+import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
 import { consoleOut, disabledDate, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
@@ -355,14 +355,14 @@ export const VestingContractCreateForm = (props: {
 
     const handleLockPeriodAmountChange = (e: any) => {
 
-        let periodAmountValue = e.target.value;
-
-        if (periodAmountValue.length > 2) {
-            periodAmountValue = periodAmountValue.substr(0, 2);
-            setLockPeriodAmount(periodAmountValue);
+        const newValue = e.target.value;
+ 
+        if (isValidInteger(newValue)) {
+            setLockPeriodAmount(newValue);
         } else {
-            setLockPeriodAmount(periodAmountValue);
+            setLockPeriodAmount("");
         }
+
     }
 
     const handleLockPeriodOptionChange = (val: PaymentRateType) => {
@@ -937,13 +937,11 @@ export const VestingContractCreateForm = (props: {
                                                 className="w-100 general-text-input"
                                                 autoComplete="on"
                                                 autoCorrect="off"
-                                                type="number"
+                                                type="text"
                                                 onChange={handleLockPeriodAmountChange}
                                                 placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
                                                 spellCheck="false"
-                                                min={0}
-                                                max={12}
-                                                maxLength={2}
+                                                min={1}
                                                 value={lockPeriodAmount}
                                             />
                                         </div>

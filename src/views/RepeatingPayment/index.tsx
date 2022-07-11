@@ -11,7 +11,6 @@ import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   cutNumber,
   fetchAccountTokens,
-  formatAmount,
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
@@ -28,7 +27,6 @@ import { EventType, OperationType, PaymentRateType, TransactionStatus } from "..
 import {
   consoleOut,
   disabledDate,
-  getFairPercentForInterval,
   getIntervalFromSeconds,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
@@ -818,16 +816,6 @@ export const RepeatingPayment = (props: {
     }
     return label;
   }, [selectedToken, t]);
-
-  const getRecommendedFundingAmount = () => {
-    const rateAmount = parseFloat(paymentRateAmount as string);
-    const percent = getFairPercentForInterval(paymentRateFrequency);
-    const recommendedMinAmount = percent * rateAmount || 0;
-    const formatted = formatAmount(recommendedMinAmount, selectedToken?.decimals, true);
-
-    // String to obtain: 0.21 SOL (10%).
-    return `${parseFloat(formatted).toString()} ${selectedToken?.symbol}`;
-  }
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;

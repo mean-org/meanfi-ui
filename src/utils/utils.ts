@@ -13,9 +13,9 @@ import {
   TransactionInstruction,
   TransactionSignature
 } from "@solana/web3.js";
-import { CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
+import { CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
+import { consoleOut, getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
 import { NATIVE_SOL } from './tokens';
@@ -188,6 +188,11 @@ export function convert(
 export function isValidNumber(str: string): boolean {
   if (str === null || str === undefined ) { return false; }
   return INPUT_AMOUNT_PATTERN.test(str);
+}
+
+export function isValidInteger(str: string): boolean {
+  if (str === null || str === undefined ) { return false; }
+  return INTEGER_INPUT_AMOUNT_PATTERN.test(str);
 }
 
 /**
