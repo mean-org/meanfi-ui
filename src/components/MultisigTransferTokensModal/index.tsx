@@ -833,15 +833,9 @@ export const MultisigTransferTokensModal = (props: {
                           fullTokenInfo={selectedToken}
                         />
                       )}
-                      {selectedToken && tokenBalance && tokenBalance > MIN_SOL_BALANCE_REQUIRED ? (
-                        <div className="token-max simplelink" onClick={() =>
-                          {
-                            if (selectedToken.address === NATIVE_SOL.address) {
-                              const amount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
-                              setAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-                            } else {
-                              setAmount(cutNumber(tokenBalance, selectedToken.decimals));
-                            }
+                      {selectedToken && fromVault ? (
+                        <div className="token-max simplelink" onClick={() => {
+                          setAmount(cutNumber(fromVault.balance as number, selectedToken.decimals));
                           }}>
                           MAX
                         </div>
@@ -879,6 +873,7 @@ export const MultisigTransferTokensModal = (props: {
                       )}
                     </span>
                   </div>
+                  
                   <div className="right inner-label">
                     <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                       ~${amount
