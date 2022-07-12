@@ -45,6 +45,12 @@ export const VestingContractActivity = (props: {
 
         let message = '';
         switch (item.action) {
+            case VestingTreasuryActivityAction.TreasuryCreate:
+                message += `Vesting contract created - ${vestingContract.name}`;
+                break;
+            case VestingTreasuryActivityAction.TreasuryModify:
+                message += `Vesting contract modified - ${vestingContract.name}`;
+                break;
             case VestingTreasuryActivityAction.TreasuryAddFunds:
                 message += `Vesting contract funds added - ${vestingContract.name}`;
                 break;
@@ -73,7 +79,7 @@ export const VestingContractActivity = (props: {
                 message += `Vesting stream resumed for ${item.beneficiary ? shortenAddress(item.beneficiary) : '--'}`;
                 break;
             default:
-                message += 'Pending...';
+                message += '--';
                 break;
         }
         return message;
@@ -86,6 +92,8 @@ export const VestingContractActivity = (props: {
 
         let message = '';
         switch (item.action) {
+            case VestingTreasuryActivityAction.TreasuryCreate:
+            case VestingTreasuryActivityAction.TreasuryModify:
             case VestingTreasuryActivityAction.TreasuryAddFunds:
             case VestingTreasuryActivityAction.TreasuryWithdraw:
             case VestingTreasuryActivityAction.TreasuryRefresh:
@@ -100,7 +108,7 @@ export const VestingContractActivity = (props: {
                 message += item.stream ? shortenAddress(item.stream) : '--';
                 break;
             default:
-                message += 'Pending...';
+                message += '--';
                 break;
         }
         return message;

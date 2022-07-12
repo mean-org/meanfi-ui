@@ -74,6 +74,9 @@
                                         width: auto;
                                         height: auto;
                                         background-color: transparent;
+                                        > img {
+                                            border-radius: 50%;
+                                        }
                                     }
                                 }
                                 .description-cell {

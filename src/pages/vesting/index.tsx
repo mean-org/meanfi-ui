@@ -430,8 +430,8 @@ export const VestingView = () => {
                 onClick={() => {
                   const url = `/multisig/${item.extras.multisig}?v=proposals`;
                   setHighLightableMultisigId(item.extras.multisig);
-                  navigate(url);
                   notification.close(myNotifyKey);
+                  navigate(url);
                 }}>
                 See proposals
               </Button>
