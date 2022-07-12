@@ -7,17 +7,12 @@ import {
   Account,
   ConfirmOptions,
   Connection,
-  // Keypair,
   LAMPORTS_PER_SOL,
   MemcmpFilter,
   PublicKey,
-  // SystemProgram,
-  // Signer,
-  // SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
   TransactionInstruction
-
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
@@ -31,7 +26,6 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   shortenAddress,
-  // tabNameFormat
 } from '../../utils/utils';
 
 import { Button, Dropdown, Empty, Menu, Spin, Tooltip } from 'antd';
@@ -57,7 +51,6 @@ import './style.scss';
 // MULTISIG
 import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
 import { MultisigEditModal } from '../../components/MultisigEditModal';
-// import { TransactionFees } from '@mean-dao/msp';
 import { customLogger } from '../..';
 import { openNotification } from '../../components/Notifications';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
@@ -69,7 +62,6 @@ import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MultisigTransactionSummary, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk/';
-// import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { UserTokenAccount } from '../../models/transactions';
@@ -82,6 +74,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
 import { MultisigTransactionWithId, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 
+export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -3155,6 +3148,11 @@ export const SafeView = () => {
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
+    const path = window.location.pathname;
+    if (!path.startsWith(MULTISIG_ROUTE_BASE_PATH)) {
+      return;
+    }
+
     const reloadMultisigs = () => {
       const refreshCta = document.getElementById("multisig-refresh-cta");
       if (refreshCta) {
@@ -3914,6 +3912,19 @@ export const SafeView = () => {
     // }
 
   }, [id, address, multisigTxs, programs, getQueryParamV, selectedMultisig, publicKey, multisigClient]);
+
+
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   ///////////////
   // Rendering //
