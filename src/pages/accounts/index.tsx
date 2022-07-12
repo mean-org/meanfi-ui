@@ -924,6 +924,7 @@ export const AccountsNewView = () => {
       }
     };
 
+    consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
     if (item) {
       if (item.operationType === OperationType.Wrap) {
         recordTxConfirmation(item, true);
@@ -1006,12 +1007,13 @@ export const AccountsNewView = () => {
     param,
     address,
     inspectedAccountType,
-    isSelectedAssetNativeAccount, 
-    resetTransactionStatus, 
-    recordTxConfirmation, 
+    isSelectedAssetNativeAccount,
+    showNotificationByType,
+    resetTransactionStatus,
+    recordTxConfirmation,
     setShouldLoadTokens,
-    reloadSwitch, 
-    navigate, 
+    reloadSwitch,
+    navigate,
   ]);
 
   // Setup event handler for Tx confirmation error
@@ -4064,6 +4066,18 @@ export const AccountsNewView = () => {
       consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
+
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   //////////////////
   // Transactions //

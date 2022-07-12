@@ -38,6 +38,7 @@ import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { STREAMS_ROUTE_BASE_PATH } from '../Streams';
 import { environment } from '../../environments/environment';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
 const { Option } = Select;
 
@@ -360,6 +361,12 @@ export const OneTimePayment = (props: {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+
+    const path = window.location.pathname;
+    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
+      return;
+    }
+
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     setIsBusy(false);
     resetTransactionStatus();
@@ -594,6 +601,18 @@ export const OneTimePayment = (props: {
     onTxConfirmed,
     onTxTimedout,
   ]);
+
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   //////////////////
   //  Validation  //

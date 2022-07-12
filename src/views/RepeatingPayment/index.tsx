@@ -28,7 +28,6 @@ import { EventType, OperationType, PaymentRateType, TransactionStatus } from "..
 import {
   consoleOut,
   disabledDate,
-  getFairPercentForInterval,
   getIntervalFromSeconds,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
@@ -46,7 +45,7 @@ import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
@@ -61,6 +60,7 @@ import { InfoIcon } from '../../components/InfoIcon';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { STREAMS_ROUTE_BASE_PATH } from '../Streams';
 import { environment } from '../../environments/environment';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -70,7 +70,6 @@ export const RepeatingPayment = (props: {
 }) => {
   const { inModal, transferCompleted, token, tokenChanged } = props;
   const connection = useConnection();
-  const [searchParams] = useSearchParams();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
@@ -389,6 +388,12 @@ export const RepeatingPayment = (props: {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+
+    const path = window.location.pathname;
+    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
+      return;
+    }
+
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     setIsBusy(false);
     resetTransactionStatus();
@@ -674,6 +679,18 @@ export const RepeatingPayment = (props: {
     onTxTimedout,
   ]);
 
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   //////////////////
   //  Validation  //
   //////////////////
@@ -799,16 +816,6 @@ export const RepeatingPayment = (props: {
     }
     return label;
   }, [selectedToken, t]);
-
-  const getRecommendedFundingAmount = () => {
-    const rateAmount = parseFloat(paymentRateAmount as string);
-    const percent = getFairPercentForInterval(paymentRateFrequency);
-    const recommendedMinAmount = percent * rateAmount || 0;
-    const formatted = formatAmount(recommendedMinAmount, selectedToken?.decimals, true);
-
-    // String to obtain: 0.21 SOL (10%).
-    return `${parseFloat(formatted).toString()} ${selectedToken?.symbol}`;
-  }
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;

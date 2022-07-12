@@ -296,6 +296,17 @@ export const StakingRewardsView = () => {
     pageInitialized,
   ]);
 
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onDepositTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      setCanSubscribe(true);
+      setPageInitialized(false);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   ///////////////////
   // Event hanling //
   ///////////////////
