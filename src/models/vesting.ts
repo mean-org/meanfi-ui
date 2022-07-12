@@ -87,6 +87,17 @@ export interface VestingContractCreateOptions {
     fundingAmount: number;
 }
 
+export interface VestingContractEditOptions {
+    // vestingContractName: string;
+    // vestingCategory: SubCategory;
+    feePayedByTreasurer: boolean;
+    duration: number;
+    durationUnit: TimeUnit;
+    cliffVestPercent: number;
+    startDate: Date;
+    multisig: string;
+}
+
 export interface VestingContractWithdrawOptions {
     amount: string;
     tokenAmount: any;

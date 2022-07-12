@@ -39,7 +39,7 @@ import { VestingContractCreateForm } from './components/VestingContractCreateFor
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
+import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
@@ -61,6 +61,7 @@ import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import { BN } from 'bn.js';
 import { PendingProposalsComponent } from './components/PendingProposalsComponent';
 import { NATIVE_SOL } from '../../utils/tokens';
+import { VestingContractEditModal } from './components/VestingContractEditModal';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -948,6 +949,7 @@ export const VestingView = () => {
     if (!publicKey || !selectedVestingContract || !streamTemplate) { return true; }
     return isStartDateGone(streamTemplate.startUtc as string);
   }, [isStartDateGone, publicKey, selectedVestingContract, streamTemplate]);
+
 
   //////////////
   //  Modals  //
@@ -3223,6 +3225,21 @@ export const VestingView = () => {
     isMultisigTreasury,
   ]);
 
+  // Edit vesting contract settings
+  const [isEditContractSettingsModalOpen, setIsEditContractSettingsModalOpen] = useState(false);
+  const hideEditContractSettingsModal = useCallback(() => setIsEditContractSettingsModalOpen(false), []);
+  const showEditContractSettingsModal = useCallback(() => setIsEditContractSettingsModalOpen(true), []);
+
+  const onAcceptEditContractSettings = (params: VestingContractEditOptions) => {
+    consoleOut('params', params, 'blue');
+    onExecuteEditContractSettingsTx(params);
+  }
+
+  const onExecuteEditContractSettingsTx = (params: VestingContractEditOptions) => {
+    // TODO: close a Tx here and adapt as needed
+    consoleOut('only missing the Tx...', '', 'blue');
+  }
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -3451,6 +3468,20 @@ export const VestingView = () => {
       ctaItems++;
     }
 
+    if (canPerformAnyAction() && selectedVestingContract && selectedVestingContract.totalStreams === 0 && !isContractLocked()) {
+      actions.push({
+        action: MetaInfoCtaAction.VestingContractEditSettings,
+        caption: 'Edit contract settings',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractEditSettings}`,
+        tooltip: '',
+        callBack: showEditContractSettingsModal
+      });
+      ctaItems++;
+    }
+
     // Refresh Account Data
     actions.push({
       action: MetaInfoCtaAction.VestingContractRefreshAccount,
@@ -3471,6 +3502,7 @@ export const VestingView = () => {
     onExecuteRefreshVestingContractBalance,
     showVestingContractTransferFundsModal,
     showVestingContractSolBalanceModal,
+    showEditContractSettingsModal,
     showVestingContractCloseModal,
     getAvailableStreamingBalance,
     showCreateStreamModal,
@@ -4281,6 +4313,24 @@ export const VestingView = () => {
             userBalances={userBalances}
             vestingContract={selectedVestingContract}
             withdrawTransactionFees={withdrawTransactionFees}
+          />
+        )}
+
+        {isEditContractSettingsModalOpen && vestingContractAddress && (
+          <VestingContractEditModal
+            accountAddress={vestingContractAddress || ''}
+            handleClose={hideEditContractSettingsModal}
+            isBusy={isBusy}
+            isMultisigContext={isMultisigContext}
+            isVisible={isEditContractSettingsModalOpen}
+            loadingMultisigAccounts={loadingMultisigAccounts}
+            nativeBalance={nativeBalance}
+            onTransactionStarted={(options: VestingContractEditOptions) => onAcceptEditContractSettings(options)}
+            selectedMultisig={selectedMultisig}
+            selectedToken={workingToken}
+            streamTemplate={streamTemplate}
+            transactionFees={transactionFees}
+            vestingContract={selectedVestingContract}
           />
         )}
 

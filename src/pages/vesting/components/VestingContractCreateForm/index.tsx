@@ -4,7 +4,7 @@ import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/c
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
-import { consoleOut, disabledDate, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
+import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
 import { TokenListItem } from '../../../../components/TokenListItem';
@@ -477,7 +477,7 @@ export const VestingContractCreateForm = (props: {
         setCliffReleasePercentage(`${value}`);
     };
 
-    const onChange = (time: moment.Moment | null, timeString: string) => {
+    const onTimePickerChange = (time: moment.Moment | null, timeString: string) => {
         if (time) {
             const shortTime = time.format(timeFormat);
             setContractTime(shortTime);
@@ -1014,7 +1014,7 @@ export const VestingContractCreateForm = (props: {
                                         size="middle"
                                         use12Hours
                                         format={timeFormat}
-                                        onChange={onChange} />
+                                        onChange={onTimePickerChange} />
                                 </div>
                             </div>
                         </div>

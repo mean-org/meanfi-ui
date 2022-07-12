@@ -152,4 +152,5 @@ export enum MetaInfoCtaAction {
     VestingContractWithdrawFunds = 23,
     VestingContractRefreshAccount = 24,
     VestingContractClose = 25,
+    VestingContractEditSettings = 26,
 }
