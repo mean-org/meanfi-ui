@@ -85,14 +85,12 @@ export const TreasuryStreamCreateModal = (props: {
     treasuryList,
     treasuryDetails,
     userBalances,
-    withdrawTransactionFees,
-    showNotificationByType
+    withdrawTransactionFees
   } = props;
   const { t } = useTranslation('common');
   const [searchParams] = useSearchParams();
   const { wallet, publicKey } = useWallet();
   const { endpoint } = useConnectionConfig();
-  const { treasuryOption } = useContext(AppStateContext);
   const {
     theme,
     tokenList,
@@ -125,8 +123,6 @@ export const TreasuryStreamCreateModal = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
   const {
-    clearTxConfirmationContext,
-    startFetchTxSignatureInfo,
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
   const [currentStep, setCurrentStep] = useState(0);
@@ -151,6 +147,7 @@ export const TreasuryStreamCreateModal = (props: {
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [workingAssociatedToken, setWorkingAssociatedToken] = useState('');
   const [workingTreasuryDetails, setWorkingTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
+  const [workingTreasuryType, setWorkingTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] = useState('');
 
   const isNewTreasury = useCallback(() => {
@@ -450,7 +447,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
 
-    if (treasuryOption && treasuryOption.type === TreasuryType.Lock) {
+    if (workingTreasuryType === TreasuryType.Lock) {
       return !rateAmount
         ? 'Add funds to commit'
         : '';
@@ -518,36 +515,20 @@ export const TreasuryStreamCreateModal = (props: {
   // Data management //
   /////////////////////
 
-  // Debug some startup params
-  // useEffect(() => {
-  //   if (workingTreasuryDetails) {
-  //     consoleOut('workingTreasuryDetails:', workingTreasuryDetails, 'blue');
-  //     if (selectedMultisig) {
-  //       consoleOut('multisigAddress:', selectedMultisig.id.toBase58(), 'blue');
-  //     } else {
-  //       consoleOut('multisigAddress not available:', '', 'blue');
-  //     }
-  //     consoleOut('isMultisigTreasury:', isSelectedStreamingAccountMultisigTreasury, 'blue');
-  //   }
-  // }, [isSelectedStreamingAccountMultisigTreasury, selectedMultisig, workingTreasuryDetails]);
-
-  // Set working copy of the associated token if passed-in
-  // useEffect(() => {
-  //   if (isVisible && associatedToken) {
-  //     setWorkingAssociatedToken(associatedToken);
-  //   }
-  // }, [isVisible, associatedToken]);
-
   // Set working copy of the selected streaming account if passed-in
+  // Also set the working associated token
+  // Also set the treasury type
   useEffect(() => {
     if (isVisible) {
       if (treasuryDetails) {
         const v1 = treasuryDetails as TreasuryInfo;
         const v2 = treasuryDetails as Treasury;
+        const treasuryType = treasuryDetails.version < 2 ? v1.type as TreasuryType : v2.treasuryType as TreasuryType;
         consoleOut('treasuryDetails aquired:', treasuryDetails, 'blue');
         setWorkingTreasuryDetails(treasuryDetails);
         setSelectedStreamingAccountId(treasuryDetails.id as string);
         setWorkingAssociatedToken(treasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
+        setWorkingTreasuryType(treasuryType);
       } else {
         consoleOut('treasuryDetails not set!', '', 'blue');
       }
@@ -1003,7 +984,7 @@ export const TreasuryStreamCreateModal = (props: {
   }, [fromCoinAmount, percentageValue]);
 
   useEffect(() => {
-    if (treasuryOption && treasuryOption.type === TreasuryType.Lock) {
+    if (workingTreasuryType === TreasuryType.Lock) {
       setPaymentRateAmount(cutNumber((parseFloat(fromCoinAmount) - parseFloat(cliffRelease)) / parseFloat(lockPeriodAmount), 6));
     }
 
@@ -1201,7 +1182,7 @@ export const TreasuryStreamCreateModal = (props: {
       startUtc.setSeconds(now.getSeconds());
       startUtc.setMilliseconds(now.getMilliseconds());
 
-      const isLockedTreasury = treasuryOption && treasuryOption.type === TreasuryType.Lock
+      const isLockedTreasury = workingTreasuryType === TreasuryType.Lock
         ? true
         : false;
 
@@ -1685,7 +1666,7 @@ export const TreasuryStreamCreateModal = (props: {
   return (
     <Modal
       className="mean-modal treasury-stream-create-modal"
-      title={(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (<div className="modal-title">{param === "multisig" ? "Propose stream to the account" : t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
+      title={(workingTreasuryType === TreasuryType.Open) ? (<div className="modal-title">{param === "multisig" ? "Propose stream to the account" : t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
       maskClosable={false}
       footer={null}
       visible={isVisible}
@@ -1707,16 +1688,16 @@ export const TreasuryStreamCreateModal = (props: {
       ) : (
         <>
           <div className="scrollable-content">
-            <StepSelector step={currentStep} steps={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? 3 : 2} onValueSelected={onStepperChange} />
+            <StepSelector step={currentStep} steps={(workingTreasuryType === TreasuryType.Lock) ? 3 : 2} onValueSelected={onStepperChange} />
 
             <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
 
-              {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+              {(workingTreasuryType === TreasuryType.Lock) && (
                 <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel1-name')}</div>
               )}
 
               {/* Create multi-recipient stream checkbox */}
-              {/* {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+              {/* {(workingTreasuryType === TreasuryType.Open) && (
                 <div className="mb-2 flex-row align-items-start">
                   <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-multi-recipient-checkbox-label')}</span>
                   <Radio.Group className="ml-2 d-flex" 
@@ -1863,7 +1844,7 @@ export const TreasuryStreamCreateModal = (props: {
               )}
 
               {/* Payment rate */}
-              {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (
+              {(workingTreasuryType === TreasuryType.Open) ? (
                 <>
                   <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
                   <div className="two-column-form-layout col60x40 mb-3">
@@ -2035,7 +2016,7 @@ export const TreasuryStreamCreateModal = (props: {
               )}
 
               {/* Send date */}
-              {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+              {(workingTreasuryType === TreasuryType.Open) && (
                 <>
                   <div className="form-label">{t('transactions.send-date.label')}</div>
                   <div className="well">
@@ -2076,7 +2057,7 @@ export const TreasuryStreamCreateModal = (props: {
 
             <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
 
-              {treasuryOption && treasuryOption.type === TreasuryType.Open ? (
+              {workingTreasuryType === TreasuryType.Open ? (
                 <>
                   {publicKey && (
                     <>
@@ -2292,7 +2273,7 @@ export const TreasuryStreamCreateModal = (props: {
                     </div>
                   </div>
 
-                  {/* {treasuryOption && treasuryOption.type === TreasuryType.Lock && (
+                  {/* {workingTreasuryType === TreasuryType.Lock && (
                     <div className="mb-2 flex-fixed-right">
                       <div className="left form-label flex-row align-items-center">
                         {t('treasuries.treasury-streams.allocation-reserved-label')}
@@ -2325,7 +2306,7 @@ export const TreasuryStreamCreateModal = (props: {
                 </>
               ) : (
                 <>
-                  {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                  {(workingTreasuryType === TreasuryType.Lock) && (
                     <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel2-name')}</div>
                   )}
 
@@ -2470,7 +2451,7 @@ export const TreasuryStreamCreateModal = (props: {
 
             <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
 
-              {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+              {(workingTreasuryType === TreasuryType.Lock) && (
                 <>
                   <div className="flex-fixed-right">
                     <div className="left">
@@ -2548,7 +2529,7 @@ export const TreasuryStreamCreateModal = (props: {
               shape="round"
               size="large"
               onClick={onContinueStepOneButtonClick}
-              disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
+              disabled={(workingTreasuryType === TreasuryType.Lock) ? (
                 !publicKey ||
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
@@ -2565,7 +2546,7 @@ export const TreasuryStreamCreateModal = (props: {
                 (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
                 !arePaymentSettingsValid()
               )}>
-              {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? getStepOneContinueButtonLabel() : getStepOneContinueButtonLabelInLocked()}
+              {(workingTreasuryType === TreasuryType.Open) ? getStepOneContinueButtonLabel() : getStepOneContinueButtonLabelInLocked()}
             </Button>
           </div>
 
@@ -2576,8 +2557,8 @@ export const TreasuryStreamCreateModal = (props: {
               type="primary"
               shape="round"
               size="large"
-              onClick={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? onContinueStepTwoButtonClick : onTransactionStart}
-              disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
+              onClick={(workingTreasuryType === TreasuryType.Lock) ? onContinueStepTwoButtonClick : onTransactionStart}
+              disabled={(workingTreasuryType === TreasuryType.Lock) ? (
                 !publicKey ||
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
@@ -2599,18 +2580,18 @@ export const TreasuryStreamCreateModal = (props: {
                 !isVerifiedRecipient ||
                 nativeBalance < getMinBalanceRequired()
               )}>
-              {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+              {(workingTreasuryType === TreasuryType.Open) && (
                 isBusy && (
                   <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                 )
               )}
-              {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (isBusy
+              {(workingTreasuryType === TreasuryType.Open) && (isBusy
                 // ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
                 ? t('streams.create-new-stream-cta-busy')
                 : getTransactionStartButtonLabel()
               )}
 
-              {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && getStepTwoContinueButtonLabel()}
+              {(workingTreasuryType === TreasuryType.Lock) && getStepTwoContinueButtonLabel()}
             </Button>
           </div>
 
