@@ -127,6 +127,7 @@ export const TreasuryStreamCreateModal = (props: {
   const {
     clearTxConfirmationContext,
     startFetchTxSignatureInfo,
+    enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
   const [currentStep, setCurrentStep] = useState(0);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -531,27 +532,30 @@ export const TreasuryStreamCreateModal = (props: {
   // }, [isSelectedStreamingAccountMultisigTreasury, selectedMultisig, workingTreasuryDetails]);
 
   // Set working copy of the associated token if passed-in
-  useEffect(() => {
-    if (isVisible && associatedToken) {
-      setWorkingAssociatedToken(associatedToken);
-    }
-  }, [isVisible, associatedToken]);
+  // useEffect(() => {
+  //   if (isVisible && associatedToken) {
+  //     setWorkingAssociatedToken(associatedToken);
+  //   }
+  // }, [isVisible, associatedToken]);
 
   // Set working copy of the selected streaming account if passed-in
   useEffect(() => {
     if (isVisible) {
       if (treasuryDetails) {
+        const v1 = treasuryDetails as TreasuryInfo;
+        const v2 = treasuryDetails as Treasury;
         consoleOut('treasuryDetails aquired:', treasuryDetails, 'blue');
         setWorkingTreasuryDetails(treasuryDetails);
         setSelectedStreamingAccountId(treasuryDetails.id as string);
+        setWorkingAssociatedToken(treasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
       } else {
         consoleOut('treasuryDetails not set!', '', 'blue');
       }
     }
-  }, [isVisible, treasuryDetails]);
+  }, [associatedToken, isVisible, treasuryDetails]);
 
   useEffect(() => {
-    if (hasNoStreamingAccounts || workingAssociatedToken) {
+    if (hasNoStreamingAccounts || workingAssociatedToken || !workingTreasuryDetails) {
       return;
     }
 
@@ -562,12 +566,12 @@ export const TreasuryStreamCreateModal = (props: {
       const v2 = workingTreasuryDetails as Treasury;
       tokenAddress = workingTreasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
       token = getTokenByMintAddress(tokenAddress);
-    } else if (treasuryList && treasuryList.length > 0) {
-      const item = treasuryList[0];
-      const v1 = item as TreasuryInfo;
-      const v2 = item as Treasury;
-      tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-      token = getTokenByMintAddress(tokenAddress);
+    // } else if (treasuryList && treasuryList.length > 0) {
+    //   const item = treasuryList[0];
+    //   const v1 = item as TreasuryInfo;
+    //   const v2 = item as Treasury;
+    //   tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
+    //   token = getTokenByMintAddress(tokenAddress);
     }
 
     if (token) {
@@ -1034,12 +1038,17 @@ export const TreasuryStreamCreateModal = (props: {
     let signedTransactions: Transaction[] = [];
     let signatures: string[] = [];
     let encodedTxs: string[] = [];
+    const displayParams: any = {
+      rateAmount: 0,
+      rateInterval: "",
+      multisig: ""
+    };
 
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
+    resetTransactionStatus();
 
     const createStreams = async (data: any) => {
 
@@ -1224,6 +1233,12 @@ export const TreasuryStreamCreateModal = (props: {
         cliffVestPercent: 0,                                                        // cliffVestPercent
         feePayedByTreasurer: isFeePaidByTreasurer                                   // feePayedByTreasurer
       };
+
+      displayParams.rateAmount = rateAmount;
+      displayParams.rateInterval = getIntervalFromSeconds(data.rateIntervalInSeconds);
+      displayParams.multisig = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
+      ? selectedMultisig.id.toBase58()
+      : "";
 
       consoleOut('data:', data);
 
@@ -1427,7 +1442,7 @@ export const TreasuryStreamCreateModal = (props: {
       return result;
     }
 
-    if (wallet) {
+    if (wallet && selectedToken) {
       const create = await createTxs();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -1438,10 +1453,21 @@ export const TreasuryStreamCreateModal = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Txs to confirmation queue:', signatures);
-            signatures.forEach(s => {
-              startFetchTxSignatureInfo(s, "confirmed", OperationType.TreasuryStreamCreate);
+            const messageLoading = (param === "multisig") ? `Creating stream proposal to send ${displayParams.rateAmount} ${selectedToken.symbol} ${displayParams.rateInterval}.` : `Creating stream to send ${displayParams.rateAmount} ${selectedToken.symbol} ${displayParams.rateInterval}.`
+            const messageCompleted = (param === "multisig") ? `Proposal to create stream to send ${displayParams.rateAmount} ${selectedToken.symbol} ${displayParams.rateInterval}.` : `Stream to send ${displayParams.rateAmount} ${selectedToken.symbol} ${displayParams.rateInterval} has been proposed.`
+            enqueueTransactionConfirmation({
+              signature: signatures[0],
+              operationType: OperationType.TreasuryStreamCreate,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: messageLoading,
+              completedTitle: "Transaction confirmed",
+              completedMessage: messageCompleted,
+              extras: displayParams.multisig
             });
-            param === "multisig" && showNotificationByType("info");
+
+            // param === "multisig" && showNotificationByType("info");
             resetTransactionStatus();
             setIsBusy(false);
             handleOk();

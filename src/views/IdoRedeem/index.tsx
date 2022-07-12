@@ -172,7 +172,7 @@ export const IdoRedeem = (props: {
           idoAddress
         )
         .then(value => {
-          consoleOut('createStream2 returned transaction:', value);
+          consoleOut('createReddemTx returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -185,7 +185,7 @@ export const IdoRedeem = (props: {
           return true;
         })
         .catch(error => {
-          console.error('createStream2 error:', error);
+          console.error('createReddemTx error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
