@@ -2134,11 +2134,11 @@ export const VestingView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createStream = async (data: any): Promise<[Transaction, PublicKey] | null> => {
+    const createVestingStream = async (data: any): Promise<[Transaction, PublicKey] | null> => {
 
       if (!connection || !msp || !publicKey) { return null; }
 
-      consoleOut('createStream received data:', data, 'blue');
+      consoleOut('createVestingStream received data:', data, 'blue');
 
       if (!data.multisig) {
         return await msp.createStreamWithTemplate(
@@ -2146,7 +2146,6 @@ export const VestingView = () => {
           publicKey,                                                                // treasurer
           new PublicKey(data.treasury),                                             // treasury
           new PublicKey(data.beneficiary),                                          // beneficiary
-          new PublicKey(data.treasuryAssociatedTokenMint),                          // treasuryAssociatedTokenMint
           data.allocationAssigned,                                                  // allocationAssigned
           data.streamName                                                           // streamName
         );
@@ -2155,7 +2154,7 @@ export const VestingView = () => {
       if (!multisigClient || !multisigAccounts) { return null; }
 
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === data.multisig)[0];
-      consoleOut('createStream filtered multisig:', multisig.authority.toBase58(), 'blue');
+      consoleOut('createVestingStream filtered multisig:', multisig.authority.toBase58(), 'blue');
 
       if (!multisig) { return null; }
 
@@ -2188,7 +2187,6 @@ export const VestingView = () => {
         new PublicKey(data.treasury),                                             // treasury
         stream,                                                                   // stream
         new PublicKey(data.beneficiary),                                          // beneficiary
-        new PublicKey(data.treasuryAssociatedTokenMint),                          // treasuryAssociatedTokenMint
         data.allocationAssigned,                                                  // allocationAssigned
         data.streamName,                                                          // streamName
       );
@@ -2311,7 +2309,7 @@ export const VestingView = () => {
         return false;
       }
 
-      const result = await createStream(data)
+      const result = await createVestingStream(data)
         .then(values => {
           if (!values || !values.length) { return false; }
           setTransactionStatus({
@@ -2326,7 +2324,7 @@ export const VestingView = () => {
           return true;
         })
         .catch(error => {
-          console.error('createStream error:', error);
+          console.error('createVestingStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure

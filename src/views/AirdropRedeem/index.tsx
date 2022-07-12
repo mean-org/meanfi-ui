@@ -235,7 +235,6 @@ export const AirdropRedeem = (props: {
           treasurer,                                                        // treasurer
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary
-          associatedToken,                                                  // associatedToken
           streamName,                                                       // streamName
           allocation,                                                       // allocationAssigned
           rateAmount,                                                       // rateAmount
@@ -245,7 +244,7 @@ export const AirdropRedeem = (props: {
           cliffVestPercent
         )
         .then(value => {
-          consoleOut('createStream2 returned transaction:', value);
+          consoleOut('createStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -258,7 +257,7 @@ export const AirdropRedeem = (props: {
           return true;
         })
         .catch(error => {
-          console.error('createStream2 error:', error);
+          console.error('createStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure

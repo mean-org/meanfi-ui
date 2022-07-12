@@ -948,7 +948,7 @@ export const RepeatingPayment = (props: {
           false // TODO: (feePayedByTreasurer)
         )
         .then(value => {
-          consoleOut('createStream returned transaction:', value);
+          consoleOut('streamPayment returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -961,7 +961,7 @@ export const RepeatingPayment = (props: {
           return true;
         })
         .catch(error => {
-          console.error('createStream error:', error);
+          console.error('streamPayment error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure

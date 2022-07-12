@@ -1111,20 +1111,18 @@ export const TreasuryStreamCreateModal = (props: {
       const result = await createStreams(data)
         .then(values => {
           if (!values || !values.length) { return false; }
-          // consoleOut('createStreams returned transaction:', values);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            // result: getTxIxResume(value)
           });
           transactions = values;
           return true;
         })
         .catch(error => {
-          console.error('createStream error:', error);
+          console.error('createStreams error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
