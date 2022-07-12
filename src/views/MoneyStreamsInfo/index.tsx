@@ -11,7 +11,6 @@ import { useWallet } from "../../contexts/wallet";
 import { IconArrowForward, IconLoading } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
-import { PieChartComponent } from "./PieChart";
 import "./style.scss";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import Wave from 'react-wavify'
@@ -28,7 +27,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, delay, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
@@ -308,7 +307,7 @@ export const MoneyStreamsInfoView = (props: {
     if (sortedStreamingAccountList) {
       getFinalList(sortedStreamingAccountList)
         .then(items => {
-          consoleOut('streamingAccountCombinedList', items, "blue");
+          consoleOut('streamingAccountCombinedList:', items, "blue");
 
           setStreamingAccountCombinedList(items);
         })
@@ -1228,6 +1227,16 @@ export const MoneyStreamsInfoView = (props: {
 
   }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
 
+  const isStreamRunning = useCallback((stream: Stream | StreamInfo) => {
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
+    if (stream.version < 2) {
+      return v1.state === STREAM_STATE.Running ? true : false;
+    } else {
+      return v2.status === STREAM_STATUS.Running ? true : false;
+    }
+  }, []);
+
   const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
     if (item) {
       const v1 = item as StreamInfo;
@@ -1419,75 +1428,88 @@ export const MoneyStreamsInfoView = (props: {
 
   // Calculate the rate per day for incoming streams
   useEffect(() => {
-    if (incomingStreamList) {
-      const runningIncomingStreams = incomingStreamList.filter((stream: Stream | StreamInfo) => getStreamStatus(stream) === "Running");
+    if (incomingStreamList && !loadingStreams) {
+      const runningIncomingStreams = incomingStreamList.filter((stream: Stream | StreamInfo) => isStreamRunning(stream));
+
+      let totalRateAmountValue = 0;
 
       for (const stream of runningIncomingStreams) {
         const v1 = stream as StreamInfo;
         const v2 = stream as Stream;
-
         const isNew = v2.version && v2.version >= 2 ? true : false;
 
         const token = getTokenByMintAddress(stream.associatedToken as string);
 
-        let totalRateAmountValue = 0;
-
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-
-          const rateAmountValue = isNew ? toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount;
-
-          totalRateAmountValue += rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
+          const rateAmountValue = isNew ? toUiAmount(new BN(v2.rateAmount), token.decimals) : v1.rateAmount;
+          const valueOfDay = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
+          totalRateAmountValue += valueOfDay
         }
 
-        setRateIncomingPerDay(totalRateAmountValue);
       }
+
+      setRateIncomingPerDay(totalRateAmountValue);
     }
   }, [
+    loadingStreams,
     incomingStreamList,
     getDepositAmountDisplay,
     getTokenPriceByAddress,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     getRateAmountDisplay,
-    getStreamStatus,
+    isStreamRunning,
     t,
   ]);
 
   // Calculate the rate per day for outgoing streams
   useEffect(() => {
-    if (outgoingStreamList) {
-      const runningOutgoingStreams = outgoingStreamList.filter((stream: Stream | StreamInfo) => getStreamStatus(stream) === "Running");
+    if (outgoingStreamList && streamingAccountCombinedList && !loadingStreams && !loadingCombinedStreamingList) {
+      const fromStreamingAccounts: (Stream | StreamInfo)[] = [];
+      streamingAccountCombinedList.forEach(item => {
+        if (item.streams && item.streams.length > 0) {
+          fromStreamingAccounts.push(...item.streams);
+        }
+      });
+      const runningOutgoingStreams = outgoingStreamList.filter((stream: Stream | StreamInfo) => isStreamRunning(stream));
+
+      if (fromStreamingAccounts.length > 0) {
+        runningOutgoingStreams.push(...fromStreamingAccounts);
+      }
+
+      let totalRateAmountValue = 0;
 
       for (const stream of runningOutgoingStreams) {
         const v1 = stream as StreamInfo;
         const v2 = stream as Stream;
-
         const isNew = v2.version && v2.version >= 2 ? true : false;
 
         const token = getTokenByMintAddress(stream.associatedToken as string);
 
-        let totalRateAmountValue = 0;
-
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-
           const rateAmountValue = isNew ? toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount;
-
-          totalRateAmountValue += rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
+          const valueOfDay = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
+          totalRateAmountValue += valueOfDay;
+          consoleOut(`${shortenAddress(stream.id as string)} rateAmountValue:`, valueOfDay, 'blue');
         }
 
-        setRateOutgoingPerDay(totalRateAmountValue);
       }
+      consoleOut('totalRateAmountValue:', totalRateAmountValue, 'blue');
+      setRateOutgoingPerDay(totalRateAmountValue);
     }
   }, [
+    loadingStreams,
     outgoingStreamList,
+    loadingCombinedStreamingList,
+    streamingAccountCombinedList,
     getDepositAmountDisplay,
     getTokenPriceByAddress,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     getRateAmountDisplay,
-    getStreamStatus,
+    isStreamRunning,
     t,
   ]);
 
