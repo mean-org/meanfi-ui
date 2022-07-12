@@ -649,7 +649,7 @@ export const getReadableDate = (date: string, includeTime = false, isUtc = false
 
 export const getlllDate = (date: any): string => {
     // Month name, day of month, year, time
-    return moment(date).format("MMMM D YYYY HH:mm");
+    return moment(date).format("MMM D YYYY HH:mm");
 }
 
 export const getOrdinalDay = (date: Date): string => {
