@@ -1554,8 +1554,8 @@ export const MoneyStreamsInfoView = (props: {
     }
   ];
 
-  const [withdrawalScale, setWithdrawalScale] = useState<number>();
-  const [unallocatedScale, setUnallocatedsetScale] = useState<number>();
+  const [withdrawalScale, setWithdrawalScale] = useState<number>(0);
+  const [unallocatedScale, setUnallocatedsetScale] = useState<number>(0);
 
   useEffect(() => {
     if (!totalAccountBalance && !withdrawalBalance) { return; }
@@ -1565,6 +1565,8 @@ export const MoneyStreamsInfoView = (props: {
 
     if (calculateScaleInHeightIncoming > 0 && calculateScaleInHeightIncoming <= 3) {
       setWithdrawalScale(3);
+    } else if (calculateScaleInHeightIncoming === 0) {
+      setWithdrawalScale(0);
     } else {
       setWithdrawalScale(Math.ceil(calculateScaleInHeightIncoming));
     }
@@ -1579,6 +1581,8 @@ export const MoneyStreamsInfoView = (props: {
 
     if (calculateScaleInHeightOutgoing > 0 && calculateScaleInHeightOutgoing <= 3) {
       setUnallocatedsetScale(3);
+    } else if (calculateScaleInHeightOutgoing === 0) {
+      setUnallocatedsetScale(0);
     } else {
       setUnallocatedsetScale(Math.ceil(calculateScaleInHeightOutgoing));
     }

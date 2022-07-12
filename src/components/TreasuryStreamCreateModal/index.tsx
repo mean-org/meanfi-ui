@@ -85,7 +85,8 @@ export const TreasuryStreamCreateModal = (props: {
     treasuryList,
     treasuryDetails,
     userBalances,
-    withdrawTransactionFees
+    withdrawTransactionFees,
+    showNotificationByType
   } = props;
   const { t } = useTranslation('common');
   const [searchParams] = useSearchParams();
@@ -1448,7 +1449,7 @@ export const TreasuryStreamCreateModal = (props: {
               extras: displayParams.multisig
             });
 
-            // param === "multisig" && showNotificationByType("info");
+            param === "multisig" && showNotificationByType("info");
             resetTransactionStatus();
             setIsBusy(false);
             handleOk();
