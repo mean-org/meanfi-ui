@@ -321,6 +321,10 @@ export const AccountsNewView = () => {
         setIsFirstLoad(true);
       }, 5);
       navigate(url, { replace: true });
+    } else {
+      setTimeout(() => {
+        setIsFirstLoad(true);
+      }, 5);
     }
   }, [address, location.pathname, navigate, publicKey]);
 
