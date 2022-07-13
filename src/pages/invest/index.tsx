@@ -21,8 +21,7 @@ import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST, SOCN_USD } from "../../constants/token-list";
-import { confirmationEvents } from "../../contexts/transaction-status";
-import { EventType, InvestItemPaths } from "../../models/enums";
+import { InvestItemPaths } from "../../models/enums";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
 
@@ -372,22 +371,6 @@ export const InvestView = () => {
     }
 
   }, [stakeClient]);
-
-  // If any Stake/Unstake Tx finished and confirmed refresh the StakePoolInfo
-  const onStakeTxConfirmed = useCallback((value: any) => {
-
-    const path = window.location.pathname;
-    if (!path.startsWith(INVEST_ROUTE_BASE_PATH)) {
-      return;
-    }
-
-    consoleOut("onStakeTxConfirmed event executed:", value, 'crimson');
-    if (stakeClient && meanPrice) {
-      consoleOut('calling getStakePoolInfo...', '', 'orange');
-      refreshStakePoolInfo(meanPrice);
-      consoleOut('After calling refreshStakePoolInfo()', '', 'orange');
-    }
-  }, [meanPrice, refreshStakePoolInfo, stakeClient]);
 
   // Get raydium pool info
   const getRaydiumPoolInfo = useCallback(async () => {
@@ -880,40 +863,6 @@ export const InvestView = () => {
     detailsPanelOpen,
   ]);
 
-  // Setup event listeners
-  useEffect(() => {
-    if (pageInitialized && canSubscribe) {
-      setCanSubscribe(false);
-      confirmationEvents.on(EventType.TxConfirmSuccess, onStakeTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onStakeTxConfirmed', 'blue');
-    }
-  }, [
-    canSubscribe,
-    pageInitialized,
-    onStakeTxConfirmed
-  ]);
-
-  // Set when a page is initialized
-  useEffect(() => {
-    if (!pageInitialized && stakeClient) {
-      setPageInitialized(true);
-    }
-  }, [
-    stakeClient,
-    pageInitialized,
-  ]);
-
-  useEffect(() => {
-    // Do unmounting stuff here
-    return () => {
-      confirmationEvents.off(EventType.TxConfirmSuccess, onStakeTxConfirmed);
-      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
-      setCanSubscribe(true);
-      setPageInitialized(false);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const renderMeanBonds = (
     <>
       <h2>Get discounted sMEAN</h2>
@@ -1145,6 +1094,7 @@ export const InvestView = () => {
                           type="default"
                           shape="circle"
                           size="small"
+                          id="refresh-stake-pool-info-cta"
                           icon={<ReloadOutlined />}
                           onClick={() => {
                             refreshStakePoolInfo(meanPrice);

@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import './style.scss';
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined,  } from "@ant-design/icons";
-import { Button, Col, Modal, Row, Spin } from "antd";
+import { LoadingOutlined,  } from "@ant-design/icons";
+import { Button, Col, Row } from "antd";
 import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
@@ -9,9 +9,9 @@ import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { StakeQuote, StakingClient } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
-import { TxConfirmationContext } from "../../contexts/transaction-status";
-import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
+import { EventType, OperationType, TransactionStatus } from "../../models/enums";
+import { consoleOut, getTransactionStatusForLogs } from "../../utils/ui";
 import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
 import { TokenInfo } from "@solana/spl-token-registry";
@@ -19,8 +19,8 @@ import { INPUT_DEBOUNCE_TIME } from "../../constants";
 import { AppUsageEvent, SegmentStakeMeanData } from "../../utils/segment-service";
 import { segmentAnalytics } from "../../App";
 import { openNotification } from "../../components/Notifications";
+import { INVEST_ROUTE_BASE_PATH } from "../../pages/invest";
 
-const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let inputDebounceTimeout: any;
 
 export const StakeTabView = (props: {
@@ -80,41 +80,23 @@ export const StakeTabView = (props: {
   const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(false);
   const [fetchingStakeQuote, setFetchingStakeQuote] = useState(false);
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
-  ///////////////////////
-  //  EVENTS & MODALS  //
-  ///////////////////////
 
-  // Common transaction execution modal
-  const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
-  const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
-  const hideTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(false), []);
+  //////////////////////////
+  //  CALLBACKS & EVENTS  //
+  //////////////////////////
 
-  const refreshPage = () => {
-    hideTransactionExecutionModal();
-    window.location.reload();
-  }
+  const resetTransactionStatus = useCallback(() => {
 
-  const onCloseTransactionExecutionModal = () => {
-    setFromCoinAmount("");
-    hideTransactionExecutionModal();
-  }
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
 
-  // Transaction execution (Applies to all transactions)
-  const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
-  }
- 
-  const isError = (): boolean => {
-    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled
-            ? true
-            : false;
-  }
+  }, [
+    setTransactionStatus
+  ]);
 
   const fetchQuoteFromInput = (value: string) => {
     clearTimeout(inputDebounceTimeout);
@@ -187,12 +169,31 @@ export const StakeTabView = (props: {
       : false;
   }
 
+  // Handler paste clipboard data
+  const pasteHandler = (e: any) => {
+    const getClipBoardData = e.clipboardData.getData('Text');
+    const replaceCommaToDot = getClipBoardData.replace(",", "")
+    const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
+
+    setFromCoinAmount(onlyNumbersAndDot.trim());
+    setFetchingStakeQuote(true);
+  }
+
+  const getMaxDecimalsForValue = (value: number) => {
+    return value < 5
+      ? 6
+      : value >= 5 && value < 100
+        ? 4
+        : 2;
+  }
+
   const onTransactionStart = useCallback(async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature = "";
     let encodedTx: string;
     const transactionLog: any[] = [];
+    resetTransactionStatus();
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && props.stakeClient && props.selectedToken) {
@@ -419,7 +420,6 @@ export const StakeTabView = (props: {
     };
 
     if (wallet && props.selectedToken) {
-      showTransactionExecutionModal();
       setIsBusy(true);
       const create = await createTx();
       consoleOut("created:", create);
@@ -450,7 +450,8 @@ export const StakeTabView = (props: {
                 props.selectedToken.decimals
               )} ${props.selectedToken.symbol}`,
             });
-            setIsBusy(false);
+            resetTransactionStatus();
+            setFromCoinAmount("");
           } else {
             openNotification({
               title: t("notifications.error-title"),
@@ -477,11 +478,78 @@ export const StakeTabView = (props: {
     props.selectedToken,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
-    showTransactionExecutionModal,
+    resetTransactionStatus,
     getTokenPriceBySymbol,
     setTransactionStatus,
     t
   ]);
+
+  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
+    let event: any;
+    if (operation === OperationType.Stake) {
+      event = success ? AppUsageEvent.StakeMeanCompleted : AppUsageEvent.StakeMeanFailed;
+      segmentAnalytics.recordEvent(event, { signature: signature });
+    }
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+
+    const path = window.location.pathname;
+    if (!path.startsWith(INVEST_ROUTE_BASE_PATH)) {
+      return;
+    }
+
+    const reloadStakePools = () => {
+      const stakePoolsRefreshCta = document.getElementById("refresh-stake-pool-info-cta");
+      if (stakePoolsRefreshCta) {
+        stakePoolsRefreshCta.click();
+      } else {
+        console.log('element not found:', '#refresh-stake-pool-info-cta', 'red');
+      }
+    };
+
+    if (item.operationType === OperationType.Stake) {
+      consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+      recordTxConfirmation(item.signature, item.operationType, true);
+      setIsBusy(false);
+      reloadStakePools();
+    }
+
+  }, [recordTxConfirmation]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
+
+    const reloadStakePools = () => {
+      const stakePoolsRefreshCta = document.getElementById("refresh-stake-pool-info-cta");
+      if (stakePoolsRefreshCta) {
+        stakePoolsRefreshCta.click();
+      } else {
+        console.log('element not found:', '#refresh-stake-pool-info-cta', 'red');
+      }
+    };
+
+    if (item.operationType === OperationType.Stake) {
+      consoleOut("onTxTimedout event executed:", item, 'crimson');
+      recordTxConfirmation(item.signature, item.operationType, false);
+      setIsBusy(false);
+      openNotification({
+        title: 'Create vesting contract status',
+        description: 'The transaction to create the vesting contract was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully created.',
+        duration: null,
+        type: "info",
+        handleClose: () => reloadStakePools()
+      });
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
+
+
+  /////////////////////
+  // Data management //
+  /////////////////////
 
   // Stake quote for 1 MEAN
   useEffect(() => {
@@ -525,24 +593,6 @@ export const StakeTabView = (props: {
     canFetchStakeQuote,
   ]);
 
-  // Handler paste clipboard data
-  const pasteHandler = (e: any) => {
-    const getClipBoardData = e.clipboardData.getData('Text');
-    const replaceCommaToDot = getClipBoardData.replace(",", "")
-    const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
-
-    setFromCoinAmount(onlyNumbersAndDot.trim());
-    setFetchingStakeQuote(true);
-  }
-
-  const getMaxDecimalsForValue = (value: number) => {
-    return value < 5
-      ? 6
-      : value >= 5 && value < 100
-        ? 4
-        : 2;
-  }
-
   // Unstake quote
   useEffect(() => {
     const getMeanQuote = async (sMEAN: number) => {
@@ -574,6 +624,38 @@ export const StakeTabView = (props: {
     fromCoinAmount
   ]);
 
+  // Setup event listeners
+  useEffect(() => {
+    if (canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    }
+  }, [
+    canSubscribe,
+    onTxConfirmed,
+    onTxTimedout
+  ]);
+
+  // Unsubscribed from events
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  ///////////////
+  // Rendering //
+  ///////////////
+
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
@@ -597,7 +679,7 @@ export const StakeTabView = (props: {
         </span>
       </div>
       <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
-      <div className="well mb-1">
+      <div className={`well mb-1${isBusy ? ' disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
@@ -715,102 +797,6 @@ export const StakeTabView = (props: {
         {isBusy && (<span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>)}
         {getStakeButtonLabel()}
       </Button>
-
-      {/* Common transaction execution modal */}
-      <Modal
-        className="mean-modal no-full-screen"
-        maskClosable={false}
-        visible={isTransactionExecutionModalVisible}
-        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-        onCancel={hideTransactionExecutionModal}
-        width={360}
-        footer={null}>
-        <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">
-                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-              </h4>
-              <div className="info-label">Staking {formatThousands(parseFloat(fromCoinAmount), 6)} MEAN</div>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">
-                  {t('transactions.status.instructions')}
-                </div>
-              )}
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-              </h4>
-              <p className="operation">
-                {formatThousands(parseFloat(fromCoinAmount), 6)} MEAN has been staked successfully
-              </p>
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={onCloseTransactionExecutionModal}>
-                {t('general.cta-finish')}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-                </h4>
-              )}
-              {transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ? (
-                <div className="row two-col-ctas mt-3">
-                  <div className="col-6">
-                    <Button
-                      block
-                      type="text"
-                      shape="round"
-                      size="middle"
-                      onClick={onCloseTransactionExecutionModal}>
-                      {t('general.retry')}
-                    </Button>
-                  </div>
-                  <div className="col-6">
-                    <Button
-                      block
-                      type="primary"
-                      shape="round"
-                      size="middle"
-                      onClick={() => refreshPage()}>
-                      {t('general.refresh')}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  block
-                  type="primary"
-                  shape="round"
-                  size="middle"
-                  onClick={onCloseTransactionExecutionModal}>
-                  {t('general.cta-close')}
-                </Button>
-              )}
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-            </>
-          )}
-        </div>
-      </Modal>
     </>
   )
 }
