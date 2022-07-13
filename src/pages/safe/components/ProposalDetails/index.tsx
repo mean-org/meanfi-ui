@@ -10,7 +10,7 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { consoleOut, copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigParticipant, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { useWallet } from '../../../../contexts/wallet';
 import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, NATIVE_LOADER, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
@@ -464,7 +464,7 @@ export const ProposalDetailsView = (props: {
   const rejectedSigners = selectedProposal.signers.filter((s: any) => s === false).length;
   const expirationDate = selectedProposal.details.expirationDate ? new Date(selectedProposal.details.expirationDate) : "";
   const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : "";
-  const proposedBy = selectedMultisig.owners.find((owner: any) => owner.address === selectedProposal.proposer?.toBase58());
+  const proposedBy = (selectedMultisig.owners as MultisigParticipant[]).find((owner: MultisigParticipant) => owner.address === selectedProposal.proposer?.toBase58());
   const neededSigners = () => { return selectedMultisig.threshold - approvedSigners; };
   const resume = (selectedProposal.status === 0 && neededSigners() > 0) && `Needs ${neededSigners()} ${neededSigners() > 1 ? "approvals" : "approval"} to pass`;
 
@@ -507,7 +507,7 @@ export const ProposalDetailsView = (props: {
                   <div className="proposal-resume-left-text">
                     <div className="info-label">Pending execution by</div>
                     {publicKey && (
-                      <span>{proposedBy.name ? proposedBy.name : shortenAddress(publicKey.toBase58(), 4)}</span>
+                      <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(publicKey.toBase58(), 4)}</span>
                     )}
                   </div>
                 </Col>
@@ -516,7 +516,7 @@ export const ProposalDetailsView = (props: {
                   <IconUserClock className="user-image mean-svg-icons bg-yellow" />
                   <div className="proposal-resume-left-text">
                     <div className="info-label">Pending execution by</div>
-                    <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                    <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                   </div>
                 </Col>
               )
@@ -525,7 +525,7 @@ export const ProposalDetailsView = (props: {
                 <IconLightning className="user-image mean-svg-icons bg-green" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Executed by</div>
-                  <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                 </div>
               </Col>
             ) : (
@@ -533,7 +533,7 @@ export const ProposalDetailsView = (props: {
                 <IconUser className="user-image mean-svg-icons" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Proposed by</div>
-                  <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                 </div>
               </Col>
             )}
