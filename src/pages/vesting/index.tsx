@@ -8,7 +8,7 @@ import { Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd
 import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd, toTimestamp } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
-import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { AccountInfo, ConfirmOptions, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
   calculateActionFees,
   MSP,
@@ -26,7 +26,7 @@ import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
+import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
 import { MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -62,6 +62,7 @@ import { BN } from 'bn.js';
 import { PendingProposalsComponent } from './components/PendingProposalsComponent';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { VestingContractEditModal } from './components/VestingContractEditModal';
+import { readAccountInfo } from '../../utils/accounts';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -153,6 +154,7 @@ export const VestingView = () => {
   const [loadingContractActivity, setLoadingContractActivity] = useState(false);
   const [contractActivity, setContractActivity] = useState<VestingTreasuryActivity[]>([]);
   const [hasMoreContractActivity, setHasMoreContractActivity] = useState<boolean>(true);
+  const [availableStreamingBalance, setAvailableStreamingBalance] = useState(0);
 
 
   /////////////////////////
@@ -777,19 +779,19 @@ export const VestingView = () => {
 
   }, [accountAddress, getQueryAccountType, multisigAccounts, selectedMultisig])
 
-  const getAvailableStreamingBalance = useCallback(() => {
-    if (!selectedVestingContract) { return 0; }
+  // const getAvailableStreamingBalance = useCallback(() => {
+  //   if (!selectedVestingContract) { return 0; }
 
-    const token = getTokenByMintAddress(selectedVestingContract.associatedToken as string);
+  //   const token = getTokenByMintAddress(selectedVestingContract.associatedToken as string);
 
-    if (token) {
-      const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
-      const ub = makeDecimal(new BN(unallocated), token.decimals);
-      return ub >= 0 ? ub : 0;
-    }
+  //   if (token) {
+  //     const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
+  //     const ub = makeDecimal(new BN(unallocated), token.decimals);
+  //     return ub >= 0 ? ub : 0;
+  //   }
 
-    return 0;
-  }, [getTokenByMintAddress, selectedVestingContract]);
+  //   return 0;
+  // }, [getTokenByMintAddress, selectedVestingContract]);
 
   const getContractActivity = useCallback((streamId: string, clearHistory = false) => {
     if (!streamId || !msp || loadingContractActivity) {
@@ -3386,7 +3388,7 @@ export const VestingView = () => {
         action: MetaInfoCtaAction.VestingContractCreateStreamOnce,
         isVisible: true,
         caption: 'Create stream',
-        disabled: !getAvailableStreamingBalance(),
+        disabled: availableStreamingBalance === 0,
         uiComponentType: 'button',
         uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamOnce}`,
         tooltip: '',
@@ -3416,7 +3418,7 @@ export const VestingView = () => {
     //     action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
     //     isVisible: true,
     //     caption: 'Bulk create',
-    //     disabled: !getAvailableStreamingBalance(),
+    //     disabled: availableStreamingBalance === 0,
     //     uiComponentType: 'button',
     //     uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
     //     tooltip: '',
@@ -3431,7 +3433,7 @@ export const VestingView = () => {
       caption: 'Claim unallocated tokens',
       isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: !canPerformAnyAction() || getAvailableStreamingBalance() === 0,
+      disabled: !canPerformAnyAction() || availableStreamingBalance === 0,
       uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractWithdrawFunds}`,
       tooltip: '',
       callBack: showVestingContractTransferFundsModal
@@ -3497,12 +3499,12 @@ export const VestingView = () => {
 
   }, [
     selectedVestingContract,
+    availableStreamingBalance,
     onExecuteRefreshVestingContractBalance,
     showVestingContractTransferFundsModal,
     showVestingContractSolBalanceModal,
     showEditContractSettingsModal,
     showVestingContractCloseModal,
-    getAvailableStreamingBalance,
     showCreateStreamModal,
     canPerformAnyAction,
     isMultisigTreasury,
@@ -3763,6 +3765,40 @@ export const VestingView = () => {
       }
     }
   }, [accountAddress, getQueryAccountType, isMultisigTreasury, multisigTxFees, selectedVestingContract, transactionFees]);
+
+  // Keep the available streaming balance for the current vesting contract updated
+  useEffect(() => {
+    let streamingBalance = 0;
+
+    if (!connection || !selectedVestingContract) {
+      setAvailableStreamingBalance(streamingBalance);
+      return;
+    }
+
+    const token = getTokenByMintAddress(selectedVestingContract.associatedToken as string);
+    if (token) {
+      const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
+      const ub = makeDecimal(new BN(unallocated), token.decimals);
+      streamingBalance = ub >= 0 ? ub : 0;
+      consoleOut('Available streaming balance:', streamingBalance, 'blue');
+      setAvailableStreamingBalance(streamingBalance);
+    } else {
+      readAccountInfo(connection, selectedVestingContract.associatedToken as string)
+      .then(info => {
+        if ((info as any).data["parsed"]) {
+          const decimals = (info as AccountInfo<ParsedAccountData>).data.parsed.info.decimals;
+          const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
+          const ub = makeDecimal(new BN(unallocated), decimals);
+          streamingBalance = ub >= 0 ? ub : 0;
+        }
+      })
+      .finally(() => {
+        consoleOut('Available streaming balance:', streamingBalance, 'blue');
+        setAvailableStreamingBalance(streamingBalance);
+      });
+    }
+
+  }, [connection, getTokenByMintAddress, selectedVestingContract]);
 
   // Hook on wallet connect/disconnect
   useEffect(() => {
