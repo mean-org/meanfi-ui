@@ -162,6 +162,9 @@ export const MoneyStreamsInfoView = (props: {
   const [streamingAccountCombinedList, setStreamingAccountCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
   const [loadingMoneyStreamsDetails, setLoadingMoneyStreamsDetails] = useState(true);
 
+  const [hasIncomingStreamsRunning, setHasIncomingStreamsRunning] = useState<number>();
+  const [hasOutgoingStreamsRunning, setHasOutgoingStreamsRunning] = useState<number>();
+
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -1446,8 +1449,9 @@ export const MoneyStreamsInfoView = (props: {
           const valueOfDay = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
           totalRateAmountValue += valueOfDay
         }
-
       }
+
+      setHasIncomingStreamsRunning(runningIncomingStreams.length);
 
       setRateIncomingPerDay(totalRateAmountValue);
     }
@@ -1467,15 +1471,17 @@ export const MoneyStreamsInfoView = (props: {
   useEffect(() => {
     if (outgoingStreamList && streamingAccountCombinedList && !loadingStreams && !loadingCombinedStreamingList) {
       const fromStreamingAccounts: (Stream | StreamInfo)[] = [];
+      let runningOutgoingStreamsFromStreamingAccounts: (Stream | StreamInfo)[] = [];
       streamingAccountCombinedList.forEach(item => {
         if (item.streams && item.streams.length > 0) {
           fromStreamingAccounts.push(...item.streams);
+          runningOutgoingStreamsFromStreamingAccounts = fromStreamingAccounts.filter((stream: Stream | StreamInfo) => isStreamRunning(stream));
         }
       });
       const runningOutgoingStreams = outgoingStreamList.filter((stream: Stream | StreamInfo) => isStreamRunning(stream));
 
-      if (fromStreamingAccounts.length > 0) {
-        runningOutgoingStreams.push(...fromStreamingAccounts);
+      if (runningOutgoingStreamsFromStreamingAccounts.length > 0) {
+        runningOutgoingStreams.push(...runningOutgoingStreamsFromStreamingAccounts);
       }
 
       let totalRateAmountValue = 0;
@@ -1494,8 +1500,10 @@ export const MoneyStreamsInfoView = (props: {
           totalRateAmountValue += valueOfDay;
           consoleOut(`${shortenAddress(stream.id as string)} rateAmountValue:`, valueOfDay, 'blue');
         }
-
       }
+
+      setHasOutgoingStreamsRunning(runningOutgoingStreams.length);
+      
       consoleOut('totalRateAmountValue:', totalRateAmountValue, 'blue');
       setRateOutgoingPerDay(totalRateAmountValue);
     }
@@ -1651,7 +1659,7 @@ export const MoneyStreamsInfoView = (props: {
       <Row gutter={[8, 8]}>
         <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
         {/* Background animation */}
-        {rateIncomingPerDay !== 0 ? (
+        {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
           <div className="stream-background stream-background-incoming">
             <img
               className="inbound"
@@ -1708,7 +1716,7 @@ export const MoneyStreamsInfoView = (props: {
         </Col>
         <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
           {/* Background animation */}
-          {rateIncomingPerDay !== 0 ? (
+          {(hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0) ? (
             <div className="stream-background stream-background-outgoing">
               <img
                 className="inbound"
