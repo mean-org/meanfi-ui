@@ -45,6 +45,7 @@ export const TreasuryCreateModal = (props: {
     userTokens,
     splTokenList,
     loadingPrices,
+    accountAddress,
     transactionStatus,
     getTokenPriceBySymbol,
     setTransactionStatus,
@@ -179,7 +180,8 @@ export const TreasuryCreateModal = (props: {
       const intersectedList = new Array<TokenInfo>();
       const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
 
-      const pk = props.multisigAddress ? new PublicKey(props.multisigAddress) : publicKey;
+      // const pk = props.multisigAddress ? new PublicKey(props.multisigAddress) : publicKey;
+      const pk = new PublicKey(accountAddress);
 
       fetchAccountTokens(connection, pk)
       .then(accTks => {
@@ -251,13 +253,13 @@ export const TreasuryCreateModal = (props: {
     userTokens,
     connection,
     splTokenList,
+    accountAddress,
     props.nativeBalance,
-    props.multisigAddress,
+    // props.multisigAddress,
   ]);
 
   // Pick a token if none selected
   useEffect(() => {
-
     const timeout = setTimeout(() => {
       if (userBalances && !workingToken) {
         setWorkingToken(selectedList[0]);
