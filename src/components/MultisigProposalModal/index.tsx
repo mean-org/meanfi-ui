@@ -105,9 +105,7 @@ export const MultisigProposalModal = (props: {
     if (selectedApp?.name === "Payment Streaming") {
       setIsModalVisible(false);
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/summary?account-type=multisig`;
-  
       navigate(url);
-      navigate(`${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?multisig=${selectedMultisig.authority.toBase58()}`);
     } else if (selectedApp?.name === "Token Vesting") {
       setIsModalVisible(false);
       navigate(`${VESTING_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/contracts?account-type=multisig`);
