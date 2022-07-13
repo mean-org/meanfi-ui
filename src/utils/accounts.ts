@@ -281,3 +281,27 @@ export async function setAccountOwner(
     return false;
   });
 }
+
+export async function readAccountInfo(
+  connection: Connection,
+  address?: string
+) {
+  if (!connection || !address) { return null; }
+
+  let accInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+  try {
+    accInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+  if (accInfo) {
+    if (!(accInfo as any).data["parsed"]) {
+      return accInfo as AccountInfo<Buffer>;
+    } else {
+      return accInfo as AccountInfo<ParsedAccountData>;
+    }
+  } else {
+    return null;
+  }
+}
