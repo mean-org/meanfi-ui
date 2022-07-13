@@ -324,7 +324,7 @@ export const InvestView = () => {
       name: "Socean",
       token: "scnSOL",
       href: "https://www.socean.fi/app/stake",
-      img: "https://www.socean.fi/static/media/scnSOL_blackCircle.14ca2915.png",
+      img: "/assets/socean-scnSOL.svg",
       totalStaked: soceanTotalStakedValue > 0 ? `${formatThousands(soceanTotalStakedValue)} SOL` : "--",
       apy: soceanApyValue > 0 ? `${cutNumber(soceanApyValue, 2)}%` : "--"
     },
@@ -496,7 +496,7 @@ export const InvestView = () => {
   const getSoceanApyInfo = useCallback(async () => {
 
     try {
-      const res = await fetch('https://www.socean.fi/api/apy');
+      const res = await fetch('https://api.socean.fi/v2/stake/apy');
       const data = await res.json();
       // Should update if got data
       if (data) {
@@ -1437,7 +1437,7 @@ export const InvestView = () => {
                                     <div key={index}>
                                       <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={solData.href}>
                                         <div className="std-table-cell responsive-cell pl-0">
-                                          <div className="icon-cell pr-1 d-inline-block">
+                                          <div className="icon-cell pr-1 d-inline-block align-middle">
                                             <div className="token-icon">
                                               <img alt={solData.name} width="20" height="20" src={solData.img} />
                                             </div>
