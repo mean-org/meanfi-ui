@@ -602,6 +602,7 @@ export const OneTimePayment = (props: {
     onTxTimedout,
   ]);
 
+  // Unsubscribe from events
   useEffect(() => {
     // Do unmounting stuff here
     return () => {

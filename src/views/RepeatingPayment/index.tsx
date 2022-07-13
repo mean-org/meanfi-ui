@@ -679,6 +679,7 @@ export const RepeatingPayment = (props: {
     onTxTimedout,
   ]);
 
+  // Unsubscribe from events
   useEffect(() => {
     // Do unmounting stuff here
     return () => {

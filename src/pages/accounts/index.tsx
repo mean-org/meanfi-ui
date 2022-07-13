@@ -1008,6 +1008,7 @@ export const AccountsNewView = () => {
     address,
     inspectedAccountType,
     isSelectedAssetNativeAccount,
+    showNotificationByType,
     resetTransactionStatus,
     recordTxConfirmation,
     setShouldLoadTokens,
@@ -3018,6 +3019,8 @@ export const AccountsNewView = () => {
       if (!previousRoute.startsWith('/accounts')) {
         setTreasuryList([]);
         setStreamList([]);
+        setAutocloseTreasuries([]);
+        setStreamingAccountCombinedList([]);
       }
       consoleOut('Loading treasuries...', 'accountAddress changed!', 'purple');
       refreshTreasuries(true);
@@ -4063,6 +4066,7 @@ export const AccountsNewView = () => {
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
+  // Unsubscribe from events
   useEffect(() => {
     // Do unmounting stuff here
     return () => {
@@ -4070,6 +4074,7 @@ export const AccountsNewView = () => {
       consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setSelectedAsset(undefined);
       setCanSubscribe(true);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
