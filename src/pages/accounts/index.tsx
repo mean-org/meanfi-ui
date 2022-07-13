@@ -3781,18 +3781,24 @@ export const AccountsNewView = () => {
     if (asset && accountTokens && accountTokens.length > 0) {
       if (!selectedAsset || (selectedAsset && selectedAsset.publicAddress !== asset)) {
         consoleOut('Presetting token based on url...', '', 'crimson');
-        const inferredAsset = accountTokens.find(t => t.publicAddress === asset || t.address === asset);
+        const inferredAsset = accountTokens.find(t => t.publicAddress === asset);
         if (inferredAsset) {
           selectAsset(inferredAsset);
         }
       }
     } else if (!asset && accountTokens && accountTokens.length > 0) {
-      if (!selectedAsset || (selectedAsset && selectedAsset.publicAddress !== accountAddress)) {
+      if (!selectedAsset) {
         consoleOut('Presetting first token in the list...', '', 'crimson');
         selectAsset(accountTokens[0]);
+      } else {
+        const inferredAsset = accountTokens.find(t => t.publicAddress === accountAddress);
+        if (inferredAsset) {
+          selectAsset(inferredAsset);
+        }
       }
     }
-  }, [accountAddress, accountTokens, asset, selectAsset, selectedAsset]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountAddress, accountTokens, asset]);
 
   // Preset the selected streaming account from the list if provided in path param (treasuryId)
   useEffect(() => {
