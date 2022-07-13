@@ -1585,12 +1585,24 @@ export const MoneyStreamsInfoView = (props: {
   ];
 
   const [withdrawalScale, setWithdrawalScale] = useState<number>(0);
-  const [unallocatedScale, setUnallocatedsetScale] = useState<number>(0);
+  const [unallocatedScale, setUnallocatedScale] = useState<number>(0);
 
   useEffect(() => {
-    if (!totalAccountBalance && !withdrawalBalance) { return; }
+    if (!withdrawalBalance) { return; }
 
-    const calculateScaleBalanceIncoming = (withdrawalBalance * 100) / (totalAccountBalance as number);
+    const getlength = (number: any) => {
+      return Math.round(number).toString().length;
+    }
+    
+    const divider = getlength(withdrawalBalance);
+
+    const incomingDivider = parseFloat(`1${"0".repeat((divider && divider >= 2) ? divider - 2 : 1)}`);
+
+    consoleOut("incomingDivider test", incomingDivider);
+
+    const calculateScaleBalanceIncoming = withdrawalBalance / incomingDivider;
+
+    // const calculateScaleBalanceIncoming = (withdrawalBalance * 100) / (totalAccountBalance as number);
     const calculateScaleInHeightIncoming = (calculateScaleBalanceIncoming * 30) / 100;
 
     if (calculateScaleInHeightIncoming > 0 && calculateScaleInHeightIncoming <= 3) {
@@ -1604,17 +1616,29 @@ export const MoneyStreamsInfoView = (props: {
   }, [totalAccountBalance, withdrawalBalance]);
 
   useEffect(() => {
-    if (!totalAccountBalance && !unallocatedBalance) { return; }
+    if (!unallocatedBalance) { return; }
 
-    const calculateScaleBalanceOutgoing = (unallocatedBalance * 100) / (totalAccountBalance as number);
+    const getlength = (number: any) => {
+      return Math.round(number).toString().length;
+    }
+    
+    const divider = getlength(unallocatedBalance);
+
+    const outgoingDivider = parseFloat(`1${"0".repeat((divider && divider >= 2) ? divider - 2 : 1)}`);
+    // const outgoingDivider = parseFloat(`1${"0".repeat(divider - 2)}`);
+
+    consoleOut("outgoingDivider test", outgoingDivider);
+
+    const calculateScaleBalanceOutgoing = unallocatedBalance / outgoingDivider;
+    // const calculateScaleBalanceOutgoing = (unallocatedBalance * 100) / (totalAccountBalance as number);
     const calculateScaleInHeightOutgoing = (calculateScaleBalanceOutgoing * 30) / 100;
 
     if (calculateScaleInHeightOutgoing > 0 && calculateScaleInHeightOutgoing <= 3) {
-      setUnallocatedsetScale(3);
+      setUnallocatedScale(3);
     } else if (calculateScaleInHeightOutgoing === 0) {
-      setUnallocatedsetScale(0);
+      setUnallocatedScale(0);
     } else {
-      setUnallocatedsetScale(Math.ceil(calculateScaleInHeightOutgoing));
+      setUnallocatedScale(Math.ceil(calculateScaleInHeightOutgoing));
     }
 
   }, [totalAccountBalance, unallocatedBalance]);
