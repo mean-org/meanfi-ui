@@ -25,6 +25,7 @@ import {
   StakingRewardsView,
   AccountsNewView,
   SafeView,
+  VestingView,
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -60,6 +61,11 @@ export function AppRoutes() {
                       <Route path="/accounts/:address/streaming/outgoing/treasury/:treasuryId/:streamId" element={<AccountsNewView />} />
                       {/* Streams routes (under refactor) */}
                       <Route path="/accounts/streams" element={<AccountsNewView />} />
+                      <Route path="/vesting" element={<VestingView />} />
+                      <Route path="/vesting/:address" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts/:vestingContract" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts/:vestingContract/:activeTab" element={<VestingView />} />
                       {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (

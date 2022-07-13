@@ -51,6 +51,7 @@ import {
 import { StreamOpenModal } from '../../components/StreamOpenModal';
 import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
 import {
+  CUSTOM_TOKEN_NAME,
   FALLBACK_COIN_IMAGE,
   NO_FEES,
   PERFORMANCE_THRESHOLD,
@@ -308,7 +309,7 @@ export const Streams = () => {
     if (address && isValidAddress(address)) {
       const unkToken: TokenInfo = {
         address: address,
-        name: 'Unknown',
+        name: CUSTOM_TOKEN_NAME,
         chainId: 101,
         decimals: 6,
         symbol: shortenAddress(address),
@@ -431,7 +432,7 @@ export const Streams = () => {
       }
     };
 
-    consoleOut("onTxConfirmed event handled:", item, 'crimson');
+    console.log("onTxConfirmed event handled:", item);
     recordTxConfirmation(item.signature, item.operationType, true);
     switch (item.operationType) {
       case OperationType.StreamWithdraw:
@@ -2561,7 +2562,7 @@ export const Streams = () => {
       const treasury = new PublicKey((streamDetail as Stream).treasury as string);
       const associatedToken = new PublicKey(streamDetail.associatedToken as string);
       const amount = addFundsData.tokenAmount;
-      const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
+      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
       setAddFundsPayload(addFundsData);
 
       const data = {
@@ -2570,7 +2571,6 @@ export const Streams = () => {
         stream: stream.toBase58(),                                      // stream
         amount: `${amount.toNumber()} (${addFundsData.amount})`,        // amount
       }
-
       consoleOut('add funds data:', data);
 
       // Report event to Segment analytics
@@ -3646,7 +3646,7 @@ export const Streams = () => {
           valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -3755,7 +3755,7 @@ export const Streams = () => {
           valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
 
         // Log input data
         transactionLog.push({

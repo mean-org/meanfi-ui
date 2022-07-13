@@ -34,8 +34,6 @@ import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { INITIAL_TREASURIES_SUMMARY, TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
 import { customLogger } from "../..";
@@ -48,6 +46,8 @@ import { CreateStreamModal } from "../../components/CreateStreamModal";
 import { initialSummary, StreamsSummary } from "../../models/streams";
 import { Identicon } from "../../components/Identicon";
 import { openNotification } from "../../components/Notifications";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 
 const { TabPane } = Tabs;
 

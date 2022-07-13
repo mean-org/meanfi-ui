@@ -17,7 +17,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { openNotification } from "../../components/Notifications";
 import { calculateActionFees } from "@mean-dao/money-streaming/lib/utils";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamTopupParams } from "../../models/common-types";
 import { OperationType, TransactionStatus } from "../../models/enums";
@@ -270,7 +270,7 @@ export const MoneyStreamsOutgoingView = (props: {
     if (address && isValidAddress(address)) {
       const unkToken: TokenInfo = {
         address: address,
-        name: 'Unknown',
+        name: CUSTOM_TOKEN_NAME,
         chainId: 101,
         decimals: 6,
         symbol: shortenAddress(address),
@@ -1823,7 +1823,7 @@ export const MoneyStreamsOutgoingView = (props: {
           valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -1932,7 +1932,7 @@ export const MoneyStreamsOutgoingView = (props: {
           valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
 
         // Log input data
         transactionLog.push({

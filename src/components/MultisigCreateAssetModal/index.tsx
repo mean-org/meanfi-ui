@@ -17,6 +17,7 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { isError } from '../../utils/transactions';
 import { useConnection } from '../../contexts/connection';
 import { openNotification } from '../Notifications';
+import { CUSTOM_TOKEN_NAME } from '../../constants';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -143,7 +144,7 @@ export const MultisigCreateAssetModal = (props: {
     if (address && isValidAddress(address)) {
       const unkToken: TokenInfo = {
         address: address,
-        name: 'Unknown',
+        name: CUSTOM_TOKEN_NAME,
         chainId: 101,
         decimals: 6,
         symbol: shortenAddress(address),

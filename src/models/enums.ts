@@ -12,12 +12,12 @@ export enum PaymentScheme {
 
 // In seconds for the API
 export enum PaymentRateType {
-    PerMinute = 0,  // 60
-    PerHour = 1,    // 3600
-    PerDay = 2,     // 86400
-    PerWeek = 3,    // 604800
-    PerMonth = 4,   // 2629750
-    PerYear = 5,    // 31557000
+    PerMinute = 1,  // 60
+    PerHour = 2,    // 3600
+    PerDay = 3,     // 86400
+    PerWeek = 4,    // 604800
+    PerMonth = 5,   // 2629750
+    PerYear = 6,    // 31557000
 }
 
 export enum TimesheetRequirementOption {
@@ -133,7 +133,7 @@ export enum EventType {
     TxConfirmTimeout = 'txTimedout',
 }
 
-export enum AccountAssetAction {
+export enum MetaInfoCtaAction {
     Send = 0,
     Buy = 1,
     Exchange = 2,
@@ -146,7 +146,15 @@ export enum AccountAssetAction {
     Refresh = 11,
     CloseAccount = 12,
     Share = 13,
-    Close = 14
+    Close = 14,
+    VestingContractCreateStreamOnce = 20,
+    VestingContractCreateStreamBulk = 21,
+    VestingContractAddFunds = 21,
+    VestingContractViewSolBalance = 22,
+    VestingContractWithdrawFunds = 23,
+    VestingContractRefreshAccount = 24,
+    VestingContractClose = 25,
+    VestingContractEditSettings = 26,
 }
 
 export type VestingContractCategory = {

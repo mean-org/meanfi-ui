@@ -7,7 +7,7 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount } from "../../utils/utils";
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import {
@@ -1074,7 +1074,7 @@ export const OneTimePayment = (props: {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown token'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "dimmed"}
@@ -1114,7 +1114,7 @@ export const OneTimePayment = (props: {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown token"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={async () => {
@@ -1138,19 +1138,19 @@ export const OneTimePayment = (props: {
                   decimals = -2;
                 }
               }
-              const uknwnToken: TokenInfo = {
+              const unknownToken: TokenInfo = {
                 address,
-                name: 'Unknown token',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: getNetworkIdByEnvironment(environment),
                 decimals,
                 symbol: `[${shortenAddress(address)}]`,
               };
-              tokenChanged(t);
-              setSelectedToken(uknwnToken);
+              tokenChanged(unknownToken);
+              setSelectedToken(unknownToken);
               if (userBalances && userBalances[address]) {
                 setSelectedTokenBalance(userBalances[address]);
               }
-              consoleOut("token selected:", uknwnToken, 'blue');
+              consoleOut("token selected:", unknownToken, 'blue');
               // Do not close on errors (-1 or -2)
               if (decimals >= 0) {
                 onCloseTokenSelector();
@@ -1165,6 +1165,14 @@ export const OneTimePayment = (props: {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">symbol:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.symbol : '-'}</span>
+          <span className="ml-1">name:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.name : '-'}</span>
+          <span className="ml-1">address:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.address : '-'}</span>
+        </div>
+      )} */}
+
       <div className="contract-wrapper">
 
         {/* Recipient */}
@@ -1221,12 +1229,14 @@ export const OneTimePayment = (props: {
             <div className="left">
               <span className="add-on simplelink">
                 {selectedToken && (
-                  <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
-                    mintAddress={selectedToken.address}
-                    name={selectedToken.name}
-                    showCaretDown={true}
-                    fullTokenInfo={selectedToken}
-                  />
+                  <>
+                    <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
+                      mintAddress={selectedToken.address}
+                      showCaretDown={true}
+                      showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                      fullTokenInfo={selectedToken}
+                    />
+                  </>
                 )}
                 {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
                   <div className="token-max simplelink" onClick={() =>

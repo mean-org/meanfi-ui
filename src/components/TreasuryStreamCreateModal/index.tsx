@@ -37,7 +37,7 @@ import { OperationType, PaymentRateType, TransactionStatus } from '../../models/
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
-import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
@@ -484,7 +484,7 @@ export const TreasuryStreamCreateModal = (props: {
   const setCustomToken = useCallback((address: string) => {
     const unkToken: TokenInfo = {
       address: address,
-      name: 'Unknown',
+      name: CUSTOM_TOKEN_NAME,
       chainId: 101,
       decimals: 6,
       symbol: shortenAddress(address),
@@ -1277,20 +1277,18 @@ export const TreasuryStreamCreateModal = (props: {
       const result = await createStreams(data)
         .then(values => {
           if (!values || !values.length) { return false; }
-          // consoleOut('createStreams returned transaction:', values);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            // result: getTxIxResume(value)
           });
           transactions = values;
           return true;
         })
         .catch(error => {
-          console.error('createStream error:', error);
+          console.error('createStreams error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure

@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import './style.scss';
-import { Modal, Button, Spin, Select, Drawer } from 'antd';
+import { Modal, Button, Spin, Drawer } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
@@ -9,40 +9,49 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { cutNumber, fetchAccountTokens, formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTokenBySymbol, isValidNumber, shortenAddress } from '../../utils/utils';
+import { cutNumber, fetchAccountTokens, formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenBySymbol, isValidNumber, shortenAddress } from '../../utils/utils';
 import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
-import { FALLBACK_COIN_IMAGE, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../constants';
-import { Identicon } from '../Identicon';
+import { MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../constants';
 import { UserTokenAccount } from '../../models/transactions';
 import { InputMean } from '../InputMean';
 import { TokenDisplay } from '../TokenDisplay';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
+import { useAccountsContext } from '../../contexts/accounts';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { TextInput } from '../TextInput';
 import { TokenListItem } from '../TokenListItem';
 import { environment } from '../../environments/environment';
 
-const { Option } = Select;
+// const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigTransferTokensModal = (props: {
+  assets: UserTokenAccount[];
   handleClose: any;
   handleOk: any;
-  isVisible: boolean;
   isBusy: boolean;
+  isVisible: boolean;
   nativeBalance: number;
-  transactionFees: TransactionFees;
   selectedVault: UserTokenAccount | undefined;
-  assets: UserTokenAccount[];
+  transactionFees: TransactionFees;
 }) => {
+  const {
+    assets,
+    handleClose,
+    handleOk,
+    isBusy,
+    isVisible,
+    nativeBalance,
+    selectedVault,
+    transactionFees,
+  } = props;
   const { t } = useTranslation('common');
   const accounts = useAccountsContext();
   const connection = useConnection();
-  const { account } = useNativeAccount();
+  // const { account } = useNativeAccount();
   const { publicKey, connected } = useWallet();
   const {
     tokenList,
@@ -50,9 +59,7 @@ export const MultisigTransferTokensModal = (props: {
     splTokenList,
     loadingPrices,
     selectedToken,
-    effectiveRate,
     transactionStatus,
-    getUserTokenByMintAddress,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
     setEffectiveRate,
@@ -75,8 +82,8 @@ export const MultisigTransferTokensModal = (props: {
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
-  const [nativeBalance, setNativeBalance] = useState(0);
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  // const [nativeBalance, setNativeBalance] = useState(0);
+  // const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
   // Process inputs
   useEffect(() => {
@@ -106,18 +113,17 @@ export const MultisigTransferTokensModal = (props: {
   }, [inModal, props.selectedVault]);
 
   // Keep account balance updated
-  useEffect(() => {
+  // useEffect(() => {
 
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
+  //   const getAccountBalance = (): number => {
+  //     return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+  //   }
 
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance]);
+  //   if (account?.lamports !== previousBalance || !nativeBalance) {
+  //     setNativeBalance(getAccountBalance());
+  //     setPreviousBalance(account?.lamports);
+  //   }
+  // }, [account, nativeBalance, previousBalance]);
 
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback((searchString: string) => {
@@ -424,7 +430,7 @@ export const MultisigTransferTokensModal = (props: {
       clearTimeout(timeout);
     }
 
-  }, [connection, fromVault, props.isVisible, publicKey])
+  }, [connection, fromVault, props.isVisible, publicKey]);
 
   const onAcceptModal = () => {
     props.handleOk({
@@ -437,7 +443,7 @@ export const MultisigTransferTokensModal = (props: {
 
   const onCloseModal = () => {
     consoleOut('onCloseModal called!', '', 'crimson');
-    props.handleClose();
+    handleClose();
   }
 
   const onTitleInputValueChange = (e: any) => {
@@ -466,7 +472,7 @@ export const MultisigTransferTokensModal = (props: {
 
     let newValue = e.target.value;
 
-    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const decimals = selectedVault ? selectedVault.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
 
@@ -502,7 +508,7 @@ export const MultisigTransferTokensModal = (props: {
   }
 
   const refreshPage = () => {
-    props.handleClose();
+    handleClose();
     window.location.reload();
   }
 

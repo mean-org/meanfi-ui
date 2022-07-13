@@ -1,8 +1,7 @@
+import React, { useContext } from "react";
 import { Identicon } from "../Identicon";
-import React from "react";
-import { getTokenIcon } from "../../utils/utils";
-import { useConnectionConfig } from "../../contexts/connection";
 import { PublicKey } from "@solana/web3.js";
+import { AppStateContext } from "../../contexts/appstate";
 
 export const TokenIcon = (props: {
   mintAddress?: string | PublicKey;
@@ -10,27 +9,37 @@ export const TokenIcon = (props: {
   size?: number;
   className?: string;
 }) => {
-  const { tokenMap } = useConnectionConfig();
-  const icon = getTokenIcon(tokenMap, props.mintAddress);
+  const {
+    mintAddress,
+    style,
+    size,
+    className,
+  } = props;
+  const { getTokenByMintAddress } = useContext(AppStateContext);
+  const address = typeof mintAddress === "string" ? mintAddress : mintAddress?.toBase58();
 
-  const size = props.size || 20;
+  if (!address) {
+    return null;
+  }
 
-  if (icon) {
+  const token = getTokenByMintAddress(address);
+  const defaultSize = size || 20;
+
+  if (token) {
     return (
       <img
         alt="Token icon"
-        className={props.className}
-        key={icon}
-        width={props.style?.width || size.toString()}
-        height={props.style?.height || size.toString()}
-        src={icon}
+        className={className}
+        key={token.address}
+        width={style?.width || defaultSize.toString()}
+        height={style?.height || defaultSize.toString()}
+        src={token.logoURI}
         style={{
-          marginRight: "0.5rem",
-          marginTop: "0.11rem",
-          borderRadius: "10rem",
-          backgroundColor: "white",
+          margin: "0",
+          borderRadius: "50%",
+          backgroundColor: "transparent",
           backgroundClip: "padding-box",
-          ...props.style,
+          ...style,
         }}
       />
     );
@@ -38,13 +47,13 @@ export const TokenIcon = (props: {
 
   return (
     <Identicon
-      address={props.mintAddress}
+      address={mintAddress}
       style={{
         marginRight: "0.5rem",
-        width: size,
-        height: size,
+        width: defaultSize,
+        height: defaultSize,
         marginTop: 2,
-        ...props.style,
+        ...style,
       }}
     />
   );
@@ -56,13 +65,14 @@ export const PoolIcon = (props: {
   style?: React.CSSProperties;
   className?: string;
 }) => {
+  const { mintA, mintB, style, className } = props;
   return (
-    <div className={props.className} style={{ display: "flex" }}>
+    <div className={className} style={{ display: "flex" }}>
       <TokenIcon
-        mintAddress={props.mintA}
-        style={{ marginRight: "-0.5rem", ...props.style }}
+        mintAddress={mintA}
+        style={{ marginRight: "-0.5rem", ...style }}
       />
-      <TokenIcon mintAddress={props.mintB} />
+      <TokenIcon mintAddress={mintB} />
     </div>
   );
 };

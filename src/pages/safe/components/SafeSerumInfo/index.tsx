@@ -27,7 +27,7 @@ export const SafeSerumInfoView = (props: {
   // multisigVaults: MultisigVault[];
   multisigClient: Program<Idl>;
   multisigTxs: MultisigTransaction[];
-
+  vestingAccountsCount: number;
 }) => {
   const { 
     connection,
@@ -37,7 +37,8 @@ export const SafeSerumInfoView = (props: {
     onNewProposalMultisigClick,
     // onDataToAssetView,
     // multisigClient,
-    multisigTxs
+    multisigTxs,
+    vestingAccountsCount,
   } = props;
 
   const {
@@ -308,6 +309,7 @@ export const SafeSerumInfoView = (props: {
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
         tabs={tabs}
+        vestingAccountsCount={vestingAccountsCount}
        />
     </>
   )

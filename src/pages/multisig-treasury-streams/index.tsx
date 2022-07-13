@@ -29,7 +29,6 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import {
     formatAmount,
-    formatThousands,
     getAmountWithSymbol,
     getTokenAmountAndSymbolByTokenAddress,
     getTokenSymbol,
@@ -39,18 +38,19 @@ import {
 import {
     consoleOut,
     copyText,
-    friendlyDisplayDecimalPlaces,
     getFormattedNumberToLocale,
     getIntervalFromSeconds,
     getReadableDate,
     getShortDate,
     isValidAddress,
+    toUsCurrency,
 } from "../../utils/ui";
 import {
     FALLBACK_COIN_IMAGE,
     SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
     SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
     FIVE_MINUTES_REFRESH_TIMEOUT,
+    CUSTOM_TOKEN_NAME,
 } from "../../constants";
 import {
     getSolanaExplorerClusterParam,
@@ -299,7 +299,7 @@ export const MultisigTreasuryStreams = () => {
             if (address && isValidAddress(address)) {
                 const unkToken: TokenInfo = {
                     address: address,
-                    name: "Unknown",
+                    name: CUSTOM_TOKEN_NAME,
                     chainId: 101,
                     decimals: 6,
                     symbol: shortenAddress(address),
@@ -1123,15 +1123,7 @@ export const MultisigTreasuryStreams = () => {
                                 <span className="rate-amount">--</span>
                             ) : (
                                 <>
-                                    <div className="rate-amount">$
-                                        {
-                                            formatThousands(
-                                            Math.abs(streamsSummary.totalNet),
-                                            friendlyDisplayDecimalPlaces(streamsSummary.totalNet),
-                                            friendlyDisplayDecimalPlaces(streamsSummary.totalNet)
-                                            )
-                                        }
-                                    </div>
+                                    <div className="rate-amount">{toUsCurrency(streamsSummary.totalNet)}</div>
                                     <div className="interval">{t('streams.streaming-balance')}</div>
                                 </>
                             )}

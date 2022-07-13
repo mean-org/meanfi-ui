@@ -73,6 +73,7 @@ import { segmentAnalytics } from "../../App";
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
 import { MultisigTransactionWithId, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
+import { Category, MSP, Treasury } from '@mean-dao/msp';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
@@ -83,8 +84,7 @@ const proposalLoadStatusRegister = new Map<string, boolean>();
 export const SafeView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { address, id } = useParams();
   const {
     programs,
@@ -94,6 +94,7 @@ export const SafeView = () => {
     previousRoute,
     detailsPanelOpen,
     transactionStatus,
+    streamV2ProgramAddress,
     highLightableMultisigId,
     previousWalletConnectState,
     setHighLightableMultisigId,
@@ -171,6 +172,9 @@ export const SafeView = () => {
   const [selectedTab, setSelectedTab] = useState<number>();
   const [multisigUsdValues, setMultisigUsdValues] = useState<Map<string, number> | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
+  // Vesting contracts
+  const [loadingTreasuries, setLoadingTreasuries] = useState(true);
+  const [treasuryList, setTreasuryList] = useState<Treasury[]>([]);
   
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -238,6 +242,23 @@ export const SafeView = () => {
     wallet
   ]);
 
+  // Create and cache Money Streaming Program V2 instance
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from safes');
+      return new MSP(
+        connectionConfig.endpoint,
+        streamV2ProgramAddress,
+        "confirmed"
+      );
+    }
+    return undefined;
+  }, [
+    connectionConfig.endpoint,
+    publicKey,
+    streamV2ProgramAddress
+  ]);
+
   // Live reference to the selected multisig
   const selectedMultisigRef = useRef(selectedMultisig);
   useEffect(() => {
@@ -254,6 +275,40 @@ export const SafeView = () => {
   }, [
     setTransactionStatus
   ]);
+
+  const getAllUserV2Accounts = useCallback(async (account: string) => {
+
+    if (!msp) { return []; }
+
+    setTimeout(() => {
+      setLoadingTreasuries(true);
+    });
+
+    const pk = new PublicKey(account);
+
+    return await msp.listTreasuries(pk, true, true, Category.vesting);
+
+  }, [msp]);
+
+  const refreshVestingContracts = useCallback((address: string) => {
+
+    if (!publicKey || !msp || !address) { return; }
+
+    getAllUserV2Accounts(address)
+      .then(treasuries => {
+        consoleOut('Vesting contracts:', treasuries, 'blue');
+        setTreasuryList(treasuries.map(vc => {
+          return Object.assign({}, vc, {
+            name: vc.name.trim()
+          })
+        }));
+      })
+      .catch(error => {
+        console.error(error);
+      })
+      .finally(() => setLoadingTreasuries(false));
+
+  }, [getAllUserV2Accounts, msp, publicKey]);
 
   const setProposalsLoading = useCallback((loading: boolean) => {
     const multisigId = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.id.toBase58() : '';
@@ -345,10 +400,6 @@ export const SafeView = () => {
     t,
     resetTransactionStatus
   ])
-
-  // const onTxExecuted = useCallback(() => {
-    
-  // },[]);
 
   const onExecuteCreateMultisigTx = useCallback(async (data: any) => {
 
@@ -3176,7 +3227,7 @@ export const SafeView = () => {
       }
     }
 
-    consoleOut("onTxConfirmed event handled:", item, 'crimson');
+    console.log("onTxConfirmed event handled:", item);
     recordTxConfirmation(item.signature, item.operationType, true);
 
     switch (item.operationType) {
@@ -3200,8 +3251,8 @@ export const SafeView = () => {
     }
 
   }, [
-    multisigClient, 
-    publicKey, 
+    publicKey,
+    multisigClient,
     recordTxConfirmation
   ]);
 
@@ -3430,7 +3481,8 @@ export const SafeView = () => {
   
             if (highLightableMultisigId) {
               // Select a multisig that was instructed to highlight when entering this feature
-              item = allInfo.find(m => m.id.toBase58() === highLightableMultisigId);
+              // either by its ID or by its authority
+              item = allInfo.find(m => m.id.toBase58() === highLightableMultisigId || m.authority.toBase58() === highLightableMultisigId);
             } else if (selectedMultisig) {
               // Or re-select the one active
               item = selectedMultisig.id ? allInfo.find(m => m.id.equals(selectedMultisig.id)) : undefined;
@@ -3802,7 +3854,7 @@ export const SafeView = () => {
 
     // consoleOut('Try to scroll multisig into view...', '', 'green');
     const timeout = setTimeout(() => {
-      const highlightTarget = document.getElementById(highLightableMultisigId);
+      const highlightTarget = document.getElementById(selectedMultisig.id.toBase58());
       if (highlightTarget) {
         highlightTarget.scrollIntoView({ behavior: 'smooth' });
       }
@@ -3827,7 +3879,7 @@ export const SafeView = () => {
 
     if (!address && multisigAccounts && multisigAccounts.length > 0) {
       const firstMultisig = multisigAccounts[0].authority.toBase58();
-      const url = `/multisig/${firstMultisig}?v=proposals`;
+      const url = `${MULTISIG_ROUTE_BASE_PATH}/${firstMultisig}?v=proposals`;
       navigate(url);
     } else if (address && multisigAccounts && multisigAccounts.length > 0 && id) {
       const param = getQueryParamV();
@@ -3835,7 +3887,7 @@ export const SafeView = () => {
       const isProgramsFork = param === "programs" || param === "transactions" || param === "anchor-idl" ? true : false;
       const isValidParam = isProposalsFork || isProgramsFork ? true : false;
       if (!isValidParam) {
-        const url = `/multisig`;
+        const url = MULTISIG_ROUTE_BASE_PATH;
         navigate(url, { replace: true });
       }
     }
@@ -3913,6 +3965,18 @@ export const SafeView = () => {
 
   }, [id, address, multisigTxs, programs, getQueryParamV, selectedMultisig, publicKey, multisigClient]);
 
+  // Load vesting contracs based on selected multisig
+  useEffect(() => {
+
+    if (!publicKey || !selectedMultisig || !msp || !address) { return; }
+
+    if (selectedMultisig.authority.toBase58() === address) {
+      consoleOut('Calling refreshTreasuries...', '', 'blue');
+      refreshVestingContracts(address);
+    }
+
+  }, [address, msp, publicKey, refreshVestingContracts, selectedMultisig]);
+
 
   useEffect(() => {
     // Do unmounting stuff here
@@ -3944,7 +4008,7 @@ export const SafeView = () => {
             setTotalSafeBalance(undefined);
 
             // Need refresh Txs happens inmediately after selecting a multisig
-            const url = `/multisig/${item.authority.toBase58()}?v=proposals`;
+            const url = `${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`;
             navigate(url);
           };
 
@@ -4042,7 +4106,7 @@ export const SafeView = () => {
   }
 
   const goToProposalDetailsHandler = (selectedProposal: any) => {
-    const url = `/multisig/${address}/proposals/${selectedProposal.id.toBase58()}?v=instruction`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}/proposals/${selectedProposal.id.toBase58()}?v=instruction`;
     navigate(url);
   }
 
@@ -4051,7 +4115,7 @@ export const SafeView = () => {
   // }
 
   const goToProgramDetailsHandler = (selectedProgram: any) => {
-    const url = `/multisig/${address}/programs/${selectedProgram.pubkey.toBase58()}?v=transactions`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}/programs/${selectedProgram.pubkey.toBase58()}?v=transactions`;
     navigate(url);
   }
 
@@ -4061,7 +4125,7 @@ export const SafeView = () => {
       setHighLightableMultisigId(selectedMultisig.id.toBase58());
     }
     setNeedRefreshTxs(true);
-    const url = `/multisig/${address}?v=proposals`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}?v=proposals`;
     navigate(url);
   }
 
@@ -4070,7 +4134,7 @@ export const SafeView = () => {
     if (selectedMultisig) {
       setHighLightableMultisigId(selectedMultisig.id.toBase58());
     }
-    const url = `/multisig/${address}?v=programs`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}?v=programs`;
     navigate(url);
   }
 
@@ -4203,6 +4267,7 @@ export const SafeView = () => {
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
                               multisigClient={multisigSerumClient}
                               multisigTxs={serumMultisigTxs}
+                              vestingAccountsCount={treasuryList ? treasuryList.length : 0}
                             />
                           ) : (
                             <SafeMeanInfo
@@ -4223,6 +4288,7 @@ export const SafeView = () => {
                               selectedTab={selectedTab}
                               proposalSelected={proposalSelected}
                               assetSelected={assetSelected}
+                              vestingAccountsCount={treasuryList ? treasuryList.length : 0}
                             />
                           )
                         ) : isProposalDetails ? (

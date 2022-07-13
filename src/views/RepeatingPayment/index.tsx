@@ -11,7 +11,6 @@ import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   cutNumber,
   fetchAccountTokens,
-  formatAmount,
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
@@ -22,7 +21,7 @@ import {
   toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
@@ -34,7 +33,8 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
-  PaymentRateTypeOption
+  PaymentRateTypeOption,
+  toUsCurrency
 } from "../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
@@ -76,7 +76,6 @@ export const RepeatingPayment = (props: {
     tokenList,
     userTokens,
     splTokenList,
-    effectiveRate,
     loadingPrices,
     recipientNote,
     fromCoinAmount,
@@ -413,7 +412,7 @@ export const RepeatingPayment = (props: {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
-    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    console.log("onTxTimedout event executed:", item);
     // If we have the item, record failure and remove it from the list
     if (item) {
       recordTxConfirmation(item.signature, false);
@@ -562,12 +561,13 @@ export const RepeatingPayment = (props: {
   ]);
 
   const getTokenPrice = useCallback(() => {
-    if (!fromCoinAmount || ! effectiveRate) {
+    if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
 
-    return parseFloat(fromCoinAmount) * effectiveRate;
-  }, [effectiveRate, fromCoinAmount]);
+    return parseFloat(fromCoinAmount) * price;
+  }, [fromCoinAmount, selectedToken, getTokenPriceByAddress, getTokenPriceBySymbol]);
 
   const getPaymentRateAmount = useCallback(() => {
 
@@ -902,16 +902,17 @@ export const RepeatingPayment = (props: {
         consoleOut('data:', data);
 
         // Report event to Segment analytics
+        const price = getTokenPrice();
         const segmentData: SegmentStreamRPTransferData = {
           asset: selectedToken?.symbol,
-          assetPrice: effectiveRate,
+          assetPrice: price,
           allocation: parseFloat(fromCoinAmount as string),
           beneficiary: data.beneficiary,
           startUtc: dateFormat(data.startUtc, SIMPLE_DATE_TIME_FORMAT),
           rateAmount: parseFloat(paymentRateAmount as string),
           interval: getPaymentRateOptionLabel(paymentRateFrequency),
           feePayedByTreasurer: data.feePayedByTreasurer,
-          valueInUsd: effectiveRate * parseFloat(fromCoinAmount as string)
+          valueInUsd: price * parseFloat(fromCoinAmount as string)
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFormButton, segmentData);
@@ -947,7 +948,7 @@ export const RepeatingPayment = (props: {
           false // TODO: (feePayedByTreasurer)
         )
         .then(value => {
-          consoleOut('createStream returned transaction:', value);
+          consoleOut('streamPayment returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -960,7 +961,7 @@ export const RepeatingPayment = (props: {
           return true;
         })
         .catch(error => {
-          console.error('createStream error:', error);
+          console.error('streamPayment error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -1149,11 +1150,11 @@ export const RepeatingPayment = (props: {
     nativeBalance,
     recipientNote,
     selectedToken,
-    effectiveRate,
     fromCoinAmount,
     recipientAddress,
     paymentStartDate,
     paymentRateAmount,
+    transferCompleted,
     location.pathname,
     paymentRateFrequency,
     transactionCancelled,
@@ -1166,7 +1167,7 @@ export const RepeatingPayment = (props: {
     resetContractValues,
     getPaymentRateLabel,
     setSelectedStream,
-    transferCompleted,
+    getTokenPrice,
     getFeeAmount,
     // navigate,
   ]);
@@ -1218,7 +1219,7 @@ export const RepeatingPayment = (props: {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown token'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
@@ -1258,7 +1259,7 @@ export const RepeatingPayment = (props: {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown token"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={async () => {
@@ -1282,19 +1283,19 @@ export const RepeatingPayment = (props: {
                   decimals = -2;
                 }
               }
-              const uknwnToken: TokenInfo = {
+              const unknownToken: TokenInfo = {
                 address,
-                name: 'Unknown token',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: getNetworkIdByEnvironment(environment),
                 decimals,
                 symbol: `[${shortenAddress(address)}]`,
               };
-              tokenChanged(t);
-              setSelectedToken(uknwnToken);
+              tokenChanged(unknownToken);
+              setSelectedToken(unknownToken);
               if (userBalances && userBalances[address]) {
                 setSelectedTokenBalance(userBalances[address]);
               }
-              consoleOut("token selected:", uknwnToken, 'blue');
+              consoleOut("token selected:", unknownToken, 'blue');
               // Do not close on errors (-1 or -2)
               if (decimals >= 0) {
                 onCloseTokenSelector();
@@ -1394,8 +1395,8 @@ export const RepeatingPayment = (props: {
                       <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                         mintAddress={selectedToken.address}
                         name={selectedToken.name}
-                        showName={false}
                         showCaretDown={true}
+                        showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                         fullTokenInfo={selectedToken}
                       />
                     )}
@@ -1566,8 +1567,8 @@ export const RepeatingPayment = (props: {
                 <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
-                    showName={false}
                     showCaretDown={true}
+                    showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                     fullTokenInfo={selectedToken}
                   />
                 )}
@@ -1615,9 +1616,9 @@ export const RepeatingPayment = (props: {
             </div>
             <div className="right inner-label">
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                ~${fromCoinAmount && effectiveRate
-                  ? formatAmount(getTokenPrice(), 2)
-                  : "0.00"}
+                ~{fromCoinAmount
+                  ? toUsCurrency(getTokenPrice())
+                  : "$0.00"}
               </span>
             </div>
           </div>

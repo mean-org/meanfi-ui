@@ -25,7 +25,7 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./con
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices, getRaydiumLiquidityPools, getRaydiumLpPairs } from "../utils/api";
+import { getPrices } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
@@ -463,8 +463,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [stakedAmount, updateStakedAmount] = useState<string>(contextDefaultValues.stakedAmount);
   const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
-  const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
-  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
   const [raydiumLps, setRaydiumLps] = useState<any>(contextDefaultValues.raydiumLps);
   const [shouldLoadRaydiumLps, setShouldLoadRaydiumLps] = useState(true);
@@ -485,6 +483,9 @@ const AppStateProvider: React.FC = ({ children }) => {
       ? true
       : false;
   }, [tpsAvg]);
+
+  const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
+  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
 
   if (!streamProgramAddress) {
     setStreamProgramAddress(streamProgramAddressFromConfig);
@@ -1106,24 +1107,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     setSelectedContract,
     setContractName
   ]);
-
-  /*
-  // Get Raydium LP token list
-  useEffect(() => {
-    if (!raydiumLps && shouldLoadRaydiumLps) {
-      // getRaydiumLiquidityPools()
-      getRaydiumLpPairs()
-      .then(result => {
-        // consoleOut('Raydium official LPs:', result.official, 'blue');
-        // result.official
-        // result.unOfficial
-        consoleOut('Raydium pairs:', result, 'blue');
-        setRaydiumLps(result);
-      })
-      .finally(() => setShouldLoadRaydiumLps(false));
-    }
-  }, [raydiumLps, shouldLoadRaydiumLps]);
-  */
 
   // Cache selected DDCA frequency option
   const ddcaOptFromCache = useMemo(

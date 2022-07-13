@@ -27,6 +27,7 @@ export const MAX_TOKEN_LIST_ITEMS = 100;
 export const MAX_MULTISIG_PARTICIPANTS = 10;
 export const CUSTOM_TOKEN_NAME = 'Custom token';
 export const INPUT_AMOUNT_PATTERN = /^[0-9]*[.,]?[0-9]*$/;
+export const INTEGER_INPUT_AMOUNT_PATTERN = /^[1-9][0-9]*$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
 export const TIMEPICKER_FORMAT = 'h:mm a';
 export const SIMPLE_DATE_FORMAT = 'mm/dd/yyyy';
@@ -156,6 +157,7 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'CmbwXRT5z5aCxCzATqm5aZr7XpTh2AN7ToG35csw7YV',  // Moe
     'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
     'FkRtTexEwLtYerHRKUku7ZZJx1VuTqxwGF636nAuer3B', // YAF
+    'DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ', // YAF
     'F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc', // YGF
     'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
     '9PLqBWNkjegBdz4UD5LYSswWVXfxMf8hUsK2R9b3Lj23', // AMA
@@ -172,10 +174,14 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'c8fLDB5oFSwGnwAV1LGQqaadHt2WbvWv7o79YnnUWxd',  // J
     '5rtv52oecUAYAMXN9UzYBwoHGsRD1arLQN6WmRfcMDBP', // J
     '468Z5p52439dAqjLzBm2FCNxvDSnpbMsNx85b7Kmz3TQ', // Ayaz
-    //
+    'Cgn2mBir832Eyzx3j77DcdK8nCWndJvD6LewULNMfpbv',  // Ridwan
+    // Credix
     'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL', // Maxim Credix
     '63cUbJ3yecyduEPPYbPERPSJzAy6ZnRWvjE6u4qkkAVd', // Maxim Credix 2
-    'Cgn2mBir832Eyzx3j77DcdK8nCWndJvD6LewULNMfpbv'  // Ridwan
+    // BD team
+    '5wSYErsZGiJAVFyiM3JTvodn2ne4fXNsBjHu9YSRW7va', // LL
+    'CPq1KRCwFyQKUxQG6ewSorLoof5qrSMxjdhDm96auvij', // KRYL
+    'E9Z6RHa2Bhf7d5T455FKCag9gNbvqHuAcF3vgwkYHWGy', // INNA
 ];
 
 export const BETA_TESTING_PROGRAM_WHITELIST = [
