@@ -1673,7 +1673,7 @@ export const MoneyStreamsInfoView = (props: {
               <div className="d-flex align-items-center">
                 <h4>Incoming streams</h4>
                 <span className="info-icon">
-                  {incomingAmount ? (
+                  {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
                     <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
                   ) : (
                     <ArrowDownOutlined className="mean-svg-icons incoming ml-1" />
@@ -1730,7 +1730,7 @@ export const MoneyStreamsInfoView = (props: {
               <div className="d-flex align-items-center">
                 <h4>Outgoing streams</h4>
                 <span className="info-icon">
-                  {outgoingAmount ? (
+                  {(hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0) ? (
                     <ArrowUpOutlined className="mean-svg-icons outgoing bounce ml-1" />
                   ) : (
                     <ArrowUpOutlined className="mean-svg-icons outgoing ml-1" />
