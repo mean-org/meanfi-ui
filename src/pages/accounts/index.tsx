@@ -59,7 +59,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { AccountAssetAction, EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, delay, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, delay, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -303,7 +303,7 @@ export const AccountsNewView = () => {
     if (!publicKey) { return; }
 
     consoleOut('pathname:', location.pathname, 'crimson');
-    if (location.pathname === "/accounts/streams") {
+    if (location.pathname.endsWith('/streams')) {
       return;
       // Ensure path: /accounts/:address/assets if nothing provided
     } else if (!address && publicKey) {
@@ -321,10 +321,6 @@ export const AccountsNewView = () => {
         setIsFirstLoad(true);
       }, 5);
       navigate(url, { replace: true });
-    } else {
-      setTimeout(() => {
-        setIsFirstLoad(true);
-      }, 5);
     }
   }, [address, location.pathname, navigate, publicKey]);
 
@@ -1008,7 +1004,6 @@ export const AccountsNewView = () => {
     address,
     inspectedAccountType,
     isSelectedAssetNativeAccount,
-    showNotificationByType,
     resetTransactionStatus,
     recordTxConfirmation,
     setShouldLoadTokens,
@@ -1766,7 +1761,7 @@ export const AccountsNewView = () => {
           amount: data.amount
         };
         
-        consoleOut('selectedAsset:', selectedAsset, 'blue');
+        consoleOut('token:', selectedAsset, 'blue');
         consoleOut('data:', payload);
 
         // Log input data
@@ -3350,7 +3345,7 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountAddress, address, publicKey]);
 
-  // Ensure lokens Load on entering /accounts
+  // Ensure tokens Load on entering /accounts
   useEffect(() => {
     if (!isFirstLoad || !publicKey || !accountAddress) { return; }
 
@@ -3593,33 +3588,6 @@ export const AccountsNewView = () => {
                 setAccountTokens(finalList);
                 setTokensLoaded(true);
 
-                // Preset the passed-in token via query params either
-                // as token account address or mint address or token symbol
-                if (pathParamAsset) {
-                  let inferredAsset: UserTokenAccount | undefined = undefined;
-                  if (isValidAddress(pathParamAsset)) {
-                    inferredAsset = finalList.find(t => t.publicAddress === pathParamAsset || t.address === pathParamAsset);
-                  } else {
-                    inferredAsset = finalList.find(t => t.symbol === pathParamAsset);
-                  }
-                  if (inferredAsset) {
-                    selectAsset(inferredAsset);
-                  }
-                } else if (selectedAsset) {
-                  consoleOut('No pathParamAsset but selectedAsset', 'beware!!!', 'pink');
-                  consoleOut('selectedAsset:', selectedAsset, 'orange');
-                  // If no asset from route param but there is already one selected, keep selection
-                  const item = finalList.find(m => m.publicAddress === selectedAsset.publicAddress);
-                  if (item) {
-                    selectAsset(item, true);
-                  } else {
-                    selectAsset(finalList[0]);
-                  }
-                } else {
-                  consoleOut('Neither pathParamAsset nor selectedAsset', 'beware!!!', 'red');
-                  selectAsset(finalList[0]);
-                }
-
               } else {
                 pinnedTokens.forEach((item, index) => {
                   item.valueInUsd = 0;
@@ -3803,6 +3771,24 @@ export const AccountsNewView = () => {
     onTxConfirmed,
     onTxTimedout,
   ]);
+
+  // Preset token based on url param asset
+  useEffect(() => {
+    if (asset && accountTokens && accountTokens.length > 0) {
+      if (!selectedAsset || (selectedAsset && selectedAsset.publicAddress !== asset)) {
+        consoleOut('Presetting token based on url...', '', 'crimson');
+        const inferredAsset = accountTokens.find(t => t.publicAddress === asset || t.address === asset);
+        if (inferredAsset) {
+          selectAsset(inferredAsset);
+        }
+      }
+    } else if (!asset && accountTokens && accountTokens.length > 0) {
+      if (!selectedAsset || (selectedAsset && selectedAsset.publicAddress !== accountAddress)) {
+        consoleOut('Presetting first token in the list...', '', 'crimson');
+        selectAsset(accountTokens[0]);
+      }
+    }
+  }, [accountAddress, accountTokens, asset, selectAsset, selectedAsset]);
 
   // Preset the selected streaming account from the list if provided in path param (treasuryId)
   useEffect(() => {
@@ -4489,8 +4475,10 @@ export const AccountsNewView = () => {
   const renderAsset = useCallback((asset: UserTokenAccount, index: number) => {
     const onTokenAccountClick = () => {
       setSelectedCategory("assets");
+      if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
+        reloadSwitch();
+      }
       navigateToAsset(asset);
-      selectAsset(asset, true, true);
     }
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
