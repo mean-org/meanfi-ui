@@ -1447,9 +1447,9 @@ export const TreasuryStreamCreateModal = (props: {
               extras: displayParams.multisig
             });
 
-            param === "multisig" && showNotificationByType("info");
-            resetTransactionStatus();
+            // param === "multisig" && showNotificationByType("info");
             setIsBusy(false);
+            resetTransactionStatus();
             handleOk();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1733,9 +1733,9 @@ export const TreasuryStreamCreateModal = (props: {
                                   const trsryName = i.version < 2
                                     ? (i as TreasuryInfo).label
                                     : (i as Treasury).name;
-                                  return trsryName === option!.key ? true : false;
+                                  return trsryName === option?.key ? true : false;
                                 });
-                                return option!.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
+                                return option?.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
                               }}
                               onSelect={onStreamingAccountSelected}
                             />

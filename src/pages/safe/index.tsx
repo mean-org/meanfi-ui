@@ -2836,9 +2836,9 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
+    resetTransactionStatus();
 
     const cancelTx = async (data: any) => {
 
@@ -3097,8 +3097,8 @@ export const SafeView = () => {
                 transactionId: data.transaction.id
               }
             });
-            resetTransactionStatus();
             setIsBusy(false);
+            resetTransactionStatus();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
