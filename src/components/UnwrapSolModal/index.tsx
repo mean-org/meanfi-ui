@@ -211,6 +211,7 @@ export const UnwrapSolModal = (props: {
     }
   }, [connection, pageInitialized, publicKey]);
 
+  // Unsubscribe from events
   useEffect(() => {
     // Do unmounting stuff here
     return () => {

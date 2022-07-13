@@ -639,7 +639,7 @@ export const StakeTabView = (props: {
     onTxTimedout
   ]);
 
-  // Unsubscribed from events
+  // Unsubscribe from events
   useEffect(() => {
     // Do unmounting stuff here
     return () => {

@@ -296,6 +296,7 @@ export const StakingRewardsView = () => {
     pageInitialized,
   ]);
 
+  // Unsubscribe from events
   useEffect(() => {
     // Do unmounting stuff here
     return () => {
