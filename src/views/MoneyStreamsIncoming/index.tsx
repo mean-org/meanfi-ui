@@ -6,7 +6,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { IconEllipsisVertical } from "../../Icons";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, copyText, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
   TransactionFees,
@@ -38,6 +38,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../contexts/accounts";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from "react-router-dom";
+import { openNotification } from "../../components/Notifications";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -153,6 +154,23 @@ export const MoneyStreamsIncomingView = (props: {
     publicKey,
     endpoint,
   ]);
+
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (copyText(address.toString())) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t]);
 
   const isNewStream = useCallback(() => {
     if (streamSelected) {
@@ -1241,6 +1259,14 @@ export const MoneyStreamsIncomingView = (props: {
     <Menu>
       <Menu.Item key="msi-00" onClick={showTransferStreamModal}>
         <span className="menu-item-text">Transfer ownership</span>
+      </Menu.Item>
+      <Menu.Item key="msi-01" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
+        <span className="menu-item-text">Copy stream id</span>
+      </Menu.Item>
+      <Menu.Item key="msi-02">
+        <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
+          <span className="menu-item-text">View on Solscan</span>
+        </a>
       </Menu.Item>
     </Menu>
   );

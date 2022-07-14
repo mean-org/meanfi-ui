@@ -2479,10 +2479,10 @@ export const MoneyStreamsOutgoingView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="mso-00" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)} disabled={isBusy || hasStreamPendingTx()}>
+      <Menu.Item key="mso-00" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
         <span className="menu-item-text">Copy stream id</span>
       </Menu.Item>
-      <Menu.Item key="mso-01" onClick={() => {}} disabled={isBusy || hasStreamPendingTx()}>
+      <Menu.Item key="mso-01">
         <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">View on Solscan</span>
         </a>
