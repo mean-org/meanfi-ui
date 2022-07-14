@@ -956,6 +956,10 @@ export const AccountsNewView = () => {
         //   setHighLightableMultisigId(multisigAuthority);
         // }
         // navigate(`/multisig/${multisigAuthority}?v=proposals`);
+      } else if (item.operationType === OperationType.DeleteAsset) {
+        if (item.extras) {
+          showNotificationByType("info");
+        }
       } else if (item.operationType === OperationType.StreamAddFunds) {
         if (item.extras) {
           showNotificationByType("info");
@@ -2378,7 +2382,7 @@ export const AccountsNewView = () => {
   }, []);
 
   const onAcceptDeleteVault = (data: any) => {
-
+    consoleOut('deleteVault data:', data, 'blue');
     onExecuteCloseAssetTx(data);
   };
 
@@ -2388,9 +2392,9 @@ export const AccountsNewView = () => {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -2399,13 +2403,14 @@ export const AccountsNewView = () => {
 
       if (!publicKey || !inputAsset || !selectedMultisig || !multisigClient || !inputAsset.publicAddress) { 
         console.error("I do not have anything, review");
-        
         return null;
       }
 
       if (!inputAsset.owner || !selectedMultisig.authority.equals(new PublicKey(inputAsset.owner))) {
         throw Error("Invalid asset owner");
       }
+
+      multisigAuth = selectedMultisig.authority.toBase58();
 
       const closeIx = Token.createCloseAccountInstruction(
         TOKEN_PROGRAM_ID,
@@ -2643,6 +2648,10 @@ export const AccountsNewView = () => {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             if (sent) {
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished
+              });
               enqueueTransactionConfirmation({
                 signature: signature,
                 operationType: OperationType.DeleteAsset,
@@ -2651,15 +2660,10 @@ export const AccountsNewView = () => {
                 loadingTitle: 'Confirming transaction',
                 loadingMessage: "Deleting asset",
                 completedTitle: 'Transaction confirmed',
-                completedMessage: 'Asset successfully deleted'
+                completedMessage: 'Asset successfully deleted',
+                extras: multisigAuth
               });
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.TransactionFinished
-              });
-
               setIsDeleteVaultModalVisible(false);
-              param === "multisig" && showNotificationByType("info");
             } else {
               openNotification({
                 title: t('notifications.error-title'),

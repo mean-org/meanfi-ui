@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useContext } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
