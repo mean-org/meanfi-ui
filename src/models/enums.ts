@@ -62,6 +62,7 @@ export enum OperationType {
     StreamPause = 5,
     StreamResume = 6,
     StreamTransferBeneficiary = 7,
+    StreamCreateWithTemplate = 8,
     // Treasury options
     TreasuryCreate = 10,
     TreasuryStreamCreate = 11,
