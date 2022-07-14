@@ -248,8 +248,6 @@ export const AccountsNewView = () => {
 
   // Streaming account
   const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
-
-  const [treasuriesSummary, setTreasuriesSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
   const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [streamingAccountCombinedList, setStreamingAccountCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
@@ -3021,6 +3019,10 @@ export const AccountsNewView = () => {
         setStreamList([]);
         setAutocloseTreasuries([]);
         setStreamingAccountCombinedList([]);
+        setTotalAccountBalance(0);
+        setTotalTokenAccountsValue(0);
+        setTotalStreamingValue(0);
+        setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
       }
       consoleOut('Loading treasuries...', 'accountAddress changed!', 'purple');
       refreshTreasuries(true);
@@ -4002,7 +4004,7 @@ export const AccountsNewView = () => {
   // Live data calculation - NetWorth
   useEffect(() => {
 
-    if (streamsSummary && accountTokens && treasuriesSummary) {
+    if (streamsSummary && accountTokens && streamingAccountsSummary) {
       // Total USD value
       let sumMeanTokens = 0;
       accountTokens.forEach((asset: UserTokenAccount, index: number) => {
@@ -4013,14 +4015,14 @@ export const AccountsNewView = () => {
       });
       setTotalTokenAccountsValue(sumMeanTokens);
 
-      setTotalStreamingValue(streamsSummary.totalNet + treasuriesSummary.totalNet);
+      setTotalStreamingValue(streamsSummary.totalNet + streamingAccountsSummary.totalNet);
 
       // Net Worth
       const total = sumMeanTokens + totalAccountBalance;
       setNetWorth(total);
     }
 
-  }, [getTokenPriceBySymbol, accountTokens, treasuriesSummary, streamsSummary, totalAccountBalance]);
+  }, [getTokenPriceBySymbol, accountTokens, streamingAccountsSummary, streamsSummary, totalAccountBalance]);
 
   // Window resize listeners
   useEffect(() => {
@@ -5316,51 +5318,7 @@ export const AccountsNewView = () => {
                             <div className="amount">{toUsCurrency(totalAccountBalance)}</div>
                           </div>
                           <div className="asset-category">
-                            <>
-                              {renderMoneyStreamsSummary}
-                            </>
-                            {/* {inspectedAccountType === "wallet" ? (
-                              <>
-                                <TreasuriesSummary
-                                  address={accountAddress}
-                                  connection={connection}
-                                  ms={ms}
-                                  msp={msp}
-                                  title={t('treasuries.summary-title')}
-                                  enabled={userHasAccess()}
-                                  selected={selectedCategory === "streaming"}
-                                  onNewValue={(value: number) => setTreasuriesTvl(value)}
-                                  tooltipEnabled="See your Streaming Accounts"
-                                  tooltipDisabled="To see your Streaming Accounts you need to connect your wallet"
-                                  onSelect={() => {
-                                    if (userHasAccess()) {
-                                      navigateToStreaming();
-                                    }
-                                  }}
-                                />
-                              </>
-                            ) : inspectedAccountType === "multisig" ? (
-                              <>
-                                <TreasuriesSummary
-                                  address={accountAddress}
-                                  connection={connection}
-                                  ms={ms}
-                                  msp={msp}
-                                  title="Money Streaming"
-                                  enabled={userHasAccess()}
-                                  selected={selectedCategory === "streaming"}
-                                  onNewValue={(value: number) => setTreasuriesTvl(value)}
-                                  tooltipEnabled="See Multisig Streaming Accounts"
-                                  tooltipDisabled=""
-                                  targetPath={getMultisigTreasuriesPath()}
-                                  onSelect={() => {
-                                    if (userHasAccess()) {
-                                      navigateToStreaming();
-                                    }
-                                  }}
-                                />
-                              </>
-                            ) : null} */}
+                            {renderMoneyStreamsSummary}
                           </div>
 
                           <div className="asset-category-title flex-fixed-right">
