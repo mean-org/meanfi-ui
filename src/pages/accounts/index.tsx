@@ -138,7 +138,6 @@ export const AccountsNewView = () => {
     streamDetail,
     transactions,
     isWhitelisted,
-    previousRoute,
     selectedAsset,
     accountAddress,
     loadingStreams,
@@ -3014,21 +3013,21 @@ export const AccountsNewView = () => {
         setTreasuriesLoaded(true);
       }
 
-      if (!previousRoute.startsWith('/accounts')) {
-        setTreasuryList([]);
-        setStreamList([]);
-        setAutocloseTreasuries([]);
-        setStreamingAccountCombinedList([]);
-        setTotalAccountBalance(0);
-        setTotalTokenAccountsValue(0);
-        setTotalStreamingValue(0);
-        setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
-      }
+      // if (!previousRoute.startsWith('/accounts')) {
+      //   setTreasuryList([]);
+      //   setStreamList([]);
+      //   setAutocloseTreasuries([]);
+      //   setStreamingAccountCombinedList([]);
+      //   setTotalAccountBalance(0);
+      //   setTotalTokenAccountsValue(0);
+      //   setTotalStreamingValue(0);
+      //   setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
+      // }
       consoleOut('Loading treasuries...', 'accountAddress changed!', 'purple');
       refreshTreasuries(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountAddress, previousRoute, publicKey]);
+  }, [accountAddress, publicKey]);
 
   // Treasury list refresh timeout
   useEffect(() => {
@@ -4076,6 +4075,15 @@ export const AccountsNewView = () => {
       consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      consoleOut('Clearing accounts state...', '', 'purple');
+      setTreasuryList([]);
+      setStreamList([]);
+      setAutocloseTreasuries([]);
+      setStreamingAccountCombinedList([]);
+      setTotalAccountBalance(0);
+      setTotalTokenAccountsValue(0);
+      setTotalStreamingValue(0);
+      setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
       setSelectedAsset(undefined);
       setCanSubscribe(true);
     };
@@ -5206,7 +5214,6 @@ export const AccountsNewView = () => {
         <div className="debug-bar">
           <span className="ml-1">selectedCategory:</span><span className="ml-1 font-bold fg-dark-active">{selectedCategory || '-'}</span>
           <span className="ml-1">pathParamStreamingTab:</span><span className="ml-1 font-bold fg-dark-active">{pathParamStreamingTab || '-'}</span>
-          <span className="ml-1">previousRoute:</span><span className="ml-1 font-bold fg-dark-active">{previousRoute || '-'}</span>
         </div>
       )} */}
 
