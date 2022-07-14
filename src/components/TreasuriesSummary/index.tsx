@@ -147,8 +147,6 @@ export const TreasuriesSummary = (props: {
             totalNet: 0
         };
 
-        consoleOut('=========== Block start ===========', '', 'orange');
-
         for (const treasury of treasuryList) {
 
             const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2
@@ -185,12 +183,6 @@ export const TreasuriesSummary = (props: {
         }
 
         resume['totalAmount'] += treasuryList.length;
-
-        consoleOut('openAmount:', resume['openAmount'], 'blue');
-        consoleOut('lockedAmount:', resume['lockedAmount'], 'blue');
-        consoleOut('totalAmount:', resume['totalAmount'], 'blue');
-        consoleOut('totalNet:', resume['totalNet'], 'blue');
-        consoleOut('=========== Block ends ===========', '', 'orange');
 
         // Update state
         setTreasuriesSummary(resume);

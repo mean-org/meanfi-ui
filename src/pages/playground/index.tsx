@@ -929,10 +929,14 @@ export const PlaygroundView = () => {
         {renderRouteLink('With NO specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets')}
         <div className="form-label">Preset a specific asset</div>
         {renderRouteLink('With specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets/FQPAweWDZZbKjDQk3MCx285dUeZosLzF2FacqfyegrGC')}
-        <div className="form-label">View a multisig account</div>
-        {renderRouteLink('With specific asset preset', '/accounts/D9w3w6CQZvmAaqvQ9BsHSfg8vCa58dh3mXLND5dyDT1z/assets?account-type=multisig')}
         <div className="form-label">View multisig vesting contracts</div>
         {renderRouteLink('Send multisig to vesting', `/vesting/${sampleMultisig}/contracts?account-type=multisig`)}
+        <div className="form-label">View a multisig account</div>
+        {renderRouteLink('With specific asset preset', '/accounts/D9w3w6CQZvmAaqvQ9BsHSfg8vCa58dh3mXLND5dyDT1z/assets?account-type=multisig')}
+        <div className="form-label">View multisig streaming accounts</div>
+        {renderRouteLink('See multisig streaming accounts', `/accounts/${sampleMultisig}/streaming/outgoing?account-type=multisig`)}
+        {renderRouteLink('See multisig streaming accounts', `/accounts/8FZVqSVZ4o6QzQEn5eL3nsF9tt1PJozmj2S5uSYWiMw/streaming/outgoing?account-type=multisig`)}
+        {renderRouteLink('See multisig streaming accounts', `/accounts/JAPXPLLiMLrDdtEvovDGUt2umkP6G2aeaCikJWeFjyiB/streaming/outgoing?account-type=multisig`)}
       </div>
     </>
   );

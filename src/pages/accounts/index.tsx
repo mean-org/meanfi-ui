@@ -59,7 +59,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, delay, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, delay, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -2694,8 +2694,6 @@ export const AccountsNewView = () => {
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
-    clearTxConfirmationContext,
-    showNotificationByType,
     resetTransactionStatus,
     setTransactionStatus,
     getQueryAccountType,
@@ -2791,8 +2789,6 @@ export const AccountsNewView = () => {
         totalNet: 0
     };
 
-    consoleOut('=========== Block start ===========', '', 'orange');
-
     for (const treasury of treasuryList) {
 
         const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2
@@ -2828,9 +2824,6 @@ export const AccountsNewView = () => {
 
     resume['totalAmount'] += treasuryList.length;
 
-    consoleOut('totalNet in streaming accounts:', resume['totalNet'], 'blue');
-    consoleOut('=========== Block ends ===========', '', 'orange');
-
     // Update state
     setStreamingAccountsSummary(resume);
 
@@ -2859,8 +2852,6 @@ export const AccountsNewView = () => {
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-
-    consoleOut('=========== Block start ===========', '', 'orange');
 
     for (const stream of updatedStreamsv1) {
 
@@ -2911,9 +2902,6 @@ export const AccountsNewView = () => {
 
     resume['totalAmount'] += updatedStreamsv2.length;
 
-    consoleOut('totalNet in incoming streams:', resume['totalNet'], 'blue');
-    consoleOut('=========== Block ends ===========', '', 'orange');
-
     // Update state
     setIncomingStreamsSummary(resume);
 
@@ -2946,8 +2934,6 @@ export const AccountsNewView = () => {
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-
-    consoleOut('=========== Block start ===========', '', 'orange');
 
     for (const stream of updatedStreamsv1) {
 
@@ -2997,9 +2983,6 @@ export const AccountsNewView = () => {
     }
 
     resume['totalAmount'] += updatedStreamsv2.length;
-
-    consoleOut('totalNet in outgoing streams:', resume['totalNet'], 'blue');
-    consoleOut('=========== Block ends ===========', '', 'orange');
 
     // Update state
     setOutgoingStreamsSummary(resume);
@@ -3248,7 +3231,6 @@ export const AccountsNewView = () => {
       callBack: (inspectedAccountType && inspectedAccountType === "multisig") ? showDeleteVaultModal : showCloseAssetModal
     });
 
-    consoleOut('Asset actions:', actions, 'crimson');
     setAssetCtas(actions);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -3595,18 +3577,20 @@ export const AccountsNewView = () => {
                 const finalList = intersectedList.concat(custom);
 
                 // Report in the console for debugging
-                const tokenTable: any[] = [];
-                finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
-                    pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
-                    mintAddress: shortenAddress(item.address),
-                    symbol: item.symbol,
-                    decimals: item.decimals,
-                    balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
-                    price: getTokenPriceBySymbol(item.symbol),
-                    valueInUSD: toUsCurrency(item.valueInUsd) || "$0.00"
-                  })
-                );
-                console.table(tokenTable);
+                // if (isLocal()) {
+                //   const tokenTable: any[] = [];
+                //   finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
+                //       pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
+                //       mintAddress: shortenAddress(item.address),
+                //       symbol: item.symbol,
+                //       decimals: item.decimals,
+                //       balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
+                //       price: getTokenPriceBySymbol(item.symbol),
+                //       valueInUSD: toUsCurrency(item.valueInUsd) || "$0.00"
+                //     })
+                //   );
+                //   console.table(tokenTable);
+                // }
 
                 // Update the state
                 setAccountTokens(finalList);
@@ -3828,8 +3812,7 @@ export const AccountsNewView = () => {
 
     if (pathParamTreasuryId && treasuryId && pathParamTreasuryId === treasuryId) {
       const item = treasuryList.find(s => s.id as string === pathParamTreasuryId);
-      consoleOut('treasuryList:', treasuryList, 'darkgreen');
-      consoleOut('item:', item, 'darkgreen');
+      consoleOut('treasuryDetail:', item, 'darkgreen');
       if (item) {
         setTreasuryDetail(item);
       }
@@ -3849,6 +3832,9 @@ export const AccountsNewView = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathParamStreamId, publicKey, streamDetail, streamList]);
+
+
+
 
   // Create a combined list of streaming accounts with its 
   useEffect(() => {
@@ -3881,7 +3867,6 @@ export const AccountsNewView = () => {
     }
 
     setLoadingCombinedStreamingList(true);
-    setStreamingAccountCombinedList([]);
 
     const sortedStreamingAccountList = treasuryList.map((streaming) => streaming).sort((a, b) => {
       const vA1 = a as TreasuryInfo;
@@ -3902,15 +3887,20 @@ export const AccountsNewView = () => {
 
     getFinalList(sortedStreamingAccountList)
       .then(items => {
-        consoleOut('streamingAccountCombinedList', items, "blue");
+        consoleOut('streamingAccountCombinedList:', items, "blue");
 
         setStreamingAccountCombinedList(items);
       })
       .catch((error) => {
         console.log(error);
+        setStreamingAccountCombinedList([]);
+        consoleOut('streamingAccountCombinedList:', [], "blue");
       })
       .finally(() => setLoadingCombinedStreamingList(false));
   }, [getStreamingAccountStreams, streamList, treasuryList]);
+
+
+
 
   // Set the list of incoming and outgoing streams
   useEffect(() => {
@@ -5455,19 +5445,21 @@ export const AccountsNewView = () => {
                             <div id="streams-refresh-reset-cta" onClick={onRefreshStreamsReset}></div>
                             {!pathParamStreamId && !pathParamTreasuryId ? (
                               <MoneyStreamsInfoView
+                                accountAddress={accountAddress}
+                                autocloseTreasuries={autocloseTreasuries}
+                                loadingCombinedStreamingList={loadingCombinedStreamingList}
+                                loadingStreams={loadingStreams}
+                                multisigAccounts={multisigAccounts}
                                 onSendFromIncomingStreamInfo={goToStreamIncomingDetailsHandler}
                                 onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
                                 onSendFromStreamingAccountDetails={goToStreamingAccountDetailsHandler}
                                 onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
-                                loadingStreams={loadingStreams}
-                                streamList={streamList}
-                                accountAddress={accountAddress}
-                                selectedTab={pathParamStreamingTab}
-                                autocloseTreasuries={autocloseTreasuries}
-                                treasuryList={treasuryList}
-                                multisigAccounts={multisigAccounts}
                                 selectedMultisig={selectedMultisig}
+                                selectedTab={pathParamStreamingTab}
                                 showNotificationByType={() => showNotificationByType("info")}
+                                streamList={streamList}
+                                streamingAccountCombinedList={streamingAccountCombinedList}
+                                treasuryList={treasuryList}
                               />
                             ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                               <MoneyStreamsIncomingView

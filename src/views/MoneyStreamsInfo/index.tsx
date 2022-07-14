@@ -57,20 +57,39 @@ type CombinedStreamingAccounts = {
 };
 
 export const MoneyStreamsInfoView = (props: {
+  accountAddress: string;
+  autocloseTreasuries: (Treasury | TreasuryInfo)[];
+  loadingCombinedStreamingList: boolean;
+  loadingStreams: boolean;
+  multisigAccounts: MultisigInfo[] | undefined;
   onSendFromIncomingStreamInfo?: any;
   onSendFromOutgoingStreamInfo?: any;
   onSendFromStreamingAccountDetails?: any;
   onSendFromStreamingAccountOutgoingStreamInfo?: any;
-  loadingStreams: boolean;
-  streamList: Array<Stream | StreamInfo> | undefined;
-  accountAddress: string;
-  selectedTab: string;
-  autocloseTreasuries: (Treasury | TreasuryInfo)[];
-  treasuryList: (Treasury | TreasuryInfo)[];
-  multisigAccounts: MultisigInfo[] | undefined;
   selectedMultisig: MultisigInfo | undefined;
+  selectedTab: string;
   showNotificationByType?: any;
+  streamList: Array<Stream | StreamInfo> | undefined;
+  streamingAccountCombinedList: CombinedStreamingAccounts[] | undefined;
+  treasuryList: (Treasury | TreasuryInfo)[];
 }) => {
+  const {
+    accountAddress,
+    autocloseTreasuries,
+    loadingCombinedStreamingList,
+    loadingStreams,
+    multisigAccounts,
+    onSendFromIncomingStreamInfo,
+    onSendFromOutgoingStreamInfo,
+    onSendFromStreamingAccountDetails,
+    onSendFromStreamingAccountOutgoingStreamInfo,
+    selectedMultisig,
+    selectedTab,
+    showNotificationByType,
+    streamList,
+    streamingAccountCombinedList,
+    treasuryList,
+  } = props;
   const {
     tokenList,
     streamListv1,
@@ -92,22 +111,6 @@ export const MoneyStreamsInfoView = (props: {
     clearTxConfirmationContext,
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
-  const {
-    onSendFromStreamingAccountOutgoingStreamInfo,
-    onSendFromStreamingAccountDetails,
-    onSendFromIncomingStreamInfo,
-    onSendFromOutgoingStreamInfo,
-    showNotificationByType,
-    autocloseTreasuries,
-    multisigAccounts,
-    selectedMultisig,
-    accountAddress,
-    loadingStreams,
-    treasuryList,
-    selectedTab,
-    streamList,
-  } = props;
-
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const [searchParams] = useSearchParams();
@@ -152,16 +155,10 @@ export const MoneyStreamsInfoView = (props: {
 
   // Treasuries related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
-  // const [loadingTreasuries, setLoadingTreasuries] = useState(false);
-  const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
-  // const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [streamingAccountsSummary, setStreamingAccountsSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
   const [incomingStreamsSummary, setIncomingStreamsSummary] = useState<StreamsSummary>(initialSummary);
   const [outgoingStreamsSummary, setOutgoingStreamsSummary] = useState<StreamsSummary>(initialSummary);
-
-  const [streamingAccountCombinedList, setStreamingAccountCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
   const [loadingMoneyStreamsDetails, setLoadingMoneyStreamsDetails] = useState(true);
-
   const [hasIncomingStreamsRunning, setHasIncomingStreamsRunning] = useState<number>();
   const [hasOutgoingStreamsRunning, setHasOutgoingStreamsRunning] = useState<number>();
 
@@ -249,78 +246,6 @@ export const MoneyStreamsInfoView = (props: {
     });
   }, [setTransactionStatus]);
 
-  // Call only if you have control over every loop
-  const getStreamingAccountStreams = useCallback(async (treasuryPk: PublicKey, isNewTreasury: boolean) => {
-    if (!publicKey || !ms || !msp || !treasuryPk || !streamList) { return undefined; }
-
-    if (isNewTreasury) {
-      return streamList.filter((item: any) => item.treasury === treasuryPk.toBase58());
-    } else {
-      return  streamList.filter((item: any) => item.treasuryAddress === treasuryPk.toBase58());
-    }
-
-  }, [ms, msp, publicKey, streamList]);
-
-  // Create a combined list of streaming accounts with its 
-  useEffect(() => {
-    if (!treasuryList || !streamList) { return; }
-
-    const getFinalList = async (list: (Treasury | TreasuryInfo)[]) => {
-      const finalList: CombinedStreamingAccounts[] = [];
-
-      for (const item of list) {
-        const treasuryPk = new PublicKey(item.id as string);
-        const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2
-          ? true
-          : false;
-
-        const itemList = await getStreamingAccountStreams(treasuryPk, isNewTreasury);
-        if (itemList) {
-          const listItem: CombinedStreamingAccounts = {
-            streams: itemList,
-            treasury: item as any
-          };
-          finalList.push(listItem);
-        }
-      }
-
-      return finalList;
-    }
-
-    setLoadingCombinedStreamingList(true);
-    setStreamingAccountCombinedList([]);
-
-    const sortedStreamingAccountList = treasuryList.map((streaming) => streaming).sort((a, b) => {
-      const vA1 = a as TreasuryInfo;
-      const vA2 = a as Treasury;
-      const vB1 = b as TreasuryInfo;
-      const vB2 = b as Treasury;
-
-      const isNewTreasury = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
-        ? true
-        : false;
-
-      if (isNewTreasury) {
-        return vB2.totalStreams - vA2.totalStreams;
-      } else {
-        return vB1.streamsAmount - vA1.streamsAmount;
-      }
-    });
-
-    if (sortedStreamingAccountList) {
-      getFinalList(sortedStreamingAccountList)
-        .then(items => {
-          consoleOut('streamingAccountCombinedList:', items, "blue");
-
-          setStreamingAccountCombinedList(items);
-        })
-        .catch((error) => {
-          console.log(error);
-        })
-        .finally(() => setLoadingCombinedStreamingList(false));
-    }
-  }, [getStreamingAccountStreams, streamList, treasuryList]);
-
   // Keep account balance updated
   useEffect(() => {
 
@@ -405,7 +330,7 @@ export const MoneyStreamsInfoView = (props: {
         totalNet: 0
     };
 
-    consoleOut('=========== Block start ===========', '', 'orange');
+    // consoleOut('=========== Block start ===========', '', 'orange');
 
     for (const treasury of treasuryList) {
 
@@ -442,8 +367,8 @@ export const MoneyStreamsInfoView = (props: {
 
     resume['totalAmount'] += treasuryList.length;
 
-    consoleOut('totalNet in streaming accounts:', resume['totalNet'], 'blue');
-    consoleOut('=========== Block ends ===========', '', 'orange');
+    // consoleOut('totalNet in streaming accounts:', resume['totalNet'], 'blue');
+    // consoleOut('=========== Block ends ===========', '', 'orange');
 
     // Update state
     setStreamingAccountsSummary(resume);
@@ -474,7 +399,7 @@ export const MoneyStreamsInfoView = (props: {
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
-    consoleOut('=========== Block start ===========', '', 'orange');
+    // consoleOut('=========== Block start ===========', '', 'orange');
 
     for (const stream of updatedStreamsv1) {
 
@@ -525,8 +450,8 @@ export const MoneyStreamsInfoView = (props: {
 
     resume['totalAmount'] += updatedStreamsv2.length;
 
-    consoleOut('totalNet in incoming streams:', resume['totalNet'], 'blue');
-    consoleOut('=========== Block ends ===========', '', 'orange');
+    // consoleOut('totalNet in incoming streams:', resume['totalNet'], 'blue');
+    // consoleOut('=========== Block ends ===========', '', 'orange');
 
     // Update state
     setIncomingStreamsSummary(resume);
@@ -561,7 +486,7 @@ export const MoneyStreamsInfoView = (props: {
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
-    consoleOut('=========== Block start ===========', '', 'orange');
+    // consoleOut('=========== Block start ===========', '', 'orange');
 
     for (const stream of updatedStreamsv1) {
 
@@ -612,8 +537,8 @@ export const MoneyStreamsInfoView = (props: {
 
     resume['totalAmount'] += updatedStreamsv2.length;
 
-    consoleOut('totalNet in outgoing streams:', resume['totalNet'], 'blue');
-    consoleOut('=========== Block ends ===========', '', 'orange');
+    // consoleOut('totalNet in outgoing streams:', resume['totalNet'], 'blue');
+    // consoleOut('=========== Block ends ===========', '', 'orange');
 
     // Update state
     setOutgoingStreamsSummary(resume);
@@ -633,27 +558,6 @@ export const MoneyStreamsInfoView = (props: {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
 
-  const isMultisigTreasury = useCallback((treasury?: any) => {
-
-    const treasuryInfo: any = treasury ?? treasuryDetails;
-  
-    if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
-      return false;
-    }
-  
-    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
-  
-    if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
-      return true;
-    }
-  
-    return false;
-  
-  }, [
-    multisigAccounts, 
-    publicKey, 
-    treasuryDetails
-  ]);
 
   //////////////////////
   // MODALS & ACTIONS //
@@ -1498,13 +1402,10 @@ export const MoneyStreamsInfoView = (props: {
           const rateAmountValue = isNew ? toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount;
           const valueOfDay = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
           totalRateAmountValue += valueOfDay;
-          consoleOut(`${shortenAddress(stream.id as string)} rateAmountValue:`, valueOfDay, 'blue');
         }
       }
 
       setHasOutgoingStreamsRunning(runningOutgoingStreams.length);
-      
-      consoleOut('totalRateAmountValue:', totalRateAmountValue, 'blue');
       setRateOutgoingPerDay(totalRateAmountValue);
     }
   }, [
@@ -1598,7 +1499,7 @@ export const MoneyStreamsInfoView = (props: {
 
     const incomingDivider = parseFloat(`1${"0".repeat((divider && divider >= 2) ? divider - 2 : 1)}`);
 
-    consoleOut("incomingDivider test", incomingDivider);
+    // consoleOut("incomingDivider test", incomingDivider);
 
     const calculateScaleBalanceIncoming = withdrawalBalance / incomingDivider;
 
@@ -1627,7 +1528,7 @@ export const MoneyStreamsInfoView = (props: {
     const outgoingDivider = parseFloat(`1${"0".repeat((divider && divider >= 2) ? divider - 2 : 1)}`);
     // const outgoingDivider = parseFloat(`1${"0".repeat(divider - 2)}`);
 
-    consoleOut("outgoingDivider test", outgoingDivider);
+    // consoleOut("outgoingDivider test", outgoingDivider);
 
     const calculateScaleBalanceOutgoing = unallocatedBalance / outgoingDivider;
     // const calculateScaleBalanceOutgoing = (unallocatedBalance * 100) / (totalAccountBalance as number);
@@ -1659,8 +1560,8 @@ export const MoneyStreamsInfoView = (props: {
     setHeightGreenWave(`${withdrawalScale}vh`);
     setHeightRedWave(`${unallocatedScale}vh`);
 
-    consoleOut("Height green withdrawal scale", withdrawalScale);
-    consoleOut("Height red withdrawal scale", unallocatedScale);
+    // consoleOut("Height green withdrawal scale", withdrawalScale);
+    // consoleOut("Height red withdrawal scale", unallocatedScale);
 
   }, [unallocatedScale, withdrawalScale]);
 
