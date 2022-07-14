@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import './style.scss';
-import { Modal, Button, Spin, Select } from 'antd';
+import { Modal, Button, Spin, Drawer } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
@@ -9,49 +9,389 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../utils/utils';
-import { useConnection } from '../../contexts/connection';
+import { cutNumber, fetchAccountTokens, formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenBySymbol, isValidNumber, shortenAddress } from '../../utils/utils';
+import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { PublicKey } from '@solana/web3.js';
+import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
-import { FALLBACK_COIN_IMAGE } from '../../constants';
-import { Identicon } from '../Identicon';
+import { MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../constants';
 import { UserTokenAccount } from '../../models/transactions';
+import { InputMean } from '../InputMean';
+import { TokenDisplay } from '../TokenDisplay';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { useAccountsContext } from '../../contexts/accounts';
+import { NATIVE_SOL } from '../../utils/tokens';
+import { TextInput } from '../TextInput';
+import { TokenListItem } from '../TokenListItem';
+import { environment } from '../../environments/environment';
 
-const { Option } = Select;
+// const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigTransferTokensModal = (props: {
+  assets: UserTokenAccount[];
   handleClose: any;
   handleOk: any;
-  isVisible: boolean;
   isBusy: boolean;
+  isVisible: boolean;
   nativeBalance: number;
-  transactionFees: TransactionFees;
   selectedVault: UserTokenAccount | undefined;
-  assets: UserTokenAccount[];
+  transactionFees: TransactionFees;
 }) => {
-  const { t } = useTranslation('common');
-  const connection = useConnection();
-  const { publicKey } = useWallet();
   const {
-    selectedToken,
+    assets,
+    handleClose,
+    handleOk,
+    isBusy,
+    isVisible,
+    nativeBalance,
+    selectedVault,
+    transactionFees,
+  } = props;
+  const { t } = useTranslation('common');
+  const accounts = useAccountsContext();
+  const connection = useConnection();
+  // const { account } = useNativeAccount();
+  const { publicKey, connected } = useWallet();
+  const {
+    tokenList,
+    userTokens,
+    splTokenList,
     loadingPrices,
-    effectiveRate,
+    selectedToken,
     transactionStatus,
-    getUserTokenByMintAddress,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    setEffectiveRate,
+    setSelectedToken,
     refreshPrices,
   } = useContext(AppStateContext);
 
+  const inModal = false;
+
+  const [proposalTitle, setProposalTitle] = useState("");
   const [fromVault, setFromVault] = useState<UserTokenAccount>();
   const [fromMint, setFromMint] = useState<any>();
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
 
+  const [userBalances, setUserBalances] = useState<any>();
+  const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
+  // const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+  const [tokenFilter, setTokenFilter] = useState("");
+  const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
+  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  // const [nativeBalance, setNativeBalance] = useState(0);
+  // const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+
+  // Process inputs
+  useEffect(() => {
+    if (props.selectedVault && inModal) {
+      setSelectedToken(props.selectedVault);
+      return;
+    } else {
+      let from: TokenInfo | undefined = undefined;
+      if (props.selectedVault) {
+        from = props.selectedVault.address
+          ? props.selectedVault.symbol === 'SOL'
+            ? getTokenBySymbol('wSOL')
+            : getTokenBySymbol(props.selectedVault.symbol)
+          : getTokenBySymbol('MEAN');
+
+        if (from) {
+          setSelectedToken(from);
+        }
+      } else {
+        from = getTokenBySymbol('MEAN');
+        if (from) {
+          setSelectedToken(from);
+        }
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inModal, props.selectedVault]);
+
+  // Keep account balance updated
+  // useEffect(() => {
+
+  //   const getAccountBalance = (): number => {
+  //     return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+  //   }
+
+  //   if (account?.lamports !== previousBalance || !nativeBalance) {
+  //     setNativeBalance(getAccountBalance());
+  //     setPreviousBalance(account?.lamports);
+  //   }
+  // }, [account, nativeBalance, previousBalance]);
+
+  // Updates the token list everytime is filtered
+  const updateTokenListByFilter = useCallback((searchString: string) => {
+
+    if (!selectedList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const filter = (t: any) => {
+        return (
+          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.address.toLowerCase().includes(searchString.toLowerCase())
+        );
+      };
+
+      const showFromList = !searchString 
+        ? selectedList
+        : selectedList.filter((t: any) => filter(t));
+
+      setFilteredTokenList(showFromList);
+
+    });
+
+    return () => { 
+      clearTimeout(timeout);
+    }
+
+  }, [selectedList]);
+
+  const onInputCleared = useCallback(() => {
+    setTokenFilter('');
+    updateTokenListByFilter('');
+  },[
+    updateTokenListByFilter
+  ]);
+
+  const onTokenSearchInputChange = useCallback((e: any) => {
+
+    const newValue = e.target.value;
+    setTokenFilter(newValue);
+    updateTokenListByFilter(newValue);
+
+  },[
+    updateTokenListByFilter
+  ]);
+
+  const getTokenPrice = useCallback(() => {
+    if (!amount || !selectedToken) {
+      return 0;
+    }
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+
+    return parseFloat(amount) * price;
+  }, [amount, selectedToken, getTokenPriceByAddress, getTokenPriceBySymbol]);
+
+  const autoFocusInput = useCallback(() => {
+    const input = document.getElementById("token-search-otp");
+    if (input) {
+      setTimeout(() => {
+        input.focus();
+      }, 100);
+    }
+  }, []);
+
+  const showDrawer = () => {
+    setIsTokenSelectorVisible(true);
+    autoFocusInput();
+  };
+
+  const hideDrawer = () => {
+    setIsTokenSelectorVisible(false);
+  };
+
+  // Automatically update all token balances and rebuild token list
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !userTokens || !tokenList || !accounts || !accounts.tokenAccounts) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const balancesMap: any = {};
+
+      fetchAccountTokens(connection, publicKey)
+      .then(accTks => {
+        if (accTks) {
+
+          const meanTokensCopy = new Array<TokenInfo>();
+          const intersectedList = new Array<TokenInfo>();
+          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+
+          // Build meanTokensCopy including the MeanFi pinned tokens
+          userTokensCopy.forEach(item => {
+            meanTokensCopy.push(item);
+          });
+
+          // Now add all other items but excluding those in userTokens
+          splTokenList.forEach(item => {
+            if (!userTokens.includes(item)) {
+              meanTokensCopy.push(item);
+            }
+          });
+
+          // Create a list containing tokens for the user owned token accounts
+          accTks.forEach(item => {
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromMeanTokensCopy);
+            }
+          });
+
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;
+          intersectedList.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+          
+          setSelectedList(intersectedList);
+          consoleOut('intersectedList:', intersectedList, 'orange');
+
+        } else {
+          for (const t of tokenList) {
+            balancesMap[t.address] = 0;
+          }
+          // set the list to the userTokens list
+          setSelectedList(tokenList);
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (const t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+        setSelectedList(tokenList);
+      })
+      .finally(() => setUserBalances(balancesMap));
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [accounts, connection, nativeBalance, publicKey, splTokenList, tokenList, userTokens]);
+
+  // Keep token balance updated
+  useEffect(() => {
+
+    if (!connection || !publicKey || !userBalances || !selectedToken) {
+      setSelectedTokenBalance(0);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setSelectedTokenBalance(userBalances[selectedToken.address]);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [connection, publicKey, selectedToken, userBalances]);
+
+  // Automatically update all token balances and rebuild token list
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !userTokens || !tokenList || !accounts || !accounts.tokenAccounts) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const balancesMap: any = {};
+
+      fetchAccountTokens(connection, publicKey)
+      .then(accTks => {
+        if (accTks) {
+
+          const meanTokensCopy = new Array<TokenInfo>();
+          const intersectedList = new Array<TokenInfo>();
+          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+
+          // Build meanTokensCopy including the MeanFi pinned tokens
+          userTokensCopy.forEach(item => {
+            meanTokensCopy.push(item);
+          });
+
+          // Now add all other items but excluding those in userTokens
+          splTokenList.forEach(item => {
+            if (!userTokens.includes(item)) {
+              meanTokensCopy.push(item);
+            }
+          });
+
+          // Create a list containing tokens for the user owned token accounts
+          accTks.forEach(item => {
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromMeanTokensCopy);
+            }
+          });
+
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;
+          intersectedList.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+          
+          setSelectedList(intersectedList);
+          consoleOut('intersectedList:', intersectedList, 'orange');
+
+        } else {
+          for (const t of tokenList) {
+            balancesMap[t.address] = 0;
+          }
+          // set the list to the userTokens list
+          setSelectedList(tokenList);
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (const t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+        setSelectedList(tokenList);
+      })
+      .finally(() => setUserBalances(balancesMap));
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [accounts, connection, nativeBalance, publicKey, splTokenList, tokenList, userTokens]);
+
   // Resolves fromVault
   useEffect(() => {
 
-    if (!props.isVisible || !connection || !publicKey || !props.assets || props.assets.length === 0) {
+    if (!props.isVisible || !connection || !publicKey || !props.assets) {
       return;
     }
 
@@ -63,13 +403,7 @@ export const MultisigTransferTokensModal = (props: {
 
     return () => clearTimeout(timeout);
 
-  }, [
-    publicKey,
-    connection,
-    props.assets,
-    props.isVisible,
-    props.selectedVault,
-  ]);
+  }, [connection, props.assets, props.isVisible, props.selectedVault, publicKey]);
 
   // Resolves fromMint
   useEffect(() => {
@@ -96,15 +430,11 @@ export const MultisigTransferTokensModal = (props: {
       clearTimeout(timeout);
     }
 
-  }, [
-    connection,
-    fromVault,
-    publicKey,
-    props.isVisible
-  ])
+  }, [connection, fromVault, props.isVisible, publicKey]);
 
   const onAcceptModal = () => {
     props.handleOk({
+      title: proposalTitle,
       from: fromVault ? fromVault.publicAddress as string : '',
       amount: +amount,
       to: to
@@ -113,20 +443,24 @@ export const MultisigTransferTokensModal = (props: {
 
   const onCloseModal = () => {
     consoleOut('onCloseModal called!', '', 'crimson');
-    props.handleClose();
+    handleClose();
   }
 
-  const onVaultChanged = useCallback((e: any) => {
-    
-    if (props.assets && props.assets.length) {
-      consoleOut("asset selected:", e, 'blue');
-      const selectedFromVault = props.assets.filter(v => v.publicAddress === e)[0];
-      setFromVault(selectedFromVault);
-    }
+  const onTitleInputValueChange = (e: any) => {
+    setProposalTitle(e.target.value);
+  }
 
-  },[
-    props.assets
-  ]);
+  // const onVaultChanged = useCallback((e: any) => {
+    
+  //   if (props.assets && props.assets.length) {
+  //     consoleOut("asset selected:", e, 'blue');
+  //     const selectedFromVault = props.assets.filter(v => v.publicAddress === e)[0];
+  //     setFromVault(selectedFromVault);
+  //   }
+
+  // },[
+  //   props.assets
+  // ]);
 
   const onMintToAddressChange = (e: any) => {
     const inputValue = e.target.value as string;
@@ -138,7 +472,7 @@ export const MultisigTransferTokensModal = (props: {
 
     let newValue = e.target.value;
 
-    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const decimals = selectedVault ? selectedVault.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
 
@@ -162,6 +496,7 @@ export const MultisigTransferTokensModal = (props: {
 
   const isValidForm = (): boolean => {
     return (
+      proposalTitle &&
       fromVault &&
       to &&
       isValidAddress(fromVault.publicAddress) &&
@@ -173,7 +508,7 @@ export const MultisigTransferTokensModal = (props: {
   }
 
   const refreshPage = () => {
-    props.handleClose();
+    handleClose();
     window.location.reload();
   }
 
@@ -188,277 +523,529 @@ export const MultisigTransferTokensModal = (props: {
     setAmount(onlyNumbersAndDot.trim());
   }
 
+  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
+
+  const showTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(true);
+    autoFocusInput();
+  }, [autoFocusInput]);
+
+  const onCloseTokenSelector = useCallback(() => {
+    hideDrawer();
+    setTokenSelectorModalVisibility(false);
+    // Reset token on errors (decimals: -1 or -2)
+    if (selectedToken && selectedToken.decimals < 0) {
+      // tokenChanged(undefined);
+      setSelectedToken(undefined);
+    }
+    if (tokenFilter && !isValidAddress(tokenFilter)) {
+      setTokenFilter('');
+    }
+  }, [selectedToken, setSelectedToken, tokenFilter]);
+
+  const renderTokenList = (
+    <>
+      {(filteredTokenList && filteredTokenList.length > 0) && (
+        filteredTokenList.map((t, index) => {
+          const onClick = function () {
+            // tokenChanged(t);
+            setSelectedToken(t);
+
+            consoleOut("token selected:", t.symbol, 'blue');
+            const price = getTokenPriceByAddress(t.address) || getTokenPriceBySymbol(t.symbol);
+            setEffectiveRate(price);
+            onCloseTokenSelector();
+          };
+
+          if (index < MAX_TOKEN_LIST_ITEMS) {
+            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
+            return (
+              <TokenListItem
+                key={t.address}
+                name={t.name || 'Unknown token'}
+                mintAddress={t.address}
+                token={t}
+                className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "dimmed"}
+                onClick={onClick}
+                balance={balance}
+              />
+            );
+          } else {
+            return null;
+          }
+        })
+      )}
+    </>
+  );
+
+  const renderTokenSelectorInner = (
+    <div className="token-selector-wrapper">
+      <div className="token-search-wrapper">
+        <TextInput
+          id="token-search-otp"
+          value={tokenFilter}
+          allowClear={true}
+          extraClass="mb-2"
+          onInputClear={onInputCleared}
+          placeholder={t('token-selector.search-input-placeholder')}
+          error={
+            tokenFilter && selectedToken && selectedToken.decimals === -1
+              ? 'Account not found'
+              : tokenFilter && selectedToken && selectedToken.decimals === -2
+                ? 'Account is not a token mint'
+                : ''
+          }
+          onInputChange={onTokenSearchInputChange} />
+      </div>
+      <div className="token-list">
+        {filteredTokenList.length > 0 && renderTokenList}
+        {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+          <TokenListItem
+            key={tokenFilter}
+            name="Unknown token"
+            mintAddress={tokenFilter}
+            className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+            onClick={async () => {
+              const address = tokenFilter;
+              let decimals = -1;
+              let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+              try {
+                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                consoleOut('accountInfo:', accountInfo, 'blue');
+              } catch (error) {
+                console.error(error);
+              }
+              if (accountInfo) {
+                if ((accountInfo as any).data["program"] &&
+                    (accountInfo as any).data["program"] === "spl-token" &&
+                    (accountInfo as any).data["parsed"] &&
+                    (accountInfo as any).data["parsed"]["type"] &&
+                    (accountInfo as any).data["parsed"]["type"] === "mint") {
+                  decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+                } else {
+                  decimals = -2;
+                }
+              }
+              const uknwnToken: TokenInfo = {
+                address,
+                name: 'Unknown token',
+                chainId: getNetworkIdByEnvironment(environment),
+                decimals,
+                symbol: `[${shortenAddress(address)}]`,
+              };
+              // tokenChanged(t);
+              setSelectedToken(uknwnToken);
+              if (userBalances && userBalances[address]) {
+                setSelectedTokenBalance(userBalances[address]);
+              }
+              consoleOut("token selected:", uknwnToken, 'blue');
+              // Do not close on errors (-1 or -2)
+              if (decimals >= 0) {
+                onCloseTokenSelector();
+              }
+            }}
+            balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+          />
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.transfer-tokens.modal-title')}</div>}
-      maskClosable={false}
-      footer={null}
-      visible={props.isVisible}
-      onOk={onAcceptModal}
-      onCancel={onCloseModal}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+    <>
+      <Modal
+        className="mean-modal simple-modal"
+        title={<div className="modal-title">{t('multisig.transfer-tokens.modal-title')}</div>}
+        maskClosable={false}
+        footer={null}
+        visible={props.isVisible}
+        onOk={onAcceptModal}
+        onCancel={onCloseModal}
+        width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+        <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
 
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
-          <>
-            {/* Amount to send */}
-            <div className="mb-3">
-              <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
-                <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
-                  {props.assets && props.assets.length > 0 && fromVault && (
-                    <>
-                      <div className="info-label mb-0">
-                        <div className="subtitle text-truncate">{shortenAddress(fromVault?.publicAddress as string, 8)}</div>
-                      </div>
+          {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+            <>
+              {/* Proposal title */}
+              <div className="mb-3">
+                <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+                <InputMean
+                  id="proposal-title-field"
+                  name="Title"
+                  className="w-100 general-text-input"
+                  onChange={onTitleInputValueChange}
+                  placeholder="Add a proposal title (required)"
+                  value={proposalTitle}
+                />
+              </div>
 
-                      <div className="flex-fixed-left transfer-proposal-select mt-0">
-                      <div className="left">
-                        <span className="add-on">
-                          {props.assets && props.assets.length > 0 && fromVault && (
-                            <Select className={`token-selector-dropdown auto-height`} value={fromVault.publicAddress}
-                              style={{width:"100%", maxWidth:'none'}}
-                              onChange={onVaultChanged}
-                              bordered={false}
-                              showArrow={false}
-                              dropdownRender={menu => (
-                              <div>{menu}</div>
-                            )}>
-                              {props.assets.map((option: UserTokenAccount) => {
-                                const token = getUserTokenByMintAddress(option.address as string);
-                                const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                                  event.currentTarget.src = FALLBACK_COIN_IMAGE;
-                                  event.currentTarget.className = "error";
-                                };
+              {/* From */}
+              <div className="mb-3">
+                <div className="form-label">From</div>
+                <div className={`well ${fromVault?.publicAddress as string ? 'disabled' : ''}`}>
+                  <input id="token-address-field"
+                    className="general-text-input"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    type="text"
+                    readOnly
+                    value={fromVault?.publicAddress as string}
+                  />
+                </div>
+              </div>
 
-                                return (
-                                  <Option key={option.publicAddress} value={option.publicAddress}>
-                                    <div className="option-container">
-                                      <div className="transaction-list-row w-100">
-                                        <div className="icon-cell">
-                                          <div className="token-icon">
-                                            {(token && token.logoURI) ? (
-                                              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-                                            ) : (
-                                              <Identicon address={option.address} style={{
-                                                width: "26px",
-                                                display: "inline-flex",
-                                                height: "26px",
-                                                overflow: "hidden",
-                                                borderRadius: "50%"
-                                              }} />
-                                            )}
-                                          </div>
-                                        </div>
-                                        <div className="description-cell">
-                                          <div className="title text-truncate">
-                                            {(token && token.symbol) ? (
-                                              token.symbol 
-                                            ) : (
-                                              `${shortenAddress(option.address, 4)}`
-                                            )}
+              {/* Amount to send */}
+              {/* <div className="mb-3">
+                <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
+                  <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+                    {props.assets && props.assets.length > 0 && fromVault && (
+                      <>
+                        <div className="info-label mb-0">
+                          <div className="subtitle text-truncate">{shortenAddress(fromVault?.publicAddress as string, 8)}</div>
+                        </div>
+
+                        <div className="flex-fixed-left transfer-proposal-select mt-0">
+                        <div className="left">
+                          <span className="add-on">
+                            {props.assets && props.assets.length > 0 && fromVault && (
+                              <Select className={`token-selector-dropdown auto-height`} value={fromVault.publicAddress}
+                                style={{width:"100%", maxWidth:'none'}}
+                                onChange={onVaultChanged}
+                                bordered={false}
+                                showArrow={false}
+                                dropdownRender={menu => (
+                                <div>{menu}</div>
+                              )}>
+                                {props.assets.map((option: UserTokenAccount) => {
+                                  const token = getUserTokenByMintAddress(option.address as string);
+                                  const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                                    event.currentTarget.src = FALLBACK_COIN_IMAGE;
+                                    event.currentTarget.className = "error";
+                                  };
+
+                                  return (
+                                    <Option key={option.publicAddress} value={option.publicAddress}>
+                                      <div className="option-container">
+                                        <div className="transaction-list-row w-100">
+                                          <div className="icon-cell">
+                                            <div className="token-icon">
+                                              {(token && token.logoURI) ? (
+                                                <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                                              ) : (
+                                                <Identicon address={option.address} style={{
+                                                  width: "26px",
+                                                  display: "inline-flex",
+                                                  height: "26px",
+                                                  overflow: "hidden",
+                                                  borderRadius: "50%"
+                                                }} />
+                                              )}
                                             </div>
-                                        </div>
-                                        <div className="rate-cell">
-                                          <div className="rate-amount text-uppercase">
-                                            {getTokenAmountAndSymbolByTokenAddress(
-                                              option.balance || 0,
-                                              token ? token.address as string : '',
-                                              true
-                                            )}
+                                          </div>
+                                          <div className="description-cell">
+                                            <div className="title text-truncate">
+                                              {(token && token.symbol) ? (
+                                                token.symbol 
+                                              ) : (
+                                                `${shortenAddress(option.address, 4)}`
+                                              )}
+                                              </div>
+                                          </div>
+                                          <div className="rate-cell">
+                                            <div className="rate-amount text-uppercase">
+                                              {getTokenAmountAndSymbolByTokenAddress(
+                                                option.balance || 0,
+                                                token ? token.address as string : '',
+                                                true
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  </Option>
-                                );
-                              })}
-                            </Select>
-                          )}
-                        </span>
-                      </div>
-                      <div className="right">
-                        <input
-                          className="general-text-input text-right"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          autoCorrect="off"
-                          type="text"
-                          onChange={onMintAmountChange}
-                          pattern="^[0-9]*[.,]?[0-9]*$"
-                          placeholder="0.0"
-                          minLength={1}
-                          maxLength={79}
-                          spellCheck="false"
-                          onPaste={pasteHandler}
-                          value={amount}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex-fixed-right">
-                      <div className="left inner-label">
-                        <span>{t('transactions.send-amount.label-right')}:</span>
-                          <span>
-                            {getTokenAmountAndSymbolByTokenAddress(
-                              fromVault.balance || 0,
-                              fromVault ? fromVault.publicAddress as string : '',
-                              true
+                                    </Option>
+                                  );
+                                })}
+                              </Select>
                             )}
-                        </span>
+                          </span>
+                        </div>
+                        <div className="right">
+                          <input
+                            className="general-text-input text-right"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            type="text"
+                            onChange={onMintAmountChange}
+                            pattern="^[0-9]*[.,]?[0-9]*$"
+                            placeholder="0.0"
+                            minLength={1}
+                            maxLength={79}
+                            spellCheck="false"
+                            onPaste={pasteHandler}
+                            value={amount}
+                          />
+                        </div>
                       </div>
 
-                      <div className="right inner-label">
-                        <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                          ~${amount && effectiveRate
-                            ? formatAmount(parseFloat(amount) * effectiveRate, 2)
-                            : "0.00"}
-                        </span>
-                      </div>
-                    </div>
-                    {(fromVault && fromMint) && (
-                      <>
-                      {
-                        +amount > (fromVault.balance || 0) ? (
-                          <span className="form-field-error">
-                            {t('multisig.multisig-assets.validation-amount-high')}
+                      <div className="flex-fixed-right">
+                        <div className="left inner-label">
+                          <span>{t('transactions.send-amount.label-right')}:</span>
+                            <span>
+                              {getTokenAmountAndSymbolByTokenAddress(
+                                fromVault.balance || 0,
+                                fromVault ? fromVault.publicAddress as string : '',
+                                true
+                              )}
                           </span>
-                        ) : (null)
-                      }
-                      </>
-                    )}
-                  </>
+                        </div>
+
+                        <div className="right inner-label">
+                          <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                            ~${amount && effectiveRate
+                              ? formatAmount(parseFloat(amount) * effectiveRate, 2)
+                              : "0.00"}
+                          </span>
+                        </div>
+                      </div>
+                      {(fromVault && fromMint) && (
+                        <>
+                        {
+                          +amount > (fromVault.balance || 0) ? (
+                            <span className="form-field-error">
+                              {t('multisig.multisig-assets.validation-amount-high')}
+                            </span>
+                          ) : (null)
+                        }
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div> */}
+
+              {/* Send amount */}
+              <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
+              <div className="well">
+                <div className="flex-fixed-left">
+                  <div className="left">
+                    <span className="add-on simplelink">
+                      {selectedToken && (
+                        <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
+                          mintAddress={selectedToken.address}
+                          name={selectedToken.name}
+                          showCaretDown={true}
+                          fullTokenInfo={selectedToken}
+                        />
+                      )}
+                      {selectedToken && fromVault ? (
+                        <div className="token-max simplelink" onClick={() => {
+                          setAmount(cutNumber(fromVault.balance as number, selectedToken.decimals));
+                          }}>
+                          MAX
+                        </div>
+                      ) : null}
+                    </span>
+                  </div>
+                  <div className="right">
+                    <input
+                      className="general-text-input text-right"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      type="text"
+                      onChange={onMintAmountChange}
+                      pattern="^[0-9]*[.,]?[0-9]*$"
+                      placeholder="0.0"
+                      minLength={1}
+                      maxLength={79}
+                      spellCheck="false"
+                      onPaste={pasteHandler}
+                      value={amount}
+                    />
+                  </div>
+                </div>
+                <div className="flex-fixed-right">
+                  <div className="left inner-label">
+                    <span>{t('transactions.send-amount.label-right')}:</span>
+                    <span>
+                      {fromVault && (
+                        getTokenAmountAndSymbolByTokenAddress(
+                          fromVault.balance || 0,
+                          fromVault ? fromVault.publicAddress as string : '',
+                          true
+                        )
+                      )}
+                    </span>
+                  </div>
+                  
+                  <div className="right inner-label">
+                    <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                      ~${amount
+                        ? formatAmount(getTokenPrice(), 2)
+                        : "0.00"}
+                    </span>
+                  </div>
+                </div>
+                {selectedToken && selectedToken.address === NATIVE_SOL.address && (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+                  <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
                 )}
               </div>
-            </div>
 
-            {/* Transfer to */}
-            <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
-            <div className="well">
-              <input id="mint-to-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                onChange={onMintToAddressChange}
-                placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
-                required={true}
-                spellCheck="false"
-                value={to}/>
-              {to && !isValidAddress(to) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
-              )}
-            </div>
+              {/* Transfer to */}
+              <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
+              <div className="well">
+                <input id="mint-to-field"
+                  className="general-text-input"
+                  autoComplete="on"
+                  autoCorrect="off"
+                  type="text"
+                  onChange={onMintToAddressChange}
+                  placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
+                  required={true}
+                  spellCheck="false"
+                  value={to}/>
+                {to && !isValidAddress(to) && (
+                  <span className="form-field-error">
+                    {t('transactions.validation.address-validation')}
+                  </span>
+                )}
+              </div>
 
-            {/* explanatory paragraph */}
-            <p>{t("multisig.multisig-assets.explanatory-paragraph")}</p>
-          </>
-        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
-          <>
-            <div className="transaction-progress">
-              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="transaction-progress p-0">
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                      props.nativeBalance,
-                      NATIVE_SOL_MINT.toBase58()
-                    ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58()
-                    )})
-                  }
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-                </h4>
-              )}
-            </div>
-          </>
-        )}
+              {/* explanatory paragraph */}
+              <p>{t("multisig.multisig-assets.explanatory-paragraph")}</p>
+            </>
+          ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
+            <>
+              <div className="transaction-progress">
+                <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="transaction-progress p-0">
+                <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                  <h4 className="mb-4">
+                    {t('transactions.status.tx-start-failure', {
+                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                        props.nativeBalance,
+                        NATIVE_SOL_MINT.toBase58()
+                      ),
+                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                        NATIVE_SOL_MINT.toBase58()
+                      )})
+                    }
+                  </h4>
+                ) : (
+                  <h4 className="font-bold mb-3">
+                    {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                  </h4>
+                )}
+              </div>
+            </>
+          )}
 
-      </div>
+        </div>
 
-      <div 
-        className={
-          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
-            ? "panel2 show" 
-            : "panel2 hide"
-          }>          
-        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
-        <div className="transaction-progress">
-          <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-          <h4 className="font-bold mb-1">
-            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-          </h4>
-          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-            <div className="indication">{t('transactions.status.instructions')}</div>
+        <div 
+          className={
+            props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
+              ? "panel2 show" 
+              : "panel2 hide"
+            }>          
+          {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+          <div className="transaction-progress">
+            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+            <h4 className="font-bold mb-1">
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+            </h4>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            )}
+          </div>
           )}
         </div>
-        )}
-      </div>
 
-      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-        <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
-            <Button
-              block
-              type="text"
-              shape="round"
-              size="middle"
-              className={props.isBusy ? 'inactive' : ''}
-              onClick={() => isError(transactionStatus.currentOperation)
-                ? onAcceptModal()
-                : onCloseModal()}>
-              {isError(transactionStatus.currentOperation)
-                ? t('general.retry')
-                : t('general.cta-close')
-              }
-            </Button>
-          </div>
-          {!isError(transactionStatus.currentOperation) && (
-            <div className="col-6">
+        {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+          <div className="row two-col-ctas mt-3 transaction-progress p-0">
+            <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
               <Button
-                className={`extra-height ${props.isBusy ? 'inactive' : ''}`}
                 block
-                type="primary"
+                type="text"
                 shape="round"
                 size="middle"
-                disabled={!isValidForm()}
-                onClick={() => {
-                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                    onAcceptModal();
-                  } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                    onCloseModal();
-                  } else {
-                    refreshPage();
-                  }
-                }}>
-                {props.isBusy
-                  ? t('multisig.transfer-tokens.main-cta-busy')
-                  : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? t('multisig.multisig-assets.main-cta')
-                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                      ? t('general.cta-finish')
-                      : t('general.refresh')
+                className={props.isBusy ? 'inactive' : ''}
+                onClick={() => isError(transactionStatus.currentOperation)
+                  ? onAcceptModal()
+                  : onCloseModal()}>
+                {isError(transactionStatus.currentOperation)
+                  ? t('general.retry')
+                  : t('general.cta-close')
                 }
               </Button>
             </div>
-          )}
-        </div>
+            {!isError(transactionStatus.currentOperation) && (
+              <div className="col-6">
+                <Button
+                  className={`extra-height ${props.isBusy ? 'inactive' : ''}`}
+                  block
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                  disabled={!isValidForm()}
+                  onClick={() => {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                      onAcceptModal();
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                      onCloseModal();
+                    } else {
+                      refreshPage();
+                    }
+                  }}>
+                  {props.isBusy
+                    ? t('multisig.transfer-tokens.main-cta-busy')
+                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                      ? t('multisig.multisig-assets.main-cta')
+                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                        ? t('general.cta-finish')
+                        : t('general.refresh')
+                  }
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Token selection modal */}
+      {!inModal && isTokenSelectorModalVisible && (
+        <Modal
+          className="mean-modal unpadded-content"
+          visible={isTokenSelectorModalVisible}
+          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+          onCancel={onCloseTokenSelector}
+          width={450}
+          footer={null}>
+          {renderTokenSelectorInner}
+        </Modal>
       )}
-    </Modal>
+
+      {isTokenSelectorVisible && (
+        <Drawer
+          title={t('token-selector.modal-title')}
+          placement="bottom"
+          closable={true}
+          onClose={onCloseTokenSelector}
+          visible={isTokenSelectorVisible}
+          getContainer={false}
+          style={{ position: 'absolute' }}>
+          {renderTokenSelectorInner}
+        </Drawer>
+      )}
+    </>
   );
 };

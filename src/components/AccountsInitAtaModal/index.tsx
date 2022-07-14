@@ -7,7 +7,7 @@ import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
-import { MAX_TOKEN_LIST_ITEMS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
 import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from '../../utils/ui';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -120,7 +120,7 @@ export const AccountsInitAtaModal = (props: {
       });
 
       setSelectedList(finalList);
-      consoleOut('finalList:', finalList, 'blue');
+      consoleOut('token list:', finalList, 'blue');
     }
   }, [isVisible, ownedTokenAccounts, splTokenList, tokenList, tokenAccounts]);
 
@@ -533,7 +533,7 @@ export const AccountsInitAtaModal = (props: {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
@@ -574,7 +574,7 @@ export const AccountsInitAtaModal = (props: {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown token"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={async () => {
@@ -600,7 +600,7 @@ export const AccountsInitAtaModal = (props: {
               }
               const uknwnToken: TokenInfo = {
                 address,
-                name: 'Unknown token',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: getNetworkIdByEnvironment(environment),
                 decimals,
                 symbol: shortenAddress(address),
@@ -648,6 +648,7 @@ export const AccountsInitAtaModal = (props: {
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showCaretDown={true}
+                    showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                     fullTokenInfo={selectedToken}
                   />
                 ) : (

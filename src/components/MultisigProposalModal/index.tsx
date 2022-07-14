@@ -17,14 +17,14 @@ import { InputTextAreaMean } from '../InputTextAreaMean';
 import { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
-// import { Identicon } from '../../components/Identicon';
 import { getMultisigInstructionSummary, NATIVE_LOADER, parseSerializedTx } from '../../models/multisig';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { openNotification } from '../Notifications';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { VESTING_ROUTE_BASE_PATH } from '../../pages/vesting';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -47,6 +47,7 @@ export const MultisigProposalModal = (props: {
   selectedMultisig?: any;
 }) => {
   const navigate = useNavigate();
+  const { address } = useParams();
   const { publicKey } = useWallet();
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
@@ -90,7 +91,7 @@ export const MultisigProposalModal = (props: {
     } else {
       openNotification({
         description: t('notifications.account-address-not-copied-message'),
-        type: "error"
+        type: "error",
       });
     }
 
@@ -101,9 +102,13 @@ export const MultisigProposalModal = (props: {
   }
 
   const onContinueStepOneButtonClick = () => {
-    if (selectedApp?.name === "Money Streaming") {
+    if (selectedApp?.name === "Payment Streaming") {
       setIsModalVisible(false);
-      navigate(`${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?multisig=${selectedMultisig.authority.toBase58()}`);
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/summary?account-type=multisig`;
+      navigate(url);
+    } else if (selectedApp?.name === "Token Vesting") {
+      setIsModalVisible(false);
+      navigate(`${VESTING_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/contracts?account-type=multisig`);
     } else {
       setCurrentStep(1);  // Go to step 2
     }
@@ -311,8 +316,8 @@ export const MultisigProposalModal = (props: {
           }
 
           return (
-            <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
-              <div className={`select-app-item simplelink ${selectedApp && selectedApp.id === app.id ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
+            <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={`app-${index}`}>
+              <div className={`select-app-item simplelink ${selectedApp && selectedApp.name === app.name ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
                 {app.id === NATIVE_LOADER.toBase58() ? (
                   <img src={app.logoUri} width={65} height={65} alt={app.name} />
                   // <Identicon address={PublicKey.default} style={{ width:"65", height:"65", display: "inline-flex" }} />

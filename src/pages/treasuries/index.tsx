@@ -49,7 +49,8 @@ import {
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   HALF_MINUTE_REFRESH_TIMEOUT,
   VERBOSE_DATE_TIME_FORMAT,
-  WRAPPED_SOL_MINT_ADDRESS
+  WRAPPED_SOL_MINT_ADDRESS,
+  CUSTOM_TOKEN_NAME
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
@@ -96,7 +97,8 @@ import {
   STREAM_STATUS,
   MSP,
   TreasuryType,
-  Constants as MSPV2Constants
+  Constants as MSPV2Constants,
+  Category
   
 } from '@mean-dao/msp';
 
@@ -371,7 +373,7 @@ export const TreasuriesView = () => {
     if (address && isValidAddress(address)) {
       const unkToken: TokenInfo = {
         address: address,
-        name: 'Unknown',
+        name: CUSTOM_TOKEN_NAME,
         chainId: 101,
         decimals: 6,
         symbol: shortenAddress(address),
@@ -429,7 +431,6 @@ export const TreasuriesView = () => {
           }
         } else {
           setTreasuryDetails(undefined);
-          setTreasuryDetails(undefined);
           if (dock) {
             openNotification({
               title: t('notifications.error-title'),
@@ -470,7 +471,7 @@ export const TreasuriesView = () => {
 
     if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
 
-    let treasuries = await msp.listTreasuries(publicKey);
+    let treasuries = await msp.listTreasuries(publicKey, true, true, Category.default);
 
     if (selectedMultisig && multisigAccounts) {
 
@@ -482,14 +483,14 @@ export const TreasuriesView = () => {
 
       if (filterMultisigAccounts) {
         for (const key of filterMultisigAccounts) {
-          multisigTreasuries.push(...(await msp.listTreasuries(key)));
+          multisigTreasuries.push(...(await msp.listTreasuries(key, true, true, Category.default)));
         }
       }
 
       treasuries = multisigTreasuries;
     } 
 
-    return treasuries.filter((t: any) => !t.autoClose);
+    return treasuries.filter(t => !t.autoClose && t.category === 0);
 
   }, [
     connection, 
@@ -879,10 +880,6 @@ export const TreasuriesView = () => {
     }
     return false;
   }, [publicKey]);
-
-  // const isUnderDevelopment = () => {
-  //   return isLocal() || (isDev() && isWhitelisted) ? true : false;
-  // };
 
   const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
     const isInbound = isInboundStream(item);
@@ -5925,11 +5922,17 @@ export const TreasuriesView = () => {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           withdrawTransactionFees={withdrawTransactionFees}
-          treasuryDetails={treasuryDetails}
-          isMultisigTreasury={isMultisigTreasury()}
+          treasuryDetails={
+            treasuryDetails
+              ? treasuryDetails
+              : treasuryList && treasuryList.length > 0
+                ? treasuryList[0]
+                : undefined
+          }
+          treasuryList={treasuryList?.filter(t => t.version >= 2)}
           minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}
-          multisigAddress={getSelectedTreasuryMultisig()}
+          selectedMultisig={selectedMultisig}
           userBalances={userBalances}
         />
       )}
@@ -6047,7 +6050,7 @@ export const TreasuriesView = () => {
         </div>
       </Modal>
 
-      {isTransferFundsModalVisible && (
+      {/* {isTransferFundsModalVisible && (
         <TreasuryTransferFundsModal
           isVisible={isTransferFundsModalVisible}
           nativeBalance={nativeBalance}
@@ -6062,7 +6065,7 @@ export const TreasuriesView = () => {
           }}
           isBusy={isBusy}
         />
-      )}
+      )} */}
 
       <PreFooter />
     </>

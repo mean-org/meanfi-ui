@@ -8,14 +8,17 @@ import { openNotification } from '../Notifications';
 export const AddressDisplay = (props: {
     address: string;
     showFullAddress?: boolean;
+    maxChars?: number;
     linkText?: string;
     newTabLink?: string;
     newTabIcon?: JSX.Element;
     className?: string;
     style?: React.CSSProperties;
     iconStyles?: React.CSSProperties;
+    prefix?: string;
+    suffix?: string;
 }) => {
-    const { address, showFullAddress,linkText, newTabIcon, newTabLink, className, style, iconStyles } = props;
+    const { address, showFullAddress, maxChars, linkText, newTabIcon, newTabLink, className, style, iconStyles, prefix, suffix } = props;
     const { t } = useTranslation('common');
 
     // Copy address to clipboard
@@ -44,7 +47,9 @@ export const AddressDisplay = (props: {
             <div onClick={() => copyAddressToClipboard(linkText || address)}
                 className={`left ${className || 'simplelink underline-on-hover'}`}
                 style={style}>
-                {linkText ? linkText : showFullAddress ? address : shortenAddress(address, 8)}
+                {prefix}
+                {linkText ? linkText : showFullAddress ? address : shortenAddress(address, maxChars || 8)}
+                {suffix}
             </div>
             {newTabLink && (
                 <div className="right" style={{ marginLeft: "4px" }}>

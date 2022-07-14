@@ -21,8 +21,9 @@ import { useAccountsContext } from '../../contexts/accounts';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { TokenListItem } from '../TokenListItem';
-import { MAX_TOKEN_LIST_ITEMS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { PublicKey } from '@solana/web3.js';
+import { useSearchParams } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -34,15 +35,17 @@ export const TreasuryCreateModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   selectedMultisig: MultisigInfo | undefined;
-  multisigAccounts: MultisigInfo[];
+  multisigAccounts?: MultisigInfo[] | undefined;
   multisigAddress?: string;
 }) => {
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const {
     tokenList,
     userTokens,
     splTokenList,
     loadingPrices,
+    accountAddress,
     transactionStatus,
     getTokenPriceBySymbol,
     setTransactionStatus,
@@ -144,6 +147,7 @@ export const TreasuryCreateModal = (props: {
 
   // When modal goes visible, preset the appropriate value for multisig treasury switch
   useEffect(() => {
+    if (!props.multisigAccounts) { return; }
     if (props.isVisible && props.selectedMultisig) {
       setEnableMultisigTreasuryOption(true);
       setLocalSelectedMultisig(props.selectedMultisig);
@@ -176,7 +180,8 @@ export const TreasuryCreateModal = (props: {
       const intersectedList = new Array<TokenInfo>();
       const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
 
-      const pk = props.multisigAddress ? new PublicKey(props.multisigAddress) : publicKey;
+      // const pk = props.multisigAddress ? new PublicKey(props.multisigAddress) : publicKey;
+      const pk = new PublicKey(accountAddress);
 
       fetchAccountTokens(connection, pk)
       .then(accTks => {
@@ -248,13 +253,13 @@ export const TreasuryCreateModal = (props: {
     userTokens,
     connection,
     splTokenList,
+    accountAddress,
     props.nativeBalance,
-    props.multisigAddress,
+    // props.multisigAddress,
   ]);
 
   // Pick a token if none selected
   useEffect(() => {
-
     const timeout = setTimeout(() => {
       if (userBalances && !workingToken) {
         setWorkingToken(selectedList[0]);
@@ -374,7 +379,7 @@ export const TreasuryCreateModal = (props: {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={balance ? workingToken && workingToken.address === t.address ? "selected" : "simplelink" : "dimmed"}
@@ -408,13 +413,13 @@ export const TreasuryCreateModal = (props: {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={workingToken && workingToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={() => {
               const uknwnToken: TokenInfo = {
                 address: tokenFilter,
-                name: 'Unknown',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: 101,
                 decimals: 6,
                 symbol: '',
@@ -430,11 +435,25 @@ export const TreasuryCreateModal = (props: {
     </div>
   );
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
+
   return (
     <>
       <Modal
         className="mean-modal simple-modal"
-        title={<div className="modal-title">{t('treasuries.create-treasury.modal-title')}</div>}
+        title={<div className="modal-title">{ t('treasuries.create-treasury.modal-title')}</div>}
+        // title={<div className="modal-title">{param === "multisig" ? "Initiate streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
         maskClosable={false}
         footer={null}
         visible={props.isVisible}
@@ -480,6 +499,7 @@ export const TreasuryCreateModal = (props: {
                           mintAddress={workingToken.address}
                           name={workingToken.name}
                           showCaretDown={true}
+                          showName={workingToken.name === CUSTOM_TOKEN_NAME ? true : false}
                           fullTokenInfo={workingToken}
                         />
                       )}
@@ -556,7 +576,7 @@ export const TreasuryCreateModal = (props: {
                 // )
               }
 
-              {(enableMultisigTreasuryOption && props.multisigAccounts.length > 0) && (
+              {(enableMultisigTreasuryOption && props.multisigAccounts && props.multisigAccounts.length > 0) && (
                 <>
                   <div className="mb-3">
                     <div className="form-label">{t('treasuries.create-treasury.multisig-selector-label')}</div>
@@ -655,9 +675,9 @@ export const TreasuryCreateModal = (props: {
                   {props.isBusy
                     ? t('treasuries.create-treasury.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                      ? enableMultisigTreasuryOption && props.multisigAccounts.length > 0
-                        ? t('treasuries.create-treasury.create-multisig-cta')
-                        : t('treasuries.create-treasury.main-cta')
+                      ? enableMultisigTreasuryOption && props.multisigAccounts && props.multisigAccounts.length > 0
+                        ? (param === "multisig" ? "Submit proposal" : t('treasuries.create-treasury.create-multisig-cta'))
+                        : (param === "multisig" ? "Submit proposal" : t('treasuries.create-treasury.main-cta'))
                       : t('general.refresh')
                   }
                 </Button>

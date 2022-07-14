@@ -19,3 +19,4 @@ export { StatsView } from './stats';
 export { SwapView } from './exchange';
 export { TransfersView } from './transfers';
 export { TreasuriesView } from './treasuries';
+export { VestingView } from './vesting';

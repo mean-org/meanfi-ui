@@ -334,164 +334,167 @@ export const ProposalSummaryModal = (props: {
     }
   };
 
-  const renderGeneralSummaryModal = (
-    <>
-      {(isTxPendingApproval() || isTxPendingExecution()) && (
-        <div className="inner-container">
-          {/* Top badge */}
-          <div className="float-right-badge">
-            <span className="badge darken small text-uppercase mr-1">Active</span>
-          </div>
-        </div>
-      )}
-      {
-        highlightedMultisigTx && multisigTransactionSummary && (
-        <>
-          {/* Title */}
-          <Row className="mb-1">
-            {multisigTransactionSummary.title && (
-              <>
-                <Col span={8} className="text-right pr-1">
-                  <span className="info-label">{t('multisig.proposal-modal.title-label')}:</span>
-                </Col>
-                <Col span={16} className="text-left pl-1">
-                  <span>{multisigTransactionSummary.title}</span>
-                </Col>
-              </>
-            )}
-          </Row>
-          {/* Expiry date */}
-          {
-            !highlightedMultisigTx.executedOn && (
-              <Row className="mb-1">
-                <Col span={8} className="text-right pr-1">
-                  <span className="info-label">{t('multisig.proposal-modal.expires-label')}:</span>
-                </Col>
-                <Col span={16} className="text-left pl-1">
-                  {multisigTransactionSummary.expirationDate ? (
-                    <>
-                      {(isTxPendingApproval() || isTxPendingExecution()) ? (
-                        <Countdown className="align-middle" date={multisigTransactionSummary.expirationDate} renderer={renderer} />
-                      ) : (
-                        <span>Expired on {new Date(multisigTransactionSummary.expirationDate).toDateString()}</span>
-                      )}
-                    </>
-                  ) : (
-                    <span>{t('multisig.proposal-modal.does-not-expire')}</span>
-                  )}
-                </Col>
-              </Row>
-            )
-          }
-          {/* Proposer */}
-          <Row className="mb-1">
-            <Col span={8} className="text-right pr-1">
-              <span className="info-label">{t('multisig.multisig-transactions.proposed-by')}</span>
-            </Col>
-            <Col span={16} className="text-left pl-1">
-              <span>{getTxInitiator(highlightedMultisigTx)?.name} ({shortenAddress(multisigTransactionSummary.proposer as string, 4)})</span>
-            </Col>
-          </Row>
-          {/* Submitted on */}
-          <Row className="mb-1">
-            <Col span={8} className="text-right pr-1">
-              <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span>
-            </Col>
-            <Col span={16} className="text-left pl-1">
-              <span>{getReadableDate(multisigTransactionSummary.createdOn, true)}</span>
-            </Col>
-          </Row>
-          {/* Status */}
-          <Row className="mb-1">
-            <Col span={8} className="text-right pr-1">
-              <span className="info-label">{t('multisig.multisig-transactions.column-pending-signatures')}:</span>
-            </Col>
-            <Col span={16} className="text-left pl-1 mb-1 d-flex align-items-start justify-content-start">
-              <span>{getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-signed')}, {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-pending')}</span>
-              <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
-            </Col>
-          </Row>
-        </>)
-      }
-      <Row>
-        <Col span={24}>
-          {isTxPendingExecution() ? (
-            <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
-          ) : isTxPendingApproval() ? (
-            <div className="text-center proposal-resume">
-            {
-              (selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 
-                ? t('multisig.multisig-transactions.missing-signatures', {
-                  missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)
-                }) 
-                : t('multisig.multisig-transactions.missing-signature', {
-                  missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)
-                })
-             }
+  const renderGeneralSummaryModal = () => {
+    const initiator = getTxInitiator(highlightedMultisigTx);
+    return (
+      <>
+        {(isTxPendingApproval() || isTxPendingExecution()) && (
+          <div className="inner-container">
+            {/* Top badge */}
+            <div className="float-right-badge">
+              <span className="badge darken small text-uppercase mr-1">Active</span>
             </div>
-          ) : isTxVoided() ? (
-            <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-voided')}</div>
-          ) : isTxExpired() ? (
-            <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-expired')}</div>
-          ) : (
-            <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-completed')}</div>
-          )}
-        </Col>
-      </Row>
-
-      <Divider className="mt-1" />
-
-      <Row className="mb-1">
-        <Col span={12} className="text-right pr-1">
-          <div className="text-uppercase">{t('multisig.proposal-modal.instruction')}:</div>
-        </Col>
-        <Col span={12} className="text-left pl-1">
-          <div>{getOperationName(highlightedMultisigTx.operation)}</div>
-        </Col>
-      </Row>
-
-      <div className="well mb-1 proposal-summary-container vertical-scroll">
-        <div className="mb-1">
-          <span>{t('multisig.proposal-modal.instruction-program')}:</span><br />
-          <div>
-            <span onClick={() => copyAddressToClipboard(multisigTransactionSummary?.instruction.programId)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-              {multisigTransactionSummary?.instruction.programId}
-            </span>
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${multisigTransactionSummary?.instruction.programId}${getSolanaExplorerClusterParam()}`}>
-              <IconExternalLink className="mean-svg-icons external-icon" />
-            </a>
           </div>
-        </div>
-        {multisigTransactionSummary?.instruction.accounts.map((account: any) => (
-          <div className="mb-1" key={account.index}>
-            <span>{t('multisig.proposal-modal.instruction-account')} {account.index + 1}:</span><br />
+        )}
+        {
+          highlightedMultisigTx && multisigTransactionSummary && (
+          <>
+            {/* Title */}
+            <Row className="mb-1">
+              {multisigTransactionSummary.title && (
+                <>
+                  <Col span={8} className="text-right pr-1">
+                    <span className="info-label">{t('multisig.proposal-modal.title-label')}:</span>
+                  </Col>
+                  <Col span={16} className="text-left pl-1">
+                    <span>{multisigTransactionSummary.title}</span>
+                  </Col>
+                </>
+              )}
+            </Row>
+            {/* Expiry date */}
+            {
+              !highlightedMultisigTx.executedOn && (
+                <Row className="mb-1">
+                  <Col span={8} className="text-right pr-1">
+                    <span className="info-label">{t('multisig.proposal-modal.expires-label')}:</span>
+                  </Col>
+                  <Col span={16} className="text-left pl-1">
+                    {multisigTransactionSummary.expirationDate ? (
+                      <>
+                        {(isTxPendingApproval() || isTxPendingExecution()) ? (
+                          <Countdown className="align-middle" date={multisigTransactionSummary.expirationDate} renderer={renderer} />
+                        ) : (
+                          <span>Expired on {new Date(multisigTransactionSummary.expirationDate).toDateString()}</span>
+                        )}
+                      </>
+                    ) : (
+                      <span>{t('multisig.proposal-modal.does-not-expire')}</span>
+                    )}
+                  </Col>
+                </Row>
+              )
+            }
+            {/* Proposer */}
+            <Row className="mb-1">
+              <Col span={8} className="text-right pr-1">
+                <span className="info-label">{t('multisig.multisig-transactions.proposed-by')}</span>
+              </Col>
+              <Col span={16} className="text-left pl-1">
+                <span>{initiator ? initiator.name : '--'} ({shortenAddress(multisigTransactionSummary.proposer as string, 4)})</span>
+              </Col>
+            </Row>
+            {/* Submitted on */}
+            <Row className="mb-1">
+              <Col span={8} className="text-right pr-1">
+                <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span>
+              </Col>
+              <Col span={16} className="text-left pl-1">
+                <span>{getReadableDate(multisigTransactionSummary.createdOn, true)}</span>
+              </Col>
+            </Row>
+            {/* Status */}
+            <Row className="mb-1">
+              <Col span={8} className="text-right pr-1">
+                <span className="info-label">{t('multisig.multisig-transactions.column-pending-signatures')}:</span>
+              </Col>
+              <Col span={16} className="text-left pl-1 mb-1 d-flex align-items-start justify-content-start">
+                <span>{getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-signed')}, {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-pending')}</span>
+                <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
+              </Col>
+            </Row>
+          </>)
+        }
+        <Row>
+          <Col span={24}>
+            {isTxPendingExecution() ? (
+              <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
+            ) : isTxPendingApproval() ? (
+              <div className="text-center proposal-resume">
+              {
+                (selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 
+                  ? t('multisig.multisig-transactions.missing-signatures', {
+                    missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)
+                  }) 
+                  : t('multisig.multisig-transactions.missing-signature', {
+                    missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)
+                  })
+               }
+              </div>
+            ) : isTxVoided() ? (
+              <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-voided')}</div>
+            ) : isTxExpired() ? (
+              <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-expired')}</div>
+            ) : (
+              <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-completed')}</div>
+            )}
+          </Col>
+        </Row>
+  
+        <Divider className="mt-1" />
+  
+        <Row className="mb-1">
+          <Col span={12} className="text-right pr-1">
+            <div className="text-uppercase">{t('multisig.proposal-modal.instruction')}:</div>
+          </Col>
+          <Col span={12} className="text-left pl-1">
+            <div>{getOperationName(highlightedMultisigTx.operation)}</div>
+          </Col>
+        </Row>
+  
+        <div className="well mb-1 proposal-summary-container vertical-scroll">
+          <div className="mb-1">
+            <span>{t('multisig.proposal-modal.instruction-program')}:</span><br />
             <div>
-              <span onClick={() => copyAddressToClipboard(account.address)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-                {account.address}
+              <span onClick={() => copyAddressToClipboard(multisigTransactionSummary?.instruction.programId)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                {multisigTransactionSummary?.instruction.programId}
               </span>
               <a
                 target="_blank"
                 rel="noopener noreferrer"
-                href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.address}${getSolanaExplorerClusterParam()}`}>
+                href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${multisigTransactionSummary?.instruction.programId}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons external-icon" />
               </a>
             </div>
           </div>
-        ))}
-        <div className="mb-1">
-          <span>{t('multisig.proposal-modal.instruction-data')}:</span><br />
-          {multisigTransactionSummary?.instruction.data.map((data: any) => (
-            <span key={data.value} onClick={() => copyAddressToClipboard(data.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-              {data.value}
-            </span>
+          {multisigTransactionSummary?.instruction.accounts.map((account: any) => (
+            <div className="mb-1" key={account.index}>
+              <span>{t('multisig.proposal-modal.instruction-account')} {account.index + 1}:</span><br />
+              <div>
+                <span onClick={() => copyAddressToClipboard(account.address)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                  {account.address}
+                </span>
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.address}${getSolanaExplorerClusterParam()}`}>
+                  <IconExternalLink className="mean-svg-icons external-icon" />
+                </a>
+              </div>
+            </div>
           ))}
+          <div className="mb-1">
+            <span>{t('multisig.proposal-modal.instruction-data')}:</span><br />
+            {multisigTransactionSummary?.instruction.data.map((data: any) => (
+              <span key={data.value} onClick={() => copyAddressToClipboard(data.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                {data.value}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  }
 
   return (
     <Modal

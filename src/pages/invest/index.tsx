@@ -21,8 +21,7 @@ import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST, SOCN_USD } from "../../constants/token-list";
-import { confirmationEvents } from "../../contexts/transaction-status";
-import { EventType, InvestItemPaths } from "../../models/enums";
+import { InvestItemPaths } from "../../models/enums";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
 
@@ -324,7 +323,7 @@ export const InvestView = () => {
       name: "Socean",
       token: "scnSOL",
       href: "https://www.socean.fi/app/stake",
-      img: "https://www.socean.fi/static/media/scnSOL_blackCircle.14ca2915.png",
+      img: "/assets/socean-scnSOL.svg",
       totalStaked: soceanTotalStakedValue > 0 ? `${formatThousands(soceanTotalStakedValue)} SOL` : "--",
       apy: soceanApyValue > 0 ? `${cutNumber(soceanApyValue, 2)}%` : "--"
     },
@@ -372,16 +371,6 @@ export const InvestView = () => {
     }
 
   }, [stakeClient]);
-
-  // If any Stake/Unstake Tx finished and confirmed refresh the StakePoolInfo
-  const onStakeTxConfirmed = useCallback((value: any) => {
-    consoleOut("onStakeTxConfirmed event executed:", value, 'crimson');
-    if (stakeClient && meanPrice) {
-      consoleOut('calling getStakePoolInfo...', '', 'orange');
-      refreshStakePoolInfo(meanPrice);
-      consoleOut('After calling refreshStakePoolInfo()', '', 'orange');
-    }
-  }, [meanPrice, refreshStakePoolInfo, stakeClient]);
 
   // Get raydium pool info
   const getRaydiumPoolInfo = useCallback(async () => {
@@ -490,7 +479,7 @@ export const InvestView = () => {
   const getSoceanApyInfo = useCallback(async () => {
 
     try {
-      const res = await fetch('https://www.socean.fi/api/apy');
+      const res = await fetch('https://api.socean.fi/v2/stake/apy');
       const data = await res.json();
       // Should update if got data
       if (data) {
@@ -874,29 +863,6 @@ export const InvestView = () => {
     detailsPanelOpen,
   ]);
 
-  // Setup event listeners
-  useEffect(() => {
-    if (pageInitialized && canSubscribe) {
-      setCanSubscribe(false);
-      confirmationEvents.on(EventType.TxConfirmSuccess, onStakeTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onStakeTxConfirmed', 'blue');
-    }
-  }, [
-    canSubscribe,
-    pageInitialized,
-    onStakeTxConfirmed
-  ]);
-
-  // Set when a page is initialized
-  useEffect(() => {
-    if (!pageInitialized && stakeClient) {
-      setPageInitialized(true);
-    }
-  }, [
-    stakeClient,
-    pageInitialized,
-  ]);
-
   const renderMeanBonds = (
     <>
       <h2>Get discounted sMEAN</h2>
@@ -1128,6 +1094,7 @@ export const InvestView = () => {
                           type="default"
                           shape="circle"
                           size="small"
+                          id="refresh-stake-pool-info-cta"
                           icon={<ReloadOutlined />}
                           onClick={() => {
                             refreshStakePoolInfo(meanPrice);
@@ -1420,7 +1387,7 @@ export const InvestView = () => {
                                     <div key={index}>
                                       <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={solData.href}>
                                         <div className="std-table-cell responsive-cell pl-0">
-                                          <div className="icon-cell pr-1 d-inline-block">
+                                          <div className="icon-cell pr-1 d-inline-block align-middle">
                                             <div className="token-icon">
                                               <img alt={solData.name} width="20" height="20" src={solData.img} />
                                             </div>

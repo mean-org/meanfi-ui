@@ -46,6 +46,9 @@ export const TokenDisplay = (props: {
                 </>
               )}
             </div>
+            {showName && (
+              <div className="token-name mr-1">{fullTokenInfo ? fullTokenInfo.name : name ? `(${name})` : token ? `(${token.name})` : ''}</div>
+            )}
             {fullTokenInfo ? (
               <div className="token-symbol">{fullTokenInfo.symbol}</div>
             ) : props.symbol ? (
@@ -54,9 +57,6 @@ export const TokenDisplay = (props: {
               <div className="token-symbol">{token.symbol}</div>
             ) : (
               <div className="token-symbol">{shortenAddress(mintAddress)}</div>
-            )}
-            {showName && (
-              <div className="token-name">{fullTokenInfo ? fullTokenInfo.name : name ? `(${name})` : token ? `(${token.name})` : ''}</div>
             )}
             {showCaretDown && (
               <span className="flex-center dropdown-arrow">

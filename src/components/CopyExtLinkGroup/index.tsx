@@ -12,10 +12,11 @@ export const CopyExtLinkGroup = (props: {
   number?: number;
   externalLink?: boolean;
   message?: string;
+  classNameContainer?: string;
   className?: string;
   isTx?: boolean;
 }) => {
-  const { content, number, externalLink, message, className, isTx } = props;
+  const { content, number, externalLink, message, classNameContainer, className, isTx } = props;
 
   const { t } = useTranslation('common');
 
@@ -43,7 +44,7 @@ export const CopyExtLinkGroup = (props: {
 
   return (
     <>
-    <div className="d-flex align-items-center copy-ext-link-group">
+    <div className={`d-flex align-items-center copy-ext-link-group ${classNameContainer}`}>
       <div onClick={() => copyAddressToClipboard(content)} className={`simplelink underline-on-hover ${className}`}>
         {!number ? content : shortenAddress(content, number)}
         </div>

@@ -1,9 +1,8 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
-import { MSP, Treasury, TreasuryType } from '@mean-dao/msp';
+import { Category, MSP, Treasury, TreasuryType } from '@mean-dao/msp';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { consoleOut, kFormatter, toUsCurrency } from '../../utils/ui';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { THREE_MINUTES_REFRESH_TIMEOUT } from '../../constants';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
 import { makeDecimal } from '../../utils/utils';
@@ -14,32 +13,46 @@ import { SyncOutlined } from '@ant-design/icons';
 import { useWallet } from '../../contexts/wallet';
 import { Tooltip } from 'antd';
 import { IconLoading } from '../../Icons';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
 
 export const TreasuriesSummary = (props: {
     address: string;
     connection: Connection;
+    enabled: boolean;
     ms: MoneyStreaming | undefined;
     msp: MSP | undefined;
-    selected: boolean;
-    enabled: boolean;
-    title: string;
-    tooltipEnabled: string;
-    tooltipDisabled: string;
-    targetPath?: string;
-    onSelect: any;
     onNewValue: any;
+    onSelect: any;
+    selected: boolean;
+    targetPath?: string;
+    title: string;
+    tooltipDisabled: string;
+    tooltipEnabled: string;
 }) => {
 
-    const { address, connection, ms, msp, selected, onSelect, onNewValue, enabled, title, tooltipEnabled, tooltipDisabled, targetPath } = props;
+    const {
+        address,
+        connection,
+        enabled,
+        ms,
+        msp,
+        onNewValue,
+        onSelect,
+        selected,
+        targetPath,
+        title,
+        tooltipDisabled,
+        tooltipEnabled,
+    } = props;
+    const { pathname } = useLocation();
+    const [searchParams] = useSearchParams();
     const { connected, publicKey } = useWallet();
     const {
         previousWalletConnectState,
         getTokenPriceBySymbol,
         getTokenByMintAddress,
     } = useContext(AppStateContext);
-    const { pathname } = useLocation();
-    const [searchParams] = useSearchParams();
     const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
     const [loadingTreasuries, setLoadingTreasuries] = useState(false);
     const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
@@ -67,9 +80,9 @@ export const TreasuriesSummary = (props: {
 
         if (!connection || !address || loadingTreasuries || !msp) { return []; }
 
-        const treasuries = await msp.listTreasuries(new PublicKey(address));
+        const treasuries = await msp.listTreasuries(new PublicKey(address), true, true, Category.default);
 
-        return treasuries.filter((t: any) => !t.autoClose);
+        return treasuries.filter(t => !t.autoClose && t.category === 0);
 
     }, [address, connection, loadingTreasuries, msp]);
 
@@ -325,11 +338,13 @@ export const TreasuriesSummary = (props: {
     return (
         <>
             {publicKey && enabled ? (
-                <Link to={targetPath || STREAMING_ACCOUNTS_ROUTE_BASE_PATH} state={{ previousPath: searchParams ? `${pathname}?${searchParams.toString()}` : pathname }}>
-                    <Tooltip title={tooltipEnabled}>
-                        {renderContent}
-                    </Tooltip>
-                </Link>
+                <>
+                    <Link to={targetPath || STREAMING_ACCOUNTS_ROUTE_BASE_PATH} state={{ previousPath: searchParams ? `${pathname}?${searchParams.toString()}` : pathname }}>
+                        <Tooltip title={tooltipEnabled}>
+                            {renderContent}
+                        </Tooltip>
+                    </Link>
+                </>
             ) : (
                 <Tooltip title={tooltipDisabled}>
                     {renderContent}

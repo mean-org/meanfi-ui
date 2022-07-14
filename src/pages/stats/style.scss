@@ -1,42 +1,3 @@
-@media (max-width: 575px) {
-  .promo-space div:nth-child(1),
-  .promo-space div:nth-child(2) {
-    display: none;
-  }
-  .info-cards {
-    height: auto !important;
-  }
-  .slide {
-    margin-bottom: 4em;
-  }
-  ul.tabs {
-    width: 100% !important;
-    li span {
-      align-items: center !important;
-    }
-  }
-  .ant-card-body {
-    .item-container {
-      .item-inner {
-        width: 100% !important;
-        flex-flow: column !important;
-        .item-content {
-          text-align: right;
-        }
-      }
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .promo-space div:nth-child(2) {
-    display: none;
-  }
-  .slide {
-    margin-bottom: 4em;
-  }
-}
-
 /*************** GENERAL ***************/
 .card {
   padding: 0;
@@ -105,234 +66,266 @@ ul.tabs {
     }
   }
 }
-.avatar-coin {
-  border-radius: 50%;
-  display: inline-block;
-  font-size: 35px;
-  height: 1em;
-  position: relative;
-  vertical-align: middle;
-  width: 1em;
-  margin-left: -0.25em;
-}
 
-/*************** PROMO SPACE ***************/
-.promo-space_link img {
-  border-radius: var(--custom-border-radius);
-  object-fit: cover;
-}
- 
-/*************** SUMARY CARD ***************/
-.summary-card {
-  min-height: 24em;
-  .summary-content {
-    display: flex;
-    flex-direction: column;
-    min-height: 4em;
-    padding-bottom: 1em;
-    .summary-content_text {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      span {
-        font-size: 16px;
+.stats {
+  @media (max-width: 575px) {
+    .promo-space div:nth-child(1),
+    .promo-space div:nth-child(2) {
+      display: none;
+    }
+    .info-cards {
+      height: auto !important;
+    }
+    .slide {
+      margin-bottom: 4em;
+    }
+    ul.tabs {
+      width: 100% !important;
+      li span {
+        align-items: center !important;
       }
-      .ant-typography {
-        width: 85%;
-        button {
-          float: right;
+    }
+    .ant-card-body {
+      .item-container {
+        .item-inner {
+          width: 100% !important;
+          flex-flow: column !important;
+          .item-content {
+            text-align: right;
+          }
         }
       }
-      .anticon svg {
-        font-size: 18px;
-      }
     }
   }
-}
-
-/*************** PRICE CARD ***************/
-.price-items {
-  display: flex; 
-  justify-content: space-between; 
-  padding-bottom: 1em;
-  .price-items_left {
-    display: flex;
-    flex-flow: column;
-  }
-  .price-items_right {
-    button {
-      color: var(--color-secondary-alpha-85);
-      border: none;
-      width: 48px;
-      padding: 0 !important;
-      span {
-        width: inherit;
-        height: inherit;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
+  @media (max-width: 768px) {
+    .promo-space div:nth-child(2) {
+      display: none;
     }
-    .active {
-      border: var(--custom-border-style);
+    .slide {
+      margin-bottom: 4em;
     }
   }
-}
-
-// CHART
-.recharts-responsive-container {
-  .recharts-surface {
-    height: 190px;
+  .avatar-coin {
+    border-radius: 50%;
+    display: inline-block;
+    font-size: 35px;
+    height: 1em;
+    position: relative;
+    vertical-align: middle;
+    width: 1em;
+    margin-left: -0.25em;
   }
-  .tooltip {
+  /*************** PROMO SPACE ***************/
+  .promo-space_link img {
     border-radius: var(--custom-border-radius);
-    background: var(--color-panel-background);
-    color: var(--color-secondary-alpha-85);
-    padding: 0.6rem 1rem 0.1rem;
-    height: auto;
-    box-shadow: 0px 1px 2px 0px rgba(60,64,67,0.3), 0px 2px 6px 2px rgba(60,64,67,0.15);
-    text-align: center;
+    object-fit: cover;
   }
-}
-
-/*************** INFO CARDS ***************/
-.info-cards {
-  min-height: 102px;
-  height: 100%;
-}
-
-/*************** SLIDER CARDS ***************/
-.slider-row {
-  margin-left: 0px !important;
-  margin-right: -30px !important;
-  .slide {
-    overflow-x: scroll;
-    flex-wrap: nowrap !important;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    .slide-card {
-      min-height: 20em;
-      height: fit-content;
-      margin: 0.25em auto 1.25em;
-      .slide-content {
-        display: flex;
-        flex-direction: column;
-        text-align: center;
-        .slide-content_avatar {
-          display: flex;
-          justify-content: center;
-          margin-left: 3.25em;
-          margin-bottom: 0.5em;
-          .avatar-coin {
-            .avatar-coin__content {
-              font-size: .5em;
-              line-height: .5em;
-              overflow: hidden!important;
-            }
-          }
-          .avatar-coin__content, 
-          .avatar-coin img {
-            border-radius: inherit;
-            height: inherit;
-            width: inherit;
-          }
-        }
-        .slide-content_info {
-          display: flex;
-          flex-direction: column;
-          .info-pair {
-            font-size: 16px;
-          }
-          .info-liquidity {
-            display: flex;
-            flex-direction: column;
-            span:nth-child(2) {
-              font-size: 18px;
-            }
-          }
-        }
-        .slide-content_buttons {
-          display: grid;
-          align-items: flex-end;
-          height: 5em;
-        }
-      }
-    }
-  }
-}
-
-
-/***************************** MEAN DAO TAB ****************************/
-.treasury-card {
-  min-height: 12.5em;
-  .ant-card-body {
-    .item-container {
+  /*************** SUMARY CARD ***************/
+  .summary-card {
+    min-height: 24em;
+    .summary-content {
       display: flex;
-      flex-wrap: wrap;
-      font-size: 16px;
-      margin-bottom: 0.75em;
-      .item-inner {
+      flex-direction: column;
+      min-height: 4em;
+      padding-bottom: 1em;
+      .summary-content_text {
         display: flex;
         justify-content: space-between;
-        flex-wrap: wrap;
-        border: 1px solid var(--color-secondary-alpha-25);
-        border-radius: 10px;
-        padding: 1em 2em;
-        width: calc((100% / 2) - 1em);
-        margin: 0.5em;
-        .item-header {
-          display: flex;
-          img {
-            width: inherit;
-            height: 0.7em;
-          }
-          h3 {
-            padding-left: 0.5em;
+        align-items: center;
+        span {
+          font-size: 16px;
+        }
+        .ant-typography {
+          width: 85%;
+          button {
+            float: right;
           }
         }
-        .item-content {
-          display: flex;
-          flex-flow: column;
+        .anticon svg {
+          font-size: 18px;
         }
       }
     }
   }
-}
-.emissions-card {
-  min-height: 12.5em;
-  .item-container {
-    margin-bottom: 0.75em;
-    font-size: 16px;
-    table {
-      text-align: left;
-      table-layout: fixed;
-      overflow: hidden;
-      thead,
-      tbody {
-        tr td {
-          border-top: 1px solid var(--color-secondary-alpha-10);
-        }
-        tr:hover {
-          background-color: var(--color-secondary-alpha-05);
-        }
-        tr th:nth-child(1),
-        tr td:nth-child(1) {
-          width: 15%;
-        }
-        tr th:nth-child(2),
-        tr td:nth-child(2) {
-          width: 10%;
-        }
-        tr th:nth-child(3),
-        tr td:nth-child(3) {
-          width: 75%;
+  // CHART
+  .recharts-responsive-container {
+    .recharts-surface {
+      height: 190px;
+    }
+    .tooltip {
+      border-radius: var(--custom-border-radius);
+      background: var(--color-panel-background);
+      color: var(--color-secondary-alpha-85);
+      padding: 0.6rem 1rem 0.1rem;
+      height: auto;
+      box-shadow: 0px 1px 2px 0px rgba(60,64,67,0.3), 0px 2px 6px 2px rgba(60,64,67,0.15);
+      text-align: center;
+    }
+  }
+  /*************** INFO CARDS ***************/
+  .info-cards {
+    min-height: 102px;
+    height: 100%;
+  }
+  /*************** SLIDER CARDS ***************/
+  .slider-row {
+    margin-left: 0px !important;
+    margin-right: -30px !important;
+    .slide {
+      overflow-x: scroll;
+      flex-wrap: nowrap !important;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      .slide-card {
+        min-height: 20em;
+        height: fit-content;
+        margin: 0.25em auto 1.25em;
+        .slide-content {
+          display: flex;
+          flex-direction: column;
+          text-align: center;
+          .slide-content_avatar {
+            display: flex;
+            justify-content: center;
+            margin-left: 3.25em;
+            margin-bottom: 0.5em;
+            .avatar-coin {
+              .avatar-coin__content {
+                font-size: .5em;
+                line-height: .5em;
+                overflow: hidden!important;
+              }
+            }
+            .avatar-coin__content, 
+            .avatar-coin img {
+              border-radius: inherit;
+              height: inherit;
+              width: inherit;
+            }
+          }
+          .slide-content_info {
+            display: flex;
+            flex-direction: column;
+            .info-pair {
+              font-size: 16px;
+            }
+            .info-liquidity {
+              display: flex;
+              flex-direction: column;
+              span:nth-child(2) {
+                font-size: 18px;
+              }
+            }
+          }
+          .slide-content_buttons {
+            display: grid;
+            align-items: flex-end;
+            height: 5em;
+          }
         }
       }
-      tbody {
-        .icon-button-container {
-          font-weight: 400 !important;
+    }
+  }
+  /***************************** MEAN DAO TAB ****************************/
+  .treasury-card {
+    min-height: 12.5em;
+    .ant-card-body {
+      .item-container {
+        display: flex;
+        flex-wrap: wrap;
+        font-size: 16px;
+        margin-bottom: 0.75em;
+        .item-inner {
+          display: flex;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          border: 1px solid var(--color-secondary-alpha-25);
+          border-radius: 10px;
+          padding: 1em 2em;
+          width: calc((100% / 2) - 1em);
+          margin: 0.5em;
+          .item-header {
+            display: flex;
+            img {
+              width: inherit;
+              height: 0.7em;
+            }
+            h3 {
+              padding-left: 0.5em;
+            }
+          }
+          .item-content {
+            display: flex;
+            flex-flow: column;
+          }
         }
+      }
+    }
+  }
+  .emissions-card {
+    min-height: 12.5em;
+    .item-container {
+      margin-bottom: 0.75em;
+      font-size: 16px;
+      table {
+        text-align: left;
+        table-layout: fixed;
+        overflow: hidden;
+        thead,
+        tbody {
+          tr td {
+            border-top: 1px solid var(--color-secondary-alpha-10);
+          }
+          tr:hover {
+            background-color: var(--color-secondary-alpha-05);
+          }
+          tr th:nth-child(1),
+          tr td:nth-child(1) {
+            width: 15%;
+          }
+          tr th:nth-child(2),
+          tr td:nth-child(2) {
+            width: 10%;
+          }
+          tr th:nth-child(3),
+          tr td:nth-child(3) {
+            width: 75%;
+          }
+        }
+        tbody {
+          .icon-button-container {
+            font-weight: 400 !important;
+          }
+        }
+      }
+    }
+  }
+  /*************** PRICE CARD ***************/
+  .price-items {
+    display: flex; 
+    justify-content: space-between; 
+    padding-bottom: 1em;
+    .price-items_left {
+      display: flex;
+      flex-flow: column;
+    }
+    .price-items_right {
+      button {
+        color: var(--color-secondary-alpha-85);
+        border: none;
+        width: 48px;
+        padding: 0 !important;
+        span {
+          width: inherit;
+          height: inherit;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+      }
+      .active {
+        border: var(--custom-border-style);
       }
     }
   }

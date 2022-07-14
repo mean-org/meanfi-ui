@@ -10,7 +10,6 @@ import {
   TRANSACTION_STATUS_RETRY_TIMEOUT
 } from "../constants";
 import { useTranslation } from "react-i18next";
-import { shortenAddress } from "../utils/utils";
 import { openNotification } from "../components/Notifications";
 import { notification } from "antd";
 
@@ -253,12 +252,11 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
           duration: 4,
           description: (
             <>
-              <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
               <a className="secondary-link"
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}`}
                   target="_blank"
                   rel="noopener noreferrer">
-                  {shortenAddress(lastSentTxSignature, 8)}
+                  {t('notifications.check-transaction-in-explorer')} &gt;
               </a>
             </>
           )
@@ -279,12 +277,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     lastSentTxSignature,
     getTxStatus
   ]);
-
-  const rebuildHistoryFromCache = useCallback(() => {
-    const history = Array.from(txStatusCache.values());
-    setConfirmationHistory(history.reverse());
-    consoleOut('confirmationHistory:', history, 'orange');
-  }, []);
 
   const fetchTxStatus = useCallback(async (
     signature: string,
@@ -311,6 +303,13 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
   }, [connection]);
 
   const enqueueTransactionConfirmation = useCallback(async (data: TxConfirmationInfo) => {
+
+    const rebuildHistoryFromCache = () => {
+      const history = Array.from(txStatusCache.values());
+      setConfirmationHistory(history.reverse());
+      consoleOut('confirmationHistory:', history, 'orange');
+    };
+
     const now = new Date().getTime();
     txConfirmationCache.add(data.signature, data, now);
     openNotification({
@@ -328,12 +327,11 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
             }
           </span>
           <div>
-            <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
             <a className="secondary-link"
                 href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
                 target="_blank"
                 rel="noopener noreferrer">
-                {shortenAddress(data.signature, 8)}
+                {t('notifications.check-transaction-in-explorer')} &gt;
             </a>
           </div>
         </>
@@ -364,17 +362,17 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
               }
             </span>
             <div>
-              <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
               <a className="secondary-link"
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
                   target="_blank"
                   rel="noopener noreferrer">
-                  {shortenAddress(data.signature, 8)}
+                  {t('notifications.check-transaction-in-explorer')} &gt;
               </a>
             </div>
           </>
         )
       });
+      consoleOut('Emitting event:', EventType.TxConfirmSuccess, 'orange');
       confirmationEvents.emit(EventType.TxConfirmSuccess, data);
       rebuildHistoryFromCache();
     } else {
@@ -401,24 +399,23 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
               }
             </span>
             <div>
-              <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
               <a className="secondary-link"
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
                   target="_blank"
                   rel="noopener noreferrer">
-                  {shortenAddress(data.signature, 8)}
+                  {t('notifications.check-transaction-in-explorer')} &gt;
               </a>
             </div>
           </>
         )
       });
+      consoleOut('Emitting event:', EventType.TxConfirmTimeout, 'orange');
       confirmationEvents.emit(EventType.TxConfirmTimeout, data);
       rebuildHistoryFromCache();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     t,
-    fetchTxStatus,
-    rebuildHistoryFromCache
   ]);
 
   return (

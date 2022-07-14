@@ -256,6 +256,92 @@
 		"current-wsol-balance": "현재 WSOL 잔액",
 		"label-input-amount": "Enter amount to unwrap"
 	},
+	"vesting": {
+		"add-funds": {
+			"modal-title": "Add funds to the vesting contract"
+		},
+		"screen-subtitle": "Realize the power of no-code token locks on Solana",
+		"screen-title": "Mean Vesting",
+		"user-instruction-headline": "Get started by creating a vesting contract below",
+		"create-account": {
+			"create-cta": "Create vesting contract",
+			"create-cta-busy": "Creating vesting contract",
+			"fee-paid-by-treasury": "Streaming fees will be paid from the vesting contract's funds",
+			"step-one-label": "Contract info",
+			"step-two-label": "Contract settings",
+			"tab-label-create-account": "Create new account",
+			"tab-label-select-account": "Select existing account",
+			"vesting-contract-name-label": "Vesting contract name",
+			"vesting-contract-type-label": "Vesting contract type",
+			"vesting-contract-type-tooltip": "This vesting contract can either be open or locked in nature. Open contracts allow you to have more flexibility in case you need to pause or cancel a stream. Locked streams are not able to be paused or cancelled and are perfect for token locks, and fixed investor token distributions.",
+			"vesting-contract-token-label": "Token to vest and initial funding",
+			"multisig-vesting-contract-token-label": "Token to vest",
+			"vesting-contract-token-tooltip": "Select the token you are going to vest from your wallet's token list. If the token is not in the list, please enter the mint address in the token selector pop up.",
+			"vesting-account-type-options": {
+				"vesting-account-type-locked-description": "Locked vesting contracts are perfect for investors and token locks as they can not be paused or cancelled.",
+				"vesting-account-type-locked-name": "Locked vesting contract",
+				"vesting-account-type-open-description": "An open vesting contract allows you to create flexible vesting streams that can be paused and cancelled.",
+				"vesting-account-type-open-name": "Open vesting contract"
+			}
+		},
+		"create-stream": {
+			"beneficiary-address-label": "Beneficiary address",
+			"beneficiary-address-missing": "Add valid beneficiary",
+			"beneficiary-address-placeholder": "Input a valid Solana address",
+			"cannot-send-to-yourself": "Can't send to yourself",
+			"modal-title": "Create a vesting stream",
+			"start-immediately": "Immediately after approval",
+			"step-one-label": "Stream details",
+			"step-one-validation-pass": "Next",
+			"step-two-label": "Stream summary",
+			"stream-name-empty": "Stream name cannot be empty",
+			"total-funds-to-commit": "Total funds to commit",
+			"total-funds-to-stream": "Total funds to stream",
+			"vesting-stream-name-label": "Vesting stream name",
+			"vesting-stream-name-placeholder": "Name for this no-code vesting stream",
+			"verified-recipient-disclaimer-tooltip": "In order for the beneficiary to be able to withdraw funds from their stream, they must be the owner of the private keys to the address inputted. Please make sure the address supplied is correct and does not belong to a centralized exchange."
+		},
+		"vesting-account-details": {
+			"panel-title": "Vesting Account Details"
+		},
+		"vesting-account-streams": {
+			"no-streams": "This vesting contract has no streams created yet.",
+			"stream-status-complete": "Finished vesting",
+			"stream-status-streaming": "{{timeLeft}} left"
+		},
+		"close-account": {
+			"modal-title": "Close Contract",
+			"cannot-close-warn": "We're Sorry!",
+			"cannot-close-single-explanation": "There is still one stream that exists in this vesting contract. All streams must be closed before you can close the contract.",
+			"cannot-close-explanation": "There are still {{numItems}} streams that exist in this vesting contract. All streams must be closed before you can close the contract.",
+			"can-close-explanation": "Closing a vesting contract will remove it completely from the list of contracts. Upon closure, all funds left over in the account will be immediately sent back to the contract's treasurer.",
+			"funds-left-in-contract": "Funds left in the contract",
+			"close-cta": "Close contract",
+			"close-cta-busy": "Closing contract",
+			"close-stream-also-closes-account-label": "Also close the vesting contract",
+			"cant-close-stream-message": "You cannot close a vesting stream once started",
+			"option-close-stream": "Close stream",
+			"option-copy-stream-id": "Copy stream ID",
+			"option-show-stream": "Show stream"
+		},
+		"sol-balance": {
+			"modal-title": "SOL Balance",
+			"contract-balance-label": "Your SOL contract balance",
+			"contract-balance-low-warning": "You are running low on SOL needed to pay for vesting transaction fees.",
+			"qrcode-scan-label": "Scan the QR code to receive funds",
+			"deposit-address-disclaimer": "This address can only be used to receive SOL to pay for transaction fees on this vesting contract account"
+		},
+		"refresh-tooltip": "Click to refresh the list of vesting contracts",
+		"withdraw-funds": {
+			"modal-title": "Withdraw vesting contract funds",
+			"from-vesting-contract": "From vesting contract"
+		},
+		"status": {
+			"status-running": "Running",
+			"status-scheduled": "Scheduled",
+			"status-stopped": "Completed"
+		}
+	},
 	"general": {
 		"cta-change": "변경",
 		"cta-close": "종료",
@@ -267,8 +353,10 @@
 		"days": "일일",
 		"finished": "완성된",
 		"hour": "시간",
+		"hours": "hours",
 		"loading": "로딩중",
 		"minute": "분",
+		"minutes": "minutes",
 		"month": "달",
 		"months": "개월",
 		"no": "아니오",
@@ -280,6 +368,7 @@
 		"reload-cta": "지금 다시 시도하세요",
 		"reload-cta-disabled": "다시 시도할 수 있습니다.",
 		"retry": "재시도",
+		"second": "second",
 		"seconds": "두번째의",
 		"start": "시작",
 		"starting": "개시",
@@ -678,7 +767,7 @@
 	"notifications": {
 		"account-address-copied-message": "계좌 주소가 성공적으로 복사됨",
 		"account-address-not-copied-message": "계정 주소를 복사할 수 없습니다",
-		"check-transaction-in-explorer": "Check your transaction here",
+		"check-transaction-in-explorer": "View on Solana Explorer",
 		"create-money-stream-completed": "머니스트림이 생성되었습니다.",
 		"create-money-stream-completed-wait-for-confirm": "거래가 확인되면 목록에 표시되어야 합니다.",
 		"error-cannot-faucet-mainnet-message": "메인넷에서 faucet 사용불가",
@@ -817,6 +906,7 @@
 			"status-running": "운영",
 			"status-scheduled": "예정된",
 			"status-stopped": "정지된",
+			"status-paused": "Paused",
 			"stopped": "자금 부족",
 			"stopped-manually": "수동으로 중지됨",
 			"streaming": "스트리밍"
@@ -1111,6 +1201,7 @@
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "이름 또는 주소로 스트림 검색",
+			"select-streaming-account-label": "Streaming account",
 			"success-message": "Your streaming account was funded successfully."
 		},
 		"back-to-treasuries-cta": "Back to Streaming Accounts",
@@ -1242,6 +1333,7 @@
 			"status-running": "운영",
 			"status-scheduled": "예정된",
 			"status-stopped": "중지된",
+			"status-paused": "Paused",
 			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
@@ -1299,7 +1391,8 @@
 				"submenu-title": "서비스",
 				"wallet-guide": "지갑 가이드",
 				"wrap": "랩",
-				"unwrap": "Unwrap"
+				"unwrap": "Unwrap",
+				"vesting": "Vesting"
 			},
 			"stats": "통계",
 			"swap": "교환",

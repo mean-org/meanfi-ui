@@ -28,6 +28,8 @@ import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 import { shortenAddress } from "../../utils/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
+import { INVEST_ROUTE_BASE_PATH } from "../../pages/invest";
+import { VESTING_ROUTE_BASE_PATH } from "../../pages/vesting";
 import { getDefaultRpc } from "../../services/connections-hq";
 
 const { Header, Content, Footer } = Layout;
@@ -39,6 +41,7 @@ export const AppLayout = React.memo((props: any) => {
   const {
     theme,
     tpsAvg,
+    previousRoute,
     detailsPanelOpen,
     previousWalletConnectState,
     setPreviousWalletConnectState,
@@ -46,6 +49,7 @@ export const AppLayout = React.memo((props: any) => {
     refreshTokenBalance,
     setDtailsPanelOpen,
     setDiagnosisInfo,
+    setPreviousRoute,
     setSelectedAsset,
     setStreamList,
     setTpsAvg,
@@ -163,9 +167,19 @@ export const AppLayout = React.memo((props: any) => {
     setTpsAvg,
   ]);
 
-  const getPlatform = (): string => {
+  const getPlatform = useCallback((): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
-  }
+  }, []);
+
+  const canRenderBackButton = useCallback(() => {
+    const excemptLocations = [
+      INVEST_ROUTE_BASE_PATH,
+      VESTING_ROUTE_BASE_PATH
+    ];
+    const found = excemptLocations.some(l => location.pathname.startsWith(l));
+
+    return detailsPanelOpen && !found ? true : false;
+  }, [detailsPanelOpen, location.pathname]);
 
   /*
   const sendConnectionMetric = useCallback((address: string) => {
@@ -201,7 +215,7 @@ export const AppLayout = React.memo((props: any) => {
       .catch(e => {
         consoleOut('InfluxDB write API - WRITE FAILED', e, 'red');
       })
-  }, [provider]);
+  }, [provider, getPlatform]);
   */
 
   // Init Google Analytics
@@ -339,6 +353,7 @@ export const AppLayout = React.memo((props: any) => {
     setReferralAddress,
     setSelectedAsset,
     setStreamList,
+    getPlatform,
     t,
   ]);
 
@@ -401,6 +416,17 @@ export const AppLayout = React.memo((props: any) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
+  // Clear accounts state when leaving
+  useEffect(() => {
+    const isAccountPage = location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH);
+
+    if (location.pathname !== previousRoute) {
+      if (!isAccountPage) {
+        setPreviousRoute(location.pathname);
+      }
+    }
+  }, [location.pathname, previousRoute, setPreviousRoute]);
+
   const closeAllPanels = () => {
     if (detailsPanelOpen) {
       setDtailsPanelOpen(false);
@@ -424,7 +450,7 @@ export const AppLayout = React.memo((props: any) => {
       const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
       const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${tpsAvg || '-'}, latency: ${responseTime}ms`;
       const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
-      const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, build: [${gitInfo.commit.shortHash}] on ${gitInfo.commit.date}`;
+      const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, branch: ${gitInfo.branch || '-'}, build: [${gitInfo.commit.shortHash}] on ${gitInfo.commit.date}`;
       const debugInfo: AccountDetails = {
         dateTime,
         clientInfo,
@@ -462,7 +488,7 @@ export const AppLayout = React.memo((props: any) => {
               </div>
             )}
             <Header className="App-Bar">
-              {!location.pathname.startsWith('/invest') && (detailsPanelOpen) && (
+              {canRenderBackButton() && (
                 <BackButton handleClose={() => closeAllPanels()} />
               )}
               <div className="app-bar-inner">

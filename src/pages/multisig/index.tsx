@@ -70,7 +70,7 @@ import './style.scss';
 import { BN } from "@project-serum/anchor";
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
-import { MSP, Treasury } from '@mean-dao/msp';
+import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { customLogger } from '../..';
 import { ProgramAccounts } from '../../utils/accounts';
 import { getOperationName } from '../../utils/multisig-helpers';
@@ -1986,7 +1986,7 @@ export const MultisigView = () => {
     if (!connection || !publicKey || !msp || !selectedMultisig) { return []; }
 
     try {
-      const treasuries = await msp.listTreasuries(selectedMultisig.authority);
+      const treasuries = await msp.listTreasuries(selectedMultisig.authority, true, true, Category.default);
       return treasuries;
     } catch (error) {
       console.error(error);

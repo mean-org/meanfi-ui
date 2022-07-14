@@ -260,6 +260,9 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
     case OperationType.StreamWithdraw:
       ix = programIdl.instructions.filter(ix => ix.name === "withdraw")[0];
       break;
+    case OperationType.StreamTransferBeneficiary:
+      ix = programIdl.instructions.filter(ix => ix.name === "transferStream")[0];
+      break;
     // CREDIX
     case OperationType.CredixDepositFunds:
       ix = programIdl.instructions.filter(ix => ix.name === "depositFunds")[0];

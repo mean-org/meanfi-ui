@@ -22,7 +22,7 @@ import { OperationType, TransactionStatus } from '../../models/enums';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
-import { FALLBACK_COIN_IMAGE, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
 import { customLogger } from '../..';
 import useWindowSize from '../../hooks/useWindowResize';
@@ -132,147 +132,6 @@ export const MultisigAssetsView = () => {
   const isCanvasTight = useCallback(() => {
     return width < 576 || (width >= 768 && width < 960);
   }, [width]);
-
-  // const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
-  //   if (!selectedMultisig) { return undefined; }
-
-  //   const owners: MultisigParticipant[] = (selectedMultisig as MultisigInfo).owners;
-  //   const initiator = owners && owners.length > 0
-  //     ? owners.find(o => o.address === mtx.proposer?.toBase58())
-  //     : undefined;
-
-  //   return initiator;
-  // }, [selectedMultisig]);
-
-  // const isUserTxInitiator = useCallback(() => {
-  //   if (!highlightedMultisigTx || !publicKey) { return false; }
-  //   const initiator = getTxInitiator(highlightedMultisigTx);
-  //   return initiator && publicKey.toBase58() === initiator.address ? true : false;
-  // }, [
-  //   publicKey,
-  //   highlightedMultisigTx,
-  //   getTxInitiator,
-  // ]);
-
-  // const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
-  //   if (mtx && mtx.signers) {
-  //     return mtx.signers.filter((s: boolean) => s === true).length;
-  //   }
-  //   return 0;
-  // }, []);
-
-  // const isTxVoided = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Voided) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxPendingApproval = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Active) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxPendingExecution = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Passed) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxRejected = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Rejected) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxPendingApprovalOrExecution = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Active ||
-  //         highlightedMultisigTx.status === MultisigTransactionStatus.Passed) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isUserInputNeeded = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.executedOn) { // Executed
-  //       return false;
-  //     } else if (highlightedMultisigTx.didSigned === undefined) { // Rejected
-  //       return false;
-  //     } else if (highlightedMultisigTx.didSigned === false) { // Not yet signed
-  //       return true;
-  //     } else {
-  //       return isTxPendingExecution() // Signed but
-  //         ? true    // Tx still needs signing or execution
-  //         : false;  // Tx completed, nothing to do
-  //     }
-  //   }
-
-  //   return false;
-
-  // }, [highlightedMultisigTx, isTxPendingExecution]);
-
-  // const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
-
-  //   if (mtx.executedOn) {
-  //     return "";
-  //   } else if (mtx.didSigned === undefined) {
-  //     return "fg-red";
-  //   } else if (mtx.didSigned === false) {
-  //     return theme === 'light' ? "fg-light-orange" : "fg-warning";
-  //   } else {
-  //     return theme === 'light' ? "fg-green" : "fg-success"
-  //   }
-
-  // },[theme]);
-
-  // const getTxApproveMainCtaLabel = useCallback(() => {
-
-  //   const busyLabel = isTxPendingExecution()
-  //     ? 'Executing transaction'
-  //     : isTxPendingApproval()
-  //       ? 'Approving transaction'
-  //       : isTxVoided() 
-  //         ? 'Cancelling Transaction' 
-  //         : '';
-
-  //   const iddleLabel = isTxPendingExecution()
-  //     ? 'Execute transaction'
-  //     : isTxPendingApproval()
-  //       ? 'Approve transaction'
-  //       : isTxVoided() 
-  //         ? 'Cancel Transaction' 
-  //         : '';
-
-  //   return isBusy
-  //     ? busyLabel
-  //     : transactionStatus.currentOperation === TransactionStatus.Iddle
-  //       ? iddleLabel
-  //       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-  //         ? t('general.cta-finish')
-  //         : t('general.refresh');
-  // }, [
-  //   isBusy,
-  //   transactionStatus.currentOperation,
-  //   isTxPendingExecution,
-  //   isTxPendingApproval,
-  //   isTxVoided,
-  //   t,
-  // ]);
 
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
@@ -3413,7 +3272,7 @@ export const MultisigAssetsView = () => {
               </div>
             </div>
             <div className="description-cell">
-              <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
+              <div className="title text-truncate">{token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
               <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
             </div>
             <div className="rate-cell">

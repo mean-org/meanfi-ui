@@ -51,6 +51,7 @@ import {
 import { StreamOpenModal } from '../../components/StreamOpenModal';
 import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
 import {
+  CUSTOM_TOKEN_NAME,
   FALLBACK_COIN_IMAGE,
   NO_FEES,
   PERFORMANCE_THRESHOLD,
@@ -308,7 +309,7 @@ export const Streams = () => {
     if (address && isValidAddress(address)) {
       const unkToken: TokenInfo = {
         address: address,
-        name: 'Unknown',
+        name: CUSTOM_TOKEN_NAME,
         chainId: 101,
         decimals: 6,
         symbol: shortenAddress(address),
@@ -403,6 +404,11 @@ export const Streams = () => {
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
+    const path = window.location.pathname;
+    if (!path.startsWith(STREAMS_ROUTE_BASE_PATH)) {
+      return;
+    }
+
     const softReloadStreams = () => {
       const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
       if (streamsRefreshCta) {
@@ -426,7 +432,7 @@ export const Streams = () => {
       }
     };
 
-    consoleOut("onTxConfirmed event handled:", item, 'crimson');
+    console.log("onTxConfirmed event handled:", item);
     recordTxConfirmation(item.signature, item.operationType, true);
     switch (item.operationType) {
       case OperationType.StreamWithdraw:
@@ -885,6 +891,19 @@ export const Streams = () => {
     onTxConfirmed,
     onTxTimedout
   ]);
+
+  // Unsubscribe from events
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   //////////////////////
   // MODALS & ACTIONS //
@@ -2544,7 +2563,7 @@ export const Streams = () => {
       const treasury = new PublicKey((streamDetail as Stream).treasury as string);
       const associatedToken = new PublicKey(streamDetail.associatedToken as string);
       const amount = addFundsData.tokenAmount;
-      const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
+      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol) : 0;
       setAddFundsPayload(addFundsData);
 
       const data = {
@@ -2553,7 +2572,6 @@ export const Streams = () => {
         stream: stream.toBase58(),                                      // stream
         amount: `${amount.toNumber()} (${addFundsData.amount})`,        // amount
       }
-
       consoleOut('add funds data:', data);
 
       // Report event to Segment analytics
@@ -3629,7 +3647,7 @@ export const Streams = () => {
           valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -3738,7 +3756,7 @@ export const Streams = () => {
           valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -5693,34 +5711,6 @@ export const Streams = () => {
           <div className="inner-container">
             {connected && streamDetail ? (
               <>
-                {/* Top action icons */}
-                {/* {isUnderDevelopment() && (
-                  <div className="float-top-right">
-                    <span className="icon-button-container secondary-button">
-                      <Tooltip placement="bottom" title={t('streams.edit-stream.edit-stream-tooltip')}>
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
-                          icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
-                          onClick={() => onEditStreamClick()}
-                          disabled={isInboundStream(streamDetail)}
-                        />
-                      </Tooltip>
-                      <Tooltip placement="bottom" title={t('streams.stream-detail.close-money-stream-menu-item')}>
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
-                          icon={<IconTrash className="mean-svg-icons" />}
-                          onClick={showCloseStreamModal}
-                          disabled
-                        />
-                      </Tooltip>
-                    </span>
-                  </div>
-                )} */}
-
               {isInboundStream(streamDetail)
                 ? streamDetail.version < 2
                   ? renderInboundStreamV1(streamDetail as StreamInfo)

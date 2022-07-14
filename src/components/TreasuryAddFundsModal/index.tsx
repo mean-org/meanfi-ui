@@ -37,7 +37,7 @@ import { isError } from '../../utils/transactions';
 import { AllocationType, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { openNotification } from '../Notifications';
-import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -51,9 +51,9 @@ export const TreasuryAddFundsModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   withdrawTransactionFees: TransactionFees;
-  streamStats: TreasuryStreamsBreakdown | undefined;
+  streamStats?: TreasuryStreamsBreakdown;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
-  treasuryStreams: (Stream | StreamInfo)[];
+  treasuryStreams: Array<Stream | StreamInfo> | undefined;
   associatedToken: string;
 }) => {
   const {
@@ -437,7 +437,7 @@ export const TreasuryAddFundsModal = (props: {
     if (address && isValidAddress(address)) {
       const unkToken: TokenInfo = {
         address: address,
-        name: 'Unknown',
+        name: CUSTOM_TOKEN_NAME,
         chainId: 101,
         decimals: 6,
         symbol: shortenAddress(address),

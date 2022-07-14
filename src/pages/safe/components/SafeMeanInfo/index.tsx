@@ -40,6 +40,7 @@ export const SafeMeanInfo = (props: {
   onRefreshRequested: any;
   loadingProposals: boolean;
   loadingPrograms: boolean;
+  vestingAccountsCount: number;
 }) => {
   const { 
     programs,
@@ -73,6 +74,7 @@ export const SafeMeanInfo = (props: {
     onRefreshRequested,
     loadingProposals,
     loadingPrograms,
+    vestingAccountsCount,
   } = props;
   const navigate = useNavigate();
   const location = useLocation();
@@ -581,7 +583,7 @@ export const SafeMeanInfo = (props: {
               <div 
                 key={index}
                 onClick={onSelectProposal}
-                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                 >
                   <ResumeItem
                     id={proposal.id.toBase58()}
@@ -596,6 +598,10 @@ export const SafeMeanInfo = (props: {
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
                     isLink={true}
+                    classNameRightContent="resume-stream-row"
+                    classNameIcon="icon-proposal-row"
+                    xs={24}
+                    md={24}
                   />
               </div>
             )
@@ -626,7 +632,7 @@ export const SafeMeanInfo = (props: {
               <div 
                 key={`${index + 1}`}
                 onClick={onSelectProgram}
-                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
                   <ResumeItem
                     id={program.pubkey.toBase58()}
@@ -701,6 +707,7 @@ export const SafeMeanInfo = (props: {
         tabs={tabs}
         selectedTab={selectedTab}
         isTxInProgress={isTxInProgress}
+        vestingAccountsCount={vestingAccountsCount}
       />
     </>
   )
