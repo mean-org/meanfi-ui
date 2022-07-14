@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useState } from 'react';
 import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -15,24 +15,31 @@ export const StreamTransferOpenModal = (props: {
   isVisible: boolean;
   streamDetail: Stream | StreamInfo | undefined;
 }) => {
+  const {
+    handleClose,
+    handleOk,
+    isVisible,
+    streamDetail,
+  } = props;
   const [address, setAddress] = useState('');
   const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
 
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
+  const [queryAccountType, setQueryAccountType] = useState<string | undefined>(undefined);
 
   const isAddressTreasurer = useCallback((address: string): boolean => {
-    if (props.streamDetail && address) {
-      const v1 = props.streamDetail as StreamInfo;
-      const v2 = props.streamDetail as Stream;
+    if (streamDetail && address) {
+      const v1 = streamDetail as StreamInfo;
+      const v2 = streamDetail as Stream;
       if ((v1.version < 2 && v1.treasurerAddress === address) ||
           (v2.version >= 2 && v2.treasurer === address)) {
         return true;
       }
     }
     return false;
-  }, [props.streamDetail]);
+  }, [streamDetail]);
 
   const handleAddressChange = (e: any) => {
     setAddress(e.target.value);
@@ -44,13 +51,13 @@ export const StreamTransferOpenModal = (props: {
   }
 
   const onAcceptNewAddress = () => {
-    props.handleOk(address);
+    handleOk(address);
   }
 
   const onCloseModal = () => {
     setAddress('');
     setIsVerifiedRecipient(false);
-    props.handleClose();
+    handleClose();
   }
 
   const onIsVerifiedRecipientChange = (e: any) => {
@@ -68,14 +75,18 @@ export const StreamTransferOpenModal = (props: {
     return undefined;
   }, [searchParams]);
 
-  const param = getQueryAccountType();
+  useEffect(() => {
+    if (isVisible) {
+      setQueryAccountType(getQueryAccountType());
+    }
+  }, [getQueryAccountType, isVisible]);
 
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">{param === "multisig" ? "Propose transfer stream" : t('transfer-stream.modal-title')}</div>}
+      title={<div className="modal-title">{queryAccountType === "multisig" ? "Propose transfer stream" : t('transfer-stream.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      visible={isVisible}
       onOk={onAcceptNewAddress}
       onCancel={onCloseModal}
       width={480}>
@@ -127,7 +138,7 @@ export const StreamTransferOpenModal = (props: {
         size="large"
         disabled={!address || !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address) || !isVerifiedRecipient}
         onClick={onAcceptNewAddress}>
-        {param === "multisig" ? "Submit proposal" : !address ? t('transfer-stream.streamid-empty') : t('transfer-stream.streamid-open-cta')}
+        {queryAccountType === "multisig" ? "Submit proposal" : !address ? t('transfer-stream.streamid-empty') : t('transfer-stream.streamid-open-cta')}
       </Button>
     </Modal>
   );

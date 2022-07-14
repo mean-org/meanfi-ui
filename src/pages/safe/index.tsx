@@ -128,7 +128,6 @@ export const SafeView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [transactionFees, setTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
-  // const [transactionAssetFees, setTransactionAssetFees] = useState<TransactionFees>(NO_FEES);
   // Multisig accounts
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
@@ -2485,7 +2484,6 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -2496,19 +2494,20 @@ export const SafeView = () => {
 
       let tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
 
-      if (data.transaction.operation === OperationType.StreamCreate || 
-        data.transaction.operation === OperationType.TreasuryStreamCreate
+      if (data.transaction.operation === OperationType.StreamCreate ||
+          data.transaction.operation === OperationType.TreasuryStreamCreate ||
+          data.transaction.operation === OperationType.StreamCreateWithTemplate
       ) {
-        tx = await multisigClient.executeCreateMoneyStreamTransaction(publicKey, data.transaction.id);  
+        tx = await multisigClient.executeCreateMoneyStreamTransaction(publicKey, data.transaction.id);
       }
-  
+
       return tx;
     };
 
     const createTx = async (): Promise<boolean> => {
 
       if (publicKey && data) {
-        consoleOut("Start transaction for create stream", '', 'blue');
+        consoleOut("Start Multisig ExecuteTransaction Tx", '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
         setTransactionStatus({
@@ -2776,7 +2775,7 @@ export const SafeView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature, 'blue');
-            setIsBusy(false);
+            // setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
@@ -2796,7 +2795,8 @@ export const SafeView = () => {
               }
             });
           } else {
-            showMultisigTxResultModal();
+            // showMultisigTxResultModal();
+            onExecuteFinishTxCancelled();
             setIsBusy(false);
           }
         } else { 
@@ -2804,7 +2804,8 @@ export const SafeView = () => {
           onExecuteFinishTxCancelled();
         }
       } else {
-        showMultisigTxResultModal();
+        // showMultisigTxResultModal();
+        onExecuteFinishTxCancelled();
         setIsBusy(false);
       }
     }
@@ -3240,6 +3241,7 @@ export const SafeView = () => {
         refreshSelectedProposal(item.extras as any);
         break;
       case OperationType.ExecuteTransaction:
+        setIsBusy(false);
         reloadMultisigs();
         break;
       case OperationType.CancelTransaction:
@@ -3608,29 +3610,6 @@ export const SafeView = () => {
     clearTxConfirmationContext
   ]);
 
-  // Setup event listeners
-  useEffect(() => {
-
-    if (!canSubscribe) { return; }
-
-    const timeout = setTimeout(() => {
-      setCanSubscribe(false);
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
-      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    canSubscribe,
-    onTxConfirmed,
-    onTxTimedout
-  ]);
-
   // Keep account balance updated
   useEffect(() => {
 
@@ -3976,6 +3955,29 @@ export const SafeView = () => {
 
   }, [address, msp, publicKey, refreshVestingContracts, selectedMultisig]);
 
+  // Setup event listeners
+  useEffect(() => {
+
+    if (!canSubscribe) { return; }
+
+    const timeout = setTimeout(() => {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    canSubscribe,
+    onTxConfirmed,
+    onTxTimedout
+  ]);
+
   // Unsubscribe from events
   useEffect(() => {
     // Do unmounting stuff here
@@ -4148,14 +4150,13 @@ export const SafeView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">previousRoute:</span><span className="ml-1 font-bold fg-dark-active">{previousRoute || '-'}</span>
-          <span className="ml-1">multisigTxs:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
-          <span className="ml-1">proposalLoadStatusRegister:</span><span className="ml-1 font-bold fg-dark-active">{proposalLoadStatusRegister.size}</span>
+          <span className="ml-1">nativeBalance:</span><span className="ml-1 font-bold fg-dark-active">{nativeBalance}</span>
+          {/* <span className="ml-1">multisigTxs:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
+          <span className="ml-1">proposalLoadStatusRegister:</span><span className="ml-1 font-bold fg-dark-active">{proposalLoadStatusRegister.size}</span> */}
         </div>
-      )} */}
-
+      )}
 
       <div className="container main-container">
 
