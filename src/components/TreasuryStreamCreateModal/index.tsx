@@ -5,20 +5,24 @@ import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, T
 import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
+  formatAmount,
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
+  getTokenSymbol,
   isValidNumber,
   makeDecimal,
   makeInteger,
   shortenAddress,
-  toTokenAmount
+  toTokenAmount,
+  toUiAmount
 } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import {
   consoleOut,
   disabledDate,
+  getFormattedNumberToLocale,
   getIntervalFromSeconds,
   getLockPeriodOptionLabel,
   getPaymentRateOptionLabel,
@@ -43,8 +47,8 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
-import { Beneficiary, Constants as MSPV2Constants, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { TreasuryInfo } from '@mean-dao/money-streaming';
+import { Beneficiary, Constants as MSPV2Constants, MSP, Stream, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
@@ -900,6 +904,22 @@ export const TreasuryStreamCreateModal = (props: {
     return '';
   }, []);
 
+  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+
+    if (item) {
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }, [getTokenByMintAddress]);
+
 
   useEffect(() => {
     if (!csvFile) { return; }
@@ -1020,11 +1040,7 @@ export const TreasuryStreamCreateModal = (props: {
     let signedTransactions: Transaction[] = [];
     let signatures: string[] = [];
     let encodedTxs: string[] = [];
-    const displayParams: any = {
-      rateAmount: 0,
-      rateInterval: "",
-      multisig: ""
-    };
+    let displayParams: any = {};
 
     const transactionLog: any[] = [];
 
@@ -1216,11 +1232,7 @@ export const TreasuryStreamCreateModal = (props: {
         feePayedByTreasurer: isFeePaidByTreasurer                                   // feePayedByTreasurer
       };
 
-      displayParams.rateAmount = rateAmount;
-      displayParams.rateInterval = getIntervalFromSeconds(data.rateIntervalInSeconds);
-      displayParams.multisig = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
-      ? selectedMultisig.id.toBase58()
-      : "";
+      displayParams = data;
 
       consoleOut('data:', data);
 
@@ -1433,8 +1445,11 @@ export const TreasuryStreamCreateModal = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Txs to confirmation queue:', signatures);
-            const messageLoading = (param === "multisig") ? `Creating stream proposal to send ${displayParams.rateAmount} ${selectedToken.symbol} ${displayParams.rateInterval}.` : `Creating stream to send ${displayParams.rateAmount} ${selectedToken.symbol} ${displayParams.rateInterval}.`
-            const messageCompleted = (param === "multisig") ? `Proposal to create stream to send ${displayParams.rateAmount} ${selectedToken.symbol} ${displayParams.rateInterval}.` : `Stream to send ${displayParams.rateAmount} ${selectedToken.symbol} ${displayParams.rateInterval} has been proposed.`
+            const isMultisig = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
+            ? selectedMultisig.id.toBase58()
+            : "";
+            const messageLoading = isMultisig ? `Creating stream proposal to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.` : `Creating stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.`
+            const messageCompleted = isMultisig ? `Proposal to create stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.` : `Stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)} has been proposed.`
             enqueueTransactionConfirmation({
               signature: signatures[0],
               operationType: OperationType.TreasuryStreamCreate,
@@ -1444,10 +1459,9 @@ export const TreasuryStreamCreateModal = (props: {
               loadingMessage: messageLoading,
               completedTitle: "Transaction confirmed",
               completedMessage: messageCompleted,
-              extras: displayParams.multisig
+              extras: isMultisig
             });
 
-            // param === "multisig" && showNotificationByType("info");
             setIsBusy(false);
             resetTransactionStatus();
             handleOk();
