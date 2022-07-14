@@ -23,6 +23,7 @@ import { RejectCancelModal } from '../../../../components/RejectCancelModal';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { IDL as SplTokenIdl } from '@project-serum/anchor/dist/cjs/spl/token';
+import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 
 export const ProposalDetailsView = (props: {
   isBusy: boolean;
@@ -64,6 +65,7 @@ export const ProposalDetailsView = (props: {
     onOperationStarted,
     hasMultisigPendingProposal,
   } = props;
+  const { confirmationHistory } = useContext(TxConfirmationContext);
 
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -89,6 +91,15 @@ export const ProposalDetailsView = (props: {
     onOperationStarted(operation)
     onProposalCancel(operation);
   };
+
+  // Determine if the ExecuteTransaction operation is in progress by searching
+  // into the confirmation history
+  const isExecutionPendingConfirmation = useCallback(() => {
+    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
+
+    return confirmationHistory.some(h => h.operationType === OperationType.ExecuteTransaction && h.txInfoFetchStatus === "fetching");
+
+  }, [confirmationHistory]);
 
   useEffect(() => {
     if (transactionStatus.currentOperation === TransactionStatus.ConfirmTransaction) {
@@ -646,7 +657,9 @@ export const ProposalDetailsView = (props: {
                       hasMultisigPendingProposal || 
                       (
                         !isProposer && !anyoneCanExecuteTx()
-                      )
+                      ) ||
+                      isBusy ||
+                      isExecutionPendingConfirmation()
                     }
                     onClick={() => {
                       const operation = { transaction: selectedProposal }
