@@ -348,9 +348,22 @@ export const StreamingAccountView = (props: {
   
   }, [loadingStreamingAccountActivity, msp, streamingAccountActivity]);
 
+  const getStreamingAccountName = useCallback(() => {
+    if (streamingAccountSelected) {
+      const v1 = streamingAccountSelected as TreasuryInfo;
+      const v2 = streamingAccountSelected as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      return isNewTreasury ? v2.name : v1.label;
+    }
+    return "";
+  }, [streamingAccountSelected]);
+
   const getStreamingAccountActivityAction = (item: VestingTreasuryActivity): string => {
     let message = '';
     switch (item.action) {
+        case VestingTreasuryActivityAction.TreasuryCreate:
+            message += "Streaming account created";
+            break;
         case VestingTreasuryActivityAction.TreasuryAddFunds:
             message += "Deposit funds in the streaming account";
             break;
@@ -361,22 +374,25 @@ export const StreamingAccountView = (props: {
             message += "Refresh streaming account data";
             break;
         case VestingTreasuryActivityAction.StreamCreate:
-            message += "Create stream";
+            message += `Create stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            break;
+        case VestingTreasuryActivityAction.StreamAllocateFunds:
+            message += `Topped up stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamWithdraw:
-            message += "Withdraw funds from the stream";
+            message += `Withdraw funds from stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamClose:
-            message += "Close stream";
+            message += `Close stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamPause:
-            message += "Pause stream"
+            message += `Pause stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamResume:
-            message += "Resume stream"
+            message += `Resume stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
             break;
         default:
-            message += 'Pending...';
+            message += '--';
             break;
     }
     return message;
@@ -2858,16 +2874,6 @@ export const StreamingAccountView = (props: {
       <div>{t('treasuries.close-account.close-treasury-confirmation')}</div>
     );
   };
-
-  const getStreamingAccountName = useCallback(() => {
-    if (streamingAccountSelected) {
-      const v1 = streamingAccountSelected as TreasuryInfo;
-      const v2 = streamingAccountSelected as Treasury;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-      return isNewTreasury ? v2.name : v1.label;
-    }
-    return "";
-  }, [streamingAccountSelected]);
 
   const getStreamingAccountContent = useCallback(() => {
     if (streamingAccountSelected) {
