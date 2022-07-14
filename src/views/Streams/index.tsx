@@ -5711,34 +5711,6 @@ export const Streams = () => {
           <div className="inner-container">
             {connected && streamDetail ? (
               <>
-                {/* Top action icons */}
-                {/* {isUnderDevelopment() && (
-                  <div className="float-top-right">
-                    <span className="icon-button-container secondary-button">
-                      <Tooltip placement="bottom" title={t('streams.edit-stream.edit-stream-tooltip')}>
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
-                          icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
-                          onClick={() => onEditStreamClick()}
-                          disabled={isInboundStream(streamDetail)}
-                        />
-                      </Tooltip>
-                      <Tooltip placement="bottom" title={t('streams.stream-detail.close-money-stream-menu-item')}>
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
-                          icon={<IconTrash className="mean-svg-icons" />}
-                          onClick={showCloseStreamModal}
-                          disabled
-                        />
-                      </Tooltip>
-                    </span>
-                  </div>
-                )} */}
-
               {isInboundStream(streamDetail)
                 ? streamDetail.version < 2
                   ? renderInboundStreamV1(streamDetail as StreamInfo)

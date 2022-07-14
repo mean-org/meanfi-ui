@@ -881,10 +881,6 @@ export const TreasuriesView = () => {
     return false;
   }, [publicKey]);
 
-  // const isUnderDevelopment = () => {
-  //   return isLocal() || (isDev() && isWhitelisted) ? true : false;
-  // };
-
   const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
     const isInbound = isInboundStream(item);
     return isInbound

@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isProd, toTimestamp } from '../../utils/ui';
+import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isDev, isLocal, isProd, toTimestamp } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { AccountInfo, ConfirmOptions, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -73,6 +73,7 @@ export const VestingView = () => {
   const {
     userTokens,
     splTokenList,
+    isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
     streamV2ProgramAddress,
@@ -305,6 +306,10 @@ export const VestingView = () => {
   /////////////////
   //  Callbacks  //
   /////////////////
+
+  const isUnderDevelopment = () => {
+    return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  };
 
   const getQueryAccountType = useCallback(() => {
     let accountTypeInQuery: string | null = null;
@@ -3468,7 +3473,8 @@ export const VestingView = () => {
       ctaItems++;
     }
 
-    if (canPerformAnyAction() && selectedVestingContract && selectedVestingContract.totalStreams === 0 && !isContractLocked()) {
+    // TODO: remove isUnderDevelopment() when releasing
+    if (isUnderDevelopment() && canPerformAnyAction() && selectedVestingContract && selectedVestingContract.totalStreams === 0 && !isContractLocked()) {
       actions.push({
         action: MetaInfoCtaAction.VestingContractEditSettings,
         caption: 'Edit contract settings',
