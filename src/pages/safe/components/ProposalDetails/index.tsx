@@ -1,7 +1,6 @@
 import './style.scss';
 import { Button, Col, Row, Tooltip } from "antd"
 import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus, IconThumbsDown } from "../../../../Icons"
-
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +39,6 @@ export const ProposalDetailsView = (props: {
   onOperationStarted: any;
   multisigClient?: MeanMultisig | undefined;
   hasMultisigPendingProposal?: boolean;
-  
 }) => {
 
   const {
@@ -655,9 +653,7 @@ export const ProposalDetailsView = (props: {
                     className="thin-stroke d-flex justify-content-center align-items-center"
                     disabled={
                       hasMultisigPendingProposal || 
-                      (
-                        !isProposer && !anyoneCanExecuteTx()
-                      ) ||
+                      (!isProposer && !anyoneCanExecuteTx()) ||
                       isBusy ||
                       isExecutionPendingConfirmation()
                     }
