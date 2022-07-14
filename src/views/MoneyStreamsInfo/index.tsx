@@ -1588,13 +1588,13 @@ export const MoneyStreamsInfoView = (props: {
   const [unallocatedScale, setUnallocatedScale] = useState<number>(0);
 
   useEffect(() => {
-    if (!withdrawalBalance) { return; }
+    if (!totalAccountBalance || !withdrawalBalance) { return; }
 
     const getlength = (number: any) => {
       return Math.round(number).toString().length;
     }
     
-    const divider = getlength(withdrawalBalance);
+    const divider = getlength(totalAccountBalance);
 
     const incomingDivider = parseFloat(`1${"0".repeat((divider && divider >= 2) ? divider - 2 : 1)}`);
 
@@ -1616,13 +1616,13 @@ export const MoneyStreamsInfoView = (props: {
   }, [totalAccountBalance, withdrawalBalance]);
 
   useEffect(() => {
-    if (!unallocatedBalance) { return; }
+    if (!totalAccountBalance || !unallocatedBalance) { return; }
 
     const getlength = (number: any) => {
       return Math.round(number).toString().length;
     }
     
-    const divider = getlength(unallocatedBalance);
+    const divider = getlength(totalAccountBalance);
 
     const outgoingDivider = parseFloat(`1${"0".repeat((divider && divider >= 2) ? divider - 2 : 1)}`);
     // const outgoingDivider = parseFloat(`1${"0".repeat(divider - 2)}`);
