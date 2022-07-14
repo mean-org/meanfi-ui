@@ -7,7 +7,7 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect } from "react";
-import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
+import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
 import { getFormattedNumberToLocale, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
@@ -33,9 +33,7 @@ export const MoneyStreamDetails = (props: {
 }) => {
   const { stream, hideDetailsHandler, infoData, isStreamIncoming, isStreamOutgoing, buttons } = props;
   const {
-    theme,
     splTokenList,
-    selectedToken,
     streamActivity,
     hasMoreStreamActivity,
     loadingStreamActivity,

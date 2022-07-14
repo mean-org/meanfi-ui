@@ -31,6 +31,15 @@ export interface StreamTopupParams {
     associatedToken: string;
 }
 
+export interface StreamTopupTxCreateParams {
+    payer: string;
+    contributor: string;
+    treasury: string;
+    stream: string;
+    amount: any;
+    associatedToken: string;
+}
+
 export interface PartnerImage {
     fileName: string;
     altText?: string;

@@ -19,7 +19,7 @@ import { calculateActionFees } from "@mean-dao/money-streaming/lib/utils";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
-import { StreamTopupParams } from "../../models/common-types";
+import { StreamTopupParams, StreamTopupTxCreateParams } from "../../models/common-types";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
@@ -433,6 +433,64 @@ export const MoneyStreamsOutgoingView = (props: {
       });
     }
 
+    const allocateToStream = async (data: StreamTopupTxCreateParams) => {
+
+      if (!msp) { return null; }
+
+      if (data.stream === '') {
+        return await msp.addFunds(
+          new PublicKey(data.payer),                    // payer
+          new PublicKey(data.contributor),              // contributor
+          new PublicKey(data.treasury),                 // treasury
+          new PublicKey(data.associatedToken),          // associatedToken
+          data.amount,                                  // amount
+        );
+      }
+
+      if (!isMultisigTreasury()) {
+        return await msp.allocate(
+          new PublicKey(data.payer),                   // payer
+          new PublicKey(data.contributor),             // treasurer
+          new PublicKey(data.treasury),                // treasury
+          new PublicKey(data.stream),                  // stream
+          data.amount,                                 // amount
+        );
+      }
+
+      if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      const allocateTx = await msp.allocate(
+        new PublicKey(data.payer),                   // payer
+        new PublicKey(multisig.authority),           // treasurer
+        new PublicKey(data.treasury),                // treasury
+        new PublicKey(data.stream),                  // stream
+        data.amount,                                 // amount
+      );
+
+      const ixData = Buffer.from(allocateTx.instructions[0].data);
+      const ixAccounts = allocateTx.instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Add Funds",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamAddFunds,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
+
+      return tx;
+    }
+
     const fundFromTreasury = async (payload: {
       payer: PublicKey;
       treasurer: PublicKey;
@@ -442,14 +500,29 @@ export const MoneyStreamsOutgoingView = (props: {
     }) => {
       if (!msp) { return false; }
       // Create a transaction
-      return await msp.allocate(
-        payload.payer,                                              // payer
-        payload.treasurer,                                          // contributor
-        payload.treasury,                                           // treasury
-        payload.stream,                                             // stream
-        payload.amount,                                             // amount
-      )
+      const data: StreamTopupTxCreateParams = {
+        payer: payload.payer.toBase58(),
+        contributor: payload.payer.toBase58(),
+        treasury: payload.treasury.toBase58(),
+        stream: payload.stream.toBase58(),
+        amount: payload.amount,
+        associatedToken: addFundsData.associatedToken
+      };
+      return await allocateToStream(data)
       .then(value => {
+        if (!value) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: 'Transaction could not be created'
+          });
+          customLogger.logError('Allocate transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
+          return false;
+        }
         consoleOut('allocate returned transaction:', value);
         setTransactionStatus({
           lastOperation: TransactionStatus.InitTransactionSuccess,
