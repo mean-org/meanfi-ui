@@ -3854,6 +3854,10 @@ export const AccountsNewView = () => {
     const getFinalList = async (list: (Treasury | TreasuryInfo)[]) => {
       const finalList: CombinedStreamingAccounts[] = [];
 
+      if (list.length === 0) {
+        return finalList;
+      }
+
       for (const item of list) {
         const treasuryPk = new PublicKey(item.id as string);
         const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2
@@ -3893,18 +3897,16 @@ export const AccountsNewView = () => {
       }
     });
 
-    if (sortedStreamingAccountList) {
-      getFinalList(sortedStreamingAccountList)
-        .then(items => {
-          consoleOut('streamingAccountCombinedList', items, "blue");
+    getFinalList(sortedStreamingAccountList)
+      .then(items => {
+        consoleOut('streamingAccountCombinedList', items, "blue");
 
-          setStreamingAccountCombinedList(items);
-        })
-        .catch((error) => {
-          console.log(error);
-        })
-        .finally(() => setLoadingCombinedStreamingList(false));
-    }
+        setStreamingAccountCombinedList(items);
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => setLoadingCombinedStreamingList(false));
   }, [getStreamingAccountStreams, streamList, treasuryList]);
 
   // Set the list of incoming and outgoing streams
