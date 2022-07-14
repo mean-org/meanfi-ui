@@ -4086,14 +4086,16 @@ export const AccountsNewView = () => {
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       consoleOut('Clearing accounts state...', '', 'purple');
+      setTokensLoaded(false);
+      setAccountTokens([]);
       setTreasuryList([]);
       setStreamList([]);
       setAutocloseTreasuries([]);
       setStreamingAccountCombinedList([]);
+      setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
       setTotalAccountBalance(0);
       setTotalTokenAccountsValue(0);
       setTotalStreamingValue(0);
-      setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
       setSelectedAsset(undefined);
       setCanSubscribe(true);
     };
@@ -4430,10 +4432,8 @@ export const AccountsNewView = () => {
           ? "See your Money Streams"
           : "To see your Money Streams you need to connect your wallet"}> */}
         <div key="streams" onClick={() => {
-          if (userHasAccess()) {
-            navigateToStreaming();
-            setAutoOpenDetailsPanel(true);
-          }
+          navigateToStreaming();
+          setAutoOpenDetailsPanel(true);
         }} className={`transaction-list-row ${selectedCategory === "streaming" ? 'selected' : ''}`}>
           <div className="icon-cell">
             {loadingStreams ? (
