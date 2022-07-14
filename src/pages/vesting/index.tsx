@@ -2191,7 +2191,6 @@ export const VestingView = () => {
       const ixAccounts = createStreamTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      // TODO: I believe this would be changed to "Create vesting account"
       const tx = await multisigClient.createMoneyStreamTransaction(
         publicKey,
         "Create Vesting Stream",
@@ -3281,7 +3280,7 @@ export const VestingView = () => {
       return;
     }
 
-    if (!publicKey || !userTokens || !splTokenList || !accounts.tokenAccounts) {
+    if (!publicKey || !userTokens || !splTokenList) {
       return;
     }
 
@@ -3296,13 +3295,15 @@ export const VestingView = () => {
 
           // Build meanTokensCopy including the MeanFi pinned tokens
           userTokensCopy.forEach(item => {
-            meanTokensCopy.push(item);
+            if (!meanTokensCopy.some(i => i.address === item.address)) {
+              meanTokensCopy.push(item);
+            }
           });
 
           // Now add all other items but excluding those in userTokens (only in prod)
           if (isProd()) {
             splTokenList.forEach(item => {
-              if (!userTokens.some(i => i.address === item.address)) {
+              if (!meanTokensCopy.some(i => i.address === item.address)) {
                 meanTokensCopy.push(item);
               }
             });
@@ -3352,15 +3353,11 @@ export const VestingView = () => {
       })
       .finally(() => setUserBalances(balancesMap));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     connection,
-    userTokens,
-    splTokenList,
     nativeBalance,
-    workingToken,
-    accounts.tokenAccounts,
-    setSelectedToken
   ]);
 
   // Build CTAs
@@ -3487,6 +3484,7 @@ export const VestingView = () => {
 
     setAssetCtas(actions);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedVestingContract,
     availableStreamingBalance,
