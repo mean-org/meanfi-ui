@@ -26,7 +26,7 @@ import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
+import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
 import { MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -146,8 +146,6 @@ export const VestingView = () => {
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
   const [needReloadMultisigs, setNeedReloadMultisigs] = useState(true);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
-  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [vestingContractFlowRate, setVestingContractFlowRate] = useState<VestingFlowRateInfo | undefined>(undefined);
@@ -970,7 +968,6 @@ export const VestingView = () => {
 
   const onVestingContractCreated = useCallback(() => {
     closeVestingContractCreateModal();
-    setOngoingOperation(undefined);
     refreshTokenBalance();
     clearFormValues();
   }, [clearFormValues, closeVestingContractCreateModal, refreshTokenBalance]);
@@ -984,8 +981,6 @@ export const VestingView = () => {
 
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryCreate);
-    setRetryOperationPayload(createOptions);
     setIsBusy(true);
 
     const createTreasury = async (data: CreateVestingTreasuryParams) => {
@@ -1400,7 +1395,6 @@ export const VestingView = () => {
   const onAcceptCreateVestingContract = useCallback((data: VestingContractCreateOptions) => {
     consoleOut('Create vesting contract options:', data, 'blue');
     onExecuteCreateVestingContractTransaction(data);
-    setRetryOperationPayload(data);
   }, [onExecuteCreateVestingContractTransaction]);
 
   // Vesting contract SOL balance modal
@@ -1439,7 +1433,6 @@ export const VestingView = () => {
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryClose);
     setIsBusy(true);
 
     const closeTreasury = async (data: any) => {
@@ -1724,7 +1717,6 @@ export const VestingView = () => {
               extras: selectedVestingContract.id as string
             });
             setIsBusy(false);
-            setOngoingOperation(undefined);
             onCloseTreasuryTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1759,7 +1751,6 @@ export const VestingView = () => {
   const closeAddFundsModal = useCallback(() => {
     resetTransactionStatus();
     setIsAddFundsModalVisibility(false);
-    setOngoingOperation(undefined);
   }, [resetTransactionStatus]);
 
   const onExecuteAddFundsTransaction = async (params: VestingContractTopupParams) => {
@@ -1771,8 +1762,6 @@ export const VestingView = () => {
 
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryAddFunds);
-    setRetryOperationPayload(params);
     setIsBusy(true);
 
     const addFunds = async (data: any) => {
@@ -2503,7 +2492,6 @@ export const VestingView = () => {
 
   const closeVestingContractTransferFundsModal = () => {
     setIsVestingContractTransferFundsModalVisible(false);
-    setOngoingOperation(undefined);
     resetTransactionStatus();
     clearFormValues();
   };
@@ -2517,8 +2505,6 @@ export const VestingView = () => {
 
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryWithdraw);
-    setRetryOperationPayload(params);
     setIsBusy(true);
 
     const treasuryWithdraw = async (data: any) => {
@@ -2854,7 +2840,6 @@ export const VestingView = () => {
 
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
     refreshTokenBalance();
-    setOngoingOperation(undefined);
     resetTransactionStatus();
   },[refreshTokenBalance, resetTransactionStatus]);
 
@@ -2868,7 +2853,6 @@ export const VestingView = () => {
 
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryRefreshBalance);
     setIsBusy(true);
 
     const refreshBalance = async (treasury: PublicKey) => {
@@ -3318,7 +3302,7 @@ export const VestingView = () => {
           // Now add all other items but excluding those in userTokens (only in prod)
           if (isProd()) {
             splTokenList.forEach(item => {
-              if (!userTokens.includes(item)) {
+              if (!userTokens.some(i => i.address === item.address)) {
                 meanTokensCopy.push(item);
               }
             });
