@@ -2130,6 +2130,10 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const isMultisig = isMultisigTreasury(streamingAccountSelected) && selectedMultisig
+            ? selectedMultisig.id.toBase58()
+            : "";
+
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryRefreshBalance,
@@ -2139,8 +2143,9 @@ export const StreamingAccountView = (props: {
               loadingMessage: "Refresh streaming account data",
               completedTitle: "Transaction confirmed",
               completedMessage: "Successfully refreshed data in streaming account",
-              extras: streamingAccountSelected.id as string
+              extras: isMultisig
             });
+
             onRefreshTreasuryBalanceTransactionFinished();
             setOngoingOperation(undefined);
             setLoadingStreamingAccountDetails(true);
@@ -2158,6 +2163,7 @@ export const StreamingAccountView = (props: {
     multisigTxFees,
     multisigClient,
     multisigAccounts,
+    selectedMultisig,
     transactionCancelled,
     streamingAccountSelected,
     transactionFees.mspFlatFee,

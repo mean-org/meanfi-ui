@@ -1002,6 +1002,9 @@ export const AccountsNewView = () => {
         }
         navigate(url);
       } else if (item.operationType === OperationType.TreasuryRefreshBalance) {
+        if (item.extras) {
+          showNotificationByType("info");
+        }
         softReloadStreams();
       } else if (item.operationType === OperationType.Transfer) {
         softReloadStreams();
