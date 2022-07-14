@@ -3301,6 +3301,9 @@ export const AccountsNewView = () => {
       if (!asset) {
         setPathParamAsset('');
       }
+      if (autoOpenDetailsPanel) {
+        setDtailsPanelOpen(false);
+      }
     } else if (location.pathname.indexOf('/streaming') !== -1) {
       consoleOut('Setting category:', 'streaming', 'crimson');
       setSelectedCategory("streaming");
@@ -5282,7 +5285,7 @@ export const AccountsNewView = () => {
                                 </Tooltip>
                               </span>
                             </div>
-                            <span className="title">Multisig safe</span>
+                            <span className="title ml-2">Multisig safe</span>
                           </>
                         ) : (
                           <span className="title">{t('assets.screen-title')}</span>
