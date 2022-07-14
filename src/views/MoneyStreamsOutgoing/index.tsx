@@ -381,6 +381,7 @@ export const MoneyStreamsOutgoingView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -463,6 +464,8 @@ export const MoneyStreamsOutgoingView = (props: {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
+
+      multisigAuth = multisig.authority.toBase58();
 
       const allocateTx = await msp.allocate(
         new PublicKey(data.payer),                   // payer
@@ -920,7 +923,7 @@ export const MoneyStreamsOutgoingView = (props: {
                 parseFloat(addFundsData.amount),
                 token.decimals
               )} ${token.symbol}`,
-              extras: streamSelected.id as string
+              extras: multisigAuth
             });
             setIsBusy(false);
             onAddFundsTransactionFinished();

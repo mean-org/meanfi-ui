@@ -388,38 +388,6 @@ export const AccountsNewView = () => {
     return undefined;
   }, [searchParams]);
 
-  const showNotificationByType = useCallback(async (type: IconType) => {
-    await delay(1500);
-    const myNotifyKey = `notify-${Date.now()}`;
-    openNotification({
-      type,
-      key: myNotifyKey,
-      title: 'Review proposal',
-      duration: 20,
-      description: (
-        <>
-          <div className="mb-2">The proposal's status can be reviewed in the Multisig Safe's proposal list.</div>
-          <Button
-            type="primary"
-            shape="round"
-            size="small"
-            className="extra-small"
-            onClick={() => {
-              const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
-              if (multisigAuthority) {
-                setHighLightableMultisigId(multisigAuthority);
-              }
-              navigate(`/multisig/${multisigAuthority}?v=proposals`);
-              notification.close(myNotifyKey);
-            }}
-          >
-              Review proposal
-          </Button>
-        </>
-      ),
-    });
-  }, [navigate, setHighLightableMultisigId]);
-
   // Token Merger Modal
   const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
   const showTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(true), []);
@@ -891,6 +859,38 @@ export const AccountsNewView = () => {
     setHideLowBalances(setting);
   }, [accountTokens, navigateToAsset, selectAsset, selectedAsset, setHideLowBalances, shouldHideAsset]);
 
+  const showNotificationByType = useCallback(async (type: IconType) => {
+    await delay(1500);
+    const myNotifyKey = `notify-${Date.now()}`;
+    openNotification({
+      type,
+      key: myNotifyKey,
+      title: 'Review proposal',
+      duration: 20,
+      description: (
+        <>
+          <div className="mb-2">The proposal's status can be reviewed in the Multisig Safe's proposal list.</div>
+          <Button
+            type="primary"
+            shape="round"
+            size="small"
+            className="extra-small"
+            onClick={() => {
+              const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
+              if (multisigAuthority) {
+                setHighLightableMultisigId(multisigAuthority);
+              }
+              navigate(`/multisig/${multisigAuthority}?v=proposals`);
+              notification.close(myNotifyKey);
+            }}
+          >
+              Review proposal
+          </Button>
+        </>
+      ),
+    });
+  }, [navigate, setHighLightableMultisigId]);
+
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
     let event: any;
 
@@ -903,10 +903,11 @@ export const AccountsNewView = () => {
     segmentAnalytics.recordEvent(event, { signature: item.signature });
   }, []);
 
-  const param = getQueryAccountType();
-
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+
+    const param = getQueryAccountType();
+
     const softReloadStreams = () => {
       const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
       if (streamsRefreshCta) {
@@ -956,6 +957,9 @@ export const AccountsNewView = () => {
         // }
         // navigate(`/multisig/${multisigAuthority}?v=proposals`);
       } else if (item.operationType === OperationType.StreamAddFunds) {
+        if (item.extras) {
+          showNotificationByType("info");
+        }
         softReloadStreams();
       } else if (item.operationType === OperationType.StreamPause) {
         softReloadStreams();
@@ -1001,7 +1005,6 @@ export const AccountsNewView = () => {
     }
     resetTransactionStatus();
   }, [
-    param,
     address,
     inspectedAccountType,
     isSelectedAssetNativeAccount,
@@ -1009,6 +1012,7 @@ export const AccountsNewView = () => {
     resetTransactionStatus,
     recordTxConfirmation,
     setShouldLoadTokens,
+    getQueryAccountType,
     reloadSwitch,
     navigate,
   ]);
@@ -1949,6 +1953,7 @@ export const AccountsNewView = () => {
     }
 
     if (wallet && selectedAsset) {
+      const param = getQueryAccountType();
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -1991,7 +1996,6 @@ export const AccountsNewView = () => {
     }
 
   }, [
-    param,
     wallet,
     publicKey,
     connection,
@@ -2008,6 +2012,7 @@ export const AccountsNewView = () => {
     showNotificationByType,
     resetTransactionStatus,
     setTransactionStatus,
+    getQueryAccountType,
     t
   ]);
 
@@ -2273,6 +2278,7 @@ export const AccountsNewView = () => {
     }
 
     if (wallet && selectedAsset) {
+      const param = getQueryAccountType();
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -2298,7 +2304,6 @@ export const AccountsNewView = () => {
                 lastOperation: transactionStatus.currentOperation,
                 currentOperation: TransactionStatus.TransactionFinished
               });
-
               setIsTransferVaultAuthorityModalVisible(false);
               param === "multisig" && showNotificationByType("info");
             } else {
@@ -2316,7 +2321,6 @@ export const AccountsNewView = () => {
     }
 
   }, [
-    param,
     wallet,
     publicKey,
     connection,
@@ -2333,6 +2337,7 @@ export const AccountsNewView = () => {
     resetTransactionStatus,
     showNotificationByType,
     setTransactionStatus,
+    getQueryAccountType,
     t
   ]);
 
@@ -2626,6 +2631,7 @@ export const AccountsNewView = () => {
     }
 
     if (wallet && data) {
+      const param = getQueryAccountType();
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -2669,7 +2675,6 @@ export const AccountsNewView = () => {
     }
 
   }, [
-    param,
     wallet,
     publicKey,
     connection,
@@ -2686,6 +2691,7 @@ export const AccountsNewView = () => {
     showNotificationByType,
     resetTransactionStatus,
     setTransactionStatus,
+    getQueryAccountType,
     t
   ]);
 
