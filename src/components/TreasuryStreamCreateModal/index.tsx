@@ -1727,41 +1727,50 @@ export const TreasuryStreamCreateModal = (props: {
                 <>
                   {param === "multisig" && selectedMultisig && !treasuryDetails && (
                     <>
-                      <div className="form-label">{t('treasuries.add-funds.select-streaming-account-label')}</div>
-                      <div className="well">
-                        <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                          <div className="left mr-0">
-                            <AutoComplete
-                              bordered={false}
-                              style={{ width: '100%' }}
-                              allowClear={true}
-                              dropdownClassName="stream-select-dropdown"
-                              options={renderStreamingAccountsSelectOptions()}
-                              placeholder={t('treasuries.add-funds.search-streams-placeholder')}
-                              onChange={(inputValue, option) => {
-                                setSelectedStreamingAccountId(inputValue);
-                              }}
-                              filterOption={(inputValue, option) => {
-                                if (!treasuryList || treasuryList.length === 0) { return false; }
-                                const originalItem = treasuryList.find(i => {
-                                  const trsryName = i.version < 2
-                                    ? (i as TreasuryInfo).label
-                                    : (i as Treasury).name;
-                                  return trsryName === option?.key ? true : false;
-                                });
-                                return option?.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
-                              }}
-                              onSelect={onStreamingAccountSelected}
-                            />
-                          </div>
-                        </div>
-                        {
-                          selectedStreamingAccountId && !isValidAddress(selectedStreamingAccountId) && (
-                            <span className="form-field-error">
-                              {t('transactions.validation.address-validation')}
+                      <div className="mb-3">
+                        <div className="form-label icon-label">
+                          {t('treasuries.add-funds.select-streaming-account-label')}
+                          <Tooltip placement="bottom" title="Every payment stream is set up and funded from a streaming account. Select the account you want for the stream to be created and funded from. If you do not have the streaming account set up yet, first create and fund the account before proceeding.">
+                            <span>
+                              <IconHelpCircle className="mean-svg-icons" />
                             </span>
-                          )
-                        }
+                          </Tooltip>
+                        </div>
+                        <div className="well">
+                          <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                            <div className="left mr-0">
+                              <AutoComplete
+                                bordered={false}
+                                style={{ width: '100%' }}
+                                allowClear={true}
+                                dropdownClassName="stream-select-dropdown"
+                                options={renderStreamingAccountsSelectOptions()}
+                                placeholder={t('treasuries.add-funds.search-streams-placeholder')}
+                                onChange={(inputValue, option) => {
+                                  setSelectedStreamingAccountId(inputValue);
+                                }}
+                                filterOption={(inputValue, option) => {
+                                  if (!treasuryList || treasuryList.length === 0) { return false; }
+                                  const originalItem = treasuryList.find(i => {
+                                    const trsryName = i.version < 2
+                                      ? (i as TreasuryInfo).label
+                                      : (i as Treasury).name;
+                                    return trsryName === option?.key ? true : false;
+                                  });
+                                  return option?.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
+                                }}
+                                onSelect={onStreamingAccountSelected}
+                              />
+                            </div>
+                          </div>
+                          {
+                            selectedStreamingAccountId && !isValidAddress(selectedStreamingAccountId) && (
+                              <span className="form-field-error">
+                                {t('transactions.validation.address-validation')}
+                              </span>
+                            )
+                          }
+                        </div>
                       </div>
                     </>
                   )}
