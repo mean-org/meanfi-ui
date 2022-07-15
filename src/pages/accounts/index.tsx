@@ -2656,6 +2656,7 @@ export const AccountsNewView = () => {
 
     const pk = new PublicKey(accountAddress);
 
+    consoleOut('Fetching treasuries for address:', accountAddress, 'orange');
     const treasuries = await msp.listTreasuries(pk, true, true, Category.default);
 
     const autoclosables = treasuries.filter(t => t.autoClose);
