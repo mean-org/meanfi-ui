@@ -3865,7 +3865,7 @@ export const SafeView = () => {
       const isValidParam = isProposalsFork || isProgramsFork ? true : false;
       if (!isValidParam) {
         const url = MULTISIG_ROUTE_BASE_PATH;
-        navigate(url, { replace: true });
+        navigate(url);
       }
     }
   }, [id, address, multisigAccounts, navigate, publicKey, getQueryParamV]);
