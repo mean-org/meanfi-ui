@@ -143,7 +143,6 @@ export const AccountsNewView = () => {
     loadingStreams,
     streamsSummary,
     lastTxSignature,
-    detailsPanelOpen,
     shouldLoadTokens,
     transactionStatus,
     streamProgramAddress,
@@ -161,7 +160,6 @@ export const AccountsNewView = () => {
     setTransactionStatus,
     refreshTokenBalance,
     setShouldLoadTokens,
-    setDtailsPanelOpen,
     refreshStreamList,
     setStreamsSummary,
     setAccountAddress,
@@ -181,7 +179,7 @@ export const AccountsNewView = () => {
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isPageLoaded, setIsPageLoaded] = useState(true);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [tokensLoaded, setTokensLoaded] = useState(false);
@@ -243,7 +241,9 @@ export const AccountsNewView = () => {
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
-  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
+
+  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
   // Streaming account
   const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
@@ -261,38 +261,6 @@ export const AccountsNewView = () => {
   const [streamingAccountsSummary, setStreamingAccountsSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
   const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
 
-  const selectedMultisigRef = useRef(selectedMultisig);
-  useEffect(() => {
-    selectedMultisigRef.current = selectedMultisig;
-  }, [selectedMultisig]);
-
-  // Keep account balance updated
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshTokenBalance
-  ]);
-
-  const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
-  }, [
-    isBusy,
-    fetchTxInfoStatus,
-  ]);
 
   // Perform premature redirect here if no address was provided in path
   // to the current wallet address if the user is connected
@@ -306,24 +274,31 @@ export const AccountsNewView = () => {
     } else if (!address && publicKey) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${publicKey.toBase58()}/assets`;
       consoleOut('No account address, redirecting to:', url, 'orange');
+      setAutoOpenDetailsPanel(false);
       setTimeout(() => {
-        setIsFirstLoad(true);
+        setIsPageLoaded(true);
       }, 5);
       navigate(url, { replace: true });
       // Ensure path: /accounts/:address/assets if address provided but not /assets or /streaming
     } else if (address && location.pathname.indexOf('/assets') === -1 && location.pathname.indexOf('/streaming') === -1) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/assets`;
       consoleOut('Address found, redirecting to:', url, 'orange');
+      setAutoOpenDetailsPanel(false);
       setTimeout(() => {
-        setIsFirstLoad(true);
+        setIsPageLoaded(true);
       }, 5);
       navigate(url, { replace: true });
     } else {
+      // address, asset, streamingTab, streamId, treasuryId
+      consoleOut(`address: ${address || '-'}\nasset: ${asset || '-'}\nstreamingTab: ${streamingTab || '-'}\nstreamId: ${streamId || '-'}\ntreasuryId: ${treasuryId || '-'}\n`, '', 'darkgreen');
+      if (asset || streamingTab) {
+        setAutoOpenDetailsPanel(true);
+      }
       setTimeout(() => {
-        setIsFirstLoad(true);
+        setIsPageLoaded(true);
       }, 5);
     }
-  }, [address, location.pathname, navigate, publicKey]);
+  }, [address, asset, location.pathname, navigate, publicKey, streamId, streamingTab, treasuryId]);
 
   const connection = useMemo(() => new Connection(endpoint, {
     commitment: "confirmed",
@@ -353,6 +328,22 @@ export const AccountsNewView = () => {
     streamV2ProgramAddress
   ]);
 
+  const selectedMultisigRef = useRef(selectedMultisig);
+  useEffect(() => {
+    selectedMultisigRef.current = selectedMultisig;
+  }, [selectedMultisig]);
+
+  ////////////////////////////
+  //   Events and actions   //
+  ////////////////////////////
+
+  const isTxInProgress = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+  ]);
+
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
     if (item && publicKey && accountAddress) {
       const v1 = item as StreamInfo;
@@ -365,10 +356,6 @@ export const AccountsNewView = () => {
     }
     return false;
   }, [accountAddress, publicKey]);
-
-  ////////////////////////////
-  //   Events and actions   //
-  ////////////////////////////
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -458,41 +445,9 @@ export const AccountsNewView = () => {
     hideUnwrapSolModal();
   }
 
-  // const onAddAccountAddress = useCallback(() => {
-  //   navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressInput}/assets`);
-  //   setAccountAddressInput('');
-  // }, [navigate, accountAddressInput]);
-
   const handleScanAnotherAddressButtonClick = () => {
     setAddAccountPanelOpen(true);
   }
-
-  // const handleBackToAccountDetailsButtonClick = () => {
-  //   setAddAccountPanelOpen(false);
-  // }
-
-  // const triggerWindowResize = () => {
-  //   window.dispatchEvent(new Event('resize'));
-  // }
-
-  // const handleAccountAddressInputChange = (e: any) => {
-  //   const inputValue = e.target.value as string;
-  //   // Set the input value
-  //   const trimmedValue = inputValue.trim();
-  //   setAccountAddressInput(trimmedValue);
-  // }
-
-  // const handleAccountAddressInputFocusIn = () => {
-  //   setTimeout(() => {
-  //     triggerWindowResize();
-  //   }, 100);
-  // }
-
-  // const handleAccountAddressInputFocusOut = () => {
-  //   setTimeout(() => {
-  //     triggerWindowResize();
-  //   }, 100);
-  // }
 
   const isInspectedAccountTheConnectedWallet = useCallback(() => {
     return accountAddress && publicKey && publicKey.toBase58() === accountAddress
@@ -536,23 +491,23 @@ export const AccountsNewView = () => {
 
   const goToExchangeWithPresetAsset = useCallback(() => {
     const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
-    setDtailsPanelOpen(false);
+    setDetailsPanelOpen(false);
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
     } else {
       navigate('/exchange');
     }
-  }, [navigate, selectedAsset, setDtailsPanelOpen]);
+  }, [navigate, selectedAsset, setDetailsPanelOpen]);
 
   const handleGoToExchangeClick = useCallback(() => {
     const queryParams = `${selectedAsset ? '?to=' + selectedAsset.symbol : ''}`;
-    setDtailsPanelOpen(false);
+    setDetailsPanelOpen(false);
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
     } else {
       navigate('/exchange');
     }
-  }, [navigate, selectedAsset, setDtailsPanelOpen]);
+  }, [navigate, selectedAsset, setDetailsPanelOpen]);
 
   const investButtonEnabled = useCallback(() => {
     if (!selectedAsset || !isInspectedAccountTheConnectedWallet()) { return false; }
@@ -562,7 +517,7 @@ export const AccountsNewView = () => {
   }, [isInspectedAccountTheConnectedWallet, selectedAsset]);
 
   const handleGoToInvestClick = useCallback(() => {
-    setDtailsPanelOpen(false);
+    setDetailsPanelOpen(false);
     let url = INVEST_ROUTE_BASE_PATH;
 
     if (selectedAsset) {
@@ -587,7 +542,7 @@ export const AccountsNewView = () => {
 
     navigate(url);
 
-  }, [navigate, selectedAsset, setDtailsPanelOpen]);
+  }, [navigate, selectedAsset, setDetailsPanelOpen]);
 
   const onExchangeAsset = useCallback(() => {
     if (!selectedAsset) { return; }
@@ -822,7 +777,7 @@ export const AccountsNewView = () => {
   const selectAsset = useCallback((
     asset: UserTokenAccount,
     clearTxList = true,
-    openDetailsPanel = false
+    openDetails = false
   ) => {
     setStatus(FetchStatus.Fetching);
     if (clearTxList) {
@@ -830,8 +785,8 @@ export const AccountsNewView = () => {
       setTransactions(undefined);
     }
     setSelectedAsset(asset);
-    if (openDetailsPanel) {
-      setDtailsPanelOpen(true);
+    if (openDetails) {
+      setDetailsPanelOpen(true);
     }
     setTimeout(() => {
       startSwitch();
@@ -840,7 +795,7 @@ export const AccountsNewView = () => {
     startSwitch,
     setTransactions,
     setSelectedAsset,
-    setDtailsPanelOpen,
+    setDetailsPanelOpen,
   ]);
 
   const shouldHideAsset = useCallback((asset: UserTokenAccount) => {
@@ -1174,6 +1129,7 @@ export const AccountsNewView = () => {
       });
   };
 
+  // Gets multisig pending Txs count
   useEffect(() => {
 
     if (!publicKey ||
@@ -2999,6 +2955,27 @@ export const AccountsNewView = () => {
   // Data management //
   /////////////////////
 
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
+
   // Load treasuries when account address changes
   useEffect(() => {
     if (publicKey && accountAddress && !treasuriesLoaded) {
@@ -3051,28 +3028,8 @@ export const AccountsNewView = () => {
     }
   }, [width]);
 
-  /**
-   * - No CTAs if it is a custom token or we don't know the asset's token
-   * - No Buy if the asset is wSOL
-   * 
-   * isBuyCtaAvailable()      -> For the selected asset.
-   * isExchangeCtaAvailable() -> For the selected asset.
-   * isInvestCtaAvailable()   -> For the selected asset.
-   * isReceiveCtaAvailable()  -> For the selected asset.
-   * 
-   * 1. If the token is a custom token:
-   * - Only available actions Close and Refresh inside ellipsis
-   * 2. If wSOL token
-   * - Actions available: Send, Receive and Unwrap
-   * 3. If the token has no Activities
-   * - Actions available: Receive, Exchange, Buy
-   * 3. If the user has token balance:
-   * - Send and Buy are both enable
-   * 4. If the user has No token balance, but has token activity:
-   * Buy is always available unless is a custom token or wSOL
-   */
-
-   useEffect(() => {
+  // Build CTAs
+  useEffect(() => {
     if (!selectedAsset) { return; }
 
     const numMaxCtas = isXsDevice ? 2 : 5;
@@ -3240,9 +3197,9 @@ export const AccountsNewView = () => {
     investButtonEnabled,
   ]);  
 
-  // Enable deep-linking - Parse and save query params as needed
+  // Enable deep-linking when isPageLoaded - Parse and save query params as needed
   useEffect(() => {
-    if (!isFirstLoad || !publicKey) { return; }
+    if (!isPageLoaded || !publicKey) { return; }
 
     if (address) {
       consoleOut('Route param address:', address, 'crimson');
@@ -3283,7 +3240,7 @@ export const AccountsNewView = () => {
         setPathParamAsset('');
       }
       if (autoOpenDetailsPanel) {
-        setDtailsPanelOpen(true);
+        setDetailsPanelOpen(true);
       }
     } else if (location.pathname.indexOf('/streaming') !== -1) {
       consoleOut('Setting category:', 'streaming', 'crimson');
@@ -3292,7 +3249,7 @@ export const AccountsNewView = () => {
         setPathParamStreamId('');
       }
       if (autoOpenDetailsPanel) {
-        setDtailsPanelOpen(true);
+        setDetailsPanelOpen(true);
       }
     } else {
       setSelectedCategory("other-assets");
@@ -3325,13 +3282,14 @@ export const AccountsNewView = () => {
     streamId,
     publicKey,
     treasuryId,
-    isFirstLoad,
+    isPageLoaded,
     streamingTab,
     searchParams,
     accountAddress,
+    detailsPanelOpen,
     location.pathname,
     autoOpenDetailsPanel,
-    setDtailsPanelOpen,
+    setDetailsPanelOpen,
     setAccountAddress,
   ]);
 
@@ -3349,9 +3307,9 @@ export const AccountsNewView = () => {
 
   // Ensure tokens Load on entering /accounts
   useEffect(() => {
-    if (!isFirstLoad || !publicKey || !accountAddress) { return; }
+    if (!isPageLoaded || !publicKey || !accountAddress) { return; }
 
-    setIsFirstLoad(false);
+    setIsPageLoaded(false);
     setTransactions([]);
 
     setTimeout(() => {
@@ -3361,7 +3319,7 @@ export const AccountsNewView = () => {
     }, 1000);
   }, [
     publicKey,
-    isFirstLoad,
+    isPageLoaded,
     accountAddress,
     shouldLoadTokens,
     setShouldLoadTokens,
@@ -3382,7 +3340,7 @@ export const AccountsNewView = () => {
         splTokenList.length === 0 ||
         !coinPrices ||
         (selectedCategory !== "assets" && accountTokens && accountTokens.length > 0) ||
-        isFirstLoad
+        isPageLoaded
     ) {
       return;
     }
@@ -3624,7 +3582,7 @@ export const AccountsNewView = () => {
     connection,
     coinPrices,
     userTokens,
-    isFirstLoad,
+    isPageLoaded,
     pinnedTokens,
     splTokenList,
     pathParamAsset,
@@ -4358,8 +4316,9 @@ export const AccountsNewView = () => {
   //////////////
 
   const onBackButtonClicked = () => {
-    setDtailsPanelOpen(false);
+    setDetailsPanelOpen(false);
     setAutoOpenDetailsPanel(false);
+    navigate(-1);
   }
 
   ///////////////
@@ -4506,15 +4465,8 @@ export const AccountsNewView = () => {
       if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
         reloadSwitch();
       }
-      // if (!isXsDevice) {
-      //   navigateToAsset(asset);
-      // } else {
-      //   setSelectedAsset(asset);
-      //   setDtailsPanelOpen(true);
-      // }
       navigateToAsset(asset);
       selectAsset(asset, true, true);
-      setAutoOpenDetailsPanel(true);
     }
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
@@ -4581,7 +4533,7 @@ export const AccountsNewView = () => {
     selectedAsset,
     hideLowBalances,
     selectedCategory,
-    setDtailsPanelOpen,
+    setDetailsPanelOpen,
     shouldHideAsset,
   ]);
 
@@ -5118,12 +5070,17 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">selectedCategory:</span><span className="ml-1 font-bold fg-dark-active">{selectedCategory || '-'}</span>
-          <span className="ml-1">pathParamStreamingTab:</span><span className="ml-1 font-bold fg-dark-active">{pathParamStreamingTab || '-'}</span>
+          <span className="ml-1">address:</span><span className="ml-1 font-bold fg-dark-active">{address ? 'true' : 'false'}</span>
+          <span className="ml-1">asset:</span><span className="ml-1 font-bold fg-dark-active">{asset ? 'true' : 'false'}</span>
+          <span className="ml-1">streamingTab:</span><span className="ml-1 font-bold fg-dark-active">{streamingTab || '-'}</span>
+          <span className="ml-1">streamId:</span><span className="ml-1 font-bold fg-dark-active">{streamId ? 'true' : 'false'}</span>
+          <span className="ml-1">treasuryId:</span><span className="ml-1 font-bold fg-dark-active">{treasuryId ? 'true' : 'false'}</span>
+          <span className="ml-1">autoOpenPanel:</span><span className="ml-1 font-bold fg-dark-active">{autoOpenDetailsPanel ? 'true' : 'false'}</span>
+          <span className="ml-1">panelOpen:</span><span className="ml-1 font-bold fg-dark-active">{detailsPanelOpen ? 'true' : 'false'}</span>
         </div>
-      )} */}
+      )}
 
       {detailsPanelOpen && (
         <Button

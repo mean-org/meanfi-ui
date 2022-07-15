@@ -74,7 +74,6 @@ export const VestingView = () => {
     userTokens,
     splTokenList,
     isWhitelisted,
-    detailsPanelOpen,
     transactionStatus,
     streamV2ProgramAddress,
     pendingMultisigTxCount,
@@ -92,7 +91,6 @@ export const VestingView = () => {
     setPaymentStartDate,
     refreshTokenBalance,
     setRecipientAddress,
-    setDtailsPanelOpen,
     setFromCoinAmount,
     setSelectedToken,
   } = useContext(AppStateContext);
@@ -124,7 +122,6 @@ export const VestingView = () => {
   // Selected vesting contract
   const [selectedVestingContract, setSelectedVestingContract] = useState<Treasury | undefined>(undefined);
   const [streamTemplate, setStreamTemplate] = useState<StreamTemplate | undefined>(undefined);
-  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [assetCtas, setAssetCtas] = useState<MetaInfoCta[]>([]);
   // Source token list
@@ -155,6 +152,8 @@ export const VestingView = () => {
   const [hasMoreContractActivity, setHasMoreContractActivity] = useState<boolean>(true);
   const [availableStreamingBalance, setAvailableStreamingBalance] = useState(0);
 
+  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
   /////////////////////////
   //  Setup & Init code  //
@@ -169,14 +168,19 @@ export const VestingView = () => {
     if (!address) {
       const url = `${VESTING_ROUTE_BASE_PATH}/${publicKey.toBase58()}/contracts`;
       consoleOut('No address, redirecting to:', url, 'orange');
+      setAutoOpenDetailsPanel(false);
       setTreasuriesLoaded(false);
       navigate(url);
+    } else {
+      if (address && vestingContract) {
+        setAutoOpenDetailsPanel(true);
+      }
     }
     // In any case, set the flag isPageLoaded a bit later
     setTimeout(() => {
       setIsPageLoaded(true);
     }, 5);
-  }, [address, location.pathname, navigate, publicKey]);
+  }, [address, location.pathname, navigate, publicKey, vestingContract]);
 
   // Enable deep-linking when isPageLoaded
   useEffect(() => {
@@ -201,8 +205,10 @@ export const VestingView = () => {
     if (activeTab) {
       consoleOut('Route param activeTab:', activeTab, 'crimson');
       setAccountDetailTab(activeTab as VestingAccountDetailTab);
-    // } else {
-    //   setAccountDetailTab(undefined);
+    }
+
+    if (autoOpenDetailsPanel) {
+      setDetailsPanelOpen(true);
     }
 
     let accountTypeInQuery: string | null = null;
@@ -219,7 +225,7 @@ export const VestingView = () => {
       setInspectedAccountType(undefined);
     }
 
-  }, [accountAddress, activeTab, address, isPageLoaded, publicKey, searchParams, vestingContract]);
+  }, [accountAddress, activeTab, address, autoOpenDetailsPanel, isPageLoaded, publicKey, searchParams, vestingContract]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -3531,7 +3537,7 @@ export const VestingView = () => {
           setHasMoreContractActivity(true);
           consoleOut('selectedVestingContract:', item, 'blue');
           if (autoOpenDetailsPanel) {
-            setDtailsPanelOpen(true);
+            setDetailsPanelOpen(true);
           }
         } else {
           // /vesting/:address/contracts/:vestingContract
@@ -3856,8 +3862,9 @@ export const VestingView = () => {
   ////////////////////////////
 
   const onBackButtonClicked = () => {
-    setDtailsPanelOpen(false);
+    setDetailsPanelOpen(false);
     setAutoOpenDetailsPanel(false);
+    navigate(-1);
   }
 
   const onTabChange = useCallback((activeKey: string) => {
