@@ -2657,13 +2657,10 @@ export const AccountsNewView = () => {
     const pk = new PublicKey(accountAddress);
 
     consoleOut('Fetching treasuries for address:', accountAddress, 'orange');
-    const treasuries = await msp.listTreasuries(pk, true, true, Category.default);
+    const treasuries = await msp.listTreasuries(pk, true, false, Category.default);
+    consoleOut('getAllUserV2Treasuries ->', treasuries, 'orange');
 
-    const autoclosables = treasuries.filter(t => t.autoClose);
-
-    setAutocloseTreasuries(autoclosables);
-
-    return treasuries.filter(t => !t.autoClose && t.category === 0);
+    return treasuries;
 
   }, [
     msp,
@@ -2695,8 +2692,15 @@ export const AccountsNewView = () => {
             }
             treasuryAccumulator.push(...treasuriesv1);
           }
-          setTreasuryList(treasuryAccumulator);
-          consoleOut('treasuryList:', treasuryAccumulator, 'blue');
+
+          const autoclosables = treasuryAccumulator.filter(t => t.autoClose);
+
+          setAutocloseTreasuries(autoclosables);
+
+          const streamingAccounts = treasuryAccumulator.filter(t => !t.autoClose);
+      
+          setTreasuryList(streamingAccounts);
+          consoleOut('treasuryList:', streamingAccounts, 'blue');
         })
         .catch(error => {
           console.error(error);
