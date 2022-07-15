@@ -3283,7 +3283,7 @@ export const AccountsNewView = () => {
         setPathParamAsset('');
       }
       if (autoOpenDetailsPanel) {
-        setDtailsPanelOpen(false);
+        setDtailsPanelOpen(true);
       }
     } else if (location.pathname.indexOf('/streaming') !== -1) {
       consoleOut('Setting category:', 'streaming', 'crimson');
@@ -4506,12 +4506,15 @@ export const AccountsNewView = () => {
       if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
         reloadSwitch();
       }
-      if (!isXsDevice) {
-        navigateToAsset(asset);
-      } else {
-        setSelectedAsset(asset);
-        setDtailsPanelOpen(true);
-      }
+      // if (!isXsDevice) {
+      //   navigateToAsset(asset);
+      // } else {
+      //   setSelectedAsset(asset);
+      //   setDtailsPanelOpen(true);
+      // }
+      navigateToAsset(asset);
+      selectAsset(asset, true, true);
+      setAutoOpenDetailsPanel(true);
     }
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
