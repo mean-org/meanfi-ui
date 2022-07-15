@@ -38,10 +38,8 @@ export const InvestView = () => {
   const {
     coinPrices,
     stakedAmount,
-    detailsPanelOpen,
     setIsVerifiedRecipient,
     getTokenPriceBySymbol,
-    setDtailsPanelOpen,
     setFromCoinAmount,
   } = useContext(AppStateContext);
   const connection = useConnection();
@@ -84,7 +82,6 @@ export const InvestView = () => {
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
   const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
   const [canSubscribe, setCanSubscribe] = useState(true);
-  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
 
   // Tokens and balances
   const [meanAddresses, setMeanAddresses] = useState<Env>();
@@ -93,6 +90,10 @@ export const InvestView = () => {
   const [meanBalance, setMeanBalance] = useState<number>(0);
   const [lastTimestamp, setLastTimestamp] = useState(Date.now());
   const [socnUsdBalance, setSocnUsdBalance] = useState<number>(0);
+
+  const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
+  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
@@ -551,7 +552,7 @@ export const InvestView = () => {
   }, [marinadeApyValue, marinadeTotalStakedValue, maxOrcaAprValue, maxRadiumAprValue, orcaInfo, raydiumInfo, soceanApyValue, soceanTotalStakedValue]);
 
   const onBackButtonClicked = () => {
-    setDtailsPanelOpen(false);
+    setDetailsPanelOpen(false);
     setAutoOpenDetailsPanel(false);
   }
 
@@ -559,25 +560,39 @@ export const InvestView = () => {
   //   Effects   //
   /////////////////
 
-  // Process routing here
+  // Perform premature redirects if no investItem was provided in path
   useEffect(() => {
     if (!publicKey) { return; }
 
     if (!investItem) {
       const url = `${INVEST_ROUTE_BASE_PATH}/${investItems[0].path}?option=stake`;
       consoleOut('No investItem, redirecting to:', url, 'orange');
-      navigate(url, { replace: true });
-      return;
+      setAutoOpenDetailsPanel(false);
+      navigate(url);
+    } else {
+      setAutoOpenDetailsPanel(false);
     }
 
-    consoleOut('investItem:', investItem, 'blue');
+    setTimeout(() => {
+      setIsPageLoaded(true);
+    }, 5);
 
-    const item = investItems.find(i => i.path === investItem);
-    if (item) {
-      if (autoOpenDetailsPanel) {
-        setDtailsPanelOpen(true);
+  }, [investItem, investItems, navigate, publicKey]);
+
+
+  // Enable deep-linking when isPageLoaded
+  useEffect(() => {
+    if (!isPageLoaded || !publicKey) { return; }
+
+    if (investItem) {
+      consoleOut('investItem:', investItem, 'blue');
+      const item = investItems.find(i => i.path === investItem);
+      if (item) {
+        if (autoOpenDetailsPanel) {
+          setDetailsPanelOpen(true);
+        }
+        setSelectedInvest(item);
       }
-      setSelectedInvest(item);
     }
 
     // Get the option if passed-in
@@ -604,7 +619,7 @@ export const InvestView = () => {
         break;
     }
 
-  }, [autoOpenDetailsPanel, investItem, investItems, isSmallUpScreen, navigate, publicKey, searchParams, setDtailsPanelOpen, setSearchParams]);
+  }, [autoOpenDetailsPanel, investItem, investItems, isPageLoaded, publicKey, searchParams, setSearchParams]);
 
   // Get token addresses from staking client and save tokens
   useEffect(() => {

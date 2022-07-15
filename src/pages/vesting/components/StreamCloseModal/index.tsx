@@ -9,14 +9,11 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { StreamTreasuryType } from '../../../../models/treasuries';
 import { consoleOut, percentage } from '../../../../utils/ui';
 import { getAmountWithSymbol, toUiAmount } from '../../../../utils/utils';
-import { STREAMS_ROUTE_BASE_PATH } from '../../../../views/Streams';
-import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../../treasuries';
 import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
 
 export const StreamCloseModal = (props: {
@@ -31,8 +28,6 @@ export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;
 }) => {
   const { t } = useTranslation('common');
-  const location = useLocation();
-  const navigate = useNavigate();
   const connection = useConnection();
   const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
@@ -175,16 +170,6 @@ export const StreamCloseModal = (props: {
     publicKey,
     localStreamDetail
   ]);
-
-  const getTreasuryName = useCallback(() => {
-    if (treasuryDetails) {
-      const v1 = treasuryDetails as TreasuryInfo;
-      const v2 = treasuryDetails as Treasury;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-      return isNewTreasury ? v2.name : v1.label;
-    }
-    return '-';
-  }, [treasuryDetails]);
 
   const getFeeAmount = useCallback((fees: TransactionFees): number => {
     let fee = 0;

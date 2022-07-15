@@ -8,4 +8,3 @@ export { OneTimePayment } from "./OneTimePayment";
 export { RecurringExchange } from "./RecurringExchange";
 export { RepeatingPayment } from "./RepeatingPayment";
 export { SolaniumRedeem } from "./SolaniumRedeem";
-export { Streams } from "./Streams";

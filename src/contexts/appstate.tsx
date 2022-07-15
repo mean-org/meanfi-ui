@@ -49,7 +49,6 @@ import { ProgramAccounts } from "../utils/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
-import { STREAMS_ROUTE_BASE_PATH } from "../views/Streams";
 import { MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
@@ -71,7 +70,6 @@ interface AppStateConfig {
   refreshInterval: number;
   isWhitelisted: boolean;
   isInBetaTestingProgram: boolean;
-  detailsPanelOpen: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
@@ -81,7 +79,6 @@ interface AppStateConfig {
   effectiveRate: number;
   coinPrices: any | null;
   loadingPrices: boolean;
-  raydiumLps: any;
   contract: ContractDefinition | undefined;
   treasuryOption: TreasuryTypeOption | undefined;
   recipientAddress: string;
@@ -148,7 +145,6 @@ interface AppStateConfig {
   previousRoute: string;
   setTheme: (name: string) => void;
   setTpsAvg: (value: number | null | undefined) => void;
-  setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
@@ -229,7 +225,6 @@ const contextDefaultValues: AppStateConfig = {
   refreshInterval: ONE_MINUTE_REFRESH_TIMEOUT,
   isWhitelisted: false,
   isInBetaTestingProgram: false,
-  detailsPanelOpen: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,
@@ -239,7 +234,6 @@ const contextDefaultValues: AppStateConfig = {
   effectiveRate: 0,
   coinPrices: null,
   loadingPrices: false,
-  raydiumLps: undefined,
   contract: undefined,
   treasuryOption: TREASURY_TYPE_OPTIONS[0],
   recipientAddress: '',
@@ -309,7 +303,6 @@ const contextDefaultValues: AppStateConfig = {
   previousRoute: '',
   setTheme: () => {},
   setTpsAvg: () => {},
-  setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
   setContract: () => {},
@@ -404,7 +397,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const timeDate = moment().format('hh:mm A');  
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [tpsAvg, setTpsAvg] = useState<number | null | undefined>(contextDefaultValues.tpsAvg);
-  const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
   const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
   const [contractName, setContractName] = useLocalStorageState("contractName");
@@ -464,8 +456,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-  const [raydiumLps, setRaydiumLps] = useState<any>(contextDefaultValues.raydiumLps);
-  const [shouldLoadRaydiumLps, setShouldLoadRaydiumLps] = useState(true);
   const [accountAddress, updateAccountAddress] = useState('');
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
   const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
@@ -518,10 +508,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setTheme = (name: string) => {
     updateTheme(name);
-  }
-
-  const setDtailsPanelOpen = (state: boolean) => {
-    updateDetailsPanelOpen(state);
   }
 
   /**
@@ -884,10 +870,6 @@ const AppStateProvider: React.FC = ({ children }) => {
           if (detail) {
             updateStreamDetail(detail);
             setActiveStream(detail);
-            if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-              const token = getTokenByMintAddress(detail.associatedToken as string);
-              setSelectedToken(token);
-            }
           }
         })
         .catch((error: any) => {
@@ -1238,17 +1220,9 @@ const AppStateProvider: React.FC = ({ children }) => {
                 if (detail) {
                   updateStreamDetail(detail);
                   setActiveStream(detail);
-                  if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-                    const token = getTokenByMintAddress(detail.associatedToken as string);
-                    setSelectedToken(token);
-                  }
                 } else if (item) {
                   updateStreamDetail(item);
                   setActiveStream(item);
-                  if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-                    const token = getTokenByMintAddress(item.associatedToken as string);
-                    setSelectedToken(token);
-                  }
                 }
               })
             } else {
@@ -1276,11 +1250,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     accountAddress,
     loadingStreams,
     selectedStream,
-    location.pathname,
     customStreamDocked,
     highLightableStreamId,
     clearTxConfirmationContext,
-    getTokenByMintAddress,
   ]);
 
 
@@ -1490,7 +1462,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         refreshInterval,
         isWhitelisted,
         isInBetaTestingProgram,
-        detailsPanelOpen,
         shouldLoadTokens,
         isDepositOptionsModalVisible,
         tokenList,
@@ -1501,7 +1472,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         effectiveRate,
         coinPrices,
         loadingPrices,
-        raydiumLps,
         contract,
         ddcaOption,
         treasuryOption,
@@ -1562,7 +1532,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         previousRoute,
         setTheme,
         setTpsAvg,
-        setDtailsPanelOpen,
         setShouldLoadTokens,
         showDepositOptionsModal,
         hideDepositOptionsModal,

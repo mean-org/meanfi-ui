@@ -6,7 +6,6 @@ import { Drawer, Empty, Layout } from "antd";
 import { AppBar } from "../AppBar";
 import { FooterBar } from "../FooterBar";
 import { AppStateContext } from "../../contexts/appstate";
-import { BackButton } from "../BackButton";
 import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
@@ -28,8 +27,6 @@ import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 import { shortenAddress } from "../../utils/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
-import { INVEST_ROUTE_BASE_PATH } from "../../pages/invest";
-import { VESTING_ROUTE_BASE_PATH } from "../../pages/vesting";
 import { getDefaultRpc } from "../../services/connections-hq";
 
 const { Header, Content, Footer } = Layout;
@@ -42,12 +39,10 @@ export const AppLayout = React.memo((props: any) => {
     theme,
     tpsAvg,
     previousRoute,
-    detailsPanelOpen,
     previousWalletConnectState,
     setPreviousWalletConnectState,
     setShouldLoadTokens,
     refreshTokenBalance,
-    setDtailsPanelOpen,
     setDiagnosisInfo,
     setPreviousRoute,
     setSelectedAsset,
@@ -170,16 +165,6 @@ export const AppLayout = React.memo((props: any) => {
   const getPlatform = useCallback((): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
   }, []);
-
-  const canRenderBackButton = useCallback(() => {
-    const excemptLocations = [
-      INVEST_ROUTE_BASE_PATH,
-      VESTING_ROUTE_BASE_PATH
-    ];
-    const found = excemptLocations.some(l => location.pathname.startsWith(l));
-
-    return detailsPanelOpen && !found ? true : false;
-  }, [detailsPanelOpen, location.pathname]);
 
   /*
   const sendConnectionMetric = useCallback((address: string) => {
@@ -427,12 +412,6 @@ export const AppLayout = React.memo((props: any) => {
     }
   }, [location.pathname, previousRoute, setPreviousRoute]);
 
-  const closeAllPanels = () => {
-    if (detailsPanelOpen) {
-      setDtailsPanelOpen(false);
-    }
-  }
-
   const showDrawer = () => {
     setIsDrawerVisible(true);
   };
@@ -488,9 +467,6 @@ export const AppLayout = React.memo((props: any) => {
               </div>
             )}
             <Header className="App-Bar">
-              {canRenderBackButton() && (
-                <BackButton handleClose={() => closeAllPanels()} />
-              )}
               <div className="app-bar-inner">
                 <Link to="/" className="flex-center">
                   <div className="app-title simplelink">

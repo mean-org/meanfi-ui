@@ -171,10 +171,6 @@ export const VestingView = () => {
       setAutoOpenDetailsPanel(false);
       setTreasuriesLoaded(false);
       navigate(url);
-    } else {
-      if (address && vestingContract) {
-        setAutoOpenDetailsPanel(true);
-      }
     }
     // In any case, set the flag isPageLoaded a bit later
     setTimeout(() => {

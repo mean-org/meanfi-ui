@@ -23,7 +23,6 @@ import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { openNotification } from '../Notifications';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
-import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
 import { VESTING_ROUTE_BASE_PATH } from '../../pages/vesting';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

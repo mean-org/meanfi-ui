@@ -14,13 +14,10 @@ import { useConnection } from '../../contexts/connection';
 import { PublicKey } from '@solana/web3.js';
 import { consoleOut } from '../../utils/ui';
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useLocation, useNavigate } from 'react-router-dom';
 import BN from 'bn.js';
 import { StreamTopupParams } from '../../models/common-types';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
-import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
@@ -41,8 +38,6 @@ export const StreamAddFundsModal = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-  const location = useLocation();
-  const navigate = useNavigate();
   const connection = useConnection();
   const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
@@ -180,16 +175,6 @@ export const StreamAddFundsModal = (props: {
     unallocatedBalance,
     props.withdrawTransactionFees,
   ]);
-
-  const getTreasuryName = useCallback(() => {
-    if (treasuryDetails) {
-      const v1 = treasuryDetails as TreasuryInfo;
-      const v2 = treasuryDetails as Treasury;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-      return isNewTreasury ? v2.name : v1.label;
-    }
-    return '-';
-  }, [treasuryDetails]);
 
   const shouldFundFromTreasury = useCallback(() => {
     if (!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose)) {
@@ -382,20 +367,6 @@ export const StreamAddFundsModal = (props: {
         <div className="transaction-progress">
           <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
           <h4 className="operation">{t('close-stream.cant-topup-message')}</h4>
-
-          {/* Only if the user is on streams offer navigating to the treasury */}
-          {location.pathname === STREAMS_ROUTE_BASE_PATH && treasuryDetails && (
-            <div className="mt-3">
-              <span className="mr-1">{t('treasuries.treasury-detail.treasury-name-label')}:</span>
-              <span className="mr-1 font-bold">{getTreasuryName()}</span>
-              <span className="simplelink underline-on-hover" onClick={() => {
-                props.handleClose();
-                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?treasury=${treasuryDetails.id}`;
-                navigate(url);
-              }}>{t('close-stream.see-details-cta')}</span>
-            </div>
-          )}
-
           <div className="mt-3">
             <Button
                 type="primary"

@@ -20,7 +20,7 @@ export const SafeSerumInfoView = (props: {
   isAssetDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
-  // onDataToAssetView: any;
+  onNavigateAway: any;
   selectedMultisig?: any;
   onEditMultisigClick: any;
   onNewProposalMultisigClick: any;
@@ -35,7 +35,7 @@ export const SafeSerumInfoView = (props: {
     selectedMultisig, 
     onEditMultisigClick, 
     onNewProposalMultisigClick,
-    // onDataToAssetView,
+    onNavigateAway,
     // multisigClient,
     multisigTxs,
     vestingAccountsCount,
@@ -301,13 +301,12 @@ export const SafeSerumInfoView = (props: {
   return (
     <>
       <SafeInfo
-        // connection={connection}
-        // solBalance={multisigSolBalance}
-        selectedMultisig={selectedMultisig}
+        onEditMultisigClick={onEditMultisigClick}
+        onNavigateAway={onNavigateAway}
+        onNewProposalMultisigClick={onNewProposalMultisigClick}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}
-        onNewProposalMultisigClick={onNewProposalMultisigClick}
-        onEditMultisigClick={onEditMultisigClick}
+        selectedMultisig={selectedMultisig}
         tabs={tabs}
         vestingAccountsCount={vestingAccountsCount}
        />

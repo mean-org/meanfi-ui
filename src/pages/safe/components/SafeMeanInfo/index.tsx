@@ -22,25 +22,43 @@ import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { ResumeItem } from '../../../../components/ResumeItem';
 
 export const SafeMeanInfo = (props: {
-  connection: Connection;
-  publicKey: PublicKey | null | undefined;
-  isProposalDetails: boolean;
-  isProgramDetails: boolean;
-  isAssetDetails: boolean;
-  onDataToSafeView: any;
-  onDataToProgramView: any;
-  selectedMultisig?: any;
-  onEditMultisigClick: any;
-  onNewProposalMultisigClick: any;
-  multisigClient: MeanMultisig | null;
-  selectedTab?: any;
-  proposalSelected?: any;
   assetSelected?: any;
-  onRefreshRequested: any;
-  loadingProposals: boolean;
+  connection: Connection;
+  isAssetDetails: boolean;
+  isProgramDetails: boolean;
+  isProposalDetails: boolean;
   loadingPrograms: boolean;
+  loadingProposals: boolean;
+  multisigClient: MeanMultisig | null;
+  onDataToProgramView: any;
+  onDataToSafeView: any;
+  onEditMultisigClick: any;
+  onNavigateAway: any;
+  onNewProposalMultisigClick: any;
+  onRefreshRequested: any;
+  proposalSelected?: any;
+  publicKey: PublicKey | null | undefined;
+  selectedMultisig?: any;
+  selectedTab?: any;
   vestingAccountsCount: number;
 }) => {
+  const {
+    connection,
+    loadingPrograms,
+    loadingProposals,
+    multisigClient,
+    onDataToProgramView,
+    onDataToSafeView,
+    onEditMultisigClick,
+    onNavigateAway,
+    onNewProposalMultisigClick,
+    onRefreshRequested,
+    proposalSelected,
+    publicKey,
+    selectedMultisig,
+    selectedTab,
+    vestingAccountsCount,
+  } = props;
   const { 
     programs,
     multisigTxs,
@@ -56,22 +74,6 @@ export const SafeMeanInfo = (props: {
     lastSentTxOperationType,
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
-  const {
-    connection,
-    publicKey,
-    selectedMultisig,
-    onEditMultisigClick,
-    onNewProposalMultisigClick,
-    selectedTab,
-    multisigClient,
-    proposalSelected,
-    onDataToSafeView,
-    onDataToProgramView,
-    onRefreshRequested,
-    loadingProposals,
-    loadingPrograms,
-    vestingAccountsCount,
-  } = props;
   const navigate = useNavigate();
   const location = useLocation();
   const { address } = useParams();
@@ -478,13 +480,14 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
-        selectedMultisig={selectedMultisig}
-        onNewProposalMultisigClick={onNewProposalMultisigClick}
-        onEditMultisigClick={onEditMultisigClick}
-        onRefreshTabsInfo={onRefreshRequested}
-        tabs={tabs}
-        selectedTab={selectedTab}
         isTxInProgress={isTxInProgress}
+        onEditMultisigClick={onEditMultisigClick}
+        onNavigateAway={onNavigateAway}
+        onNewProposalMultisigClick={onNewProposalMultisigClick}
+        onRefreshTabsInfo={onRefreshRequested}
+        selectedMultisig={selectedMultisig}
+        selectedTab={selectedTab}
+        tabs={tabs}
         vestingAccountsCount={vestingAccountsCount}
       />
     </>

@@ -1,5 +1,6 @@
 import { useCallback, useContext, useMemo, useRef } from 'react';
 import {
+  ArrowLeftOutlined,
   LoadingOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
@@ -91,7 +92,6 @@ export const SafeView = () => {
     coinPrices,
     multisigTxs,
     isWhitelisted,
-    detailsPanelOpen,
     transactionStatus,
     streamV2ProgramAddress,
     highLightableMultisigId,
@@ -104,7 +104,6 @@ export const SafeView = () => {
     setTransactionStatus,
     setTotalSafeBalance,
     refreshTokenBalance,
-    setDtailsPanelOpen,
     setMultisigTxs,
     setPrograms,
   } = useContext(AppStateContext);
@@ -173,7 +172,10 @@ export const SafeView = () => {
   // Vesting contracts
   const [loadingTreasuries, setLoadingTreasuries] = useState(true);
   const [treasuryList, setTreasuryList] = useState<Treasury[]>([]);
-  
+
+  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
+
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
@@ -2817,11 +2819,9 @@ export const SafeView = () => {
     multisigClient,
     selectedMultisig,
     transactionCancelled,
-    enqueueTransactionConfirmation, 
     transactionStatus.currentOperation,
-    clearTxConfirmationContext,
+    enqueueTransactionConfirmation, 
     onExecuteFinishTxCancelled,
-    showMultisigTxResultModal,
     resetTransactionStatus,
     setTransactionStatus,
   ]);
@@ -3554,7 +3554,6 @@ export const SafeView = () => {
   }, [
     width,
     isSmallUpScreen,
-    detailsPanelOpen,
   ]);
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
@@ -3990,6 +3989,17 @@ export const SafeView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const onBackButtonClicked = () => {
+    setDetailsPanelOpen(false);
+    setAutoOpenDetailsPanel(false);
+    // navigate(-1);
+  }
+
+  const onNavigateAway = () => {
+    setDetailsPanelOpen(false);
+    setAutoOpenDetailsPanel(false);
+  }
+
   ///////////////
   // Rendering //
   ///////////////
@@ -4001,7 +4011,7 @@ export const SafeView = () => {
           const onMultisigClick = (ev: any) => {
             consoleOut('=======================================', '', 'green');
             consoleOut('selected multisig:', item, 'blue');
-            setDtailsPanelOpen(true);
+            setDetailsPanelOpen(true);
             setIsProposalDetails(false);
             setIsProgramDetails(false);
             setMultisigSolBalance(undefined);
@@ -4157,6 +4167,15 @@ export const SafeView = () => {
         </div>
       )}
 
+      {detailsPanelOpen && (
+        <Button
+          id="back-button"
+          type="default"
+          shape="circle"
+          icon={<ArrowLeftOutlined />}
+          onClick={onBackButtonClicked}/>
+      )}
+
       <div className="container main-container">
 
         <div className="interaction-area">
@@ -4256,37 +4275,39 @@ export const SafeView = () => {
                           selectedMultisig.version === 0 ? (
                             <SafeSerumInfoView
                               connection={connection}
-                              isProposalDetails={isProposalDetails}
-                              isProgramDetails={isProgramDetails}
                               isAssetDetails={isAssetDetails}
-                              onDataToSafeView={goToProposalDetailsHandler}
-                              onDataToProgramView={goToProgramDetailsHandler}
-                              selectedMultisig={selectedMultisig}
-                              onEditMultisigClick={onEditMultisigClick}
-                              onNewProposalMultisigClick={onNewProposalMultisigClick}
+                              isProgramDetails={isProgramDetails}
+                              isProposalDetails={isProposalDetails}
                               multisigClient={multisigSerumClient}
                               multisigTxs={serumMultisigTxs}
+                              onDataToProgramView={goToProgramDetailsHandler}
+                              onDataToSafeView={goToProposalDetailsHandler}
+                              onEditMultisigClick={onEditMultisigClick}
+                              onNavigateAway={onNavigateAway}
+                              onNewProposalMultisigClick={onNewProposalMultisigClick}
+                              selectedMultisig={selectedMultisig}
                               vestingAccountsCount={treasuryList ? treasuryList.length : 0}
                             />
                           ) : (
                             <SafeMeanInfo
+                              assetSelected={assetSelected}
                               connection={connection}
-                              publicKey={publicKey}
-                              isProposalDetails={isProposalDetails}
-                              isProgramDetails={isProgramDetails}
                               isAssetDetails={isAssetDetails}
-                              loadingProposals={getProposalsLoadingStatus()}
+                              isProgramDetails={isProgramDetails}
+                              isProposalDetails={isProposalDetails}
                               loadingPrograms={loadingPrograms}
-                              onDataToSafeView={goToProposalDetailsHandler}
+                              loadingProposals={getProposalsLoadingStatus()}
+                              multisigClient={multisigClient}
                               onDataToProgramView={goToProgramDetailsHandler}
-                              selectedMultisig={selectedMultisig}
+                              onDataToSafeView={goToProposalDetailsHandler}
                               onEditMultisigClick={onEditMultisigClick}
+                              onNavigateAway={onNavigateAway}
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
                               onRefreshRequested={onRefresLevel1Tabs}
-                              multisigClient={multisigClient}
-                              selectedTab={selectedTab}
                               proposalSelected={proposalSelected}
-                              assetSelected={assetSelected}
+                              publicKey={publicKey}
+                              selectedMultisig={selectedMultisig}
+                              selectedTab={selectedTab}
                               vestingAccountsCount={treasuryList ? treasuryList.length : 0}
                             />
                           )

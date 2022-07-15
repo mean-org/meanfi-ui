@@ -50,7 +50,6 @@ import useLocalStorage from '../../hooks/useLocalStorage';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
-import { Streams } from '../../views';
 import { initialSummary, StreamsSummary } from '../../models/streams';
 import { Category, MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
@@ -59,7 +58,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, delay, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, delay, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -75,7 +74,6 @@ import { INVEST_ROUTE_BASE_PATH } from '../invest';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
 import { closeTokenAccount } from '../../utils/accounts';
-import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../treasuries';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
@@ -86,7 +84,6 @@ import { MultisigParticipant } from '../../models/multisig';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { useNativeAccount } from '../../contexts/accounts';
-import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 import { MoneyStreamsInfoView } from '../../views/MoneyStreamsInfo';
 import { MoneyStreamsIncomingView } from '../../views/MoneyStreamsIncoming';
 import { MoneyStreamsOutgoingView } from '../../views/MoneyStreamsOutgoing';
@@ -197,7 +194,6 @@ export const AccountsNewView = () => {
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
   const [totalStreamingValue, setTotalStreamingValue] = useState(0);
-  const [treasuriesTvl, setTreasuriesTvl] = useState(0);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [pathParamAsset, setPathParamAsset] = useState('');
   const [pathParamStreamId, setPathParamStreamId] = useState('');
@@ -289,8 +285,7 @@ export const AccountsNewView = () => {
       }, 5);
       navigate(url, { replace: true });
     } else {
-      // address, asset, streamingTab, streamId, treasuryId
-      consoleOut(`address: ${address || '-'}\nasset: ${asset || '-'}\nstreamingTab: ${streamingTab || '-'}\nstreamId: ${streamId || '-'}\ntreasuryId: ${treasuryId || '-'}\n`, '', 'darkgreen');
+      // If an asset is specified or user goes inside any tab of the streaming category, enable it
       if (asset || streamingTab) {
         setAutoOpenDetailsPanel(true);
       }
@@ -469,17 +464,17 @@ export const AccountsNewView = () => {
     return selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS ? true : false;
   }, [selectedAsset]);
 
-  const userHasAccess = useCallback (() => {
-    if (!publicKey || !accountAddress) { return false; }
-    const isUserWallet = isInspectedAccountTheConnectedWallet();
-    if (isUserWallet) { return true; }
-    // TODO: We should validate here if the user is part of the multisig
-    const param = getQueryAccountType();
-    if (param && param === "multisig") {
-      return true;
-    }
-    return false;
-  }, [accountAddress, getQueryAccountType, isInspectedAccountTheConnectedWallet, publicKey]);
+  // const userHasAccess = useCallback (() => {
+  //   if (!publicKey || !accountAddress) { return false; }
+  //   const isUserWallet = isInspectedAccountTheConnectedWallet();
+  //   if (isUserWallet) { return true; }
+  //   // TODO: We should validate here if the user is part of the multisig
+  //   const param = getQueryAccountType();
+  //   if (param && param === "multisig") {
+  //     return true;
+  //   }
+  //   return false;
+  // }, [accountAddress, getQueryAccountType, isInspectedAccountTheConnectedWallet, publicKey]);
 
   // const isAssetPurchasable = useCallback(() => {
   //   if (!selectedAsset) { return false; }
@@ -1053,14 +1048,6 @@ export const AccountsNewView = () => {
     if (!selectedAsset) { return false; }
     return !selectedAsset.publicAddress ? true : false;
   }, [selectedAsset]);
-
-  const getMultisigTreasuriesPath = useCallback(() => {
-    if (!accountAddress || !inspectedAccountType) {
-      return '';
-    }
-    const path = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?multisig=${accountAddress}`;
-    return path;
-  }, [accountAddress, inspectedAccountType]);
 
   /////////////////
   //  Init code  //
@@ -2604,7 +2591,6 @@ export const AccountsNewView = () => {
     }
 
     if (wallet && data) {
-      const param = getQueryAccountType();
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -2661,7 +2647,6 @@ export const AccountsNewView = () => {
     enqueueTransactionConfirmation,
     resetTransactionStatus,
     setTransactionStatus,
-    getQueryAccountType,
     t
   ]);
 
@@ -3857,6 +3842,7 @@ export const AccountsNewView = () => {
         consoleOut('streamingAccountCombinedList:', [], "blue");
       })
       .finally(() => setLoadingCombinedStreamingList(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streamList, treasuriesLoaded, treasuryList]);
 
   // Set the list of incoming and outgoing streams
@@ -5079,7 +5065,7 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">address:</span><span className="ml-1 font-bold fg-dark-active">{address ? 'true' : 'false'}</span>
           <span className="ml-1">asset:</span><span className="ml-1 font-bold fg-dark-active">{asset ? 'true' : 'false'}</span>
@@ -5089,7 +5075,7 @@ export const AccountsNewView = () => {
           <span className="ml-1">autoOpenPanel:</span><span className="ml-1 font-bold fg-dark-active">{autoOpenDetailsPanel ? 'true' : 'false'}</span>
           <span className="ml-1">panelOpen:</span><span className="ml-1 font-bold fg-dark-active">{detailsPanelOpen ? 'true' : 'false'}</span>
         </div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button
@@ -5116,252 +5102,246 @@ export const AccountsNewView = () => {
         {publicKey ? (
           <div className="interaction-area">
 
-            {location.pathname === STREAMS_ROUTE_BASE_PATH ? (
-              <Streams />
-            ) : (
-              <>
-                {accountAddress && (
-                  <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+            {accountAddress && (
+              <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
-                    {/* Left / top panel */}
-                    <div className="meanfi-two-panel-left">
-                      <div className="meanfi-panel-heading">
-                        {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" ? (
-                          <>
-                            <div className="back-button mb-0">
-                              <span className="icon-button-container">
-                                <Tooltip placement="bottom" title="Back to safes">
-                                  <Button
-                                    type="default"
-                                    shape="circle"
-                                    size="middle"
-                                    icon={<ArrowLeftOutlined />}
-                                    onClick={() => {
-                                      if (selectedMultisig) {
-                                        setHighLightableMultisigId(selectedMultisig.id.toBase58());
-                                      }
-                                      navigate(`/multisig/${address}?v=${tabNameFormat(activeTab)}`)
-                                    }}
-                                  />
-                                </Tooltip>
-                              </span>
-                            </div>
-                            <span className="title ml-2">Multisig safe</span>
-                          </>
-                        ) : (
-                          <span className="title">{t('assets.screen-title')}</span>
-                        )}
-                        <div className="user-address">
-                          <span className="fg-secondary">
-                            (<span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
-                              {shortenAddress(accountAddress, 5)}
-                            </span>)
-                          </span>
-                          {!connected && (
-                            <span className="icon-button-container">
-                              <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
-                                <Button
-                                  type="default"
-                                  shape="circle"
-                                  size="middle"
-                                  icon={<EditOutlined />}
-                                  onClick={handleScanAnotherAddressButtonClick}
-                                />
-                              </Tooltip>
-                            </span>
-                          )}
+                {/* Left / top panel */}
+                <div className="meanfi-two-panel-left">
+                  <div className="meanfi-panel-heading">
+                    {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" ? (
+                      <>
+                        <div className="back-button mb-0">
                           <span className="icon-button-container">
-                            <Tooltip placement="top" title={t('assets.account-address-copy-cta')}>
+                            <Tooltip placement="bottom" title="Back to safes">
                               <Button
                                 type="default"
                                 shape="circle"
                                 size="middle"
-                                icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
-                                onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
+                                icon={<ArrowLeftOutlined />}
+                                onClick={() => {
+                                  if (selectedMultisig) {
+                                    setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                                  }
+                                  navigate(`/multisig/${address}?v=${tabNameFormat(activeTab)}`)
+                                }}
                               />
                             </Tooltip>
                           </span>
                         </div>
-                      </div>
-                      <div className="inner-container">
-
-                        {/* Pending Multisig proposals notification */}
-                        {inspectedAccountType === "multisig" && renderMultisigPendinTxNotification()}
-
-                        {/* Net Worth header (sticky) */}
-                        {renderNetworth()}
-
-                        {/* Middle area (vertically flexible block of items) */}
-                        <div className="item-block vertical-scroll">
-
-                          <div className="asset-category-title flex-fixed-right">
-                            <div className="title">Streaming Assets</div>
-                            <div className="amount">{toUsCurrency(totalAccountBalance)}</div>
-                          </div>
-                          <div className="asset-category">
-                            {renderMoneyStreamsSummary}
-                          </div>
-
-                          <div className="asset-category-title flex-fixed-right">
-                            <div className="title">Tokens ({accountTokens.length})</div>
-                            <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
-                          </div>
-                          <div className="asset-category flex-column">
-                            {renderAssetsList}
-                          </div>
-
-                        </div>
-
-                        {/* Bottom CTAs */}
-                        <div className="bottom-ctas">
-                          <div className="primary-action">
-                            {isInspectedAccountTheConnectedWallet() ? (
-                              <Button
-                                block
-                                className="flex-center"
-                                type="primary"
-                                shape="round"
-                                onClick={showInitAtaModal}>
-                                <IconAdd className="mean-svg-icons" />
-                                <span className="ml-1">Add asset</span>
-                              </Button>
-                            ) : (
-                              <Tooltip placement="bottom" title={
-                                !accountAddress || inspectedAccountType !== "multisig"
-                                  ? "You can only add assets to your connected account"
-                                  : "Add asset to your multisig safe account"
-                                }>
-                                <Button
-                                  block
-                                  className="flex-center"
-                                  type="primary"
-                                  shape="round"
-                                  disabled={!accountAddress || inspectedAccountType !== "multisig"}
-                                  onClick={onShowCreateAssetModal}>
-                                  <IconAdd className="mean-svg-icons" />
-                                  <span className="ml-1">Create an asset</span>
-                                </Button>
-                              </Tooltip>
-                            )}
-                          </div>
-                          <Dropdown className="options-dropdown"
-                            overlay={assetListOptions}
-                            placement="bottomRight"
-                            trigger={["click"]}>
-                            <span className="icon-button-container">
-                              <Button
-                                type="default"
-                                shape="circle"
-                                size="middle"
-                                icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
-                                onClick={(e) => e.preventDefault()}
-                              />
-                            </span>
-                          </Dropdown>
-                        </div>
-
-                      </div>
-                    </div>
-
-                    {/* Right / down panel */}
-                    <div className="meanfi-two-panel-right">
-                      <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
-                      <div className="inner-container">
-                        {selectedCategory === "assets" ? (
-                          <>
-                            {canShowBuyOptions() ? renderTokenBuyOptions() : (
-                              <div className="flexible-column-bottom">
-                                <div className="top">
-                                  {renderCategoryMeta()}
-                                  {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
-                                </div>
-                                {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && (
-                                  (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
-                                    <Row gutter={[8, 8]}>
-                                      <Col span={24} className="alert-info-message pr-2">
-                                        <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
-                                      </Col>
-                                    </Row>
-                                  ) : null
-                                )}
-                                <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
-                                  {/* Activity table heading */}
-                                  {hasItemsToRender() && (
-                                    <div className="stats-row">
-                                      <div className="item-list-header compact">
-                                        <div className="header-row">
-                                          <div className="std-table-cell first-cell">&nbsp;</div>
-                                          <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
-                                          <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
-                                          <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
-                                          <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                  {/* Activity table content */}
-                                  {selectedCategory === "assets" && renderActivityList()}
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        ) : selectedCategory === "streaming" ? (
-                          <div className="scroll-wrapper vertical-scroll">
-                            <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
-                            <div id="streams-refresh-reset-cta" onClick={onRefreshStreamsReset}></div>
-                            {!pathParamStreamId && !pathParamTreasuryId ? (
-                              <MoneyStreamsInfoView
-                                accountAddress={accountAddress}
-                                autocloseTreasuries={autocloseTreasuries}
-                                loadingCombinedStreamingList={loadingCombinedStreamingList}
-                                loadingStreams={loadingStreams}
-                                multisigAccounts={multisigAccounts}
-                                onSendFromIncomingStreamInfo={goToStreamIncomingDetailsHandler}
-                                onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
-                                onSendFromStreamingAccountDetails={goToStreamingAccountDetailsHandler}
-                                onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
-                                selectedMultisig={selectedMultisig}
-                                selectedTab={pathParamStreamingTab}
-                                showNotificationByType={() => showNotificationByType("info")}
-                                streamList={streamList}
-                                streamingAccountCombinedList={streamingAccountCombinedList}
-                                treasuryList={treasuryList}
-                              />
-                            ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
-                              <MoneyStreamsIncomingView
-                                streamSelected={streamDetail}
-                                accountAddress={accountAddress}
-                                multisigAccounts={multisigAccounts}
-                                onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
-                                showNotificationByType={() => showNotificationByType("info")}
-                              />
-                            ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
-                              <MoneyStreamsOutgoingView
-                                streamSelected={streamDetail}
-                                streamList={streamList}
-                                multisigAccounts={multisigAccounts}
-                                onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
-                                showNotificationByType={() => showNotificationByType("info")}
-                              />
-                            ) : pathParamTreasuryId && pathParamStreamingTab === "outgoing" ? (
-                              <StreamingAccountView
-                                streamSelected={streamDetail}
-                                treasuryList={treasuryList}
-                                multisigAccounts={multisigAccounts}
-                                selectedMultisig={selectedMultisig}
-                                streamingAccountSelected={treasuryDetail}
-                                onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
-                                onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
-                                showNotificationByType={() => showNotificationByType("info")}
-                              />
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </div>
+                        <span className="title ml-2">Multisig safe</span>
+                      </>
+                    ) : (
+                      <span className="title">{t('assets.screen-title')}</span>
+                    )}
+                    <div className="user-address">
+                      <span className="fg-secondary">
+                        (<span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
+                          {shortenAddress(accountAddress, 5)}
+                        </span>)
+                      </span>
+                      {!connected && (
+                        <span className="icon-button-container">
+                          <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<EditOutlined />}
+                              onClick={handleScanAnotherAddressButtonClick}
+                            />
+                          </Tooltip>
+                        </span>
+                      )}
+                      <span className="icon-button-container">
+                        <Tooltip placement="top" title={t('assets.account-address-copy-cta')}>
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
+                            onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
+                          />
+                        </Tooltip>
+                      </span>
                     </div>
                   </div>
-                )}
-              </>
+                  <div className="inner-container">
+
+                    {/* Pending Multisig proposals notification */}
+                    {inspectedAccountType === "multisig" && renderMultisigPendinTxNotification()}
+
+                    {/* Net Worth header (sticky) */}
+                    {renderNetworth()}
+
+                    {/* Middle area (vertically flexible block of items) */}
+                    <div className="item-block vertical-scroll">
+
+                      <div className="asset-category-title flex-fixed-right">
+                        <div className="title">Streaming Assets</div>
+                        <div className="amount">{toUsCurrency(totalAccountBalance)}</div>
+                      </div>
+                      <div className="asset-category">
+                        {renderMoneyStreamsSummary}
+                      </div>
+
+                      <div className="asset-category-title flex-fixed-right">
+                        <div className="title">Tokens ({accountTokens.length})</div>
+                        <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
+                      </div>
+                      <div className="asset-category flex-column">
+                        {renderAssetsList}
+                      </div>
+
+                    </div>
+
+                    {/* Bottom CTAs */}
+                    <div className="bottom-ctas">
+                      <div className="primary-action">
+                        {isInspectedAccountTheConnectedWallet() ? (
+                          <Button
+                            block
+                            className="flex-center"
+                            type="primary"
+                            shape="round"
+                            onClick={showInitAtaModal}>
+                            <IconAdd className="mean-svg-icons" />
+                            <span className="ml-1">Add asset</span>
+                          </Button>
+                        ) : (
+                          <Tooltip placement="bottom" title={
+                            !accountAddress || inspectedAccountType !== "multisig"
+                              ? "You can only add assets to your connected account"
+                              : "Add asset to your multisig safe account"
+                            }>
+                            <Button
+                              block
+                              className="flex-center"
+                              type="primary"
+                              shape="round"
+                              disabled={!accountAddress || inspectedAccountType !== "multisig"}
+                              onClick={onShowCreateAssetModal}>
+                              <IconAdd className="mean-svg-icons" />
+                              <span className="ml-1">Create an asset</span>
+                            </Button>
+                          </Tooltip>
+                        )}
+                      </div>
+                      <Dropdown className="options-dropdown"
+                        overlay={assetListOptions}
+                        placement="bottomRight"
+                        trigger={["click"]}>
+                        <span className="icon-button-container">
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
+                            onClick={(e) => e.preventDefault()}
+                          />
+                        </span>
+                      </Dropdown>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Right / down panel */}
+                <div className="meanfi-two-panel-right">
+                  <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
+                  <div className="inner-container">
+                    {selectedCategory === "assets" ? (
+                      <>
+                        {canShowBuyOptions() ? renderTokenBuyOptions() : (
+                          <div className="flexible-column-bottom">
+                            <div className="top">
+                              {renderCategoryMeta()}
+                              {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
+                            </div>
+                            {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && (
+                              (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
+                                <Row gutter={[8, 8]}>
+                                  <Col span={24} className="alert-info-message pr-2">
+                                    <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
+                                  </Col>
+                                </Row>
+                              ) : null
+                            )}
+                            <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
+                              {/* Activity table heading */}
+                              {hasItemsToRender() && (
+                                <div className="stats-row">
+                                  <div className="item-list-header compact">
+                                    <div className="header-row">
+                                      <div className="std-table-cell first-cell">&nbsp;</div>
+                                      <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
+                                      <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
+                                      <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
+                                      <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {/* Activity table content */}
+                              {selectedCategory === "assets" && renderActivityList()}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : selectedCategory === "streaming" ? (
+                      <div className="scroll-wrapper vertical-scroll">
+                        <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
+                        <div id="streams-refresh-reset-cta" onClick={onRefreshStreamsReset}></div>
+                        {!pathParamStreamId && !pathParamTreasuryId ? (
+                          <MoneyStreamsInfoView
+                            accountAddress={accountAddress}
+                            autocloseTreasuries={autocloseTreasuries}
+                            loadingCombinedStreamingList={loadingCombinedStreamingList}
+                            loadingStreams={loadingStreams}
+                            multisigAccounts={multisigAccounts}
+                            onSendFromIncomingStreamInfo={goToStreamIncomingDetailsHandler}
+                            onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
+                            onSendFromStreamingAccountDetails={goToStreamingAccountDetailsHandler}
+                            onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
+                            selectedMultisig={selectedMultisig}
+                            selectedTab={pathParamStreamingTab}
+                            showNotificationByType={() => showNotificationByType("info")}
+                            streamList={streamList}
+                            streamingAccountCombinedList={streamingAccountCombinedList}
+                            treasuryList={treasuryList}
+                          />
+                        ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
+                          <MoneyStreamsIncomingView
+                            streamSelected={streamDetail}
+                            accountAddress={accountAddress}
+                            multisigAccounts={multisigAccounts}
+                            onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
+                            showNotificationByType={() => showNotificationByType("info")}
+                          />
+                        ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
+                          <MoneyStreamsOutgoingView
+                            streamSelected={streamDetail}
+                            streamList={streamList}
+                            multisigAccounts={multisigAccounts}
+                            onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
+                            showNotificationByType={() => showNotificationByType("info")}
+                          />
+                        ) : pathParamTreasuryId && pathParamStreamingTab === "outgoing" ? (
+                          <StreamingAccountView
+                            streamSelected={streamDetail}
+                            treasuryList={treasuryList}
+                            multisigAccounts={multisigAccounts}
+                            selectedMultisig={selectedMultisig}
+                            streamingAccountSelected={treasuryDetail}
+                            onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
+                            onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
+                            showNotificationByType={() => showNotificationByType("info")}
+                          />
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             )}
 
           </div>
