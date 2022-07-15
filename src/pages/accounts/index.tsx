@@ -2694,8 +2694,6 @@ export const AccountsNewView = () => {
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
-    clearTxConfirmationContext,
-    showNotificationByType,
     resetTransactionStatus,
     setTransactionStatus,
     getQueryAccountType,
@@ -4521,7 +4519,12 @@ export const AccountsNewView = () => {
       if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
         reloadSwitch();
       }
-      navigateToAsset(asset);
+      if (!isXsDevice) {
+        navigateToAsset(asset);
+      } else {
+        setSelectedAsset(asset);
+        setDtailsPanelOpen(true);
+      }
     }
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
@@ -4588,6 +4591,7 @@ export const AccountsNewView = () => {
     selectedAsset,
     hideLowBalances,
     selectedCategory,
+    setDtailsPanelOpen,
     shouldHideAsset,
   ]);
 
