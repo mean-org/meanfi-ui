@@ -931,8 +931,14 @@ export const AccountsNewView = () => {
         const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
         navigate(url);
       } else if (item.operationType === OperationType.StreamWithdraw) {
+        if (item.extras) {
+          showNotificationByType("info");
+        }
         softReloadStreams();
       } else if (item.operationType === OperationType.StreamTransferBeneficiary) {
+        if (item.extras) {
+          showNotificationByType("info");
+        }
         hardReloadStreams();
         const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/incoming`;
         navigate(url);

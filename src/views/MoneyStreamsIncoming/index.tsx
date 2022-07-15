@@ -565,16 +565,11 @@ export const MoneyStreamsIncomingView = (props: {
               loadingMessage: `Transfer stream to: ${shortenAddress(dataStream.address, 4)}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Stream transferred to: ${shortenAddress(dataStream.address, 4)}`,
-              extras: streamSelected.id as string
-            });
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+              extras: param === "multisig" ? true : false
             });
 
             setIsTransferStreamModalVisibility(false);
             setLoadingStreamDetails(true);
-            param === "multisig" && showNotificationByType("info");
             onTransferStreamTransactionFinished();
             setIsBusy(false);
           } else { setIsBusy(false); }
@@ -1067,17 +1062,11 @@ export const MoneyStreamsIncomingView = (props: {
                 parseFloat(withdrawData.amount),
                 token.decimals
               )} ${token.symbol}`,
-              extras: streamSelected.id as string
-            });
-
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+              extras: param === "multisig" ? true : false
             });
 
             setIsWithdrawModalVisibility(false);
             setLoadingStreamDetails(true);
-            param === "multisig" && showNotificationByType("info");
             onWithdrawFundsTransactionFinished();
             setIsBusy(false);
           } else { setIsBusy(false); }
