@@ -657,7 +657,6 @@ export const MoneyStreamsInfoView = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
@@ -702,7 +701,7 @@ export const MoneyStreamsInfoView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Create streaming account",
+        data.title === "" ? "Create streaming account" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryCreate,
@@ -737,6 +736,7 @@ export const MoneyStreamsInfoView = (props: {
       // Create a transaction
       const associatedToken = createOptions.token;
       const payload = {
+        title: createOptions.treasuryTitle,
         treasurer: publicKey.toBase58(),                                                                  // treasurer
         label: createOptions.treasuryName,                                                                // label
         type: createOptions.treasuryType === TreasuryType.Open                                            // type
@@ -941,6 +941,9 @@ export const MoneyStreamsInfoView = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             if (sent) {
+              const isMultisig = createOptions.multisigId && selectedMultisig
+              ? selectedMultisig.id.toBase58()
+              : "";
               enqueueTransactionConfirmation({
                 signature: signature,
                 operationType: OperationType.TreasuryCreate,
@@ -950,17 +953,12 @@ export const MoneyStreamsInfoView = (props: {
                 loadingMessage: `Create streaming account: ${createOptions.treasuryName}`,
                 completedTitle: "Transaction confirmed",
                 completedMessage: `Successfully streaming account creation: ${createOptions.treasuryName}`,
-                extras: createOptions.multisigId as string
-              });
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.TransactionFinished
+                extras: isMultisig
               });
 
               setIsCreateTreasuryModalVisibility(false);
               setLoadingMoneyStreamsDetails(true);
-              param === "multisig" && showNotificationByType("info");
-              param !== "multisig" && onTreasuryCreated(createOptions);
+              !isMultisig && onTreasuryCreated(createOptions);
             } else {
               openNotification({
                 title: t('notifications.error-title'),

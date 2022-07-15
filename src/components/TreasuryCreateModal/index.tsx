@@ -24,6 +24,7 @@ import { TokenListItem } from '../TokenListItem';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { PublicKey } from '@solana/web3.js';
 import { useSearchParams } from 'react-router-dom';
+import { InputMean } from '../InputMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -54,6 +55,7 @@ export const TreasuryCreateModal = (props: {
   const accounts = useAccountsContext();
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
+  const [multisigTitle, setMultisigTitle] = useState('');
   const [treasuryName, setTreasuryName] = useState('');
   const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
   const [localSelectedMultisig, setLocalSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
@@ -304,7 +306,8 @@ export const TreasuryCreateModal = (props: {
 
   const onAcceptModal = () => {
     const options: TreasuryCreateOptions = {
-      treasuryName,
+      treasuryTitle: multisigTitle,
+      treasuryName: treasuryName,
       token: workingToken as TokenInfo,
       treasuryType: treasuryOption ? treasuryOption.type : TreasuryType.Open,
       multisigId: enableMultisigTreasuryOption && localSelectedMultisig ? localSelectedMultisig.id.toBase58() : ''
@@ -318,6 +321,7 @@ export const TreasuryCreateModal = (props: {
 
   const onAfterClose = () => {
     setTimeout(() => {
+      setMultisigTitle('');
       setTreasuryName('');
     }, 50);
     setTransactionStatus({
@@ -329,6 +333,10 @@ export const TreasuryCreateModal = (props: {
   const refreshPage = () => {
     props.handleClose();
     window.location.reload();
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setMultisigTitle(e.target.value);
   }
 
   const onInputValueChange = (e: any) => {
@@ -466,6 +474,21 @@ export const TreasuryCreateModal = (props: {
 
           {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
             <>
+              {/* Proposal title */}
+              {param === "multisig" && (
+                <div className="mb-3">
+                  <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+                  <InputMean
+                    id="proposal-title-field"
+                    name="Title"
+                    className="w-100 general-text-input"
+                    onChange={onTitleInputValueChange}
+                    placeholder="Add a proposal title (required)"
+                    value={multisigTitle}
+                  />
+                </div>
+              )}
+
               {/* Treasury name */}
               <div className="mb-3">
                 <div className="form-label">{t('treasuries.create-treasury.treasury-name-input-label')}</div>

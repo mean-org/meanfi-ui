@@ -11,6 +11,7 @@ export interface TreasuryTypeOption {
 export type StreamTreasuryType = "open" | "locked" | "unknown";
 
 export interface TreasuryCreateOptions {
+    treasuryTitle: string;
     treasuryName: string;
     treasuryType: TreasuryType;
     multisigId: string;

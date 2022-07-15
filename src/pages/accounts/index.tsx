@@ -991,6 +991,9 @@ export const AccountsNewView = () => {
         }
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryCreate) {
+        if (item.extras) {
+          showNotificationByType("info");
+        }
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryClose) {
         hardReloadStreams();
