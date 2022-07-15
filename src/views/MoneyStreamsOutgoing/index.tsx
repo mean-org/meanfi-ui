@@ -2364,36 +2364,46 @@ export const MoneyStreamsOutgoingView = (props: {
   }, [ms, msp, publicKey, activeStream, getTreasuryByTreasuryId, treasuryId]);
 
   useEffect(() => {
-    if (!ms || !msp || !streamSelected) {return;}
+    if (!ms || !msp || !streamSelected) { return; }
 
     const timeout = setTimeout(() => {
-      if (msp && streamSelected && streamSelected.version >= 2) {
-        msp.refreshStream(streamSelected as Stream).then(detail => {
-          setStreamDetail(detail as Stream);
-          if (!hasStreamPendingTx()) {
-            setLoadingStreamDetails(false);
-          }
-        });
-      } else if (ms && streamSelected && streamSelected.version < 2) {
-        ms.refreshStream(streamSelected as StreamInfo).then(detail => {
-          setStreamDetail(detail as StreamInfo);
-          if (!hasStreamPendingTx()) {
-            setLoadingStreamDetails(false);
-          }
-        });
+      const v1 = streamSelected as StreamInfo;
+      const v2 = streamSelected as Stream;
+      const isV2 = streamSelected.version >= 2;
+      if (isV2) {
+        if (v2.status === STREAM_STATUS.Running) {
+          msp.refreshStream(streamSelected as Stream).then(detail => {
+            setStreamDetail(detail as Stream);
+            if (!hasStreamPendingTx()) {
+              setLoadingStreamDetails(false);
+            }
+          });
+        } else {
+          setLoadingStreamDetails(false);
+        }
+      } else {
+        if (v1.state === STREAM_STATE.Running) {
+          ms.refreshStream(streamSelected as StreamInfo).then(detail => {
+            setStreamDetail(detail as StreamInfo);
+            if (!hasStreamPendingTx()) {
+              setLoadingStreamDetails(false);
+            }
+          });
+        } else {
+          setLoadingStreamDetails(false);
+        }
       }
     }, 1000);
 
     return () => {
       clearTimeout(timeout);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    ms, 
-    msp, 
-    setStreamDetail, 
-    streamSelected, 
-    loadingStreamDetails, 
-    hasStreamPendingTx
+    ms,
+    msp,
+    streamSelected,
+    loadingStreamDetails,
   ]);
 
   const isNewStream = useCallback(() => {

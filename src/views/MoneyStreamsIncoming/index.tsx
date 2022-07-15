@@ -1145,37 +1145,61 @@ export const MoneyStreamsIncomingView = (props: {
     return deletedStreams.some(i => i === id);
   }, [deletedStreams]);
 
+  const canWithdraw = (stream: StreamInfo | Stream | undefined ) => {
+    if (!stream) {
+      return false;
+    }
+
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
+    const isV2 = stream.version >= 2 ? true : false;
+
+    return accountAddress && (isV2 ? v2.beneficiary : v1.beneficiaryAddress) === accountAddress
+      ? true
+      : false;
+  }
+
   useEffect(() => {
-    if (!ms || !msp || !streamSelected) {return;}
+    if (!ms || !msp || !streamSelected) { return; }
 
     const timeout = setTimeout(() => {
-      if (msp && streamSelected && streamSelected.version >= 2) {
-        msp.refreshStream(streamSelected as Stream).then(detail => {
-          setStreamDetail(detail as Stream);
-          if (!hasStreamPendingTx()) {
-            setLoadingStreamDetails(false);
-          }
-        });
-      } else if (ms && streamSelected && streamSelected.version < 2) {
-        ms.refreshStream(streamSelected as StreamInfo).then(detail => {
-          setStreamDetail(detail as StreamInfo);
-          if (!hasStreamPendingTx()) {
-            setLoadingStreamDetails(false);
-          }
-        });
+      const v1 = streamSelected as StreamInfo;
+      const v2 = streamSelected as Stream;
+      const isV2 = streamSelected.version >= 2;
+      if (isV2) {
+        if (v2.status === STREAM_STATUS.Running) {
+          msp.refreshStream(streamSelected as Stream).then(detail => {
+            setStreamDetail(detail as Stream);
+            if (!hasStreamPendingTx()) {
+              setLoadingStreamDetails(false);
+            }
+          });
+        } else {
+          setLoadingStreamDetails(false);
+        }
+      } else {
+        if (v1.state === STREAM_STATE.Running) {
+          ms.refreshStream(streamSelected as StreamInfo).then(detail => {
+            setStreamDetail(detail as StreamInfo);
+            if (!hasStreamPendingTx()) {
+              setLoadingStreamDetails(false);
+            }
+          });
+        } else {
+          setLoadingStreamDetails(false);
+        }
       }
     }, 1000);
 
     return () => {
       clearTimeout(timeout);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    ms, 
-    msp, 
-    setStreamDetail, 
-    streamSelected, 
-    loadingStreamDetails, 
-    hasStreamPendingTx
+    ms,
+    msp,
+    streamSelected,
+    loadingStreamDetails,
   ]);
 
   // Keep account balance updated
@@ -1263,73 +1287,78 @@ export const MoneyStreamsIncomingView = (props: {
     </Menu>
   );
 
-  const v1 = streamSelected as StreamInfo;
-  const v2 = streamSelected as Stream;
-
   // Buttons
-  const buttons = (
-    <Row gutter={[8, 8]} className="safe-btns-container mb-1">
-      <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
-        <Button
-          type="default"
-          shape="round"
-          size="small"
-          className="thin-stroke"
-          disabled={
-            isBusy ||
-            hasStreamPendingTx() ||
-            isScheduledOtp() ||
-            (!v1.escrowVestedAmount && !v2.withdrawableAmount) ||
-            (streamSelected && isDeletedStream(streamSelected.id as string)) ||
-            ((accountAddress !== v2.beneficiary) && (accountAddress !== v1.beneficiaryAddress))
-          }
-          onClick={showWithdrawModal}>
-            <div className="btn-content">
-              Withdraw funds
-            </div>
-        </Button>
-        <Button
-          type="default"
-          shape="round"
-          size="small"
-          className="thin-stroke"
-          disabled={isBusy ||
-            hasStreamPendingTx() ||
-            !streamSelected
-          }
-          onClick={() => {}}>
-            {streamSelected ? (
-              <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-                <div className="btn-content">
-                    View on Solscan
-                </div>
-              </a>
-            ) : (
-              <div className="btn-content">
-                View on Solscan
-            </div>
-            )}
-        </Button>
-      </Col>
+  const buttons = () => {
+    if (!streamSelected) { return null; }
 
-      <Col xs={4} sm={6} md={4} lg={6}>
-        <Dropdown
-          overlay={menu}
-          placement="bottomRight"
-          trigger={["click"]}>
-          <span className="ellipsis-icon icon-button-container mr-1">
-            <Button
-              type="default"
-              shape="circle"
-              size="middle"
-              icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-              onClick={(e) => e.preventDefault()}
-            />
-          </span>
-        </Dropdown>
-      </Col>
-    </Row>
-  );
+    const v1 = streamSelected as StreamInfo;
+    const v2 = streamSelected as Stream;
+    const isV2 = streamSelected.version >= 2 ? true : false;
+
+    return (
+      <Row gutter={[8, 8]} className="safe-btns-container mb-1">
+        <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={
+              !canWithdraw(streamSelected) ||
+              isBusy ||
+              hasStreamPendingTx() ||
+              isScheduledOtp() ||
+              (isV2 ? v2.withdrawableAmount === 0 : v1.escrowVestedAmount === 0) ||
+              (isDeletedStream(streamSelected.id as string))
+            }
+            onClick={showWithdrawModal}>
+              <div className="btn-content">
+                Withdraw funds
+              </div>
+          </Button>
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={isBusy ||
+              hasStreamPendingTx() ||
+              !streamSelected
+            }
+            onClick={() => {}}>
+              {streamSelected ? (
+                <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
+                  <div className="btn-content">
+                      View on Solscan
+                  </div>
+                </a>
+              ) : (
+                <div className="btn-content">
+                  View on Solscan
+              </div>
+              )}
+          </Button>
+        </Col>
+  
+        <Col xs={4} sm={6} md={4} lg={6}>
+          <Dropdown
+            overlay={menu}
+            placement="bottomRight"
+            trigger={["click"]}>
+            <span className="ellipsis-icon icon-button-container mr-1">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                onClick={(e) => e.preventDefault()}
+              />
+            </span>
+          </Dropdown>
+        </Col>
+      </Row>
+    );
+  }
 
   return (
     <>
