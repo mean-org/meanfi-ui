@@ -1244,18 +1244,10 @@ export const MoneyStreamsInfoView = (props: {
     consoleOut('autocloseTreasuries:', autocloseTreasuries, 'crimson');
 
     setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)));
-    consoleOut('streamList inside MoneyStremsInfo:', streamList, 'crimson');
 
     const onlyOuts = streamList.filter(item => !isInboundStream(item));
-    consoleOut('onlyOuts:', onlyOuts, 'crimson');
     const onlyAutoClose = onlyOuts.filter(stream => autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress));
-    consoleOut('onlyAutoClose:', onlyAutoClose, 'crimson');
-
     setOutgoingStreamList(onlyAutoClose);
-
-    // setOutgoingStreamList(
-    //   streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream) && autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress))
-    // );
   }, [
     publicKey,
     streamList,
