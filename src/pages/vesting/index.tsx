@@ -812,7 +812,7 @@ export const VestingView = () => {
         ? contractActivity[contractActivity.length - 1].signature
         : '';
     consoleOut('before:', before, 'crimson');
-    msp.listVestingTreasuryActivity(streamPublicKey, before, 5)
+    msp.listVestingTreasuryActivity(streamPublicKey, before, 5, "confirmed")
       .then(value => {
         consoleOut('VC Activity:', value);
         const activities = clearHistory

@@ -32,7 +32,6 @@ import {
   isLocal,
   isDev,
   getShortDate,
-  isProd
 } from '../../utils/ui';
 
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
@@ -2150,17 +2149,17 @@ export const MultisigView = () => {
         .getMultisigTransactions(selectedMultisig.id, publicKey)
         .then((txs: MultisigTransaction[]) => {
           consoleOut('selected multisig txs', txs, 'blue');
-          if (!isProd()) {
-            const debugTable: any[] = [];
-            txs.forEach(item => debugTable.push({
-              operation: OperationType[item.operation],
-              approved: item.didSigned,
-              executed: item.executedOn ? true : false,
-              proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
-              status: MultisigTransactionStatus[item.status]
-            }));
-            console.table(debugTable);
-          }
+          // if (isLocal()) {
+          //   const debugTable: any[] = [];
+          //   txs.forEach(item => debugTable.push({
+          //     operation: OperationType[item.operation],
+          //     approved: item.didSigned,
+          //     executed: item.executedOn ? true : false,
+          //     proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
+          //     status: MultisigTransactionStatus[item.status]
+          //   }));
+          //   console.table(debugTable);
+          // }
           setMultisigTxs(txs);
         })
         .catch((err: any) => {

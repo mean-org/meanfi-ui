@@ -493,8 +493,6 @@ export const MultisigTreasuryStreams = () => {
                 publicKey
             );
 
-            // consoleOut('=========== Block start ===========', '', 'orange');
-
             let streamsUsdNetChange = 0;
 
             for (const stream of updatedStreamsv2) {
@@ -523,9 +521,6 @@ export const MultisigTreasuryStreams = () => {
                     parseFloat(
                         freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9)
                     ) * rate;
-                // consoleOut(`rate for 1 ${asset ? asset.symbol : '[' + shortenAddress(freshStream.associatedToken as string, 6) + ']'}`, rate, 'blue');
-                // consoleOut(`streamUnitsPerSecond: ${isIncoming ? '↑' : '↓'}`, freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9), 'blue');
-                // consoleOut(`streamUnitsUsdPerSecond: ${isIncoming ? '↑' : '↓'}`, streamUnitsUsdPerSecond, 'blue');
                 if (isIncoming) {
                     streamsUsdNetChange += streamUnitsUsdPerSecond;
                 } else {
@@ -535,9 +530,6 @@ export const MultisigTreasuryStreams = () => {
 
             resume["totalAmount"] += updatedStreamsv2.length;
             resume["totalNet"] += streamsUsdNetChange;
-
-            // consoleOut('totalNet:', resume['totalNet'], 'blue');
-            // consoleOut('=========== Block ends ===========', '', 'orange');
 
             // Update state
             setLastStreamsSummary(streamsSummary);

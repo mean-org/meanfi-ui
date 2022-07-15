@@ -512,8 +512,6 @@ export const Streams = () => {
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
-    // consoleOut('=========== Block start ===========', '', 'darkorange');
-
     for (const stream of updatedStreamsv1) {
 
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
@@ -575,9 +573,6 @@ export const Streams = () => {
     }
 
     resume['totalAmount'] += updatedStreamsv2.length;
-
-    // consoleOut('totalNet:', resume['totalNet'], 'blue');
-    // consoleOut('=========== Block ends ===========', '', 'darkorange');
 
     // Update state
     setLastStreamsSummary(streamsSummary);

@@ -762,9 +762,6 @@ const AppStateProvider: React.FC = ({ children }) => {
             setActiveStream(detail);
             if (dock) {
               setStreamList([detail]);
-              // setStreamActivity([]);
-              // setHasMoreStreamActivity(true);
-              // getStreamActivity(streamId, detail.version, true);
               setCustomStreamDocked(true);
               openNotification({
                 description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
@@ -885,9 +882,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         .then((detail: Stream | StreamInfo) => {
           consoleOut('detail:', detail, 'blue');
           if (detail) {
-            // setStreamActivity([]);
-            // setHasMoreStreamActivity(true);
-            // getStreamActivity(detail.id as string, detail.version, true);
             updateStreamDetail(detail);
             setActiveStream(detail);
             if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
@@ -898,8 +892,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         })
         .catch((error: any) => {
           console.error(error);
-          // setStreamActivity([]);
-          // setHasMoreStreamActivity(false);
         });
     }
   }
@@ -993,8 +985,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       pricesNewPerformanceCounter.stop();
       consoleOut(`Fetched price list in ${pricesNewPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
       if (newPrices && newPrices.length > 0) {
-        // const pricesMap = new Map<string, number>();
-        // newPrices.forEach(tp => pricesMap.set(tp.symbol, tp.price));
         const pricesMap: any = {};
         newPrices.forEach(tp => pricesMap[tp.symbol] = tp.price);
         const solPrice = pricesMap["SOL"];
@@ -1192,14 +1182,14 @@ const AppStateProvider: React.FC = ({ children }) => {
             rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
             streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
             // Sort debugging block
-            if (!isProd()) {
-              const debugTable: any[] = [];
-              streamAccumulator.forEach(item => debugTable.push({
-                createdBlockTime: item.createdBlockTime,
-                name: item.version < 2 ? item.streamName : item.name.trim(),
-              }));
-              console.table(debugTable);
-            }
+            // if (!isProd()) {
+            //   const debugTable: any[] = [];
+            //   streamAccumulator.forEach(item => debugTable.push({
+            //     createdBlockTime: item.createdBlockTime,
+            //     name: item.version < 2 ? item.streamName : item.name.trim(),
+            //   }));
+            //   console.table(debugTable);
+            // }
             // End of debugging block
             setStreamList(streamAccumulator);
             setStreamListv2(rawStreamsv2);
@@ -1235,16 +1225,16 @@ const AppStateProvider: React.FC = ({ children }) => {
               .then((detail: Stream | StreamInfo) => {
                 streamDetailPerformanceCounter.stop();
                 refreshStreamsPerformanceCounter.stop();
-                if (!isProd()) {
-                  consoleOut('listStreams performance counter:', '', 'crimson');
-                  const results = [{
-                    v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                    v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                    streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                    total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                  }];
-                  console.table(results);
-                }
+                // if (!isProd()) {
+                //   consoleOut('listStreams performance counter:', '', 'crimson');
+                //   const results = [{
+                //     v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //     v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //     streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //     total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //   }];
+                //   console.table(results);
+                // }
                 if (detail) {
                   updateStreamDetail(detail);
                   setActiveStream(detail);
@@ -1252,12 +1242,6 @@ const AppStateProvider: React.FC = ({ children }) => {
                     const token = getTokenByMintAddress(detail.associatedToken as string);
                     setSelectedToken(token);
                   }
-                  // setTimeout(() => {
-                  //   setStreamActivity([]);
-                  //   setHasMoreStreamActivity(true);
-                  //   setLoadingStreamActivity(true);
-                  // });
-                  // getStreamActivity(detail.id as string, detail.version, true);
                 } else if (item) {
                   updateStreamDetail(item);
                   setActiveStream(item);
@@ -1265,17 +1249,9 @@ const AppStateProvider: React.FC = ({ children }) => {
                     const token = getTokenByMintAddress(item.associatedToken as string);
                     setSelectedToken(token);
                   }
-                  // setTimeout(() => {
-                  //   setStreamActivity([]);
-                  //   setHasMoreStreamActivity(true);
-                  //   setLoadingStreamActivity(true);
-                  // });
-                  // getStreamActivity(item.id as string, item.version, true);
                 }
               })
             } else {
-              // setStreamActivity([]);
-              // setHasMoreStreamActivity(false);
               updateSelectedStream(undefined);
               updateStreamDetail(undefined);
               setActiveStream(undefined);
@@ -1305,7 +1281,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     highLightableStreamId,
     clearTxConfirmationContext,
     getTokenByMintAddress,
-    // getStreamActivity
   ]);
 
 
