@@ -52,7 +52,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { Streams } from '../../views';
 import { initialSummary, StreamsSummary } from '../../models/streams';
-import { MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { Category, MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
 import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
@@ -2706,7 +2706,7 @@ export const AccountsNewView = () => {
 
     const pk = new PublicKey(accountAddress);
 
-    const treasuries = await msp.listTreasuries(pk);
+    const treasuries = await msp.listTreasuries(pk, true, true, Category.default);
 
     const autoclosables = treasuries.filter(t => t.autoClose);
 
@@ -2722,13 +2722,12 @@ export const AccountsNewView = () => {
 
   const refreshTreasuries = useCallback((reset = false) => {
 
-    if (!connection || !publicKey || loadingTreasuries) { return; }
+    if (!publicKey || loadingTreasuries) { return; }
 
     if (msp && ms) {
 
       setTimeout(() => {
         setLoadingTreasuries(true);
-        clearTxConfirmationContext();
       });
 
       const treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
@@ -2758,9 +2757,7 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
-    connection,
     loadingTreasuries,
-    clearTxConfirmationContext,
     getAllUserV2Treasuries,
     getQueryAccountType,
   ]);
@@ -3004,10 +3001,9 @@ export const AccountsNewView = () => {
 
   // Load treasuries when account address changes
   useEffect(() => {
-    if (publicKey && accountAddress) {
-      if (!treasuriesLoaded) {
-        setTreasuriesLoaded(true);
-      }
+    if (publicKey && accountAddress && !treasuriesLoaded) {
+
+      setTreasuriesLoaded(true);
 
       // if (!previousRoute.startsWith('/accounts')) {
       //   setTreasuryList([]);
@@ -3833,12 +3829,9 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathParamStreamId, publicKey, streamDetail, streamList]);
 
-
-
-
   // Create a combined list of streaming accounts with its 
   useEffect(() => {
-    if (!treasuryList || !streamList) { return; }
+    if (!treasuryList || !streamList || !treasuriesLoaded) { return; }
 
     const getFinalList = async (list: (Treasury | TreasuryInfo)[]) => {
       const finalList: CombinedStreamingAccounts[] = [];
@@ -3897,10 +3890,7 @@ export const AccountsNewView = () => {
         consoleOut('streamingAccountCombinedList:', [], "blue");
       })
       .finally(() => setLoadingCombinedStreamingList(false));
-  }, [getStreamingAccountStreams, streamList, treasuryList]);
-
-
-
+  }, [streamList, treasuriesLoaded, treasuryList]);
 
   // Set the list of incoming and outgoing streams
   useEffect(() => {
@@ -4084,10 +4074,15 @@ export const AccountsNewView = () => {
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       consoleOut('Clearing accounts state...', '', 'purple');
+      setPathParamAsset('');
+      setPathParamStreamId('');
+      setPathParamTreasuryId('');
+      setPathParamStreamingTab('');
       setTokensLoaded(false);
       setAccountTokens([]);
       setTreasuryList([]);
       setStreamList([]);
+      setTreasuriesLoaded(false);
       setAutocloseTreasuries([]);
       setStreamingAccountCombinedList([]);
       setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
@@ -5024,109 +5019,6 @@ export const AccountsNewView = () => {
     );
   };
 
-  // const renderAddAccountBox = (
-  //   <>
-  //     <div className="boxed-area container-max-width-600 add-account">
-  //       {accountAddress && (
-  //         <div className="back-button">
-  //           <span className="icon-button-container">
-  //             <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
-  //               <Button
-  //                 type="default"
-  //                 shape="circle"
-  //                 size="middle"
-  //                 className="hidden-xs"
-  //                 icon={<ArrowLeftOutlined />}
-  //                 onClick={handleBackToAccountDetailsButtonClick}
-  //               />
-  //             </Tooltip>
-  //           </span>
-  //         </div>
-  //       )}
-  //       <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
-  //       <div className="flexible-left mb-3">
-  //         <div className="transaction-field left">
-  //           <div className="transaction-field-row">
-  //             <span className="field-label-left">{t('assets.account-address-label')}</span>
-  //             <span className="field-label-right">&nbsp;</span>
-  //           </div>
-  //           <div className="transaction-field-row main-row">
-  //             <span className="input-left recipient-field-wrapper">
-  //               <input id="payment-recipient-field"
-  //                 className="w-100 general-text-input"
-  //                 autoComplete="on"
-  //                 autoCorrect="off"
-  //                 type="text"
-  //                 onFocus={handleAccountAddressInputFocusIn}
-  //                 onChange={handleAccountAddressInputChange}
-  //                 onBlur={handleAccountAddressInputFocusOut}
-  //                 placeholder={t('assets.account-address-placeholder')}
-  //                 required={true}
-  //                 spellCheck="false"
-  //                 value={accountAddressInput}/>
-  //               <span id="payment-recipient-static-field"
-  //                     className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-  //                 {accountAddressInput || t('assets.account-address-placeholder')}
-  //               </span>
-  //             </span>
-  //             <div className="addon-right simplelink" onClick={showQrScannerModal}>
-  //               <QrcodeOutlined />
-  //             </div>
-  //           </div>
-  //           <div className="transaction-field-row">
-  //             <span className="field-label-left">
-  //               {accountAddressInput && !isValidAddress(accountAddressInput) ? (
-  //                 <span className="fg-red">
-  //                   {t('transactions.validation.address-validation')}
-  //                 </span>
-  //               ) : (
-  //                 <span>&nbsp;</span>
-  //               )}
-  //             </span>
-  //           </div>
-  //         </div>
-  //         {/* Go button */}
-  //         <Button
-  //           className="main-cta right"
-  //           type="primary"
-  //           shape="round"
-  //           size="large"
-  //           onClick={onAddAccountAddress}
-  //           disabled={!isValidAddress(accountAddressInput)}>
-  //           {t('assets.account-add-cta-label')}
-  //         </Button>
-  //       </div>
-  //       <div className="text-center">
-  //         <span className="mr-1">{t('assets.create-account-help-pre')}</span>
-  //         <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-  //           {t('assets.create-account-help-link')}
-  //         </a>
-  //         <span className="ml-1">{t('assets.create-account-help-post')}</span>
-  //       </div>
-  //     </div>
-  //     {isQrScannerModalVisible && (
-  //       <QrScannerModal
-  //         isVisible={isQrScannerModalVisible}
-  //         handleOk={onAcceptQrScannerModal}
-  //         handleClose={closeQrScannerModal}/>
-  //     )}
-  //   </>
-  // );
-
-  // // Tabs
-  // const tabs = [
-  //   {
-  //     id: "summary",
-  //     name: "Summary",
-  //     // render: renderListOfSummary
-  //   },
-  //   {
-  //     id: "accounts",
-  //     name: "Accounts",
-  //     // render: renderListOfAccounts
-  //   }
-  // ];
-
   const goToStreamIncomingDetailsHandler = (stream: any) => {
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${stream.id as string}`;
 
@@ -5205,7 +5097,6 @@ export const AccountsNewView = () => {
   }
 
   const returnFromStreamingAccountDetailsHandler = () => {
-    // setIsStreamingAccountDetails(false);
 
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
 

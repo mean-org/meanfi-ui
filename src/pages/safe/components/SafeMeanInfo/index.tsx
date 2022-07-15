@@ -18,7 +18,6 @@ import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import BN from 'bn.js';
-import { MultisigVault } from '../../../../models/multisig';
 import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { ResumeItem } from '../../../../components/ResumeItem';
 
@@ -60,8 +59,6 @@ export const SafeMeanInfo = (props: {
   const {
     connection,
     publicKey,
-    // isProposalDetails,
-    // isProgramDetails,
     selectedMultisig,
     onEditMultisigClick,
     onNewProposalMultisigClick,
@@ -70,7 +67,6 @@ export const SafeMeanInfo = (props: {
     proposalSelected,
     onDataToSafeView,
     onDataToProgramView,
-    // assetSelected,
     onRefreshRequested,
     loadingProposals,
     loadingPrograms,
@@ -83,30 +79,19 @@ export const SafeMeanInfo = (props: {
   const { account } = useNativeAccount();
   const { connected } = useWallet();
   const [loadingAssets, setLoadingAssets] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction | undefined>();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isBusy, setIsBusy] = useState(false);
   const [nativeBalance, setNativeBalance] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigInfo)[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAddress, setMultisigAddress] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [assetsWithoutSol, setAssetsWithoutSol] = useState<MultisigVault[]>([]);
-  // const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
+  // const [assetsWithoutSol, setAssetsWithoutSol] = useState<MultisigVault[]>([]);
 
   // Tabs
   const [amountOfProposals, setAmountOfProposals] = useState<string>("");
-  // const [amountOfAssets, setAmountOfAssets] = useState<string>("");
   const [amountOfPrograms, setAmountOfPrograms] = useState<string>("");
 
   const getMultisigVaults = useCallback(async (
@@ -181,7 +166,7 @@ export const SafeMeanInfo = (props: {
             result.forEach(item => {
               modifiedResults.push(item);
             });
-            setAssetsWithoutSol(result);
+            // setAssetsWithoutSol(result);
             setMultisigVaults(modifiedResults);  
             consoleOut("Multisig assets", modifiedResults, "blue");
           })
@@ -333,138 +318,12 @@ export const SafeMeanInfo = (props: {
     selectedMultisig,
   ]);
 
-  useEffect(() => {
-
-    setSelectedProposal(proposalSelected);
-
-  }, [
-    proposalSelected
-  ]);
-
-  // useEffect(() => {
-
-  //   if (!selectedMultisig || !proposalSelected) { return; }
-  //   const timeout = setTimeout(() => setSelectedProposal(proposalSelected));
-  //   return () => clearTimeout(timeout);
-
-  // }, [
-  //   selectedMultisig, 
-  //   proposalSelected
-  // ]);
-
   const isTxInProgress = useCallback((): boolean => {
     return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
   }, [
     isBusy,
     fetchTxInfoStatus,
   ]);
-
-  // const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
-
-  //   if (!connection || !selectedMultisig || !selectedMultisig.authority) { return []; }
-
-  //   const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
-  //   const execDataAccountsFilter: MemcmpFilter = { 
-  //     memcmp: { offset: 13, bytes: selectedMultisig.authority.toBase58() } 
-  //   };
-
-  //   const execDataAccounts = await connection.getProgramAccounts(
-  //     BPFLoaderUpgradeab1e, {
-  //       filters: [execDataAccountsFilter]
-  //     }
-  //   );
-
-  //   const programs: ProgramAccounts[] = [];
-  //   const group = (size: number, data: any) => {
-  //     const result = [];
-  //     for (let i = 0; i < data.length; i += size) {
-  //       result.push(data.slice(i, i + size));
-  //     }
-  //     return result;
-  //   };
-
-  //   const sleep = (ms: number, log = true) => {
-  //     if (log) { consoleOut("Sleeping for", ms / 1000, "seconds"); }
-  //     return new Promise((resolve) => setTimeout(resolve, ms));
-  //   }
-
-  //   const getProgramAccountsPromise = async (execDataAccount: any) => {
-
-  //     const execAccountsFilter: MemcmpFilter = { 
-  //       memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() } 
-  //     };
-
-  //     const execAccounts = await connection.getProgramAccounts(
-  //       BPFLoaderUpgradeab1e, {
-  //         dataSlice: { offset: 0, length: 0 },
-  //         filters: [execAccountsFilter]
-  //       }
-  //     );
-
-  //     if (execAccounts.length === 0) { return; }
-
-  //     if (execAccounts.length > 1) {
-  //       throw new Error(`More than one program was found for program data account '${execDataAccount.pubkey.toBase58()}'`);
-  //     }
-
-  //     programs.push({
-  //         pubkey: execAccounts[0].pubkey,
-  //         owner: execAccounts[0].account.owner,
-  //         executable: execDataAccount.pubkey,
-  //         upgradeAuthority: selectedMultisig.authority,
-  //         size: execDataAccount.account.data.byteLength
-  //       } as ProgramAccounts
-  //     );
-  //   }
-
-  //   const execDataAccountsGroups = group(8, execDataAccounts);
-
-  //   for (const groupItem of execDataAccountsGroups) {
-  //     const promises: Promise<any>[] = [];
-  //     for (const dataAcc of groupItem) {
-  //       promises.push(
-  //         getProgramAccountsPromise(dataAcc)
-  //       );
-  //     }
-  //     await Promise.all(promises);
-  //     sleep(1_000, false);
-  //   }
-
-  //   return programs;
-
-  // },[
-  //   connection, 
-  //   selectedMultisig
-  // ]);
-
-  // Get Programs
-  // useEffect(() => {
-  //   if (!connection || !selectedMultisig || !loadingPrograms) {
-  //     return;
-  //   }
-
-  //   const timeout = setTimeout(() => {
-  //     getProgramsByUpgradeAuthority()
-  //       .then(progs => {
-  //         setPrograms(progs.length > 0 ? progs : undefined);
-  //         setAmountOfPrograms(progs.length > 0 ? progs.length.toString() : "");
-  //         consoleOut('programs:', progs);
-  //       })
-  //       .catch(error => console.error(error))
-  //       .finally(() => setLoadingPrograms(false));
-  //   });
-
-  //   return () => {
-  //     clearTimeout(timeout);
-  //   }
-  // }, [
-  //   connection,
-  //   selectedMultisig,
-  //   loadingPrograms,
-  //   getProgramsByUpgradeAuthority,
-  //   setAmountOfPrograms,
-  //   setPrograms
-  // ]);
 
   useEffect(() => {
     const loading = selectedMultisig ? true : false;
@@ -478,87 +337,6 @@ export const SafeMeanInfo = (props: {
   },[
     selectedMultisig
   ]);
-
-  // const getMultisigProposals = useCallback(async () => {
-
-  //   if (
-  //     !connection || 
-  //     !publicKey || 
-  //     !multisigClient || 
-  //     !selectedMultisig
-  //   ) { 
-  //     return [];
-  //   }
-
-  //   return await multisigClient.getMultisigTransactions(
-  //     selectedMultisig.id, 
-  //     publicKey
-  //   );
-
-  // }, [
-  //   connection, 
-  //   multisigClient, 
-  //   publicKey, 
-  //   selectedMultisig
-  // ]);
-
-  // Get Txs for the selected multisig
-  // useEffect(() => {
-
-  //   if (
-  //     !connection || 
-  //     !publicKey || 
-  //     !multisigClient || 
-  //     !selectedMultisig ||
-  //     !loadingProposals
-  //   ) { 
-  //     return;
-  //   }
-
-  //   const timeout = setTimeout(() => {
-  //     setMultisigTxs(undefined);
-  //     setAmountOfProposals("");
-  //     consoleOut('Triggering loadMultisigPendingTxs ...', '', 'blue');
-  //     getMultisigProposals()
-  //       .then((txs: MultisigTransaction[]) => {
-  //         if (loadingProposals) {
-  //           setMultisigTxs(txs.length > 0 ? txs : undefined);
-  //           setAmountOfProposals(txs.length > 0 ? txs.length.toString() : "");
-  //         }
-  //       })
-  //       .catch((err: any) => console.error("Error fetching all transactions", err))
-  //       .finally(() => setLoadingProposals(false));
-  //   });
-
-  //   return () => {
-  //     clearTimeout(timeout);
-  //   }
-
-  // }, [
-  //   publicKey, 
-  //   selectedMultisig, 
-  //   connection, 
-  //   multisigClient, 
-  //   loadingProposals, 
-  //   proposalSelected, 
-  //   setMultisigTxs, 
-  //   getMultisigProposals
-  // ]);
-
-  // useEffect(() => {
-  //   const timeout = setTimeout(() => {
-
-  //     if (multisigTxs) {
-  //       setLoadingProposals(false);
-  //     } else {
-  //       setLoadingProposals(true);
-  //     }
-  //   }, 2500);
-
-  //   return () => {
-  //     clearTimeout(timeout);
-  //   }
-  // }, [multisigTxs]);
 
   // Proposals list
   const renderListOfProposals = (

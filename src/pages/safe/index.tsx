@@ -3779,7 +3779,6 @@ export const SafeView = () => {
   useEffect(() => {
 
     if (
-      !connection || 
       !publicKey || 
       !multisigClient || 
       !selectedMultisig ||
@@ -3788,9 +3787,11 @@ export const SafeView = () => {
       return;
     }
 
-    setNeedRefreshTxs(false);
-    setProposalsLoading(true);
-    setMultisigTxs([]);
+    setTimeout(() => {
+      setNeedRefreshTxs(false);
+      setProposalsLoading(true);
+      setMultisigTxs([]);
+    });
 
     consoleOut('Triggering loadMultisigPendingTxs ...', '', 'blue');
     const msigId = selectedMultisig.id;
@@ -3807,16 +3808,16 @@ export const SafeView = () => {
       .catch((err: any) => console.error("Error fetching all transactions", err))
       .finally(() => setProposalsLoading(false));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
-    connection,
     multisigClient,
     needRefreshTxs,
     selectedMultisig,
     getActiveMultisigIdByReference,
     getMultisigProposals,
     setProposalsLoading,
-    setMultisigTxs,
+    // setMultisigTxs,
   ]);
 
   /////////////////
