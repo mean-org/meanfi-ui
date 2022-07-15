@@ -93,6 +93,11 @@
         .title {
             padding-left: 1rem;
         }
+        @media (max-width: 767px) {
+            .amount {
+                padding-right: 0.5rem;
+            }
+        }
 
         @media (max-width: 767.98px) {
             margin: 0.5rem -2.6%;
