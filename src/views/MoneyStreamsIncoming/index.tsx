@@ -249,11 +249,11 @@ export const MoneyStreamsIncomingView = (props: {
   const showTransferStreamTransactionModal = useCallback(() => setTransferStreamTransactionModalVisibility(true), []);
   const hideTransferStreamTransactionModal = useCallback(() => setTransferStreamTransactionModalVisibility(false), []);
 
-  const onAcceptTransferStream = (address: string) => {
+  const onAcceptTransferStream = (dataStream: any) => {
     closeTransferStreamModal();
-    consoleOut('New beneficiary address:', address);
-    setLastStreamTransferAddress(address);
-    onExecuteTransferStreamTransaction(address);
+    consoleOut('New beneficiary address:', dataStream.address);
+    setLastStreamTransferAddress(dataStream.address);
+    onExecuteTransferStreamTransaction(dataStream);
   };
 
   const onTransferStreamTransactionFinished = () => {
@@ -272,7 +272,7 @@ export const MoneyStreamsIncomingView = (props: {
     resetTransactionStatus();
   }
 
-  const onExecuteTransferStreamTransaction = async (address: string) => {
+  const onExecuteTransferStreamTransaction = async (dataStream: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -282,13 +282,13 @@ export const MoneyStreamsIncomingView = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const transferOwnership = async (address: string) => {
+    const transferOwnership = async (dataStream: any) => {
       if (!msp || !publicKey || !streamSelected) { return null; }
 
       if (!isIncomingMultisigStream()) {
         return await msp.transferStream(
           publicKey,                                       // beneficiary,
-          new PublicKey(address),                          // newBeneficiary,
+          new PublicKey(dataStream.address),               // newBeneficiary,
           new PublicKey(streamSelected.id as string),      // stream,
         );
       }
@@ -302,7 +302,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       const transferOwnership = await msp.transferStream(
         multisig.authority,                              // beneficiary,
-        new PublicKey(address),                          // newBeneficiary,
+        new PublicKey(dataStream.address as string),     // newBeneficiary,
         new PublicKey(streamSelected.id as string),      // stream,
       );
 
@@ -312,7 +312,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Transfer stream ownership",
+        dataStream.title === "" ? "Transfer stream ownership" : dataStream.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.StreamTransferBeneficiary,
@@ -342,7 +342,8 @@ export const MoneyStreamsIncomingView = (props: {
       });
 
       const stream = new PublicKey(streamSelected.id as string);
-      const newBeneficiary = new PublicKey(address);
+      const newBeneficiary = new PublicKey(dataStream.address as string);
+
       const data = {
         beneficiary: publicKey.toBase58(),                              // beneficiary
         newBeneficiary: newBeneficiary.toBase58(),                      // newBeneficiary
@@ -394,7 +395,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       consoleOut('Starting transferStream using MSP V2...', '', 'blue');
 
-      const result = await transferOwnership(address)
+      const result = await transferOwnership(dataStream)
         .then(value => {
           if (!value) { return false; }
           consoleOut('transferStream returned transaction:', value);
@@ -561,9 +562,9 @@ export const MoneyStreamsIncomingView = (props: {
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Transfer stream to: ${shortenAddress(address)}`,
+              loadingMessage: `Transfer stream to: ${shortenAddress(dataStream.address, 4)}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Stream transferred to: ${shortenAddress(address)}`,
+              completedMessage: `Stream transferred to: ${shortenAddress(dataStream.address, 4)}`,
               extras: streamSelected.id as string
             });
             setTransactionStatus({
@@ -661,6 +662,7 @@ export const MoneyStreamsIncomingView = (props: {
         const valueInUsd = price * amount;
 
         const data = {
+          title: withdrawData.title,
           stream: stream.toBase58(),
           beneficiary: beneficiary.toBase58(),
           amount: amount
@@ -717,6 +719,7 @@ export const MoneyStreamsIncomingView = (props: {
         consoleOut('Starting withdraw using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.withdraw(
+          // title,
           beneficiary,
           stream,
           amount
@@ -790,7 +793,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Withdraw stream funds",
+        withdrawData.title === "" ? "Withdraw stream funds" : withdrawData.title as string,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.StreamWithdraw,
@@ -1357,7 +1360,7 @@ export const MoneyStreamsIncomingView = (props: {
           selectedToken={selectedToken}
           transactionFees={transactionFees}
           isVisible={isWithdrawModalVisible}
-          handleOk={onAcceptWithdraw}
+          handleOk={(options: StreamWithdrawData) => onAcceptWithdraw(options)}
           handleClose={closeWithdrawModal}
         />
       )}
@@ -1366,7 +1369,7 @@ export const MoneyStreamsIncomingView = (props: {
         <StreamTransferOpenModal
           isVisible={isTransferStreamModalVisible}
           streamDetail={streamSelected}
-          handleOk={onAcceptTransferStream}
+          handleOk={(dataStream: any) => onAcceptTransferStream(dataStream)}
           handleClose={closeTransferStreamModal}
         />
       )}

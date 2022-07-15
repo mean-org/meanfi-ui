@@ -1365,7 +1365,6 @@ export const SafeView = () => {
     transactionCancelled,
     multisigClient,
     transactionStatus.currentOperation,
-    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,

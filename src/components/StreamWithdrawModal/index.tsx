@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import { useConnectionConfig } from '../../contexts/connection';
@@ -16,6 +16,9 @@ import { BN } from 'bn.js';
 import { openNotification } from '../Notifications';
 import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { StreamWithdrawData } from '../../models/streams';
+import { InputMean } from '../InputMean';
+import { TransactionStatus } from '../../models/enums';
+import { useSearchParams } from 'react-router-dom';
 
 export const StreamWithdrawModal = (props: {
   startUpData: Stream | StreamInfo | undefined;
@@ -28,15 +31,32 @@ export const StreamWithdrawModal = (props: {
   const { t } = useTranslation('common');
   const { endpoint } = useConnectionConfig();
   const { wallet, publicKey } = useWallet();
+  const [searchParams] = useSearchParams();
   const {
+    transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
+    setTransactionStatus,
   } = useContext(AppStateContext);
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<number>(0);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [feePayedByTreasurer, setFeePayedByTreasurer] = useState(false);
+  const [multisigTitle, setMultisigTitle] = useState('');
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   useEffect(() => {
 
@@ -160,6 +180,7 @@ export const StreamWithdrawModal = (props: {
       ? true : false;
     setWithdrawAmountInput('');
     const withdrawData: StreamWithdrawData = {
+      title: multisigTitle,
       token: props.selectedToken ? props.selectedToken.symbol || '-' : '-',
       amount: isMaxAmount ? `${maxAmount}` : withdrawAmountInput,
       inputAmount: parseFloat(withdrawAmountInput),
@@ -170,8 +191,25 @@ export const StreamWithdrawModal = (props: {
   };
 
   const onCloseModal = () => {
-    setWithdrawAmountInput('');
+    onAfterClose();
     props.handleClose();
+  }
+
+  const onAfterClose = () => {
+
+    setTimeout(() => {
+      setMultisigTitle('');
+      setWithdrawAmountInput('');
+    }, 50);
+
+    setTransactionStatus({
+        lastOperation: TransactionStatus.Iddle,
+        currentOperation: TransactionStatus.Iddle
+    });
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setMultisigTitle(e.target.value);
   }
 
   const setValue = (value: string) => {
@@ -224,7 +262,6 @@ export const StreamWithdrawModal = (props: {
   };
 
   // Validation
-
   const isValidInput = (): boolean => {
     return props.startUpData &&
       withdrawAmountInput &&
@@ -269,18 +306,33 @@ export const StreamWithdrawModal = (props: {
       onOk={onAcceptWithdrawal}
       onCancel={onCloseModal}
       width={480}>
-      <div className="well disabled">
-        <div className="flex-fixed-right">
-          <div className="left inner-label">{t('withdraw-funds.label-available-amount')}:</div>
-          <div className="right">&nbsp;</div>
-        </div>
-        <div className="flex-fixed-right">
-          <div className="left static-data-field">{props.startUpData && getDisplayAmount(maxAmount, true)}</div>
-          <div className="right">&nbsp;</div>
-        </div>
-      </div>
+        {/* Proposal title */}
+        {param === "multisig" && (
+          <div className="mb-3">
+            <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+            <InputMean
+              id="proposal-title-field"
+              name="Title"
+              className="w-100 general-text-input"
+              onChange={onTitleInputValueChange}
+              placeholder="Add a proposal title (required)"
+              value={multisigTitle}
+            />
+          </div>
+        )}
 
-      <div className={`well ${loadingData ? 'disabled' : ''}`}>
+        <div className="well disabled">
+          <div className="flex-fixed-right">
+            <div className="left inner-label">{t('withdraw-funds.label-available-amount')}:</div>
+            <div className="right">&nbsp;</div>
+          </div>
+          <div className="flex-fixed-right">
+            <div className="left static-data-field">{props.startUpData && getDisplayAmount(maxAmount, true)}</div>
+            <div className="right">&nbsp;</div>
+          </div>
+        </div>
+
+        <div className={`well ${loadingData ? 'disabled' : ''}`}>
         <div className="flex-fixed-right">
           <div className="left inner-label">{t('withdraw-funds.label-input-amount')}</div>
           <div className="right">

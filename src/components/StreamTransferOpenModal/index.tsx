@@ -8,6 +8,7 @@ import { Stream } from '@mean-dao/msp';
 import { StreamInfo } from '@mean-dao/money-streaming';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { useSearchParams } from 'react-router-dom';
+import { InputMean } from '../InputMean';
 
 export const StreamTransferOpenModal = (props: {
   handleClose: any;
@@ -28,6 +29,7 @@ export const StreamTransferOpenModal = (props: {
 
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
   const [queryAccountType, setQueryAccountType] = useState<string | undefined>(undefined);
+  const [multisigTitle, setMultisigTitle] = useState('');
 
   const isAddressTreasurer = useCallback((address: string): boolean => {
     if (streamDetail && address) {
@@ -41,6 +43,10 @@ export const StreamTransferOpenModal = (props: {
     return false;
   }, [streamDetail]);
 
+  const onTitleInputValueChange = (e: any) => {
+    setMultisigTitle(e.target.value);
+  }
+
   const handleAddressChange = (e: any) => {
     setAddress(e.target.value);
   }
@@ -50,12 +56,16 @@ export const StreamTransferOpenModal = (props: {
       ? true : false;
   }
 
-  const onAcceptNewAddress = () => {
-    handleOk(address);
+  const onAcceptModal = () => {
+    handleOk({
+      title: multisigTitle,
+      address: address
+    });
   }
 
   const onCloseModal = () => {
     setAddress('');
+    setMultisigTitle("");
     setIsVerifiedRecipient(false);
     handleClose();
   }
@@ -87,9 +97,23 @@ export const StreamTransferOpenModal = (props: {
       title={<div className="modal-title">{queryAccountType === "multisig" ? "Propose transfer stream" : t('transfer-stream.modal-title')}</div>}
       footer={null}
       visible={isVisible}
-      onOk={onAcceptNewAddress}
       onCancel={onCloseModal}
       width={480}>
+
+      {/* Proposal title */}
+      {queryAccountType === "multisig" && (
+        <div className="mb-3">
+          <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+          <InputMean
+            id="proposal-title-field"
+            name="Title"
+            className="w-100 general-text-input"
+            onChange={onTitleInputValueChange}
+            placeholder="Add a proposal title (required)"
+            value={multisigTitle}
+          />
+        </div>
+      )}
 
       <div className="form-label">{t('transfer-stream.label-streamid-input')}</div>
       <div className="well">
@@ -137,7 +161,7 @@ export const StreamTransferOpenModal = (props: {
         shape="round"
         size="large"
         disabled={!address || !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address) || !isVerifiedRecipient}
-        onClick={onAcceptNewAddress}>
+        onClick={onAcceptModal}>
         {queryAccountType === "multisig" ? "Submit proposal" : !address ? t('transfer-stream.streamid-empty') : t('transfer-stream.streamid-open-cta')}
       </Button>
     </Modal>
