@@ -1368,7 +1368,7 @@ export const MoneyStreamsIncomingView = (props: {
           hideDetailsHandler={hideDetailsHandler}
           infoData={infoData}
           isStreamIncoming={true}
-          buttons={buttons}
+          buttons={buttons()}
         />
       </Spin>
 
