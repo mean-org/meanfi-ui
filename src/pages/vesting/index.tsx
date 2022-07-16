@@ -337,6 +337,89 @@ export const VestingView = () => {
     return await calculateActionFees(connection, action);
   }, [connection]);
 
+  /*
+  const showNotificationByType = useCallback(async (type: IconType) => {
+    await delay(1500);
+    const myNotifyKey = `notify-${Date.now()}`;
+    openNotification({
+      type,
+      key: myNotifyKey,
+      title: 'Review proposal',
+      duration: 20,
+      description: (
+        <>
+          <div className="mb-2">The proposal's status can be reviewed in the Multisig Safe's proposal list.</div>
+          <Button
+            type="primary"
+            shape="round"
+            size="small"
+            className="extra-small"
+            onClick={() => {
+              const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
+              if (multisigAuthority) {
+                setHighLightableMultisigId(multisigAuthority);
+              }
+              navigate(`/multisig/${multisigAuthority}?v=proposals`);
+              notification.close(myNotifyKey);
+            }}
+          >
+              Review proposal
+          </Button>
+        </>
+      ),
+    });
+  }, [navigate, setHighLightableMultisigId]);
+  */
+
+  const notifyMultisigVestingContractActionFollowup = useCallback(async (message1: string, message2: string, item: TxConfirmationInfo) => {
+
+    const turnOffLockWorkflow = () => {
+      isWorkflowLocked = false;
+    }
+
+    if (item.extras && item.extras.multisig) {
+      openNotification({
+        type: "info",
+        description: (<span>{message1}</span>),
+        duration: 8,
+      });
+      await delay(8000);
+      openNotification({
+        type: "info",
+        description: (<span>{message2}</span>),
+        duration: 8,
+      });
+      await delay(8000);
+      const myNotifyKey = `notify-${Date.now()}`;
+      openNotification({
+        type: "info",
+        key: myNotifyKey,
+        description: (
+          <>
+            <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
+            <Button
+              type="primary"
+              size="small"
+              shape="round"
+              className="extra-small"
+              onClick={() => {
+                const url = `/multisig/${item.extras.multisig}?v=proposals`;
+                setHighLightableMultisigId(item.extras.multisig);
+                notification.close(myNotifyKey);
+                navigate(url);
+              }}>
+              See proposals
+            </Button>
+          </>
+        ),
+        duration: 30,
+        handleClose: turnOffLockWorkflow
+      });
+    } else {
+      turnOffLockWorkflow();
+    }
+  }, [navigate, setHighLightableMultisigId]);
+
   const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
     let event: any;
     switch (operation) {
@@ -403,54 +486,6 @@ export const VestingView = () => {
         console.log('element not found:', '#hard-refresh-contracts-cta', 'red');
       }
     };
-
-    const turnOffLockWorkflow = () => {
-      isWorkflowLocked = false;
-    }
-
-    const notifyMultisigVestingContractActionFollowup = async (message1: string, message2: string, item: TxConfirmationInfo) => {
-      if (item.extras && item.extras.multisig) {
-        openNotification({
-          type: "info",
-          description: (<span>{message1}</span>),
-          duration: 8,
-        });
-        await delay(8000);
-        openNotification({
-          type: "info",
-          description: (<span>{message2}</span>),
-          duration: 8,
-        });
-        await delay(8000);
-        const myNotifyKey = `notify-${Date.now()}`;
-        openNotification({
-          type: "info",
-          key: myNotifyKey,
-          description: (
-            <>
-              <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
-              <Button
-                type="primary"
-                size="small"
-                shape="round"
-                className="extra-small"
-                onClick={() => {
-                  const url = `/multisig/${item.extras.multisig}?v=proposals`;
-                  setHighLightableMultisigId(item.extras.multisig);
-                  notification.close(myNotifyKey);
-                  navigate(url);
-                }}>
-                See proposals
-              </Button>
-            </>
-          ),
-          duration: 30,
-          handleClose: turnOffLockWorkflow
-        });
-      } else {
-        turnOffLockWorkflow();
-      }
-    }
 
     switch (item.operationType) {
       case OperationType.TreasuryAddFunds:

@@ -25,20 +25,21 @@ import { IDL as SplTokenIdl } from '@project-serum/anchor/dist/cjs/spl/token';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 
 export const ProposalDetailsView = (props: {
+  appsProvider?: any;
+  connection?: any;
+  hasMultisigPendingProposal?: boolean;
   isBusy: boolean;
+  loadingData: boolean;
+  multisigClient?: MeanMultisig | undefined;
   onDataToSafeView: any;
+  onOperationStarted: any;
+  onProposalApprove?: any;
+  onProposalCancel?: any;
+  onProposalExecute?: any;
+  onProposalReject?: any;
   proposalSelected?: any;
   selectedMultisig?: any;
-  onProposalApprove?: any;
-  onProposalReject?: any;
-  onProposalExecute?: any;
-  onProposalCancel?: any;
-  connection?: any;
   solanaApps?: any;
-  appsProvider?: any;
-  onOperationStarted: any;
-  multisigClient?: MeanMultisig | undefined;
-  hasMultisigPendingProposal?: boolean;
 }) => {
 
   const {
@@ -48,20 +49,21 @@ export const ProposalDetailsView = (props: {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const {
-    isBusy,
-    connection,
-    solanaApps,
     appsProvider,
+    connection,
+    hasMultisigPendingProposal,
+    isBusy,
+    loadingData,
     multisigClient, 
     onDataToSafeView, 
+    onOperationStarted,
+    onProposalApprove,
+    onProposalCancel,
+    onProposalExecute,
+    onProposalReject,
     proposalSelected, 
     selectedMultisig, 
-    onProposalApprove,
-    onProposalReject,
-    onProposalExecute,
-    onProposalCancel,
-    onOperationStarted,
-    hasMultisigPendingProposal,
+    solanaApps,
   } = props;
   const { confirmationHistory } = useContext(TxConfirmationContext);
 
@@ -70,7 +72,8 @@ export const ProposalDetailsView = (props: {
   const [selectedProposalIdl, setSelectedProposalIdl] = useState<Idl | undefined>();
   const [proposalIxInfo, setProposalIxInfo] = useState<MultisigTransactionInstructionInfo | null>(null);
   const [proposalActivity, setProposalActivity] = useState<MultisigTransactionActivityItem[]>([]);
-  const [loadingActivity, setLoadingActivity] = useState<boolean>(true);
+  const [needReloadActivity, setNeedReloadActivity] = useState<boolean>(false);
+  const [loadingActivity, setLoadingActivity] = useState<boolean>(false);
 
   const [isCancelRejectModalVisible, setIsCancelRejectModalVisible] = useState(false);
 
@@ -166,8 +169,11 @@ export const ProposalDetailsView = (props: {
 
   useEffect(() => {
 
-    const loading = selectedProposal ? true : false;
-    const timeout = setTimeout(() => setLoadingActivity(loading));
+    const timeout = setTimeout(() => {
+      if (selectedProposal) {
+        setNeedReloadActivity(true);
+      }
+    });
 
     return () => {
       clearTimeout(timeout);
@@ -180,9 +186,11 @@ export const ProposalDetailsView = (props: {
   // Get transaction proposal activity
   useEffect(() => {
 
-    if (!multisigClient || !selectedProposal || !loadingActivity) { return; }
+    if (!multisigClient || !selectedProposal || !needReloadActivity) { return; }
 
     const timeout = setTimeout(() => {
+      setNeedReloadActivity(false);
+      setLoadingActivity(true);
       multisigClient
         .getMultisigTransactionActivity(selectedProposal.id)
         .then((activity: MultisigTransactionActivityItem[]) => {
@@ -198,9 +206,9 @@ export const ProposalDetailsView = (props: {
     }
 
   }, [
-    loadingActivity, 
-    multisigClient, 
-    selectedProposal
+    multisigClient,
+    selectedProposal,
+    needReloadActivity,
   ])
 
   // const isUnderDevelopment = () => {
@@ -655,7 +663,8 @@ export const ProposalDetailsView = (props: {
                       hasMultisigPendingProposal || 
                       (!isProposer && !anyoneCanExecuteTx()) ||
                       isBusy ||
-                      isExecutionPendingConfirmation()
+                      isExecutionPendingConfirmation() ||
+                      loadingData
                     }
                     onClick={() => {
                       const operation = { transaction: selectedProposal }
@@ -673,7 +682,12 @@ export const ProposalDetailsView = (props: {
                         shape="round"
                         size="small"
                         className="thin-stroke d-flex justify-content-center align-items-center"
-                        disabled={hasMultisigPendingProposal}
+                        disabled={
+                          hasMultisigPendingProposal ||
+                          isBusy ||
+                          isExecutionPendingConfirmation() ||
+                          loadingData
+                        }
                         onClick={() => setIsCancelRejectModalVisible(true)}>
                           <div className="btn-content">
                             Cancel
