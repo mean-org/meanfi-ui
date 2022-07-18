@@ -1017,7 +1017,6 @@ export const StreamingAccountView = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryWithdraw);
@@ -1059,7 +1058,7 @@ export const StreamingAccountView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Withdraw treasury funds",
+        data.title === "" ? "Withdraw treasury funds" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryWithdraw,
@@ -1110,6 +1109,7 @@ export const StreamingAccountView = (props: {
 
       // Create a transaction
       const payload = {
+        title: data.title,
         payer: publicKey.toBase58(),
         destination: destinationPk.toBase58(),
         treasury: treasuryPk.toBase58(),
