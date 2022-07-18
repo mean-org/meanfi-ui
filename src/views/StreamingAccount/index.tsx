@@ -1310,6 +1310,9 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const isMultisig = isMultisigTreasury(streamingAccountSelected) && selectedMultisig
+            ? selectedMultisig.id.toBase58()
+            : "";
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryWithdraw,
@@ -1325,17 +1328,11 @@ export const StreamingAccountView = (props: {
                 parseFloat(data.amount),
                 selectedToken.decimals
               )} ${selectedToken.symbol}`,
-              extras: streamingAccountSelected.id as string
-            });
-
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+              extras: isMultisig
             });
             
             setIsTransferFundsModalVisible(false);
             setLoadingStreamingAccountDetails(true);
-            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             resetTransactionStatus();
             setIsBusy(false);

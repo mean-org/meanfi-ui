@@ -940,6 +940,9 @@ export const AccountsNewView = () => {
       } else if (item.operationType === OperationType.TreasuryAddFunds) {
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryWithdraw) {
+        if (item.extras) {
+          showNotificationByType("info");
+        }
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryStreamCreate) {
         if (item.extras) {
