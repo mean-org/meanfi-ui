@@ -2977,7 +2977,7 @@ export const AccountsNewView = () => {
 
   // Load treasuries when account address changes
   useEffect(() => {
-    if (publicKey && accountAddress && !treasuriesLoaded) {
+    if (publicKey && accountAddress && address && !treasuriesLoaded && accountAddress === address) {
 
       setTreasuriesLoaded(true);
 
