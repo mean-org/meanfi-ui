@@ -821,7 +821,7 @@ export function relativeTimeFromDates(relative: Date | null, pivot: Date = new D
 export function relativeTimeFromElapsed(elapsed: number): string {
     for (const { unit, ms } of units) {
         if (Math.abs(elapsed) >= ms || unit === "second") {
-            const difference = Math.abs(elapsed) / ms;
+            const difference = elapsed / ms;
             return rtf.format(difference ? Math.round(difference) : 0, unit);
         }
     }
