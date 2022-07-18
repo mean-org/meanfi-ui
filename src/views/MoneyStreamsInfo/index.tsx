@@ -1243,7 +1243,49 @@ export const MoneyStreamsInfoView = (props: {
 
     consoleOut('autocloseTreasuries:', autocloseTreasuries, 'crimson');
 
-    setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)));
+    setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)).sort((a, b) => {
+      const vA1 = a as StreamInfo;
+      const vA2 = a as Stream;
+      const vB1 = b as StreamInfo;
+      const vB2 = b as Stream;
+
+      const isNew = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
+        ? true
+        : false;
+
+      const associatedTokenA = isNew
+      ? (vA1 as StreamInfo).associatedToken as string
+      : (vA2 as Stream).associatedToken as string;
+
+      const associatedTokenB = isNew
+      ? (vB1 as StreamInfo).associatedToken as string
+      : (vB2 as Stream).associatedToken as string;
+
+      const tokenA = getTokenByMintAddress(associatedTokenA as string);
+      const tokenB = getTokenByMintAddress(associatedTokenB as string);
+
+      let tokenPriceA;
+      let tokenPriceB;
+
+      if (tokenA) {
+        tokenPriceA = getTokenPriceByAddress(tokenA.address) || getTokenPriceBySymbol(tokenA.symbol);
+      }
+
+      if (tokenB) {
+        tokenPriceB = getTokenPriceByAddress(tokenB.address) || getTokenPriceBySymbol(tokenB.symbol);
+      }
+
+      if (tokenPriceA && tokenPriceB) {
+        if (isNew) {
+          return ((vB2.withdrawableAmount * tokenPriceB) - (vA2.withdrawableAmount * tokenPriceA));
+        } else {
+          return ((vB1.escrowVestedAmount * tokenPriceB) - (vA1.escrowVestedAmount * tokenPriceA));
+        }
+      }
+
+      return 0;
+    }));
+    consoleOut('streamList inside MoneyStremsInfo:', streamList, 'crimson');
 
     const onlyOuts = streamList.filter(item => !isInboundStream(item));
     const onlyAutoClose = onlyOuts.filter(stream => autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress));
@@ -1253,6 +1295,9 @@ export const MoneyStreamsInfoView = (props: {
     streamList,
     connection,
     autocloseTreasuries,
+    getTokenByMintAddress,
+    getTokenPriceBySymbol,
+    getTokenPriceByAddress,
     getQueryAccountType,
     isInboundStream,
   ]);
@@ -1751,6 +1796,20 @@ export const MoneyStreamsInfoView = (props: {
             const subtitle = getStreamSubtitle(stream);
             const status = getStreamStatus(stream);
             const resume = getStreamResume(stream);
+
+            const v1 = stream as StreamInfo;
+            const v2 = stream as Stream;
+            const isNew = stream.version >= 2 ? true : false;
+
+            const isV2Stream = toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
+            const isV1Stream = v1.escrowVestedAmount;
+          
+            const withdrawResume = getTokenAmountAndSymbolByTokenAddress(
+                                    isNew
+                                      ? isV2Stream
+                                      : isV1Stream,
+                                      stream.associatedToken as string
+                                  )
     
             return (
               <div 
@@ -1763,7 +1822,7 @@ export const MoneyStreamsInfoView = (props: {
                   img={img}
                   title={title}
                   subtitle={subtitle}
-                  resume={resume}
+                  resume={(isV2Stream > 0 || isV1Stream > 0) ? `${withdrawResume} available` : resume}
                   status={status}
                   hasRightIcon={true}
                   rightIcon={<IconArrowForward className="mean-svg-icons" />}
