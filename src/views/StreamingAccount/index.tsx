@@ -1769,6 +1769,9 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const isMultisig = isMultisigTreasury(streamingAccountSelected) && selectedMultisig
+            ? selectedMultisig.id.toBase58()
+            : "";
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryClose,
@@ -1778,16 +1781,11 @@ export const StreamingAccountView = (props: {
               loadingMessage: `Close streaming account: ${streamingAccountName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully closed streaming account: ${streamingAccountName}`,
-              extras: streamingAccountSelected.id as string
-            });
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+              extras: isMultisig
             });
             
             setIsCloseTreasuryModalVisibility(false);
             setLoadingStreamingAccountDetails(true);
-            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             onCloseTreasuryTransactionFinished();
             resetTransactionStatus();

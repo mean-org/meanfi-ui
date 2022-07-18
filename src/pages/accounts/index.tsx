@@ -955,14 +955,13 @@ export const AccountsNewView = () => {
         }
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryClose) {
-        hardReloadStreams();
-        let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
-        if (param === "multisig") {
-          if (inspectedAccountType && inspectedAccountType === "multisig") {
-            url += `?account-type=multisig`;
-          }
+        if (item.extras) {
+          showNotificationByType("info");
+        } else {
+          const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
+          navigate(url);
         }
-        navigate(url);
+        hardReloadStreams();
       } else if (item.operationType === OperationType.TreasuryRefreshBalance) {
         if (item.extras) {
           showNotificationByType("info");
@@ -975,7 +974,6 @@ export const AccountsNewView = () => {
     resetTransactionStatus();
   }, [
     address,
-    inspectedAccountType,
     isSelectedAssetNativeAccount,
     showNotificationByType,
     resetTransactionStatus,
