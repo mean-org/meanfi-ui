@@ -2977,7 +2977,7 @@ export const AccountsNewView = () => {
 
   // Load treasuries when account address changes
   useEffect(() => {
-    if (publicKey && accountAddress && !treasuriesLoaded) {
+    if (publicKey && accountAddress && address && !treasuriesLoaded && accountAddress === address) {
 
       setTreasuriesLoaded(true);
 
@@ -4044,11 +4044,15 @@ export const AccountsNewView = () => {
       setAutocloseTreasuries([]);
       setStreamingAccountCombinedList([]);
       setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
+      setWithdrawalBalance(0);
+      setUnallocatedBalance(0);
       setTotalAccountBalance(0);
       setTotalTokenAccountsValue(0);
       setTotalStreamingValue(0);
       setSelectedAsset(undefined);
       setCanSubscribe(true);
+      setLastStreamsSummary(initialSummary);
+      setStreamsSummary(initialSummary);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

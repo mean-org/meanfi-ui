@@ -3856,7 +3856,7 @@ export const SafeView = () => {
         // Or re-select the one active
         item = multisigAccounts.find(m => m.authority.toBase58() === address);
         if (item) {
-          consoleOut('selected via highLightableMultisigId:', item, 'purple');
+          consoleOut('selected via address in route:', item, 'purple');
         }
       }
 
