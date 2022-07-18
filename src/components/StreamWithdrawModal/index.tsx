@@ -410,7 +410,7 @@ export const StreamWithdrawModal = (props: {
         size="large"
         disabled={!isValidInput()}
         onClick={onAcceptWithdrawal}>
-        {isValidInput() ? t('transactions.validation.valid-start-withdrawal') : t('transactions.validation.invalid-amount')}
+        {isValidInput() ? param === "multisig" ? "Propose withdrawal" : t('transactions.validation.valid-start-withdrawal') : t('transactions.validation.invalid-amount')}
       </Button>
     </Modal>
   );
