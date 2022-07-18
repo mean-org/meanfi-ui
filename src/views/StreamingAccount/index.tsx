@@ -1526,8 +1526,6 @@ export const StreamingAccountView = (props: {
       const ixAccounts = closeTreasury.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      console.log("Testing close streaming account test", data.title);
-
       const tx = await multisigClient.createTransaction(
         publicKey,
         data.title === "" ? "Close streaming account" : data.title,

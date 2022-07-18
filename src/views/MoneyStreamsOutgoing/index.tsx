@@ -33,6 +33,7 @@ import { StreamTreasuryType } from "../../models/treasuries";
 import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useParams, useSearchParams } from "react-router-dom";
+import { title } from "process";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -961,12 +962,13 @@ export const MoneyStreamsOutgoingView = (props: {
   ]);
 
   const hidePauseStreamModal = useCallback(() => setIsPauseStreamModalVisibility(false), []);
-  const onAcceptPauseStream = () => {
+  const onAcceptPauseStream = (title: string) => {
+    consoleOut("Input title for pause stream:", title, 'blue');
     hidePauseStreamModal();
-    onExecutePauseStreamTransaction();
+    onExecutePauseStreamTransaction(title);
   };
 
-  const onExecutePauseStreamTransaction = async () => {
+  const onExecutePauseStreamTransaction = async (title: string) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -986,7 +988,8 @@ export const MoneyStreamsOutgoingView = (props: {
         const streamPublicKey = new PublicKey(streamSelected.id as string);
 
         const data = {
-          stream: streamPublicKey.toBase58(),                     // stream
+          title: title as string,                          // title
+          stream: streamPublicKey.toBase58(),              // stream
           initializer: publicKey.toBase58(),               // initializer
         }
         consoleOut('data:', data);
@@ -1096,7 +1099,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Pause Stream",
+        data.title === "" ? "Pause Stream" : data.title as string,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.StreamPause,
@@ -1127,6 +1130,7 @@ export const MoneyStreamsOutgoingView = (props: {
       const streamPublicKey = new PublicKey(streamSelected.id as string);
 
       const data = {
+        title: title as string,                           // title
         stream: streamPublicKey.toBase58(),               // stream
         payer: publicKey.toBase58(),                      // payer
       }
@@ -2868,7 +2872,7 @@ export const MoneyStreamsOutgoingView = (props: {
                       shape="round"
                       size="middle"
                       onClick={() => ongoingOperation === OperationType.StreamPause
-                        ? onExecutePauseStreamTransaction()
+                        ? onExecutePauseStreamTransaction(title)
                         : ongoingOperation === OperationType.StreamResume
                           ? onExecuteResumeStreamTransaction()
                           : hideTransactionExecutionModal()}>
