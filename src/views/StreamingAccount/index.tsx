@@ -1375,8 +1375,9 @@ export const StreamingAccountView = (props: {
     setIsCloseTreasuryModalVisibility(false);
   }, [isBusy]);
 
-  const onAcceptCloseTreasury = () => {
-    onExecuteCloseTreasuryTransaction();
+  const onAcceptCloseTreasury = (title: string) => {
+    consoleOut("Input title for close treaury:", title, 'blue');
+    onExecuteCloseTreasuryTransaction(title);
   };
 
   const onCloseTreasuryTransactionFinished = () => {
@@ -1384,14 +1385,13 @@ export const StreamingAccountView = (props: {
     refreshTokenBalance();
   };
 
-  const onExecuteCloseTreasuryTransaction = async () => {
+  const onExecuteCloseTreasuryTransaction = async (title: string) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryClose);
@@ -1406,6 +1406,7 @@ export const StreamingAccountView = (props: {
 
         const treasury = new PublicKey(streamingAccountSelected.id as string);
         const data = {
+          title: title as string,                               // title
           treasurer: publicKey.toBase58(),                      // treasurer
           treasury: treasury.toBase58()                         // treasury
         }
@@ -1525,9 +1526,11 @@ export const StreamingAccountView = (props: {
       const ixAccounts = closeTreasury.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
+      console.log("Testing close streaming account test", data.title);
+
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Close Treasury",
+        data.title === "" ? "Close streaming account" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryClose,
@@ -1557,6 +1560,7 @@ export const StreamingAccountView = (props: {
 
       const treasury = new PublicKey(streamingAccountSelected.id as string);
       const data = {
+        title: title as string,                               // title
         treasurer: publicKey.toBase58(),                      // treasurer
         treasury: treasury.toBase58()                         // treasury
       }
