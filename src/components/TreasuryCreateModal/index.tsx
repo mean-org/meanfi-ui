@@ -7,7 +7,7 @@ import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { AppStateContext } from '../../contexts/appstate';
 import { TreasuryCreateOptions, TreasuryTypeOption } from '../../models/treasuries';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from '../../utils/ui';
+import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress, toUsCurrency } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
@@ -18,27 +18,39 @@ import { TokenDisplay } from '../TokenDisplay';
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { TextInput } from '../TextInput';
 import { useAccountsContext } from '../../contexts/accounts';
-import { useConnection } from '../../contexts/connection';
+import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { TokenListItem } from '../TokenListItem';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
-import { PublicKey } from '@solana/web3.js';
+import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
+import { environment } from '../../environments/environment';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const TreasuryCreateModal = (props: {
   handleClose: any;
   handleOk: any;
-  isVisible: boolean;
   isBusy: boolean;
-  nativeBalance: number;
-  transactionFees: TransactionFees;
-  selectedMultisig: MultisigInfo | undefined;
+  isVisible: boolean;
   multisigAccounts?: MultisigInfo[] | undefined;
   multisigAddress?: string;
+  nativeBalance: number;
+  selectedMultisig: MultisigInfo | undefined;
+  transactionFees: TransactionFees;
 }) => {
+  const {
+    handleClose,
+    handleOk,
+    isBusy,
+    isVisible,
+    multisigAccounts,
+    multisigAddress,
+    nativeBalance,
+    selectedMultisig,
+    transactionFees,
+  } = props;
   const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const {
@@ -149,21 +161,20 @@ export const TreasuryCreateModal = (props: {
 
   // When modal goes visible, preset the appropriate value for multisig treasury switch
   useEffect(() => {
-    if (!props.multisigAccounts) { return; }
-    if (props.isVisible && props.selectedMultisig) {
+    if (!multisigAccounts) { return; }
+    if (isVisible && selectedMultisig) {
       setEnableMultisigTreasuryOption(true);
-      setLocalSelectedMultisig(props.selectedMultisig);
+      setLocalSelectedMultisig(selectedMultisig);
     } else {
       setEnableMultisigTreasuryOption(false);
-      setLocalSelectedMultisig(props.multisigAccounts[0]);
+      setLocalSelectedMultisig(multisigAccounts[0]);
     }
   }, [
-    props.isVisible,
-    props.selectedMultisig,
-    props.multisigAccounts,
+    isVisible,
+    selectedMultisig,
+    multisigAccounts,
   ]);
 
-  // Automatically update all token balances and rebuild token list
   useEffect(() => {
 
     if (!connection) {
@@ -171,49 +182,41 @@ export const TreasuryCreateModal = (props: {
       return;
     }
 
-    if (!publicKey || !userTokens || !tokenList || !accounts || !accounts.tokenAccounts) {
+    if (!publicKey || !userTokens || !splTokenList) {
       return;
     }
 
-    const timeout = setTimeout(() => {
+    const meanTokensCopy = new Array<TokenInfo>();
+    const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+    const balancesMap: any = {};
+    balancesMap[userTokensCopy[0].address] = nativeBalance;
 
-      const balancesMap: any = {};
-      const meanTokensCopy = new Array<TokenInfo>();
-      const intersectedList = new Array<TokenInfo>();
-      const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
-
-      // const pk = props.multisigAddress ? new PublicKey(props.multisigAddress) : publicKey;
-      const pk = new PublicKey(accountAddress);
-
-      fetchAccountTokens(connection, pk)
+    fetchAccountTokens(connection, publicKey)
       .then(accTks => {
         if (accTks) {
 
           // Build meanTokensCopy including the MeanFi pinned tokens
           userTokensCopy.forEach(item => {
-            meanTokensCopy.push(item);
-          });
-
-          // Now add all other items but excluding those in userTokens
-          splTokenList.forEach(item => {
-            if (!userTokens.includes(item)) {
+            if (!meanTokensCopy.some(i => i.address === item.address)) {
               meanTokensCopy.push(item);
             }
           });
 
-          // Create a list containing tokens for the user owned token accounts
+          // Now add all other items but excluding those in userTokens (only in prod)
+          if (isProd()) {
+            splTokenList.forEach(item => {
+              if (!meanTokensCopy.some(i => i.address === item.address)) {
+                meanTokensCopy.push(item);
+              }
+            });
+          }
+
+          // Add owned token accounts to balances map
+          // Code to have all tokens sorted by balance
           accTks.forEach(item => {
             balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
-            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-              intersectedList.push(tokenFromMeanTokensCopy);
-            }
           });
-
-          intersectedList.unshift(userTokensCopy[0]);
-          balancesMap[userTokensCopy[0].address] = props.nativeBalance;
-          intersectedList.sort((a, b) => {
+          meanTokensCopy.sort((a, b) => {
             if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
               return 1;
             } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
@@ -221,16 +224,20 @@ export const TreasuryCreateModal = (props: {
             }
             return 0;
           });
-          
-          setSelectedList(intersectedList);
-          consoleOut('intersectedList:', intersectedList, 'orange');
+          setSelectedList(meanTokensCopy);
+          if (!workingToken) {
+            setWorkingToken(meanTokensCopy[0]);
+          }
 
         } else {
-          for (const t of tokenList) {
+          for (const t of userTokensCopy) {
             balancesMap[t.address] = 0;
           }
           // set the list to the userTokens list
           setSelectedList(userTokensCopy);
+          if (!workingToken) {
+            setWorkingToken(userTokensCopy[0]);
+          }
         }
       })
       .catch(error => {
@@ -239,25 +246,17 @@ export const TreasuryCreateModal = (props: {
           balancesMap[t.address] = 0;
         }
         setSelectedList(userTokensCopy);
+        if (!workingToken) {
+          setWorkingToken(userTokensCopy[0]);
+        }
       })
       .finally(() => setUserBalances(balancesMap));
 
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    accounts,
     publicKey,
-    tokenList,
-    userTokens,
     connection,
-    splTokenList,
-    accountAddress,
-    props.nativeBalance,
-    // props.multisigAddress,
+    nativeBalance,
   ]);
 
   // Pick a token if none selected
@@ -312,11 +311,11 @@ export const TreasuryCreateModal = (props: {
       treasuryType: treasuryOption ? treasuryOption.type : TreasuryType.Open,
       multisigId: enableMultisigTreasuryOption && localSelectedMultisig ? localSelectedMultisig.id.toBase58() : ''
     };
-    props.handleOk(options);
+    handleOk(options);
   }
 
   const onCloseModal = () => {
-    props.handleClose();
+    handleClose();
   }
 
   const onAfterClose = () => {
@@ -331,7 +330,7 @@ export const TreasuryCreateModal = (props: {
   }
 
   const refreshPage = () => {
-    props.handleClose();
+    handleClose();
     window.location.reload();
   }
 
@@ -349,20 +348,20 @@ export const TreasuryCreateModal = (props: {
 
   const renderSelectedMultisig = () => {
     return (
-      props.selectedMultisig && (
+      selectedMultisig && (
         <div className={`transaction-list-row w-100 no-pointer`}>
           <div className="icon-cell">
-            <Identicon address={props.selectedMultisig.id} style={{ width: "30", display: "inline-flex" }} />
+            <Identicon address={selectedMultisig.id} style={{ width: "30", display: "inline-flex" }} />
           </div>
           <div className="description-cell">
-            <div className="title text-truncate">{props.selectedMultisig.label}</div>
-            <div className="subtitle text-truncate">{shortenAddress(props.selectedMultisig.id.toBase58(), 8)}</div>
+            <div className="title text-truncate">{selectedMultisig.label}</div>
+            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id.toBase58(), 8)}</div>
           </div>
           <div className="rate-cell">
             <div className="rate-amount">
               {
                 t('multisig.multisig-accounts.pending-transactions', {
-                  txs: props.selectedMultisig.pendingTxsAmount
+                  txs: selectedMultisig.pendingTxsAmount
                 })
               }
             </div>
@@ -390,7 +389,7 @@ export const TreasuryCreateModal = (props: {
                 name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
-                className={balance ? workingToken && workingToken.address === t.address ? "selected" : "simplelink" : "dimmed"}
+                className={workingToken && workingToken.address === t.address ? "selected" : "simplelink"}
                 onClick={onClick}
                 balance={balance}
                 showZeroBalances={true}
@@ -414,6 +413,13 @@ export const TreasuryCreateModal = (props: {
           extraClass="mb-2"
           onInputClear={onInputCleared}
           placeholder={t('token-selector.search-input-placeholder')}
+          error={
+            tokenFilter && workingToken && workingToken.decimals === -1
+                ? 'Account not found'
+                : tokenFilter && workingToken && workingToken.decimals === -2
+                    ? 'Account is not a token mint'
+                    : ''
+          }
           onInputChange={onTokenSearchInputChange} />
       </div>
       <div className="token-list">
@@ -424,17 +430,43 @@ export const TreasuryCreateModal = (props: {
             name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={workingToken && workingToken.address === tokenFilter ? "selected" : "simplelink"}
-            onClick={() => {
-              const uknwnToken: TokenInfo = {
-                address: tokenFilter,
+            onClick={async () => {
+              const address = tokenFilter;
+              let decimals = -1;
+              let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+              try {
+                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                consoleOut('accountInfo:', accountInfo, 'blue');
+              } catch (error) {
+                console.error(error);
+              }
+              if (accountInfo) {
+                if ((accountInfo as any).data["program"] &&
+                  (accountInfo as any).data["program"] === "spl-token" &&
+                  (accountInfo as any).data["parsed"] &&
+                  (accountInfo as any).data["parsed"]["type"] &&
+                  (accountInfo as any).data["parsed"]["type"] === "mint") {
+                  decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+                } else {
+                  decimals = -2;
+                }
+              }
+              const unknownToken: TokenInfo = {
+                address,
                 name: CUSTOM_TOKEN_NAME,
-                chainId: 101,
-                decimals: 6,
-                symbol: '',
+                chainId: getNetworkIdByEnvironment(environment),
+                decimals,
+                symbol: `[${shortenAddress(address)}]`,
               };
-              setWorkingToken(uknwnToken);
-              consoleOut("token selected:", uknwnToken, 'blue');
-              onCloseTokenSelector();
+              setWorkingToken(unknownToken);
+              if (userBalances && userBalances[address]) {
+                setWorkingTokenBalance(userBalances[address]);
+              }
+              consoleOut("token selected:", unknownToken, 'blue');
+              // Do not close on errors (-1 or -2)
+              if (decimals >= 0) {
+                onCloseTokenSelector();
+              }
             }}
             balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
           />
@@ -464,13 +496,13 @@ export const TreasuryCreateModal = (props: {
         // title={<div className="modal-title">{param === "multisig" ? "Initiate streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
         maskClosable={false}
         footer={null}
-        visible={props.isVisible}
+        visible={isVisible}
         onOk={onAcceptModal}
         onCancel={onCloseModal}
         afterClose={onAfterClose}
-        width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+        width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-        <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+        <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
 
           {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
             <>
@@ -492,7 +524,7 @@ export const TreasuryCreateModal = (props: {
               {/* Treasury name */}
               <div className="mb-3">
                 <div className="form-label">{t('treasuries.create-treasury.treasury-name-input-label')}</div>
-                <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+                <div className={`well ${isBusy ? 'disabled' : ''}`}>
                   <div className="flex-fixed-right">
                     <div className="left">
                       <input
@@ -513,7 +545,7 @@ export const TreasuryCreateModal = (props: {
               </div>
 
               <div className="form-label">{t('treasuries.create-treasury.treasury-token-label')}</div>
-              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+              <div className={`well ${isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-left">
                   <div className="left">
                     <span className="add-on simplelink">
@@ -580,7 +612,7 @@ export const TreasuryCreateModal = (props: {
 
               {/* Multisig Treasury checkbox */}
               {
-                // (!props.selectedMultisig && props.multisigAccounts.length > 0) && (
+                // (!selectedMultisig && multisigAccounts.length > 0) && (
                 //   <div className="mb-2 flex-row align-items-center">
                 //     <span className="form-label w-auto mb-0">{t('treasuries.create-treasury.multisig-treasury-switch-label')}</span>
                 //     {/* <a className="simplelink" href="https://docs.meanfi.com/" target="_blank" rel="noopener noreferrer">
@@ -599,7 +631,7 @@ export const TreasuryCreateModal = (props: {
                 // )
               }
 
-              {(enableMultisigTreasuryOption && props.multisigAccounts && props.multisigAccounts.length > 0) && (
+              {(enableMultisigTreasuryOption && multisigAccounts && multisigAccounts.length > 0) && (
                 <>
                   <div className="mb-3">
                     <div className="form-label">{t('treasuries.create-treasury.multisig-selector-label')}</div>
@@ -627,11 +659,11 @@ export const TreasuryCreateModal = (props: {
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
                       accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                        props.nativeBalance,
+                        nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
                       feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                        props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})
                     }
@@ -646,8 +678,8 @@ export const TreasuryCreateModal = (props: {
           )}
         </div>
 
-        <div className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
-          {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        <div className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
+          {isBusy && transactionStatus !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
@@ -660,7 +692,7 @@ export const TreasuryCreateModal = (props: {
           )}
         </div>
 
-        {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+        {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
           <div className="row two-col-ctas mt-3 transaction-progress p-0">
             {isError(transactionStatus.currentOperation) ? (
               <div className="col-12">
@@ -669,7 +701,7 @@ export const TreasuryCreateModal = (props: {
                   type="text"
                   shape="round"
                   size="middle"
-                  className={props.isBusy ? 'inactive' : ''}
+                  className={isBusy ? 'inactive' : ''}
                   onClick={onAcceptModal}>
                   {t('general.retry')}
                 </Button>
@@ -677,7 +709,7 @@ export const TreasuryCreateModal = (props: {
             ) : (
               <div className="col-12">
                 <Button
-                  className={props.isBusy ? 'inactive' : ''}
+                  className={isBusy ? 'inactive' : ''}
                   block
                   type="primary"
                   shape="round"
@@ -692,13 +724,13 @@ export const TreasuryCreateModal = (props: {
                       refreshPage();
                     }
                   }}>
-                  {/* {props.isBusy && (
+                  {/* {isBusy && (
                     <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                   )} */}
-                  {props.isBusy
+                  {isBusy
                     ? t('treasuries.create-treasury.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                      ? enableMultisigTreasuryOption && props.multisigAccounts && props.multisigAccounts.length > 0
+                      ? enableMultisigTreasuryOption && multisigAccounts && multisigAccounts.length > 0
                         ? (param === "multisig" ? "Submit proposal" : t('treasuries.create-treasury.create-multisig-cta'))
                         : (param === "multisig" ? "Submit proposal" : t('treasuries.create-treasury.main-cta'))
                       : t('general.refresh')
