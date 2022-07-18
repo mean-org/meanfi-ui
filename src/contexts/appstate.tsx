@@ -161,6 +161,7 @@ interface AppStateConfig {
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
   resetStreamsState: () => void;
+  clearStreams: () => void;
   refreshStreamList: (reset?: boolean, userAddress?: PublicKey) => void;
   setContract: (name: string) => void;
   setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
@@ -321,6 +322,7 @@ const contextDefaultValues: AppStateConfig = {
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
   resetStreamsState: () => {},
+  clearStreams: () => {},
   refreshStreamList: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
@@ -696,6 +698,12 @@ const AppStateProvider: React.FC = ({ children }) => {
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setIsVerifiedRecipient(false);
     setIsAllocationReserved(false);
+  }
+
+  const clearStreams = () => {
+    setStreamList([]);
+    setStreamListv2([]);
+    setStreamListv1([]);
   }
 
   const resetStreamsState = () => {
@@ -1549,6 +1557,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         refreshTokenBalance,
         resetContractValues,
         resetStreamsState,
+        clearStreams,
         refreshStreamList,
         setContract,
         setDdcaOption,

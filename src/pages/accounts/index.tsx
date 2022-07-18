@@ -58,7 +58,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, delay, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, delay, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -134,11 +134,11 @@ export const AccountsNewView = () => {
     streamListv2,
     streamDetail,
     transactions,
+    previousRoute,
     isWhitelisted,
     selectedAsset,
     accountAddress,
     loadingStreams,
-    streamsSummary,
     lastTxSignature,
     shouldLoadTokens,
     transactionStatus,
@@ -152,7 +152,6 @@ export const AccountsNewView = () => {
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
-    setLastStreamsSummary,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
@@ -165,7 +164,7 @@ export const AccountsNewView = () => {
     setActiveStream,
     setStreamDetail,
     setTransactions,
-    setStreamList,
+    clearStreams,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -191,16 +190,12 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
   const [inspectedAccountType, setInspectedAccountType] = useState<InspectedAccountType>(undefined);
-  const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
-  const [netWorth, setNetWorth] = useState(0);
-  const [totalStreamingValue, setTotalStreamingValue] = useState(0);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [pathParamAsset, setPathParamAsset] = useState('');
   const [pathParamStreamId, setPathParamStreamId] = useState('');
   const [pathParamTreasuryId, setPathParamTreasuryId] = useState('');
   const [pathParamStreamingTab, setPathParamStreamingTab] = useState('');
   const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
-  const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -245,9 +240,9 @@ export const AccountsNewView = () => {
   const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
   const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
+  const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
   const [streamingAccountCombinedList, setStreamingAccountCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
-  const [withdrawalBalance, setWithdrawalBalance] = useState(0);
-  const [unallocatedBalance, setUnallocatedBalance] = useState(0);
+  // Balances and USD values
   const [totalAccountBalance, setTotalAccountBalance] = useState(0);
   const [incomingStreamsSummary, setIncomingStreamsSummary] = useState<StreamsSummary>(initialSummary);
   const [outgoingStreamsSummary, setOutgoingStreamsSummary] = useState<StreamsSummary>(initialSummary);
@@ -255,7 +250,10 @@ export const AccountsNewView = () => {
   const [outgoingAmount, setOutgoingAmount] = useState(0);
   const [totalStreamsAmount, setTotalStreamsAmount] = useState<number | undefined>(undefined);
   const [streamingAccountsSummary, setStreamingAccountsSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
-  const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
+  const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
+  const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
+  const [netWorth, setNetWorth] = useState(0);
+  const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
 
 
   // Perform premature redirect here if no address was provided in path
@@ -2778,19 +2776,22 @@ export const AccountsNewView = () => {
     resume['totalAmount'] += treasuryList.length;
 
     // Update state
+    consoleOut('streamingAccountsSummary:', resume, 'teal');
     setStreamingAccountsSummary(resume);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-      getTokenPriceBySymbol,
-      getTokenByMintAddress,
-      getTreasuryUnallocatedBalance,
-      treasuryList
+    treasuryList,
+    getTreasuryUnallocatedBalance,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    getTokenByMintAddress,
   ]);
 
   const refreshIncomingStreamSummary = useCallback(async () => {
 
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) { return; }
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) {
+      return;
+    }
 
     const resume: StreamsSummary = {
       totalNet: 0,
@@ -2865,14 +2866,16 @@ export const AccountsNewView = () => {
     streamListv1,
     streamListv2,
     accountAddress,
+    getTokenPriceByAddress,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
-    getTokenPriceByAddress,
   ]);
 
   const refreshOutgoingStreamSummary = useCallback(async () => {
 
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) { return; }
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) {
+      return;
+    }
 
     const resume: StreamsSummary = {
       totalNet: 0,
@@ -2942,14 +2945,38 @@ export const AccountsNewView = () => {
   }, [
     ms,
     msp,
-    publicKey, 
-    streamListv1, 
+    publicKey,
+    streamListv1,
     streamListv2,
-    accountAddress, 
+    accountAddress,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
-    getTokenPriceByAddress,
   ]);
+
+  const clearStateData = useCallback(() => {
+    clearStreams();
+    setPathParamAsset('');
+    setPathParamStreamId('');
+    setPathParamTreasuryId('');
+    setPathParamStreamingTab('');
+    setAccountTokens([]);
+    setTreasuryList([]);
+    setAutocloseTreasuries([]);
+    setIncomingStreamList([]);
+    setOutgoingStreamList([]);
+    setStreamingAccountCombinedList([]);
+    setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
+    setIncomingAmount(0);
+    setOutgoingAmount(0);
+    setTotalStreamsAmount(0);
+    setTotalAccountBalance(0);
+    setIncomingStreamsSummary(initialSummary);
+    setOutgoingStreamsSummary(initialSummary);
+    setTotalTokenAccountsValue(0);
+    setStreamsSummary(initialSummary);
+    setCanShowStreamingAccountBalance(false);
+  }, [clearStreams, setStreamsSummary]);
 
   /////////////////////
   // Data management //
@@ -2982,21 +3009,14 @@ export const AccountsNewView = () => {
 
       setTreasuriesLoaded(true);
 
-      // if (!previousRoute.startsWith('/accounts')) {
-      //   setTreasuryList([]);
-      //   setStreamList([]);
-      //   setAutocloseTreasuries([]);
-      //   setStreamingAccountCombinedList([]);
-      //   setTotalAccountBalance(0);
-      //   setTotalTokenAccountsValue(0);
-      //   setTotalStreamingValue(0);
-      //   setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
-      // }
+      if (!previousRoute.startsWith('/accounts')) {
+        clearStateData();
+      }
       consoleOut('Loading treasuries...', 'accountAddress changed!', 'purple');
       refreshTreasuries(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountAddress, publicKey]);
+  }, [accountAddress, address, previousRoute, publicKey, treasuriesLoaded]);
 
   // Treasury list refresh timeout
   useEffect(() => {
@@ -3698,10 +3718,6 @@ export const AccountsNewView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Preset account address...', publicKey.toBase58(), 'green');
-        setTimeout(() => {
-          setLastStreamsSummary(initialSummary);
-          setStreamsSummary(initialSummary);
-        });
         setAddAccountPanelOpen(false);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
@@ -3710,10 +3726,6 @@ export const AccountsNewView = () => {
         confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
         consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
         setCanSubscribe(true);
-        setTimeout(() => {
-          setLastStreamsSummary(initialSummary);
-          setStreamsSummary(initialSummary);
-        });
         if (streamDetail) {
           setStreamDetail(undefined);
         }
@@ -3727,7 +3739,6 @@ export const AccountsNewView = () => {
     streamDetail,
     previousWalletConnectState,
     setAddAccountPanelOpen,
-    setLastStreamsSummary,
     setStreamsSummary,
     setStreamDetail,
     onTxConfirmed,
@@ -3924,7 +3935,7 @@ export const AccountsNewView = () => {
   ]);
 
   useEffect(() => {
-    if (!publicKey || !treasuryList) { return; }
+    if (!publicKey || !treasuryList || !treasuriesLoaded) { return; }
 
     const timeout = setTimeout(() => {
       refreshTreasuriesSummary();
@@ -3934,33 +3945,31 @@ export const AccountsNewView = () => {
       clearTimeout(timeout);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey, treasuryList]);
-
-  // Update incoming balance
-  useEffect(() => {
-    if (!incomingStreamsSummary) { return; }
-
-    setWithdrawalBalance(parseFloat(incomingStreamsSummary.totalNet.toFixed(2)));
-  }, [incomingStreamsSummary]);
-
-  // Update outgoing balance
-  useEffect(() => {
-    if (!streamingAccountsSummary || !outgoingStreamsSummary) { return; }
-
-    setUnallocatedBalance(parseFloat(outgoingStreamsSummary.totalNet.toFixed(2)) + parseFloat(streamingAccountsSummary.totalNet.toFixed(2)));
-  }, [ streamingAccountsSummary, outgoingStreamsSummary]);
+  }, [publicKey, treasuryList, treasuriesLoaded]);
 
   // Update total account balance
   useEffect(() => {
-    if (!unallocatedBalance && !withdrawalBalance) { return; }
+    if (loadingStreams || loadingCombinedStreamingList) {
+      return;
+    }
 
-      setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
-  }, [unallocatedBalance, withdrawalBalance]);
+    const wdb = parseFloat(incomingStreamsSummary.totalNet.toFixed(2));
+    const ub = parseFloat(outgoingStreamsSummary.totalNet.toFixed(2)) + parseFloat(streamingAccountsSummary.totalNet.toFixed(2));
+
+    setTotalAccountBalance(wdb + ub);
+    setCanShowStreamingAccountBalance(true);
+  }, [
+    loadingStreams,
+    incomingStreamsSummary,
+    outgoingStreamsSummary,
+    streamingAccountsSummary,
+    loadingCombinedStreamingList,
+  ]);
 
   // Live data calculation - NetWorth
   useEffect(() => {
 
-    if (streamsSummary && accountTokens && streamingAccountsSummary) {
+    if (tokensLoaded && accountTokens) {
       // Total USD value
       let sumMeanTokens = 0;
       accountTokens.forEach((asset: UserTokenAccount, index: number) => {
@@ -3971,14 +3980,14 @@ export const AccountsNewView = () => {
       });
       setTotalTokenAccountsValue(sumMeanTokens);
 
-      setTotalStreamingValue(streamsSummary.totalNet + streamingAccountsSummary.totalNet);
-
       // Net Worth
       const total = sumMeanTokens + totalAccountBalance;
       setNetWorth(total);
+    } else {
+      setNetWorth(0);
     }
 
-  }, [getTokenPriceBySymbol, accountTokens, streamingAccountsSummary, streamsSummary, totalAccountBalance]);
+  }, [accountTokens, getTokenPriceBySymbol, tokensLoaded, totalAccountBalance]);
 
   // Window resize listeners
   useEffect(() => {
@@ -4015,14 +4024,14 @@ export const AccountsNewView = () => {
 
   // Setup event listeners
   useEffect(() => {
-    if (canSubscribe) {
+    if (canSubscribe && !isPageLoaded) {
       setCanSubscribe(false);
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
     }
-  }, [canSubscribe, onTxConfirmed, onTxTimedout]);
+  }, [canSubscribe, isPageLoaded, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
   useEffect(() => {
@@ -4033,27 +4042,11 @@ export const AccountsNewView = () => {
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       consoleOut('Clearing accounts state...', '', 'purple');
-      setPathParamAsset('');
-      setPathParamStreamId('');
-      setPathParamTreasuryId('');
-      setPathParamStreamingTab('');
-      setTokensLoaded(false);
-      setAccountTokens([]);
-      setTreasuryList([]);
-      setStreamList([]);
-      setTreasuriesLoaded(false);
-      setAutocloseTreasuries([]);
-      setStreamingAccountCombinedList([]);
-      setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
-      setWithdrawalBalance(0);
-      setUnallocatedBalance(0);
-      setTotalAccountBalance(0);
-      setTotalTokenAccountsValue(0);
-      setTotalStreamingValue(0);
+      clearStateData();
       setSelectedAsset(undefined);
+      setTreasuriesLoaded(false);
+      setTokensLoaded(false);
       setCanSubscribe(true);
-      setLastStreamsSummary(initialSummary);
-      setStreamsSummary(initialSummary);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -4323,7 +4316,8 @@ export const AccountsNewView = () => {
   const onBackButtonClicked = () => {
     setDetailsPanelOpen(false);
     setAutoOpenDetailsPanel(false);
-    navigate(-1);
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+    navigate(url);
   }
 
   ///////////////
@@ -4374,7 +4368,9 @@ export const AccountsNewView = () => {
         <div className="font-bold font-size-110 left">{!isInspectedAccountTheConnectedWallet() ? "Treasury Balance" : "Net Worth"}</div>
         <div className="font-bold font-size-110 right">
           {
-            netWorth
+            loadingStreams || loadingCombinedStreamingList || !canShowStreamingAccountBalance? (
+              <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+            ) : netWorth
               ? toUsCurrency(netWorth)
               : '$0.00'
           }
@@ -4425,7 +4421,11 @@ export const AccountsNewView = () => {
             )}
           </div>
           <div className="rate-cell">
-            {!loadingStreams ? (
+            {loadingStreams || loadingCombinedStreamingList || !canShowStreamingAccountBalance ? (
+              <div className="rate-amount">
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              </div>
+            ) : (
               <>
                 {totalAccountBalance > 0 ? (
                   <>
@@ -4438,25 +4438,6 @@ export const AccountsNewView = () => {
                   <span className="rate-amount">$0.00</span>
                 )}
               </>
-            //   <>
-            //     <div className="rate-amount">
-            //       <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
-            //     </div>
-            //     <div className="interval">{t('streams.streaming-balance')}</div>
-            //   </>
-            // ) : (totalStreamsAmount === 0) ? (
-            //   <span className="rate-amount">--</span>
-            // ) : (
-            //   <>
-            //     <div className="rate-amount">
-            //       {toUsCurrency(totalAccountBalance)}
-            //     </div>
-            //     <div className="interval">{t('streams.streaming-balance')}</div>
-            //   </>
-            ) : (
-              <div className="rate-amount">
-                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-              </div>
             )}
           </div>
         </div>
@@ -5075,17 +5056,17 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">address:</span><span className="ml-1 font-bold fg-dark-active">{address ? 'true' : 'false'}</span>
-          <span className="ml-1">asset:</span><span className="ml-1 font-bold fg-dark-active">{asset ? 'true' : 'false'}</span>
-          <span className="ml-1">streamingTab:</span><span className="ml-1 font-bold fg-dark-active">{streamingTab || '-'}</span>
-          <span className="ml-1">streamId:</span><span className="ml-1 font-bold fg-dark-active">{streamId ? 'true' : 'false'}</span>
-          <span className="ml-1">treasuryId:</span><span className="ml-1 font-bold fg-dark-active">{treasuryId ? 'true' : 'false'}</span>
-          <span className="ml-1">autoOpenPanel:</span><span className="ml-1 font-bold fg-dark-active">{autoOpenDetailsPanel ? 'true' : 'false'}</span>
-          <span className="ml-1">panelOpen:</span><span className="ml-1 font-bold fg-dark-active">{detailsPanelOpen ? 'true' : 'false'}</span>
+          <span className="ml-1">streamList:</span><span className="ml-1 font-bold fg-dark-active">{streamList ? `[${streamList.length}]` : '-'}</span>
+          <span className="ml-1">streamListv1:</span><span className="ml-1 font-bold fg-dark-active">{streamListv1 ? `[${streamListv1.length}]` : '-'}</span>
+          <span className="ml-1">streamListv2:</span><span className="ml-1 font-bold fg-dark-active">{streamListv2 ? `[${streamListv2.length}]` : '-'}</span>
+          <span className="ml-1">treasuryList:</span><span className="ml-1 font-bold fg-dark-active">{treasuryList ? `[${treasuryList.length}]` : '-'}</span>
+          <span className="ml-1">accountBalance:</span><span className="ml-1 font-bold fg-dark-active">{totalAccountBalance || 0}</span>
+          <span className="ml-1">tokenAccountsValue:</span><span className="ml-1 font-bold fg-dark-active">{totalTokenAccountsValue || 0}</span>
+          <span className="ml-1">netWorth:</span><span className="ml-1 font-bold fg-dark-active">{netWorth || 0}</span>
         </div>
-      )} */}
+      )}
 
       {detailsPanelOpen && (
         <Button
@@ -5188,7 +5169,14 @@ export const AccountsNewView = () => {
 
                       <div className="asset-category-title flex-fixed-right">
                         <div className="title">Streaming Assets</div>
-                        <div className="amount">{toUsCurrency(totalAccountBalance)}</div>
+                        <div className="amount">{
+                          loadingStreams || loadingCombinedStreamingList || !canShowStreamingAccountBalance ? (
+                            <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                          ) : totalAccountBalance > 0
+                            ? toUsCurrency(totalAccountBalance)
+                            : "$0.00"
+                          }
+                        </div>
                       </div>
                       <div className="asset-category">
                         {renderMoneyStreamsSummary}
