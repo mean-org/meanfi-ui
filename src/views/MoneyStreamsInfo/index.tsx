@@ -108,7 +108,6 @@ export const MoneyStreamsInfoView = (props: {
   } = useContext(AppStateContext);
   const {
     confirmationHistory,
-    clearTxConfirmationContext,
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
   const connectionConfig = useConnectionConfig();
@@ -119,9 +118,6 @@ export const MoneyStreamsInfoView = (props: {
   const accounts = useAccountsContext();
   const { address } = useParams();
   const navigate = useNavigate();
-
-  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
-  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
 
   // Multisig related
   const [multisigAddress, setMultisigAddress] = useState('');
@@ -637,7 +633,6 @@ export const MoneyStreamsInfoView = (props: {
   const onAcceptCreateTreasury = (data: TreasuryCreateOptions) => {
     consoleOut('treasury create options:', data, 'blue');
     onExecuteCreateTreasuryTx(data);
-    setRetryOperationPayload(data);
   };
 
   const onTreasuryCreated = useCallback((createOptions: TreasuryCreateOptions) => {
@@ -659,8 +654,6 @@ export const MoneyStreamsInfoView = (props: {
 
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryCreate);
-    setRetryOperationPayload(createOptions);
     setIsBusy(true);
 
     const createTreasury = async (data: any) => {
@@ -1285,7 +1278,6 @@ export const MoneyStreamsInfoView = (props: {
 
       return 0;
     }));
-    consoleOut('streamList inside MoneyStremsInfo:', streamList, 'crimson');
 
     const onlyOuts = streamList.filter(item => !isInboundStream(item));
     const onlyAutoClose = onlyOuts.filter(stream => autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress));
@@ -1375,8 +1367,6 @@ export const MoneyStreamsInfoView = (props: {
 
   // Update total account balance
   useEffect(() => {
-    if (!unallocatedBalance && !withdrawalBalance) { return; }
-
       setTotalAccountBalance((withdrawalBalance + unallocatedBalance) as number);
   }, [unallocatedBalance, withdrawalBalance]);
 
