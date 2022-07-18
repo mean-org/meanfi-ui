@@ -1629,7 +1629,7 @@ export const MoneyStreamsInfoView = (props: {
   const renderSummary = (
     <>
       <Row gutter={[8, 8]}>
-        <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
+        <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
         {/* Background animation */}
         {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
           <div className="stream-background stream-background-incoming">
@@ -1686,7 +1686,7 @@ export const MoneyStreamsInfoView = (props: {
             </Wave>
           </div>
         </Col>
-        <Col xs={23} sm={11} md={23} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
+        <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
           {/* Background animation */}
           {(hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0) ? (
             <div className="stream-background stream-background-outgoing">
