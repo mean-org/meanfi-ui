@@ -1411,12 +1411,13 @@ export const MoneyStreamsOutgoingView = (props: {
   ]);
 
   const hideResumeStreamModal = useCallback(() => setIsResumeStreamModalVisibility(false), []);
-  const onAcceptResumeStream = () => {
+  const onAcceptResumeStream = (title: string) => {
+    consoleOut("Input title for resume stream:", title, 'blue');
     hideResumeStreamModal();
-    onExecuteResumeStreamTransaction();
+    onExecuteResumeStreamTransaction(title);
   };
 
-  const onExecuteResumeStreamTransaction = async () => {
+  const onExecuteResumeStreamTransaction = async (title: string) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -1436,7 +1437,8 @@ export const MoneyStreamsOutgoingView = (props: {
         const streamPublicKey = new PublicKey(streamSelected.id as string);
 
         const data = {
-          stream: streamPublicKey.toBase58(),                     // stream
+          title: title as string,                          // title
+          stream: streamPublicKey.toBase58(),              // stream
           initializer: publicKey.toBase58(),               // initializer
         }
         consoleOut('data:', data);
@@ -1546,7 +1548,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Resume Stream",
+        data.title === "" ? "Resume Stream" : data.title as string,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.StreamResume,
@@ -1576,6 +1578,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const streamPublicKey = new PublicKey(streamSelected.id as string);
       const data = {
+        title: title as string,                           // title
         stream: streamPublicKey.toBase58(),               // stream
         payer: publicKey.toBase58(),                      // payer
       }
@@ -2874,7 +2877,7 @@ export const MoneyStreamsOutgoingView = (props: {
                       onClick={() => ongoingOperation === OperationType.StreamPause
                         ? onExecutePauseStreamTransaction(title)
                         : ongoingOperation === OperationType.StreamResume
-                          ? onExecuteResumeStreamTransaction()
+                          ? onExecuteResumeStreamTransaction(title)
                           : hideTransactionExecutionModal()}>
                       {t('general.retry')}
                     </Button>
