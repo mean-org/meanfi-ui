@@ -174,7 +174,7 @@ export const StreamPauseModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('streams.pause-stream-modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Proposal to pause stream" : t('streams.pause-stream-modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
@@ -228,7 +228,7 @@ export const StreamPauseModal = (props: {
               shape="round"
               size="large"
               onClick={() => onAcceptModal()}>
-              {t('streams.pause-stream-cta')}
+              {param === "multisig" ? "Submit proposal" : t('streams.pause-stream-cta')}
           </Button>
         </div>
       </div>

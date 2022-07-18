@@ -174,13 +174,13 @@ export const StreamResumeModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('streams.resume-stream-modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Proposal to resume stream" : t('streams.resume-stream-modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={400}>
-        
+
       <div className="transaction-progress p-0">
         <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
         <h4>{props.content}</h4>
@@ -228,7 +228,7 @@ export const StreamResumeModal = (props: {
               shape="round"
               size="large"
               onClick={() => onAcceptModal()}>
-              {t('streams.resume-stream-cta')}
+              {param === "multisig" ? "Submit proposal" : t('streams.resume-stream-cta')}
           </Button>
         </div>
       </div>
