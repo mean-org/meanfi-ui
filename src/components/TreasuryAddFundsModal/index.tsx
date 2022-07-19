@@ -964,7 +964,7 @@ export const TreasuryAddFundsModal = (props: {
       afterClose={onAfterClose}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-      {hasNoStreamingAccounts ? (
+      {hasNoStreamingAccounts && !treasuryDetails ? (
         <div className="text-center px-4 py-4">
           {theme === 'light' ? (
             <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
