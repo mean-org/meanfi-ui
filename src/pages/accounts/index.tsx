@@ -822,7 +822,7 @@ export const AccountsNewView = () => {
             type="primary"
             shape="round"
             size="small"
-            className="extra-small"
+            className="extra-small d-flex align-items-center pb-1"
             onClick={() => {
               const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
               if (multisigAuthority) {
@@ -2355,9 +2355,7 @@ export const AccountsNewView = () => {
     enqueueTransactionConfirmation,
     clearTxConfirmationContext,
     resetTransactionStatus,
-    showNotificationByType,
     setTransactionStatus,
-    getQueryAccountType,
     t
   ]);
 
