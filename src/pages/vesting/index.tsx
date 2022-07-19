@@ -494,7 +494,7 @@ export const VestingView = () => {
     }
 
     const notifyMultisigVestingContractActionFollowup = async (message1: string, message2: string, item: TxConfirmationInfo) => {
-      if (!item || !item.extras || !item.extras.multisigId || !item.extras.vestingContractId) {
+      if (!item || !item.extras || !item.extras.multisigAuthority || !item.extras.vestingContractId) {
         turnOffLockWorkflow();
         return;
       }

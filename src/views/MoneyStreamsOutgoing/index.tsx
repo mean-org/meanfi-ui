@@ -2261,7 +2261,7 @@ export const MoneyStreamsOutgoingView = (props: {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            
+
             setCloseStreamTransactionModalVisibility(false);
             setLoadingStreamDetails(true);
             param === "multisig" && showNotificationByType("info");

@@ -842,6 +842,8 @@ export const AccountsNewView = () => {
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
     let event: any;
 
+    // TODO: We must record to segment all success and all failures equally
+
     if (item && item.operationType === OperationType.Wrap) {
       event = success ? AppUsageEvent.WrapSolCompleted : AppUsageEvent.WrapSolFailed;
     } else if (item && item.operationType === OperationType.Unwrap) {
@@ -873,46 +875,42 @@ export const AccountsNewView = () => {
       }
     };
 
-    consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
     if (item) {
+      consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+      recordTxConfirmation(item, true);
+
       if (item.operationType === OperationType.Wrap) {
-        recordTxConfirmation(item, true);
         setShouldLoadTokens(true);
         reloadSwitch();
       } else if (item.operationType === OperationType.Unwrap) {
         setIsUnwrapping(false);
-        recordTxConfirmation(item, true);
         setShouldLoadTokens(true);
         reloadSwitch();
       } else if (item.operationType === OperationType.Transfer && item.extras !== 'scheduled') {
-        recordTxConfirmation(item, true);
         setShouldLoadTokens(true);
         reloadSwitch();
       } else if (item.operationType === OperationType.CreateAsset) {
-        recordTxConfirmation(item, true);
         setShouldLoadTokens(true);
         if (isSelectedAssetNativeAccount()) {
           reloadSwitch();
         }
       } else if (item.operationType === OperationType.CloseTokenAccount) {
-        recordTxConfirmation(item, true);
         setShouldLoadTokens(true);
         reloadSwitch();
       } else if (item.operationType === OperationType.SetAssetAuthority) {
-        recordTxConfirmation(item, true);
+        if (item.extras && item.extras.multisigAuthority) {   // DONE!
+          showNotificationByType("info");
+        }
       } else if (item.operationType === OperationType.TransferTokens) {
-        recordTxConfirmation(item, true);
-        // const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
-        // if (multisigAuthority) {
-        //   setHighLightableMultisigId(multisigAuthority);
-        // }
-        // navigate(`/multisig/${multisigAuthority}?v=proposals`);
+        if (item.extras && item.extras.multisigAuthority) {   // DONE!
+          showNotificationByType("info");
+        }
       } else if (item.operationType === OperationType.DeleteAsset) {
-        if (item.extras) {
+        if (item.extras && item.extras.multisigAuthority) {   // DONE!
           showNotificationByType("info");
         }
       } else if (item.operationType === OperationType.StreamAddFunds) {
-        if (item.extras) {
+        if (item.extras && item.extras.multisigAuthority) { // DONE!
           showNotificationByType("info");
         }
         softReloadStreams();
@@ -927,12 +925,12 @@ export const AccountsNewView = () => {
         const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
         navigate(url);
       } else if (item.operationType === OperationType.StreamWithdraw) {
-        if (item.extras) {
+        if (item.extras && item.extras.multisigAuthority) {   // DONE!
           showNotificationByType("info");
         }
         softReloadStreams();
       } else if (item.operationType === OperationType.StreamTransferBeneficiary) {
-        if (item.extras) {
+        if (item.extras && item.extras.multisigAuthority) {   // DONE!
           showNotificationByType("info");
         }
         hardReloadStreams();
@@ -941,22 +939,22 @@ export const AccountsNewView = () => {
       } else if (item.operationType === OperationType.TreasuryAddFunds) {
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryWithdraw) {
-        if (item.extras) {
+        if (item.extras && item.extras.multisigAuthority) {
           showNotificationByType("info");
         }
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryStreamCreate) {
-        if (item.extras) {
+        if (item.extras && item.extras.multisigAuthority) {
           showNotificationByType("info");
         }
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryCreate) {
-        if (item.extras) {
+        if (item.extras && item.extras.multisigAuthority) {   // DONE!
           showNotificationByType("info");
         }
         softReloadStreams();
       } else if (item.operationType === OperationType.TreasuryClose) {
-        if (item.extras) {
+        if (item.extras && item.extras.multisigAuthority) {
           showNotificationByType("info");
         } else {
           const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
@@ -964,7 +962,7 @@ export const AccountsNewView = () => {
         }
         hardReloadStreams();
       } else if (item.operationType === OperationType.TreasuryRefreshBalance) {
-        if (item.extras) {
+        if (item.extras && item.extras.multisigAuthority) {
           showNotificationByType("info");
         }
         softReloadStreams();
@@ -980,22 +978,21 @@ export const AccountsNewView = () => {
     resetTransactionStatus,
     recordTxConfirmation,
     setShouldLoadTokens,
-    getQueryAccountType,
     reloadSwitch,
     navigate,
   ]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
-    consoleOut('onTxTimedout event executed:', item, 'crimson');
     if (item) {
+      consoleOut('onTxTimedout event executed:', item, 'crimson');
+      recordTxConfirmation(item, false);
       if (item.operationType === OperationType.Unwrap) {
         setIsUnwrapping(false);
       } else if (item.operationType === OperationType.TransferTokens) {
         setIsBusy(false);
       }
     }
-    recordTxConfirmation(item, false);
     resetTransactionStatus();
   }, [recordTxConfirmation, resetTransactionStatus]);
 
@@ -1914,7 +1911,6 @@ export const AccountsNewView = () => {
     }
 
     if (wallet && selectedAsset) {
-      const param = getQueryAccountType();
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -1934,14 +1930,16 @@ export const AccountsNewView = () => {
                 loadingTitle: 'Confirming transaction',
                 loadingMessage: `Transferring ${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol} to ${shortenAddress(data.to)}`,
                 completedTitle: 'Transaction confirmed',
-                completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol}) successfully transferred to ${shortenAddress(data.to)}`
+                completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol}) successfully transferred to ${shortenAddress(data.to)}`,
+                extras: {
+                  multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+                }
               });
               setTransactionStatus({
                 lastOperation: transactionStatus.currentOperation,
                 currentOperation: TransactionStatus.TransactionFinished
               });
               setIsTransferTokenModalVisible(false);
-              param === "multisig" && showNotificationByType("info");
             } else {
               openNotification({
                 title: t('notifications.error-title'),
@@ -1970,10 +1968,8 @@ export const AccountsNewView = () => {
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
     clearTxConfirmationContext,
-    showNotificationByType,
     resetTransactionStatus,
     setTransactionStatus,
-    getQueryAccountType,
     t
   ]);
 
@@ -2239,7 +2235,6 @@ export const AccountsNewView = () => {
     }
 
     if (wallet && selectedAsset) {
-      const param = getQueryAccountType();
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -2259,14 +2254,16 @@ export const AccountsNewView = () => {
                 loadingTitle: 'Confirming transaction',
                 loadingMessage: "Transferring ownership",
                 completedTitle: 'Transaction confirmed',
-                completedMessage: `Asset ${selectedAsset.name} successfully transferred to ${shortenAddress(data.selectedAuthority)}`
+                completedMessage: `Asset ${selectedAsset.name} successfully transferred to ${shortenAddress(data.selectedAuthority)}`,
+                extras: {
+                  multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+                }
               });
               setTransactionStatus({
                 lastOperation: transactionStatus.currentOperation,
                 currentOperation: TransactionStatus.TransactionFinished
               });
               setIsTransferVaultAuthorityModalVisible(false);
-              param === "multisig" && showNotificationByType("info");
             } else {
               openNotification({
                 title: t('notifications.error-title'),
@@ -2617,7 +2614,9 @@ export const AccountsNewView = () => {
                 loadingMessage: "Deleting asset",
                 completedTitle: 'Transaction confirmed',
                 completedMessage: 'Asset successfully deleted',
-                extras: multisigAuth
+                extras: {
+                  multisigAuthority: multisigAuth
+                }
               });
               setIsDeleteVaultModalVisible(false);
             } else {

@@ -337,7 +337,7 @@ export const SafeView = () => {
 
     if (confirmationHistory && confirmationHistory.length > 0) {
 
-      const item = confirmationHistory.find(h => h.extras && h.extras.multisigId && h.extras.multisigId.toBase58() === selectedMultisigRef.current?.id.toBase58() && h.txInfoFetchStatus === "fetching");
+      const item = confirmationHistory.find(h => h.extras && h.extras.multisigAuthority && h.extras.multisigAuthority.toBase58() === selectedMultisigRef.current?.id.toBase58() && h.txInfoFetchStatus === "fetching");
 
       if (item) {
         return true;
@@ -1794,7 +1794,9 @@ export const SafeView = () => {
               loadingMessage: `Create proposal: ${data.title}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully created proposal: ${data.title}`,
-              extras: data.multisigId
+              extras: {
+                multisigAuthority: data.multisigId
+              }
             });
           } else { 
             setIsBusy(false); 
@@ -2137,7 +2139,7 @@ export const SafeView = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully approved proposal: ${data.transaction.details.title}`,
               extras: {
-                multisigId: data.transaction.multisig,
+                multisigAuthority: data.transaction.multisig,
                 transactionId: data.transaction.id
               }
             });
@@ -2435,7 +2437,7 @@ export const SafeView = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully rejected proposal: ${data.transaction.details.title}`,
               extras: {
-                multisigId: data.transaction.multisig,
+                multisigAuthority: data.transaction.multisig,
                 transactionId: data.transaction.id
               }
             });
@@ -2790,7 +2792,7 @@ export const SafeView = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully executed proposal: ${data.transaction.details.title}`,
               extras: {
-                multisigId: data.transaction.multisig,
+                multisigAuthority: data.transaction.multisig,
                 transactionId: data.transaction.id
               }
             });
@@ -3091,7 +3093,7 @@ export const SafeView = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully cancelled proposal: ${data.transaction.details.title}`,
               extras: {
-                multisigId: data.transaction.multisig,
+                multisigAuthority: data.transaction.multisig,
                 transactionId: data.transaction.id
               }
             });
@@ -3210,9 +3212,9 @@ export const SafeView = () => {
     };
     
     const refreshSelectedProposal = (extras: any) => {
-      if (multisigClient && publicKey && extras && extras.multisigId && extras.transactionId) {
+      if (multisigClient && publicKey && extras && extras.multisigAuthority && extras.transactionId) {
         multisigClient
-          .getMultisigTransaction(extras.multisigId, extras.transactionId, publicKey)
+          .getMultisigTransaction(extras.multisigAuthority, extras.transactionId, publicKey)
           .then((tx: any) => setProposalSelected(tx))
           .catch((err: any) => console.error(err));
       }
