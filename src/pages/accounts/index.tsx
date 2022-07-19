@@ -993,6 +993,7 @@ export const AccountsNewView = () => {
           recordTxConfirmation(item, true);
           if (!isWorkflowLocked) {
             isWorkflowLocked = true;
+            setLoadingMultisigAccounts(false);
             notifyMultisigActionFollowup(item);
           }
           break;
@@ -1011,6 +1012,7 @@ export const AccountsNewView = () => {
           recordTxConfirmation(item, true);
           if (!isWorkflowLocked) {
             isWorkflowLocked = true;
+            setLoadingMultisigAccounts(false);
             notifyMultisigActionFollowup(item);
           }
           setTimeout(() => {
@@ -1024,6 +1026,7 @@ export const AccountsNewView = () => {
           recordTxConfirmation(item, true);
           if (!isWorkflowLocked && item.extras?.multisigAuthority) {
             isWorkflowLocked = true;
+            setLoadingMultisigAccounts(false);
             notifyMultisigActionFollowup(item);
           } else {
             const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;

@@ -1424,7 +1424,7 @@ export const MoneyStreamsInfoView = (props: {
             consoleOut('Send Tx to confirmation queue:', signature);
             if (sent) {
               const multisig = createOptions.multisigId && selectedMultisig
-                ? selectedMultisig.id.toBase58()
+                ? selectedMultisig.authority.toBase58()
                 : "";
               enqueueTransactionConfirmation({
                 signature: signature,

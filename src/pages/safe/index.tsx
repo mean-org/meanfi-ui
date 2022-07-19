@@ -2146,7 +2146,7 @@ export const SafeView = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully approved proposal: ${data.transaction.details.title}`,
               extras: {
-                multisigAuthority: data.transaction.multisig,
+                multisigAuthority: data.transaction.multisig.toBase58(),
                 transactionId: data.transaction.id
               }
             });
@@ -2444,7 +2444,7 @@ export const SafeView = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully rejected proposal: ${data.transaction.details.title}`,
               extras: {
-                multisigAuthority: data.transaction.multisig,
+                multisigAuthority: data.transaction.multisig.toBase58(),
                 transactionId: data.transaction.id
               }
             });
@@ -2799,7 +2799,7 @@ export const SafeView = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully executed proposal: ${data.transaction.details.title}`,
               extras: {
-                multisigAuthority: data.transaction.multisig,
+                multisigAuthority: data.transaction.multisig.toBase58(),
                 transactionId: data.transaction.id
               }
             });
@@ -3100,7 +3100,7 @@ export const SafeView = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully cancelled proposal: ${data.transaction.details.title}`,
               extras: {
-                multisigAuthority: data.transaction.multisig,
+                multisigAuthority: data.transaction.multisig.toBase58(),
                 transactionId: data.transaction.id
               }
             });

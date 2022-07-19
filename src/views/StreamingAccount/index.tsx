@@ -1276,7 +1276,7 @@ export const StreamingAccountView = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             const isMultisig = isMultisigTreasury(streamingAccountSelected) && selectedMultisig
-            ? selectedMultisig.id.toBase58()
+            ? selectedMultisig.authority.toBase58()
             : "";
             enqueueTransactionConfirmation({
               signature: signature,
@@ -1735,7 +1735,7 @@ export const StreamingAccountView = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             const isMultisig = isMultisigTreasury(streamingAccountSelected) && selectedMultisig
-            ? selectedMultisig.id.toBase58()
+            ? selectedMultisig.authority.toBase58()
             : "";
             enqueueTransactionConfirmation({
               signature: signature,
@@ -2097,7 +2097,7 @@ export const StreamingAccountView = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             const isMultisig = isMultisigTreasury(streamingAccountSelected) && selectedMultisig
-            ? selectedMultisig.id.toBase58()
+            ? selectedMultisig.authority.toBase58()
             : "";
 
             enqueueTransactionConfirmation({

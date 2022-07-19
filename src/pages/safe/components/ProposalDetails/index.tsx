@@ -121,7 +121,7 @@ export const ProposalDetailsView = (props: {
 
   useEffect(() => {
 
-    if (!selectedMultisig || !solanaApps || !appsProvider || !selectedProposal) { return; }
+    if (!selectedMultisig || !solanaApps || !appsProvider || !proposalSelected || !selectedProposal) { return; }
 
     const timeout = setTimeout(() => {
 

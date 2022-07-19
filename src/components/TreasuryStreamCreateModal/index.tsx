@@ -1041,7 +1041,7 @@ export const TreasuryStreamCreateModal = (props: {
     const createStreams = async (data: any) => {
 
       consoleOut('Is Multisig Treasury: ', isSelectedStreamingAccountMultisigTreasury, 'blue');
-      consoleOut('Multisig address: ', selectedMultisig ? selectedMultisig.id.toBase58() : '--', 'blue');
+      consoleOut('Multisig authority: ', selectedMultisig ? selectedMultisig.authority.toBase58() : '--', 'blue');
       consoleOut('Starting create streams using MSP V2...', '', 'blue');
       const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
@@ -1436,7 +1436,7 @@ export const TreasuryStreamCreateModal = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Txs to confirmation queue:', signatures);
             const isMultisig = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
-            ? selectedMultisig.id.toBase58()
+            ? selectedMultisig.authority.toBase58()
             : "";
             const messageLoading = isMultisig ? `Creating stream proposal to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.` : `Creating stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.`
             const messageCompleted = isMultisig ? `Proposal to create stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.` : `Stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)} has been proposed.`
