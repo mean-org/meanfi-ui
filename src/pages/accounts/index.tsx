@@ -256,7 +256,6 @@ export const AccountsNewView = () => {
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
   const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
-  // const [isWorkflowLocked, setIsWorkflowLocked] = useState(false);
 
 
   // Perform premature redirect here if no address was provided in path
@@ -329,10 +328,6 @@ export const AccountsNewView = () => {
     selectedMultisigRef.current = selectedMultisig;
   }, [selectedMultisig]);
 
-  // const isWorkflowLockedRef = useRef(isWorkflowLocked);
-  // useEffect(() => {
-  //   isWorkflowLockedRef.current = isWorkflowLocked;
-  // }, [isWorkflowLocked]);
 
   ////////////////////////////
   //   Events and actions   //
@@ -832,75 +827,6 @@ export const AccountsNewView = () => {
     setHideLowBalances(setting);
   }, [accountTokens, navigateToAsset, selectAsset, selectedAsset, setHideLowBalances, shouldHideAsset]);
 
-  // const showNotificationByType = useCallback(async (type: IconType) => {
-  //   await delay(1500);
-  //   const myNotifyKey = `notify-${Date.now()}`;
-  //   openNotification({
-  //     type,
-  //     key: myNotifyKey,
-  //     title: 'Review proposal',
-  //     duration: 20,
-  //     description: (
-  //       <>
-  //         <div className="mb-2">The proposal's status can be reviewed in the Multisig Safe's proposal list.</div>
-  //         <Button
-  //           type="primary"
-  //           shape="round"
-  //           size="small"
-  //           className="extra-small d-flex align-items-center pb-1"
-  //           onClick={() => {
-  //             const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
-  //             if (multisigAuthority) {
-  //               setHighLightableMultisigId(multisigAuthority);
-  //             }
-  //             navigate(`/multisig/${multisigAuthority}?v=proposals`);
-  //             notification.close(myNotifyKey);
-  //           }}
-  //         >
-  //             Review proposal
-  //         </Button>
-  //       </>
-  //     ),
-  //   });
-  // }, [navigate, setHighLightableMultisigId]);
-
-  // const notifyMultisigActionFollowup = useCallback(async (type: IconType) => {
-
-  //   const turnOffLockWorkflow = () => {
-  //     isWorkflowLocked = false;
-  //   }
-
-  //   await delay(1500);
-  //   const myNotifyKey = `notify-${Date.now()}`;
-  //   openNotification({
-  //     type,
-  //     key: myNotifyKey,
-  //     title: 'Review proposal',
-  //     duration: 20,
-  //     description: (
-  //       <>
-  //         <div className="mb-2">The proposal's status can be reviewed in the Multisig Safe's proposal list.</div>
-  //         <Button
-  //           type="primary"
-  //           shape="round"
-  //           size="small"
-  //           className="extra-small"
-  //           onClick={() => {
-  //             const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
-  //             if (multisigAuthority) {
-  //               setHighLightableMultisigId(multisigAuthority);
-  //             }
-  //             navigate(`/multisig/${multisigAuthority}?v=proposals`);
-  //             notification.close(myNotifyKey);
-  //           }}>
-  //           Review proposal
-  //         </Button>
-  //       </>
-  //     ),
-  //     handleClose: turnOffLockWorkflow
-  //   });
-  // }, [navigate, setHighLightableMultisigId]);
-
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
     let event: any = undefined;
 
@@ -1000,11 +926,6 @@ export const AccountsNewView = () => {
         streamsRefreshCta.click();
       }
     };
-
-    // const turnOffLockWorkflow = () => {
-    //   isWorkflowLockedRef.current = false;
-    //   setIsWorkflowLocked(false);
-    // }
 
     const turnOffLockWorkflow = () => {
       isWorkflowLocked = false;
@@ -1116,126 +1037,10 @@ export const AccountsNewView = () => {
           break;
       }
 
-    //   console.log(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-    //   recordTxConfirmation(item, true);
-
-    //   if (item.operationType === OperationType.Wrap) {
-    //     setShouldLoadTokens(true);
-    //     reloadSwitch();
-    //   } else if (item.operationType === OperationType.Unwrap) {
-    //     setIsUnwrapping(false);
-    //     setShouldLoadTokens(true);
-    //     reloadSwitch();
-    //   } else if (item.operationType === OperationType.Transfer && item.extras !== 'scheduled') {
-    //     setShouldLoadTokens(true);
-    //     reloadSwitch();
-    //   } else if (item.operationType === OperationType.CreateAsset) {
-    //     setShouldLoadTokens(true);
-    //     if (isSelectedAssetNativeAccount()) {
-    //       reloadSwitch();
-    //     }
-    //   } else if (item.operationType === OperationType.CloseTokenAccount) {
-    //     setShouldLoadTokens(true);
-    //     reloadSwitch();
-    //   } else if (item.operationType === OperationType.SetAssetAuthority) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     }
-    //   } else if (item.operationType === OperationType.TransferTokens) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     }
-    //   } else if (item.operationType === OperationType.DeleteAsset) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     }
-    //   } else if (item.operationType === OperationType.StreamAddFunds) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     }
-    //     setTimeout(() => {
-    //       softReloadStreams();
-    //     }, 20);
-    //   } else if (item.operationType === OperationType.StreamPause) {
-    //     softReloadStreams();
-    //   } else if (item.operationType === OperationType.StreamResume) {
-    //     softReloadStreams();
-    //   } else if (item.operationType === OperationType.StreamCreate) {
-    //     softReloadStreams();
-    //   } else if (item.operationType === OperationType.StreamClose) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     } else {
-    //       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
-    //       navigate(url);
-    //     }
-    //     setTimeout(() => {
-    //       hardReloadStreams();
-    //     }, 20);
-    //   } else if (item.operationType === OperationType.StreamWithdraw) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     }
-    //     setTimeout(() => {
-    //       softReloadStreams();
-    //     }, 20);
-    //   } else if (item.operationType === OperationType.StreamTransferBeneficiary) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     } else {
-    //       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
-    //       navigate(url);
-    //     }
-    //     setTimeout(() => {
-    //       hardReloadStreams();
-    //     }, 20);
-    //   } else if (item.operationType === OperationType.TreasuryAddFunds) {
-    //     softReloadStreams();
-    //   } else if (item.operationType === OperationType.TreasuryWithdraw) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     }
-    //     setTimeout(() => {
-    //       softReloadStreams();
-    //     }, 20);
-    //   } else if (item.operationType === OperationType.TreasuryStreamCreate) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     }
-    //     setTimeout(() => {
-    //       softReloadStreams();
-    //     }, 20);
-    //   } else if (item.operationType === OperationType.TreasuryCreate) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     }
-    //     setTimeout(() => {
-    //       softReloadStreams();
-    //     }, 20);
-    //   } else if (item.operationType === OperationType.TreasuryClose) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     } else {
-    //       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
-    //       navigate(url);
-    //     }
-    //     setTimeout(() => {
-    //       hardReloadStreams();
-    //     }, 20);
-    //   } else if (item.operationType === OperationType.TreasuryRefreshBalance) {
-    //     if (!isWorkflowLockedRef.current) {
-    //       notifyMultisigActionFollowup(item);
-    //     }
-    //     setTimeout(() => {
-    //       softReloadStreams();
-    //     }, 20);
-    //   } else if (item.operationType === OperationType.Transfer) {
-    //     softReloadStreams();
-    //   }
-
   }
 
-  }, [address, isSelectedAssetNativeAccount, navigate, recordTxConfirmation, reloadSwitch, setHighLightableMultisigId, setShouldLoadTokens]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, navigate, setHighLightableMultisigId]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -4302,7 +4107,7 @@ export const AccountsNewView = () => {
       setTreasuriesLoaded(false);
       setTokensLoaded(false);
       setCanSubscribe(true);
-      // setIsWorkflowLocked(false);
+      isWorkflowLocked = false;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

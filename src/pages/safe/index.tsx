@@ -4157,7 +4157,7 @@ export const SafeView = () => {
   const returnFromProposalDetailsHandler = () => {
     setIsProposalDetails(false);
     if (selectedMultisig) {
-      setHighLightableMultisigId(selectedMultisig.id.toBase58());
+      setHighLightableMultisigId(selectedMultisig.authority.toBase58());
     }
     setNeedRefreshTxs(true);
     const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}?v=proposals`;
@@ -4167,7 +4167,7 @@ export const SafeView = () => {
   const returnFromProgramDetailsHandler = () => {
     setIsProgramDetails(false);
     if (selectedMultisig) {
-      setHighLightableMultisigId(selectedMultisig.id.toBase58());
+      setHighLightableMultisigId(selectedMultisig.authority.toBase58());
     }
     const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}?v=programs`;
     navigate(url);
