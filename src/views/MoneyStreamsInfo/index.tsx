@@ -70,7 +70,6 @@ export const MoneyStreamsInfoView = (props: {
   onSendFromStreamingAccountOutgoingStreamInfo?: any;
   selectedMultisig: MultisigInfo | undefined;
   selectedTab: string;
-  showNotificationByType?: any;
   streamList: Array<Stream | StreamInfo> | undefined;
   streamingAccountCombinedList: CombinedStreamingAccounts[] | undefined;
   treasuryList: (Treasury | TreasuryInfo)[];
@@ -87,7 +86,6 @@ export const MoneyStreamsInfoView = (props: {
     onSendFromStreamingAccountOutgoingStreamInfo,
     selectedMultisig,
     selectedTab,
-    showNotificationByType,
     streamList,
     streamingAccountCombinedList,
     treasuryList,
@@ -2684,7 +2682,6 @@ export const MoneyStreamsInfoView = (props: {
           multisigClient={multisigClient}
           selectedMultisig={selectedMultisig}
           userBalances={userBalances}
-          showNotificationByType={() => showNotificationByType("info")}
         />
       )}
 

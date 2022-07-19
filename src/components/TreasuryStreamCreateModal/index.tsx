@@ -73,7 +73,6 @@ export const TreasuryStreamCreateModal = (props: {
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   userBalances: any;
   withdrawTransactionFees: TransactionFees;
-  showNotificationByType?: any;
 }) => {
   const {
     associatedToken,
@@ -90,7 +89,6 @@ export const TreasuryStreamCreateModal = (props: {
     treasuryDetails,
     userBalances,
     withdrawTransactionFees,
-    showNotificationByType
   } = props;
   const { t } = useTranslation('common');
   const [searchParams] = useSearchParams();

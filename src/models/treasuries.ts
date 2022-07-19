@@ -18,6 +18,12 @@ export interface TreasuryCreateOptions {
     token: TokenInfo;
 }
 
+export interface CloseStreamTransactionParams {
+    payer: string;
+    stream: string;
+    closeTreasury: boolean;
+}
+
 export interface UserTreasuriesSummary {
     totalAmount: number;
     openAmount: number;

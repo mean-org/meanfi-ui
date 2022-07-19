@@ -29,10 +29,10 @@ import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { StreamPauseModal } from "../../components/StreamPauseModal";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { StreamResumeModal } from "../../components/StreamResumeModal";
-import { StreamTreasuryType } from "../../models/treasuries";
+import { CloseStreamTransactionParams, StreamTreasuryType } from "../../models/treasuries";
 import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { title } from "process";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -42,7 +42,6 @@ export const MoneyStreamsOutgoingView = (props: {
   streamList?: Array<Stream | StreamInfo> | undefined;
   onSendFromOutgoingStreamDetails?: any;
   multisigAccounts: MultisigInfo[] | undefined;
-  showNotificationByType?: any;
 }) => {
   const {
     splTokenList,
@@ -66,11 +65,10 @@ export const MoneyStreamsOutgoingView = (props: {
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
 
-  const [searchParams] = useSearchParams();
   const { wallet, publicKey } = useWallet();
   const connection = useConnection();
 
-  const { streamSelected, streamList, onSendFromOutgoingStreamDetails, multisigAccounts, showNotificationByType } = props;
+  const { streamSelected, streamList, onSendFromOutgoingStreamDetails, multisigAccounts } = props;
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const { endpoint } = useConnectionConfig();
@@ -88,19 +86,6 @@ export const MoneyStreamsOutgoingView = (props: {
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
@@ -1357,7 +1342,6 @@ export const MoneyStreamsOutgoingView = (props: {
 
             setIsPauseStreamModalVisibility(false);
             setLoadingStreamDetails(true);
-            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             onTransactionFinished();
           } else { setIsBusy(false); }
@@ -1808,7 +1792,6 @@ export const MoneyStreamsOutgoingView = (props: {
             
             setIsResumeStreamModalVisibility(false);
             setLoadingStreamDetails(true);
-            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             onTransactionFinished();
           } else { setIsBusy(false); }
@@ -1870,6 +1853,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
   const onAcceptCloseStream = (data: any) => {
+    consoleOut('onAcceptCloseStream params:', data, 'blue');
     hideCloseStreamModal();
     onExecuteCloseStreamTransaction(data);
   };
@@ -1915,7 +1899,7 @@ export const MoneyStreamsOutgoingView = (props: {
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
           feeAmount: closeTreasuryData.feeAmount,
-          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
+          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns)
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
@@ -1998,6 +1982,56 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     }
 
+    const closeStream = async (data: CloseStreamTransactionParams) => {
+
+      consoleOut('closeStream received params:', data, 'blue');
+
+      if (!msp) { return null; }
+
+      if (!isMultisigTreasury()) {        
+        return await msp.closeStream(
+          new PublicKey(data.payer),              // payer
+          new PublicKey(data.payer),              // destination
+          new PublicKey(data.stream),             // stream,
+          data.closeTreasury,                     // closeTreasury
+          true                                    // autoWSol
+        );
+      }
+
+      if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      const closeStream = await msp.closeStream(
+        new PublicKey(data.payer),              // payer
+        new PublicKey(data.payer),              // TODO: This should come from the UI
+        new PublicKey(data.stream),             // stream,
+        data.closeTreasury,                     // closeTreasury
+        false
+      );
+
+      const ixData = Buffer.from(closeStream.instructions[0].data);
+      const ixAccounts = closeStream.instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Close Stream",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamClose,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
+
+      return tx;
+    }
+
     const createTxV2 = async (): Promise<boolean> => {
       if (publicKey && streamSelected && msp) {
         setTransactionStatus({
@@ -2007,11 +2041,12 @@ export const MoneyStreamsOutgoingView = (props: {
         const streamPublicKey = new PublicKey(streamSelected.id as string);
         const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
 
+        consoleOut('createTxV2 received params:', closeTreasuryData, 'blue');
         const data = {
-          stream: streamPublicKey.toBase58(),                         // stream
-          initializer: publicKey.toBase58(),                          // initializer
-          autoCloseTreasury: closeTreasuryData.closeTreasuryOption    // closeTreasury
-        }
+          payer: publicKey.toBase58(),                                 // payer
+          stream: streamPublicKey.toBase58(),                          // stream
+          closeTreasury: closeTreasuryData.closeTreasuryOption         // closeTreasury
+        } as CloseStreamTransactionParams;
         consoleOut('data:', data);
 
         // Report event to Segment analytics
@@ -2019,12 +2054,12 @@ export const MoneyStreamsOutgoingView = (props: {
           asset: selectedToken ? selectedToken.symbol : '-',
           assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           stream: data.stream,
-          initializer: data.initializer,
-          closeTreasury: data.autoCloseTreasury,
+          initializer: data.payer,
+          closeTreasury: data.closeTreasury,
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
           feeAmount: closeTreasuryData.feeAmount,
-          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
+          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns)
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
@@ -2064,14 +2099,9 @@ export const MoneyStreamsOutgoingView = (props: {
 
         consoleOut('Starting closeStream using MSP V2...', '', 'blue');
         // Create a transaction
-        return await msp.closeStream(
-          publicKey as PublicKey,                           // payer
-          publicKey as PublicKey,                           // destination
-          streamPublicKey,                                  // stream
-          closeTreasuryData.closeTreasuryOption,            // closeTreasury
-          true                                              // TODO: Define if the user can determine this
-        )
+        const result = await closeStream(data)
         .then(value => {
+          if (!value) { return false; }
           consoleOut('closeStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -2095,9 +2125,10 @@ export const MoneyStreamsOutgoingView = (props: {
             result: `${error}`
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         });
+
+        return result;
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -2122,13 +2153,22 @@ export const MoneyStreamsOutgoingView = (props: {
             consoleOut('encodedTx:', encodedTx, 'orange');
           } catch (error) {
             console.error(error);
+
+            // TODO: Apply this check for all modules, try to take Sing and send subroutines to a centrali zed
+            const encodedTxForDebugging = signedTransaction.serialize({ verifySignatures: false }).toString('base64');
+            consoleOut('encodedTx:', encodedTxForDebugging, 'orange');
+
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransaction,
               currentOperation: TransactionStatus.SignTransactionFailure
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+              result: {
+                signer: `${publicKey.toBase58()}`,
+                error: `${error}`,
+                encodedTx: encodedTxForDebugging
+              }
             });
             customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
@@ -2264,7 +2304,6 @@ export const MoneyStreamsOutgoingView = (props: {
 
             setCloseStreamTransactionModalVisibility(false);
             setLoadingStreamDetails(true);
-            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             onCloseStreamTransactionFinished();
           } else { setIsBusy(false); }

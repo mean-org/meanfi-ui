@@ -47,7 +47,6 @@ export const MoneyStreamsIncomingView = (props: {
   onSendFromIncomingStreamDetails?: any;
   accountAddress: string;
   multisigAccounts: MultisigInfo[] | undefined;
-  showNotificationByType?: any;
 }) => {
   const {
     deletedStreams,
@@ -69,7 +68,6 @@ export const MoneyStreamsIncomingView = (props: {
     onSendFromIncomingStreamDetails,
     accountAddress,
     multisigAccounts,
-    showNotificationByType,
   } = props;
 
   const connectionConfig = useConnectionConfig();

@@ -355,11 +355,11 @@ export const VestingView = () => {
             size="small"
             className="extra-small"
             onClick={() => {
-              const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
-              if (multisigAuthority) {
-                setHighLightableMultisigId(multisigAuthority);
+              const multisigId = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
+              if (multisigId) {
+                setHighLightableMultisigId(multisigId);
               }
-              navigate(`/multisig/${multisigAuthority}?v=proposals`);
+              navigate(`/multisig/${multisigId}?v=proposals`);
               notification.close(myNotifyKey);
             }}
           >
@@ -494,7 +494,7 @@ export const VestingView = () => {
     }
 
     const notifyMultisigVestingContractActionFollowup = async (message1: string, message2: string, item: TxConfirmationInfo) => {
-      if (!item || !item.extras || !item.extras.multisigAuthority || !item.extras.vestingContractId) {
+      if (!item || !item.extras || !item.extras.multisigId) {
         turnOffLockWorkflow();
         return;
       }
@@ -523,8 +523,8 @@ export const VestingView = () => {
               shape="round"
               className="extra-small"
               onClick={() => {
-                const url = `/multisig/${item.extras.multisig}?v=proposals`;
-                setHighLightableMultisigId(item.extras.multisig);
+                const url = `/multisig/${item.extras.multisigId}?v=proposals`;
+                setHighLightableMultisigId(item.extras.multisigId);
                 notification.close(myNotifyKey);
                 navigate(url);
               }}>

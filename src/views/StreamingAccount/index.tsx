@@ -32,7 +32,6 @@ import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { customLogger } from "../..";
-import { TreasuryStreamsBreakdown } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFundsModal";
 import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
@@ -53,7 +52,6 @@ export const StreamingAccountView = (props: {
   treasuryList: (Treasury | TreasuryInfo)[] | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
   selectedMultisig: MultisigInfo | undefined;
-  showNotificationByType?: any;
 }) => {
   const {
     tokenList,
@@ -88,7 +86,6 @@ export const StreamingAccountView = (props: {
   const { 
     selectedMultisig,
     multisigAccounts,
-    showNotificationByType,
     streamingAccountSelected,
     onSendFromStreamingAccountDetails,
     onSendFromStreamingAccountOutgoingStreamInfo,
@@ -98,7 +95,6 @@ export const StreamingAccountView = (props: {
 
   // Streaming account
   const [highlightedStream, sethHighlightedStream] = useState<Stream | StreamInfo | undefined>();
-  const [streamStats, setStreamStats] = useState<TreasuryStreamsBreakdown | undefined>(undefined);
   const [loadingStreamingAccountDetails, setLoadingStreamingAccountDetails] = useState(true);
   const [streamingAccountStreams, setStreamingAccountStreams] = useState<Array<Stream | StreamInfo> | undefined>(undefined);
   const [loadingStreamingAccountStreams, setLoadingStreamingAccountStreams] = useState(true);
@@ -129,19 +125,6 @@ export const StreamingAccountView = (props: {
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
   }
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const getQueryTabOption = useCallback(() => {
 
@@ -277,28 +260,6 @@ export const StreamingAccountView = (props: {
     }
 
     return false;
-
-  }, [
-    multisigAccounts, 
-    publicKey, 
-    streamingAccountSelected
-  ]);
-
-  // TODO: Here the multisig ID is returned
-  const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
-
-    const treasuryInfo: any = treasury ?? streamingAccountSelected;
-
-    if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
-      return PublicKey.default;
-    }
-
-    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
-
-    if (!multisigAccounts || !streamingAccountSelected) { return PublicKey.default; }
-    const multisig = multisigAccounts.filter(a => a.authority.equals(treasurer))[0];
-    if (!multisig) { return PublicKey.default; }
-    return multisig.id;
 
   }, [
     multisigAccounts, 
@@ -1033,7 +994,7 @@ export const StreamingAccountView = (props: {
           new PublicKey(data.destination),        // treasurer
           new PublicKey(data.treasury),           // treasury
           data.amount,                            // amount
-          true                                    // TODO: Define if the user can determine this
+          true                                    // autoWSol
         );
       }
 
@@ -3287,7 +3248,6 @@ export const StreamingAccountView = (props: {
         {tabs && renderTabset()}
       </Spin>
 
-      {/* TODO: Here the multisig ID is used */}
       {multisigClient && isCreateStreamModalVisible && (
         <TreasuryStreamCreateModal
           associatedToken={

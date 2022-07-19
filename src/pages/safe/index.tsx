@@ -334,10 +334,17 @@ export const SafeView = () => {
   // Search for pending proposal in confirmation history
   const hasMultisigPendingProposal = useCallback(() => {
     if (!selectedMultisigRef || !selectedMultisigRef.current) { return false; }
+    const isTheReference = (item: TxConfirmationInfo) => {
+      if ((item && item.extras && item.extras.multisigAuthority && item.extras.multisigAuthority === selectedMultisigRef.current?.authority.toBase58()) ||
+          (item && item.extras && item.extras.multisigId && item.extras.multisigId === selectedMultisigRef.current?.authority.toBase58())) {
+        return true;
+      }
+      return false;
+    }
 
     if (confirmationHistory && confirmationHistory.length > 0) {
 
-      const item = confirmationHistory.find(h => h.extras && h.extras.multisigAuthority && h.extras.multisigAuthority.toBase58() === selectedMultisigRef.current?.id.toBase58() && h.txInfoFetchStatus === "fetching");
+      const item = confirmationHistory.find(h => isTheReference(h) && h.txInfoFetchStatus === "fetching");
 
       if (item) {
         return true;
@@ -3210,11 +3217,11 @@ export const SafeView = () => {
         refreshCta.click();
       }
     };
-    
+
     const refreshSelectedProposal = (extras: any) => {
-      if (multisigClient && publicKey && extras && extras.multisigAuthority && extras.transactionId) {
+      if (multisigClient && publicKey && extras && (extras.multisigAuthority || extras.multisigId) && extras.transactionId) {
         multisigClient
-          .getMultisigTransaction(extras.multisigAuthority, extras.transactionId, publicKey)
+          .getMultisigTransaction((extras.multisigAuthority || extras.multisigId), extras.transactionId, publicKey)
           .then((tx: any) => setProposalSelected(tx))
           .catch((err: any) => console.error(err));
       }
@@ -3853,21 +3860,21 @@ export const SafeView = () => {
         item = multisigAccounts.find(m => m.id.toBase58() === highLightableMultisigId || m.authority.toBase58() === highLightableMultisigId);
         if (item) {
           consoleOut('selected via highLightableMultisigId:', item, 'purple');
+          consoleOut('Making multisig active:', item, 'blue');
+          setSelectedMultisig(item);
+          setNeedRefreshTxs(true);
+          setNeedReloadPrograms(true);
         }
       } else if (address) {
         // Or re-select the one active
         item = multisigAccounts.find(m => m.authority.toBase58() === address);
         if (item) {
           consoleOut('selected via address in route:', item, 'purple');
+          consoleOut('Making multisig active:', item, 'blue');
+          setSelectedMultisig(item);
+          setNeedRefreshTxs(true);
+          setNeedReloadPrograms(true);
         }
-      }
-
-      if (item) {
-        // Now make item active
-        consoleOut('Making multisig active:', item, 'blue');
-        setSelectedMultisig(item);
-        setNeedRefreshTxs(true);
-        setNeedReloadPrograms(true);
       } else {
         if (multisigAccounts.length > 0) {
           consoleOut('No multisig to select!', '', 'red');
@@ -3875,11 +3882,18 @@ export const SafeView = () => {
           const url = `${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`;
           consoleOut('Redirecting to:', url, 'blue');
           navigate(url);
-        } else {
-          setDetailsPanelOpen(false);
-          setSelectedMultisig(undefined);
+        // } else {
+        //   setDetailsPanelOpen(false);
+        //   setSelectedMultisig(undefined);
         }
       }
+
+      // if (!item && multisigAccounts.length > 0) {
+      //   item = multisigAccounts[0];
+      //   const url = `${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`;
+      //   consoleOut('Redirecting to:', url, 'blue');
+      //   navigate(url);
+      // }
     }
 
   }, [address, highLightableMultisigId, multisigAccounts, navigate]);
