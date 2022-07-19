@@ -514,6 +514,7 @@ export const StreamingAccountView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuthority = '';
     const transactionLog: any[] = [];
 
     clearTxConfirmationContext();
@@ -664,6 +665,7 @@ export const StreamingAccountView = (props: {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
+      multisigAuthority = multisig.authority.toBase58();
 
       const allocateTx = await msp.allocate(
         new PublicKey(data.payer),                   // payer
@@ -938,7 +940,9 @@ export const StreamingAccountView = (props: {
                 parseFloat(params.amount),
                 selectedToken.decimals
               )} ${selectedToken.symbol}`,
-              extras: streamingAccountSelected.id as string
+              extras: {
+                multisigAuthority: multisigAuthority
+              }
             });
             onAddFundsTransactionFinished();
             setOngoingOperation(undefined);
@@ -1289,7 +1293,9 @@ export const StreamingAccountView = (props: {
                 parseFloat(data.amount),
                 selectedToken.decimals
               )} ${selectedToken.symbol}`,
-              extras: isMultisig
+              extras: {
+                multisigAuthority: isMultisig
+              }
             });
             
             setIsTransferFundsModalVisible(false);
@@ -1740,9 +1746,11 @@ export const StreamingAccountView = (props: {
               loadingMessage: `Close streaming account: ${streamingAccountName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully closed streaming account: ${streamingAccountName}`,
-              extras: isMultisig
+              extras: {
+                multisigAuthority: isMultisig
+              }
             });
-            
+
             setIsCloseTreasuryModalVisibility(false);
             setLoadingStreamingAccountDetails(true);
             setOngoingOperation(undefined);
@@ -2101,7 +2109,9 @@ export const StreamingAccountView = (props: {
               loadingMessage: "Refresh streaming account data",
               completedTitle: "Transaction confirmed",
               completedMessage: "Successfully refreshed data in streaming account",
-              extras: isMultisig
+              extras: {
+                multisigAuthority: isMultisig
+              }
             });
 
             onRefreshTreasuryBalanceTransactionFinished();

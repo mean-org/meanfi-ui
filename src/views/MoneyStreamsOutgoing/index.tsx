@@ -1868,6 +1868,7 @@ export const MoneyStreamsOutgoingView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuthority = '';
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -2002,6 +2003,8 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const treasury = treasuryDetails as Treasury;
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      multisigAuthority = multisig.authority.toBase58();
 
       if (!multisig) { return null; }
 
@@ -2294,7 +2297,9 @@ export const MoneyStreamsOutgoingView = (props: {
               loadingMessage: `Close stream: ${streamName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully closed stream: ${streamName}`,
-              extras: streamSelected.id as string
+              extras: {
+                multisigAuthority: multisigAuthority
+              }
             });
 
             setTransactionStatus({

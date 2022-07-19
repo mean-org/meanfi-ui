@@ -612,6 +612,7 @@ export const MoneyStreamsInfoView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuthority = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -760,6 +761,8 @@ export const MoneyStreamsInfoView = (props: {
 
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
       if (!multisig) { return null; }
+
+      multisigAuthority = multisig.authority.toBase58();
 
       const allocateTx = await msp.allocate(
         new PublicKey(data.payer),                   // payer
@@ -1039,7 +1042,7 @@ export const MoneyStreamsInfoView = (props: {
               )} ${token?.symbol}`,
               extras: {
                 treasuryId: treasury.id as string,
-                multisigAuthority: param === "multisig" && selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+                multisigAuthority: multisigAuthority
               }
             });
             onAddFundsTransactionFinished();

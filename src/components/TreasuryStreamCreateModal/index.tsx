@@ -1449,7 +1449,9 @@ export const TreasuryStreamCreateModal = (props: {
               loadingMessage: messageLoading,
               completedTitle: "Transaction confirmed",
               completedMessage: messageCompleted,
-              extras: isMultisig
+              extras: {
+                multisigAuthority: isMultisig
+              }
             });
 
             setIsBusy(false);
