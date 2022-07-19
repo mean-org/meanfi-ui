@@ -21,6 +21,7 @@ export interface TreasuryTopupParams {
     allocationType: AllocationType;
     streamId: string;
     associatedToken: string;
+    treasuryId?: string;
 }
 
 export interface StreamTopupParams {

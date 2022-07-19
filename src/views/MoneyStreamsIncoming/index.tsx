@@ -277,6 +277,7 @@ export const MoneyStreamsIncomingView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -299,6 +300,8 @@ export const MoneyStreamsIncomingView = (props: {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === stream.beneficiary)[0];
 
       if (!multisig) { return null; }
+
+      multisigAuth = multisig.authority.toBase58();
 
       const transferOwnership = await msp.transferStream(
         multisig.authority,                              // beneficiary,
@@ -565,7 +568,9 @@ export const MoneyStreamsIncomingView = (props: {
               loadingMessage: `Transfer stream to: ${shortenAddress(dataStream.address, 4)}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Stream transferred to: ${shortenAddress(dataStream.address, 4)}`,
-              extras: param === "multisig" ? true : false
+              extras: {
+                multisigAuthority: multisigAuth
+              }
             });
 
             setIsTransferStreamModalVisibility(false);
@@ -635,6 +640,7 @@ export const MoneyStreamsIncomingView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -775,6 +781,8 @@ export const MoneyStreamsIncomingView = (props: {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === stream.beneficiary)[0];
 
       if (!multisig) { return null; }
+
+      multisigAuth = multisig.authority.toBase58();
 
       const withdrawFunds = await msp.withdraw(
         multisig.authority,                          // payer
@@ -1062,7 +1070,9 @@ export const MoneyStreamsIncomingView = (props: {
                 parseFloat(withdrawData.amount),
                 token.decimals
               )} ${token.symbol}`,
-              extras: param === "multisig" ? true : false
+              extras: {
+                multisigAuthority: multisigAuth
+              }
             });
 
             setIsWithdrawModalVisibility(false);

@@ -3328,8 +3328,8 @@ export const StreamingAccountView = (props: {
           withdrawTransactionFees={withdrawTransactionFees}
           treasuryDetails={streamingAccountSelected}
           isVisible={isAddFundsModalVisible}
+          selectedMultisig={selectedMultisig || undefined}
           userBalances={userBalances}
-          streamStats={streamStats}
           treasuryStreams={streamingAccountStreams}
           associatedToken={
             streamingAccountSelected

@@ -690,7 +690,7 @@ export const VestingContractStreamList = (props: {
             }
         }
 
-        if (wallet && highlightedStream) {
+        if (wallet && highlightedStream && vestingContract) {
             showTransactionExecutionModal();
             const created = await createTx();
             consoleOut('created:', created, 'blue');
@@ -701,6 +701,10 @@ export const VestingContractStreamList = (props: {
                     const sent = await sendTx();
                     consoleOut('sent:', sent);
                     if (sent && !transactionCancelled) {
+                        const treasury = vestingContract as Treasury;
+                        const multisig = multisigAccounts
+                            ? multisigAccounts.find(m => m.authority.toBase58() === treasury.treasurer)
+                            : undefined;
                         consoleOut('Send Tx to confirmation queue:', signature);
                         const message = `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of [${
                             getTokenAmountAndSymbolByTokenAddress(
@@ -724,7 +728,10 @@ export const VestingContractStreamList = (props: {
                             loadingMessage: `Vesting stream ${highlightedStream.name} closure is pending confirmation`,
                             completedTitle: "Transaction confirmed",
                             completedMessage: message,
-                            extras: closeStreamOptions
+                            extras: {
+                                vestingContractId: vestingContract.id as string,
+                                multisigId: multisig ? multisig.authority.toBase58() : ''
+                            }
                         });
                         setIsBusy(false);
                         onCloseStreamTransactionFinished();

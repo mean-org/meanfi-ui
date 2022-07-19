@@ -35,7 +35,6 @@ export const TreasuryCreateModal = (props: {
   isBusy: boolean;
   isVisible: boolean;
   multisigAccounts?: MultisigInfo[] | undefined;
-  multisigAddress?: string;
   nativeBalance: number;
   selectedMultisig: MultisigInfo | undefined;
   transactionFees: TransactionFees;
@@ -46,7 +45,6 @@ export const TreasuryCreateModal = (props: {
     isBusy,
     isVisible,
     multisigAccounts,
-    multisigAddress,
     nativeBalance,
     selectedMultisig,
     transactionFees,

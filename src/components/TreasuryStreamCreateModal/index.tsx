@@ -538,7 +538,7 @@ export const TreasuryStreamCreateModal = (props: {
         consoleOut('treasuryDetails not set!', '', 'blue');
       }
     }
-  }, [associatedToken, isVisible, treasuryDetails]);
+  }, [isVisible, treasuryDetails]);
 
   useEffect(() => {
     if (hasNoStreamingAccounts || workingAssociatedToken || !workingTreasuryDetails) {
@@ -547,18 +547,10 @@ export const TreasuryStreamCreateModal = (props: {
 
     let tokenAddress = '';
     let token: TokenInfo | undefined = undefined;
-    if (workingTreasuryDetails) {
-      const v1 = workingTreasuryDetails as TreasuryInfo;
-      const v2 = workingTreasuryDetails as Treasury;
-      tokenAddress = workingTreasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-      token = getTokenByMintAddress(tokenAddress);
-    // } else if (treasuryList && treasuryList.length > 0) {
-    //   const item = treasuryList[0];
-    //   const v1 = item as TreasuryInfo;
-    //   const v2 = item as Treasury;
-    //   tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-    //   token = getTokenByMintAddress(tokenAddress);
-    }
+    const v1 = workingTreasuryDetails as TreasuryInfo;
+    const v2 = workingTreasuryDetails as Treasury;
+    tokenAddress = workingTreasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
+    token = getTokenByMintAddress(tokenAddress);
 
     if (token) {
       consoleOut('Treasury workingAssociatedToken:', token, 'blue');

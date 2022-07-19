@@ -924,7 +924,9 @@ export const MoneyStreamsOutgoingView = (props: {
                 parseFloat(addFundsData.amount),
                 token.decimals
               )} ${token.symbol}`,
-              extras: multisigAuth
+              extras: {
+                multisigAuthority: multisigAuth
+              }
             });
             setIsBusy(false);
             onAddFundsTransactionFinished();
@@ -973,6 +975,7 @@ export const MoneyStreamsOutgoingView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -1086,6 +1089,8 @@ export const MoneyStreamsOutgoingView = (props: {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
+
+      multisigAuth = multisig.authority.toBase58();
 
       const pauseStream = await msp.pauseStream(
         new PublicKey(data.payer),                   // payer
@@ -1341,13 +1346,15 @@ export const MoneyStreamsOutgoingView = (props: {
               loadingMessage: `Pause stream: ${streamName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully paused stream: ${streamName}`,
-              extras: streamSelected.id as string
+              extras: {
+                multisigAuthority: multisigAuth
+              }
             });
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            
+
             setIsPauseStreamModalVisibility(false);
             setLoadingStreamDetails(true);
             param === "multisig" && showNotificationByType("info");
@@ -1422,6 +1429,7 @@ export const MoneyStreamsOutgoingView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -1535,6 +1543,8 @@ export const MoneyStreamsOutgoingView = (props: {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
+
+      multisigAuth = multisig.authority.toBase58();
 
       const resumeStream = await msp.resumeStream(
         new PublicKey(data.payer),                   // payer
@@ -1787,7 +1797,9 @@ export const MoneyStreamsOutgoingView = (props: {
               loadingMessage: `Resume stream: ${streamName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully resumed stream: ${streamName}`,
-              extras: streamSelected.id as string
+              extras: {
+                multisigAuthority: multisigAuth
+              }
             });
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,

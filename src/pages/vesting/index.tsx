@@ -371,6 +371,7 @@ export const VestingView = () => {
   }, [navigate, setHighLightableMultisigId]);
   */
 
+  /*
   const notifyMultisigVestingContractActionFollowup = useCallback(async (message1: string, message2: string, item: TxConfirmationInfo) => {
 
     const turnOffLockWorkflow = () => {
@@ -419,6 +420,7 @@ export const VestingView = () => {
       turnOffLockWorkflow();
     }
   }, [navigate, setHighLightableMultisigId]);
+  */
 
   const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
     let event: any;
@@ -487,6 +489,54 @@ export const VestingView = () => {
       }
     };
 
+    const turnOffLockWorkflow = () => {
+      isWorkflowLocked = false;
+    }
+
+    const notifyMultisigVestingContractActionFollowup = async (message1: string, message2: string, item: TxConfirmationInfo) => {
+      if (!item || !item.extras || !item.extras.multisigId || !item.extras.vestingContractId) {
+        turnOffLockWorkflow();
+        return;
+      }
+      openNotification({
+        type: "info",
+        description: (<span>{message1}</span>),
+        duration: 8,
+      });
+      await delay(8000);
+      openNotification({
+        type: "info",
+        description: (<span>{message2}</span>),
+        duration: 8,
+      });
+      await delay(8000);
+      const myNotifyKey = `notify-${Date.now()}`;
+      openNotification({
+        type: "info",
+        key: myNotifyKey,
+        description: (
+          <>
+            <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
+            <Button
+              type="primary"
+              size="small"
+              shape="round"
+              className="extra-small"
+              onClick={() => {
+                const url = `/multisig/${item.extras.multisig}?v=proposals`;
+                setHighLightableMultisigId(item.extras.multisig);
+                notification.close(myNotifyKey);
+                navigate(url);
+              }}>
+              See proposals
+            </Button>
+          </>
+        ),
+        duration: 30,
+        handleClose: turnOffLockWorkflow
+      });
+    }
+
     switch (item.operationType) {
       case OperationType.TreasuryAddFunds:
       case OperationType.TreasuryRefreshBalance:
@@ -499,7 +549,7 @@ export const VestingView = () => {
         softReloadContracts();
         break;
       case OperationType.TreasuryClose:
-        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryClose]}`, item, 'crimson');
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, true);
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
@@ -514,7 +564,7 @@ export const VestingView = () => {
         }, 20);
         break;
       case OperationType.TreasuryCreate:
-        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryCreate]}`, item, 'crimson');
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, true);
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
@@ -529,7 +579,7 @@ export const VestingView = () => {
         }, 20);
         break;
       case OperationType.TreasuryStreamCreate:
-        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryStreamCreate]}`, item, 'crimson');
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, true);
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
@@ -544,7 +594,7 @@ export const VestingView = () => {
         }, 20);
         break;
       case OperationType.TreasuryWithdraw:
-        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryWithdraw]}`, item, 'crimson');
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, true);
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
@@ -563,7 +613,7 @@ export const VestingView = () => {
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, [navigate, setHighLightableMultisigId]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -1014,6 +1064,7 @@ export const VestingView = () => {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let generatedVestingContractId = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -1231,6 +1282,7 @@ export const VestingView = () => {
             transaction = value;
           } else {
             transaction = value[0];
+            generatedVestingContractId = value[1].toBase58();
           }
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
@@ -1394,7 +1446,10 @@ export const VestingView = () => {
               loadingMessage,
               completedTitle: "Transaction confirmed",
               completedMessage,
-              extras: createOptions
+              extras: {
+                vestingContractId: generatedVestingContractId,
+                multisigId: createOptions.multisig
+              }
             });
             setIsBusy(false);
             resetTransactionStatus();
@@ -1751,7 +1806,10 @@ export const VestingView = () => {
               loadingMessage: `Closing vesting contract: ${selectedVestingContract.name}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Vesting contract ${selectedVestingContract.name} successfully closed`,
-              extras: selectedVestingContract.id as string
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: getMultisigIdFromContext()
+              }
             });
             setIsBusy(false);
             onCloseTreasuryTransactionFinished();
@@ -2116,7 +2174,11 @@ export const VestingView = () => {
                 parseFloat(params.amount),
                 params.associatedToken?.decimals
               )} ${params.associatedToken?.symbol}`,
-              extras: params.streamId
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: getMultisigIdFromContext(),
+                streamId: params.streamId
+              }
             });
             setIsBusy(false);
             closeAddFundsModal();
@@ -2161,6 +2223,7 @@ export const VestingView = () => {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let generatedStremId = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -2349,6 +2412,7 @@ export const VestingView = () => {
             currentOperation: TransactionStatus.SignTransaction
           });
           transaction = values[0];
+          generatedStremId = values[1].toBase58();
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
             result: getTxIxResume(values[0])
@@ -2499,7 +2563,11 @@ export const VestingView = () => {
               loadingMessage: params.txConfirmDescription,
               completedTitle: "Transaction confirmed",
               completedMessage: params.txConfirmedDescription,
-              extras: params
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: getMultisigIdFromContext(), // params.multisig
+                streamId: generatedStremId
+              }
             });
             setIsBusy(false);
             closeCreateStreamModal();
@@ -2864,7 +2932,10 @@ export const VestingView = () => {
               )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name}`,
               completedTitle: "Transaction confirmed",
               completedMessage,
-              extras: params
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: getMultisigIdFromContext(), // params.multisig
+              }
             });
             setIsBusy(false);
             closeVestingContractTransferFundsModal();
@@ -3219,7 +3290,10 @@ export const VestingView = () => {
               loadingMessage: `Refresh balance for vesting contract ${selectedVestingContract.name}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Refresh balance successful for vesting contract ${selectedVestingContract.name}`,
-              extras: selectedVestingContract.id as string
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: getMultisigIdFromContext(), // params.multisig
+              }
             });
             setIsBusy(false);
             onRefreshTreasuryBalanceTransactionFinished();
