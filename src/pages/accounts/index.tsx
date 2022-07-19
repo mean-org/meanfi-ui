@@ -843,14 +843,76 @@ export const AccountsNewView = () => {
     let event: any;
 
     // TODO: We must record to segment all success and all failures equally
-
-    if (item && item.operationType === OperationType.Wrap) {
-      event = success ? AppUsageEvent.WrapSolCompleted : AppUsageEvent.WrapSolFailed;
-    } else if (item && item.operationType === OperationType.Unwrap) {
-      event = success ? AppUsageEvent.UnwrapSolCompleted : AppUsageEvent.UnwrapSolFailed;
+    if (item) {
+      switch (item.operationType) {
+        case OperationType.Wrap:
+            event = success ? AppUsageEvent.WrapSolCompleted : AppUsageEvent.WrapSolFailed;
+            break;
+        case OperationType.Unwrap:
+            event = success ? AppUsageEvent.UnwrapSolCompleted : AppUsageEvent.UnwrapSolFailed;
+            break;
+        case OperationType.Transfer:
+            event = success ? AppUsageEvent.TransferOTPCompleted : AppUsageEvent.TransferOTPFailed;
+            break;
+        case OperationType.CreateAsset:
+            event = success ? AppUsageEvent.CreateAssetCompleted : AppUsageEvent.CreateAssetFailed;
+            break;
+        case OperationType.CloseTokenAccount:
+            event = success ? AppUsageEvent.CloseTokenAccountCompleted : AppUsageEvent.CloseTokenAccountFailed;
+            break;
+        case OperationType.SetAssetAuthority:
+            event = success ? AppUsageEvent.SetAssetAutorityCompleted : AppUsageEvent.SetAssetAutorityFailed;
+            break;
+        case OperationType.DeleteAsset:
+            event = success ? AppUsageEvent.DeleteAssetCompleted : AppUsageEvent.DeleteAssetFailed;
+            break;
+        case OperationType.TransferTokens:
+            event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
+            break;
+        case OperationType.StreamAddFunds:
+            event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
+            break;
+        case OperationType.StreamPause:
+            event = success ? AppUsageEvent.StreamPauseCompleted : AppUsageEvent.StreamPauseFailed;
+            break;
+        case OperationType.StreamResume:
+            event = success ? AppUsageEvent.StreamResumeCompleted : AppUsageEvent.StreamResumeFailed;
+            break;
+        case OperationType.StreamCreate:
+            event = success ? AppUsageEvent.StreamCreateCompleted : AppUsageEvent.StreamCreateFailed;
+            break;
+        case OperationType.StreamClose:
+            event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
+            break;
+        case OperationType.StreamWithdraw:
+            event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
+            break;
+        case OperationType.StreamTransferBeneficiary:
+            event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
+            break;
+        case OperationType.TreasuryAddFunds:
+            event = success ? AppUsageEvent.AddFundsStreamingAccountCompleted : AppUsageEvent.AddFundsStreamingAccountFailed;
+            break;
+        case OperationType.TreasuryWithdraw:
+            event = success ? AppUsageEvent.WithdrawFundsStreamingAccountCompleted : AppUsageEvent.WithdrawFundsStreamingAccountFailed;
+            break;
+        case OperationType.TreasuryStreamCreate:
+            event = success ? AppUsageEvent.CreateStreamStreamingAccountCompleted : AppUsageEvent.CreateStreamStreamingAccountFailed;
+            break;
+        case OperationType.TreasuryCreate:
+            event = success ? AppUsageEvent.CreateStreamingAccountCompleted : AppUsageEvent.CreateStreamingAccountFailed;
+            break;
+        case OperationType.TreasuryClose:
+            event = success ? AppUsageEvent.CloseStreamingAccountCompleted : AppUsageEvent.CloseStreamingAccountFailed;
+            break;
+        case OperationType.TreasuryRefreshBalance:
+            event = success ? AppUsageEvent.RefreshAccountBalanceCompleted : AppUsageEvent.RefreshAccountBalanceFailed;
+            break;
+        default:
+            break;
+      }
+      segmentAnalytics.recordEvent(event, { signature: item.signature });
     }
-
-    segmentAnalytics.recordEvent(event, { signature: item.signature });
   }, []);
 
   // Setup event handler for Tx confirmed

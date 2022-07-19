@@ -46,6 +46,18 @@ export enum AppUsageEvent {
     StreamCloseSigned = "Stream Close Signed",
     StreamCloseCompleted = "Stream Close Completed",
     StreamCloseFailed = "Stream Close Failed",
+    // Pause Stream Action
+    StreamPauseButton = "Stream Pause button click",
+    StreamPauseFormButton = "Stream Pause form button click",
+    StreamPauseSigned = "Stream Pause Signed",
+    StreamPauseCompleted = "Stream Pause Completed",
+    StreamPauseFailed = "Stream Pause Failed",
+    // Resume Stream Action
+    StreamResumeButton = "Stream Resume button click",
+    StreamResumeFormButton = "Stream Resume form button click",
+    StreamResumeSigned = "Stream Resume Signed",
+    StreamResumeCompleted = "Stream Resume Completed",
+    StreamResumeFailed = "Stream Resume Failed",
     // Stream StatusChange Action
     StreamStatusChangeButton = "Stream Status change button click",
     StreamStatusChangeFormButton = "Stream Status change form button click",
@@ -74,6 +86,27 @@ export enum AppUsageEvent {
     DepositInStakingVaultSigned = "Deposit in Staking vault Signed",
     DepositInStakingVaultCompleted = "Deposit in Staking vault Completed",
     DepositInStakingVaultFailed = "Deposit in Staking vault Failed",
+    // Assets Actions
+    // Create Asset
+    CreateAssetFormButton = "Create Asset form button click",
+    CreateAssetSigned = "Create Asset Signed",
+    CreateAssetCompleted = "Create Asset Completed",
+    CreateAssetFailed = "Create Asset Failed",
+    // Close Token account
+    CloseTokenAccountFormButton = "Close token account form button click",
+    CloseTokenAccountSigned = "Close token account Signed",
+    CloseTokenAccountCompleted = "Close token account Completed",
+    CloseTokenAccountFailed = "Close token account Failed",
+    // Set asset authority
+    SetAssetAutorityFormButton = "Set asset authority form button click",
+    SetAssetAutoritySigned = "Set asset authority Signed",
+    SetAssetAutorityCompleted = "Set asset authority Completed",
+    SetAssetAutorityFailed = "Set asset authority Failed",
+    // Delete asset
+    DeleteAssetFormButton = "Delete asset form button click",
+    DeleteAssetSigned = "Delete asset Signed",
+    DeleteAssetCompleted = "Delete asset Completed",
+    DeleteAssetFailed = "Delete asset Failed",
     // Asset management
     WrapSolFormButton = "Wrap SOL form button click",
     WrapSolSigned = "Wrap SOL Signed",
@@ -94,11 +127,32 @@ export enum AppUsageEvent {
     ExecuteProposalFailed = "Execute Proposal Failed",
     CancelProposalCompleted = "Cancel Proposal Completed",
     CancelProposalFailed = "Cancel Proposal Failed",
-    // Streaming account
+    // Streaming Account Actions
+    // Create streaming account
     CreateStreamingAccountFormButton = "Create Streaming Account form button click",
     CreateStreamingAccountSigned = "Create Streaming Account Signed",
     CreateStreamingAccountCompleted = "Create Streaming Account Completed",
     CreateStreamingAccountFailed = "Create Streaming Account Failed",
+    // Close streaming account
+    CloseStreamingAccountFormButton = "Close Streaming Account form button click",
+    CloseStreamingAccountSigned = "Close Streaming Account Signed",
+    CloseStreamingAccountCompleted = "Close Streaming Account Completed",
+    CloseStreamingAccountFailed = "Close Streaming Account Failed",
+    // Add funds in streaming account
+    AddFundsStreamingAccountFormButton = "Add Funds in Streaming Account form button click",
+    AddFundsStreamingAccountSigned = "Add Funds in Streaming Account Signed",
+    AddFundsStreamingAccountCompleted = "Add Funds in Streaming Account Completed",
+    AddFundsStreamingAccountFailed = "Add Funds in Streaming Account Failed",
+    // Withdraw funds in streaming account
+    WithdrawFundsStreamingAccountFormButton = "Withdraw Funds in Streaming Account form button click",
+    WithdrawFundsStreamingAccountSigned = "Withdraw Funds in Streaming Account Signed",
+    WithdrawFundsStreamingAccountCompleted = "Withdraw Funds in Streaming Account Completed",
+    WithdrawFundsStreamingAccountFailed = "Withdraw Funds in Streaming Account Failed",
+    // Create stream in streaming account
+    CreateStreamStreamingAccountFormButton = "Create Stream in Streaming Account form button click",
+    CreateStreamStreamingAccountSigned = "Create Stream in Streaming Account Signed",
+    CreateStreamStreamingAccountCompleted = "Create Stream in Streaming Account Completed",
+    CreateStreamStreamingAccountFailed = "Create Stream in Streaming Account Failed",
     // Refresh account balance
     RefreshAccountBalanceFormButton = "Refresh account balance form button click",
     RefreshAccountBalanceSigned = "Refresh account balance Signed",
