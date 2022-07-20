@@ -18,9 +18,10 @@ import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { TokenDisplay } from '../TokenDisplay';
 import { BN } from 'bn.js';
-import { StreamTreasuryType } from '../../models/treasuries';
 
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { useSearchParams } from 'react-router-dom';
+import { InputMean } from '../InputMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -35,6 +36,7 @@ export const TreasuryTransferFundsModal = (props: {
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
 }) => {
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const {
@@ -45,8 +47,6 @@ export const TreasuryTransferFundsModal = (props: {
     loadingPrices,
     effectiveRate,
     transactionStatus,
-    isVerifiedRecipient,
-    setIsVerifiedRecipient,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshPrices,
@@ -58,8 +58,9 @@ export const TreasuryTransferFundsModal = (props: {
   const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
-  const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
+  const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
+  const [multisigTitle, setMultisigTitle] = useState('');
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
     const treasuryInfo: any = treasury ?? props.treasuryDetails;
@@ -76,9 +77,9 @@ export const TreasuryTransferFundsModal = (props: {
 
     return false;
   }, [
+    publicKey,
     props.multisigAccounts, 
-    publicKey, 
-    props.treasuryDetails
+    props.treasuryDetails,
   ]);
 
   const shouldFundFromTreasury = useCallback(() => {
@@ -91,6 +92,7 @@ export const TreasuryTransferFundsModal = (props: {
 
   const onAcceptWithdrawTreasuryFunds = () => {
     props.handleOk({
+      title: multisigTitle,
       amount: topupAmount,
       tokenAmount: tokenAmount,
       destinationAccount: to
@@ -117,6 +119,7 @@ export const TreasuryTransferFundsModal = (props: {
 
   const onAfterClose = () => {
     setTimeout(() => {
+      setMultisigTitle("");
       setTopupAmount("");
       setTo("");
       setIsVerifiedRecipient(false);
@@ -125,6 +128,10 @@ export const TreasuryTransferFundsModal = (props: {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setMultisigTitle(e.target.value);
   }
 
   const onMintToAddressChange = (e: any) => {
@@ -348,10 +355,23 @@ export const TreasuryTransferFundsModal = (props: {
     );
   };
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
+
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('treasuries.withdraw-funds.modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Propose withdrawal" : t('treasuries.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       visible={props.isVisible}
@@ -367,6 +387,21 @@ export const TreasuryTransferFundsModal = (props: {
       <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
+            {/* Proposal title */}
+            {param === "multisig" && (
+              <div className="mb-3">
+                <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+                <InputMean
+                  id="proposal-title-field"
+                  name="Title"
+                  className="w-100 general-text-input"
+                  onChange={onTitleInputValueChange}
+                  placeholder="Add a proposal title (required)"
+                  value={multisigTitle}
+                />
+              </div>
+            )}
+
             {/* Transfer from */}
             {props.treasuryDetails && (
               <div className="mb-3">
@@ -636,9 +671,9 @@ export const TreasuryTransferFundsModal = (props: {
                   }
                 }}>
                 {props.isBusy
-                  ? t('multisig.transfer-tokens.main-cta-busy')
+                  ? ('multisig.transfer-tokens.main-cta-busy')
                   : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? t('treasuries.withdraw-funds.main-cta')
+                    ? (param === "multisig" ? "Submit proposal" : t('treasuries.withdraw-funds.main-cta'))
                     : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                       ? t('general.cta-finish')
                       : t('general.refresh')

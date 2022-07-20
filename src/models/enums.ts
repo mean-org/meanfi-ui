@@ -1,3 +1,5 @@
+import { SubCategory } from "@mean-dao/msp";
+
 export enum PaymentStartPlan {
     Now = 0,
     Schedle = 1
@@ -10,12 +12,12 @@ export enum PaymentScheme {
 
 // In seconds for the API
 export enum PaymentRateType {
-    PerMinute = 0,  // 60
-    PerHour = 1,    // 3600
-    PerDay = 2,     // 86400
-    PerWeek = 3,    // 604800
-    PerMonth = 4,   // 2629750
-    PerYear = 5,    // 31557000
+    PerMinute = 1,  // 60
+    PerHour = 2,    // 3600
+    PerDay = 3,     // 86400
+    PerWeek = 4,    // 604800
+    PerMonth = 5,   // 2629750
+    PerYear = 6,    // 31557000
 }
 
 export enum TimesheetRequirementOption {
@@ -60,6 +62,7 @@ export enum OperationType {
     StreamPause = 5,
     StreamResume = 6,
     StreamTransferBeneficiary = 7,
+    StreamCreateWithTemplate = 8,
     // Treasury options
     TreasuryCreate = 10,
     TreasuryStreamCreate = 11,
@@ -131,7 +134,7 @@ export enum EventType {
     TxConfirmTimeout = 'txTimedout',
 }
 
-export enum AccountAssetAction {
+export enum MetaInfoCtaAction {
     Send = 0,
     Buy = 1,
     Exchange = 2,
@@ -144,5 +147,61 @@ export enum AccountAssetAction {
     Refresh = 11,
     CloseAccount = 12,
     Share = 13,
-    Close = 14
+    Close = 14,
+    VestingContractCreateStreamOnce = 20,
+    VestingContractCreateStreamBulk = 21,
+    VestingContractAddFunds = 21,
+    VestingContractViewSolBalance = 22,
+    VestingContractWithdrawFunds = 23,
+    VestingContractRefreshAccount = 24,
+    VestingContractClose = 25,
+    VestingContractEditSettings = 26,
+}
+
+export type VestingContractCategory = {
+    label: string;
+    value: SubCategory;
+}
+
+export const VESTING_CATEGORIES: VestingContractCategory[] = [
+    {
+        label: 'Advisor',
+        value: SubCategory.advisor
+    },
+    {
+        label: 'Development',
+        value: SubCategory.development
+    },
+    {
+        label: 'Foundation',
+        value: SubCategory.foundation
+    },
+    {
+        label: 'Investor',
+        value: SubCategory.investor
+    },
+    {
+        label: 'Marketing',
+        value: SubCategory.marketing
+    },
+    {
+        label: 'Partnership',
+        value: SubCategory.partnership
+    },
+    {
+        label: 'Seed round',
+        value: SubCategory.seed
+    },
+    {
+        label: 'Team',
+        value: SubCategory.team
+    }
+];
+
+export const getCategoryLabelByValue = (value: SubCategory) => {
+    const item = VESTING_CATEGORIES.find(c => c.value === value);
+    if (item) {
+        return item.label;
+    }
+    return '-';
 }

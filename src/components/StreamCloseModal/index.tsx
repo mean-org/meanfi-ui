@@ -13,10 +13,8 @@ import BN from 'bn.js';
 import { useConnection } from '../../contexts/connection';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { StreamTreasuryType } from '../../models/treasuries';
-import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
-import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 
 export const StreamCloseModal = (props: {
   handleClose: any;
@@ -29,9 +27,8 @@ export const StreamCloseModal = (props: {
   transactionFees: TransactionFees;
   canCloseTreasury?: boolean;
 }) => {
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
-  const location = useLocation();
-  const navigate = useNavigate();
   const connection = useConnection();
   const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
@@ -46,10 +43,10 @@ export const StreamCloseModal = (props: {
     if (!connection || !publicKey || !props.mspClient) { return undefined; }
 
     const mspInstance = streamVersion < 2 ? props.mspClient as MoneyStreaming : props.mspClient as MSP;
-    const treasueyPk = new PublicKey(treasuryId);
+    const treasuryPk = new PublicKey(treasuryId);
 
     try {
-      const details = await mspInstance.getTreasury(treasueyPk);
+      const details = await mspInstance.getTreasury(treasuryPk);
       if (details) {
         setTreasuryDetails(details);
         consoleOut('treasuryDetails:', details, 'blue');
@@ -175,16 +172,6 @@ export const StreamCloseModal = (props: {
     localStreamDetail
   ]);
 
-  const getTreasuryName = useCallback(() => {
-    if (treasuryDetails) {
-      const v1 = treasuryDetails as TreasuryInfo;
-      const v2 = treasuryDetails as Treasury;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-      return isNewTreasury ? v2.name : v1.label;
-    }
-    return '-';
-  }, [treasuryDetails]);
-
   const getFeeAmount = useCallback((fees: TransactionFees): number => {
     let fee = 0;
 
@@ -282,10 +269,23 @@ export const StreamCloseModal = (props: {
     );
   }
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
+
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('close-stream.modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Propose close stream" : t('close-stream.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
@@ -303,20 +303,6 @@ export const StreamCloseModal = (props: {
         <div className="transaction-progress p-0">
           <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
           <h4 className="operation">{t('close-stream.cant-close-message')}</h4>
-
-          {/* Only if the user is on streams offer navigating to the treasury */}
-          {location.pathname === STREAMS_ROUTE_BASE_PATH && treasuryDetails && (
-            <div className="mt-3">
-              <span className="mr-1">{t('treasuries.treasury-detail.treasury-name-label')}:</span>
-              <span className="mr-1 font-bold">{getTreasuryName()}</span>
-              <span className="simplelink underline-on-hover" onClick={() => {
-                props.handleClose();
-                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?treasury=${treasuryDetails.id}`;
-                navigate(url);
-              }}>{t('close-stream.see-details-cta')}</span>
-            </div>
-          )}
-
           <div className="mt-3">
             <Button
                 type="primary"
@@ -385,7 +371,7 @@ export const StreamCloseModal = (props: {
                 shape="round"
                 size="large"
                 onClick={onAcceptModal}>
-                {t('close-stream.primary-cta')}
+                {param === "multisig" ? "Submit proposal" : t('close-stream.primary-cta')}
             </Button>
           </div>
         </div>

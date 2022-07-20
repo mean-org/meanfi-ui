@@ -29,7 +29,7 @@ import {
   VERBOSE_DATE_TIME_FORMAT
 } from '../../constants';
 import { IconClock, IconExchange, IconExternalLink } from '../../Icons';
-import { ArrowDownOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons';
+import { ArrowDownOutlined, ArrowLeftOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons';
 import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
@@ -51,12 +51,10 @@ export const ExchangeDcasView = () => {
   const {
     splTokenList,
     recurringBuys,
-    detailsPanelOpen,
     transactionStatus,
     loadingRecurringBuys,
     previousWalletConnectState,
     setRecurringBuys,
-    setDtailsPanelOpen,
     setTransactionStatus,
     setLoadingRecurringBuys,
   } = useContext(AppStateContext);
@@ -91,6 +89,9 @@ export const ExchangeDcasView = () => {
   const [firstLoadDone, setFirstLoadDone] = useState<boolean>(false);
   const [loadingActivity, setLoadingActivity] = useState(false);
   const [activity, setActivity] = useState<DdcaActivity[]>([]);
+
+  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
   // Select, Connect to and test the network
   useEffect(() => {
@@ -797,11 +798,11 @@ export const ExchangeDcasView = () => {
 
   const selectDdcaItem = useCallback((item: DdcaAccount) => {
     setSelectedDdca(item);
-    setDtailsPanelOpen(true);
+    setDetailsPanelOpen(true);
     reloadDdcaDetail(item.ddcaAccountAddress);
   }, [
     reloadDdcaDetail,
-    setDtailsPanelOpen
+    setDetailsPanelOpen
   ]);
 
   // Gets the recurring buys on demmand
@@ -1191,6 +1192,11 @@ export const ExchangeDcasView = () => {
     return false;
   }
 
+  const onBackButtonClicked = () => {
+    setDetailsPanelOpen(false);
+    setAutoOpenDetailsPanel(false);
+  }
+
   const menu = (
     <Menu>
       {/*
@@ -1491,17 +1497,27 @@ export const ExchangeDcasView = () => {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span className="secondary-link" onClick={() => clearTxConfirmationContext()}>[STOP]</span>
+          <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
+          <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
+          <span className="ml-1">recentlyCreatedVault:</span><span className="ml-1 font-bold fg-dark-active">{recentlyCreatedVault ? shortenAddress(recentlyCreatedVault, 8) : '-'}</span>
+          <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
+        </div>
+      )} */}
+
+      {detailsPanelOpen && (
+        <Button
+          id="back-button"
+          type="default"
+          shape="circle"
+          icon={<ArrowLeftOutlined />}
+          onClick={onBackButtonClicked}/>
+      )}
+
       <div className="container main-container">
 
-        {isLocal() && (
-          <div className="debug-bar">
-            <span className="secondary-link" onClick={() => clearTxConfirmationContext()}>[STOP]</span>
-            <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
-            <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
-            <span className="ml-1">recentlyCreatedVault:</span><span className="ml-1 font-bold fg-dark-active">{recentlyCreatedVault ? shortenAddress(recentlyCreatedVault, 8) : '-'}</span>
-            <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
-          </div>
-        )}
 
         <div className="interaction-area">
 

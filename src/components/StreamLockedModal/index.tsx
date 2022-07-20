@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Modal, Button } from 'antd';
 import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { TreasuryInfo, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream, Treasury, MSP, TreasuryType } from '@mean-dao/msp';
 import { StreamTreasuryType } from '../../models/treasuries';
@@ -11,8 +10,6 @@ import { useWallet } from '../../contexts/wallet';
 import { consoleOut } from '../../utils/ui';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
-import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
-import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 
 export const StreamLockedModal = (props: {
   handleClose: any;
@@ -22,10 +19,7 @@ export const StreamLockedModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
-  const navigate = useNavigate();
   const { publicKey } = useWallet();
-  const location = useLocation();
-  const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
 
@@ -38,7 +32,6 @@ export const StreamLockedModal = (props: {
     try {
       const details = await mspInstance.getTreasury(treasueyPk);
       if (details) {
-        setTreasuryDetails(details);
         consoleOut('treasuryDetails:', details, 'blue');
         const v1 = details as TreasuryInfo;
         const v2 = details as Treasury;
@@ -50,7 +43,6 @@ export const StreamLockedModal = (props: {
           return "open";
         }
       } else {
-        setTreasuryDetails(undefined);
         return "unknown";
       }
     } catch (error) {
@@ -65,16 +57,6 @@ export const StreamLockedModal = (props: {
     connection,
     props.mspClient,
   ]);
-
-  const getTreasuryName = useCallback(() => {
-    if (treasuryDetails) {
-      const v1 = treasuryDetails as TreasuryInfo;
-      const v2 = treasuryDetails as Treasury;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-      return isNewTreasury ? v2.name : v1.label;
-    }
-    return '-';
-  }, [treasuryDetails]);
 
   // Set treasury type
   useEffect(() => {
@@ -126,20 +108,6 @@ export const StreamLockedModal = (props: {
         <div className="transaction-progress">
           <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
           <h4 className="operation">{t('streams.locked-stream-message')}</h4>
-
-          {/* Only if the user is on streams offer navigating to the treasury */}
-          {location.pathname === STREAMS_ROUTE_BASE_PATH && treasuryDetails && (
-            <div className="mt-3">
-              <span className="mr-1">{t('treasuries.treasury-detail.treasury-name-label')}:</span>
-              <span className="mr-1 font-bold">{getTreasuryName()}</span>
-              <span className="simplelink underline-on-hover" onClick={() => {
-                props.handleClose();
-                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?treasury=${treasuryDetails.id}`;
-                navigate(url);
-              }}>{t('close-stream.see-details-cta')}</span>
-            </div>
-          )}
-
           <div className="mt-3">
             <Button
                 type="primary"

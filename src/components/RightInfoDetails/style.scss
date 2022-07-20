@@ -1,0 +1,22 @@
+.right-info-container {
+  margin-bottom: 1em;
+  .right-info-group {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    margin-bottom: 0.5em;
+    padding-left: 0.25em;
+    .info-value {
+      font-size: 18px;
+    }
+    .info-content {
+      margin-top: 0.6em;
+      font-size: 14px;
+    }
+  }
+}
+@media (max-width: 575px) {
+  .right-info-container .right-info-group {
+    margin-right: 1em;
+  }
+}

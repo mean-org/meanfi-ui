@@ -35,12 +35,35 @@ export enum AppUsageEvent {
     StreamTransferSigned = "Stream Transfer Ownership Signed",
     StreamTransferCompleted = "Stream Transfer Ownership Completed",
     StreamTransferFailed = "Stream Transfer Ownership Failed",
+    // Create a stream
+    StreamCreateFormButton = "Create stream form button click",
+    StreamCreateSigned = "Create stream Signed",
+    StreamCreateCompleted = "Create stream Completed",
+    StreamCreateFailed = "Create stream Failed",
     // Close Stream Action
     StreamCloseButton = "Stream Close button click",
-    StreamCloseStreamFormButton = "Stream Close form button click",
+    StreamCloseFormButton = "Stream Close form button click",
     StreamCloseSigned = "Stream Close Signed",
     StreamCloseCompleted = "Stream Close Completed",
     StreamCloseFailed = "Stream Close Failed",
+    // Pause Stream Action
+    StreamPauseButton = "Stream Pause button click",
+    StreamPauseFormButton = "Stream Pause form button click",
+    StreamPauseSigned = "Stream Pause Signed",
+    StreamPauseCompleted = "Stream Pause Completed",
+    StreamPauseFailed = "Stream Pause Failed",
+    // Resume Stream Action
+    StreamResumeButton = "Stream Resume button click",
+    StreamResumeFormButton = "Stream Resume form button click",
+    StreamResumeSigned = "Stream Resume Signed",
+    StreamResumeCompleted = "Stream Resume Completed",
+    StreamResumeFailed = "Stream Resume Failed",
+    // Stream StatusChange Action
+    StreamStatusChangeButton = "Stream Status change button click",
+    StreamStatusChangeFormButton = "Stream Status change form button click",
+    StreamStatusChangeSigned = "Stream Status change Signed",
+    StreamStatusChangeCompleted = "Stream Status change Completed",
+    StreamStatusChangeFailed = "Stream Status change Failed",
     // Page /transfers
     TransferOTPFormButton = "New OTP approve form button click",
     TransferOTPSigned = "New OTP Signed",
@@ -63,6 +86,27 @@ export enum AppUsageEvent {
     DepositInStakingVaultSigned = "Deposit in Staking vault Signed",
     DepositInStakingVaultCompleted = "Deposit in Staking vault Completed",
     DepositInStakingVaultFailed = "Deposit in Staking vault Failed",
+    // Assets Actions
+    // Create Asset
+    CreateAssetFormButton = "Create Asset form button click",
+    CreateAssetSigned = "Create Asset Signed",
+    CreateAssetCompleted = "Create Asset Completed",
+    CreateAssetFailed = "Create Asset Failed",
+    // Close Token account
+    CloseTokenAccountFormButton = "Close token account form button click",
+    CloseTokenAccountSigned = "Close token account Signed",
+    CloseTokenAccountCompleted = "Close token account Completed",
+    CloseTokenAccountFailed = "Close token account Failed",
+    // Set asset authority
+    SetAssetAutorityFormButton = "Set asset authority form button click",
+    SetAssetAutoritySigned = "Set asset authority Signed",
+    SetAssetAutorityCompleted = "Set asset authority Completed",
+    SetAssetAutorityFailed = "Set asset authority Failed",
+    // Delete asset
+    DeleteAssetFormButton = "Delete asset form button click",
+    DeleteAssetSigned = "Delete asset Signed",
+    DeleteAssetCompleted = "Delete asset Completed",
+    DeleteAssetFailed = "Delete asset Failed",
     // Asset management
     WrapSolFormButton = "Wrap SOL form button click",
     WrapSolSigned = "Wrap SOL Signed",
@@ -82,7 +126,55 @@ export enum AppUsageEvent {
     ExecuteProposalCompleted = "Execute Proposal Completed",
     ExecuteProposalFailed = "Execute Proposal Failed",
     CancelProposalCompleted = "Cancel Proposal Completed",
-    CancelProposalFailed = "Cancel Proposal Failed"
+    CancelProposalFailed = "Cancel Proposal Failed",
+    // Streaming Account Actions
+    // Create streaming account
+    CreateStreamingAccountFormButton = "Create Streaming Account form button click",
+    CreateStreamingAccountSigned = "Create Streaming Account Signed",
+    CreateStreamingAccountCompleted = "Create Streaming Account Completed",
+    CreateStreamingAccountFailed = "Create Streaming Account Failed",
+    // Close streaming account
+    CloseStreamingAccountFormButton = "Close Streaming Account form button click",
+    CloseStreamingAccountSigned = "Close Streaming Account Signed",
+    CloseStreamingAccountCompleted = "Close Streaming Account Completed",
+    CloseStreamingAccountFailed = "Close Streaming Account Failed",
+    // Add funds in streaming account
+    AddFundsStreamingAccountFormButton = "Add Funds in Streaming Account form button click",
+    AddFundsStreamingAccountSigned = "Add Funds in Streaming Account Signed",
+    AddFundsStreamingAccountCompleted = "Add Funds in Streaming Account Completed",
+    AddFundsStreamingAccountFailed = "Add Funds in Streaming Account Failed",
+    // Withdraw funds in streaming account
+    WithdrawFundsStreamingAccountFormButton = "Withdraw Funds in Streaming Account form button click",
+    WithdrawFundsStreamingAccountSigned = "Withdraw Funds in Streaming Account Signed",
+    WithdrawFundsStreamingAccountCompleted = "Withdraw Funds in Streaming Account Completed",
+    WithdrawFundsStreamingAccountFailed = "Withdraw Funds in Streaming Account Failed",
+    // Create stream in streaming account
+    CreateStreamStreamingAccountFormButton = "Create Stream in Streaming Account form button click",
+    CreateStreamStreamingAccountSigned = "Create Stream in Streaming Account Signed",
+    CreateStreamStreamingAccountCompleted = "Create Stream in Streaming Account Completed",
+    CreateStreamStreamingAccountFailed = "Create Stream in Streaming Account Failed",
+    // Refresh account balance
+    RefreshAccountBalanceFormButton = "Refresh account balance form button click",
+    RefreshAccountBalanceSigned = "Refresh account balance Signed",
+    RefreshAccountBalanceCompleted = "Refresh account balance Completed",
+    RefreshAccountBalanceFailed = "Refresh account balance Failed",
+    // Vesting contract
+    VestingContractCreateFormButton = "Create Vesting contract form button click",
+    VestingContractCreateSigned = "Create Vesting contract Signed",
+    VestingContractCreateCompleted = "Create Vesting contract Completed",
+    VestingContractCreateFailed = "Create Vesting contract Failed",
+    VestingContractTopupFormButton = "Topup Vesting contract form button click",
+    VestingContractTopupSigned = "Topup Vesting contract Signed",
+    VestingContractTopupCompleted = "Topup Vesting contract Completed",
+    VestingContractTopupFailed = "Topup Vesting contract Failed",
+    VestingContractCloseFormButton = "Close Vesting contract form button click",
+    VestingContractCloseSigned = "Close Vesting contract Signed",
+    VestingContractCloseCompleted = "Close Vesting contract Completed",
+    VestingContractCloseFailed = "Close Vesting contract Failed",
+    VestingContractWithdrawFundsFormButton = "Withdraw Vesting contract funds form button click",
+    VestingContractWithdrawFundsSigned = "Withdraw Vesting contract funds Signed",
+    VestingContractWithdrawFundsCompleted = "Withdraw Vesting contract funds Completed",
+    VestingContractWithdrawFundsFailed = "Withdraw Vesting contract funds Failed",
 }
 
 export enum StatsTriggertEvent {
@@ -176,6 +268,60 @@ export interface SegmentStreamTransferOwnershipData {
     stream: string;
     beneficiary: string;
     newBeneficiary: string;
+}
+
+export interface SegmentVestingContractCreateData {
+    asset: string;
+    assetPrice: number;
+    valueInUsd: number;
+    contractName: string;
+    type: string;
+    fundingAmount: number;
+    duration: number;
+    durationUnit: string;
+    subCategory: string;
+    cliffVestPercent: number;
+    startUtc: string;
+    multisig: string;
+    feePayedByTreasurer: boolean;
+}
+
+export interface SegmentVestingContractWithdrawData {
+    asset: string;
+    assetPrice: number;
+    vestingContract: string;
+    destination: string;
+    amount: number;
+    valueInUsd: number;
+}
+
+export interface SegmentStreamCreateData {
+    asset: string;
+    assetPrice: number;
+    treasury: string;
+    beneficiary: string;
+    allocation: number;
+    rateAmount: number;
+    interval: string;
+    category: number;
+    feePayedByTreasurer: boolean;
+    valueInUsd: number;
+}
+
+export interface SegmentStreamStatusChangeActionData {
+    action: string;
+    streamId: string;
+}
+
+export interface SegmentVestingContractCloseData {
+    contractName: string;
+    type: string;
+    subCategory: string;
+}
+
+export interface SegmentRefreshAccountBalanceData {
+    treasurer: string;
+    treasury: string;
 }
 
 ///////////////////

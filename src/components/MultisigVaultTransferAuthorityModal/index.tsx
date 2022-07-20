@@ -10,10 +10,11 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Identicon } from '../Identicon';
-import { FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
 
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { UserTokenAccount } from '../../models/transactions';
+import { InputMean } from '../InputMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -37,11 +38,15 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     setTransactionStatus,
   } = useContext(AppStateContext);
 
+  const [proposalTitle, setProposalTitle] = useState("");
   const [selectedAuthority, setSelectedAuthority] = useState('');
   const [destinationAddressDisclaimerAccepted, setDestinationAddressDisclaimerAccepted] = useState(false);
 
   const onAcceptModal = () => {
-    props.handleOk(selectedAuthority);
+    props.handleOk({
+      title: proposalTitle,
+      selectedAuthority: selectedAuthority
+    });
   }
 
   const onCloseModal = () => {
@@ -53,6 +58,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     props.handleAfterClose();
 
     setTimeout(() => {
+      setProposalTitle("");
       setSelectedAuthority("");
       setDestinationAddressDisclaimerAccepted(false);
     });
@@ -63,10 +69,15 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     });
   }
 
+  const onTitleInputValueChange = (e: any) => {
+    setProposalTitle(e.target.value);
+  }
+
   const isValidForm = (): boolean => {
-    return selectedAuthority &&
-            isValidAddress(selectedAuthority) &&
-            (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
+    return proposalTitle && 
+          selectedAuthority &&
+          isValidAddress(selectedAuthority) &&
+          (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
       ? true
       : false;
   }
@@ -106,7 +117,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.address as string, 6)}]`}</div>
+          <div className="title text-truncate">{token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.address as string, 6)}]`}</div>
           <div className="subtitle text-truncate">{shortenAddress(item.publicAddress as string, 8)}</div>
         </div>
         <div className="rate-cell">
@@ -180,6 +191,18 @@ export const MultisigVaultTransferAuthorityModal = (props: {
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
+            {/* Proposal title */}
+            <div className="mb-3">
+              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+              <InputMean
+                id="proposal-title-field"
+                name="Title"
+                className="w-100 general-text-input"
+                onChange={onTitleInputValueChange}
+                placeholder="Add a proposal title (required)"
+                value={proposalTitle}
+              />
+            </div>
 
             {props.selectedVault && (
               <div className="mb-3">

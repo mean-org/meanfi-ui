@@ -20,6 +20,7 @@ export interface TreasuryStreamsBreakdown {
 }
 
 export interface StreamWithdrawData {
+    title?: string;
     token: string;
     amount: string;
     inputAmount: number;

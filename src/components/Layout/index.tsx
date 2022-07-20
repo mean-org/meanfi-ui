@@ -6,7 +6,6 @@ import { Drawer, Empty, Layout } from "antd";
 import { AppBar } from "../AppBar";
 import { FooterBar } from "../FooterBar";
 import { AppStateContext } from "../../contexts/appstate";
-import { BackButton } from "../BackButton";
 import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
@@ -39,13 +38,13 @@ export const AppLayout = React.memo((props: any) => {
   const {
     theme,
     tpsAvg,
-    detailsPanelOpen,
+    previousRoute,
     previousWalletConnectState,
     setPreviousWalletConnectState,
     setShouldLoadTokens,
     refreshTokenBalance,
-    setDtailsPanelOpen,
     setDiagnosisInfo,
+    setPreviousRoute,
     setSelectedAsset,
     setStreamList,
     setTpsAvg,
@@ -163,9 +162,9 @@ export const AppLayout = React.memo((props: any) => {
     setTpsAvg,
   ]);
 
-  const getPlatform = (): string => {
+  const getPlatform = useCallback((): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
-  }
+  }, []);
 
   /*
   const sendConnectionMetric = useCallback((address: string) => {
@@ -201,7 +200,7 @@ export const AppLayout = React.memo((props: any) => {
       .catch(e => {
         consoleOut('InfluxDB write API - WRITE FAILED', e, 'red');
       })
-  }, [provider]);
+  }, [provider, getPlatform]);
   */
 
   // Init Google Analytics
@@ -339,6 +338,7 @@ export const AppLayout = React.memo((props: any) => {
     setReferralAddress,
     setSelectedAsset,
     setStreamList,
+    getPlatform,
     t,
   ]);
 
@@ -401,11 +401,16 @@ export const AppLayout = React.memo((props: any) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  const closeAllPanels = () => {
-    if (detailsPanelOpen) {
-      setDtailsPanelOpen(false);
+  // Clear accounts state when leaving
+  useEffect(() => {
+    const isAccountPage = location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH);
+
+    if (location.pathname !== previousRoute) {
+      if (!isAccountPage) {
+        setPreviousRoute(location.pathname);
+      }
     }
-  }
+  }, [location.pathname, previousRoute, setPreviousRoute]);
 
   const showDrawer = () => {
     setIsDrawerVisible(true);
@@ -424,7 +429,7 @@ export const AppLayout = React.memo((props: any) => {
       const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
       const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${tpsAvg || '-'}, latency: ${responseTime}ms`;
       const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
-      const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, build: [${gitInfo.commit.shortHash}] on ${gitInfo.commit.date}`;
+      const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, branch: ${gitInfo.branch || '-'}, build: [${gitInfo.commit.shortHash}] on ${gitInfo.commit.date}`;
       const debugInfo: AccountDetails = {
         dateTime,
         clientInfo,
@@ -462,9 +467,6 @@ export const AppLayout = React.memo((props: any) => {
               </div>
             )}
             <Header className="App-Bar">
-              {!location.pathname.startsWith('/invest') && (detailsPanelOpen) && (
-                <BackButton handleClose={() => closeAllPanels()} />
-              )}
               <div className="app-bar-inner">
                 <Link to="/" className="flex-center">
                   <div className="app-title simplelink">

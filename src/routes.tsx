@@ -15,16 +15,11 @@ import {
   PlaygroundView,
   SwapView,
   TransfersView,
-  TreasuriesView,
-  MultisigView,
   StatsView,
-  MultisigAssetsView,
-  MultisigProgramsView,
-  MultisigMintsView,
-  MultisigTreasuryStreams,
   StakingRewardsView,
   AccountsNewView,
   SafeView,
+  VestingView,
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -53,10 +48,18 @@ export function AppRoutes() {
                       <Route path="/accounts/:address" element={<AccountsNewView />} />
                       <Route path="/accounts/:address/assets" element={<AccountsNewView />} />
                       <Route path="/accounts/:address/assets/:asset" element={<AccountsNewView />} />
-                      <Route path="/accounts/:address/msigs" element={<AccountsNewView />} />
-                      <Route path="/accounts/:address/msigs/:asset" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming/:streamingTab" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming/:streamingTab/:streamId" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming/:streamingTab/treasury/:treasuryId" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming/outgoing/treasury/:treasuryId/:streamId" element={<AccountsNewView />} />
                       {/* Streams routes (under refactor) */}
                       <Route path="/accounts/streams" element={<AccountsNewView />} />
+                      <Route path="/vesting" element={<VestingView />} />
+                      <Route path="/vesting/:address" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts/:vestingContract" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts/:vestingContract/:activeTab" element={<VestingView />} />
                       {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
@@ -76,16 +79,10 @@ export function AppRoutes() {
                       <Route path="/staking-rewards" element={<StakingRewardsView />} />
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
-                      <Route path="/treasuries" element={<TreasuriesView />} />
-                      <Route path="/treasuries/:id/streams" element={<MultisigTreasuryStreams />} />
-                      <Route path="/multisig-old" element={<MultisigView />} />
                       <Route path="/multisig" element={<SafeView />} />
                       <Route path="/multisig/:address" element={<SafeView />} />
                       <Route path="/multisig/:address/proposals/:id" element={<SafeView />} />
                       <Route path="/multisig/:address/programs/:id" element={<SafeView />} />
-                      <Route path="/multisig-mints" element={<MultisigMintsView />} />
-                      <Route path="/multisig-assets" element={<MultisigAssetsView />} />
-                      <Route path="/multisig-programs" element={<MultisigProgramsView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       {/* Playgraund route for POC and testing purposes */}
                       {!isProd() && (

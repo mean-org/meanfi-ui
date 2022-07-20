@@ -11,7 +11,6 @@ import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   cutNumber,
   fetchAccountTokens,
-  formatAmount,
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
@@ -22,20 +21,20 @@ import {
   toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
-  getFairPercentForInterval,
   getIntervalFromSeconds,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
-  PaymentRateTypeOption
+  PaymentRateTypeOption,
+  toUsCurrency
 } from "../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
@@ -46,7 +45,7 @@ import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
@@ -59,8 +58,8 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import useWindowSize from '../../hooks/useWindowResize';
 import { InfoIcon } from '../../components/InfoIcon';
 import { NATIVE_SOL } from '../../utils/tokens';
-import { STREAMS_ROUTE_BASE_PATH } from '../Streams';
 import { environment } from '../../environments/environment';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -76,7 +75,6 @@ export const RepeatingPayment = (props: {
     tokenList,
     userTokens,
     splTokenList,
-    effectiveRate,
     loadingPrices,
     recipientNote,
     fromCoinAmount,
@@ -98,13 +96,12 @@ export const RepeatingPayment = (props: {
     setRecipientAddress,
     setPaymentStartDate,
     setFromCoinAmount,
-    setSelectedStream,
     setRecipientNote,
     setEffectiveRate,
     refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
@@ -378,8 +375,8 @@ export const RepeatingPayment = (props: {
   const handleGoToStreamsClick = useCallback(() => {
     resetContractValues();
     setCurrentStep(0);
-    navigate(STREAMS_ROUTE_BASE_PATH);
-  }, [navigate, resetContractValues]);
+    // navigate(STREAMS_ROUTE_BASE_PATH);
+  }, [resetContractValues]);
 
   const recordTxConfirmation = useCallback((signature: string, success = true) => {
     const event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
@@ -388,6 +385,12 @@ export const RepeatingPayment = (props: {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+
+    const path = window.location.pathname;
+    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
+      return;
+    }
+
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     setIsBusy(false);
     resetTransactionStatus();
@@ -407,7 +410,7 @@ export const RepeatingPayment = (props: {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
-    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    console.log("onTxTimedout event executed:", item);
     // If we have the item, record failure and remove it from the list
     if (item) {
       recordTxConfirmation(item.signature, false);
@@ -556,12 +559,13 @@ export const RepeatingPayment = (props: {
   ]);
 
   const getTokenPrice = useCallback(() => {
-    if (!fromCoinAmount || ! effectiveRate) {
+    if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
 
-    return parseFloat(fromCoinAmount) * effectiveRate;
-  }, [effectiveRate, fromCoinAmount]);
+    return parseFloat(fromCoinAmount) * price;
+  }, [fromCoinAmount, selectedToken, getTokenPriceByAddress, getTokenPriceBySymbol]);
 
   const getPaymentRateAmount = useCallback(() => {
 
@@ -672,6 +676,19 @@ export const RepeatingPayment = (props: {
     onTxConfirmed,
     onTxTimedout,
   ]);
+
+  // Unsubscribe from events
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   //////////////////
   //  Validation  //
@@ -799,16 +816,6 @@ export const RepeatingPayment = (props: {
     return label;
   }, [selectedToken, t]);
 
-  const getRecommendedFundingAmount = () => {
-    const rateAmount = parseFloat(paymentRateAmount as string);
-    const percent = getFairPercentForInterval(paymentRateFrequency);
-    const recommendedMinAmount = percent * rateAmount || 0;
-    const formatted = formatAmount(recommendedMinAmount, selectedToken?.decimals, true);
-
-    // String to obtain: 0.21 SOL (10%).
-    return `${parseFloat(formatted).toString()} ${selectedToken?.symbol}`;
-  }
-
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
@@ -894,16 +901,17 @@ export const RepeatingPayment = (props: {
         consoleOut('data:', data);
 
         // Report event to Segment analytics
+        const price = getTokenPrice();
         const segmentData: SegmentStreamRPTransferData = {
           asset: selectedToken?.symbol,
-          assetPrice: effectiveRate,
+          assetPrice: price,
           allocation: parseFloat(fromCoinAmount as string),
           beneficiary: data.beneficiary,
           startUtc: dateFormat(data.startUtc, SIMPLE_DATE_TIME_FORMAT),
           rateAmount: parseFloat(paymentRateAmount as string),
           interval: getPaymentRateOptionLabel(paymentRateFrequency),
           feePayedByTreasurer: data.feePayedByTreasurer,
-          valueInUsd: effectiveRate * parseFloat(fromCoinAmount as string)
+          valueInUsd: price * parseFloat(fromCoinAmount as string)
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFormButton, segmentData);
@@ -939,7 +947,7 @@ export const RepeatingPayment = (props: {
           false // TODO: (feePayedByTreasurer)
         )
         .then(value => {
-          consoleOut('createStream returned transaction:', value);
+          consoleOut('streamPayment returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -952,7 +960,7 @@ export const RepeatingPayment = (props: {
           return true;
         })
         .catch(error => {
-          console.error('createStream error:', error);
+          console.error('streamPayment error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -1111,7 +1119,7 @@ export const RepeatingPayment = (props: {
               loadingTitle: "Confirming transaction",
               loadingMessage: `Send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Stream to send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} has been created.`
+              completedMessage: `${location.pathname.includes("streaming") ? "Outgoing stream" : "Stream"} to send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} has been created.`
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -1123,10 +1131,6 @@ export const RepeatingPayment = (props: {
               resetContractValues();
               setIsVerifiedRecipient(false);
               transferCompleted();
-              if (location.pathname !== STREAMS_ROUTE_BASE_PATH) {
-                setSelectedStream(undefined);
-                navigate(STREAMS_ROUTE_BASE_PATH);
-              }
             }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1141,11 +1145,11 @@ export const RepeatingPayment = (props: {
     nativeBalance,
     recipientNote,
     selectedToken,
-    effectiveRate,
     fromCoinAmount,
     recipientAddress,
     paymentStartDate,
     paymentRateAmount,
+    transferCompleted,
     location.pathname,
     paymentRateFrequency,
     transactionCancelled,
@@ -1157,10 +1161,8 @@ export const RepeatingPayment = (props: {
     setTransactionStatus,
     resetContractValues,
     getPaymentRateLabel,
-    setSelectedStream,
-    transferCompleted,
+    getTokenPrice,
     getFeeAmount,
-    navigate,
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {
@@ -1210,7 +1212,7 @@ export const RepeatingPayment = (props: {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown token'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
@@ -1250,7 +1252,7 @@ export const RepeatingPayment = (props: {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown token"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={async () => {
@@ -1274,19 +1276,19 @@ export const RepeatingPayment = (props: {
                   decimals = -2;
                 }
               }
-              const uknwnToken: TokenInfo = {
+              const unknownToken: TokenInfo = {
                 address,
-                name: 'Unknown token',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: getNetworkIdByEnvironment(environment),
                 decimals,
                 symbol: `[${shortenAddress(address)}]`,
               };
-              tokenChanged(t);
-              setSelectedToken(uknwnToken);
+              tokenChanged(unknownToken);
+              setSelectedToken(unknownToken);
               if (userBalances && userBalances[address]) {
                 setSelectedTokenBalance(userBalances[address]);
               }
-              consoleOut("token selected:", uknwnToken, 'blue');
+              consoleOut("token selected:", unknownToken, 'blue');
               // Do not close on errors (-1 or -2)
               if (decimals >= 0) {
                 onCloseTokenSelector();
@@ -1386,8 +1388,8 @@ export const RepeatingPayment = (props: {
                       <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                         mintAddress={selectedToken.address}
                         name={selectedToken.name}
-                        showName={false}
                         showCaretDown={true}
+                        showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                         fullTokenInfo={selectedToken}
                       />
                     )}
@@ -1558,8 +1560,8 @@ export const RepeatingPayment = (props: {
                 <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
-                    showName={false}
                     showCaretDown={true}
+                    showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                     fullTokenInfo={selectedToken}
                   />
                 )}
@@ -1607,9 +1609,9 @@ export const RepeatingPayment = (props: {
             </div>
             <div className="right inner-label">
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                ~${fromCoinAmount && effectiveRate
-                  ? formatAmount(getTokenPrice(), 2)
-                  : "0.00"}
+                ~{fromCoinAmount
+                  ? toUsCurrency(getTokenPrice())
+                  : "$0.00"}
               </span>
             </div>
           </div>

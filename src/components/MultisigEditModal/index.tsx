@@ -12,6 +12,7 @@ import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../util
 import { MultisigParticipants } from '../MultisigParticipants';
 import { MultisigParticipant, MultisigTransactionFees, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
+import { InputMean } from '../InputMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -35,6 +36,7 @@ export const MultisigEditModal = (props: {
     setTransactionStatus,
   } = useContext(AppStateContext);
 
+  const [multisigTitle, setMultisigTitle] = useState('');
   const [multisigLabel, setMultisigLabel] = useState('');
   const [multisigThreshold, setMultisigThreshold] = useState(0);
   const [inputOwners, setInputOwners] = useState<MultisigParticipant[] | undefined>(undefined);
@@ -42,7 +44,7 @@ export const MultisigEditModal = (props: {
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
 
   // When modal goes visible, get passed-in owners to populate participants component
-  // Also get threshold and labe (name)
+  // Also get threshold and label (name)
   useEffect(() => {
     if (props.isVisible) {
       if (props.multisigName) {
@@ -98,6 +100,7 @@ export const MultisigEditModal = (props: {
 
   const onAcceptModal = () => {
     props.handleOk({
+      title: multisigTitle,
       label: multisigLabel,
       threshold: multisigThreshold,
       owners: multisigOwners
@@ -111,6 +114,7 @@ export const MultisigEditModal = (props: {
   const onAfterClose = () => {
 
     setTimeout(() => {
+      setMultisigTitle('');
       setMultisigLabel('');
       setMultisigThreshold(0);
       setMultisigOwners([]);
@@ -128,6 +132,10 @@ export const MultisigEditModal = (props: {
     window.location.reload();
   }
 
+  const onTitleInputValueChange = (e: any) => {
+    setMultisigTitle(e.target.value);
+  }
+  
   const onLabelInputValueChange = (e: any) => {
     setMultisigLabel(e.target.value);
   }
@@ -140,6 +148,7 @@ export const MultisigEditModal = (props: {
   const isFormValid = () => {
     return  multisigThreshold &&
             multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
+            multisigTitle &&
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
             multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
@@ -195,6 +204,19 @@ export const MultisigEditModal = (props: {
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
+            {/* Proposal title */}
+            <div className="mb-3">
+              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+              <InputMean
+                id="proposal-title-field"
+                name="Title"
+                className="w-100 general-text-input"
+                onChange={onTitleInputValueChange}
+                placeholder="Add a proposal title (required)"
+                value={multisigTitle}
+              />
+            </div>
+
             {/* Multisig label */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.create-multisig.multisig-label-input-label')}</div>

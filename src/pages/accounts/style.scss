@@ -93,6 +93,11 @@
         .title {
             padding-left: 1rem;
         }
+        @media (max-width: 767px) {
+            .amount {
+                padding-right: 0.5rem;
+            }
+        }
 
         @media (max-width: 767.98px) {
             margin: 0.5rem -2.6%;
@@ -121,7 +126,7 @@
         background-color: var(--bg-color);
 
         @media (max-width: 767.98px) {
-            margin: -0.6rem 4px -0.2rem 0;
+            margin: -0.6rem 0px -0.2rem 0;
         }
 
         @media (min-width: 768px) {
@@ -189,7 +194,6 @@
             }
         }
         .description-cell {
-            flex: 1 1 calc(100% - 40px);
             .title {
                 display: block;
                 align-items: center;
@@ -214,38 +218,6 @@
         }
     }
 
-    .accounts-category-meta {
-        .info-label {
-            width: 100%;
-            font-size: 0.8rem;
-            font-weight: 400;
-            color: var(--color-secondary-alpha-50);
-            margin-bottom: 0;
-        }
-
-        .info-data {
-            font-weight: 600;
-            color: var(--color-white);
-        }
-
-        .info-extra {
-            font-weight: 400;
-            color: var(--color-secondary-alpha-50);
-            line-height: 1;
-            margin-top: 2px;
-        }
-
-        .mean-svg-icons {
-            font-size: inherit;
-            color: inherit;
-        }
-    }
-
-    .cta-row {
-        button.ant-btn.ant-btn-round.ant-btn-sm {
-            min-width: 90px;
-        }
-    }
 }
 
 .asset-btn-group {

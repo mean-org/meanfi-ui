@@ -25,6 +25,7 @@ import {
   getAmountFromLamports,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
+  makeDecimal,
   openLinkInNewTab,
   shortenAddress,
   tabNameFormat
@@ -38,7 +39,8 @@ import {
   FALLBACK_COIN_IMAGE,
   WRAPPED_SOL_MINT_ADDRESS,
   ACCOUNTS_LOW_BALANCE_LIMIT,
-  NO_FEES
+  NO_FEES,
+  ONE_MINUTE_REFRESH_TIMEOUT
 } from '../../constants';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
@@ -48,22 +50,20 @@ import useLocalStorage from '../../hooks/useLocalStorage';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
-import { Streams } from '../../views';
 import { initialSummary, StreamsSummary } from '../../models/streams';
-import { MSP, Stream, STREAM_STATUS, TransactionFees } from '@mean-dao/msp';
-import { StreamInfo, STREAM_STATE, MoneyStreaming } from '@mean-dao/money-streaming';
+import { Category, MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { StreamInfo, STREAM_STATE, MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
 import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
-import { AccountAssetAction, EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
+import { consoleOut, copyText, delay, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
-import { TreasuriesSummary } from '../../components/TreasuriesSummary';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 import { QRCodeSVG } from 'qrcode.react';
 import { NATIVE_SOL } from '../../utils/tokens';
@@ -74,7 +74,6 @@ import { INVEST_ROUTE_BASE_PATH } from '../invest';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
 import { closeTokenAccount } from '../../utils/accounts';
-import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../treasuries';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
@@ -85,17 +84,23 @@ import { MultisigParticipant } from '../../models/multisig';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { useNativeAccount } from '../../contexts/accounts';
-import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
+import { MoneyStreamsInfoView } from '../../views/MoneyStreamsInfo';
+import { MoneyStreamsIncomingView } from '../../views/MoneyStreamsIncoming';
+import { MoneyStreamsOutgoingView } from '../../views/MoneyStreamsOutgoing';
+import { StreamingAccountView } from '../../views/StreamingAccount';
 import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
+import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
+import notification, { IconType } from 'antd/lib/notification';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
-export type CategoryOption = "networth" | "assets" | "msigs" | "other-assets";
+export type InspectedAccountType = "wallet" | "multisig" | undefined;
+export type CategoryOption = "networth" | "assets" | "streaming" | "other-assets";
 export type OtherAssetsOption = "msp-streams" | "msp-treasuries" | "orca" | "solend" | "friktion" | undefined;
 export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
+let isWorkflowLocked = false;
 
 interface AssetCta {
-  action: AccountAssetAction;
+  action: MetaInfoCtaAction;
   isVisible: boolean;
   disabled: boolean;
   caption: string;
@@ -105,11 +110,16 @@ interface AssetCta {
   callBack?: any;
 }
 
+type CombinedStreamingAccounts = {
+  treasury: Treasury | Treasury;
+  streams: Array<Stream | StreamInfo> | undefined;
+};
+
 export const AccountsNewView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { address, asset } = useParams();
+  const { address, asset, streamingTab, streamId, treasuryId } = useParams();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
@@ -125,13 +135,12 @@ export const AccountsNewView = () => {
     streamListv2,
     streamDetail,
     transactions,
+    previousRoute,
     isWhitelisted,
     selectedAsset,
     accountAddress,
     loadingStreams,
-    streamsSummary,
     lastTxSignature,
-    detailsPanelOpen,
     shouldLoadTokens,
     transactionStatus,
     streamProgramAddress,
@@ -144,22 +153,23 @@ export const AccountsNewView = () => {
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
-    setLastStreamsSummary,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
     setShouldLoadTokens,
-    setDtailsPanelOpen,
     refreshStreamList,
     setStreamsSummary,
     setAccountAddress,
     setSelectedToken,
     setSelectedAsset,
+    setActiveStream,
     setStreamDetail,
     setTransactions,
+    clearStreams,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
+    confirmationHistory,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
@@ -167,7 +177,7 @@ export const AccountsNewView = () => {
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isPageLoaded, setIsPageLoaded] = useState(true);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [tokensLoaded, setTokensLoaded] = useState(false);
@@ -182,13 +192,12 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
   const [inspectedAccountType, setInspectedAccountType] = useState<InspectedAccountType>(undefined);
-  const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
-  const [netWorth, setNetWorth] = useState(0);
-  const [treasuriesTvl, setTreasuriesTvl] = useState(0);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
-  const [urlQueryAsset, setUrlQueryAsset] = useState('');
+  const [pathParamAsset, setPathParamAsset] = useState('');
+  const [pathParamStreamId, setPathParamStreamId] = useState('');
+  const [pathParamTreasuryId, setPathParamTreasuryId] = useState('');
+  const [pathParamStreamingTab, setPathParamStreamingTab] = useState('');
   const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
-  const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -220,38 +229,34 @@ export const AccountsNewView = () => {
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
-  const selectedMultisigRef = useRef(selectedMultisig);
-  useEffect(() => {
-    selectedMultisigRef.current = selectedMultisig;
-  }, [selectedMultisig]);
+  const [loadingTreasuries, setLoadingTreasuries] = useState(false);
+  const [autocloseTreasuries, setAutocloseTreasuries] = useState<(Treasury | TreasuryInfo)[]>([]);
+  const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
+  const [customStreamDocked, setCustomStreamDocked] = useState(false);
+  const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
 
-  // Keep account balance updated
-  useEffect(() => {
+  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
+  // Streaming account
+  const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
+  const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
+  const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
+  const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
+  const [streamingAccountCombinedList, setStreamingAccountCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
+  // Balances and USD values
+  const [totalAccountBalance, setTotalAccountBalance] = useState(0);
+  const [incomingStreamsSummary, setIncomingStreamsSummary] = useState<StreamsSummary>(initialSummary);
+  const [outgoingStreamsSummary, setOutgoingStreamsSummary] = useState<StreamsSummary>(initialSummary);
+  const [incomingAmount, setIncomingAmount] = useState(0);
+  const [outgoingAmount, setOutgoingAmount] = useState(0);
+  const [totalStreamsAmount, setTotalStreamsAmount] = useState<number | undefined>(undefined);
+  const [streamingAccountsSummary, setStreamingAccountsSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
+  const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
+  const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
+  const [netWorth, setNetWorth] = useState(0);
+  const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
 
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshTokenBalance
-  ]);
-
-  const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
-  }, [
-    isBusy,
-    fetchTxInfoStatus,
-  ]);
 
   // Perform premature redirect here if no address was provided in path
   // to the current wallet address if the user is connected
@@ -261,22 +266,34 @@ export const AccountsNewView = () => {
     consoleOut('pathname:', location.pathname, 'crimson');
     if (location.pathname.endsWith('/streams')) {
       return;
+      // Ensure path: /accounts/:address/assets if nothing provided
     } else if (!address && publicKey) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${publicKey.toBase58()}/assets`;
       consoleOut('No account address, redirecting to:', url, 'orange');
+      setAutoOpenDetailsPanel(false);
       setTimeout(() => {
-        setIsFirstLoad(true);
+        setIsPageLoaded(true);
       }, 5);
       navigate(url, { replace: true });
-    } else if (address && location.pathname.indexOf('/assets') === -1) {
+      // Ensure path: /accounts/:address/assets if address provided but not /assets or /streaming
+    } else if (address && location.pathname.indexOf('/assets') === -1 && location.pathname.indexOf('/streaming') === -1) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/assets`;
       consoleOut('Address found, redirecting to:', url, 'orange');
+      setAutoOpenDetailsPanel(false);
       setTimeout(() => {
-        setIsFirstLoad(true);
+        setIsPageLoaded(true);
       }, 5);
       navigate(url, { replace: true });
+    } else {
+      // If an asset is specified or user goes inside any tab of the streaming category, enable it
+      if (asset || streamingTab) {
+        setAutoOpenDetailsPanel(true);
+      }
+      setTimeout(() => {
+        setIsPageLoaded(true);
+      }, 5);
     }
-  }, [address, location.pathname, navigate, publicKey]);
+  }, [address, asset, location.pathname, navigate, publicKey, streamId, streamingTab, treasuryId]);
 
   const connection = useMemo(() => new Connection(endpoint, {
     commitment: "confirmed",
@@ -306,9 +323,35 @@ export const AccountsNewView = () => {
     streamV2ProgramAddress
   ]);
 
+  const selectedMultisigRef = useRef(selectedMultisig);
+  useEffect(() => {
+    selectedMultisigRef.current = selectedMultisig;
+  }, [selectedMultisig]);
+
+
   ////////////////////////////
   //   Events and actions   //
   ////////////////////////////
+
+  const isTxInProgress = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+  ]);
+
+  const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
+    if (item && publicKey && accountAddress) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        return v1.beneficiaryAddress === accountAddress ? true : false;
+      } else {
+        return v2.beneficiary === accountAddress ? true : false;
+      }
+    }
+    return false;
+  }, [accountAddress, publicKey]);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -316,6 +359,17 @@ export const AccountsNewView = () => {
       currentOperation: TransactionStatus.Iddle
     });
   }, [setTransactionStatus]);
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
 
   // Token Merger Modal
   const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
@@ -387,41 +441,9 @@ export const AccountsNewView = () => {
     hideUnwrapSolModal();
   }
 
-  // const onAddAccountAddress = useCallback(() => {
-  //   navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressInput}/assets`);
-  //   setAccountAddressInput('');
-  // }, [navigate, accountAddressInput]);
-
   const handleScanAnotherAddressButtonClick = () => {
     setAddAccountPanelOpen(true);
   }
-
-  // const handleBackToAccountDetailsButtonClick = () => {
-  //   setAddAccountPanelOpen(false);
-  // }
-
-  // const triggerWindowResize = () => {
-  //   window.dispatchEvent(new Event('resize'));
-  // }
-
-  // const handleAccountAddressInputChange = (e: any) => {
-  //   const inputValue = e.target.value as string;
-  //   // Set the input value
-  //   const trimmedValue = inputValue.trim();
-  //   setAccountAddressInput(trimmedValue);
-  // }
-
-  // const handleAccountAddressInputFocusIn = () => {
-  //   setTimeout(() => {
-  //     triggerWindowResize();
-  //   }, 100);
-  // }
-
-  // const handleAccountAddressInputFocusOut = () => {
-  //   setTimeout(() => {
-  //     triggerWindowResize();
-  //   }, 100);
-  // }
 
   const isInspectedAccountTheConnectedWallet = useCallback(() => {
     return accountAddress && publicKey && publicKey.toBase58() === accountAddress
@@ -443,6 +465,35 @@ export const AccountsNewView = () => {
     return selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS ? true : false;
   }, [selectedAsset]);
 
+  const hasMultisigProposalFinishedConfirmation = useCallback(() => {
+    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
+
+    const isTheReference = (item: TxConfirmationInfo) => {
+      return item && item.extras && item.extras.multisigAuthority && item.extras.multisigAuthority === selectedMultisigRef.current?.authority.toBase58()
+        ? true
+        : false;
+    }
+
+    const txItem = confirmationHistory.find(h => h.txInfoFetchStatus !== "fetching" && isTheReference(h));
+    if (txItem) {
+      return true;
+    }
+
+    return false;
+  }, [confirmationHistory]);
+
+  // const userHasAccess = useCallback (() => {
+  //   if (!publicKey || !accountAddress) { return false; }
+  //   const isUserWallet = isInspectedAccountTheConnectedWallet();
+  //   if (isUserWallet) { return true; }
+  //   // TODO: We should validate here if the user is part of the multisig
+  //   const param = getQueryAccountType();
+  //   if (param && param === "multisig") {
+  //     return true;
+  //   }
+  //   return false;
+  // }, [accountAddress, getQueryAccountType, isInspectedAccountTheConnectedWallet, publicKey]);
+
   // const isAssetPurchasable = useCallback(() => {
   //   if (!selectedAsset) { return false; }
 
@@ -453,23 +504,23 @@ export const AccountsNewView = () => {
 
   const goToExchangeWithPresetAsset = useCallback(() => {
     const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
-    setDtailsPanelOpen(false);
+    setDetailsPanelOpen(false);
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
     } else {
       navigate('/exchange');
     }
-  }, [navigate, selectedAsset, setDtailsPanelOpen]);
+  }, [navigate, selectedAsset, setDetailsPanelOpen]);
 
   const handleGoToExchangeClick = useCallback(() => {
     const queryParams = `${selectedAsset ? '?to=' + selectedAsset.symbol : ''}`;
-    setDtailsPanelOpen(false);
+    setDetailsPanelOpen(false);
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
     } else {
       navigate('/exchange');
     }
-  }, [navigate, selectedAsset, setDtailsPanelOpen]);
+  }, [navigate, selectedAsset, setDetailsPanelOpen]);
 
   const investButtonEnabled = useCallback(() => {
     if (!selectedAsset || !isInspectedAccountTheConnectedWallet()) { return false; }
@@ -479,7 +530,7 @@ export const AccountsNewView = () => {
   }, [isInspectedAccountTheConnectedWallet, selectedAsset]);
 
   const handleGoToInvestClick = useCallback(() => {
-    setDtailsPanelOpen(false);
+    setDetailsPanelOpen(false);
     let url = INVEST_ROUTE_BASE_PATH;
 
     if (selectedAsset) {
@@ -504,7 +555,7 @@ export const AccountsNewView = () => {
 
     navigate(url);
 
-  }, [navigate, selectedAsset, setDtailsPanelOpen]);
+  }, [navigate, selectedAsset, setDetailsPanelOpen]);
 
   const onExchangeAsset = useCallback(() => {
     if (!selectedAsset) { return; }
@@ -573,20 +624,21 @@ export const AccountsNewView = () => {
 
   },[t])
 
+  // Call only if you have control over every loop
+  const getStreamingAccountStreams = useCallback(async (treasuryPk: PublicKey, isNewTreasury: boolean) => {
+    if (!publicKey || !ms || !msp || !treasuryPk || !streamList) { return undefined; }
+
+    if (isNewTreasury) {
+      return streamList.filter((item: any) => item.treasury === treasuryPk.toBase58());
+    } else {
+      return  streamList.filter((item: any) => item.treasuryAddress === treasuryPk.toBase58());
+    }
+
+  }, [ms, msp, publicKey, streamList]);
+
   const hasTransactions = useCallback(() => {
     return transactions && transactions.length > 0 ? true : false;
   }, [transactions]);
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
 
   // const getNativeAccountAsset = useCallback(() => {
   //   if (!accountAddress || !accountTokens) { return undefined; }
@@ -710,6 +762,7 @@ export const AccountsNewView = () => {
     const isMyWallet = isInspectedAccountTheConnectedWallet();
     const isAccountNative = isSelectedAssetNativeAccount(asset);
     let url = '';
+
     if (isMyWallet && isAccountNative) {
       url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/assets`;
     } else {
@@ -721,13 +774,23 @@ export const AccountsNewView = () => {
     }
     consoleOut('Asset selected, redirecting to:', url, 'orange');
     navigate(url);
-    // navigate(url, { replace: true });
   }, [accountAddress, getQueryAccountType, isInspectedAccountTheConnectedWallet, isSelectedAssetNativeAccount, navigate])
+
+  const navigateToStreaming = useCallback(() => {
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/summary`;
+
+    const param = getQueryAccountType();
+    if (param) {
+      url += `?account-type=${param}`;
+    }
+
+    navigate(url);
+  }, [accountAddress, getQueryAccountType, navigate]);
 
   const selectAsset = useCallback((
     asset: UserTokenAccount,
     clearTxList = true,
-    openDetailsPanel = false
+    openDetails = false
   ) => {
     setStatus(FetchStatus.Fetching);
     if (clearTxList) {
@@ -735,8 +798,8 @@ export const AccountsNewView = () => {
       setTransactions(undefined);
     }
     setSelectedAsset(asset);
-    if (openDetailsPanel) {
-      setDtailsPanelOpen(true);
+    if (openDetails) {
+      setDetailsPanelOpen(true);
     }
     setTimeout(() => {
       startSwitch();
@@ -745,8 +808,8 @@ export const AccountsNewView = () => {
     startSwitch,
     setTransactions,
     setSelectedAsset,
-    setDtailsPanelOpen,
-  ])
+    setDetailsPanelOpen,
+  ]);
 
   const shouldHideAsset = useCallback((asset: UserTokenAccount) => {
     const priceByAddress = getTokenPriceByAddress(asset.address);
@@ -765,171 +828,238 @@ export const AccountsNewView = () => {
   }, [accountTokens, navigateToAsset, selectAsset, selectedAsset, setHideLowBalances, shouldHideAsset]);
 
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
-    let event: any;
+    let event: any = undefined;
 
-    if (item && item.operationType === OperationType.Wrap) {
-      event = success ? AppUsageEvent.WrapSolCompleted : AppUsageEvent.WrapSolFailed;
-    } else if (item && item.operationType === OperationType.Unwrap) {
-      event = success ? AppUsageEvent.UnwrapSolCompleted : AppUsageEvent.UnwrapSolFailed;
+    // TODO: We must record to segment all success and all failures equally
+    if (item) {
+      switch (item.operationType) {
+        case OperationType.Wrap:
+            event = success ? AppUsageEvent.WrapSolCompleted : AppUsageEvent.WrapSolFailed;
+            break;
+        case OperationType.Unwrap:
+            event = success ? AppUsageEvent.UnwrapSolCompleted : AppUsageEvent.UnwrapSolFailed;
+            break;
+        case OperationType.Transfer:
+            event = success ? AppUsageEvent.TransferOTPCompleted : AppUsageEvent.TransferOTPFailed;
+            break;
+        case OperationType.CreateAsset:
+            event = success ? AppUsageEvent.CreateAssetCompleted : AppUsageEvent.CreateAssetFailed;
+            break;
+        case OperationType.CloseTokenAccount:
+            event = success ? AppUsageEvent.CloseTokenAccountCompleted : AppUsageEvent.CloseTokenAccountFailed;
+            break;
+        case OperationType.SetAssetAuthority:
+            event = success ? AppUsageEvent.SetAssetAutorityCompleted : AppUsageEvent.SetAssetAutorityFailed;
+            break;
+        case OperationType.DeleteAsset:
+            event = success ? AppUsageEvent.DeleteAssetCompleted : AppUsageEvent.DeleteAssetFailed;
+            break;
+        case OperationType.TransferTokens:
+            event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
+            break;
+        case OperationType.StreamAddFunds:
+            event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
+            break;
+        case OperationType.StreamPause:
+            event = success ? AppUsageEvent.StreamPauseCompleted : AppUsageEvent.StreamPauseFailed;
+            break;
+        case OperationType.StreamResume:
+            event = success ? AppUsageEvent.StreamResumeCompleted : AppUsageEvent.StreamResumeFailed;
+            break;
+        case OperationType.StreamCreate:
+            event = success ? AppUsageEvent.StreamCreateCompleted : AppUsageEvent.StreamCreateFailed;
+            break;
+        case OperationType.StreamClose:
+            event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
+            break;
+        case OperationType.StreamWithdraw:
+            event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
+            break;
+        case OperationType.StreamTransferBeneficiary:
+            event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
+            break;
+        case OperationType.TreasuryAddFunds:
+            event = success ? AppUsageEvent.AddFundsStreamingAccountCompleted : AppUsageEvent.AddFundsStreamingAccountFailed;
+            break;
+        case OperationType.TreasuryWithdraw:
+            event = success ? AppUsageEvent.WithdrawFundsStreamingAccountCompleted : AppUsageEvent.WithdrawFundsStreamingAccountFailed;
+            break;
+        case OperationType.TreasuryStreamCreate:
+            event = success ? AppUsageEvent.CreateStreamStreamingAccountCompleted : AppUsageEvent.CreateStreamStreamingAccountFailed;
+            break;
+        case OperationType.TreasuryCreate:
+            event = success ? AppUsageEvent.CreateStreamingAccountCompleted : AppUsageEvent.CreateStreamingAccountFailed;
+            break;
+        case OperationType.TreasuryClose:
+            event = success ? AppUsageEvent.CloseStreamingAccountCompleted : AppUsageEvent.CloseStreamingAccountFailed;
+            break;
+        case OperationType.TreasuryRefreshBalance:
+            event = success ? AppUsageEvent.RefreshAccountBalanceCompleted : AppUsageEvent.RefreshAccountBalanceFailed;
+            break;
+        default:
+            break;
+      }
+      if (event) {
+        segmentAnalytics.recordEvent(event, { signature: item.signature });
+      }
     }
-
-    segmentAnalytics.recordEvent(event, { signature: item.signature });
   }, []);
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
-    if (item) {
-      if (item.operationType === OperationType.Wrap) {
-        recordTxConfirmation(item, true);
-        setShouldLoadTokens(true);
-        reloadSwitch();
-      } else if (item.operationType === OperationType.Unwrap) {
-        setIsUnwrapping(false);
-        recordTxConfirmation(item, true);
-        setShouldLoadTokens(true);
-        reloadSwitch();
-      } else if (item.operationType === OperationType.Transfer && item.extras !== 'scheduled') {
-        recordTxConfirmation(item, true);
-        setShouldLoadTokens(true);
-        reloadSwitch();
-      } else if (item.operationType === OperationType.CreateAsset) {
-        recordTxConfirmation(item, true);
-        setShouldLoadTokens(true);
-        if (isSelectedAssetNativeAccount()) {
-          reloadSwitch();
-        }
-      } else if (item.operationType === OperationType.CloseTokenAccount) {
-        recordTxConfirmation(item, true);
-        setShouldLoadTokens(true);
-        reloadSwitch();
-      } else if (item.operationType === OperationType.TransferTokens) {
-        recordTxConfirmation(item, true);
-        const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
-        if (multisigAuthority) {
-          setHighLightableMultisigId(multisigAuthority);
-        }
-        navigate(`/multisig/${multisigAuthority}?v=proposals`);
-      }
+
+    const path = window.location.pathname;
+    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
+      return;
     }
-    resetTransactionStatus();
-  }, [isSelectedAssetNativeAccount, navigate, recordTxConfirmation, reloadSwitch, resetTransactionStatus, setHighLightableMultisigId, setShouldLoadTokens]);
+
+    const softReloadStreams = () => {
+      const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
+    const hardReloadStreams = () => {
+      const streamsRefreshCta = document.getElementById("streams-refresh-reset-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
+    const turnOffLockWorkflow = () => {
+      isWorkflowLocked = false;
+    }
+
+    const notifyMultisigActionFollowup = (item: TxConfirmationInfo) => {
+      if (!item || !item.extras || !item.extras.multisigAuthority) {
+        turnOffLockWorkflow();
+        return;
+      }
+
+      const myNotifyKey = `notify-${Date.now()}`;
+      openNotification({
+        type: "info",
+        key: myNotifyKey,
+        title: 'Review proposal',
+        duration: 20,
+        description: (
+          <>
+            <div className="mb-2">The proposal's status can be reviewed in the Multisig Safe's proposal list.</div>
+            <Button
+              type="primary"
+              shape="round"
+              size="small"
+              className="extra-small d-flex align-items-center pb-1"
+              onClick={() => {
+                const url = `/multisig/${item.extras.multisigAuthority}?v=proposals`;
+                setHighLightableMultisigId(item.extras.multisigAuthority);
+                navigate(url);
+                notification.close(myNotifyKey);
+              }}>
+              Review proposal
+            </Button>
+          </>
+        ),
+        handleClose: turnOffLockWorkflow
+      });
+    }
+
+    if (item) {
+      if (isWorkflowLocked) {
+        return;
+      }
+
+      // Lock the workflow
+      if (item.extras && item.extras.multisigAuthority) {
+        isWorkflowLocked = true;
+      }
+
+      switch (item.operationType) {
+        case OperationType.Wrap:
+        case OperationType.Unwrap:
+        case OperationType.Transfer:
+          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+          recordTxConfirmation(item, true);
+          setShouldLoadTokens(true);
+          reloadSwitch();
+          break;
+        case OperationType.CreateAsset:
+        case OperationType.CloseTokenAccount:
+          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+          recordTxConfirmation(item, true);
+          setShouldLoadTokens(true);
+          reloadSwitch();
+          break;
+        case OperationType.DeleteAsset:
+        case OperationType.SetAssetAuthority:
+        case OperationType.TransferTokens:
+          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+          recordTxConfirmation(item, true);
+          if (item.extras && item.extras.multisigAuthority) {
+            notifyMultisigActionFollowup(item);
+          }
+          setTimeout(() => {
+            setLoadingMultisigAccounts(true);
+          }, 20);
+          break;
+        case OperationType.StreamCreate:
+          softReloadStreams();
+          break;
+        case OperationType.StreamPause:
+        case OperationType.StreamResume:
+        case OperationType.StreamAddFunds:
+        case OperationType.TreasuryStreamCreate:
+        case OperationType.TreasuryRefreshBalance:
+        case OperationType.TreasuryAddFunds:
+        case OperationType.TreasuryCreate:
+        case OperationType.StreamWithdraw:
+          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+          recordTxConfirmation(item, true);
+          if (item.extras && item.extras.multisigAuthority) {
+            notifyMultisigActionFollowup(item);
+          }
+          setTimeout(() => {
+            setLoadingMultisigAccounts(true);
+            softReloadStreams();
+          }, 20);
+          break;
+        case OperationType.StreamClose:
+        case OperationType.TreasuryClose:
+        case OperationType.StreamTransferBeneficiary:
+          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+          recordTxConfirmation(item, true);
+          if (item.extras && item.extras.multisigAuthority) {
+            setLoadingMultisigAccounts(true);
+            notifyMultisigActionFollowup(item);
+          } else {
+            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
+            navigate(url);
+          }
+          setTimeout(() => {
+            hardReloadStreams();
+          }, 20);
+          break;
+        default:
+          break;
+      }
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, navigate, setHighLightableMultisigId]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
-    consoleOut("onTxTimedout event executed:", item, 'crimson');
     if (item) {
+      consoleOut('onTxTimedout event executed:', item, 'crimson');
+      recordTxConfirmation(item, false);
       if (item.operationType === OperationType.Unwrap) {
         setIsUnwrapping(false);
       } else if (item.operationType === OperationType.TransferTokens) {
         setIsBusy(false);
       }
     }
-    recordTxConfirmation(item, false);
     resetTransactionStatus();
   }, [recordTxConfirmation, resetTransactionStatus]);
-
-  const refreshStreamSummary = useCallback(async () => {
-
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) { return; }
-
-    const resume: StreamsSummary = {
-      totalNet: 0,
-      incomingAmount: 0,
-      outgoingAmount: 0,
-      totalAmount: 0
-    };
-
-    const treasurer = accountAddress
-      ? new PublicKey(accountAddress)
-      : publicKey;
-
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-
-    // consoleOut('=========== Block start ===========', '', 'orange');
-
-    for (const stream of updatedStreamsv1) {
-
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
-        ? true
-        : false;
-
-      if (isIncoming) {
-        resume['incomingAmount'] = resume['incomingAmount'] + 1;
-      } else {
-        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
-      }
-
-      // Get refreshed data
-      const freshStream = await ms.refreshStream(stream) as StreamInfo;
-      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
-
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = asset ? getTokenPriceByAddress(asset.address) : 0;
-      if (isIncoming) {
-        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
-      } else {
-        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
-      }
-    }
-
-    resume['totalAmount'] = updatedStreamsv1.length;
-
-    // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
-
-    for (const stream of updatedStreamsv2) {
-
-      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
-        ? true
-        : false;
-
-      if (isIncoming) {
-        resume['incomingAmount'] = resume['incomingAmount'] + 1;
-      } else {
-        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
-      }
-
-      // Get refreshed data
-      const freshStream = await msp.refreshStream(stream) as Stream;
-      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
-
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const pricePerToken = asset ? getTokenPriceByAddress(asset.address) : 0;
-      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
-      const decimals = asset ? asset.decimals : 9;
-      // const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
-      const amount = freshStream.withdrawableAmount;
-      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
-
-      if (isIncoming) {
-        resume['totalNet'] += amountChange;
-      } else {
-        resume['totalNet'] -= amountChange;
-      }
-    }
-
-    resume['totalAmount'] += updatedStreamsv2.length;
-
-    // consoleOut('totalNet:', resume['totalNet'], 'blue');
-    // consoleOut('=========== Block ends ===========', '', 'orange');
-
-    // Update state
-    setLastStreamsSummary(streamsSummary);
-    setStreamsSummary(resume);
-
-  }, [
-    ms,
-    msp,
-    publicKey,
-    streamListv1,
-    streamListv2,
-    streamsSummary,
-    accountAddress,
-    setLastStreamsSummary,
-    getTokenPriceByAddress,
-    getTokenByMintAddress,
-    setStreamsSummary,
-  ]);
 
   // Filter only useful Txs for the SOL account and return count
   const getSolAccountItems = useCallback((txs: MappedTransaction[]): number => {
@@ -982,14 +1112,6 @@ export const AccountsNewView = () => {
     if (!selectedAsset) { return false; }
     return !selectedAsset.publicAddress ? true : false;
   }, [selectedAsset]);
-
-  const getMultisigTreasuriesPath = useCallback(() => {
-    if (!accountAddress || !inspectedAccountType) {
-      return '';
-    }
-    const path = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?multisig=${accountAddress}`;
-    return path;
-  }, [accountAddress, inspectedAccountType]);
 
   /////////////////
   //  Init code  //
@@ -1067,6 +1189,7 @@ export const AccountsNewView = () => {
       });
   };
 
+  // Gets multisig pending Txs count
   useEffect(() => {
 
     if (!publicKey ||
@@ -1280,7 +1403,7 @@ export const AccountsNewView = () => {
     const createTx = async (): Promise<boolean> => {
 
       if (publicKey && data) {
-        consoleOut("Start transaction for create asset", '', 'blue');
+        consoleOut('Start transaction for create asset', '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
         setTransactionStatus({
@@ -1636,7 +1759,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Propose funds transfer",
+        data.title === "" ? "Propose funds transfer" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         (fromMintAddress.equals(NATIVE_SOL_MINT) ? OperationType.Transfer : OperationType.TransferTokens),
@@ -1661,12 +1784,13 @@ export const AccountsNewView = () => {
 
         // Create a transaction
         const payload = {
+          title: data.title,
           from: data.from,
           to: data.to,
           amount: data.amount
         };
         
-        consoleOut('selectedAsset:', selectedAsset, 'blue');
+        consoleOut('token:', selectedAsset, 'blue');
         consoleOut('data:', payload);
 
         // Log input data
@@ -1871,7 +1995,10 @@ export const AccountsNewView = () => {
                 loadingTitle: 'Confirming transaction',
                 loadingMessage: `Transferring ${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol} to ${shortenAddress(data.to)}`,
                 completedTitle: 'Transaction confirmed',
-                completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol}) successfully transferred to ${shortenAddress(data.to)}`
+                completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol}) successfully transferred to ${shortenAddress(data.to)}`,
+                extras: {
+                  multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+                }
               });
               setTransactionStatus({
                 lastOperation: transactionStatus.currentOperation,
@@ -1884,8 +2011,9 @@ export const AccountsNewView = () => {
                 description: t('notifications.error-sending-transaction'),
                 type: "error"
               });
-              setIsBusy(false);
             }
+            resetTransactionStatus();
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1927,14 +2055,7 @@ export const AccountsNewView = () => {
     onExecuteTransferOwnershipTx (selectedAuthority);
   };
 
-  const onVaultAuthorityTransfered = useCallback(() => {
-    // refreshVaults();
-    resetTransactionStatus();
-  },[
-    resetTransactionStatus
-  ]);
-
-  const onExecuteTransferOwnershipTx  = useCallback(async (selectedAuthority: string) => {
+  const onExecuteTransferOwnershipTx  = useCallback(async (data: any) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1947,7 +2068,7 @@ export const AccountsNewView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createTransferOwnershipTx = async (selectedAuthority: string) => {
+    const createTransferOwnershipTx = async (data: any) => {
 
       if (!publicKey || !selectedAsset || !selectedMultisig || !multisigClient) { 
         return null;
@@ -1956,7 +2077,7 @@ export const AccountsNewView = () => {
       const setAuthIx = Token.createSetAuthorityInstruction(
         TOKEN_PROGRAM_ID,
         new PublicKey(selectedAsset.publicAddress as string),
-        new PublicKey(selectedAuthority),
+        new PublicKey(data.selectedAuthority),
         'AccountOwner',
         selectedMultisig.authority,
         []
@@ -1966,7 +2087,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Change asset ownership",
+        data.title === "" ? "Change asset ownership" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.SetAssetAuthority,
@@ -1981,7 +2102,7 @@ export const AccountsNewView = () => {
 
     const createTx = async (): Promise<boolean> => {
 
-      if (!publicKey || !selectedAuthority) {
+      if (!publicKey || !data) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -1997,7 +2118,8 @@ export const AccountsNewView = () => {
 
       // Create transaction payload for debugging
       const payload = {
-        selectedAuthority: selectedAuthority,
+        title: data.title as string,
+        selectedAuthority: data.selectedAuthority,
       };
 
       consoleOut('data:', payload);
@@ -2038,7 +2160,7 @@ export const AccountsNewView = () => {
         return false;
       }
 
-      const result =  await createTransferOwnershipTx(selectedAuthority)
+      const result =  await createTransferOwnershipTx(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('createTransferVaultAuthorityTx returned transaction:', value);
@@ -2177,7 +2299,7 @@ export const AccountsNewView = () => {
       }
     }
 
-    if (wallet) {
+    if (wallet && selectedAsset) {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -2188,36 +2310,56 @@ export const AccountsNewView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetAssetAuthority);
+            if (sent) {
+              enqueueTransactionConfirmation({
+                signature: signature,
+                operationType: OperationType.SetAssetAuthority,
+                finality: "confirmed",
+                txInfoFetchStatus: "fetching",
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: "Transferring ownership",
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Asset ${selectedAsset.name} successfully transferred to ${shortenAddress(data.selectedAuthority)}`,
+                extras: {
+                  multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+                }
+              });
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished
+              });
+              setIsTransferVaultAuthorityModalVisible(false);
+            } else {
+              openNotification({
+                title: t('notifications.error-title'),
+                description: t('notifications.error-sending-transaction'),
+                type: "error"
+              });
+            }
+            resetTransactionStatus();
             setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            onVaultAuthorityTransfered();
-            setIsTransferVaultAuthorityModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
   }, [
+    wallet,
+    publicKey,
+    connection,
+    selectedAsset,
+    nativeBalance,
+    multisigClient,
+    selectedMultisig,
+    transactionCancelled,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
     clearTxConfirmationContext,
-    resetTransactionStatus, 
-    wallet, 
-    publicKey, 
-    selectedAsset, 
-    selectedMultisig, 
-    multisigClient, 
-    connection, 
-    setTransactionStatus, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    nativeBalance, 
-    transactionStatus.currentOperation, 
-    transactionCancelled, 
-    startFetchTxSignatureInfo, 
-    onVaultAuthorityTransfered
+    resetTransactionStatus,
+    setTransactionStatus,
+    t
   ]);
 
   // Delete asset modal
@@ -2256,40 +2398,36 @@ export const AccountsNewView = () => {
     setIsDeleteVaultModalVisible(true);
   }, []);
 
-  const onAcceptDeleteVault = () => {
-
-    onExecuteCloseAssetTx();
+  const onAcceptDeleteVault = (data: any) => {
+    consoleOut('deleteVault data:', data, 'blue');
+    onExecuteCloseAssetTx(data);
   };
 
-  const onVaultDeleted = useCallback(() => {
-    setIsDeleteVaultModalVisible(false);
-    resetTransactionStatus();
-  },[resetTransactionStatus]);
-
-  const onExecuteCloseAssetTx = useCallback(async () => {
+  const onExecuteCloseAssetTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const closeAssetTx = async (inputAsset: UserTokenAccount) => {
+    const closeAssetTx = async (inputAsset: UserTokenAccount, data: any) => {
 
       if (!publicKey || !inputAsset || !selectedMultisig || !multisigClient || !inputAsset.publicAddress) { 
         console.error("I do not have anything, review");
-        
         return null;
       }
 
       if (!inputAsset.owner || !selectedMultisig.authority.equals(new PublicKey(inputAsset.owner))) {
         throw Error("Invalid asset owner");
       }
+
+      multisigAuth = selectedMultisig.authority.toBase58();
 
       const closeIx = Token.createCloseAccountInstruction(
         TOKEN_PROGRAM_ID,
@@ -2303,7 +2441,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Close asset",
+        data.title === "" ? "Close asset" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.DeleteAsset,
@@ -2334,6 +2472,7 @@ export const AccountsNewView = () => {
 
       // Create transaction payload for debugging
       const payload = {
+        title: data.title,
         asset: selectedAsset,
       };
 
@@ -2374,7 +2513,7 @@ export const AccountsNewView = () => {
         return false;
       }
 
-      const result =  await closeAssetTx(selectedAsset)
+      const result =  await closeAssetTx(selectedAsset, data)
         .then((value: any) => {
           if (!value) { return false; }
           consoleOut('deleteVaultTx returned transaction:', value);
@@ -2513,7 +2652,7 @@ export const AccountsNewView = () => {
       }
     }
 
-    if (wallet) {
+    if (wallet && data) {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -2524,13 +2663,34 @@ export const AccountsNewView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DeleteAsset);
+            if (sent) {
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished
+              });
+              enqueueTransactionConfirmation({
+                signature: signature,
+                operationType: OperationType.DeleteAsset,
+                finality: "confirmed",
+                txInfoFetchStatus: "fetching",
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: "Deleting asset",
+                completedTitle: 'Transaction confirmed',
+                completedMessage: 'Asset successfully deleted',
+                extras: {
+                  multisigAuthority: multisigAuth
+                }
+              });
+              setIsDeleteVaultModalVisible(false);
+            } else {
+              openNotification({
+                title: t('notifications.error-title'),
+                description: t('notifications.error-sending-transaction'),
+                type: "error"
+              });
+            }
+            resetTransactionStatus();
             setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            onVaultDeleted();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2540,24 +2700,409 @@ export const AccountsNewView = () => {
     wallet,
     publicKey,
     connection,
-    selectedAsset,
     nativeBalance,
+    selectedAsset,
+    multisigClient,
     selectedMultisig,
     transactionCancelled,
-    multisigClient,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
-    clearTxConfirmationContext,
-    startFetchTxSignatureInfo,
+    enqueueTransactionConfirmation,
     resetTransactionStatus,
     setTransactionStatus,
-    onVaultDeleted
+    t
   ]);
+
+  const getAllUserV2Treasuries = useCallback(async () => {
+
+    if (!accountAddress || loadingTreasuries || !msp) { return []; }
+
+    const pk = new PublicKey(accountAddress);
+
+    consoleOut('Fetching treasuries for address:', accountAddress, 'orange');
+    const treasuries = await msp.listTreasuries(pk, true, false, Category.default);
+    consoleOut('getAllUserV2Treasuries ->', treasuries, 'orange');
+
+    return treasuries;
+
+  }, [
+    msp,
+    loadingTreasuries,
+    accountAddress
+  ]);
+
+  const refreshTreasuries = useCallback((reset = false) => {
+
+    if (!publicKey || loadingTreasuries) { return; }
+
+    if (msp && ms) {
+
+      setTimeout(() => {
+        setLoadingTreasuries(true);
+      });
+
+      const treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
+      let treasuriesv1: TreasuryInfo[] = [];
+      getAllUserV2Treasuries()
+        .then(async (treasuriesv2) => {
+          treasuryAccumulator.push(...treasuriesv2);
+          const param = getQueryAccountType();
+          if (!param || param !== "multisig") {
+            try {
+              treasuriesv1 = await ms.listTreasuries(publicKey);
+            } catch (error) {
+              console.error(error);
+            }
+            treasuryAccumulator.push(...treasuriesv1);
+          }
+
+          const autoclosables = treasuryAccumulator.filter(t => t.autoClose);
+
+          setAutocloseTreasuries(autoclosables);
+
+          const streamingAccounts = treasuryAccumulator.filter(t => !t.autoClose);
+      
+          setTreasuryList(streamingAccounts);
+          consoleOut('treasuryList:', streamingAccounts, 'blue');
+        })
+        .catch(error => {
+          console.error(error);
+        })
+        .finally(() => setLoadingTreasuries(false));
+    }
+
+  }, [
+    ms,
+    msp,
+    publicKey,
+    loadingTreasuries,
+    getAllUserV2Treasuries,
+    getQueryAccountType,
+  ]);
+
+  const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
+    if (tsry) {
+        const decimals = assToken ? assToken.decimals : 9;
+        const unallocated = tsry.balance - tsry.allocationAssigned;
+        const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
+        const ub = isNewTreasury
+            ? makeDecimal(new BN(unallocated), decimals)
+            : unallocated;
+        return ub;
+    }
+    return 0;
+  }, []);
+
+  const refreshTreasuriesSummary = useCallback(async () => {
+
+    if (!treasuryList) { return; }
+
+    const resume: UserTreasuriesSummary = {
+        totalAmount: 0,
+        openAmount: 0,
+        lockedAmount: 0,
+        totalNet: 0
+    };
+
+    for (const treasury of treasuryList) {
+
+        const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2
+            ? true
+            : false;
+
+        const treasuryType = isNew
+            ? (treasury as Treasury).treasuryType
+            : (treasury as TreasuryInfo).type as TreasuryType;
+
+        const associatedToken = isNew
+            ? (treasury as Treasury).associatedToken as string
+            : (treasury as TreasuryInfo).associatedTokenAddress as string;
+
+        if (treasuryType === TreasuryType.Open) {
+            resume['openAmount'] += 1;
+        } else {
+            resume['lockedAmount'] += 1;
+        }
+
+        let amountChange = 0;
+
+        const token = getTokenByMintAddress(associatedToken as string);
+
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const amount = getTreasuryUnallocatedBalance(treasury, token);
+          amountChange = amount * tokenPrice;
+        }
+
+        resume['totalNet'] += amountChange;
+    }
+
+    resume['totalAmount'] += treasuryList.length;
+
+    // Update state
+    consoleOut('streamingAccountsSummary:', resume, 'teal');
+    setStreamingAccountsSummary(resume);
+
+  }, [
+    treasuryList,
+    getTreasuryUnallocatedBalance,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    getTokenByMintAddress,
+  ]);
+
+  const refreshIncomingStreamSummary = useCallback(async () => {
+
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) {
+      return;
+    }
+
+    const resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0
+    };
+
+    const treasurer = accountAddress
+      ? new PublicKey(accountAddress)
+      : publicKey;
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+
+    for (const stream of updatedStreamsv1) {
+
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
+        ? true
+        : false;
+
+      // Get refreshed data
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+        if (isIncoming) {
+          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * tokenPrice);
+        }
+      }
+    }
+
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    for (const stream of updatedStreamsv2) {
+
+      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+        ? true
+        : false;
+
+      // Get refreshed data
+      const freshStream = await msp.refreshStream(stream) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const decimals = token.decimals || 6;
+        const amount = freshStream.withdrawableAmount;
+        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+
+        if (isIncoming) {
+          resume['totalNet'] += amountChange;
+        }
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+
+    // Update state
+    setIncomingStreamsSummary(resume);
+
+  }, [
+    ms,
+    msp,
+    publicKey,
+    streamListv1,
+    streamListv2,
+    accountAddress,
+    getTokenPriceByAddress,
+    getTokenByMintAddress,
+    getTokenPriceBySymbol,
+  ]);
+
+  const refreshOutgoingStreamSummary = useCallback(async () => {
+
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) {
+      return;
+    }
+
+    const resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0
+    };
+
+    const treasurer = accountAddress
+      ? new PublicKey(accountAddress)
+      : publicKey;
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+
+    for (const stream of updatedStreamsv1) {
+
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
+        ? true
+        : false;
+
+      // Get refreshed data
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+        if (!isIncoming) {
+          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * tokenPrice);
+        }
+      }
+    }
+
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    for (const stream of updatedStreamsv2) {
+
+      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+        ? true
+        : false;
+
+      // Get refreshed data
+      const freshStream = await msp.refreshStream(stream) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const decimals = token.decimals || 6;
+        const amount = freshStream.fundsLeftInStream;
+        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+
+        if (!isIncoming) {
+          resume['totalNet'] += amountChange;
+        }
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+
+    // Update state
+    setOutgoingStreamsSummary(resume);
+  }, [
+    ms,
+    msp,
+    publicKey,
+    streamListv1,
+    streamListv2,
+    accountAddress,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    getTokenByMintAddress,
+  ]);
+
+  const clearStateData = useCallback(() => {
+    clearStreams();
+    setPathParamAsset('');
+    setPathParamStreamId('');
+    setPathParamTreasuryId('');
+    setPathParamStreamingTab('');
+    setAccountTokens([]);
+    setTreasuryList([]);
+    setAutocloseTreasuries([]);
+    setIncomingStreamList([]);
+    setOutgoingStreamList([]);
+    setStreamingAccountCombinedList([]);
+    setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
+    setIncomingAmount(0);
+    setOutgoingAmount(0);
+    setTotalStreamsAmount(0);
+    setTotalAccountBalance(0);
+    setIncomingStreamsSummary(initialSummary);
+    setOutgoingStreamsSummary(initialSummary);
+    setTotalTokenAccountsValue(0);
+    setStreamsSummary(initialSummary);
+    setCanShowStreamingAccountBalance(false);
+  }, [clearStreams, setStreamsSummary]);
 
   /////////////////////
   // Data management //
   /////////////////////
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
+
+  // Load treasuries when account address changes
+  useEffect(() => {
+    if (publicKey && accountAddress && address && !treasuriesLoaded && accountAddress === address) {
+
+      setTreasuriesLoaded(true);
+
+      if (!previousRoute.startsWith('/accounts')) {
+        clearStateData();
+      }
+      consoleOut('Loading treasuries...', 'accountAddress changed!', 'purple');
+      refreshTreasuries(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountAddress, address, previousRoute, publicKey, treasuriesLoaded]);
+
+  // Treasury list refresh timeout
+  useEffect(() => {
+    let timer: any;
+
+    if (publicKey && treasuriesLoaded && !customStreamDocked) {
+      timer = setInterval(() => {
+        consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        refreshTreasuries(false);
+      }, ONE_MINUTE_REFRESH_TIMEOUT);
+    }
+
+    return () => clearInterval(timer);
+  }, [
+    publicKey,
+    accountAddress,
+    treasuriesLoaded,
+    loadingTreasuries,
+    customStreamDocked,
+    refreshTreasuries
+  ]);
 
   // Detect XS screen
   useEffect(() => {
@@ -2568,28 +3113,8 @@ export const AccountsNewView = () => {
     }
   }, [width]);
 
-  /**
-   * - No CTAs if it is a custom token or we don't know the asset's token
-   * - No Buy if the asset is wSOL
-   * 
-   * isBuyCtaAvailable()      -> For the selected asset.
-   * isExchangeCtaAvailable() -> For the selected asset.
-   * isInvestCtaAvailable()   -> For the selected asset.
-   * isReceiveCtaAvailable()  -> For the selected asset.
-   * 
-   * 1. If the token is a custom token:
-   * - Only available actions Close and Refresh inside ellipsis
-   * 2. If wSOL token
-   * - Actions available: Send, Receive and Unwrap
-   * 3. If the token has no Activities
-   * - Actions available: Receive, Exchange, Buy
-   * 3. If the user has token balance:
-   * - Send and Buy are both enable
-   * 4. If the user has No token balance, but has token activity:
-   * Buy is always available unless is a custom token or wSOL
-   */
-
-   useEffect(() => {
+  // Build CTAs
+  useEffect(() => {
     if (!selectedAsset) { return; }
 
     const numMaxCtas = isXsDevice ? 2 : 5;
@@ -2599,12 +3124,12 @@ export const AccountsNewView = () => {
 
     // Send
     actions.push({
-      action: AccountAssetAction.Send,
+      action: MetaInfoCtaAction.Send,
       isVisible: isCustomAsset ? false : true,
       caption: 'Send',
       disabled: !isInspectedAccountTheConnectedWallet(),
       uiComponentType: 'button',
-      uiComponentId: `button-${AccountAssetAction.Send}`,
+      uiComponentId: `button-${MetaInfoCtaAction.Send}`,
       tooltip: '',
       callBack: onSendAsset
     });
@@ -2613,12 +3138,12 @@ export const AccountsNewView = () => {
     // UnwrapSol
     if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && wSolBalance > 0) {
       actions.push({
-        action: AccountAssetAction.UnwrapSol,
+        action: MetaInfoCtaAction.UnwrapSol,
         caption: 'Unwrap',
         isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol(),
         uiComponentType: 'button',
         disabled: false,
-        uiComponentId: `button-${AccountAssetAction.UnwrapSol}`,
+        uiComponentId: `button-${MetaInfoCtaAction.UnwrapSol}`,
         tooltip: '',
         callBack: showUnwrapSolModal
       });
@@ -2627,12 +3152,12 @@ export const AccountsNewView = () => {
 
     // Buy
     actions.push({
-      action: AccountAssetAction.Buy,
+      action: MetaInfoCtaAction.Buy,
       caption: 'Buy',
       isVisible: !isSelectedAssetWsol(),
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Buy}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy}`,
       tooltip: '',
       callBack: showDepositOptionsModal
     });
@@ -2640,12 +3165,12 @@ export const AccountsNewView = () => {
 
     // Deposit
     actions.push({
-      action: AccountAssetAction.Deposit,
+      action: MetaInfoCtaAction.Deposit,
       caption: 'Deposit',
       isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Deposit}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Deposit}`,
       tooltip: '',
       callBack: showReceiveSplOrSolModal
     });
@@ -2653,12 +3178,12 @@ export const AccountsNewView = () => {
 
     // Exchange
     actions.push({
-      action: AccountAssetAction.Exchange,
+      action: MetaInfoCtaAction.Exchange,
       caption: 'Exchange',
       isVisible: isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol(),
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Exchange}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange}`,
       tooltip: '',
       callBack: onExchangeAsset
     });
@@ -2666,12 +3191,12 @@ export const AccountsNewView = () => {
 
     // Invest
     actions.push({
-      action: AccountAssetAction.Invest,
+      action: MetaInfoCtaAction.Invest,
       caption: 'Invest',
       isVisible: investButtonEnabled() && !isSelectedAssetWsol(),
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Invest}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest}`,
       tooltip: '',
       callBack: handleGoToInvestClick
     });
@@ -2680,12 +3205,12 @@ export const AccountsNewView = () => {
     // Wrap
     if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() && isWhitelisted) {
       actions.push({
-        action: AccountAssetAction.WrapSol,
+        action: MetaInfoCtaAction.WrapSol,
         caption: 'Wrap',
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.WrapSol}`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.WrapSol}`,
         tooltip: '',
         callBack: showWrapSolModal
       });
@@ -2694,12 +3219,12 @@ export const AccountsNewView = () => {
 
     // Refresh asset
     actions.push({
-      action: AccountAssetAction.Refresh,
+      action: MetaInfoCtaAction.Refresh,
       caption: 'Refresh asset',
       isVisible: true,
       uiComponentType: 'menuitem',
       disabled: false,
-      uiComponentId: `menuitem-${AccountAssetAction.Refresh}`,
+      uiComponentId: `menuitem-${MetaInfoCtaAction.Refresh}`,
       tooltip: '',
       callBack: reloadSwitch
     });
@@ -2707,12 +3232,12 @@ export const AccountsNewView = () => {
     // Merge token accounts
     if (isInspectedAccountTheConnectedWallet() && canActivateMergeTokenAccounts()) {
       actions.push({
-        action: AccountAssetAction.MergeAccounts,
+        action: MetaInfoCtaAction.MergeAccounts,
         caption: t('assets.merge-accounts-cta'),
         isVisible: true,
         uiComponentType: 'menuitem',
         disabled: false,
-        uiComponentId: `menuitem-${AccountAssetAction.MergeAccounts}`,
+        uiComponentId: `menuitem-${MetaInfoCtaAction.MergeAccounts}`,
         tooltip: '',
         callBack: activateTokenMerge
       });
@@ -2721,12 +3246,12 @@ export const AccountsNewView = () => {
     // Close asset
     // if (inspectedAccountType && inspectedAccountType === "multisig") {
     //   actions.push({
-    //     action: AccountAssetAction.Close,
+    //     action: MetaInfoCtaAction.Close,
     //     caption: 'Close asset',
     //     isVisible: true,
     //     uiComponentType: 'menuitem',
     //     disabled: isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid(),
-    //     uiComponentId: `menuitem-${AccountAssetAction.Close}`,
+    //     uiComponentId: `menuitem-${MetaInfoCtaAction.Close}`,
     //     tooltip: '',
     //     callBack: showDeleteVaultModal
     //   });
@@ -2734,17 +3259,16 @@ export const AccountsNewView = () => {
 
     // Close account
     actions.push({
-      action: (inspectedAccountType && inspectedAccountType === "multisig") ? AccountAssetAction.Close : AccountAssetAction.CloseAccount,
+      action: (inspectedAccountType && inspectedAccountType === "multisig") ? MetaInfoCtaAction.Close : MetaInfoCtaAction.CloseAccount,
       caption: 'Close account',
       isVisible: true,
       uiComponentType: 'menuitem',
       disabled: ((inspectedAccountType === "multisig") && (isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid())),
-      uiComponentId: (inspectedAccountType && inspectedAccountType === "multisig") ? `menuitem-${AccountAssetAction.Close}` : `menuitem-${AccountAssetAction.CloseAccount}`,
+      uiComponentId: (inspectedAccountType && inspectedAccountType === "multisig") ? `menuitem-${MetaInfoCtaAction.Close}` : `menuitem-${MetaInfoCtaAction.CloseAccount}`,
       tooltip: '',
       callBack: (inspectedAccountType && inspectedAccountType === "multisig") ? showDeleteVaultModal : showCloseAssetModal
     });
 
-    consoleOut('Asset actions:', actions, 'crimson');
     setAssetCtas(actions);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2758,9 +3282,9 @@ export const AccountsNewView = () => {
     investButtonEnabled,
   ]);  
 
-  // Enable deep-linking - Parse and save query params as needed
+  // Enable deep-linking when isPageLoaded - Parse and save query params as needed
   useEffect(() => {
-    if (!isFirstLoad || !publicKey) { return; }
+    if (!isPageLoaded || !publicKey) { return; }
 
     if (address) {
       consoleOut('Route param address:', address, 'crimson');
@@ -2773,17 +3297,45 @@ export const AccountsNewView = () => {
 
     if (asset) {
       consoleOut('Route param asset:', asset, 'crimson');
-      setUrlQueryAsset(asset);
+      setPathParamAsset(asset);
+    }
+
+    if (streamingTab) {
+      consoleOut('Route param streamingTab:', streamingTab, 'crimson');
+      setPathParamStreamingTab(streamingTab);
+    }
+
+    if (streamId) {
+      consoleOut('Route param streamId:', streamId, 'crimson');
+      setPathParamStreamId(streamId);
+    }
+
+    if (treasuryId) {
+      consoleOut('Route param treasuryId:', treasuryId, 'crimson');
+      setPathParamTreasuryId(treasuryId);
+    } else {
+      setPathParamTreasuryId("");
     }
 
     // The category is inferred from the route path
     if (location.pathname.indexOf('/assets') !== -1) {
+      consoleOut('Setting category:', 'assets', 'crimson');
       setSelectedCategory("assets");
       if (!asset) {
-        setUrlQueryAsset('');
+        setPathParamAsset('');
       }
-    } else if (location.pathname.indexOf('/msigs') !== -1) {
-      setSelectedCategory("msigs");
+      if (autoOpenDetailsPanel) {
+        setDetailsPanelOpen(true);
+      }
+    } else if (location.pathname.indexOf('/streaming') !== -1) {
+      consoleOut('Setting category:', 'streaming', 'crimson');
+      setSelectedCategory("streaming");
+      if (!streamId) {
+        setPathParamStreamId('');
+      }
+      if (autoOpenDetailsPanel) {
+        setDetailsPanelOpen(true);
+      }
     } else {
       setSelectedCategory("other-assets");
     }
@@ -2801,22 +3353,28 @@ export const AccountsNewView = () => {
       case "multisig":
         setInspectedAccountType("multisig");
         break;
-      case "streaming-account":
-        setInspectedAccountType("streaming-account");
+      case "wallet":
+        setInspectedAccountType("wallet");
         break;
       default:
-        setInspectedAccountType(undefined);
+        setInspectedAccountType("wallet");
         break;
     }
 
   }, [
     asset,
     address,
+    streamId,
     publicKey,
-    isFirstLoad,
+    treasuryId,
+    isPageLoaded,
+    streamingTab,
     searchParams,
     accountAddress,
+    detailsPanelOpen,
     location.pathname,
+    autoOpenDetailsPanel,
+    setDetailsPanelOpen,
     setAccountAddress,
   ]);
 
@@ -2832,11 +3390,11 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountAddress, address, publicKey]);
 
-  // Ensure lokens Load on entering /accounts
+  // Ensure tokens Load on entering /accounts
   useEffect(() => {
-    if (!isFirstLoad || !publicKey || !accountAddress) { return; }
+    if (!isPageLoaded || !publicKey || !accountAddress) { return; }
 
-    setIsFirstLoad(false);
+    setIsPageLoaded(false);
     setTransactions([]);
 
     setTimeout(() => {
@@ -2846,7 +3404,7 @@ export const AccountsNewView = () => {
     }, 1000);
   }, [
     publicKey,
-    isFirstLoad,
+    isPageLoaded,
     accountAddress,
     shouldLoadTokens,
     setShouldLoadTokens,
@@ -2866,7 +3424,8 @@ export const AccountsNewView = () => {
         !splTokenList ||
         splTokenList.length === 0 ||
         !coinPrices ||
-        isFirstLoad
+        (selectedCategory !== "assets" && accountTokens && accountTokens.length > 0) ||
+        isPageLoaded
     ) {
       return;
     }
@@ -3057,51 +3616,24 @@ export const AccountsNewView = () => {
                 const finalList = intersectedList.concat(custom);
 
                 // Report in the console for debugging
-                const tokenTable: any[] = [];
-                finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
-                    pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
-                    mintAddress: shortenAddress(item.address),
-                    symbol: item.symbol,
-                    decimals: item.decimals,
-                    balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
-                    price: getTokenPriceBySymbol(item.symbol),
-                    valueInUSD: toUsCurrency(item.valueInUsd) || "$0.00"
-                  })
-                );
-                console.table(tokenTable);
+                // if (isLocal()) {
+                //   const tokenTable: any[] = [];
+                //   finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
+                //       pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
+                //       mintAddress: shortenAddress(item.address),
+                //       symbol: item.symbol,
+                //       decimals: item.decimals,
+                //       balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
+                //       price: getTokenPriceBySymbol(item.symbol),
+                //       valueInUSD: toUsCurrency(item.valueInUsd) || "$0.00"
+                //     })
+                //   );
+                //   console.table(tokenTable);
+                // }
 
                 // Update the state
                 setAccountTokens(finalList);
                 setTokensLoaded(true);
-
-                // Preset the passed-in token via query params either
-                // as token account address or mint address or token symbol
-                if (urlQueryAsset) {
-                  let inferredAsset: UserTokenAccount | undefined = undefined;
-                  if (isValidAddress(urlQueryAsset)) {
-                    inferredAsset = finalList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
-                  } else {
-                    inferredAsset = finalList.find(t => t.symbol === urlQueryAsset);
-                  }
-                  if (inferredAsset) {
-                    selectAsset(inferredAsset);
-                  }
-                } else if (selectedAsset) {
-                  consoleOut('No urlQueryAsset but selectedAsset', 'beware!!!', 'pink');
-                  consoleOut('selectedAsset:', selectedAsset, 'orange');
-                  // If no asset from route param but there is already one selected, keep selection
-                  const item = finalList.find(m => m.publicAddress === selectedAsset.publicAddress);
-                  if (item) {
-                    selectAsset(item, true);
-                  } else {
-                    selectAsset(finalList[0]);
-                  }
-                } else {
-                  consoleOut('Neither urlQueryAsset nor selectedAsset', 'beware!!!', 'red');
-                  selectAsset(finalList[0]);
-                }
-
-                consoleOut('category', selectedCategory, 'blue');
 
               } else {
                 pinnedTokens.forEach((item, index) => {
@@ -3135,11 +3667,12 @@ export const AccountsNewView = () => {
     connection,
     coinPrices,
     userTokens,
-    isFirstLoad,
+    isPageLoaded,
     pinnedTokens,
     splTokenList,
-    urlQueryAsset,
+    pathParamAsset,
     selectedAsset,
+    accountTokens,
     accountAddress,
     shouldLoadTokens,
     selectedCategory,
@@ -3155,9 +3688,10 @@ export const AccountsNewView = () => {
   // Load the transactions when signaled
   useEffect(() => {
 
-    if (!publicKey) { return; }
+    if (!connection || !publicKey || !selectedAsset || !tokensLoaded || !shouldLoadTransactions || selectedCategory !== "assets") { return; }
 
-    if (shouldLoadTransactions && tokensLoaded && connection && accountAddress && selectedAsset && !loadingTransactions) {
+    if (!loadingTransactions && accountAddress) {
+
       setShouldLoadTransactions(false);
       setLoadingTransactions(true);
 
@@ -3223,6 +3757,7 @@ export const AccountsNewView = () => {
     accountAddress,
     lastTxSignature,
     solAccountItems,
+    selectedCategory,
     loadingTransactions,
     shouldLoadTransactions,
     getSolAccountItems,
@@ -3248,10 +3783,6 @@ export const AccountsNewView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Preset account address...', publicKey.toBase58(), 'green');
-        setTimeout(() => {
-          setLastStreamsSummary(initialSummary);
-          setStreamsSummary(initialSummary);
-        });
         setAddAccountPanelOpen(false);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
@@ -3260,10 +3791,6 @@ export const AccountsNewView = () => {
         confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
         consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
         setCanSubscribe(true);
-        setTimeout(() => {
-          setLastStreamsSummary(initialSummary);
-          setStreamsSummary(initialSummary);
-        });
         if (streamDetail) {
           setStreamDetail(undefined);
         }
@@ -3277,38 +3804,237 @@ export const AccountsNewView = () => {
     streamDetail,
     previousWalletConnectState,
     setAddAccountPanelOpen,
-    setLastStreamsSummary,
     setStreamsSummary,
     setStreamDetail,
     onTxConfirmed,
     onTxTimedout,
   ]);
 
+  // Preset token based on url param asset
+  useEffect(() => {
+    if (asset && accountTokens && accountTokens.length > 0) {
+      if (!selectedAsset || (selectedAsset && selectedAsset.publicAddress !== asset)) {
+        consoleOut('Presetting token based on url...', '', 'crimson');
+        const inferredAsset = accountTokens.find(t => t.publicAddress === asset);
+        if (inferredAsset) {
+          selectAsset(inferredAsset);
+        }
+      }
+    } else if (!asset && accountTokens && accountTokens.length > 0) {
+      if (!selectedAsset) {
+        consoleOut('Presetting first token in the list...', '', 'crimson');
+        selectAsset(accountTokens[0]);
+      } else {
+        const inferredAsset = accountTokens.find(t => t.publicAddress === accountAddress);
+        if (inferredAsset) {
+          selectAsset(inferredAsset);
+        }
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountAddress, accountTokens, asset]);
+
+  // Preset the selected streaming account from the list if provided in path param (treasuryId)
+  useEffect(() => {
+    if (!publicKey || !treasuryList || treasuryList.length === 0) {
+      setTreasuryDetail(undefined);
+    }
+
+    if (pathParamTreasuryId && treasuryId && pathParamTreasuryId === treasuryId) {
+      const item = treasuryList.find(s => s.id as string === pathParamTreasuryId);
+      consoleOut('treasuryDetail:', item, 'darkgreen');
+      if (item) {
+        setTreasuryDetail(item);
+      }
+    }
+  }, [pathParamTreasuryId, publicKey, treasuryDetail, treasuryId, treasuryList]);
+
+  // Preset the selected stream from the list if provided in path param (streamId)
+  useEffect(() => {
+    if (publicKey && streamList && streamList.length > 0 && pathParamStreamId && (!streamDetail || streamDetail.id !== pathParamStreamId)) {
+      const item = streamList.find(s => s.id as string === pathParamStreamId);
+      consoleOut('streamList:', streamList, 'darkgreen');
+      consoleOut('item:', item, 'darkgreen');
+      if (item) {
+        setStreamDetail(item);
+        setActiveStream(item);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathParamStreamId, publicKey, streamDetail, streamList]);
+
+  // Create a combined list of streaming accounts with its 
+  useEffect(() => {
+    if (!treasuryList || !streamList || !treasuriesLoaded) { return; }
+
+    const getFinalList = async (list: (Treasury | TreasuryInfo)[]) => {
+      const finalList: CombinedStreamingAccounts[] = [];
+
+      if (list.length === 0) {
+        return finalList;
+      }
+
+      for (const item of list) {
+        const treasuryPk = new PublicKey(item.id as string);
+        const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2
+          ? true
+          : false;
+
+        const itemList = await getStreamingAccountStreams(treasuryPk, isNewTreasury);
+        if (itemList) {
+          const listItem: CombinedStreamingAccounts = {
+            streams: itemList,
+            treasury: item as any
+          };
+          finalList.push(listItem);
+        }
+      }
+
+      return finalList;
+    }
+
+    setLoadingCombinedStreamingList(true);
+
+    const sortedStreamingAccountList = treasuryList.map((streaming) => streaming).sort((a, b) => {
+      const vA1 = a as TreasuryInfo;
+      const vA2 = a as Treasury;
+      const vB1 = b as TreasuryInfo;
+      const vB2 = b as Treasury;
+
+      const isNewTreasury = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
+        ? true
+        : false;
+
+      if (isNewTreasury) {
+        return vB2.totalStreams - vA2.totalStreams;
+      } else {
+        return vB1.streamsAmount - vA1.streamsAmount;
+      }
+    });
+
+    getFinalList(sortedStreamingAccountList)
+      .then(items => {
+        consoleOut('streamingAccountCombinedList:', items, "blue");
+
+        setStreamingAccountCombinedList(items);
+      })
+      .catch((error) => {
+        console.log(error);
+        setStreamingAccountCombinedList([]);
+        consoleOut('streamingAccountCombinedList:', [], "blue");
+      })
+      .finally(() => setLoadingCombinedStreamingList(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streamList, treasuriesLoaded, treasuryList]);
+
+  // Set the list of incoming and outgoing streams
+  useEffect(() => {
+    if (!connection || !publicKey || !streamList || !autocloseTreasuries) {
+      setIncomingStreamList(undefined);
+      setOutgoingStreamList(undefined);
+
+      return;
+    }
+
+    setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)));
+
+    setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream) && autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress)));
+  }, [
+    publicKey,
+    streamList,
+    connection,
+    autocloseTreasuries,
+    getQueryAccountType,
+    isInboundStream,
+  ]);
+
+  // Incoming amount
+  useEffect(() => {
+    if (!incomingStreamList) { return; }
+
+    setIncomingAmount(incomingStreamList.length);
+  }, [
+    incomingStreamList
+  ]);
+
+  // Outgoing amount
+  useEffect(() => {
+    if (!outgoingStreamList || !streamingAccountCombinedList) { return; }
+
+    const sumStreamingStreams = streamingAccountCombinedList.reduce((accumulator, streaming: any) => {
+      return accumulator + streaming.streams?.length;
+    }, 0);
+
+    setOutgoingAmount(outgoingStreamList.length + sumStreamingStreams);
+  }, [
+    outgoingStreamList,
+    streamingAccountCombinedList
+  ]);
+
+  // Total streams amount
+  useEffect(() => {
+    if (!incomingAmount && !outgoingAmount) { return; }
+
+    setTotalStreamsAmount((incomingAmount + outgoingAmount) as number);
+  }, [incomingAmount, outgoingAmount])
+
   // Live data calculation
   useEffect(() => {
-
-    if (!publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
+    if (!publicKey || !streamList || (!streamListv1 && !streamListv2) || !address) { return; }
 
     const timeout = setTimeout(() => {
-      refreshStreamSummary();
+      refreshIncomingStreamSummary();
+      refreshOutgoingStreamSummary();
     }, 1000);
 
     return () => {
       clearTimeout(timeout);
     }
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    address,
     publicKey,
     streamList,
     streamListv1,
     streamListv2,
-    refreshStreamSummary,
+  ]);
+
+  useEffect(() => {
+    if (!publicKey || !treasuryList || !treasuriesLoaded) { return; }
+
+    const timeout = setTimeout(() => {
+      refreshTreasuriesSummary();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publicKey, treasuryList, treasuriesLoaded]);
+
+  // Update total account balance
+  useEffect(() => {
+    if (loadingStreams || loadingCombinedStreamingList) {
+      return;
+    }
+
+    const wdb = parseFloat(incomingStreamsSummary.totalNet.toFixed(2));
+    const ub = parseFloat(outgoingStreamsSummary.totalNet.toFixed(2)) + parseFloat(streamingAccountsSummary.totalNet.toFixed(2));
+
+    setTotalAccountBalance(wdb + ub);
+    setCanShowStreamingAccountBalance(true);
+  }, [
+    loadingStreams,
+    incomingStreamsSummary,
+    outgoingStreamsSummary,
+    streamingAccountsSummary,
+    loadingCombinedStreamingList,
   ]);
 
   // Live data calculation - NetWorth
   useEffect(() => {
 
-    if (streamsSummary && accountTokens) {
+    if (tokensLoaded && accountTokens) {
       // Total USD value
       let sumMeanTokens = 0;
       accountTokens.forEach((asset: UserTokenAccount, index: number) => {
@@ -3320,11 +4046,13 @@ export const AccountsNewView = () => {
       setTotalTokenAccountsValue(sumMeanTokens);
 
       // Net Worth
-      const total = sumMeanTokens + streamsSummary.totalNet + treasuriesTvl;
+      const total = sumMeanTokens + totalAccountBalance;
       setNetWorth(total);
+    } else {
+      setNetWorth(0);
     }
 
-  }, [treasuriesTvl, streamsSummary, getTokenPriceBySymbol, accountTokens]);
+  }, [accountTokens, getTokenPriceBySymbol, tokensLoaded, totalAccountBalance]);
 
   // Window resize listeners
   useEffect(() => {
@@ -3361,14 +4089,33 @@ export const AccountsNewView = () => {
 
   // Setup event listeners
   useEffect(() => {
-    if (canSubscribe) {
+    if (canSubscribe && !isPageLoaded) {
       setCanSubscribe(false);
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
     }
-  }, [canSubscribe, onTxConfirmed, onTxTimedout]);
+  }, [canSubscribe, isPageLoaded, onTxConfirmed, onTxTimedout]);
+
+  // Unsubscribe from events
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      consoleOut('Clearing accounts state...', '', 'purple');
+      clearStateData();
+      setSelectedAsset(undefined);
+      setTreasuriesLoaded(false);
+      setTokensLoaded(false);
+      setCanSubscribe(true);
+      isWorkflowLocked = false;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   //////////////////
   // Transactions //
@@ -3429,7 +4176,7 @@ export const AccountsNewView = () => {
         )
           .then((value: Transaction | null) => {
             if (value !== null) {
-              consoleOut("closeTokenAccount returned transaction:", value);
+              consoleOut('closeTokenAccount returned transaction:', value);
               // Stage 1 completed - The transaction is created and returned
               setTransactionStatus({
                 lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -3479,11 +4226,11 @@ export const AccountsNewView = () => {
 
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
-        consoleOut("Signing transaction...");
+        consoleOut('Signing transaction...');
         return await wallet
           .signTransaction(transaction)
           .then((signed: Transaction) => {
-            consoleOut("signTransaction returned a signed transaction:", signed);
+            consoleOut('signTransaction returned a signed transaction:', signed);
             signedTransaction = signed;
             // Try signature verification by serializing the transaction
             try {
@@ -3545,7 +4292,7 @@ export const AccountsNewView = () => {
         return await connection
           .sendEncodedTransaction(encodedTx)
           .then((sig) => {
-            consoleOut("sendEncodedTransaction returned a signature:", sig);
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction,
@@ -3587,13 +4334,13 @@ export const AccountsNewView = () => {
     if (wallet) {
       setIsUnwrapping(true);
       const create = await createTx();
-      consoleOut("created:", create);
+      consoleOut('created:', create);
       if (create) {
         const sign = await signTx();
-        consoleOut("signed:", sign);
+        consoleOut('signed:', sign);
         if (sign) {
           const sent = await sendTx();
-          consoleOut("sent:", sent);
+          consoleOut('sent:', sent);
           if (sent) {
             enqueueTransactionConfirmation({
               signature: signature,
@@ -3618,6 +4365,26 @@ export const AccountsNewView = () => {
     }
   }
 
+  const onRefreshStreamsNoReset = () => {
+    refreshStreamList(false);
+    refreshTreasuries(false);
+  };
+
+  const onRefreshStreamsReset = () => {
+    refreshStreamList(true);
+    refreshTreasuries(false);
+  };
+
+  //////////////
+  //  Events  //
+  //////////////
+
+  const onBackButtonClicked = () => {
+    setDetailsPanelOpen(false);
+    setAutoOpenDetailsPanel(false);
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+    navigate(url);
+  }
 
   ///////////////
   // Rendering //
@@ -3667,7 +4434,9 @@ export const AccountsNewView = () => {
         <div className="font-bold font-size-110 left">{!isInspectedAccountTheConnectedWallet() ? "Treasury Balance" : "Net Worth"}</div>
         <div className="font-bold font-size-110 right">
           {
-            netWorth
+            loadingStreams || loadingCombinedStreamingList || !canShowStreamingAccountBalance? (
+              <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+            ) : netWorth
               ? toUsCurrency(netWorth)
               : '$0.00'
           }
@@ -3678,19 +4447,13 @@ export const AccountsNewView = () => {
 
   const renderMoneyStreamsSummary = (
     <>
-      <Tooltip title={isInspectedAccountTheConnectedWallet()
+      {/* <Tooltip title={isInspectedAccountTheConnectedWallet()
           ? "See your Money Streams"
-          : "To see your Money Streams you need to connect your wallet"}>
+          : "To see your Money Streams you need to connect your wallet"}> */}
         <div key="streams" onClick={() => {
-          if (publicKey && accountAddress && accountAddress === publicKey.toBase58()) {
-            // setSelectedCategory("other-assets");
-            // setSelectedOtherAssetsOption("msp-streams");
-            // setSelectedAsset(undefined);
-            setTimeout(() => {
-              navigate(STREAMS_ROUTE_BASE_PATH);
-            }, 10);
-          }
-        }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
+          navigateToStreaming();
+          setAutoOpenDetailsPanel(true);
+        }} className={`transaction-list-row ${selectedCategory === "streaming" ? 'selected' : ''}`}>
           <div className="icon-cell">
             {loadingStreams ? (
               <div className="token-icon animate-border-loading">
@@ -3702,13 +4465,13 @@ export const AccountsNewView = () => {
                 </div>
               </div>
             ) : (
-              <div className={streamsSummary.totalNet !== 0 ? 'token-icon animate-border' : 'token-icon'}>
+              <div className={totalStreamsAmount !== 0 ? 'token-icon animate-border' : 'token-icon'}>
                 <div className="streams-count simplelink" onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     refreshStreamList(false);
                   }}>
-                  <span className="font-size-75 font-bold text-shadow">{kFormatter(streamsSummary.totalAmount) || 0}</span>
+                  <span className="font-size-75 font-bold text-shadow">{kFormatter(totalStreamsAmount as number) || 0}</span>
                 </div>
               </div>
             )}
@@ -3717,39 +4480,43 @@ export const AccountsNewView = () => {
             <div className="title">{t('account-area.money-streams')}</div>
             {loadingStreams ? (
               <div className="subtitle"><IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }}/></div>
-            ) : streamsSummary.totalAmount === 0 ? (
+            ) : (totalStreamsAmount === 0) ? (
               <div className="subtitle">{t('account-area.no-money-streams')}</div>
             ) : (
-              <div className="subtitle">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
+              <div className="subtitle">{incomingAmount} {t('streams.stream-stats-incoming')}, {outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
             )}
           </div>
           <div className="rate-cell">
-            {loadingStreams ? (
-              <>
-                <div className="rate-amount">
-                  <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
-                </div>
-                <div className="interval">{t('streams.streaming-balance')}</div>
-              </>
-            ) : streamsSummary.totalAmount === 0 ? (
-              <span className="rate-amount">--</span>
+            {loadingStreams || loadingCombinedStreamingList || !canShowStreamingAccountBalance ? (
+              <div className="rate-amount">
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              </div>
             ) : (
               <>
-                <div className="rate-amount">
-                  {toUsCurrency(Math.abs(streamsSummary.totalNet))}
-                </div>
-                <div className="interval">{t('streams.streaming-balance')}</div>
+                {totalAccountBalance > 0 ? (
+                  <>
+                    <div className="rate-amount">
+                      {toUsCurrency(totalAccountBalance)}
+                    </div>
+                    <div className="interval">{t('streams.streaming-balance')}</div>
+                  </>
+                ) : (
+                  <span className="rate-amount">$0.00</span>
+                )}
               </>
             )}
           </div>
         </div>
-      </Tooltip>
+      {/* </Tooltip> */}
     </>
   );
 
   const renderAsset = useCallback((asset: UserTokenAccount, index: number) => {
     const onTokenAccountClick = () => {
       setSelectedCategory("assets");
+      if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
+        reloadSwitch();
+      }
       navigateToAsset(asset);
       selectAsset(asset, true, true);
     }
@@ -3818,6 +4585,7 @@ export const AccountsNewView = () => {
     selectedAsset,
     hideLowBalances,
     selectedCategory,
+    setDetailsPanelOpen,
     shouldHideAsset,
   ]);
 
@@ -4264,106 +5032,115 @@ export const AccountsNewView = () => {
     );
   };
 
-  // const renderAddAccountBox = (
-  //   <>
-  //     <div className="boxed-area container-max-width-600 add-account">
-  //       {accountAddress && (
-  //         <div className="back-button">
-  //           <span className="icon-button-container">
-  //             <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
-  //               <Button
-  //                 type="default"
-  //                 shape="circle"
-  //                 size="middle"
-  //                 className="hidden-xs"
-  //                 icon={<ArrowLeftOutlined />}
-  //                 onClick={handleBackToAccountDetailsButtonClick}
-  //               />
-  //             </Tooltip>
-  //           </span>
-  //         </div>
-  //       )}
-  //       <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
-  //       <div className="flexible-left mb-3">
-  //         <div className="transaction-field left">
-  //           <div className="transaction-field-row">
-  //             <span className="field-label-left">{t('assets.account-address-label')}</span>
-  //             <span className="field-label-right">&nbsp;</span>
-  //           </div>
-  //           <div className="transaction-field-row main-row">
-  //             <span className="input-left recipient-field-wrapper">
-  //               <input id="payment-recipient-field"
-  //                 className="w-100 general-text-input"
-  //                 autoComplete="on"
-  //                 autoCorrect="off"
-  //                 type="text"
-  //                 onFocus={handleAccountAddressInputFocusIn}
-  //                 onChange={handleAccountAddressInputChange}
-  //                 onBlur={handleAccountAddressInputFocusOut}
-  //                 placeholder={t('assets.account-address-placeholder')}
-  //                 required={true}
-  //                 spellCheck="false"
-  //                 value={accountAddressInput}/>
-  //               <span id="payment-recipient-static-field"
-  //                     className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-  //                 {accountAddressInput || t('assets.account-address-placeholder')}
-  //               </span>
-  //             </span>
-  //             <div className="addon-right simplelink" onClick={showQrScannerModal}>
-  //               <QrcodeOutlined />
-  //             </div>
-  //           </div>
-  //           <div className="transaction-field-row">
-  //             <span className="field-label-left">
-  //               {accountAddressInput && !isValidAddress(accountAddressInput) ? (
-  //                 <span className="fg-red">
-  //                   {t('transactions.validation.address-validation')}
-  //                 </span>
-  //               ) : (
-  //                 <span>&nbsp;</span>
-  //               )}
-  //             </span>
-  //           </div>
-  //         </div>
-  //         {/* Go button */}
-  //         <Button
-  //           className="main-cta right"
-  //           type="primary"
-  //           shape="round"
-  //           size="large"
-  //           onClick={onAddAccountAddress}
-  //           disabled={!isValidAddress(accountAddressInput)}>
-  //           {t('assets.account-add-cta-label')}
-  //         </Button>
-  //       </div>
-  //       <div className="text-center">
-  //         <span className="mr-1">{t('assets.create-account-help-pre')}</span>
-  //         <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-  //           {t('assets.create-account-help-link')}
-  //         </a>
-  //         <span className="ml-1">{t('assets.create-account-help-post')}</span>
-  //       </div>
-  //     </div>
-  //     {isQrScannerModalVisible && (
-  //       <QrScannerModal
-  //         isVisible={isQrScannerModalVisible}
-  //         handleOk={onAcceptQrScannerModal}
-  //         handleClose={closeQrScannerModal}/>
-  //     )}
-  //   </>
-  // );
+  const goToStreamIncomingDetailsHandler = (stream: any) => {
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${stream.id as string}`;
+
+    if (inspectedAccountType && inspectedAccountType === "multisig") {
+      url += `?account-type=multisig&v=details`;
+    } else {
+      url += `?v=details`;
+    }
+
+    navigate(url);
+  }
+
+  const goToStreamOutgoingDetailsHandler = (stream: any) => {
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/${stream.id as string}`;
+
+    if (inspectedAccountType && inspectedAccountType === "multisig") {
+      url += `?account-type=multisig&v=details`;
+    } else {
+      url += `?v=details`;
+    }
+
+    navigate(url);
+  }
+
+  const goToStreamingAccountDetailsHandler = (streamingTreasury: Treasury | TreasuryInfo | undefined) => {
+    if (streamingTreasury) {
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${streamingTreasury.id as string}`;
+
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig&v=streams`;
+      } else {
+        url += `?v=streams`;
+      }
+  
+      navigate(url);
+    }
+  }
+
+  const goToStreamingAccountStreamOutgoingDetailsHandler = (stream: any, streamingTreasury: Treasury | TreasuryInfo | undefined) => {
+    if (streamingTreasury) {
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${streamingTreasury.id as string}/${stream.id as string}`;
+
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig&v=details`;
+      } else {
+        url += `?v=details`;
+      }
+  
+      navigate(url);
+    }
+  }
+
+  const returnFromIncomingStreamDetailsHandler = () => {
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
+
+    if (inspectedAccountType && inspectedAccountType === "multisig") {
+      url += `?account-type=multisig`;
+    }
+
+    navigate(url);
+  }
+
+  const returnFromOutgoingStreamDetailsHandler = () => {
+    let url;
+    if (treasuryId !== undefined) {
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId as string}`;
+    } else {
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+    }
+
+    if (inspectedAccountType && inspectedAccountType === "multisig") {
+      url += `?account-type=multisig`;
+    }
+
+    navigate(url);
+  }
+
+  const returnFromStreamingAccountDetailsHandler = () => {
+
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+
+    if (inspectedAccountType && inspectedAccountType === "multisig") {
+      url += `?account-type=multisig`;
+    }
+
+    navigate(url);
+  }
 
   return (
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">pendingMultisigTxCount:</span><span className="ml-1 font-bold fg-dark-active">{pendingMultisigTxCount !== undefined ? pendingMultisigTxCount : '-'}</span>
-          <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
-          <span className="ml-1">totalAmount:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalAmount : '-'}</span>
-          <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
-          <span className="ml-1">treasuriesTvl:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesTvl || '0'}</span>
+          <span className="ml-1">streamList:</span><span className="ml-1 font-bold fg-dark-active">{streamList ? `[${streamList.length}]` : '-'}</span>
+          <span className="ml-1">streamListv1:</span><span className="ml-1 font-bold fg-dark-active">{streamListv1 ? `[${streamListv1.length}]` : '-'}</span>
+          <span className="ml-1">streamListv2:</span><span className="ml-1 font-bold fg-dark-active">{streamListv2 ? `[${streamListv2.length}]` : '-'}</span>
+          <span className="ml-1">treasuryList:</span><span className="ml-1 font-bold fg-dark-active">{treasuryList ? `[${treasuryList.length}]` : '-'}</span>
+          <span className="ml-1">accountBalance:</span><span className="ml-1 font-bold fg-dark-active">{totalAccountBalance || 0}</span>
+          <span className="ml-1">tokenAccountsValue:</span><span className="ml-1 font-bold fg-dark-active">{totalTokenAccountsValue || 0}</span>
         </div>
       )} */}
+
+      {detailsPanelOpen && (
+        <Button
+          id="back-button"
+          type="default"
+          shape="circle"
+          icon={<ArrowLeftOutlined />}
+          onClick={onBackButtonClicked}/>
+      )}
 
       <div className="container main-container accounts">
 
@@ -4381,197 +5158,162 @@ export const AccountsNewView = () => {
         {publicKey ? (
           <div className="interaction-area">
 
-            {location.pathname === STREAMS_ROUTE_BASE_PATH ? (
-              <Streams />
-            ) : (
-              <>
-                {accountAddress && (
-                  <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+            {accountAddress && (
+              <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
-                    {/* Left / top panel */}
-                    <div className="meanfi-two-panel-left">
-                      <div className="meanfi-panel-heading">
-                        {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" ? (
-                          <>
-                            <div className="back-button mb-0">
-                              <span className="icon-button-container">
-                                <Tooltip placement="bottom" title="Back to safes">
-                                  <Button
-                                    type="default"
-                                    shape="circle"
-                                    size="middle"
-                                    icon={<ArrowLeftOutlined />}
-                                    onClick={() => {
-                                      if (selectedMultisig) {
-                                        setHighLightableMultisigId(selectedMultisig.id.toBase58());
-                                      }
-                                      navigate(`/multisig/${address}?v=${tabNameFormat(activeTab)}`)
-                                    }}
-                                  />
-                                </Tooltip>
-                              </span>
-                            </div>
-                            <span className="title">Multisig safe</span>
-                          </>
-                        ) : (
-                          <span className="title">{t('assets.screen-title')}</span>
-                        )}
-                        <div className="user-address">
-                          <span className="fg-secondary">
-                            (<span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
-                              {shortenAddress(accountAddress, 5)}
-                            </span>)
-                          </span>
-                          {!connected && (
-                            <span className="icon-button-container">
-                              <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
-                                <Button
-                                  type="default"
-                                  shape="circle"
-                                  size="middle"
-                                  icon={<EditOutlined />}
-                                  onClick={handleScanAnotherAddressButtonClick}
-                                />
-                              </Tooltip>
-                            </span>
-                          )}
+                {/* Left / top panel */}
+                <div className="meanfi-two-panel-left">
+                  <div className="meanfi-panel-heading">
+                    {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" ? (
+                      <>
+                        <div className="back-button mb-0">
                           <span className="icon-button-container">
-                            <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+                            <Tooltip placement="bottom" title="Back to safes">
                               <Button
                                 type="default"
                                 shape="circle"
                                 size="middle"
-                                icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
-                                onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
+                                icon={<ArrowLeftOutlined />}
+                                onClick={() => {
+                                  if (selectedMultisig) {
+                                    setHighLightableMultisigId(selectedMultisig.authority.toBase58());
+                                  }
+                                  navigate(`/multisig/${address}?v=${tabNameFormat(activeTab)}`)
+                                }}
                               />
                             </Tooltip>
                           </span>
                         </div>
-                      </div>
-                      <div className="inner-container">
+                        <span className="title ml-2">Multisig safe</span>
+                      </>
+                    ) : (
+                      <span className="title">{t('assets.screen-title')}</span>
+                    )}
+                    <div className="user-address">
+                      <span className="fg-secondary">
+                        (<span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
+                          {shortenAddress(accountAddress, 5)}
+                        </span>)
+                      </span>
+                      {!connected && (
+                        <span className="icon-button-container">
+                          <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<EditOutlined />}
+                              onClick={handleScanAnotherAddressButtonClick}
+                            />
+                          </Tooltip>
+                        </span>
+                      )}
+                      <span className="icon-button-container">
+                        <Tooltip placement="top" title={t('assets.account-address-copy-cta')}>
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
+                            onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
+                          />
+                        </Tooltip>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="inner-container">
 
-                        {/* Pending Multisig proposals notification */}
-                        {inspectedAccountType === "multisig" && renderMultisigPendinTxNotification()}
+                    {/* Pending Multisig proposals notification */}
+                    {inspectedAccountType === "multisig" && renderMultisigPendinTxNotification()}
 
-                        {/* Net Worth header (sticky) */}
-                        {renderNetworth()}
+                    {/* Net Worth header (sticky) */}
+                    {renderNetworth()}
 
-                        {/* Middle area (vertically flexible block of items) */}
-                        <div className="item-block vertical-scroll">
+                    {/* Middle area (vertically flexible block of items) */}
+                    <div className="item-block vertical-scroll">
 
-                          <div className="asset-category-title flex-fixed-right">
-                            <div className="title">Streaming Assets (2)</div>
-                            <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
-                          </div>
-                          <div className="asset-category">
-                            {inspectedAccountType === undefined ? (
-                              <>
-                                {renderMoneyStreamsSummary}
-                                <TreasuriesSummary
-                                  address={accountAddress}
-                                  connection={connection}
-                                  ms={ms}
-                                  msp={msp}
-                                  title={t('treasuries.summary-title')}
-                                  enabled={isInspectedAccountTheConnectedWallet()}
-                                  selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
-                                  onNewValue={(value: number) => setTreasuriesTvl(value)}
-                                  tooltipEnabled="See your Streaming Accounts"
-                                  tooltipDisabled="To see your Streaming Accounts you need to connect your wallet"
-                                  onSelect={() => {
-                                    if (publicKey) {
-                                      // setSelectedCategory("other-assets");
-                                      // setSelectedOtherAssetsOption("msp-streams");
-                                      // setSelectedAsset(undefined);
-                                    }
-                                  }}
-                                />
-                              </>
-                            ) : inspectedAccountType === "multisig" ? (
-                              <TreasuriesSummary
-                                address={accountAddress}
-                                connection={connection}
-                                ms={ms}
-                                msp={msp}
-                                title="Money Streaming"
-                                enabled={true}
-                                selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
-                                onNewValue={(value: number) => setTreasuriesTvl(value)}
-                                tooltipEnabled="See Multisig Streaming Accounts"
-                                tooltipDisabled=""
-                                targetPath={getMultisigTreasuriesPath()}
-                                onSelect={() => {
-                                  // Do nothing
-                                }}
-                              />
-                            ) : null}
-                          </div>
-
-                          <div className="asset-category-title flex-fixed-right">
-                            <div className="title">Tokens ({accountTokens.length})</div>
-                            <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
-                          </div>
-                          <div className="asset-category flex-column">
-                            {renderAssetsList}
-                          </div>
-
+                      <div className="asset-category-title flex-fixed-right">
+                        <div className="title">Streaming Assets</div>
+                        <div className="amount">{
+                          loadingStreams || loadingCombinedStreamingList || !canShowStreamingAccountBalance ? (
+                            <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                          ) : totalAccountBalance > 0
+                            ? toUsCurrency(totalAccountBalance)
+                            : "$0.00"
+                          }
                         </div>
-
-                        {/* Bottom CTAs */}
-                        <div className="bottom-ctas">
-                          <div className="primary-action">
-                            {isInspectedAccountTheConnectedWallet() ? (
-                              <Button
-                                block
-                                className="flex-center"
-                                type="primary"
-                                shape="round"
-                                onClick={showInitAtaModal}>
-                                <IconAdd className="mean-svg-icons" />
-                                <span className="ml-1">Add asset</span>
-                              </Button>
-                            ) : (
-                              <Tooltip placement="bottom" title={
-                                !accountAddress || inspectedAccountType !== "multisig"
-                                  ? "You can only add assets to your connected account"
-                                  : "Add asset to your multisig safe account"
-                                }>
-                                <Button
-                                  block
-                                  className="flex-center"
-                                  type="primary"
-                                  shape="round"
-                                  disabled={!accountAddress || inspectedAccountType !== "multisig"}
-                                  onClick={onShowCreateAssetModal}>
-                                  <IconAdd className="mean-svg-icons" />
-                                  <span className="ml-1">Create an asset</span>
-                                </Button>
-                              </Tooltip>
-                            )}
-                          </div>
-                          <Dropdown className="options-dropdown"
-                            overlay={assetListOptions}
-                            placement="bottomRight"
-                            trigger={["click"]}>
-                            <span className="icon-button-container">
-                              <Button
-                                type="default"
-                                shape="circle"
-                                size="middle"
-                                icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
-                                onClick={(e) => e.preventDefault()}
-                              />
-                            </span>
-                          </Dropdown>
-                        </div>
-
                       </div>
+                      <div className="asset-category">
+                        {renderMoneyStreamsSummary}
+                      </div>
+
+                      <div className="asset-category-title flex-fixed-right">
+                        <div className="title">Tokens ({accountTokens.length})</div>
+                        <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
+                      </div>
+                      <div className="asset-category flex-column">
+                        {renderAssetsList}
+                      </div>
+
                     </div>
 
-                    {/* Right / down panel */}
-                    <div className="meanfi-two-panel-right">
-                      <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
-                      <div className="inner-container">
+                    {/* Bottom CTAs */}
+                    <div className="bottom-ctas">
+                      <div className="primary-action">
+                        {isInspectedAccountTheConnectedWallet() ? (
+                          <Button
+                            block
+                            className="flex-center"
+                            type="primary"
+                            shape="round"
+                            onClick={showInitAtaModal}>
+                            <IconAdd className="mean-svg-icons" />
+                            <span className="ml-1">Add asset</span>
+                          </Button>
+                        ) : (
+                          <Tooltip placement="bottom" title={
+                            !accountAddress || inspectedAccountType !== "multisig"
+                              ? "You can only add assets to your connected account"
+                              : "Add asset to your multisig safe account"
+                            }>
+                            <Button
+                              block
+                              className="flex-center"
+                              type="primary"
+                              shape="round"
+                              disabled={!accountAddress || inspectedAccountType !== "multisig"}
+                              onClick={onShowCreateAssetModal}>
+                              <IconAdd className="mean-svg-icons" />
+                              <span className="ml-1">Create an asset</span>
+                            </Button>
+                          </Tooltip>
+                        )}
+                      </div>
+                      <Dropdown className="options-dropdown"
+                        overlay={assetListOptions}
+                        placement="bottomRight"
+                        trigger={["click"]}>
+                        <span className="icon-button-container">
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
+                            onClick={(e) => e.preventDefault()}
+                          />
+                        </span>
+                      </Dropdown>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Right / down panel */}
+                <div className="meanfi-two-panel-right">
+                  <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
+                  <div className="inner-container">
+                    {selectedCategory === "assets" ? (
+                      <>
                         {canShowBuyOptions() ? renderTokenBuyOptions() : (
                           <div className="flexible-column-bottom">
                             <div className="top">
@@ -4607,12 +5349,58 @@ export const AccountsNewView = () => {
                             </div>
                           </div>
                         )}
+                      </>
+                    ) : selectedCategory === "streaming" ? (
+                      <div className="scroll-wrapper vertical-scroll">
+                        <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
+                        <div id="streams-refresh-reset-cta" onClick={onRefreshStreamsReset}></div>
+                        {!pathParamStreamId && !pathParamTreasuryId ? (
+                          <MoneyStreamsInfoView
+                            accountAddress={accountAddress}
+                            autocloseTreasuries={autocloseTreasuries}
+                            loadingCombinedStreamingList={loadingCombinedStreamingList}
+                            loadingStreams={loadingStreams}
+                            multisigAccounts={multisigAccounts}
+                            onSendFromIncomingStreamInfo={goToStreamIncomingDetailsHandler}
+                            onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
+                            onSendFromStreamingAccountDetails={goToStreamingAccountDetailsHandler}
+                            onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
+                            selectedMultisig={selectedMultisig}
+                            selectedTab={pathParamStreamingTab}
+                            streamList={streamList}
+                            streamingAccountCombinedList={streamingAccountCombinedList}
+                            treasuryList={treasuryList}
+                          />
+                        ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
+                          <MoneyStreamsIncomingView
+                            streamSelected={streamDetail}
+                            accountAddress={accountAddress}
+                            multisigAccounts={multisigAccounts}
+                            onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
+                          />
+                        ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
+                          <MoneyStreamsOutgoingView
+                            streamSelected={streamDetail}
+                            streamList={streamList}
+                            multisigAccounts={multisigAccounts}
+                            onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
+                          />
+                        ) : pathParamTreasuryId && pathParamStreamingTab === "outgoing" ? (
+                          <StreamingAccountView
+                            streamSelected={streamDetail}
+                            treasuryList={treasuryList}
+                            multisigAccounts={multisigAccounts}
+                            selectedMultisig={selectedMultisig}
+                            streamingAccountSelected={treasuryDetail}
+                            onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
+                            onSendFromStreamingAccountOutgoingStreamInfo={goToStreamingAccountStreamOutgoingDetailsHandler}
+                          />
+                        ) : null}
                       </div>
-                    </div>
-
+                    ) : null}
                   </div>
-                )}
-              </>
+                </div>
+              </div>
             )}
 
           </div>

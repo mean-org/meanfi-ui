@@ -7,7 +7,7 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount } from "../../utils/utils";
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import {
@@ -27,7 +27,6 @@ import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
@@ -36,8 +35,8 @@ import { segmentAnalytics } from '../../App';
 import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
 import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
-import { STREAMS_ROUTE_BASE_PATH } from '../Streams';
 import { environment } from '../../environments/environment';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
 const { Option } = Select;
 
@@ -79,8 +78,6 @@ export const OneTimePayment = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
-  const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
@@ -360,6 +357,12 @@ export const OneTimePayment = (props: {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+
+    const path = window.location.pathname;
+    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
+      return;
+    }
+
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     setIsBusy(false);
     resetTransactionStatus();
@@ -368,18 +371,13 @@ export const OneTimePayment = (props: {
     setSelectedStream(undefined);
     if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
       recordTxConfirmation(item.signature, true);
-      if (!inModal) {
-        navigate(STREAMS_ROUTE_BASE_PATH);
-      }
     }
   }, [
-    inModal,
     setIsVerifiedRecipient,
     resetTransactionStatus,
     recordTxConfirmation,
     resetContractValues,
     setSelectedStream,
-    navigate,
   ]);
 
   // Setup event handler for Tx confirmation error
@@ -594,6 +592,19 @@ export const OneTimePayment = (props: {
     onTxConfirmed,
     onTxTimedout,
   ]);
+
+  // Unsubscribe from events
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   //////////////////
   //  Validation  //
@@ -986,10 +997,6 @@ export const OneTimePayment = (props: {
               resetContractValues();
               setIsVerifiedRecipient(false);
               transferCompleted();
-              if (isScheduledPayment() && location.pathname !== STREAMS_ROUTE_BASE_PATH) {
-                setSelectedStream(undefined);
-                navigate(STREAMS_ROUTE_BASE_PATH);
-              }
             }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1009,7 +1016,6 @@ export const OneTimePayment = (props: {
     fromCoinAmount,
     paymentStartDate,
     recipientAddress,
-    location.pathname,
     fixedScheduleValue,
     transactionCancelled,
     streamV2ProgramAddress,
@@ -1022,10 +1028,8 @@ export const OneTimePayment = (props: {
     setTransactionStatus,
     resetContractValues,
     isScheduledPayment,
-    setSelectedStream,
     transferCompleted,
     getFeeAmount,
-    navigate,
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {
@@ -1055,7 +1059,7 @@ export const OneTimePayment = (props: {
             return (
               <TokenListItem
                 key={t.address}
-                name={t.name || 'Unknown token'}
+                name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
                 className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "dimmed"}
@@ -1095,7 +1099,7 @@ export const OneTimePayment = (props: {
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown token"
+            name={CUSTOM_TOKEN_NAME}
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
             onClick={async () => {
@@ -1119,19 +1123,19 @@ export const OneTimePayment = (props: {
                   decimals = -2;
                 }
               }
-              const uknwnToken: TokenInfo = {
+              const unknownToken: TokenInfo = {
                 address,
-                name: 'Unknown token',
+                name: CUSTOM_TOKEN_NAME,
                 chainId: getNetworkIdByEnvironment(environment),
                 decimals,
                 symbol: `[${shortenAddress(address)}]`,
               };
-              tokenChanged(t);
-              setSelectedToken(uknwnToken);
+              tokenChanged(unknownToken);
+              setSelectedToken(unknownToken);
               if (userBalances && userBalances[address]) {
                 setSelectedTokenBalance(userBalances[address]);
               }
-              consoleOut("token selected:", uknwnToken, 'blue');
+              consoleOut("token selected:", unknownToken, 'blue');
               // Do not close on errors (-1 or -2)
               if (decimals >= 0) {
                 onCloseTokenSelector();
@@ -1146,6 +1150,14 @@ export const OneTimePayment = (props: {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">symbol:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.symbol : '-'}</span>
+          <span className="ml-1">name:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.name : '-'}</span>
+          <span className="ml-1">address:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.address : '-'}</span>
+        </div>
+      )} */}
+
       <div className="contract-wrapper">
 
         {/* Recipient */}
@@ -1202,12 +1214,14 @@ export const OneTimePayment = (props: {
             <div className="left">
               <span className="add-on simplelink">
                 {selectedToken && (
-                  <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
-                    mintAddress={selectedToken.address}
-                    name={selectedToken.name}
-                    showCaretDown={true}
-                    fullTokenInfo={selectedToken}
-                  />
+                  <>
+                    <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
+                      mintAddress={selectedToken.address}
+                      showCaretDown={true}
+                      showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                      fullTokenInfo={selectedToken}
+                    />
+                  </>
                 )}
                 {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
                   <div className="token-max simplelink" onClick={() =>

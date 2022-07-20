@@ -25,7 +25,7 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./con
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices, getRaydiumLiquidityPools, getRaydiumLpPairs } from "../utils/api";
+import { getPrices } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
@@ -49,7 +49,6 @@ import { ProgramAccounts } from "../utils/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
-import { STREAMS_ROUTE_BASE_PATH } from "../views/Streams";
 import { MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
@@ -71,7 +70,6 @@ interface AppStateConfig {
   refreshInterval: number;
   isWhitelisted: boolean;
   isInBetaTestingProgram: boolean;
-  detailsPanelOpen: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
@@ -81,7 +79,6 @@ interface AppStateConfig {
   effectiveRate: number;
   coinPrices: any | null;
   loadingPrices: boolean;
-  raydiumLps: any;
   contract: ContractDefinition | undefined;
   treasuryOption: TreasuryTypeOption | undefined;
   recipientAddress: string;
@@ -114,7 +111,7 @@ interface AppStateConfig {
   streamProgramAddress: string;
   streamV2ProgramAddress: string;
   loadingStreamActivity: boolean;
-  streamActivity: StreamActivity[];
+  streamActivity: StreamActivity[] | undefined;
   hasMoreStreamActivity: boolean;
   customStreamDocked: boolean;
   diagnosisInfo: AccountDetails | undefined;
@@ -144,9 +141,10 @@ interface AppStateConfig {
   unstakedAmount: string;
   unstakeStartDate: string | undefined;
   stakingMultiplier: number;
+  // Routes
+  previousRoute: string;
   setTheme: (name: string) => void;
   setTpsAvg: (value: number | null | undefined) => void;
-  setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
@@ -163,6 +161,7 @@ interface AppStateConfig {
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
   resetStreamsState: () => void;
+  clearStreams: () => void;
   refreshStreamList: (reset?: boolean, userAddress?: PublicKey) => void;
   setContract: (name: string) => void;
   setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
@@ -187,11 +186,12 @@ interface AppStateConfig {
   setPrograms: (list: Array<ProgramAccounts> | undefined) => void;
   setMultisigTxs: (list: Array<MultisigTransaction> | undefined) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
+  setActiveStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
   setDeletedStream: (id: string) => void,
   setHighLightableStreamId: (id: string | undefined) => void,
   openStreamById: (streamId: string, dock: boolean) => void;
-  getStreamActivity: (streamId: string, version: number) => void;
+  getStreamActivity: (streamId: string, version: number, clearHistory?: boolean) => void;
   setCustomStreamDocked: (state: boolean) => void;
   setDiagnosisInfo: (info: AccountDetails | undefined) => void;
   // Accounts
@@ -216,6 +216,8 @@ interface AppStateConfig {
   setUnstakedAmount: (data: string) => void;
   setUnstakeStartDate: (date: string) => void;
   setStakingMultiplier: (rate: number) => void;
+  // Routes
+  setPreviousRoute: (route: string) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -224,7 +226,6 @@ const contextDefaultValues: AppStateConfig = {
   refreshInterval: ONE_MINUTE_REFRESH_TIMEOUT,
   isWhitelisted: false,
   isInBetaTestingProgram: false,
-  detailsPanelOpen: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,
@@ -234,7 +235,6 @@ const contextDefaultValues: AppStateConfig = {
   effectiveRate: 0,
   coinPrices: null,
   loadingPrices: false,
-  raydiumLps: undefined,
   contract: undefined,
   treasuryOption: TREASURY_TYPE_OPTIONS[0],
   recipientAddress: '',
@@ -270,7 +270,7 @@ const contextDefaultValues: AppStateConfig = {
   streamProgramAddress: '',
   streamV2ProgramAddress: '',
   loadingStreamActivity: false,
-  streamActivity: [],
+  streamActivity: undefined,
   hasMoreStreamActivity: true,
   customStreamDocked: false,
   diagnosisInfo: undefined,
@@ -300,9 +300,10 @@ const contextDefaultValues: AppStateConfig = {
   unstakedAmount: '',
   unstakeStartDate: 'undefined',
   stakingMultiplier: 1,
+  // Routes
+  previousRoute: '',
   setTheme: () => {},
   setTpsAvg: () => {},
-  setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
   setContract: () => {},
@@ -321,6 +322,7 @@ const contextDefaultValues: AppStateConfig = {
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
   resetStreamsState: () => {},
+  clearStreams: () => {},
   refreshStreamList: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
@@ -343,6 +345,7 @@ const contextDefaultValues: AppStateConfig = {
   setPrograms: () => {},
   setMultisigTxs: () => {},
   setSelectedStream: () => {},
+  setActiveStream: () => {},
   setStreamDetail: () => {},
   setDeletedStream: () => {},
   setHighLightableStreamId: () => {},
@@ -371,7 +374,9 @@ const contextDefaultValues: AppStateConfig = {
   setStakedAmount: () => {},
   setUnstakedAmount: () => {},
   setUnstakeStartDate: () => {},
-  setStakingMultiplier: () => {}
+  setStakingMultiplier: () => {},
+  // Routes
+  setPreviousRoute: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -394,7 +399,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const timeDate = moment().format('hh:mm A');  
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [tpsAvg, setTpsAvg] = useState<number | null | undefined>(contextDefaultValues.tpsAvg);
-  const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
   const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
   const [contractName, setContractName] = useLocalStorageState("contractName");
@@ -421,7 +425,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
   const [loadingStreams, updateLoadingStreams] = useState(false);
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
-  const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
+  const [streamActivity, setStreamActivity] = useState<StreamActivity[] | undefined>(undefined);
   const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(contextDefaultValues.hasMoreStreamActivity);
   const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
   const [diagnosisInfo, setDiagnosisInfo] = useState<AccountDetails | undefined>(contextDefaultValues.diagnosisInfo);
@@ -453,11 +457,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [stakedAmount, updateStakedAmount] = useState<string>(contextDefaultValues.stakedAmount);
   const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
-  const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
-  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-  const [raydiumLps, setRaydiumLps] = useState<any>(contextDefaultValues.raydiumLps);
-  const [shouldLoadRaydiumLps, setShouldLoadRaydiumLps] = useState(true);
   const [accountAddress, updateAccountAddress] = useState('');
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
   const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
@@ -468,12 +468,16 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
+  const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
 
   const isDowngradedPerformance = useMemo(() => {
     return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
       ? true
       : false;
   }, [tpsAvg]);
+
+  const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
+  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
 
   if (!streamProgramAddress) {
     setStreamProgramAddress(streamProgramAddressFromConfig);
@@ -506,10 +510,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setTheme = (name: string) => {
     updateTheme(name);
-  }
-
-  const setDtailsPanelOpen = (state: boolean) => {
-    updateDetailsPanelOpen(state);
   }
 
   /**
@@ -700,9 +700,15 @@ const AppStateProvider: React.FC = ({ children }) => {
     setIsAllocationReserved(false);
   }
 
+  const clearStreams = () => {
+    setStreamList([]);
+    setStreamListv2([]);
+    setStreamListv1([]);
+  }
+
   const resetStreamsState = () => {
     setStreamList([]);
-    setStreamActivity([]);
+    setStreamActivity(undefined);
     setStreamDetail(undefined);
     setActiveStream(undefined);
     setLoadingStreamActivity(false);
@@ -750,9 +756,6 @@ const AppStateProvider: React.FC = ({ children }) => {
             setActiveStream(detail);
             if (dock) {
               setStreamList([detail]);
-              setStreamActivity([]);
-              setHasMoreStreamActivity(true);
-              getStreamActivity(streamId, detail.version, true);
               setCustomStreamDocked(true);
               openNotification({
                 description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
@@ -804,6 +807,11 @@ const AppStateProvider: React.FC = ({ children }) => {
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
 
+      if (clearHistory) {
+        setStreamActivity(undefined);
+        setHasMoreStreamActivity(true);
+      }
+
       if (version < 2) {
         ms.listStreamActivity(streamPublicKey)
           .then(value => {
@@ -812,7 +820,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           })
           .catch(err => {
             console.error(err);
-            setStreamActivity([]);
+            setStreamActivity(undefined);
           })
           .finally(() => {
             setHasMoreStreamActivity(false);
@@ -845,7 +853,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           })
           .catch(err => {
             console.error(err);
-            setStreamActivity([]);
+            setStreamActivity(undefined);
             setHasMoreStreamActivity(false);
           })
           .finally(() => setLoadingStreamActivity(false));
@@ -868,21 +876,12 @@ const AppStateProvider: React.FC = ({ children }) => {
         .then((detail: Stream | StreamInfo) => {
           consoleOut('detail:', detail, 'blue');
           if (detail) {
-            setStreamActivity([]);
-            setHasMoreStreamActivity(true);
-            getStreamActivity(detail.id as string, detail.version, true);
             updateStreamDetail(detail);
             setActiveStream(detail);
-            if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-              const token = getTokenByMintAddress(detail.associatedToken as string);
-              setSelectedToken(token);
-            }
           }
         })
         .catch((error: any) => {
           console.error(error);
-          setStreamActivity([]);
-          setHasMoreStreamActivity(false);
         });
     }
   }
@@ -976,8 +975,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       pricesNewPerformanceCounter.stop();
       consoleOut(`Fetched price list in ${pricesNewPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
       if (newPrices && newPrices.length > 0) {
-        // const pricesMap = new Map<string, number>();
-        // newPrices.forEach(tp => pricesMap.set(tp.symbol, tp.price));
         const pricesMap: any = {};
         newPrices.forEach(tp => pricesMap[tp.symbol] = tp.price);
         const solPrice = pricesMap["SOL"];
@@ -1091,24 +1088,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     setContractName
   ]);
 
-  /*
-  // Get Raydium LP token list
-  useEffect(() => {
-    if (!raydiumLps && shouldLoadRaydiumLps) {
-      // getRaydiumLiquidityPools()
-      getRaydiumLpPairs()
-      .then(result => {
-        // consoleOut('Raydium official LPs:', result.official, 'blue');
-        // result.official
-        // result.unOfficial
-        consoleOut('Raydium pairs:', result, 'blue');
-        setRaydiumLps(result);
-      })
-      .finally(() => setShouldLoadRaydiumLps(false));
-    }
-  }, [raydiumLps, shouldLoadRaydiumLps]);
-  */
-
   // Cache selected DDCA frequency option
   const ddcaOptFromCache = useMemo(
     () => DDCA_FREQUENCY_OPTIONS.find(({ name }) => name === ddcaOptionName),
@@ -1193,14 +1172,14 @@ const AppStateProvider: React.FC = ({ children }) => {
             rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
             streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
             // Sort debugging block
-            if (!isProd()) {
-              const debugTable: any[] = [];
-              streamAccumulator.forEach(item => debugTable.push({
-                createdBlockTime: item.createdBlockTime,
-                name: item.version < 2 ? item.streamName : item.name.trim(),
-              }));
-              console.table(debugTable);
-            }
+            // if (!isProd()) {
+            //   const debugTable: any[] = [];
+            //   streamAccumulator.forEach(item => debugTable.push({
+            //     createdBlockTime: item.createdBlockTime,
+            //     name: item.version < 2 ? item.streamName : item.name.trim(),
+            //   }));
+            //   console.table(debugTable);
+            // }
             // End of debugging block
             setStreamList(streamAccumulator);
             setStreamListv2(rawStreamsv2);
@@ -1236,47 +1215,25 @@ const AppStateProvider: React.FC = ({ children }) => {
               .then((detail: Stream | StreamInfo) => {
                 streamDetailPerformanceCounter.stop();
                 refreshStreamsPerformanceCounter.stop();
-                if (!isProd()) {
-                  consoleOut('listStreams performance counter:', '', 'crimson');
-                  const results = [{
-                    v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                    v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                    streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                    total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                  }];
-                  console.table(results);
-                }
+                // if (!isProd()) {
+                //   consoleOut('listStreams performance counter:', '', 'crimson');
+                //   const results = [{
+                //     v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //     v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //     streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //     total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //   }];
+                //   console.table(results);
+                // }
                 if (detail) {
                   updateStreamDetail(detail);
                   setActiveStream(detail);
-                  if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-                    const token = getTokenByMintAddress(detail.associatedToken as string);
-                    setSelectedToken(token);
-                  }
-                  setTimeout(() => {
-                    setStreamActivity([]);
-                    setHasMoreStreamActivity(true);
-                    setLoadingStreamActivity(true);
-                  });
-                  getStreamActivity(detail.id as string, detail.version, true);
                 } else if (item) {
                   updateStreamDetail(item);
                   setActiveStream(item);
-                  if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-                    const token = getTokenByMintAddress(item.associatedToken as string);
-                    setSelectedToken(token);
-                  }
-                  setTimeout(() => {
-                    setStreamActivity([]);
-                    setHasMoreStreamActivity(true);
-                    setLoadingStreamActivity(true);
-                  });
-                  getStreamActivity(item.id as string, item.version, true);
                 }
               })
             } else {
-              setStreamActivity([]);
-              setHasMoreStreamActivity(false);
               updateSelectedStream(undefined);
               updateStreamDetail(undefined);
               setActiveStream(undefined);
@@ -1301,12 +1258,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     accountAddress,
     loadingStreams,
     selectedStream,
-    location.pathname,
     customStreamDocked,
     highLightableStreamId,
     clearTxConfirmationContext,
-    getTokenByMintAddress,
-    getStreamActivity
   ]);
 
 
@@ -1516,7 +1470,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         refreshInterval,
         isWhitelisted,
         isInBetaTestingProgram,
-        detailsPanelOpen,
         shouldLoadTokens,
         isDepositOptionsModalVisible,
         tokenList,
@@ -1527,7 +1480,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         effectiveRate,
         coinPrices,
         loadingPrices,
-        raydiumLps,
         contract,
         ddcaOption,
         treasuryOption,
@@ -1585,9 +1537,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         unstakedAmount,
         unstakeStartDate,
         stakingMultiplier,
+        previousRoute,
         setTheme,
         setTpsAvg,
-        setDtailsPanelOpen,
         setShouldLoadTokens,
         showDepositOptionsModal,
         hideDepositOptionsModal,
@@ -1605,6 +1557,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         refreshTokenBalance,
         resetContractValues,
         resetStreamsState,
+        clearStreams,
         refreshStreamList,
         setContract,
         setDdcaOption,
@@ -1630,6 +1583,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPrograms,
         setMultisigTxs,
         setSelectedStream,
+        setActiveStream,
         setStreamDetail,
         setDeletedStream,
         setHighLightableStreamId,
@@ -1652,7 +1606,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setStakedAmount,
         setUnstakedAmount,
         setUnstakeStartDate,
-        setStakingMultiplier
+        setStakingMultiplier,
+        setPreviousRoute,
       }}>
       {children}
     </AppStateContext.Provider>

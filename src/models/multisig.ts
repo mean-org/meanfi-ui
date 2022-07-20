@@ -52,8 +52,8 @@ export type MultisigTransactionDetail = {
   expirationDate: Date | undefined
 }
 
-export interface MultisigTransactionWithId {
-  multisigId: string;
+export interface MultisigProposalsWithAuthority {
+  multisigAuth: string;
   transactions: MultisigTransaction[];
 }
 
@@ -259,6 +259,9 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
       break;
     case OperationType.StreamWithdraw:
       ix = programIdl.instructions.filter(ix => ix.name === "withdraw")[0];
+      break;
+    case OperationType.StreamTransferBeneficiary:
+      ix = programIdl.instructions.filter(ix => ix.name === "transferStream")[0];
       break;
     // CREDIX
     case OperationType.CredixDepositFunds:

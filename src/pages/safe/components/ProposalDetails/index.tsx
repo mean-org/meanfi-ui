@@ -1,7 +1,6 @@
 import './style.scss';
 import { Button, Col, Row, Tooltip } from "antd"
 import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus, IconThumbsDown } from "../../../../Icons"
-
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
 import { useTranslation } from 'react-i18next';
@@ -10,9 +9,9 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { consoleOut, copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigParticipant, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { useWallet } from '../../../../contexts/wallet';
-import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, NATIVE_LOADER, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
+import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { Idl } from '@project-serum/anchor';
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
@@ -23,23 +22,24 @@ import { RejectCancelModal } from '../../../../components/RejectCancelModal';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { IDL as SplTokenIdl } from '@project-serum/anchor/dist/cjs/spl/token';
+import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 
 export const ProposalDetailsView = (props: {
+  appsProvider?: any;
+  connection?: any;
+  hasMultisigPendingProposal?: boolean;
   isBusy: boolean;
+  loadingData: boolean;
+  multisigClient?: MeanMultisig | undefined;
   onDataToSafeView: any;
+  onOperationStarted: any;
+  onProposalApprove?: any;
+  onProposalCancel?: any;
+  onProposalExecute?: any;
+  onProposalReject?: any;
   proposalSelected?: any;
   selectedMultisig?: any;
-  onProposalApprove?: any;
-  onProposalReject?: any;
-  onProposalExecute?: any;
-  onProposalCancel?: any;
-  connection?: any;
   solanaApps?: any;
-  appsProvider?: any;
-  onOperationStarted: any;
-  multisigClient?: MeanMultisig | undefined;
-  hasMultisigPendingProposal?: boolean;
-  
 }) => {
 
   const {
@@ -49,28 +49,31 @@ export const ProposalDetailsView = (props: {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const {
-    isBusy,
-    connection,
-    solanaApps,
     appsProvider,
+    connection,
+    hasMultisigPendingProposal,
+    isBusy,
+    loadingData,
     multisigClient, 
     onDataToSafeView, 
+    onOperationStarted,
+    onProposalApprove,
+    onProposalCancel,
+    onProposalExecute,
+    onProposalReject,
     proposalSelected, 
     selectedMultisig, 
-    onProposalApprove,
-    onProposalReject,
-    onProposalExecute,
-    onProposalCancel,
-    onOperationStarted,
-    hasMultisigPendingProposal,
+    solanaApps,
   } = props;
+  const { confirmationHistory } = useContext(TxConfirmationContext);
 
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedProposalIdl, setSelectedProposalIdl] = useState<Idl | undefined>();
   const [proposalIxInfo, setProposalIxInfo] = useState<MultisigTransactionInstructionInfo | null>(null);
   const [proposalActivity, setProposalActivity] = useState<MultisigTransactionActivityItem[]>([]);
-  const [loadingActivity, setLoadingActivity] = useState<boolean>(true);
+  const [needReloadActivity, setNeedReloadActivity] = useState<boolean>(false);
+  const [loadingActivity, setLoadingActivity] = useState<boolean>(false);
 
   const [isCancelRejectModalVisible, setIsCancelRejectModalVisible] = useState(false);
 
@@ -89,6 +92,15 @@ export const ProposalDetailsView = (props: {
     onOperationStarted(operation)
     onProposalCancel(operation);
   };
+
+  // Determine if the ExecuteTransaction operation is in progress by searching
+  // into the confirmation history
+  const isExecutionPendingConfirmation = useCallback(() => {
+    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
+
+    return confirmationHistory.some(h => h.operationType === OperationType.ExecuteTransaction && h.txInfoFetchStatus === "fetching");
+
+  }, [confirmationHistory]);
 
   useEffect(() => {
     if (transactionStatus.currentOperation === TransactionStatus.ConfirmTransaction) {
@@ -109,7 +121,7 @@ export const ProposalDetailsView = (props: {
 
   useEffect(() => {
 
-    if (!selectedMultisig || !solanaApps || !appsProvider || !selectedProposal) { return; }
+    if (!selectedMultisig || !solanaApps || !appsProvider || !proposalSelected || !selectedProposal) { return; }
 
     const timeout = setTimeout(() => {
 
@@ -157,8 +169,11 @@ export const ProposalDetailsView = (props: {
 
   useEffect(() => {
 
-    const loading = selectedProposal ? true : false;
-    const timeout = setTimeout(() => setLoadingActivity(loading));
+    const timeout = setTimeout(() => {
+      if (selectedProposal) {
+        setNeedReloadActivity(true);
+      }
+    });
 
     return () => {
       clearTimeout(timeout);
@@ -171,9 +186,11 @@ export const ProposalDetailsView = (props: {
   // Get transaction proposal activity
   useEffect(() => {
 
-    if (!multisigClient || !selectedProposal || !loadingActivity) { return; }
+    if (!multisigClient || !selectedProposal || !needReloadActivity) { return; }
 
     const timeout = setTimeout(() => {
+      setNeedReloadActivity(false);
+      setLoadingActivity(true);
       multisigClient
         .getMultisigTransactionActivity(selectedProposal.id)
         .then((activity: MultisigTransactionActivityItem[]) => {
@@ -189,9 +206,9 @@ export const ProposalDetailsView = (props: {
     }
 
   }, [
-    loadingActivity, 
-    multisigClient, 
-    selectedProposal
+    multisigClient,
+    selectedProposal,
+    needReloadActivity,
   ])
 
   // const isUnderDevelopment = () => {
@@ -383,7 +400,7 @@ export const ProposalDetailsView = (props: {
             return (
               <div 
                 key={`${activity.index + 1}`}
-                className={`d-flex w-100 align-items-center activities-list ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                className={`d-flex w-100 align-items-center activities-list mr-1 pr-4 ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                 >
                   <div className="resume-item-container">
                     <span className="mr-2">
@@ -440,6 +457,7 @@ export const ProposalDetailsView = (props: {
         selectedProposal.operation !== OperationType.SetMultisigAuthority &&
         selectedProposal.operation !== OperationType.SetAssetAuthority &&
         selectedProposal.operation !== OperationType.DeleteAsset &&
+        selectedProposal.operation !== OperationType.StreamTransferBeneficiary &&
         selectedProposal.operation !== OperationType.CredixDepositFunds &&
         selectedProposal.operation !== OperationType.CredixWithdrawFunds) {
       return false;
@@ -463,7 +481,7 @@ export const ProposalDetailsView = (props: {
   const rejectedSigners = selectedProposal.signers.filter((s: any) => s === false).length;
   const expirationDate = selectedProposal.details.expirationDate ? new Date(selectedProposal.details.expirationDate) : "";
   const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : "";
-  const proposedBy = selectedMultisig.owners.find((owner: any) => owner.address === selectedProposal.proposer?.toBase58());
+  const proposedBy = (selectedMultisig.owners as MultisigParticipant[]).find((owner: MultisigParticipant) => owner.address === selectedProposal.proposer?.toBase58());
   const neededSigners = () => { return selectedMultisig.threshold - approvedSigners; };
   const resume = (selectedProposal.status === 0 && neededSigners() > 0) && `Needs ${neededSigners()} ${neededSigners() > 1 ? "approvals" : "approval"} to pass`;
 
@@ -489,6 +507,7 @@ export const ProposalDetailsView = (props: {
           resume={resume}
           isDetailsPanel={true}
           isLink={false}
+          classNameRightContent="resume-right-content"
         />
         {selectedProposal.details.description && (
           <Row className="safe-details-description pl-1">
@@ -505,7 +524,7 @@ export const ProposalDetailsView = (props: {
                   <div className="proposal-resume-left-text">
                     <div className="info-label">Pending execution by</div>
                     {publicKey && (
-                      <span>{proposedBy.name ? proposedBy.name : shortenAddress(publicKey.toBase58(), 4)}</span>
+                      <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(publicKey.toBase58(), 4)}</span>
                     )}
                   </div>
                 </Col>
@@ -514,7 +533,7 @@ export const ProposalDetailsView = (props: {
                   <IconUserClock className="user-image mean-svg-icons bg-yellow" />
                   <div className="proposal-resume-left-text">
                     <div className="info-label">Pending execution by</div>
-                    <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                    <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                   </div>
                 </Col>
               )
@@ -523,7 +542,7 @@ export const ProposalDetailsView = (props: {
                 <IconLightning className="user-image mean-svg-icons bg-green" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Executed by</div>
-                  <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                 </div>
               </Col>
             ) : (
@@ -531,7 +550,7 @@ export const ProposalDetailsView = (props: {
                 <IconUser className="user-image mean-svg-icons" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Proposed by</div>
-                  <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                 </div>
               </Col>
             )}
@@ -642,9 +661,10 @@ export const ProposalDetailsView = (props: {
                     className="thin-stroke d-flex justify-content-center align-items-center"
                     disabled={
                       hasMultisigPendingProposal || 
-                      (
-                        !isProposer && !anyoneCanExecuteTx()
-                      )
+                      (!isProposer && !anyoneCanExecuteTx()) ||
+                      isBusy ||
+                      isExecutionPendingConfirmation() ||
+                      loadingData
                     }
                     onClick={() => {
                       const operation = { transaction: selectedProposal }
@@ -662,7 +682,12 @@ export const ProposalDetailsView = (props: {
                         shape="round"
                         size="small"
                         className="thin-stroke d-flex justify-content-center align-items-center"
-                        disabled={hasMultisigPendingProposal}
+                        disabled={
+                          hasMultisigPendingProposal ||
+                          isBusy ||
+                          isExecutionPendingConfirmation() ||
+                          loadingData
+                        }
                         onClick={() => setIsCancelRejectModalVisible(true)}>
                           <div className="btn-content">
                             Cancel

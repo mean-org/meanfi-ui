@@ -8,7 +8,7 @@ import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '.
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
-import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
@@ -71,7 +71,7 @@ export const UnwrapSolModal = (props: {
     if (wSol) {
       const bareAmount = cutNumber(amount, wSol.decimals);
       if (addSymbol) {
-        return wSol.name === 'Unknown' ? `${bareAmount} [${wSol.symbol}]` : `${bareAmount} ${wSol.symbol}`;
+        return wSol.name === CUSTOM_TOKEN_NAME ? `${bareAmount} [${wSol.symbol}]` : `${bareAmount} ${wSol.symbol}`;
       }
       return bareAmount;
     }
@@ -210,6 +210,17 @@ export const UnwrapSolModal = (props: {
       setPageInitialized(true);
     }
   }, [connection, pageInitialized, publicKey]);
+
+  // Unsubscribe from events
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onUnwrapConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      setPageInitialized(false);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Events and actions
 

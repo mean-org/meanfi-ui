@@ -13,9 +13,9 @@ import {
   TransactionInstruction,
   TransactionSignature
 } from "@solana/web3.js";
-import { INPUT_AMOUNT_PATTERN, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
+import { CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
+import { consoleOut, getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
 import { NATIVE_SOL } from './tokens';
@@ -136,11 +136,14 @@ export const formatUSD = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-export const numberFormatter = new Intl.NumberFormat("en-US", {
-  style: "decimal",
-  minimumFractionDigits: 4,
-  maximumFractionDigits: 9,
-});
+export const formatPercent = (val: number, maxDecimals?: number) => {
+  const convertedVlue = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals || 0
+  });
+
+  return convertedVlue.format(val);
+}
 
 export const isSmallNumber = (val: number) => {
   return val < 0.001 && val > 0;
@@ -185,6 +188,11 @@ export function convert(
 export function isValidNumber(str: string): boolean {
   if (str === null || str === undefined ) { return false; }
   return INPUT_AMOUNT_PATTERN.test(str);
+}
+
+export function isValidInteger(str: string): boolean {
+  if (str === null || str === undefined ) { return false; }
+  return INTEGER_INPUT_AMOUNT_PATTERN.test(str);
 }
 
 /**
@@ -289,7 +297,7 @@ export const getTokenAmountAndSymbolByTokenAddress = (
     // TODO: Fair assumption but we should be able to work with either an address or a TokenInfo param
     const unkToken: TokenInfo = {
       address: address,
-      name: 'Unknown',
+      name: CUSTOM_TOKEN_NAME,
       chainId: 101,
       decimals: 6,
       symbol: shortenAddress(address),
@@ -631,4 +639,36 @@ export const openLinkInNewTab = (address: string) => {
 
 export const tabNameFormat = (str: string) => {
   return str.toLowerCase().split(' ').join('_');
+}
+
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    // eslint-disable-next-line no-useless-escape
+    .replace(/[\~\!\@\#\$\%\^\&\*\(\)\-\_\=\+\]\[\}\{\'\"\;\\\:\?\/\>\<\.\,]+/g, '-')
+    .replace(/ +/g, '-');
+}
+
+/**
+ * Flatten a multidimensional object
+ *
+ * For example:
+ *   flattenObject{ a: 1, b: { c: 2 } }
+ * Returns:
+ *   { a: 1, c: 2}
+ */
+ export const flattenObject = (obj: any) => {
+  const flattened: any = {};
+
+  Object.keys(obj).forEach((key) => {
+    const value = obj[key];
+
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      Object.assign(flattened, flattenObject(value));
+    } else {
+      flattened[key] = value;
+    }
+  })
+
+  return flattened
 }

@@ -11,10 +11,17 @@ export interface TreasuryTypeOption {
 export type StreamTreasuryType = "open" | "locked" | "unknown";
 
 export interface TreasuryCreateOptions {
+    treasuryTitle: string;
     treasuryName: string;
     treasuryType: TreasuryType;
     multisigId: string;
     token: TokenInfo;
+}
+
+export interface CloseStreamTransactionParams {
+    payer: string;
+    stream: string;
+    closeTreasury: boolean;
 }
 
 export interface UserTreasuriesSummary {

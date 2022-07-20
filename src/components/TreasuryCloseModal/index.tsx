@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
@@ -11,6 +11,8 @@ import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { Treasury } from '@mean-dao/msp';
 import { AppStateContext } from '../../contexts/appstate';
+import { useSearchParams } from 'react-router-dom';
+import { InputMean } from '../InputMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -27,11 +29,13 @@ export const TreasuryCloseModal = (props: {
   isBusy: boolean;
 }) => {
   const { t } = useTranslation('common');
+  const [searchParams] = useSearchParams();
   const {
     transactionStatus
   } = useContext(AppStateContext);
   // const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
+  const [multisigTitle, setMultisigTitle] = useState('');
 
   // const isUserTreasurer = (): boolean => {
   //   if (publicKey && props.treasuryDetails) {
@@ -43,11 +47,18 @@ export const TreasuryCloseModal = (props: {
   // }
 
   const onAcceptModal = () => {
-    props.handleOk();
+    props.handleOk(multisigTitle);
+    setTimeout(() => {
+      setMultisigTitle('');
+    }, 50);
   }
 
   const onCloseModal = () => {
     props.handleClose();
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setMultisigTitle(e.target.value);
   }
 
   // Preset fee amount
@@ -60,25 +71,29 @@ export const TreasuryCloseModal = (props: {
     props.transactionFees
   ]);
 
-  // const isError = (): boolean => {
-  //   return  props.transactionStatus === TransactionStatus.TransactionStartFailure ||
-  //           props.transactionStatus === TransactionStatus.InitTransactionFailure ||
-  //           props.transactionStatus === TransactionStatus.SignTransactionFailure ||
-  //           props.transactionStatus === TransactionStatus.SendTransactionFailure
-  //           ? true
-  //           : false;
-  // }
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
 
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('treasuries.close-account.modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Propose close account" : t('treasuries.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+      width={380}>
 
       <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
@@ -86,6 +101,21 @@ export const TreasuryCloseModal = (props: {
             <div className="mb-3 text-center">
               <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3" />
               <h4 className="mb-4">{props.content}</h4>
+
+              {/* Proposal title */}
+              {param === "multisig" && (
+                <div className="mb-3">
+                  <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+                  <InputMean
+                    id="proposal-title-field"
+                    name="Title"
+                    className="w-100 general-text-input"
+                    onChange={onTitleInputValueChange}
+                    placeholder="Add a proposal title (required)"
+                    value={multisigTitle}
+                  />
+                </div>
+              )}
             </div>
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
@@ -171,7 +201,7 @@ export const TreasuryCloseModal = (props: {
                   block
                   type="primary"
                   shape="round"
-                  onClick={props.handleOk}>
+                  onClick={() => onAcceptModal()}>
                   {props.isBusy && (
                     <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                   )}
@@ -179,7 +209,7 @@ export const TreasuryCloseModal = (props: {
                     ? t('treasuries.close-account.cta-close-busy')
                     : isError(transactionStatus.currentOperation)
                       ? t('general.retry')
-                      : t('treasuries.close-account.cta-close')
+                      : (param === "multisig" ? "Submit proposal" : t('treasuries.close-account.cta-close'))
                   }
                 </Button>
               </div>

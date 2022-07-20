@@ -1,0 +1,75 @@
+.stream-detail-component {
+  .details-item {
+    line-height: 2.2;
+  }
+  > .transaction-list-row {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    .description-cell {
+      padding-left: 8px;
+      .title {
+        line-height: 1;
+        .badge.small {
+          vertical-align: 2px;
+        }
+      }
+      .subtitle {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        margin-top: 4px;
+        flex-wrap: wrap;
+      }
+    }
+  }
+  .transaction-detail-row {
+    .info-data {
+      color: var(--text-color);
+      font-weight: 700;
+    }
+  }
+  .stream-activity-list {
+    .transaction-list-row {
+      border-radius: 0;
+      .icon-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: 0 0 30px;
+        width: 30px;
+        padding-right: 4px;
+        color: var(--color-secondary-alpha-85);
+        .mean-svg-icons {
+          width: auto;
+          height: auto;
+        }
+      }
+      .description-cell {
+        flex: 1 1 auto !important;
+        display: grid;
+        padding: 0 10px 0 5px;
+        .title {
+          font-size: 13px;
+          line-height: 1.3;
+        }
+      }
+      .rate-cell {
+        flex: 0 0 auto !important;
+        .rate-amount {
+          font-size: 13px;
+        }
+      }
+      .actions-cell {
+        width: 30px;
+        flex: 0 0 30px;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        color: var(--color-secondary-alpha-85);
+        padding-left: 4px;
+      }
+    }
+  }
+}

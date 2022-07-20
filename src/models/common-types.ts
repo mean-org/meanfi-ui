@@ -1,5 +1,12 @@
-import { AllocationType } from "@mean-dao/money-streaming";
+import { AllocationType } from "@mean-dao/msp";
+import { MetaInfoCtaAction } from "./enums";
 import { StreamTreasuryType } from "./treasuries";
+
+export interface RoutingInfo {
+    key: string;
+    path: string;
+    parent: string;
+}
 
 export interface SelectOption {
     key: number;
@@ -14,6 +21,7 @@ export interface TreasuryTopupParams {
     allocationType: AllocationType;
     streamId: string;
     associatedToken: string;
+    treasuryId?: string;
 }
 
 export interface StreamTopupParams {
@@ -21,6 +29,15 @@ export interface StreamTopupParams {
     tokenAmount: any;
     treasuryType: StreamTreasuryType | undefined;
     fundFromTreasury: boolean;
+    associatedToken: string;
+}
+
+export interface StreamTopupTxCreateParams {
+    payer: string;
+    contributor: string;
+    treasury: string;
+    stream: string;
+    amount: any;
     associatedToken: string;
 }
 
@@ -35,4 +52,23 @@ export class Allocation {
     cliffPercent!: number;
     monthlyRate!: number;
     isAirdropCompleted!: boolean;
+}
+
+export interface MetaInfoCta {
+    action: MetaInfoCtaAction;
+    isVisible: boolean;
+    disabled: boolean;
+    caption: string;
+    uiComponentType: "button" | "menuitem";
+    uiComponentId: string;
+    tooltip: string;
+    callBack?: any;
+}
+
+export type TimeData = {
+    total: number;
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
 }

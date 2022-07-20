@@ -1,9 +1,11 @@
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
+import { RightInfoDetails } from "../../../../../components/RightInfoDetails";
 import { TabsMean } from "../../../../../components/TabsMean";
 import { AppStateContext } from "../../../../../contexts/appstate";
 import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
@@ -12,18 +14,34 @@ import { NATIVE_SOL } from "../../../../../utils/tokens";
 import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
 import { shortenAddress } from "../../../../../utils/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
+import { VESTING_ROUTE_BASE_PATH } from "../../../../vesting";
 
 export const SafeInfo = (props: {
-  selectedMultisig?: any;
+  isTxInProgress?: any;
+  onEditMultisigClick?: any;
+  onNavigateAway: any;
+  onNewProposalMultisigClick?: any;
+  onRefreshTabsInfo?: any;
   safeNameImg?: string;
   safeNameImgAlt?: string;
-  onNewProposalMultisigClick?: any;
-  onEditMultisigClick?: any;
-  onRefreshTabsInfo?: any;
-  tabs?: Array<any>;
+  selectedMultisig?: MultisigInfo;
   selectedTab?: any;
-  isTxInProgress?: any;
+  tabs?: Array<any>;
+  vestingAccountsCount: number;
 }) => {
+  const {
+    isTxInProgress,
+    onEditMultisigClick,
+    onNavigateAway,
+    onNewProposalMultisigClick,
+    onRefreshTabsInfo,
+    safeNameImg,
+    safeNameImgAlt,
+    selectedMultisig,
+    selectedTab,
+    tabs,
+    vestingAccountsCount,
+  } = props;
   const {
     coinPrices,
     splTokenList,
@@ -34,49 +52,44 @@ export const SafeInfo = (props: {
     setTotalSafeBalance,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
-
-  const { selectedMultisig, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onEditMultisigClick, onRefreshTabsInfo, tabs, selectedTab, isTxInProgress } = props;
-
-  // const { t } = useTranslation('common');
   const navigate = useNavigate();
-
   const [selectedLabelName, setSelectedLabelName] = useState("");
-  // const [totalSafeBalance, setTotalSafeBalance] = useState<number>(0);
 
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
   }
-  
+
   // Safe Name
   useEffect(() => {
-    (selectedMultisig.label) ? (
-      setSelectedLabelName(selectedMultisig.label)
-    ) : (
-      setSelectedLabelName(shortenAddress(selectedMultisig.id.toBase58(), 4))
-    )
-  }, [selectedMultisig.id, selectedMultisig.label]);
+    if (selectedMultisig) {
+      if (selectedMultisig.label) {
+        setSelectedLabelName(selectedMultisig.label)
+      } else {
+        setSelectedLabelName(shortenAddress(selectedMultisig.id.toBase58(), 4))
+      }
+    }
+  }, [selectedMultisig]);
 
   const renderSafeName = (
-      <Row className="d-flex align-items-center">
-        {(safeNameImg && safeNameImgAlt) && (
-          <Tooltip placement="rightTop" title="Serum Multisig">
-            <img src={safeNameImg} alt={safeNameImgAlt} width={16} height={16} className="simplelink mr-1" />
-          </Tooltip>
-        )}
-        <div>{selectedLabelName}</div>
-      </Row>
+    <Row className="d-flex align-items-center">
+      {(safeNameImg && safeNameImgAlt) && (
+        <Tooltip placement="rightTop" title="Serum Multisig">
+          <img src={safeNameImg} alt={safeNameImgAlt} width={16} height={16} className="simplelink mr-1" />
+        </Tooltip>
+      )}
+      <div>{selectedLabelName}</div>
+    </Row>
   );
 
   // Security
   const renderSecurity = (
     <>
       <span>Security</span>
-      <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig.owners || []} />
+      <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig ? selectedMultisig.owners : []} />
     </>
   );
   
   // Safe Balance
-  // const [safeAssetsAmount, setSafeAssetsAmount] = useState<any>();
   const [assetsAmout, setAssetsAmount] = useState<string>();
 
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
@@ -165,11 +178,11 @@ export const SafeInfo = (props: {
       </>
     )
   );
-    
+
   // Deposit Address
   const renderDepositAddress = (
     <CopyExtLinkGroup
-      content={selectedMultisig.authority.toBase58()}
+      content={selectedMultisig ? selectedMultisig.authority.toBase58() : ''}
       number={4}
       externalLink={true}
     />
@@ -194,10 +207,20 @@ export const SafeInfo = (props: {
     }
   ];
 
-  // View assets
+  // View account
   const onGoToAccounts = () => {
-    navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/assets?account-type=multisig
-    `);
+    if (selectedMultisig) {
+      onNavigateAway();
+      navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/assets?account-type=multisig`);
+    }
+  }
+
+  // Go to vesting
+  const goToVesting = () => {
+    if (selectedMultisig) {
+      onNavigateAway();
+      navigate(`${VESTING_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/contracts?account-type=multisig`);
+    }
   }
 
   // Dropdown (three dots button)
@@ -219,20 +242,9 @@ export const SafeInfo = (props: {
 
   return (
     <>
-      <Row gutter={[8, 8]} className="safe-info-container">
-        {infoSafeData.map((info, index) => (
-          <Col xs={12} sm={12} md={12} lg={12} key={index}>
-            <div className="info-safe-group">
-              <span className="info-label">
-                {info.name}
-              </span>
-              <span className="info-data">
-                {info.value}
-              </span>
-            </div>
-          </Col>
-        ))}
-      </Row>
+      <RightInfoDetails
+        infoData={infoSafeData}
+      /> 
 
       <Row gutter={[8, 8]} className="safe-btns-container mb-1">
         <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
@@ -255,9 +267,23 @@ export const SafeInfo = (props: {
             disabled={isTxInProgress()}
             onClick={onGoToAccounts}>
               <div className="btn-content">
-                View assets
+                View account
               </div>
           </Button>
+
+          {vestingAccountsCount > 0 && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={() => goToVesting()}>
+                <div className="btn-content">
+                  Vesting
+                </div>
+            </Button>
+          )}
+
         </Col>
         
         <Col xs={4} sm={6} md={4} lg={6}>

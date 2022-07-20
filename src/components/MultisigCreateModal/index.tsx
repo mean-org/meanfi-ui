@@ -185,7 +185,7 @@ export const MultisigCreateModal = (props: {
             <div className="mb-3">
               <div className="form-label icon-label">
                 {t('multisig.create-multisig.multisig-threshold-input-label')}
-                <Tooltip placement="top" title={t("multisig.create-multisig.multisig-threshold-question-mark-tooltip")}>
+                <Tooltip placement="bottom" title={t("multisig.create-multisig.multisig-threshold-question-mark-tooltip")}>
                   <span>
                     <IconHelpCircle className="mean-svg-icons" />
                   </span>

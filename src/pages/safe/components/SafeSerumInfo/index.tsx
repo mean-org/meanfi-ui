@@ -4,7 +4,6 @@ import { Button, Col, Row } from "antd"
 import { IconArrowForward } from "../../../../Icons"
 // import { shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
-import { ResumeItem } from '../UI/ResumeItem';
 // import { MultisigVault } from '../../../../models/multisig';
 import { Idl, Program } from '@project-serum/anchor';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
@@ -12,6 +11,7 @@ import { ProgramAccounts } from '../../../../utils/accounts';
 import { consoleOut } from '../../../../utils/ui';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../../../contexts/appstate';
+import { ResumeItem } from '../../../../components/ResumeItem';
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;
@@ -20,14 +20,14 @@ export const SafeSerumInfoView = (props: {
   isAssetDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
-  // onDataToAssetView: any;
+  onNavigateAway: any;
   selectedMultisig?: any;
   onEditMultisigClick: any;
   onNewProposalMultisigClick: any;
   // multisigVaults: MultisigVault[];
   multisigClient: Program<Idl>;
   multisigTxs: MultisigTransaction[];
-
+  vestingAccountsCount: number;
 }) => {
   const { 
     connection,
@@ -35,9 +35,10 @@ export const SafeSerumInfoView = (props: {
     selectedMultisig, 
     onEditMultisigClick, 
     onNewProposalMultisigClick,
-    // onDataToAssetView,
+    onNavigateAway,
     // multisigClient,
-    multisigTxs
+    multisigTxs,
+    vestingAccountsCount,
   } = props;
 
   const {
@@ -60,6 +61,8 @@ export const SafeSerumInfoView = (props: {
             props.onDataToSafeView(tx);
           };
 
+          const title = tx.details.title ? tx.details.title : "Unknown proposal";
+
           const approvedSigners = tx.signers.filter((s: any) => s === true).length;
           const expirationDate = tx.details.expirationDate ? tx.details.expirationDate.toDateString() : "";
           const executedOnDate = tx.executedOn ? tx.executedOn.toDateString() : "";
@@ -68,18 +71,18 @@ export const SafeSerumInfoView = (props: {
             <div 
               key={tx.id.toBase58()}
               onClick={onSelectProposal}
-              className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ResumeItem
                   id={tx.id.toBase58()}
                   // src={proposal.src}
-                  title={tx.details.title}
+                  title={title}
                   expires={expirationDate}
                   executedOn={executedOnDate}
                   approved={approvedSigners}
                   status={tx.status}
-                  isProposalDetails={isProposalDetails}
                   rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                  isLink={true}
                 />
             </div>
           )
@@ -298,14 +301,14 @@ export const SafeSerumInfoView = (props: {
   return (
     <>
       <SafeInfo
-        // connection={connection}
-        // solBalance={multisigSolBalance}
-        selectedMultisig={selectedMultisig}
+        onEditMultisigClick={onEditMultisigClick}
+        onNavigateAway={onNavigateAway}
+        onNewProposalMultisigClick={onNewProposalMultisigClick}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}
-        onNewProposalMultisigClick={onNewProposalMultisigClick}
-        onEditMultisigClick={onEditMultisigClick}
+        selectedMultisig={selectedMultisig}
         tabs={tabs}
+        vestingAccountsCount={vestingAccountsCount}
        />
     </>
   )
