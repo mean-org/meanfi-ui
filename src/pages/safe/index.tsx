@@ -38,7 +38,7 @@ import {
   toUsCurrency
 } from '../../utils/ui';
 
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
+import { MEAN_MULTISIG_ACCOUNT_LAMPORTS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
@@ -78,7 +78,6 @@ import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
-const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const proposalLoadStatusRegister = new Map<string, boolean>();

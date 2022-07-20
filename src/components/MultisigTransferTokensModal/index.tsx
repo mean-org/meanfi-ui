@@ -8,13 +8,12 @@ import { TransactionStatus } from '../../models/enums';
 import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { TransactionFees } from '@mean-dao/money-streaming';
-import { cutNumber, fetchAccountTokens, formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenBySymbol, isValidNumber, shortenAddress } from '../../utils/utils';
+import { cutNumber, fetchAccountTokens, formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../utils/utils';
 import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
-import { MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../constants';
+import { MAX_TOKEN_LIST_ITEMS, MEAN_MULTISIG_ACCOUNT_LAMPORTS, MIN_SOL_BALANCE_REQUIRED } from '../../constants';
 import { UserTokenAccount } from '../../models/transactions';
 import { InputMean } from '../InputMean';
 import { TokenDisplay } from '../TokenDisplay';
@@ -24,7 +23,7 @@ import { NATIVE_SOL } from '../../utils/tokens';
 import { TextInput } from '../TextInput';
 import { TokenListItem } from '../TokenListItem';
 import { environment } from '../../environments/environment';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { MultisigInfo, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 
 // const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -38,7 +37,7 @@ export const MultisigTransferTokensModal = (props: {
   nativeBalance: number;
   selectedMultisig: MultisigInfo | undefined;
   selectedVault: UserTokenAccount | undefined;
-  transactionFees: TransactionFees;
+  transactionFees: MultisigTransactionFees;
 }) => {
   const {
     assets,
@@ -81,6 +80,7 @@ export const MultisigTransferTokensModal = (props: {
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [minRequiredBalance, setMinRequiredBalance] = useState(0);
 
   // Process inputs
   useEffect(() => {
@@ -90,6 +90,15 @@ export const MultisigTransferTokensModal = (props: {
       }
     }
   }, [isVisible, selectedVault]);
+
+  useEffect(() => {
+    if (isVisible && transactionFees) {
+      const totalMultisigFee = transactionFees.multisigFee + (MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL);
+      const minRequired = totalMultisigFee + transactionFees.rentExempt + transactionFees.networkFee;
+      consoleOut('Min required balance:', minRequired, 'blue');
+      setMinRequiredBalance(minRequired);
+    }
+  }, [isVisible, transactionFees]);
 
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback((searchString: string) => {
@@ -692,7 +701,7 @@ export const MultisigTransferTokensModal = (props: {
                         NATIVE_SOL_MINT.toBase58()
                       ),
                       feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                        minRequiredBalance,
                         NATIVE_SOL_MINT.toBase58()
                       )})
                     }

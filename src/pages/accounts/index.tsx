@@ -40,7 +40,8 @@ import {
   WRAPPED_SOL_MINT_ADDRESS,
   ACCOUNTS_LOW_BALANCE_LIMIT,
   NO_FEES,
-  ONE_MINUTE_REFRESH_TIMEOUT
+  ONE_MINUTE_REFRESH_TIMEOUT,
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS
 } from '../../constants';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
@@ -76,11 +77,11 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { closeTokenAccount } from '../../utils/accounts';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { BN } from 'bn.js';
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import SerumIDL from '../../models/serum-multisig-idl';
-import { MultisigParticipant } from '../../models/multisig';
+import { MultisigParticipant, ZERO_FEES } from '../../models/multisig';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -257,6 +258,9 @@ export const AccountsNewView = () => {
   const [netWorth, setNetWorth] = useState(0);
   const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
 
+  const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
+  const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+
 
   // Perform premature redirect here if no address was provided in path
   // to the current wallet address if the user is connected
@@ -300,6 +304,45 @@ export const AccountsNewView = () => {
     disableRetryOnRateLimit: true
   }), [
     endpoint
+  ]);
+
+  /////////////////
+  //  Init code  //
+  /////////////////
+
+  const multisigClient = useMemo(() => {
+    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
+    return new MeanMultisig(
+      connectionConfig.endpoint,
+      publicKey,
+      "confirmed"
+    );
+  }, [
+    connection,
+    publicKey,
+    connectionConfig.endpoint,
+  ]);
+
+  const multisigSerumClient = useMemo(() => {
+
+    const opts: ConfirmOptions = {
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
+      skipPreflight: true,
+      maxRetries: 3
+    };
+
+    const provider = new AnchorProvider(connection, wallet as any, opts);
+
+    return new Program(
+      SerumIDL,
+      "msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt",
+      provider
+    );
+
+  }, [
+    connection, 
+    wallet
   ]);
 
   // Create and cache Money Streaming Program instance
@@ -392,6 +435,20 @@ export const AccountsNewView = () => {
     hideTokenMergerModal,
     resetTransactionStatus,
   ]);
+
+  const getMultisigTxProposalFees = useCallback(() => {
+
+    if (!multisigClient) { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
+      .then(value => {
+        setMultisigTransactionFees(value);
+        consoleOut('multisigTransactionFees:', value, 'orange');
+      });
+
+    resetTransactionStatus();
+
+  }, [multisigClient, resetTransactionStatus]);
 
   // Deposit SPL or SOL modal
   const [isReceiveSplOrSolModalOpen, setIsReceiveSplOrSolModalOpen] = useState(false);
@@ -1113,45 +1170,6 @@ export const AccountsNewView = () => {
     return !selectedAsset.publicAddress ? true : false;
   }, [selectedAsset]);
 
-  /////////////////
-  //  Init code  //
-  /////////////////
-
-  const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
-    return new MeanMultisig(
-      connectionConfig.endpoint,
-      publicKey,
-      "confirmed"
-    );
-  }, [
-    connection,
-    publicKey,
-    connectionConfig.endpoint,
-  ]);
-
-  const multisigSerumClient = useMemo(() => {
-
-    const opts: ConfirmOptions = {
-      preflightCommitment: "confirmed",
-      commitment: "confirmed",
-      skipPreflight: true,
-      maxRetries: 3
-    };
-
-    const provider = new AnchorProvider(connection, wallet as any, opts);
-
-    return new Program(
-      SerumIDL,
-      "msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt",
-      provider
-    );
-
-  }, [
-    connection, 
-    wallet
-  ]);
-
   const parseSerumMultisigAccount = (info: any) => {
 
     return PublicKey
@@ -1646,6 +1664,7 @@ export const AccountsNewView = () => {
   const [isTransferTokenModalVisible, setIsTransferTokenModalVisible] = useState(false);
   const showTransferTokenModal = useCallback(() => {
     setIsTransferTokenModalVisible(true);
+    getMultisigTxProposalFees();
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
@@ -1653,7 +1672,7 @@ export const AccountsNewView = () => {
     };
     resetTransactionStatus();
     setTransactionFees(fees);
-  }, [resetTransactionStatus]);
+  }, [resetTransactionStatus, getMultisigTxProposalFees]);
 
   const onAcceptTransferToken = (params: any) => {
     consoleOut('params', params, 'blue');
@@ -1806,10 +1825,17 @@ export const AccountsNewView = () => {
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
+        consoleOut('networkFee:', multisigTransactionFees.networkFee, 'blue');
+        consoleOut('rentExempt:', multisigTransactionFees.rentExempt, 'blue');
+        const totalMultisigFee = multisigTransactionFees.multisigFee + (MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL);
+        consoleOut('multisigFee:', totalMultisigFee, 'blue');
+        const minRequired = totalMultisigFee + multisigTransactionFees.rentExempt + multisigTransactionFees.networkFee;
+        consoleOut('Min required balance:', minRequired, 'blue');
 
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+        setMinRequiredBalance(minRequired);
+
+        if (nativeBalance < minRequired) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1820,12 +1846,12 @@ export const AccountsNewView = () => {
               getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
               getTokenAmountAndSymbolByTokenAddress(
-                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+                minRequired, 
                 NATIVE_SOL_MINT.toBase58()
               )
             })`
           });
-          customLogger.logWarning('Transfer tokens transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create multisig transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3045,6 +3071,7 @@ export const AccountsNewView = () => {
     setStreamsSummary(initialSummary);
     setCanShowStreamingAccountBalance(false);
   }, [clearStreams, setStreamsSummary]);
+
 
   /////////////////////
   // Data management //
@@ -5535,7 +5562,7 @@ export const AccountsNewView = () => {
         <MultisigTransferTokensModal
           isVisible={isTransferTokenModalVisible}
           nativeBalance={nativeBalance}
-          transactionFees={transactionFees}
+          transactionFees={multisigTransactionFees}
           handleOk={onAcceptTransferToken}
           handleClose={() => {
             onAfterEveryModalClose();
