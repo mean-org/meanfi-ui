@@ -128,6 +128,7 @@ export const SafeView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [transactionFees, setTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   // Multisig accounts
+  const [needReloadMultisigAccounts, setNeedReloadMultisigAccounts] = useState(true);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
@@ -3473,13 +3474,16 @@ export const SafeView = () => {
   ])
   
   useEffect(() => {
-  
-    if (!connection || !publicKey || !multisigClient || !loadingMultisigAccounts) {
+
+    if (!connection || !publicKey || !multisigClient || !needReloadMultisigAccounts) {
       return;
     }
-  
+
     const timeout = setTimeout(() => {
-  
+
+      setNeedReloadMultisigAccounts(false);
+      setLoadingMultisigAccounts(true);
+
       consoleOut('=======================================', '', 'green');
       multisigClient
         .getMultisigs(publicKey)
@@ -3496,11 +3500,11 @@ export const SafeView = () => {
         })
         .finally(() => setLoadingMultisigAccounts(false));
     });
-  
+
     return () => {
       clearTimeout(timeout);
     }
-  
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
@@ -3508,19 +3512,20 @@ export const SafeView = () => {
     multisigClient,
     selectedMultisig,
     highLightableMultisigId,
-    loadingMultisigAccounts,
-    // serumAccounts
+    needReloadMultisigAccounts,
   ]);
 
 
   const refreshMultisigs = useCallback((reset = false) => {
-  
+
     if (!connection || !publicKey || !multisigClient) {
       return;
     }
-  
+
     const timeout = setTimeout(() => {
-      // TODO: Add loading indicator (not now because it gets confused with the useEffect version)
+
+      setLoadingMultisigAccounts(true);
+
       multisigClient
         .getMultisigs(publicKey)
         .then((allInfo: MultisigInfo[]) => {
@@ -3531,7 +3536,6 @@ export const SafeView = () => {
           consoleOut('multisigAccounts:', allAccounts, 'darkorange');
 
           if (reset) {
-            // setSelectedMultisig(allAccounts[0]);
             navigate(`${MULTISIG_ROUTE_BASE_PATH}/${allAccounts[0].authority.toBase58()}?v=proposals`);
           }
         })
@@ -3539,12 +3543,13 @@ export const SafeView = () => {
           console.error(err);
           consoleOut('multisigPendingTxs:', [], 'blue');
         })
+        .finally(() => setLoadingMultisigAccounts(false));
     });
-  
+
     return () => {
       clearTimeout(timeout);
     }
-  
+
   }, [connection, multisigClient, navigate, publicKey, serumAccounts]);
 
   // Load/Unload multisig on wallet connect/disconnect
@@ -3552,7 +3557,7 @@ export const SafeView = () => {
     if (previousWalletConnectState !== connected) {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        setLoadingMultisigAccounts(true);
+        setNeedReloadMultisigAccounts(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setMultisigAccounts([]);
@@ -3560,7 +3565,7 @@ export const SafeView = () => {
         sethHighlightedMultisigTx(undefined);
         setMultisigTransactionSummary(undefined);
         setSelectedMultisig(undefined);
-        setLoadingMultisigAccounts(false);
+        setNeedReloadMultisigAccounts(false);
         consoleOut('User is disconnecting...', '', 'green');
         setCanSubscribe(true);
       }
@@ -3598,7 +3603,7 @@ export const SafeView = () => {
         setNeedRefreshTxs(true);
         setNeedReloadPrograms(true);
         clearTxConfirmationContext();
-        setLoadingMultisigAccounts(true);
+        setNeedReloadMultisigAccounts(true);
         sethHighlightedMultisigTx(undefined);
         setMultisigTransactionSummary(undefined);
       } else if (fetchTxInfoStatus === "error") {
