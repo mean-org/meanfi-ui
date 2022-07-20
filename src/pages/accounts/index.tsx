@@ -5541,6 +5541,7 @@ export const AccountsNewView = () => {
             onAfterEveryModalClose();
             setIsTransferTokenModalVisible(false);
           }}
+          selectedMultisig={selectedMultisig || undefined}
           selectedVault={selectedAsset}
           isBusy={isBusy}
           assets={accountTokens}
