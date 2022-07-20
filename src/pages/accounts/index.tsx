@@ -4382,21 +4382,36 @@ export const AccountsNewView = () => {
 
   const onBackButtonClicked = () => {
     if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamId}`) {
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig`;
+      }
       navigate(url);
     } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/${streamId}`) {
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig`;
+      }
       navigate(url);
     } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId}`) {
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig`;
+      }
       navigate(url);
     } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId}/${streamId}`) {
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId}`;
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId}`;
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig`;
+      }
       navigate(url);
     } else {
       setDetailsPanelOpen(false);
       setAutoOpenDetailsPanel(false);
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig`;
+      }
       navigate(url);
     }
   }
