@@ -444,11 +444,19 @@ export const AccountsNewView = () => {
       .then(value => {
         setMultisigTransactionFees(value);
         consoleOut('multisigTransactionFees:', value, 'orange');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        consoleOut('networkFee:', value.networkFee, 'blue');
+        consoleOut('rentExempt:', value.rentExempt, 'blue');
+        const totalMultisigFee = value.multisigFee + (MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL);
+        consoleOut('multisigFee:', totalMultisigFee, 'blue');
+        const minRequired = totalMultisigFee + value.rentExempt + value.networkFee;
+        consoleOut('Min required balance:', minRequired, 'blue');
+        setMinRequiredBalance(minRequired);
       });
 
     resetTransactionStatus();
 
-  }, [multisigClient, resetTransactionStatus]);
+  }, [multisigClient, nativeBalance, resetTransactionStatus]);
 
   // Deposit SPL or SOL modal
   const [isReceiveSplOrSolModalOpen, setIsReceiveSplOrSolModalOpen] = useState(false);
@@ -1825,17 +1833,8 @@ export const AccountsNewView = () => {
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        consoleOut('networkFee:', multisigTransactionFees.networkFee, 'blue');
-        consoleOut('rentExempt:', multisigTransactionFees.rentExempt, 'blue');
-        const totalMultisigFee = multisigTransactionFees.multisigFee + (MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL);
-        consoleOut('multisigFee:', totalMultisigFee, 'blue');
-        const minRequired = totalMultisigFee + multisigTransactionFees.rentExempt + multisigTransactionFees.networkFee;
-        consoleOut('Min required balance:', minRequired, 'blue');
 
-        setMinRequiredBalance(minRequired);
-
-        if (nativeBalance < minRequired) {
+        if (nativeBalance < minRequiredBalance) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1846,7 +1845,7 @@ export const AccountsNewView = () => {
               getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
               getTokenAmountAndSymbolByTokenAddress(
-                minRequired, 
+                minRequiredBalance, 
                 NATIVE_SOL_MINT.toBase58()
               )
             })`
