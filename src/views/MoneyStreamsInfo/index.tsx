@@ -2136,7 +2136,12 @@ export const MoneyStreamsInfoView = (props: {
               <span className="incoming-amount">{rateIncomingPerDay ? `+ ${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
             <div className="info-value">
-              {`Total streams: ${incomingAmount ? incomingAmount : "0"}`}
+              <span className="mr-1">Total streams:</span>
+              <span>
+                {loadingCombinedStreamingList || loadingStreams ? (
+                  <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                ) : formatThousands(incomingAmount)}
+              </span>
             </div>
           </div>
           <div className="stream-balance">
@@ -2144,7 +2149,12 @@ export const MoneyStreamsInfoView = (props: {
               Available to withdraw:
             </div>
             <div className="info-value">
-              {withdrawalBalance ? toUsCurrency(withdrawalBalance) : "$0.00"}
+              {loadingCombinedStreamingList || loadingStreams ? (
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              ) : withdrawalBalance
+                ? toUsCurrency(withdrawalBalance)
+                : "$0.00"
+              }
             </div>
           </div>
           <div className="wave-container wave-green" id="wave">
@@ -2193,7 +2203,12 @@ export const MoneyStreamsInfoView = (props: {
               <span className="outgoing-amount">{rateOutgoingPerDay ? `- ${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
             <div className="info-value">
-              {`Total streams: ${outgoingAmount ? outgoingAmount : "0"}`}
+              <span className="mr-1">Total streams:</span>
+              <span>
+                {loadingCombinedStreamingList || loadingStreams ? (
+                  <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                ) : formatThousands(outgoingAmount)}
+              </span>
             </div>
           </div>
           <div className="stream-balance">
@@ -2201,7 +2216,12 @@ export const MoneyStreamsInfoView = (props: {
               Remaining balance:
             </div>
             <div className="info-value">
-              {unallocatedBalance ? toUsCurrency(unallocatedBalance) : "$0.00"}
+              {loadingCombinedStreamingList || loadingStreams ? (
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              ) : unallocatedBalance
+                ? toUsCurrency(unallocatedBalance)
+                : "$0.00"
+              }
             </div>
           </div>
           <div className="wave-container wave-red" id="wave">
