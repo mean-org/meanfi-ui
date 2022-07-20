@@ -19,6 +19,7 @@ import { VESTING_ROUTE_BASE_PATH } from "../../../../vesting";
 export const SafeInfo = (props: {
   isTxInProgress?: any;
   onEditMultisigClick?: any;
+  onNavigateAway: any;
   onNewProposalMultisigClick?: any;
   onRefreshTabsInfo?: any;
   safeNameImg?: string;
@@ -29,19 +30,9 @@ export const SafeInfo = (props: {
   vestingAccountsCount: number;
 }) => {
   const {
-    coinPrices,
-    splTokenList,
-    isWhitelisted,
-    multisigVaults,
-    totalSafeBalance,
-    multisigSolBalance,
-    setTotalSafeBalance,
-    getTokenByMintAddress,
-  } = useContext(AppStateContext);
-
-  const {
     isTxInProgress,
     onEditMultisigClick,
+    onNavigateAway,
     onNewProposalMultisigClick,
     onRefreshTabsInfo,
     safeNameImg,
@@ -51,12 +42,18 @@ export const SafeInfo = (props: {
     tabs,
     vestingAccountsCount,
   } = props;
-
-  // const { t } = useTranslation('common');
+  const {
+    coinPrices,
+    splTokenList,
+    isWhitelisted,
+    multisigVaults,
+    totalSafeBalance,
+    multisigSolBalance,
+    setTotalSafeBalance,
+    getTokenByMintAddress,
+  } = useContext(AppStateContext);
   const navigate = useNavigate();
-
   const [selectedLabelName, setSelectedLabelName] = useState("");
-  // const [totalSafeBalance, setTotalSafeBalance] = useState<number>(0);
 
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
@@ -210,9 +207,10 @@ export const SafeInfo = (props: {
     }
   ];
 
-  // View assets
+  // View account
   const onGoToAccounts = () => {
     if (selectedMultisig) {
+      onNavigateAway();
       navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/assets?account-type=multisig`);
     }
   }
@@ -220,6 +218,7 @@ export const SafeInfo = (props: {
   // Go to vesting
   const goToVesting = () => {
     if (selectedMultisig) {
+      onNavigateAway();
       navigate(`${VESTING_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/contracts?account-type=multisig`);
     }
   }

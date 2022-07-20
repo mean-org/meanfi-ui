@@ -18,6 +18,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
   }
 }
 .incoming-stream-amount {
@@ -43,7 +44,7 @@
   z-index: 0;
 }
 .stream-background-outgoing {
-  margin-top: 2em;
+  margin-top: 3em;
   position: relative;
   height: 100%;
   z-index: 0;

@@ -501,9 +501,9 @@ export const MoneyStreamDetails = (props: {
       const showDays = days > 0 ? (days > 1 ? `${days} days` : `${days} day`) : "";
       const showHours = hours > 0 ? (hours > 1 ? `${hours} hours` : `${hours} hour`) : "";
       const showMinutes = minutes > 0 ? (minutes > 1 ? `${minutes} minutes` : `${minutes} minute`) : "";
-      const showSeconds = seconds > 0 ? (seconds > 1 ? `${seconds} seconds` : `${seconds} second`) : "";
+      // const showSeconds = seconds > 0 ? (seconds > 1 ? `${seconds} seconds` : `${seconds} second`) : "";
 
-      return <span>{`${showYears} ${showDays} ${showHours} ${showMinutes} ${showSeconds}`}</span>;
+      return <span>{`${showYears} ${showDays} ${showHours} ${showMinutes}`}</span>;
     }
   };
 

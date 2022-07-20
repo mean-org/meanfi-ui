@@ -21,6 +21,7 @@ import { BN } from 'bn.js';
 
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from 'react-router-dom';
+import { InputMean } from '../InputMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -59,6 +60,7 @@ export const TreasuryTransferFundsModal = (props: {
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
+  const [multisigTitle, setMultisigTitle] = useState('');
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
     const treasuryInfo: any = treasury ?? props.treasuryDetails;
@@ -90,6 +92,7 @@ export const TreasuryTransferFundsModal = (props: {
 
   const onAcceptWithdrawTreasuryFunds = () => {
     props.handleOk({
+      title: multisigTitle,
       amount: topupAmount,
       tokenAmount: tokenAmount,
       destinationAccount: to
@@ -116,6 +119,7 @@ export const TreasuryTransferFundsModal = (props: {
 
   const onAfterClose = () => {
     setTimeout(() => {
+      setMultisigTitle("");
       setTopupAmount("");
       setTo("");
       setIsVerifiedRecipient(false);
@@ -124,6 +128,10 @@ export const TreasuryTransferFundsModal = (props: {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setMultisigTitle(e.target.value);
   }
 
   const onMintToAddressChange = (e: any) => {
@@ -379,6 +387,21 @@ export const TreasuryTransferFundsModal = (props: {
       <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
+            {/* Proposal title */}
+            {param === "multisig" && (
+              <div className="mb-3">
+                <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+                <InputMean
+                  id="proposal-title-field"
+                  name="Title"
+                  className="w-100 general-text-input"
+                  onChange={onTitleInputValueChange}
+                  placeholder="Add a proposal title (required)"
+                  value={multisigTitle}
+                />
+              </div>
+            )}
+
             {/* Transfer from */}
             {props.treasuryDetails && (
               <div className="mb-3">

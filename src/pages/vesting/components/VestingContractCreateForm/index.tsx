@@ -534,7 +534,7 @@ export const VestingContractCreateForm = (props: {
 
     const todayAndPriorDatesDisabled = (current: any) => {
         // Can not select neither today nor days before today
-        return current && current < moment().add(1, 'days').endOf('day');
+        return current && current < moment().add(1, 'day').startOf('day');
     }
 
     const onResetDate = () => {

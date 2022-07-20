@@ -26,7 +26,7 @@ import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
+import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
 import { MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -74,7 +74,6 @@ export const VestingView = () => {
     userTokens,
     splTokenList,
     isWhitelisted,
-    detailsPanelOpen,
     transactionStatus,
     streamV2ProgramAddress,
     pendingMultisigTxCount,
@@ -92,7 +91,6 @@ export const VestingView = () => {
     setPaymentStartDate,
     refreshTokenBalance,
     setRecipientAddress,
-    setDtailsPanelOpen,
     setFromCoinAmount,
     setSelectedToken,
   } = useContext(AppStateContext);
@@ -124,7 +122,6 @@ export const VestingView = () => {
   // Selected vesting contract
   const [selectedVestingContract, setSelectedVestingContract] = useState<Treasury | undefined>(undefined);
   const [streamTemplate, setStreamTemplate] = useState<StreamTemplate | undefined>(undefined);
-  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [assetCtas, setAssetCtas] = useState<MetaInfoCta[]>([]);
   // Source token list
@@ -146,8 +143,6 @@ export const VestingView = () => {
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
   const [needReloadMultisigs, setNeedReloadMultisigs] = useState(true);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
-  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [vestingContractFlowRate, setVestingContractFlowRate] = useState<VestingFlowRateInfo | undefined>(undefined);
@@ -157,6 +152,8 @@ export const VestingView = () => {
   const [hasMoreContractActivity, setHasMoreContractActivity] = useState<boolean>(true);
   const [availableStreamingBalance, setAvailableStreamingBalance] = useState(0);
 
+  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
   /////////////////////////
   //  Setup & Init code  //
@@ -171,6 +168,7 @@ export const VestingView = () => {
     if (!address) {
       const url = `${VESTING_ROUTE_BASE_PATH}/${publicKey.toBase58()}/contracts`;
       consoleOut('No address, redirecting to:', url, 'orange');
+      setAutoOpenDetailsPanel(false);
       setTreasuriesLoaded(false);
       navigate(url);
     }
@@ -178,7 +176,7 @@ export const VestingView = () => {
     setTimeout(() => {
       setIsPageLoaded(true);
     }, 5);
-  }, [address, location.pathname, navigate, publicKey]);
+  }, [address, location.pathname, navigate, publicKey, vestingContract]);
 
   // Enable deep-linking when isPageLoaded
   useEffect(() => {
@@ -203,8 +201,10 @@ export const VestingView = () => {
     if (activeTab) {
       consoleOut('Route param activeTab:', activeTab, 'crimson');
       setAccountDetailTab(activeTab as VestingAccountDetailTab);
-    // } else {
-    //   setAccountDetailTab(undefined);
+    }
+
+    if (autoOpenDetailsPanel) {
+      setDetailsPanelOpen(true);
     }
 
     let accountTypeInQuery: string | null = null;
@@ -221,7 +221,7 @@ export const VestingView = () => {
       setInspectedAccountType(undefined);
     }
 
-  }, [accountAddress, activeTab, address, isPageLoaded, publicKey, searchParams, vestingContract]);
+  }, [accountAddress, activeTab, address, autoOpenDetailsPanel, isPageLoaded, publicKey, searchParams, vestingContract]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -409,47 +409,47 @@ export const VestingView = () => {
     }
 
     const notifyMultisigVestingContractActionFollowup = async (message1: string, message2: string, item: TxConfirmationInfo) => {
-      if (item.extras && item.extras.multisig) {
-        openNotification({
-          type: "info",
-          description: (<span>{message1}</span>),
-          duration: 8,
-        });
-        await delay(8000);
-        openNotification({
-          type: "info",
-          description: (<span>{message2}</span>),
-          duration: 8,
-        });
-        await delay(8000);
-        const myNotifyKey = `notify-${Date.now()}`;
-        openNotification({
-          type: "info",
-          key: myNotifyKey,
-          description: (
-            <>
-              <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
-              <Button
-                type="primary"
-                size="small"
-                shape="round"
-                className="extra-small"
-                onClick={() => {
-                  const url = `/multisig/${item.extras.multisig}?v=proposals`;
-                  setHighLightableMultisigId(item.extras.multisig);
-                  notification.close(myNotifyKey);
-                  navigate(url);
-                }}>
-                See proposals
-              </Button>
-            </>
-          ),
-          duration: 30,
-          handleClose: turnOffLockWorkflow
-        });
-      } else {
+      if (!item || !item.extras || !item.extras.multisigId) {
         turnOffLockWorkflow();
+        return;
       }
+      openNotification({
+        type: "info",
+        description: (<span>{message1}</span>),
+        duration: 8,
+      });
+      await delay(8000);
+      openNotification({
+        type: "info",
+        description: (<span>{message2}</span>),
+        duration: 8,
+      });
+      await delay(8000);
+      const myNotifyKey = `notify-${Date.now()}`;
+      openNotification({
+        type: "info",
+        key: myNotifyKey,
+        description: (
+          <>
+            <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
+            <Button
+              type="primary"
+              size="small"
+              shape="round"
+              className="extra-small"
+              onClick={() => {
+                const url = `/multisig/${item.extras.multisigId}?v=proposals`;
+                setHighLightableMultisigId(item.extras.multisigId);
+                navigate(url);
+                notification.close(myNotifyKey);
+              }}>
+              See proposals
+            </Button>
+          </>
+        ),
+        duration: 30,
+        handleClose: turnOffLockWorkflow
+      });
     }
 
     switch (item.operationType) {
@@ -464,7 +464,7 @@ export const VestingView = () => {
         softReloadContracts();
         break;
       case OperationType.TreasuryClose:
-        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryClose]}`, item, 'crimson');
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, true);
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
@@ -479,7 +479,7 @@ export const VestingView = () => {
         }, 20);
         break;
       case OperationType.TreasuryCreate:
-        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryCreate]}`, item, 'crimson');
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, true);
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
@@ -494,7 +494,7 @@ export const VestingView = () => {
         }, 20);
         break;
       case OperationType.TreasuryStreamCreate:
-        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryStreamCreate]}`, item, 'crimson');
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, true);
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
@@ -509,7 +509,7 @@ export const VestingView = () => {
         }, 20);
         break;
       case OperationType.TreasuryWithdraw:
-        consoleOut(`onTxConfirmed event handled for operation ${OperationType[OperationType.TreasuryWithdraw]}`, item, 'crimson');
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, true);
         if (!isWorkflowLocked) {
           isWorkflowLocked = true;
@@ -528,7 +528,7 @@ export const VestingView = () => {
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, [navigate, setHighLightableMultisigId]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -814,7 +814,7 @@ export const VestingView = () => {
         ? contractActivity[contractActivity.length - 1].signature
         : '';
     consoleOut('before:', before, 'crimson');
-    msp.listVestingTreasuryActivity(streamPublicKey, before, 5)
+    msp.listVestingTreasuryActivity(streamPublicKey, before, 5, "confirmed")
       .then(value => {
         consoleOut('VC Activity:', value);
         const activities = clearHistory
@@ -970,7 +970,6 @@ export const VestingView = () => {
 
   const onVestingContractCreated = useCallback(() => {
     closeVestingContractCreateModal();
-    setOngoingOperation(undefined);
     refreshTokenBalance();
     clearFormValues();
   }, [clearFormValues, closeVestingContractCreateModal, refreshTokenBalance]);
@@ -980,12 +979,11 @@ export const VestingView = () => {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let generatedVestingContractId = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryCreate);
-    setRetryOperationPayload(createOptions);
     setIsBusy(true);
 
     const createTreasury = async (data: CreateVestingTreasuryParams) => {
@@ -1199,6 +1197,7 @@ export const VestingView = () => {
             transaction = value;
           } else {
             transaction = value[0];
+            generatedVestingContractId = value[1].toBase58();
           }
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
@@ -1362,7 +1361,10 @@ export const VestingView = () => {
               loadingMessage,
               completedTitle: "Transaction confirmed",
               completedMessage,
-              extras: createOptions
+              extras: {
+                vestingContractId: generatedVestingContractId,
+                multisigId: createOptions.multisig
+              }
             });
             setIsBusy(false);
             resetTransactionStatus();
@@ -1400,7 +1402,6 @@ export const VestingView = () => {
   const onAcceptCreateVestingContract = useCallback((data: VestingContractCreateOptions) => {
     consoleOut('Create vesting contract options:', data, 'blue');
     onExecuteCreateVestingContractTransaction(data);
-    setRetryOperationPayload(data);
   }, [onExecuteCreateVestingContractTransaction]);
 
   // Vesting contract SOL balance modal
@@ -1439,7 +1440,6 @@ export const VestingView = () => {
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryClose);
     setIsBusy(true);
 
     const closeTreasury = async (data: any) => {
@@ -1721,10 +1721,12 @@ export const VestingView = () => {
               loadingMessage: `Closing vesting contract: ${selectedVestingContract.name}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Vesting contract ${selectedVestingContract.name} successfully closed`,
-              extras: selectedVestingContract.id as string
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: getMultisigIdFromContext()
+              }
             });
             setIsBusy(false);
-            setOngoingOperation(undefined);
             onCloseTreasuryTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1759,7 +1761,6 @@ export const VestingView = () => {
   const closeAddFundsModal = useCallback(() => {
     resetTransactionStatus();
     setIsAddFundsModalVisibility(false);
-    setOngoingOperation(undefined);
   }, [resetTransactionStatus]);
 
   const onExecuteAddFundsTransaction = async (params: VestingContractTopupParams) => {
@@ -1771,8 +1772,6 @@ export const VestingView = () => {
 
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryAddFunds);
-    setRetryOperationPayload(params);
     setIsBusy(true);
 
     const addFunds = async (data: any) => {
@@ -2090,7 +2089,11 @@ export const VestingView = () => {
                 parseFloat(params.amount),
                 params.associatedToken?.decimals
               )} ${params.associatedToken?.symbol}`,
-              extras: params.streamId
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: getMultisigIdFromContext(),
+                streamId: params.streamId
+              }
             });
             setIsBusy(false);
             closeAddFundsModal();
@@ -2135,6 +2138,7 @@ export const VestingView = () => {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let generatedStremId = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -2202,7 +2206,6 @@ export const VestingView = () => {
       const ixAccounts = createStreamTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      // TODO: I believe this would be changed to "Create vesting account"
       const tx = await multisigClient.createMoneyStreamTransaction(
         publicKey,
         "Create Vesting Stream",
@@ -2324,6 +2327,7 @@ export const VestingView = () => {
             currentOperation: TransactionStatus.SignTransaction
           });
           transaction = values[0];
+          generatedStremId = values[1].toBase58();
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
             result: getTxIxResume(values[0])
@@ -2474,7 +2478,11 @@ export const VestingView = () => {
               loadingMessage: params.txConfirmDescription,
               completedTitle: "Transaction confirmed",
               completedMessage: params.txConfirmedDescription,
-              extras: params
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: getMultisigIdFromContext(), // params.multisig
+                streamId: generatedStremId
+              }
             });
             setIsBusy(false);
             closeCreateStreamModal();
@@ -2503,7 +2511,6 @@ export const VestingView = () => {
 
   const closeVestingContractTransferFundsModal = () => {
     setIsVestingContractTransferFundsModalVisible(false);
-    setOngoingOperation(undefined);
     resetTransactionStatus();
     clearFormValues();
   };
@@ -2517,8 +2524,6 @@ export const VestingView = () => {
 
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryWithdraw);
-    setRetryOperationPayload(params);
     setIsBusy(true);
 
     const treasuryWithdraw = async (data: any) => {
@@ -2842,7 +2847,10 @@ export const VestingView = () => {
               )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name}`,
               completedTitle: "Transaction confirmed",
               completedMessage,
-              extras: params
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: getMultisigIdFromContext(), // params.multisig
+              }
             });
             setIsBusy(false);
             closeVestingContractTransferFundsModal();
@@ -2854,7 +2862,6 @@ export const VestingView = () => {
 
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
     refreshTokenBalance();
-    setOngoingOperation(undefined);
     resetTransactionStatus();
   },[refreshTokenBalance, resetTransactionStatus]);
 
@@ -2868,7 +2875,6 @@ export const VestingView = () => {
 
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TreasuryRefreshBalance);
     setIsBusy(true);
 
     const refreshBalance = async (treasury: PublicKey) => {
@@ -3199,7 +3205,10 @@ export const VestingView = () => {
               loadingMessage: `Refresh balance for vesting contract ${selectedVestingContract.name}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Refresh balance successful for vesting contract ${selectedVestingContract.name}`,
-              extras: selectedVestingContract.id as string
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: getMultisigIdFromContext(), // params.multisig
+              }
             });
             setIsBusy(false);
             onRefreshTreasuryBalanceTransactionFinished();
@@ -3297,7 +3306,7 @@ export const VestingView = () => {
       return;
     }
 
-    if (!publicKey || !userTokens || !splTokenList || !accounts.tokenAccounts) {
+    if (!publicKey || !userTokens || !splTokenList) {
       return;
     }
 
@@ -3312,13 +3321,15 @@ export const VestingView = () => {
 
           // Build meanTokensCopy including the MeanFi pinned tokens
           userTokensCopy.forEach(item => {
-            meanTokensCopy.push(item);
+            if (!meanTokensCopy.some(i => i.address === item.address)) {
+              meanTokensCopy.push(item);
+            }
           });
 
           // Now add all other items but excluding those in userTokens (only in prod)
           if (isProd()) {
             splTokenList.forEach(item => {
-              if (!userTokens.includes(item)) {
+              if (!meanTokensCopy.some(i => i.address === item.address)) {
                 meanTokensCopy.push(item);
               }
             });
@@ -3368,15 +3379,11 @@ export const VestingView = () => {
       })
       .finally(() => setUserBalances(balancesMap));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     connection,
-    userTokens,
-    splTokenList,
     nativeBalance,
-    workingToken,
-    accounts.tokenAccounts,
-    setSelectedToken
   ]);
 
   // Build CTAs
@@ -3503,6 +3510,7 @@ export const VestingView = () => {
 
     setAssetCtas(actions);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedVestingContract,
     availableStreamingBalance,
@@ -3549,7 +3557,7 @@ export const VestingView = () => {
           setHasMoreContractActivity(true);
           consoleOut('selectedVestingContract:', item, 'blue');
           if (autoOpenDetailsPanel) {
-            setDtailsPanelOpen(true);
+            setDetailsPanelOpen(true);
           }
         } else {
           // /vesting/:address/contracts/:vestingContract
@@ -3874,8 +3882,9 @@ export const VestingView = () => {
   ////////////////////////////
 
   const onBackButtonClicked = () => {
-    setDtailsPanelOpen(false);
+    setDetailsPanelOpen(false);
     setAutoOpenDetailsPanel(false);
+    navigate(-1);
   }
 
   const onTabChange = useCallback((activeKey: string) => {

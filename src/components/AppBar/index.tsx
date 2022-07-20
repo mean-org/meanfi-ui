@@ -16,17 +16,11 @@ import { CustomCSSProps } from '../../utils/css-custom-props';
 import { isLocal, isProd } from '../../utils/ui';
 import { NotificationBell } from '../CurrentBalance';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
-import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 import { RoutingInfo } from '../../models/common-types';
 import { INVEST_ROUTE_BASE_PATH } from '../../pages/invest';
 
 const { SubMenu } = Menu;
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
-  {
-    key: 'streams',
-    path: STREAMS_ROUTE_BASE_PATH,
-    parent: 'root'
-  },
   {
     key: 'accounts',
     path: ACCOUNTS_ROUTE_BASE_PATH,
@@ -81,26 +75,17 @@ export const AppBar = (props: {
   const { t } = useTranslation("common");
   const {
     isWhitelisted,
-    detailsPanelOpen,
     isDepositOptionsModalVisible,
-    setDtailsPanelOpen,
     setShouldLoadTokens,
     hideDepositOptionsModal,
   } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const closeAllPanels = () => {
-    if (detailsPanelOpen) {
-      setDtailsPanelOpen(false);
-    }
-  }
-
   const dismissMenu = () => {
     const mobileMenuTrigger = document.getElementById("overlay-input");
     if (mobileMenuTrigger) {
       mobileMenuTrigger?.click();
-      closeAllPanels();
     }
   }
 
@@ -169,15 +154,9 @@ export const AppBar = (props: {
 
   const mainNav = (
     <Menu selectedKeys={selectedItems} mode="horizontal">
-      {location.pathname === STREAMS_ROUTE_BASE_PATH ? (
-        <Menu.Item key="streams">
-          <Link to={ACCOUNTS_ROUTE_BASE_PATH} onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
-        </Menu.Item>
-      ) : (
-        <Menu.Item key="accounts">
-          <Link to={ACCOUNTS_ROUTE_BASE_PATH} onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
-        </Menu.Item>
-      )}
+      <Menu.Item key="accounts">
+        <Link to={ACCOUNTS_ROUTE_BASE_PATH} onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
+      </Menu.Item>
       <Menu.Item key="exchange">
         <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>

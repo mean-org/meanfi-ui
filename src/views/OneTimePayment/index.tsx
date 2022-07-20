@@ -27,7 +27,6 @@ import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
@@ -36,7 +35,6 @@ import { segmentAnalytics } from '../../App';
 import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
 import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
-import { STREAMS_ROUTE_BASE_PATH } from '../Streams';
 import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
@@ -80,8 +78,6 @@ export const OneTimePayment = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
-  const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
@@ -375,18 +371,13 @@ export const OneTimePayment = (props: {
     setSelectedStream(undefined);
     if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
       recordTxConfirmation(item.signature, true);
-      if (!inModal) {
-        navigate(STREAMS_ROUTE_BASE_PATH);
-      }
     }
   }, [
-    inModal,
     setIsVerifiedRecipient,
     resetTransactionStatus,
     recordTxConfirmation,
     resetContractValues,
     setSelectedStream,
-    navigate,
   ]);
 
   // Setup event handler for Tx confirmation error
@@ -1006,10 +997,6 @@ export const OneTimePayment = (props: {
               resetContractValues();
               setIsVerifiedRecipient(false);
               transferCompleted();
-              if (isScheduledPayment() && location.pathname !== STREAMS_ROUTE_BASE_PATH) {
-                setSelectedStream(undefined);
-                navigate(STREAMS_ROUTE_BASE_PATH);
-              }
             }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1029,7 +1016,6 @@ export const OneTimePayment = (props: {
     fromCoinAmount,
     paymentStartDate,
     recipientAddress,
-    location.pathname,
     fixedScheduleValue,
     transactionCancelled,
     streamV2ProgramAddress,
@@ -1042,10 +1028,8 @@ export const OneTimePayment = (props: {
     setTransactionStatus,
     resetContractValues,
     isScheduledPayment,
-    setSelectedStream,
     transferCompleted,
     getFeeAmount,
-    navigate,
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {

@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
 import BN from 'bn.js';
+import { InputMean } from '../InputMean';
+import { useSearchParams } from 'react-router-dom';
 
 export const StreamPauseModal = (props: {
   handleClose: any;
@@ -23,7 +25,22 @@ export const StreamPauseModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
+  const [searchParams] = useSearchParams();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
+  const [multisigTitle, setMultisigTitle] = useState('');
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
 
   const amITreasurer = useCallback((): boolean => {
     if (props.streamDetail && publicKey) {
@@ -130,6 +147,21 @@ export const StreamPauseModal = (props: {
     getFeeAmount
   ]);
 
+  const onAcceptModal = () => {
+    props.handleOk(multisigTitle);
+    setTimeout(() => {
+      setMultisigTitle('');
+    }, 50);
+  }
+
+  const onCloseModal = () => {
+    props.handleClose();
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setMultisigTitle(e.target.value);
+  }
+
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
@@ -142,14 +174,14 @@ export const StreamPauseModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('streams.pause-stream-modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Proposal to pause stream" : t('streams.pause-stream-modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={400}>
 
-      <div className="transaction-progress">
+      <div className="transaction-progress p-0">
         <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
         <h4>{props.content}</h4>
 
@@ -167,21 +199,36 @@ export const StreamPauseModal = (props: {
           </div>
         )}
 
+        {/* Proposal title */}
+        {param === "multisig" && (
+          <div className="mb-3">
+            <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+            <InputMean
+              id="proposal-title-field"
+              name="Title"
+              className="w-100 general-text-input"
+              onChange={onTitleInputValueChange}
+              placeholder="Add a proposal title (required)"
+              value={multisigTitle}
+            />
+          </div>
+        )}
+
         <div className="mt-3">
           <Button
               className="mr-3"
               type="text"
               shape="round"
               size="large"
-              onClick={props.handleClose}>
+              onClick={onCloseModal}>
               {t('close-stream.secondary-cta')}
           </Button>
           <Button
               type="primary"
               shape="round"
               size="large"
-              onClick={props.handleOk}>
-              {t('streams.pause-stream-cta')}
+              onClick={() => onAcceptModal()}>
+              {param === "multisig" ? "Submit proposal" : t('streams.pause-stream-cta')}
           </Button>
         </div>
       </div>

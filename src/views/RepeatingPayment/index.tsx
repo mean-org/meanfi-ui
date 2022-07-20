@@ -58,7 +58,6 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import useWindowSize from '../../hooks/useWindowResize';
 import { InfoIcon } from '../../components/InfoIcon';
 import { NATIVE_SOL } from '../../utils/tokens';
-import { STREAMS_ROUTE_BASE_PATH } from '../Streams';
 import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
@@ -97,7 +96,6 @@ export const RepeatingPayment = (props: {
     setRecipientAddress,
     setPaymentStartDate,
     setFromCoinAmount,
-    setSelectedStream,
     setRecipientNote,
     setEffectiveRate,
     refreshPrices,
@@ -1133,10 +1131,6 @@ export const RepeatingPayment = (props: {
               resetContractValues();
               setIsVerifiedRecipient(false);
               transferCompleted();
-              if (location.pathname !== STREAMS_ROUTE_BASE_PATH) {
-                setSelectedStream(undefined);
-                // navigate(STREAMS_ROUTE_BASE_PATH);
-              }
             }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1167,10 +1161,8 @@ export const RepeatingPayment = (props: {
     setTransactionStatus,
     resetContractValues,
     getPaymentRateLabel,
-    setSelectedStream,
     getTokenPrice,
     getFeeAmount,
-    // navigate,
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {

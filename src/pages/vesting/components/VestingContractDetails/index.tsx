@@ -11,7 +11,7 @@ import { getCategoryLabelByValue, VestingFlowRateInfo } from '../../../../models
 import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
 import { IconLoading } from '../../../../Icons';
-import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getTodayPercentualBetweenTwoDates, percentage, toTimestamp } from '../../../../utils/ui';
+import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getShortDate, getTodayPercentualBetweenTwoDates, percentage, toTimestamp } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { Progress } from 'antd';
 
@@ -244,7 +244,12 @@ export const VestingContractDetails = (props: {
                         </div>
                         <div className={`right mb-2 pr-2 font-size-100 line-height-120 ${isXsDevice ? 'text-left' : 'text-right'}`}>
                             {getVestingDistributionStatus()}
-                            {vestingContractFlowRate && vestingContract && selectedToken && vestingContract.totalStreams > 0 && (
+                            {vestingContract.totalStreams === 0 && isDateInTheFuture(paymentStartDate) && (
+                                <div className="vested-amount">
+                                    {`starts on ${getShortDate(paymentStartDate, false)}`}
+                                </div>
+                            )}
+                            {vestingContractFlowRate && selectedToken && vestingContract.totalStreams > 0 && (
                                 <>
                                     {isDateInTheFuture(paymentStartDate) ? (
                                         <div className="vested-amount">
@@ -267,22 +272,24 @@ export const VestingContractDetails = (props: {
                                     )}
                                 </>
                             )}
-                            <div className="vesting-progress">
-                                <Progress
-                                    percent={completedVestingPercentage}
-                                    showInfo={false}
-                                    status={completedVestingPercentage === 0
-                                            ? "normal"
-                                            : completedVestingPercentage === 100
-                                                ? "success"
-                                                : "active"
-                                    }
-                                    type="line"
-                                    className="vesting-list-progress-bar medium"
-                                    trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
-                                    style={{ width: 85 }}
-                                />
-                            </div>
+                            {vestingContract.totalStreams > 0 && (
+                                <div className="vesting-progress">
+                                    <Progress
+                                        percent={completedVestingPercentage}
+                                        showInfo={false}
+                                        status={completedVestingPercentage === 0
+                                                ? "normal"
+                                                : completedVestingPercentage === 100
+                                                    ? "success"
+                                                    : "active"
+                                        }
+                                        type="line"
+                                        className="vesting-list-progress-bar medium"
+                                        trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                        style={{ width: 85 }}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                     </div>

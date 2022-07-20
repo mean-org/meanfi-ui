@@ -29,10 +29,11 @@ import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { StreamPauseModal } from "../../components/StreamPauseModal";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { StreamResumeModal } from "../../components/StreamResumeModal";
-import { StreamTreasuryType } from "../../models/treasuries";
+import { CloseStreamTransactionParams, StreamTreasuryType } from "../../models/treasuries";
 import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { title } from "process";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -41,7 +42,6 @@ export const MoneyStreamsOutgoingView = (props: {
   streamList?: Array<Stream | StreamInfo> | undefined;
   onSendFromOutgoingStreamDetails?: any;
   multisigAccounts: MultisigInfo[] | undefined;
-  showNotificationByType?: any;
 }) => {
   const {
     splTokenList,
@@ -65,11 +65,10 @@ export const MoneyStreamsOutgoingView = (props: {
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
 
-  const [searchParams] = useSearchParams();
   const { wallet, publicKey } = useWallet();
   const connection = useConnection();
 
-  const { streamSelected, streamList, onSendFromOutgoingStreamDetails, multisigAccounts, showNotificationByType } = props;
+  const { streamSelected, streamList, onSendFromOutgoingStreamDetails, multisigAccounts } = props;
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const { endpoint } = useConnectionConfig();
@@ -87,19 +86,6 @@ export const MoneyStreamsOutgoingView = (props: {
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
@@ -923,7 +909,9 @@ export const MoneyStreamsOutgoingView = (props: {
                 parseFloat(addFundsData.amount),
                 token.decimals
               )} ${token.symbol}`,
-              extras: multisigAuth
+              extras: {
+                multisigAuthority: multisigAuth
+              }
             });
             setIsBusy(false);
             onAddFundsTransactionFinished();
@@ -961,16 +949,18 @@ export const MoneyStreamsOutgoingView = (props: {
   ]);
 
   const hidePauseStreamModal = useCallback(() => setIsPauseStreamModalVisibility(false), []);
-  const onAcceptPauseStream = () => {
+  const onAcceptPauseStream = (title: string) => {
+    consoleOut("Input title for pause stream:", title, 'blue');
     hidePauseStreamModal();
-    onExecutePauseStreamTransaction();
+    onExecutePauseStreamTransaction(title);
   };
 
-  const onExecutePauseStreamTransaction = async () => {
+  const onExecutePauseStreamTransaction = async (title: string) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -986,7 +976,8 @@ export const MoneyStreamsOutgoingView = (props: {
         const streamPublicKey = new PublicKey(streamSelected.id as string);
 
         const data = {
-          stream: streamPublicKey.toBase58(),                     // stream
+          title: title as string,                          // title
+          stream: streamPublicKey.toBase58(),              // stream
           initializer: publicKey.toBase58(),               // initializer
         }
         consoleOut('data:', data);
@@ -1084,6 +1075,8 @@ export const MoneyStreamsOutgoingView = (props: {
 
       if (!multisig) { return null; }
 
+      multisigAuth = multisig.authority.toBase58();
+
       const pauseStream = await msp.pauseStream(
         new PublicKey(data.payer),                   // payer
         multisig.authority,                          // treasurer
@@ -1096,7 +1089,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Pause Stream",
+        data.title === "" ? "Pause Stream" : data.title as string,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.StreamPause,
@@ -1127,6 +1120,7 @@ export const MoneyStreamsOutgoingView = (props: {
       const streamPublicKey = new PublicKey(streamSelected.id as string);
 
       const data = {
+        title: title as string,                           // title
         stream: streamPublicKey.toBase58(),               // stream
         payer: publicKey.toBase58(),                      // payer
       }
@@ -1337,16 +1331,17 @@ export const MoneyStreamsOutgoingView = (props: {
               loadingMessage: `Pause stream: ${streamName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully paused stream: ${streamName}`,
-              extras: streamSelected.id as string
+              extras: {
+                multisigAuthority: multisigAuth
+              }
             });
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            
+
             setIsPauseStreamModalVisibility(false);
             setLoadingStreamDetails(true);
-            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             onTransactionFinished();
           } else { setIsBusy(false); }
@@ -1407,16 +1402,18 @@ export const MoneyStreamsOutgoingView = (props: {
   ]);
 
   const hideResumeStreamModal = useCallback(() => setIsResumeStreamModalVisibility(false), []);
-  const onAcceptResumeStream = () => {
+  const onAcceptResumeStream = (title: string) => {
+    consoleOut("Input title for resume stream:", title, 'blue');
     hideResumeStreamModal();
-    onExecuteResumeStreamTransaction();
+    onExecuteResumeStreamTransaction(title);
   };
 
-  const onExecuteResumeStreamTransaction = async () => {
+  const onExecuteResumeStreamTransaction = async (title: string) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -1432,7 +1429,8 @@ export const MoneyStreamsOutgoingView = (props: {
         const streamPublicKey = new PublicKey(streamSelected.id as string);
 
         const data = {
-          stream: streamPublicKey.toBase58(),                     // stream
+          title: title as string,                          // title
+          stream: streamPublicKey.toBase58(),              // stream
           initializer: publicKey.toBase58(),               // initializer
         }
         consoleOut('data:', data);
@@ -1530,6 +1528,8 @@ export const MoneyStreamsOutgoingView = (props: {
 
       if (!multisig) { return null; }
 
+      multisigAuth = multisig.authority.toBase58();
+
       const resumeStream = await msp.resumeStream(
         new PublicKey(data.payer),                   // payer
         multisig.authority,                          // treasurer
@@ -1542,7 +1542,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Resume Stream",
+        data.title === "" ? "Resume Stream" : data.title as string,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.StreamResume,
@@ -1572,6 +1572,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const streamPublicKey = new PublicKey(streamSelected.id as string);
       const data = {
+        title: title as string,                           // title
         stream: streamPublicKey.toBase58(),               // stream
         payer: publicKey.toBase58(),                      // payer
       }
@@ -1780,7 +1781,9 @@ export const MoneyStreamsOutgoingView = (props: {
               loadingMessage: `Resume stream: ${streamName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully resumed stream: ${streamName}`,
-              extras: streamSelected.id as string
+              extras: {
+                multisigAuthority: multisigAuth
+              }
             });
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1789,7 +1792,6 @@ export const MoneyStreamsOutgoingView = (props: {
             
             setIsResumeStreamModalVisibility(false);
             setLoadingStreamDetails(true);
-            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             onTransactionFinished();
           } else { setIsBusy(false); }
@@ -1851,6 +1853,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
   const onAcceptCloseStream = (data: any) => {
+    consoleOut('onAcceptCloseStream params:', data, 'blue');
     hideCloseStreamModal();
     onExecuteCloseStreamTransaction(data);
   };
@@ -1865,6 +1868,7 @@ export const MoneyStreamsOutgoingView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuthority = '';
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -1896,7 +1900,7 @@ export const MoneyStreamsOutgoingView = (props: {
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
           feeAmount: closeTreasuryData.feeAmount,
-          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
+          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns)
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
@@ -1979,6 +1983,58 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     }
 
+    const closeStream = async (data: CloseStreamTransactionParams) => {
+
+      consoleOut('closeStream received params:', data, 'blue');
+
+      if (!msp) { return null; }
+
+      if (!isMultisigTreasury()) {        
+        return await msp.closeStream(
+          new PublicKey(data.payer),              // payer
+          new PublicKey(data.payer),              // destination
+          new PublicKey(data.stream),             // stream,
+          data.closeTreasury,                     // closeTreasury
+          true                                    // autoWSol
+        );
+      }
+
+      if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      multisigAuthority = multisig.authority.toBase58();
+
+      if (!multisig) { return null; }
+
+      const closeStream = await msp.closeStream(
+        new PublicKey(data.payer),              // payer
+        new PublicKey(data.payer),              // TODO: This should come from the UI
+        new PublicKey(data.stream),             // stream,
+        data.closeTreasury,                     // closeTreasury
+        false
+      );
+
+      const ixData = Buffer.from(closeStream.instructions[0].data);
+      const ixAccounts = closeStream.instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Close Stream",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamClose,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
+
+      return tx;
+    }
+
     const createTxV2 = async (): Promise<boolean> => {
       if (publicKey && streamSelected && msp) {
         setTransactionStatus({
@@ -1988,11 +2044,12 @@ export const MoneyStreamsOutgoingView = (props: {
         const streamPublicKey = new PublicKey(streamSelected.id as string);
         const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
 
+        consoleOut('createTxV2 received params:', closeTreasuryData, 'blue');
         const data = {
-          stream: streamPublicKey.toBase58(),                         // stream
-          initializer: publicKey.toBase58(),                          // initializer
-          autoCloseTreasury: closeTreasuryData.closeTreasuryOption    // closeTreasury
-        }
+          payer: publicKey.toBase58(),                                 // payer
+          stream: streamPublicKey.toBase58(),                          // stream
+          closeTreasury: closeTreasuryData.closeTreasuryOption         // closeTreasury
+        } as CloseStreamTransactionParams;
         consoleOut('data:', data);
 
         // Report event to Segment analytics
@@ -2000,12 +2057,12 @@ export const MoneyStreamsOutgoingView = (props: {
           asset: selectedToken ? selectedToken.symbol : '-',
           assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           stream: data.stream,
-          initializer: data.initializer,
-          closeTreasury: data.autoCloseTreasury,
+          initializer: data.payer,
+          closeTreasury: data.closeTreasury,
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
           feeAmount: closeTreasuryData.feeAmount,
-          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
+          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns)
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
@@ -2045,14 +2102,9 @@ export const MoneyStreamsOutgoingView = (props: {
 
         consoleOut('Starting closeStream using MSP V2...', '', 'blue');
         // Create a transaction
-        return await msp.closeStream(
-          publicKey as PublicKey,                           // payer
-          publicKey as PublicKey,                           // destination
-          streamPublicKey,                                  // stream
-          closeTreasuryData.closeTreasuryOption,            // closeTreasury
-          true                                              // TODO: Define if the user can determine this
-        )
+        const result = await closeStream(data)
         .then(value => {
+          if (!value) { return false; }
           consoleOut('closeStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -2076,9 +2128,10 @@ export const MoneyStreamsOutgoingView = (props: {
             result: `${error}`
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         });
+
+        return result;
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -2103,13 +2156,22 @@ export const MoneyStreamsOutgoingView = (props: {
             consoleOut('encodedTx:', encodedTx, 'orange');
           } catch (error) {
             console.error(error);
+
+            // TODO: Apply this check for all modules, try to take Sing and send subroutines to a centrali zed
+            const encodedTxForDebugging = signedTransaction.serialize({ verifySignatures: false }).toString('base64');
+            consoleOut('encodedTx:', encodedTxForDebugging, 'orange');
+
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransaction,
               currentOperation: TransactionStatus.SignTransactionFailure
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+              result: {
+                signer: `${publicKey.toBase58()}`,
+                error: `${error}`,
+                encodedTx: encodedTxForDebugging
+              }
             });
             customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
@@ -2235,17 +2297,18 @@ export const MoneyStreamsOutgoingView = (props: {
               loadingMessage: `Close stream: ${streamName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully closed stream: ${streamName}`,
-              extras: streamSelected.id as string
+              extras: {
+                multisigAuthority: multisigAuthority
+              }
             });
 
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            
+
             setCloseStreamTransactionModalVisibility(false);
             setLoadingStreamDetails(true);
-            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             onCloseStreamTransactionFinished();
           } else { setIsBusy(false); }
@@ -2364,36 +2427,46 @@ export const MoneyStreamsOutgoingView = (props: {
   }, [ms, msp, publicKey, activeStream, getTreasuryByTreasuryId, treasuryId]);
 
   useEffect(() => {
-    if (!ms || !msp || !streamSelected) {return;}
+    if (!ms || !msp || !streamSelected) { return; }
 
     const timeout = setTimeout(() => {
-      if (msp && streamSelected && streamSelected.version >= 2) {
-        msp.refreshStream(streamSelected as Stream).then(detail => {
-          setStreamDetail(detail as Stream);
-          if (!hasStreamPendingTx()) {
-            setLoadingStreamDetails(false);
-          }
-        });
-      } else if (ms && streamSelected && streamSelected.version < 2) {
-        ms.refreshStream(streamSelected as StreamInfo).then(detail => {
-          setStreamDetail(detail as StreamInfo);
-          if (!hasStreamPendingTx()) {
-            setLoadingStreamDetails(false);
-          }
-        });
+      const v1 = streamSelected as StreamInfo;
+      const v2 = streamSelected as Stream;
+      const isV2 = streamSelected.version >= 2;
+      if (isV2) {
+        if (v2.status === STREAM_STATUS.Running) {
+          msp.refreshStream(streamSelected as Stream).then(detail => {
+            setStreamDetail(detail as Stream);
+            if (!hasStreamPendingTx()) {
+              setLoadingStreamDetails(false);
+            }
+          });
+        } else {
+          setLoadingStreamDetails(false);
+        }
+      } else {
+        if (v1.state === STREAM_STATE.Running) {
+          ms.refreshStream(streamSelected as StreamInfo).then(detail => {
+            setStreamDetail(detail as StreamInfo);
+            if (!hasStreamPendingTx()) {
+              setLoadingStreamDetails(false);
+            }
+          });
+        } else {
+          setLoadingStreamDetails(false);
+        }
       }
     }, 1000);
 
     return () => {
       clearTimeout(timeout);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    ms, 
-    msp, 
-    setStreamDetail, 
-    streamSelected, 
-    loadingStreamDetails, 
-    hasStreamPendingTx
+    ms,
+    msp,
+    streamSelected,
+    loadingStreamDetails,
   ]);
 
   const isNewStream = useCallback(() => {
@@ -2479,10 +2552,10 @@ export const MoneyStreamsOutgoingView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="mso-00" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)} disabled={isBusy || hasStreamPendingTx()}>
+      <Menu.Item key="mso-00" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
         <span className="menu-item-text">Copy stream id</span>
       </Menu.Item>
-      <Menu.Item key="mso-01" onClick={() => {}} disabled={isBusy || hasStreamPendingTx()}>
+      <Menu.Item key="mso-01">
         <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">View on Solscan</span>
         </a>
@@ -2858,9 +2931,9 @@ export const MoneyStreamsOutgoingView = (props: {
                       shape="round"
                       size="middle"
                       onClick={() => ongoingOperation === OperationType.StreamPause
-                        ? onExecutePauseStreamTransaction()
+                        ? onExecutePauseStreamTransaction(title)
                         : ongoingOperation === OperationType.StreamResume
-                          ? onExecuteResumeStreamTransaction()
+                          ? onExecuteResumeStreamTransaction(title)
                           : hideTransactionExecutionModal()}>
                       {t('general.retry')}
                     </Button>

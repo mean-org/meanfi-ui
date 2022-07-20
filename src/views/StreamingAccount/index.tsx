@@ -32,7 +32,6 @@ import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { customLogger } from "../..";
-import { TreasuryStreamsBreakdown } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFundsModal";
 import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
@@ -53,7 +52,6 @@ export const StreamingAccountView = (props: {
   treasuryList: (Treasury | TreasuryInfo)[] | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
   selectedMultisig: MultisigInfo | undefined;
-  showNotificationByType?: any;
 }) => {
   const {
     tokenList,
@@ -88,7 +86,6 @@ export const StreamingAccountView = (props: {
   const { 
     selectedMultisig,
     multisigAccounts,
-    showNotificationByType,
     streamingAccountSelected,
     onSendFromStreamingAccountDetails,
     onSendFromStreamingAccountOutgoingStreamInfo,
@@ -98,7 +95,6 @@ export const StreamingAccountView = (props: {
 
   // Streaming account
   const [highlightedStream, sethHighlightedStream] = useState<Stream | StreamInfo | undefined>();
-  const [streamStats, setStreamStats] = useState<TreasuryStreamsBreakdown | undefined>(undefined);
   const [loadingStreamingAccountDetails, setLoadingStreamingAccountDetails] = useState(true);
   const [streamingAccountStreams, setStreamingAccountStreams] = useState<Array<Stream | StreamInfo> | undefined>(undefined);
   const [loadingStreamingAccountStreams, setLoadingStreamingAccountStreams] = useState(true);
@@ -129,19 +125,6 @@ export const StreamingAccountView = (props: {
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
   }
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const getQueryTabOption = useCallback(() => {
 
@@ -284,28 +267,6 @@ export const StreamingAccountView = (props: {
     streamingAccountSelected
   ]);
 
-  // TODO: Here the multisig ID is returned
-  const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
-
-    const treasuryInfo: any = treasury ?? streamingAccountSelected;
-
-    if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
-      return PublicKey.default;
-    }
-
-    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
-
-    if (!multisigAccounts || !streamingAccountSelected) { return PublicKey.default; }
-    const multisig = multisigAccounts.filter(a => a.authority.equals(treasurer))[0];
-    if (!multisig) { return PublicKey.default; }
-    return multisig.id;
-
-  }, [
-    multisigAccounts, 
-    publicKey, 
-    streamingAccountSelected
-  ]);
-
   const getStreamingAccountActivity = useCallback((streamingAccountSelectedId: string, clearHistory = false) => {
     if (!streamingAccountSelectedId || !msp || loadingStreamingAccountActivity) {
       return;
@@ -348,9 +309,22 @@ export const StreamingAccountView = (props: {
   
   }, [loadingStreamingAccountActivity, msp, streamingAccountActivity]);
 
+  const getStreamingAccountName = useCallback(() => {
+    if (streamingAccountSelected) {
+      const v1 = streamingAccountSelected as TreasuryInfo;
+      const v2 = streamingAccountSelected as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      return isNewTreasury ? v2.name : v1.label;
+    }
+    return "";
+  }, [streamingAccountSelected]);
+
   const getStreamingAccountActivityAction = (item: VestingTreasuryActivity): string => {
     let message = '';
     switch (item.action) {
+        case VestingTreasuryActivityAction.TreasuryCreate:
+            message += "Streaming account created";
+            break;
         case VestingTreasuryActivityAction.TreasuryAddFunds:
             message += "Deposit funds in the streaming account";
             break;
@@ -361,22 +335,25 @@ export const StreamingAccountView = (props: {
             message += "Refresh streaming account data";
             break;
         case VestingTreasuryActivityAction.StreamCreate:
-            message += "Create stream";
+            message += `Create stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            break;
+        case VestingTreasuryActivityAction.StreamAllocateFunds:
+            message += `Topped up stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamWithdraw:
-            message += "Withdraw funds from the stream";
+            message += `Withdraw funds from stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamClose:
-            message += "Close stream";
+            message += `Close stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamPause:
-            message += "Pause stream"
+            message += `Pause stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamResume:
-            message += "Resume stream"
+            message += `Resume stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
             break;
         default:
-            message += 'Pending...';
+            message += '--';
             break;
     }
     return message;
@@ -537,6 +514,7 @@ export const StreamingAccountView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuthority = '';
     const transactionLog: any[] = [];
 
     clearTxConfirmationContext();
@@ -687,6 +665,7 @@ export const StreamingAccountView = (props: {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
+      multisigAuthority = multisig.authority.toBase58();
 
       const allocateTx = await msp.allocate(
         new PublicKey(data.payer),                   // payer
@@ -961,7 +940,9 @@ export const StreamingAccountView = (props: {
                 parseFloat(params.amount),
                 selectedToken.decimals
               )} ${selectedToken.symbol}`,
-              extras: streamingAccountSelected.id as string
+              extras: {
+                multisigAuthority: multisigAuthority
+              }
             });
             onAddFundsTransactionFinished();
             setOngoingOperation(undefined);
@@ -1001,7 +982,6 @@ export const StreamingAccountView = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryWithdraw);
@@ -1018,7 +998,7 @@ export const StreamingAccountView = (props: {
           new PublicKey(data.destination),        // treasurer
           new PublicKey(data.treasury),           // treasury
           data.amount,                            // amount
-          true                                    // TODO: Define if the user can determine this
+          true                                    // autoWSol
         );
       }
 
@@ -1043,7 +1023,7 @@ export const StreamingAccountView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Withdraw treasury funds",
+        data.title === "" ? "Withdraw treasury funds" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryWithdraw,
@@ -1094,6 +1074,7 @@ export const StreamingAccountView = (props: {
 
       // Create a transaction
       const payload = {
+        title: data.title,
         payer: publicKey.toBase58(),
         destination: destinationPk.toBase58(),
         treasury: treasuryPk.toBase58(),
@@ -1294,6 +1275,9 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const isMultisig = isMultisigTreasury(streamingAccountSelected) && selectedMultisig
+            ? selectedMultisig.authority.toBase58()
+            : "";
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryWithdraw,
@@ -1309,17 +1293,13 @@ export const StreamingAccountView = (props: {
                 parseFloat(data.amount),
                 selectedToken.decimals
               )} ${selectedToken.symbol}`,
-              extras: streamingAccountSelected.id as string
-            });
-
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+              extras: {
+                multisigAuthority: isMultisig
+              }
             });
             
             setIsTransferFundsModalVisible(false);
             setLoadingStreamingAccountDetails(true);
-            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             resetTransactionStatus();
             setIsBusy(false);
@@ -1362,8 +1342,9 @@ export const StreamingAccountView = (props: {
     setIsCloseTreasuryModalVisibility(false);
   }, [isBusy]);
 
-  const onAcceptCloseTreasury = () => {
-    onExecuteCloseTreasuryTransaction();
+  const onAcceptCloseTreasury = (title: string) => {
+    consoleOut("Input title for close treaury:", title, 'blue');
+    onExecuteCloseTreasuryTransaction(title);
   };
 
   const onCloseTreasuryTransactionFinished = () => {
@@ -1371,14 +1352,13 @@ export const StreamingAccountView = (props: {
     refreshTokenBalance();
   };
 
-  const onExecuteCloseTreasuryTransaction = async () => {
+  const onExecuteCloseTreasuryTransaction = async (title: string) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryClose);
@@ -1393,6 +1373,7 @@ export const StreamingAccountView = (props: {
 
         const treasury = new PublicKey(streamingAccountSelected.id as string);
         const data = {
+          title: title as string,                               // title
           treasurer: publicKey.toBase58(),                      // treasurer
           treasury: treasury.toBase58()                         // treasury
         }
@@ -1514,7 +1495,7 @@ export const StreamingAccountView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Close Treasury",
+        data.title === "" ? "Close streaming account" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryClose,
@@ -1544,6 +1525,7 @@ export const StreamingAccountView = (props: {
 
       const treasury = new PublicKey(streamingAccountSelected.id as string);
       const data = {
+        title: title as string,                               // title
         treasurer: publicKey.toBase58(),                      // treasurer
         treasury: treasury.toBase58()                         // treasury
       }
@@ -1752,6 +1734,9 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const isMultisig = isMultisigTreasury(streamingAccountSelected) && selectedMultisig
+            ? selectedMultisig.authority.toBase58()
+            : "";
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryClose,
@@ -1761,16 +1746,13 @@ export const StreamingAccountView = (props: {
               loadingMessage: `Close streaming account: ${streamingAccountName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully closed streaming account: ${streamingAccountName}`,
-              extras: streamingAccountSelected.id as string
+              extras: {
+                multisigAuthority: isMultisig
+              }
             });
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            
+
             setIsCloseTreasuryModalVisibility(false);
             setLoadingStreamingAccountDetails(true);
-            param === "multisig" && showNotificationByType("info");
             setOngoingOperation(undefined);
             onCloseTreasuryTransactionFinished();
             resetTransactionStatus();
@@ -2114,6 +2096,10 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const isMultisig = isMultisigTreasury(streamingAccountSelected) && selectedMultisig
+            ? selectedMultisig.authority.toBase58()
+            : "";
+
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryRefreshBalance,
@@ -2123,8 +2109,11 @@ export const StreamingAccountView = (props: {
               loadingMessage: "Refresh streaming account data",
               completedTitle: "Transaction confirmed",
               completedMessage: "Successfully refreshed data in streaming account",
-              extras: streamingAccountSelected.id as string
+              extras: {
+                multisigAuthority: isMultisig
+              }
             });
+
             onRefreshTreasuryBalanceTransactionFinished();
             setOngoingOperation(undefined);
             setLoadingStreamingAccountDetails(true);
@@ -2142,6 +2131,7 @@ export const StreamingAccountView = (props: {
     multisigTxFees,
     multisigClient,
     multisigAccounts,
+    selectedMultisig,
     transactionCancelled,
     streamingAccountSelected,
     transactionFees.mspFlatFee,
@@ -2859,16 +2849,6 @@ export const StreamingAccountView = (props: {
     );
   };
 
-  const getStreamingAccountName = useCallback(() => {
-    if (streamingAccountSelected) {
-      const v1 = streamingAccountSelected as TreasuryInfo;
-      const v2 = streamingAccountSelected as Treasury;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-      return isNewTreasury ? v2.name : v1.label;
-    }
-    return "";
-  }, [streamingAccountSelected]);
-
   const getStreamingAccountContent = useCallback(() => {
     if (streamingAccountSelected) {
       const v1 = streamingAccountSelected as TreasuryInfo;
@@ -3278,7 +3258,6 @@ export const StreamingAccountView = (props: {
         {tabs && renderTabset()}
       </Spin>
 
-      {/* TODO: Here the multisig ID is used */}
       {multisigClient && isCreateStreamModalVisible && (
         <TreasuryStreamCreateModal
           associatedToken={
@@ -3318,9 +3297,10 @@ export const StreamingAccountView = (props: {
           transactionFees={transactionFees}
           withdrawTransactionFees={withdrawTransactionFees}
           treasuryDetails={streamingAccountSelected}
+          treasuryList={[]}
           isVisible={isAddFundsModalVisible}
+          selectedMultisig={selectedMultisig || undefined}
           userBalances={userBalances}
-          streamStats={streamStats}
           treasuryStreams={streamingAccountStreams}
           associatedToken={
             streamingAccountSelected

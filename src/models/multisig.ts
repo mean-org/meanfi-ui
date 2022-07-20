@@ -52,8 +52,8 @@ export type MultisigTransactionDetail = {
   expirationDate: Date | undefined
 }
 
-export interface MultisigTransactionWithId {
-  multisigId: string;
+export interface MultisigProposalsWithAuthority {
+  multisigAuth: string;
   transactions: MultisigTransaction[];
 }
 

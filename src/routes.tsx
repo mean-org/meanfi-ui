@@ -15,13 +15,7 @@ import {
   PlaygroundView,
   SwapView,
   TransfersView,
-  TreasuriesView,
-  MultisigView,
   StatsView,
-  MultisigAssetsView,
-  MultisigProgramsView,
-  MultisigMintsView,
-  MultisigTreasuryStreams,
   StakingRewardsView,
   AccountsNewView,
   SafeView,
@@ -85,16 +79,10 @@ export function AppRoutes() {
                       <Route path="/staking-rewards" element={<StakingRewardsView />} />
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
-                      <Route path="/treasuries" element={<TreasuriesView />} />
-                      <Route path="/treasuries/:id/streams" element={<MultisigTreasuryStreams />} />
-                      <Route path="/multisig-old" element={<MultisigView />} />
                       <Route path="/multisig" element={<SafeView />} />
                       <Route path="/multisig/:address" element={<SafeView />} />
                       <Route path="/multisig/:address/proposals/:id" element={<SafeView />} />
                       <Route path="/multisig/:address/programs/:id" element={<SafeView />} />
-                      <Route path="/multisig-mints" element={<MultisigMintsView />} />
-                      <Route path="/multisig-assets" element={<MultisigAssetsView />} />
-                      <Route path="/multisig-programs" element={<MultisigProgramsView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       {/* Playgraund route for POC and testing purposes */}
                       {!isProd() && (

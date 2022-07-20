@@ -6,7 +6,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { IconEllipsisVertical } from "../../Icons";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, copyText, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
   TransactionFees,
@@ -38,6 +38,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../contexts/accounts";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from "react-router-dom";
+import { openNotification } from "../../components/Notifications";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -46,7 +47,6 @@ export const MoneyStreamsIncomingView = (props: {
   onSendFromIncomingStreamDetails?: any;
   accountAddress: string;
   multisigAccounts: MultisigInfo[] | undefined;
-  showNotificationByType?: any;
 }) => {
   const {
     deletedStreams,
@@ -68,7 +68,6 @@ export const MoneyStreamsIncomingView = (props: {
     onSendFromIncomingStreamDetails,
     accountAddress,
     multisigAccounts,
-    showNotificationByType,
   } = props;
 
   const connectionConfig = useConnectionConfig();
@@ -154,6 +153,23 @@ export const MoneyStreamsIncomingView = (props: {
     endpoint,
   ]);
 
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (copyText(address.toString())) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t]);
+
   const isNewStream = useCallback(() => {
     if (streamSelected) {
       return streamSelected.version >= 2 ? true : false;
@@ -231,11 +247,11 @@ export const MoneyStreamsIncomingView = (props: {
   const showTransferStreamTransactionModal = useCallback(() => setTransferStreamTransactionModalVisibility(true), []);
   const hideTransferStreamTransactionModal = useCallback(() => setTransferStreamTransactionModalVisibility(false), []);
 
-  const onAcceptTransferStream = (address: string) => {
+  const onAcceptTransferStream = (dataStream: any) => {
     closeTransferStreamModal();
-    consoleOut('New beneficiary address:', address);
-    setLastStreamTransferAddress(address);
-    onExecuteTransferStreamTransaction(address);
+    consoleOut('New beneficiary address:', dataStream.address);
+    setLastStreamTransferAddress(dataStream.address);
+    onExecuteTransferStreamTransaction(dataStream);
   };
 
   const onTransferStreamTransactionFinished = () => {
@@ -254,23 +270,24 @@ export const MoneyStreamsIncomingView = (props: {
     resetTransactionStatus();
   }
 
-  const onExecuteTransferStreamTransaction = async (address: string) => {
+  const onExecuteTransferStreamTransaction = async (dataStream: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const transferOwnership = async (address: string) => {
+    const transferOwnership = async (dataStream: any) => {
       if (!msp || !publicKey || !streamSelected) { return null; }
 
       if (!isIncomingMultisigStream()) {
         return await msp.transferStream(
           publicKey,                                       // beneficiary,
-          new PublicKey(address),                          // newBeneficiary,
+          new PublicKey(dataStream.address),               // newBeneficiary,
           new PublicKey(streamSelected.id as string),      // stream,
         );
       }
@@ -282,9 +299,11 @@ export const MoneyStreamsIncomingView = (props: {
 
       if (!multisig) { return null; }
 
+      multisigAuth = multisig.authority.toBase58();
+
       const transferOwnership = await msp.transferStream(
         multisig.authority,                              // beneficiary,
-        new PublicKey(address),                          // newBeneficiary,
+        new PublicKey(dataStream.address as string),     // newBeneficiary,
         new PublicKey(streamSelected.id as string),      // stream,
       );
 
@@ -294,7 +313,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Transfer stream ownership",
+        dataStream.title === "" ? "Transfer stream ownership" : dataStream.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.StreamTransferBeneficiary,
@@ -324,7 +343,8 @@ export const MoneyStreamsIncomingView = (props: {
       });
 
       const stream = new PublicKey(streamSelected.id as string);
-      const newBeneficiary = new PublicKey(address);
+      const newBeneficiary = new PublicKey(dataStream.address as string);
+
       const data = {
         beneficiary: publicKey.toBase58(),                              // beneficiary
         newBeneficiary: newBeneficiary.toBase58(),                      // newBeneficiary
@@ -376,7 +396,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       consoleOut('Starting transferStream using MSP V2...', '', 'blue');
 
-      const result = await transferOwnership(address)
+      const result = await transferOwnership(dataStream)
         .then(value => {
           if (!value) { return false; }
           consoleOut('transferStream returned transaction:', value);
@@ -543,19 +563,16 @@ export const MoneyStreamsIncomingView = (props: {
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Transfer stream to: ${shortenAddress(address)}`,
+              loadingMessage: `Transfer stream to: ${shortenAddress(dataStream.address, 4)}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Stream transferred to: ${shortenAddress(address)}`,
-              extras: streamSelected.id as string
-            });
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+              completedMessage: `Stream transferred to: ${shortenAddress(dataStream.address, 4)}`,
+              extras: {
+                multisigAuthority: multisigAuth
+              }
             });
 
             setIsTransferStreamModalVisibility(false);
             setLoadingStreamDetails(true);
-            param === "multisig" && showNotificationByType("info");
             onTransferStreamTransactionFinished();
             setIsBusy(false);
           } else { setIsBusy(false); }
@@ -621,6 +638,7 @@ export const MoneyStreamsIncomingView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -643,6 +661,7 @@ export const MoneyStreamsIncomingView = (props: {
         const valueInUsd = price * amount;
 
         const data = {
+          title: withdrawData.title,
           stream: stream.toBase58(),
           beneficiary: beneficiary.toBase58(),
           amount: amount
@@ -699,6 +718,7 @@ export const MoneyStreamsIncomingView = (props: {
         consoleOut('Starting withdraw using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.withdraw(
+          // title,
           beneficiary,
           stream,
           amount
@@ -760,6 +780,8 @@ export const MoneyStreamsIncomingView = (props: {
 
       if (!multisig) { return null; }
 
+      multisigAuth = multisig.authority.toBase58();
+
       const withdrawFunds = await msp.withdraw(
         multisig.authority,                          // payer
         new PublicKey(data.stream),                  // stream,
@@ -772,7 +794,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Withdraw stream funds",
+        withdrawData.title === "" ? "Withdraw stream funds" : withdrawData.title as string,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.StreamWithdraw,
@@ -1046,17 +1068,13 @@ export const MoneyStreamsIncomingView = (props: {
                 parseFloat(withdrawData.amount),
                 token.decimals
               )} ${token.symbol}`,
-              extras: streamSelected.id as string
-            });
-
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+              extras: {
+                multisigAuthority: multisigAuth
+              }
             });
 
             setIsWithdrawModalVisibility(false);
             setLoadingStreamDetails(true);
-            param === "multisig" && showNotificationByType("info");
             onWithdrawFundsTransactionFinished();
             setIsBusy(false);
           } else { setIsBusy(false); }
@@ -1135,37 +1153,61 @@ export const MoneyStreamsIncomingView = (props: {
     return deletedStreams.some(i => i === id);
   }, [deletedStreams]);
 
+  const canWithdraw = (stream: StreamInfo | Stream | undefined ) => {
+    if (!stream) {
+      return false;
+    }
+
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
+    const isV2 = stream.version >= 2 ? true : false;
+
+    return accountAddress && (isV2 ? v2.beneficiary : v1.beneficiaryAddress) === accountAddress
+      ? true
+      : false;
+  }
+
   useEffect(() => {
-    if (!ms || !msp || !streamSelected) {return;}
+    if (!ms || !msp || !streamSelected) { return; }
 
     const timeout = setTimeout(() => {
-      if (msp && streamSelected && streamSelected.version >= 2) {
-        msp.refreshStream(streamSelected as Stream).then(detail => {
-          setStreamDetail(detail as Stream);
-          if (!hasStreamPendingTx()) {
-            setLoadingStreamDetails(false);
-          }
-        });
-      } else if (ms && streamSelected && streamSelected.version < 2) {
-        ms.refreshStream(streamSelected as StreamInfo).then(detail => {
-          setStreamDetail(detail as StreamInfo);
-          if (!hasStreamPendingTx()) {
-            setLoadingStreamDetails(false);
-          }
-        });
+      const v1 = streamSelected as StreamInfo;
+      const v2 = streamSelected as Stream;
+      const isV2 = streamSelected.version >= 2;
+      if (isV2) {
+        if (v2.status === STREAM_STATUS.Running) {
+          msp.refreshStream(streamSelected as Stream).then(detail => {
+            setStreamDetail(detail as Stream);
+            if (!hasStreamPendingTx()) {
+              setLoadingStreamDetails(false);
+            }
+          });
+        } else {
+          setLoadingStreamDetails(false);
+        }
+      } else {
+        if (v1.state === STREAM_STATE.Running) {
+          ms.refreshStream(streamSelected as StreamInfo).then(detail => {
+            setStreamDetail(detail as StreamInfo);
+            if (!hasStreamPendingTx()) {
+              setLoadingStreamDetails(false);
+            }
+          });
+        } else {
+          setLoadingStreamDetails(false);
+        }
       }
     }, 1000);
 
     return () => {
       clearTimeout(timeout);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    ms, 
-    msp, 
-    setStreamDetail, 
-    streamSelected, 
-    loadingStreamDetails, 
-    hasStreamPendingTx
+    ms,
+    msp,
+    streamSelected,
+    loadingStreamDetails,
   ]);
 
   // Keep account balance updated
@@ -1242,76 +1284,89 @@ export const MoneyStreamsIncomingView = (props: {
       <Menu.Item key="msi-00" onClick={showTransferStreamModal}>
         <span className="menu-item-text">Transfer ownership</span>
       </Menu.Item>
+      <Menu.Item key="msi-01" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
+        <span className="menu-item-text">Copy stream id</span>
+      </Menu.Item>
+      <Menu.Item key="msi-02">
+        <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
+          <span className="menu-item-text">View on Solscan</span>
+        </a>
+      </Menu.Item>
     </Menu>
   );
 
-  const v1 = streamSelected as StreamInfo;
-  const v2 = streamSelected as Stream;
-
   // Buttons
-  const buttons = (
-    <Row gutter={[8, 8]} className="safe-btns-container mb-1">
-      <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
-        <Button
-          type="default"
-          shape="round"
-          size="small"
-          className="thin-stroke"
-          disabled={
-            isBusy ||
-            hasStreamPendingTx() ||
-            isScheduledOtp() ||
-            (!v1.escrowVestedAmount && !v2.withdrawableAmount) ||
-            (streamSelected && isDeletedStream(streamSelected.id as string)) ||
-            ((accountAddress !== v2.beneficiary) && (accountAddress !== v1.beneficiaryAddress))
-          }
-          onClick={showWithdrawModal}>
-            <div className="btn-content">
-              Withdraw funds
-            </div>
-        </Button>
-        <Button
-          type="default"
-          shape="round"
-          size="small"
-          className="thin-stroke"
-          disabled={isBusy ||
-            hasStreamPendingTx() ||
-            !streamSelected
-          }
-          onClick={() => {}}>
-            {streamSelected ? (
-              <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-                <div className="btn-content">
-                    View on Solscan
-                </div>
-              </a>
-            ) : (
-              <div className="btn-content">
-                View on Solscan
-            </div>
-            )}
-        </Button>
-      </Col>
+  const buttons = () => {
+    if (!streamSelected) { return null; }
 
-      <Col xs={4} sm={6} md={4} lg={6}>
-        <Dropdown
-          overlay={menu}
-          placement="bottomRight"
-          trigger={["click"]}>
-          <span className="ellipsis-icon icon-button-container mr-1">
-            <Button
-              type="default"
-              shape="circle"
-              size="middle"
-              icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-              onClick={(e) => e.preventDefault()}
-            />
-          </span>
-        </Dropdown>
-      </Col>
-    </Row>
-  );
+    const v1 = streamSelected as StreamInfo;
+    const v2 = streamSelected as Stream;
+    const isV2 = streamSelected.version >= 2 ? true : false;
+
+    return (
+      <Row gutter={[8, 8]} className="safe-btns-container mb-1">
+        <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={
+              !canWithdraw(streamSelected) ||
+              isBusy ||
+              hasStreamPendingTx() ||
+              isScheduledOtp() ||
+              (isV2 ? v2.withdrawableAmount === 0 : v1.escrowVestedAmount === 0) ||
+              (isDeletedStream(streamSelected.id as string))
+            }
+            onClick={showWithdrawModal}>
+              <div className="btn-content">
+                Withdraw funds
+              </div>
+          </Button>
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={isBusy ||
+              hasStreamPendingTx() ||
+              !streamSelected
+            }
+            onClick={() => {}}>
+              {streamSelected ? (
+                <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
+                  <div className="btn-content">
+                      View on Solscan
+                  </div>
+                </a>
+              ) : (
+                <div className="btn-content">
+                  View on Solscan
+              </div>
+              )}
+          </Button>
+        </Col>
+  
+        <Col xs={4} sm={6} md={4} lg={6}>
+          <Dropdown
+            overlay={menu}
+            placement="bottomRight"
+            trigger={["click"]}>
+            <span className="ellipsis-icon icon-button-container mr-1">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                onClick={(e) => e.preventDefault()}
+              />
+            </span>
+          </Dropdown>
+        </Col>
+      </Row>
+    );
+  }
 
   return (
     <>
@@ -1321,7 +1376,7 @@ export const MoneyStreamsIncomingView = (props: {
           hideDetailsHandler={hideDetailsHandler}
           infoData={infoData}
           isStreamIncoming={true}
-          buttons={buttons}
+          buttons={buttons()}
         />
       </Spin>
 
@@ -1331,7 +1386,7 @@ export const MoneyStreamsIncomingView = (props: {
           selectedToken={selectedToken}
           transactionFees={transactionFees}
           isVisible={isWithdrawModalVisible}
-          handleOk={onAcceptWithdraw}
+          handleOk={(options: StreamWithdrawData) => onAcceptWithdraw(options)}
           handleClose={closeWithdrawModal}
         />
       )}
@@ -1340,7 +1395,7 @@ export const MoneyStreamsIncomingView = (props: {
         <StreamTransferOpenModal
           isVisible={isTransferStreamModalVisible}
           streamDetail={streamSelected}
-          handleOk={onAcceptTransferStream}
+          handleOk={(dataStream: any) => onAcceptTransferStream(dataStream)}
           handleClose={closeTransferStreamModal}
         />
       )}
@@ -1360,7 +1415,7 @@ export const MoneyStreamsIncomingView = (props: {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {withdrawFundsAmount ? withdrawFundsAmount.inputAmount : 0}</h5>
+              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {withdrawFundsAmount ? withdrawFundsAmount.inputAmount : 0} {selectedToken?.symbol}</h5>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                 <div className="indication">{t('transactions.status.instructions')}</div>
               )}

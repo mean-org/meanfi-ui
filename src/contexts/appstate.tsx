@@ -49,7 +49,6 @@ import { ProgramAccounts } from "../utils/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
-import { STREAMS_ROUTE_BASE_PATH } from "../views/Streams";
 import { MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
@@ -71,7 +70,6 @@ interface AppStateConfig {
   refreshInterval: number;
   isWhitelisted: boolean;
   isInBetaTestingProgram: boolean;
-  detailsPanelOpen: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
@@ -81,7 +79,6 @@ interface AppStateConfig {
   effectiveRate: number;
   coinPrices: any | null;
   loadingPrices: boolean;
-  raydiumLps: any;
   contract: ContractDefinition | undefined;
   treasuryOption: TreasuryTypeOption | undefined;
   recipientAddress: string;
@@ -148,7 +145,6 @@ interface AppStateConfig {
   previousRoute: string;
   setTheme: (name: string) => void;
   setTpsAvg: (value: number | null | undefined) => void;
-  setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
@@ -165,6 +161,7 @@ interface AppStateConfig {
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
   resetStreamsState: () => void;
+  clearStreams: () => void;
   refreshStreamList: (reset?: boolean, userAddress?: PublicKey) => void;
   setContract: (name: string) => void;
   setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
@@ -229,7 +226,6 @@ const contextDefaultValues: AppStateConfig = {
   refreshInterval: ONE_MINUTE_REFRESH_TIMEOUT,
   isWhitelisted: false,
   isInBetaTestingProgram: false,
-  detailsPanelOpen: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,
@@ -239,7 +235,6 @@ const contextDefaultValues: AppStateConfig = {
   effectiveRate: 0,
   coinPrices: null,
   loadingPrices: false,
-  raydiumLps: undefined,
   contract: undefined,
   treasuryOption: TREASURY_TYPE_OPTIONS[0],
   recipientAddress: '',
@@ -309,7 +304,6 @@ const contextDefaultValues: AppStateConfig = {
   previousRoute: '',
   setTheme: () => {},
   setTpsAvg: () => {},
-  setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
   setContract: () => {},
@@ -328,6 +322,7 @@ const contextDefaultValues: AppStateConfig = {
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
   resetStreamsState: () => {},
+  clearStreams: () => {},
   refreshStreamList: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
@@ -404,7 +399,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const timeDate = moment().format('hh:mm A');  
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [tpsAvg, setTpsAvg] = useState<number | null | undefined>(contextDefaultValues.tpsAvg);
-  const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
   const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
   const [contractName, setContractName] = useLocalStorageState("contractName");
@@ -464,8 +458,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-  const [raydiumLps, setRaydiumLps] = useState<any>(contextDefaultValues.raydiumLps);
-  const [shouldLoadRaydiumLps, setShouldLoadRaydiumLps] = useState(true);
   const [accountAddress, updateAccountAddress] = useState('');
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
   const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
@@ -518,10 +510,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setTheme = (name: string) => {
     updateTheme(name);
-  }
-
-  const setDtailsPanelOpen = (state: boolean) => {
-    updateDetailsPanelOpen(state);
   }
 
   /**
@@ -712,6 +700,12 @@ const AppStateProvider: React.FC = ({ children }) => {
     setIsAllocationReserved(false);
   }
 
+  const clearStreams = () => {
+    setStreamList([]);
+    setStreamListv2([]);
+    setStreamListv1([]);
+  }
+
   const resetStreamsState = () => {
     setStreamList([]);
     setStreamActivity(undefined);
@@ -762,9 +756,6 @@ const AppStateProvider: React.FC = ({ children }) => {
             setActiveStream(detail);
             if (dock) {
               setStreamList([detail]);
-              // setStreamActivity([]);
-              // setHasMoreStreamActivity(true);
-              // getStreamActivity(streamId, detail.version, true);
               setCustomStreamDocked(true);
               openNotification({
                 description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
@@ -885,21 +876,12 @@ const AppStateProvider: React.FC = ({ children }) => {
         .then((detail: Stream | StreamInfo) => {
           consoleOut('detail:', detail, 'blue');
           if (detail) {
-            // setStreamActivity([]);
-            // setHasMoreStreamActivity(true);
-            // getStreamActivity(detail.id as string, detail.version, true);
             updateStreamDetail(detail);
             setActiveStream(detail);
-            if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-              const token = getTokenByMintAddress(detail.associatedToken as string);
-              setSelectedToken(token);
-            }
           }
         })
         .catch((error: any) => {
           console.error(error);
-          // setStreamActivity([]);
-          // setHasMoreStreamActivity(false);
         });
     }
   }
@@ -993,8 +975,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       pricesNewPerformanceCounter.stop();
       consoleOut(`Fetched price list in ${pricesNewPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
       if (newPrices && newPrices.length > 0) {
-        // const pricesMap = new Map<string, number>();
-        // newPrices.forEach(tp => pricesMap.set(tp.symbol, tp.price));
         const pricesMap: any = {};
         newPrices.forEach(tp => pricesMap[tp.symbol] = tp.price);
         const solPrice = pricesMap["SOL"];
@@ -1192,14 +1172,14 @@ const AppStateProvider: React.FC = ({ children }) => {
             rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
             streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
             // Sort debugging block
-            if (!isProd()) {
-              const debugTable: any[] = [];
-              streamAccumulator.forEach(item => debugTable.push({
-                createdBlockTime: item.createdBlockTime,
-                name: item.version < 2 ? item.streamName : item.name.trim(),
-              }));
-              console.table(debugTable);
-            }
+            // if (!isProd()) {
+            //   const debugTable: any[] = [];
+            //   streamAccumulator.forEach(item => debugTable.push({
+            //     createdBlockTime: item.createdBlockTime,
+            //     name: item.version < 2 ? item.streamName : item.name.trim(),
+            //   }));
+            //   console.table(debugTable);
+            // }
             // End of debugging block
             setStreamList(streamAccumulator);
             setStreamListv2(rawStreamsv2);
@@ -1235,47 +1215,25 @@ const AppStateProvider: React.FC = ({ children }) => {
               .then((detail: Stream | StreamInfo) => {
                 streamDetailPerformanceCounter.stop();
                 refreshStreamsPerformanceCounter.stop();
-                if (!isProd()) {
-                  consoleOut('listStreams performance counter:', '', 'crimson');
-                  const results = [{
-                    v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                    v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                    streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                    total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                  }];
-                  console.table(results);
-                }
+                // if (!isProd()) {
+                //   consoleOut('listStreams performance counter:', '', 'crimson');
+                //   const results = [{
+                //     v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //     v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //     streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //     total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                //   }];
+                //   console.table(results);
+                // }
                 if (detail) {
                   updateStreamDetail(detail);
                   setActiveStream(detail);
-                  if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-                    const token = getTokenByMintAddress(detail.associatedToken as string);
-                    setSelectedToken(token);
-                  }
-                  // setTimeout(() => {
-                  //   setStreamActivity([]);
-                  //   setHasMoreStreamActivity(true);
-                  //   setLoadingStreamActivity(true);
-                  // });
-                  // getStreamActivity(detail.id as string, detail.version, true);
                 } else if (item) {
                   updateStreamDetail(item);
                   setActiveStream(item);
-                  if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-                    const token = getTokenByMintAddress(item.associatedToken as string);
-                    setSelectedToken(token);
-                  }
-                  // setTimeout(() => {
-                  //   setStreamActivity([]);
-                  //   setHasMoreStreamActivity(true);
-                  //   setLoadingStreamActivity(true);
-                  // });
-                  // getStreamActivity(item.id as string, item.version, true);
                 }
               })
             } else {
-              // setStreamActivity([]);
-              // setHasMoreStreamActivity(false);
               updateSelectedStream(undefined);
               updateStreamDetail(undefined);
               setActiveStream(undefined);
@@ -1300,12 +1258,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     accountAddress,
     loadingStreams,
     selectedStream,
-    location.pathname,
     customStreamDocked,
     highLightableStreamId,
     clearTxConfirmationContext,
-    getTokenByMintAddress,
-    // getStreamActivity
   ]);
 
 
@@ -1515,7 +1470,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         refreshInterval,
         isWhitelisted,
         isInBetaTestingProgram,
-        detailsPanelOpen,
         shouldLoadTokens,
         isDepositOptionsModalVisible,
         tokenList,
@@ -1526,7 +1480,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         effectiveRate,
         coinPrices,
         loadingPrices,
-        raydiumLps,
         contract,
         ddcaOption,
         treasuryOption,
@@ -1587,7 +1540,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         previousRoute,
         setTheme,
         setTpsAvg,
-        setDtailsPanelOpen,
         setShouldLoadTokens,
         showDepositOptionsModal,
         hideDepositOptionsModal,
@@ -1605,6 +1557,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         refreshTokenBalance,
         resetContractValues,
         resetStreamsState,
+        clearStreams,
         refreshStreamList,
         setContract,
         setDdcaOption,
