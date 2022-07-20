@@ -75,6 +75,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
 import { MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
+import { ErrorReportModal } from '../../components/ErrorReportModal';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
@@ -139,10 +140,6 @@ export const SafeView = () => {
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
 
-  // Modal visibility flags
-  const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
-  const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
-
   // Programs
   const [programSelected, setProgramSelected] = useState<any>();
   const [needReloadPrograms, setNeedReloadPrograms] = useState(false);
@@ -175,6 +172,7 @@ export const SafeView = () => {
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
   const [queryParamV, setQueryParamV] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<TransactionStatusInfo | undefined>(undefined);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -264,6 +262,12 @@ export const SafeView = () => {
   useEffect(() => {
     selectedMultisigRef.current = selectedMultisig;
   }, [selectedMultisig]);
+
+  // Live reference to the last reflected error
+  const lastErrorRef = useRef(lastError);
+  useEffect(() => {
+    lastErrorRef.current = lastError;
+  }, [lastError]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -1030,6 +1034,16 @@ export const SafeView = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
   }
 
+  // Modal visibility flags
+  const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
+  const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
+  const [isErrorReportingModalVisible, setIsErrorReportingModalVisible] = useState(false);
+  const showErrorReportingModal = useCallback(() => setIsErrorReportingModalVisible(true), []);
+  const closeErrorReportingModal = useCallback(() => {
+    setIsErrorReportingModalVisible(false);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
+
   // New Proposal
   const onNewProposalMultisigClick = useCallback(() => {
 
@@ -1783,13 +1797,11 @@ export const SafeView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            // startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            // onTxProposalCreated();
             setMultisigProposalModalVisible(false);
             resetTransactionStatus();
             enqueueTransactionConfirmation({
@@ -1844,37 +1856,9 @@ export const SafeView = () => {
 
   const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
 
-  // Transaction confirm and execution modal launched from each Tx row
-  const [isMultisigActionTransactionModalVisible, setMultisigActionTransactionModalVisible] = useState(false);
-  // const showMultisigActionTransactionModal = useCallback((tx: MultisigTransaction) => {
-  //   resetTransactionStatus();
-  //   sethHighlightedMultisigTx(tx);
-  //   setMultisigTransactionSummary(
-  //     getMultisigTransactionSummary(tx)
-  //   );
-  //   setMultisigActionTransactionModalVisible(true);
-  // }, [resetTransactionStatus]);
-
 
   const saveOperationPayloadOnStart = (payload: any) => {
     setOperationPayload(payload);
-  };
-
-  const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
-    consoleOut('onAcceptMultisigActionModal:', item, 'blue');
-    if (item.status === MultisigTransactionStatus.Active) {
-      onExecuteApproveTx({ transaction: item });
-    } else if (item.status === MultisigTransactionStatus.Passed) {
-      onExecuteFinishTx({ transaction: item })
-    } else if (item.status === MultisigTransactionStatus.Voided) {
-      onExecuteCancelTx({ transaction: item })
-    }
-    setMultisigActionTransactionModalVisible(false);
-  };
-
-  const onCloseMultisigActionModal = () => {
-    setMultisigActionTransactionModalVisible(false);
-    resetTransactionStatus();
   };
 
   const onExecuteApproveTxCancelled = useCallback(() => {
@@ -2195,7 +2179,6 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -2457,32 +2440,40 @@ export const SafeView = () => {
     }
 
   }, [
-    clearTxConfirmationContext, 
-    resetTransactionStatus, 
-    wallet, 
-    selectedMultisig, 
-    multisigClient, 
-    publicKey, 
-    setTransactionStatus, 
-    nativeBalance, 
-    transactionStatus.currentOperation, 
-    t, 
-    connection, 
-    transactionCancelled, 
-    enqueueTransactionConfirmation, 
-    onExecuteRejectTxCancelled
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigClient,
+    selectedMultisig,
+    transactionCancelled,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    onExecuteRejectTxCancelled,
+    resetTransactionStatus,
+    setTransactionStatus,
+    t,
   ]);
 
   const onExecuteFinishTxCancelled = useCallback(() => {
-    resetTransactionStatus();
     openNotification({
       type: "info",
       duration: 5,
       description: t('notifications.tx-not-executed')
     });
+    consoleOut('lastError:', lastErrorRef.current, 'blue');
+    if (lastErrorRef.current && lastErrorRef.current.customError) {
+      // Show the error reporting modal
+      setTransactionStatus(lastErrorRef.current);
+      showErrorReportingModal();
+    } else {
+      resetTransactionStatus();
+    }
   },[
+    showErrorReportingModal,
+    resetTransactionStatus,
+    setTransactionStatus,
     t,
-    resetTransactionStatus
   ]);
 
   const onExecuteFinishTx = useCallback(async (data: any) => {
@@ -2726,8 +2717,11 @@ export const SafeView = () => {
           if (error.toString().indexOf('0x1794') !== -1) {
             const treasury = data.transaction.operation === OperationType.StreamClose
               ? data.transaction.accounts[5].pubkey.toBase58()
-              : data.transaction.accounts[3].pubkey.toBase58();
+              : data.transaction.operation === OperationType.TreasuryStreamCreate || data.transaction.operation === OperationType.StreamCreate || data.transaction.operation === OperationType.StreamCreateWithTemplate
+                ? data.transaction.accounts[2].pubkey.toBase58()
+                : data.transaction.accounts[3].pubkey.toBase58();
             txStatus.customError = {
+              title: '',
               message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
@@ -2760,8 +2754,9 @@ export const SafeView = () => {
               data: asset
             };
           }
-          //TODO: Yamel (AUI HAY QUE LEVANTAR EL MODAL)
-          setTransactionStatus(txStatus);
+          consoleOut('setLastError ->', txStatus, 'blue');
+          lastErrorRef.current = txStatus;
+          setLastError(txStatus);
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
             result: { error, encodedTx }
@@ -2784,7 +2779,6 @@ export const SafeView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature, 'blue');
-            // setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
@@ -2804,8 +2798,9 @@ export const SafeView = () => {
               }
             });
           } else {
-            // showMultisigTxResultModal();
-            onExecuteFinishTxCancelled();
+            setTimeout(() => {
+              onExecuteFinishTxCancelled();
+            }, 30);
             setIsBusy(false);
           }
         } else { 
@@ -2813,7 +2808,6 @@ export const SafeView = () => {
           onExecuteFinishTxCancelled();
         }
       } else {
-        // showMultisigTxResultModal();
         onExecuteFinishTxCancelled();
         setIsBusy(false);
       }
@@ -3943,6 +3937,7 @@ export const SafeView = () => {
             .then(tx => {
               consoleOut('getProposal -> finished...');
               consoleOut('getProposal -> tx:', tx, 'orange');
+              consoleOut('getProposal -> tx -> accounts:', tx?.accounts.map(t => t.pubkey.toBase58()), 'orange');
               setProposalSelected(tx);
               setIsProposalDetails(true);
               setIsProgramDetails(false);
@@ -4410,18 +4405,11 @@ export const SafeView = () => {
         />
       )}
 
-      {/* Transaction confirm and execution modal launched from each Tx row */}
-      {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (
-        <ProposalSummaryModal
-          isVisible={isMultisigActionTransactionModalVisible}
-          handleOk={onAcceptMultisigActionModal}
-          handleClose={onCloseMultisigActionModal}
-          isBusy={isBusy}
-          nativeBalance={nativeBalance}
-          highlightedMultisigTx={highlightedMultisigTx}
-          multisigTransactionSummary={multisigTransactionSummary}
-          selectedMultisig={selectedMultisig}
-          minRequiredBalance={minRequiredBalance}
+      {isErrorReportingModalVisible && (
+        <ErrorReportModal
+          handleClose={closeErrorReportingModal}
+          isVisible={isErrorReportingModalVisible}
+          title={transactionStatus.customError.title || 'Error submitting transaction'}
         />
       )}
 
