@@ -383,16 +383,14 @@ export const SafeView = () => {
 
     setIsCreateMultisigModalVisible(false);
     resetTransactionStatus();
-    openNotification({
-      description: t('multisig.create-multisig.success-message'),
-      type: "success"
-    });
+    setIsBusy(false);
+    // openNotification({
+    //   description: t('multisig.create-multisig.success-message'),
+    //   type: "success"
+    // });
     setTransactionFees(ZERO_FEES);
 
-  },[
-    t,
-    resetTransactionStatus
-  ])
+  },[resetTransactionStatus])
 
   const onMultisigModified = useCallback(() => {
 
@@ -653,7 +651,7 @@ export const SafeView = () => {
       }
     }
 
-    if (wallet) {
+    if (wallet && data) {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -664,29 +662,38 @@ export const SafeView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateMultisig);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.CreateMultisig,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Creating safe ${data.label}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Safe ${data.label} successfully created`
             });
+            // startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateMultisig);
+            // setIsBusy(false);
+            // setTransactionStatus({
+            //   lastOperation: transactionStatus.currentOperation,
+            //   currentOperation: TransactionStatus.TransactionFinished
+            // });
             onMultisigCreated();
-            setIsCreateMultisigModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
   }, [
-    clearTxConfirmationContext, 
+    clearTxConfirmationContext,
+    enqueueTransactionConfirmation,
     connection, 
     multisigClient, 
     nativeBalance, 
     onMultisigCreated, 
     publicKey, 
     resetTransactionStatus, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
+    setTransactionStatus,  
     transactionCancelled, 
     transactionFees.multisigFee, 
     transactionFees.networkFee, 
@@ -3218,6 +3225,13 @@ export const SafeView = () => {
       }
     };
 
+    const hardReloadMultisigs = () => {
+      const streamsRefreshCta = document.getElementById("multisig-hard-refresh-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
     const refreshSelectedProposal = (extras: any) => {
       if (multisigClient && publicKey && extras && (extras.multisigAuthority || extras.multisigId) && extras.transactionId) {
         multisigClient
@@ -3254,15 +3268,16 @@ export const SafeView = () => {
       case OperationType.CancelTransaction:
         goToProposals();
         break;  
+      case OperationType.CreateMultisig:
+        // setHighLightableMultisigId(undefined);
+        // setSelectedMultisig(undefined);
+        hardReloadMultisigs();
+        break;  
       default:
         break;
     }
 
-  }, [
-    publicKey,
-    multisigClient,
-    recordTxConfirmation
-  ]);
+  }, [multisigClient, publicKey, recordTxConfirmation]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -3503,6 +3518,41 @@ export const SafeView = () => {
     loadingMultisigAccounts,
     // serumAccounts
   ]);
+
+
+  const refreshMultisigs = useCallback((reset = false) => {
+  
+    if (!connection || !publicKey || !multisigClient) {
+      return;
+    }
+  
+    const timeout = setTimeout(() => {
+      // TODO: Add loading indicator (not now because it gets confused with the useEffect version)
+      multisigClient
+        .getMultisigs(publicKey)
+        .then((allInfo: MultisigInfo[]) => {
+
+          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+          const allAccounts = [...allInfo, ...serumAccounts];
+          setMultisigAccounts(allAccounts);
+          consoleOut('multisigAccounts:', allAccounts, 'darkorange');
+
+          if (reset) {
+            // setSelectedMultisig(allAccounts[0]);
+            navigate(`${MULTISIG_ROUTE_BASE_PATH}/${allAccounts[0].authority.toBase58()}?v=proposals`);
+          }
+        })
+        .catch((err: any) => {
+          console.error(err);
+          consoleOut('multisigPendingTxs:', [], 'blue');
+        })
+    });
+  
+    return () => {
+      clearTimeout(timeout);
+    }
+  
+  }, [connection, multisigClient, navigate, publicKey, serumAccounts]);
 
   // Load/Unload multisig on wallet connect/disconnect
   useEffect(() => {
@@ -4230,11 +4280,10 @@ export const SafeView = () => {
                           shape="circle"
                           size="small"
                           icon={<ReloadOutlined />}
-                          onClick={() => {
-                            setLoadingMultisigAccounts(true);
-                          }}
+                          onClick={refreshMultisigs(false)}
                         />
                       </span>
+                      <span id="multisig-hard-refresh-cta" onClick={refreshMultisigs(true)}></span>
                     </span>
                   </div>
                 </Tooltip>
