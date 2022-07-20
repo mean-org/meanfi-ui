@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { findATokenAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
   DAO_CORE_TEAM_WHITELIST,
@@ -35,7 +35,6 @@ import { MappedTransaction } from "../utils/history";
 import { consoleOut, isProd, msToTime } from "../utils/ui";
 import { appConfig } from "..";
 import { DdcaAccount } from "@mean-dao/ddca";
-import { TxConfirmationContext } from "./transaction-status";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { TreasuryTypeOption } from "../models/treasuries";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
@@ -393,7 +392,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [isInBetaTestingProgram, setIsInBetaTestingProgram] = useState(contextDefaultValues.isInBetaTestingProgram);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
-  const { clearTxConfirmationContext } = useContext(TxConfirmationContext);
   const today = new Date().toLocaleDateString("en-US");
   const tomorrow = moment().add(1, 'days').format('L');
   const timeDate = moment().format('hh:mm A');  
@@ -1140,9 +1138,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     if (msp) {
       updateLoadingStreams(true);
-      setTimeout(() => {
-        clearTxConfirmationContext();
-      });
 
       const streamAccumulator: any[] = [];
       let rawStreamsv1: StreamInfo[] = [];
@@ -1260,7 +1255,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     selectedStream,
     customStreamDocked,
     highLightableStreamId,
-    clearTxConfirmationContext,
   ]);
 
 

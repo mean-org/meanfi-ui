@@ -951,12 +951,7 @@ export const MultisigTransferTokensModal = (props: {
 
         </div>
 
-        <div 
-          className={
-            props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
-              ? "panel2 show" 
-              : "panel2 hide"
-            }>          
+        <div className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>          
           {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
