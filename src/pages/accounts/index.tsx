@@ -4380,10 +4380,24 @@ export const AccountsNewView = () => {
   //////////////
 
   const onBackButtonClicked = () => {
-    setDetailsPanelOpen(false);
-    setAutoOpenDetailsPanel(false);
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
-    navigate(url);
+    if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamId}`) {
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
+      navigate(url);
+    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/${streamId}`) {
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+      navigate(url);
+    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId}`) {
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+      navigate(url);
+    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId}/${streamId}`) {
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId}`;
+      navigate(url);
+    } else {
+      setDetailsPanelOpen(false);
+      setAutoOpenDetailsPanel(false);
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+      navigate(url);
+    }
   }
 
   ///////////////

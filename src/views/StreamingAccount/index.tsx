@@ -40,6 +40,8 @@ import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
 import { Identicon } from "../../components/Identicon";
 import { SolBalanceModal } from "../../components/SolBalanceModal";
 import { NATIVE_SOL } from "../../utils/tokens";
+import useWindowSize from "../../hooks/useWindowResize";
+import { isMobile } from "react-device-detect";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -81,6 +83,7 @@ export const StreamingAccountView = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const { width } = useWindowSize();
   const { address, treasuryId } = useParams();
   
   const { 
@@ -92,6 +95,7 @@ export const StreamingAccountView = (props: {
   } = props;
 
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
 
   // Streaming account
   const [highlightedStream, sethHighlightedStream] = useState<Stream | StreamInfo | undefined>();
@@ -125,6 +129,28 @@ export const StreamingAccountView = (props: {
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
   }
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
+
+  // const getQueryAccountType = useCallback(() => {
+  //   let accountTypeInQuery: string | null = null;
+  //   if (searchParams) {
+  //     accountTypeInQuery = searchParams.get('account-type');
+  //     if (accountTypeInQuery) {
+  //       return accountTypeInQuery;
+  //     }
+  //   }
+  //   return undefined;
+  // }, [searchParams]);
+
+  // const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const getQueryTabOption = useCallback(() => {
 
@@ -3167,12 +3193,14 @@ export const StreamingAccountView = (props: {
   return (
     <>
       <Spin spinning={loadingStreamingAccountDetails}>
-        <Row gutter={[8, 8]} className="safe-details-resume">
-          <div onClick={hideDetailsHandler} className="back-button icon-button-container">
-            <IconArrowBack className="mean-svg-icons" />
-            <span className="ml-1">Back</span>
-          </div>
-        </Row>
+        {!isXsDevice && (
+          <Row gutter={[8, 8]} className="safe-details-resume">
+            <div onClick={hideDetailsHandler} className="back-button icon-button-container">
+              <IconArrowBack className="mean-svg-icons" />
+              <span className="ml-1">Back</span>
+            </div>
+          </Row>
+        )}
 
         {streamingAccountSelected && (
           <ResumeItem
