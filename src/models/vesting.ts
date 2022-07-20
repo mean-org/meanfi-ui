@@ -18,10 +18,10 @@ export const VESTING_CATEGORIES: VestingContractCategory[] = [
         label: 'Advisor',
         value: SubCategory.advisor
     },
-    {
-        label: 'Community',
-        value: SubCategory.community
-    },
+    // {
+    //     label: 'Community',
+    //     value: SubCategory.community
+    // },
     {
         label: 'Development',
         value: SubCategory.development
