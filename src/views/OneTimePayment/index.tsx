@@ -195,9 +195,8 @@ export const OneTimePayment = (props: {
             }
             return 0;
           });
-          
+
           setSelectedList(intersectedList);
-          consoleOut('intersectedList:', intersectedList, 'orange');
 
         } else {
           for (const t of tokenList) {

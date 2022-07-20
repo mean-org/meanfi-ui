@@ -3937,7 +3937,7 @@ export const SafeView = () => {
             .then(tx => {
               consoleOut('getProposal -> finished...');
               consoleOut('getProposal -> tx:', tx, 'orange');
-              consoleOut('getProposal -> tx -> accounts:', tx?.accounts.map(t => t.pubkey.toBase58()), 'orange');
+              // consoleOut('getProposal -> tx -> accounts:', tx?.accounts.map(t => t.pubkey.toBase58()), 'orange');
               setProposalSelected(tx);
               setIsProposalDetails(true);
               setIsProgramDetails(false);

@@ -532,7 +532,6 @@ export const PlaygroundView = () => {
           });
 
           setSelectedList(intersectedList);
-          consoleOut('intersectedList:', intersectedList, 'orange');
           if (!selectedToken) { setSelectedToken(intersectedList[0]); }
 
         } else {

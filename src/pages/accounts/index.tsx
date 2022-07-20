@@ -231,7 +231,7 @@ export const AccountsNewView = () => {
 
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [autocloseTreasuries, setAutocloseTreasuries] = useState<(Treasury | TreasuryInfo)[]>([]);
-  const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
+  // const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
 
@@ -2714,27 +2714,31 @@ export const AccountsNewView = () => {
     t
   ]);
 
-  const getAllUserV2Treasuries = useCallback(async () => {
+  const getAllUserV2Treasuries = useCallback(async (addr?: string) => {
 
-    if (!accountAddress || loadingTreasuries || !msp) { return []; }
+    if (!msp) { return []; }
 
-    const pk = new PublicKey(accountAddress);
+    if (addr || (accountAddress && address && accountAddress === address)) {
+      const pk = new PublicKey(addr || accountAddress);
 
-    consoleOut('Fetching treasuries for address:', accountAddress, 'orange');
-    const treasuries = await msp.listTreasuries(pk, true, false, Category.default);
-    consoleOut('getAllUserV2Treasuries ->', treasuries, 'orange');
+      consoleOut('Fetching treasuries for:', addr || accountAddress, 'orange');
+      const treasuries = await msp.listTreasuries(pk, true, false, Category.default);
+      consoleOut('getAllUserV2Treasuries ->', treasuries, 'orange');
 
-    return treasuries;
+      return treasuries;
+    }
+
+    return [];
 
   }, [
     msp,
-    loadingTreasuries,
+    address,
     accountAddress
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
 
-    if (!publicKey || loadingTreasuries) { return; }
+    if (!publicKey) { return; }
 
     if (msp && ms) {
 
@@ -2762,7 +2766,7 @@ export const AccountsNewView = () => {
           setAutocloseTreasuries(autoclosables);
 
           const streamingAccounts = treasuryAccumulator.filter(t => !t.autoClose);
-      
+
           setTreasuryList(streamingAccounts);
           consoleOut('treasuryList:', streamingAccounts, 'blue');
         })
@@ -2776,7 +2780,6 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
-    loadingTreasuries,
     getAllUserV2Treasuries,
     getQueryAccountType,
   ]);
@@ -3070,9 +3073,7 @@ export const AccountsNewView = () => {
 
   // Load treasuries when account address changes
   useEffect(() => {
-    if (publicKey && accountAddress && address && !treasuriesLoaded && accountAddress === address) {
-
-      setTreasuriesLoaded(true);
+    if (publicKey && accountAddress && address && accountAddress === address) {
 
       if (!previousRoute.startsWith('/accounts')) {
         clearStateData();
@@ -3081,13 +3082,13 @@ export const AccountsNewView = () => {
       refreshTreasuries(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountAddress, address, previousRoute, publicKey, treasuriesLoaded]);
+  }, [accountAddress, address, previousRoute, publicKey]);
 
   // Treasury list refresh timeout
   useEffect(() => {
     let timer: any;
 
-    if (publicKey && treasuriesLoaded && !customStreamDocked) {
+    if (publicKey && !customStreamDocked) {
       timer = setInterval(() => {
         consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshTreasuries(false);
@@ -3098,7 +3099,6 @@ export const AccountsNewView = () => {
   }, [
     publicKey,
     accountAddress,
-    treasuriesLoaded,
     loadingTreasuries,
     customStreamDocked,
     refreshTreasuries
@@ -3865,7 +3865,7 @@ export const AccountsNewView = () => {
 
   // Create a combined list of streaming accounts with its 
   useEffect(() => {
-    if (!treasuryList || !streamList || !treasuriesLoaded) { return; }
+    if (!treasuryList || !streamList) { return; }
 
     const getFinalList = async (list: (Treasury | TreasuryInfo)[]) => {
       const finalList: CombinedStreamingAccounts[] = [];
@@ -3925,7 +3925,7 @@ export const AccountsNewView = () => {
       })
       .finally(() => setLoadingCombinedStreamingList(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streamList, treasuriesLoaded, treasuryList]);
+  }, [streamList, treasuryList]);
 
   // Set the list of incoming and outgoing streams
   useEffect(() => {
@@ -3999,8 +3999,9 @@ export const AccountsNewView = () => {
     streamListv2,
   ]);
 
+  // 
   useEffect(() => {
-    if (!publicKey || !treasuryList || !treasuriesLoaded) { return; }
+    if (!publicKey || !treasuryList) { return; }
 
     const timeout = setTimeout(() => {
       refreshTreasuriesSummary();
@@ -4010,7 +4011,7 @@ export const AccountsNewView = () => {
       clearTimeout(timeout);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey, treasuryList, treasuriesLoaded]);
+  }, [publicKey, treasuryList]);
 
   // Update total account balance
   useEffect(() => {
@@ -4109,7 +4110,7 @@ export const AccountsNewView = () => {
       consoleOut('Clearing accounts state...', '', 'purple');
       clearStateData();
       setSelectedAsset(undefined);
-      setTreasuriesLoaded(false);
+      // setTreasuriesLoaded(false);
       setTokensLoaded(false);
       setCanSubscribe(true);
       isWorkflowLocked = false;

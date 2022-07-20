@@ -224,7 +224,6 @@ export const RepeatingPayment = (props: {
           });
 
           setSelectedList(intersectedList);
-          consoleOut('intersectedList:', intersectedList, 'orange');
 
         } else {
           for (const t of tokenList) {
