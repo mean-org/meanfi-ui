@@ -4275,10 +4275,10 @@ export const SafeView = () => {
                           shape="circle"
                           size="small"
                           icon={<ReloadOutlined />}
-                          onClick={refreshMultisigs(false)}
+                          onClick={() => refreshMultisigs()}
                         />
                       </span>
-                      <span id="multisig-hard-refresh-cta" onClick={refreshMultisigs(true)}></span>
+                      <span id="multisig-hard-refresh-cta" onClick={() => refreshMultisigs(true)}></span>
                     </span>
                   </div>
                 </Tooltip>
