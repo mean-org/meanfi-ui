@@ -966,8 +966,13 @@ export const AccountsNewView = () => {
     }
 
     if (item) {
-      if (item.extras && item.extras.multisigAuthority && isWorkflowLocked) {
+      if (isWorkflowLocked) {
         return;
+      }
+
+      // Lock the workflow
+      if (item.extras && item.extras.multisigAuthority) {
+        isWorkflowLocked = true;
       }
 
       switch (item.operationType) {
@@ -991,11 +996,12 @@ export const AccountsNewView = () => {
         case OperationType.TransferTokens:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
-          if (!isWorkflowLocked) {
-            isWorkflowLocked = true;
-            setLoadingMultisigAccounts(false);
+          if (item.extras && item.extras.multisigAuthority) {
             notifyMultisigActionFollowup(item);
           }
+          setTimeout(() => {
+            setLoadingMultisigAccounts(true);
+          }, 20);
           break;
         case OperationType.StreamCreate:
           softReloadStreams();
@@ -1010,12 +1016,11 @@ export const AccountsNewView = () => {
         case OperationType.StreamWithdraw:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
-          if (!isWorkflowLocked) {
-            isWorkflowLocked = true;
-            setLoadingMultisigAccounts(false);
+          if (item.extras && item.extras.multisigAuthority) {
             notifyMultisigActionFollowup(item);
           }
           setTimeout(() => {
+            setLoadingMultisigAccounts(true);
             softReloadStreams();
           }, 20);
           break;
@@ -1024,9 +1029,8 @@ export const AccountsNewView = () => {
         case OperationType.StreamTransferBeneficiary:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
-          if (!isWorkflowLocked && item.extras?.multisigAuthority) {
-            isWorkflowLocked = true;
-            setLoadingMultisigAccounts(false);
+          if (item.extras && item.extras.multisigAuthority) {
+            setLoadingMultisigAccounts(true);
             notifyMultisigActionFollowup(item);
           } else {
             const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
@@ -1039,9 +1043,7 @@ export const AccountsNewView = () => {
         default:
           break;
       }
-
   }
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, navigate, setHighLightableMultisigId]);
 
