@@ -1,5 +1,5 @@
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Row, Spin, Tabs } from "antd";
+import { Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
@@ -8,7 +8,7 @@ import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreate
 import { AppStateContext } from "../../contexts/appstate";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { IconArrowForward, IconLoading } from "../../Icons";
+import { IconArrowForward, IconEllipsisVertical, IconLoading } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import "./style.scss";
@@ -50,6 +50,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { TreasuryTopupParams } from "../../models/common-types";
+import useWindowSize from "../../hooks/useWindowResize";
+import { isMobile } from "react-device-detect";
 
 const { TabPane } = Tabs;
 
@@ -116,6 +118,7 @@ export const MoneyStreamsInfoView = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const { width } = useWindowSize();
   const { address } = useParams();
   const navigate = useNavigate();
 
@@ -154,6 +157,17 @@ export const MoneyStreamsInfoView = (props: {
   const [loadingMoneyStreamsDetails, setLoadingMoneyStreamsDetails] = useState(true);
   const [hasIncomingStreamsRunning, setHasIncomingStreamsRunning] = useState<number>();
   const [hasOutgoingStreamsRunning, setHasOutgoingStreamsRunning] = useState<number>();
+
+  const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -1956,13 +1970,23 @@ export const MoneyStreamsInfoView = (props: {
   const renderProtocol = (
     <>
       {accountAddress && (
-        <CopyExtLinkGroup
-          content={accountAddress}
-          number={8}
-          externalLink={true}
-          isTx={false}
-          classNameContainer="mb-1"
-        />
+        !isXsDevice ? (
+          <CopyExtLinkGroup
+            content={accountAddress}
+            number={8}
+            externalLink={true}
+            isTx={false}
+            classNameContainer="mb-1"
+          />
+        ) : (
+          <CopyExtLinkGroup
+            content={accountAddress}
+            number={4}
+            externalLink={true}
+            isTx={false}
+            classNameContainer="mb-1"
+          />
+        )
       )}
       <div className="badge-container">
         {listOfBadges.map((badge, index) => (
@@ -2618,6 +2642,15 @@ export const MoneyStreamsInfoView = (props: {
     );
   }
 
+  // Dropdown (three dots button) inside outgoing stream list
+  const menu = (
+    <Menu>
+      <Menu.Item key="00" onClick={param === "multisig" ? showCreateStreamModal : showCreateMoneyStreamModal}>
+        <span className="menu-item-text">Create stream</span>
+      </Menu.Item>
+    </Menu>
+  );
+
   return (
     <>
       <Spin spinning={loadingMoneyStreamsDetails || loadingCombinedStreamingList}>
@@ -2626,8 +2659,8 @@ export const MoneyStreamsInfoView = (props: {
         />
 
         <Row gutter={[8, 8]} className="safe-btns-container mb-1">
-          <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
-          <Button
+          <Col xs={isXsDevice ? 20 : 24} sm={isXsDevice ? 18 : 24} md={isXsDevice ? 20 : 24} lg={isXsDevice ? 18 : 24} className="btn-group">
+            <Button
               type="default"
               shape="round"
               size="small"
@@ -2661,22 +2694,43 @@ export const MoneyStreamsInfoView = (props: {
                   </div>
               </Button>
             )}
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke btn-min-width"
-              onClick={() => {
-                param === "multisig"
-                  ? showCreateStreamModal()
-                  : showCreateMoneyStreamModal()
-              }}>
-              <div className="btn-content">
-                {/* {param === "multisig" ? "Initiate stream" : "Create stream"} */}
-                Create stream
-              </div>
-            </Button>
+            {!isXsDevice && (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke btn-min-width"
+                onClick={() => {
+                  param === "multisig"
+                    ? showCreateStreamModal()
+                    : showCreateMoneyStreamModal()
+                }}>
+                <div className="btn-content">
+                  {/* {param === "multisig" ? "Initiate stream" : "Create stream"} */}
+                  Create stream
+                </div>
+              </Button>
+            )}
           </Col>
+
+          {isXsDevice && (
+            <Col xs={4} sm={6} md={4} lg={6}>
+              <Dropdown className="options-dropdown"
+                overlay={menu}
+                placement="bottomRight"
+                trigger={["click"]}>
+                <span className="icon-button-container ml-1">
+                  <Button
+                    type="default"
+                    shape="circle"
+                    size="middle"
+                    icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                    onClick={(e) => e.preventDefault()}
+                  />
+                </span>
+              </Dropdown>
+            </Col>
+          )}
         </Row>
 
         {renderTabset()}

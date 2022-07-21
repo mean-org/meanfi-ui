@@ -2973,6 +2973,10 @@ export const StreamingAccountView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
+      <Menu.Item key="ms-00" onClick={showCreateStreamModal} disabled={hasStreamingAccountPendingTx() ||
+    (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)}>
+        <span className="menu-item-text">Create stream</span>
+      </Menu.Item>
       <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={hasStreamingAccountPendingTx() || (streamingAccountStreams && streamingAccountStreams.length > 0) || !isTreasurer()}>
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
@@ -3224,21 +3228,7 @@ export const StreamingAccountView = (props: {
               type="default"
               shape="round"
               size="small"
-              className="thin-stroke"
-              disabled={
-                hasStreamingAccountPendingTx() ||
-                (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)
-              }
-              onClick={showCreateStreamModal}>
-                <div className="btn-content">
-                  Create stream
-                </div>
-            </Button>
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
+              className="thin-stroke btn-min-width"
               disabled={hasStreamingAccountPendingTx()}
               onClick={showAddFundsModal}>
                 <div className="btn-content">
@@ -3249,7 +3239,7 @@ export const StreamingAccountView = (props: {
               type="default"
               shape="round"
               size="small"
-              className="thin-stroke"
+              className="thin-stroke btn-min-width"
               disabled={
                 hasStreamingAccountPendingTx() ||
                 getTreasuryUnallocatedBalance() <= 0
@@ -3259,6 +3249,22 @@ export const StreamingAccountView = (props: {
                   Withdraw funds
                 </div>
             </Button>
+            {!isXsDevice && (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke btn-min-width"
+                disabled={
+                  hasStreamingAccountPendingTx() ||
+                  (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)
+                }
+                onClick={showCreateStreamModal}>
+                  <div className="btn-content">
+                    Create stream
+                  </div>
+              </Button>
+            )}
           </Col>
 
           <Col xs={4} sm={6} md={4} lg={6}>
