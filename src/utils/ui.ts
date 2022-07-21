@@ -31,7 +31,7 @@ export const isLocal = (): boolean => {
 }
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (!isProd()) {
+    if (!isProd() || isLocal()) {
         if (msg) {
             if (value === 'NOT_SPECIFIED') {
                 console.log(`%c${msg}`, `color: ${color}`);

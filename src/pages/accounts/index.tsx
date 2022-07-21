@@ -843,6 +843,7 @@ export const AccountsNewView = () => {
     const isAccountNative = isSelectedAssetNativeAccount(asset);
     let url = '';
 
+    consoleOut('navigateToAsset received asset:', asset.publicAddress, 'blue');
     if (isMyWallet && isAccountNative) {
       url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/assets`;
     } else {
@@ -3081,7 +3082,6 @@ export const AccountsNewView = () => {
 
   const clearStateData = useCallback(() => {
     clearStreams();
-    setPathParamAsset('');
     setPathParamStreamId('');
     setPathParamTreasuryId('');
     setPathParamStreamingTab('');
@@ -3870,17 +3870,15 @@ export const AccountsNewView = () => {
 
   // Preset token based on url param asset
   useEffect(() => {
-    if (asset && accountTokens && accountTokens.length > 0) {
-      if (!selectedAsset || (selectedAsset && selectedAsset.publicAddress !== asset)) {
-        consoleOut('Presetting token based on url...', '', 'crimson');
-        const inferredAsset = accountTokens.find(t => t.publicAddress === asset);
-        if (inferredAsset) {
-          selectAsset(inferredAsset);
-        }
+    if (pathParamAsset && accountTokens && accountTokens.length > 0) {
+      consoleOut('Presetting token based on url...', pathParamAsset, 'crimson');
+      const inferredAsset = accountTokens.find(t => t.publicAddress === pathParamAsset);
+      if (inferredAsset) {
+        selectAsset(inferredAsset);
       }
-    } else if (!asset && accountTokens && accountTokens.length > 0) {
+    } else if (!pathParamAsset && accountTokens && accountTokens.length > 0) {
       if (!selectedAsset) {
-        consoleOut('Presetting first token in the list...', '', 'crimson');
+        consoleOut('Presetting first token in the list...', accountTokens[0].publicAddress, 'crimson');
         selectAsset(accountTokens[0]);
       } else {
         const inferredAsset = accountTokens.find(t => t.publicAddress === accountAddress);
@@ -3890,7 +3888,7 @@ export const AccountsNewView = () => {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountAddress, accountTokens, asset]);
+  }, [accountAddress, accountTokens, pathParamAsset]);
 
   // Preset the selected streaming account from the list if provided in path param (treasuryId)
   useEffect(() => {
@@ -4107,8 +4105,6 @@ export const AccountsNewView = () => {
       // Net Worth
       const total = sumMeanTokens + totalAccountBalance;
       setNetWorth(total);
-    } else {
-      setNetWorth(0);
     }
 
   }, [accountTokens, getTokenPriceBySymbol, tokensLoaded, totalAccountBalance]);
@@ -4167,8 +4163,7 @@ export const AccountsNewView = () => {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       consoleOut('Clearing accounts state...', '', 'purple');
       clearStateData();
-      setSelectedAsset(undefined);
-      // setTreasuriesLoaded(false);
+      // setSelectedAsset(undefined);
       setTokensLoaded(false);
       setCanSubscribe(true);
       isWorkflowLocked = false;
@@ -4599,14 +4594,16 @@ export const AccountsNewView = () => {
     </>
   );
 
-  const renderAsset = useCallback((asset: UserTokenAccount, index: number) => {
+  const renderAsset = useCallback((asset: UserTokenAccount) => {
     const onTokenAccountClick = () => {
       setSelectedCategory("assets");
-      if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
-        reloadSwitch();
-      }
+      consoleOut('clicked on asset:', asset.publicAddress, 'blue');
+      // if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
+      //   reloadSwitch();
+      // } else {
+      // }
+      // selectAsset(asset, true, true);
       navigateToAsset(asset);
-      selectAsset(asset, true, true);
     }
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
@@ -4621,13 +4618,15 @@ export const AccountsNewView = () => {
     }
 
     return (
-      <div key={`${index}`} onClick={onTokenAccountClick}
-          className={`transaction-list-row ${isSelectedToken() && selectedCategory === "assets"
-            ? 'selected'
-            : hideLowBalances && (shouldHideAsset(asset) || !asset.balance)
-              ? 'hidden'
-              : ''
-          }`
+      <div key={`${asset.displayIndex}`}
+            onClick={onTokenAccountClick}
+            id={asset.publicAddress}
+            className={`transaction-list-row ${isSelectedToken() && selectedCategory === "assets"
+              ? 'selected'
+              : hideLowBalances && (shouldHideAsset(asset) || !asset.balance)
+                ? 'hidden'
+                : ''
+            }`
         }>
         <div className="icon-cell">
           <div className="token-icon">
@@ -4701,7 +4700,7 @@ export const AccountsNewView = () => {
               </div>
           )}
           {/* Render user token accounts */}
-          {accountTokens.map((asset, index) => renderAsset(asset, index))}
+          {accountTokens.map(asset => renderAsset(asset))}
         </>
       ) : tokensLoaded ? (
         <div className="flex flex-center">
