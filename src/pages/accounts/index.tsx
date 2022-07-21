@@ -5413,11 +5413,11 @@ export const AccountsNewView = () => {
                               {renderCategoryMeta()}
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
-                            {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && (
+                            {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && selectedMultisig && (
                               (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
                                 <Row gutter={[8, 8]}>
-                                  <Col span={24} className="alert-info-message pr-2 simplelink" onClick={showSolBalanceModal}>
-                                    <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon />
+                                  <Col span={24} className={`alert-info-message pr-2 ${selectedMultisig ? "simplelink" : "disable-pointer"}`} onClick={showSolBalanceModal}>
+                                    <Alert message="SOL account balance is very low in the safe. Click here to add more SOL." type="info" showIcon />
                                   </Col>
                                 </Row>
                               ) : null
@@ -5656,7 +5656,7 @@ export const AccountsNewView = () => {
         />
       )}
 
-      {(isSolBalanceModalOpen && multisigSolBalance) && (
+      {(isSolBalanceModalOpen && selectedMultisig) && (
         <SolBalanceModal
           address={NATIVE_SOL.address || ''}
           accountAddress={accountAddress}
@@ -5664,7 +5664,7 @@ export const AccountsNewView = () => {
           isVisible={isSolBalanceModalOpen}
           handleClose={hideSolBalanceModal}
           tokenSymbol={NATIVE_SOL.symbol}
-          nativeBalance={multisigSolBalance}
+          nativeBalance={selectedMultisig.balance}
           selectedMultisig={selectedMultisig}
           isStreamingAccount={false}
         />
