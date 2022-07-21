@@ -2191,25 +2191,29 @@ export const MoneyStreamsInfoView = (props: {
               }
             </div>
           </div>
-          <div className="wave-container wave-green" id="wave">
-            {/* <div className="wave wave-green"></div> */}
-            <Wave fill="url(#gradient1)"
-              paused={isPaused}
-              className="svg-container"
-              style={{ height: `${withdrawalScale}vh`, position: "absolute", bottom: 0 }}
-              options={{
-                amplitude: 6,
-                speed: 0.25,
-                points: 6
-              }}>
-              <defs>
-                <linearGradient id="gradient1" gradientTransform="rotate(180)">
-                  <stop offset="10%"  stopColor="#006820" />
-                  <stop offset="100%" stopColor="#181a2a" />
-                </linearGradient>
-              </defs>
-            </Wave>
-          </div>
+          {loadingCombinedStreamingList || loadingStreams ? (
+            <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+          ) : (
+            <div className="wave-container wave-green" id="wave">
+              {/* <div className="wave wave-green"></div> */}
+              <Wave fill="url(#gradient1)"
+                paused={isPaused}
+                className="svg-container"
+                style={{ height: `${withdrawalScale}vh`, position: "absolute", bottom: 0 }}
+                options={{
+                  amplitude: 6,
+                  speed: 0.25,
+                  points: 6
+                }}>
+                <defs>
+                  <linearGradient id="gradient1" gradientTransform="rotate(180)">
+                    <stop offset="10%"  stopColor="#006820" />
+                    <stop offset="100%" stopColor="#181a2a" />
+                  </linearGradient>
+                </defs>
+              </Wave>
+            </div>
+          )}
         </Col>
         <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
           {/* Background animation */}
@@ -2258,25 +2262,29 @@ export const MoneyStreamsInfoView = (props: {
               }
             </div>
           </div>
-          <div className="wave-container wave-red" id="wave">
-            {/* <div className="wave wave-red"></div> */}
-            <Wave fill="url(#gradient2)"
-              paused={isPaused}
-              className="svg-container"
-              style={{ height: `${unallocatedScale}vh`, position: "absolute", bottom: 0 }}
-              options={{
-                amplitude: 6,
-                speed: 0.25,
-                points: 6
-              }}>
-              <defs>
-                <linearGradient id="gradient2" gradientTransform="rotate(180)">
-                  <stop offset="10%"  stopColor="#b7001c" />
-                  <stop offset="100%" stopColor="#181a2a" />
-                </linearGradient>
-              </defs>
-            </Wave>
-          </div>
+          {loadingCombinedStreamingList || loadingStreams ? (
+            <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+          ) : (
+            <div className="wave-container wave-red" id="wave">
+              {/* <div className="wave wave-red"></div> */}
+              <Wave fill="url(#gradient2)"
+                paused={isPaused}
+                className="svg-container"
+                style={{ height: `${unallocatedScale}vh`, position: "absolute", bottom: 0 }}
+                options={{
+                  amplitude: 6,
+                  speed: 0.25,
+                  points: 6
+                }}>
+                <defs>
+                  <linearGradient id="gradient2" gradientTransform="rotate(180)">
+                    <stop offset="10%"  stopColor="#b7001c" />
+                    <stop offset="100%" stopColor="#181a2a" />
+                  </linearGradient>
+                </defs>
+              </Wave>
+            </div>
+          )}
         </Col>
       </Row>
 
