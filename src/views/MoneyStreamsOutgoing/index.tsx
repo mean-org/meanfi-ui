@@ -2576,7 +2576,7 @@ export const MoneyStreamsOutgoingView = (props: {
           type="default"
           shape="round"
           size="small"
-          className="thin-stroke"
+          className="thin-stroke btn-min-width"
           disabled={
             isBusy ||
             hasStreamPendingTx() ||
@@ -2595,7 +2595,7 @@ export const MoneyStreamsOutgoingView = (props: {
               type="default"
               shape="round"
               size="small"
-              className="thin-stroke"
+              className="thin-stroke btn-min-width"
               disabled={isBusy || hasStreamPendingTx()}
               onClick={showResumeStreamModal}>
                 <div className="btn-content">
@@ -2607,7 +2607,7 @@ export const MoneyStreamsOutgoingView = (props: {
               type="default"
               shape="round"
               size="small"
-              className="thin-stroke"
+              className="thin-stroke btn-min-width"
               disabled={isBusy || hasStreamPendingTx()}
               onClick={showPauseStreamModal}>
                 <div className="btn-content">

@@ -672,3 +672,41 @@ export function slugify(text: string): string {
 
   return flattened
 }
+
+/**
+ * Returns an instruction to create the ATA if the account does not exist, 
+ * otherwise it returns null.
+ * @param connection 
+ * @param owner 
+ * @param mint 
+ * @param payer 
+ * @returns 
+ */
+export async function getCreateAtaInstructionIfNotExists(
+  connection: Connection,
+  owner: PublicKey,
+  mint: PublicKey,
+  payer: PublicKey
+  ) {
+  const ata = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mint,
+    owner,
+    true,
+  );
+
+  const ataAccountInfo = await connection.getAccountInfo(ata);
+
+  if (ataAccountInfo) {
+    return null;
+  }
+  return Token.createAssociatedTokenAccountInstruction(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mint,
+    ata,
+    owner,
+    payer,
+  );
+}

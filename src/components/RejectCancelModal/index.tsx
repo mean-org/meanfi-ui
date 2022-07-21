@@ -79,13 +79,6 @@ export const RejectCancelModal = (props: {
               </Col>
             </Row>
           </>
-        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
-          <>
-            <div className="transaction-progress">
-              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('treasuries.create-treasury.success-message')}</h4>
-            </div>
-          </>
         ) : (
           <>
             <div className="transaction-progress p-2">

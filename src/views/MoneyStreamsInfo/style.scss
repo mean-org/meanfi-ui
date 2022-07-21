@@ -101,3 +101,10 @@
   animation-iteration-count: 2s;
   animation-delay: 0s;
 }
+
+.btn-min-width {
+  min-width: 8.5em;
+  .btn-content {
+    justify-content: center !important;
+  }
+}

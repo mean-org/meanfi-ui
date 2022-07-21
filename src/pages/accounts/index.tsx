@@ -40,7 +40,8 @@ import {
   WRAPPED_SOL_MINT_ADDRESS,
   ACCOUNTS_LOW_BALANCE_LIMIT,
   NO_FEES,
-  ONE_MINUTE_REFRESH_TIMEOUT
+  ONE_MINUTE_REFRESH_TIMEOUT,
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS
 } from '../../constants';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
@@ -76,11 +77,11 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { closeTokenAccount } from '../../utils/accounts';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { BN } from 'bn.js';
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import SerumIDL from '../../models/serum-multisig-idl';
-import { MultisigParticipant } from '../../models/multisig';
+import { MultisigParticipant, ZERO_FEES } from '../../models/multisig';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -91,6 +92,7 @@ import { StreamingAccountView } from '../../views/StreamingAccount';
 import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
 import notification, { IconType } from 'antd/lib/notification';
+import { SolBalanceModal } from '../../components/SolBalanceModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -231,7 +233,7 @@ export const AccountsNewView = () => {
 
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [autocloseTreasuries, setAutocloseTreasuries] = useState<(Treasury | TreasuryInfo)[]>([]);
-  const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
+  // const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
 
@@ -257,6 +259,13 @@ export const AccountsNewView = () => {
   const [netWorth, setNetWorth] = useState(0);
   const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
 
+  const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
+  const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+
+  // SOL Balance Modal
+  const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
+  const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
+  const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
 
   // Perform premature redirect here if no address was provided in path
   // to the current wallet address if the user is connected
@@ -302,6 +311,45 @@ export const AccountsNewView = () => {
     endpoint
   ]);
 
+  /////////////////
+  //  Init code  //
+  /////////////////
+
+  const multisigClient = useMemo(() => {
+    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
+    return new MeanMultisig(
+      connectionConfig.endpoint,
+      publicKey,
+      "confirmed"
+    );
+  }, [
+    connection,
+    publicKey,
+    connectionConfig.endpoint,
+  ]);
+
+  const multisigSerumClient = useMemo(() => {
+
+    const opts: ConfirmOptions = {
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
+      skipPreflight: true,
+      maxRetries: 3
+    };
+
+    const provider = new AnchorProvider(connection, wallet as any, opts);
+
+    return new Program(
+      SerumIDL,
+      "msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt",
+      provider
+    );
+
+  }, [
+    connection, 
+    wallet
+  ]);
+
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
     endpoint,
@@ -327,6 +375,11 @@ export const AccountsNewView = () => {
   useEffect(() => {
     selectedMultisigRef.current = selectedMultisig;
   }, [selectedMultisig]);
+
+  const accountAddressRef = useRef(accountAddress);
+  useEffect(() => {
+    accountAddressRef.current = accountAddress;
+  }, [accountAddress]);
 
 
   ////////////////////////////
@@ -392,6 +445,28 @@ export const AccountsNewView = () => {
     hideTokenMergerModal,
     resetTransactionStatus,
   ]);
+
+  const getMultisigTxProposalFees = useCallback(() => {
+
+    if (!multisigClient) { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
+      .then(value => {
+        setMultisigTransactionFees(value);
+        consoleOut('multisigTransactionFees:', value, 'orange');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        consoleOut('networkFee:', value.networkFee, 'blue');
+        consoleOut('rentExempt:', value.rentExempt, 'blue');
+        const totalMultisigFee = value.multisigFee + (MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL);
+        consoleOut('multisigFee:', totalMultisigFee, 'blue');
+        const minRequired = totalMultisigFee + value.rentExempt + value.networkFee;
+        consoleOut('Min required balance:', minRequired, 'blue');
+        setMinRequiredBalance(minRequired);
+      });
+
+    resetTransactionStatus();
+
+  }, [multisigClient, nativeBalance, resetTransactionStatus]);
 
   // Deposit SPL or SOL modal
   const [isReceiveSplOrSolModalOpen, setIsReceiveSplOrSolModalOpen] = useState(false);
@@ -747,6 +822,11 @@ export const AccountsNewView = () => {
     setShouldLoadTransactions(true);
   }, [])
 
+  const reloadTokensAndActivity = () => {
+    setShouldLoadTokens(true);
+    reloadSwitch();
+  }
+
   const reloadSwitch = useCallback(() => {
     refreshAssetBalance();
     setSolAccountItems(0);
@@ -763,6 +843,7 @@ export const AccountsNewView = () => {
     const isAccountNative = isSelectedAssetNativeAccount(asset);
     let url = '';
 
+    consoleOut('navigateToAsset received asset:', asset.publicAddress, 'blue');
     if (isMyWallet && isAccountNative) {
       url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/assets`;
     } else {
@@ -913,6 +994,13 @@ export const AccountsNewView = () => {
       return;
     }
 
+    const softReloadAssets = () => {
+      const streamsRefreshCta = document.getElementById("account-assets-refresh-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
     const softReloadStreams = () => {
       const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
       if (streamsRefreshCta) {
@@ -981,15 +1069,13 @@ export const AccountsNewView = () => {
         case OperationType.Transfer:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
-          setShouldLoadTokens(true);
-          reloadSwitch();
+          softReloadAssets();
           break;
         case OperationType.CreateAsset:
         case OperationType.CloseTokenAccount:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
-          setShouldLoadTokens(true);
-          reloadSwitch();
+          softReloadAssets();
           break;
         case OperationType.DeleteAsset:
         case OperationType.SetAssetAuthority:
@@ -1026,6 +1112,19 @@ export const AccountsNewView = () => {
           break;
         case OperationType.StreamClose:
         case OperationType.TreasuryClose:
+          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+          recordTxConfirmation(item, true);
+          if (item.extras && item.extras.multisigAuthority) {
+            setLoadingMultisigAccounts(true);
+            notifyMultisigActionFollowup(item);
+          } else {
+            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressRef.current}/streaming/outgoing`;
+            navigate(url);
+          }
+          setTimeout(() => {
+            hardReloadStreams();
+          }, 20);
+          break;
         case OperationType.StreamTransferBeneficiary:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
@@ -1033,7 +1132,7 @@ export const AccountsNewView = () => {
             setLoadingMultisigAccounts(true);
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
+            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressRef.current}/streaming/incoming`;
             navigate(url);
           }
           setTimeout(() => {
@@ -1112,45 +1211,6 @@ export const AccountsNewView = () => {
     if (!selectedAsset) { return false; }
     return !selectedAsset.publicAddress ? true : false;
   }, [selectedAsset]);
-
-  /////////////////
-  //  Init code  //
-  /////////////////
-
-  const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
-    return new MeanMultisig(
-      connectionConfig.endpoint,
-      publicKey,
-      "confirmed"
-    );
-  }, [
-    connection,
-    publicKey,
-    connectionConfig.endpoint,
-  ]);
-
-  const multisigSerumClient = useMemo(() => {
-
-    const opts: ConfirmOptions = {
-      preflightCommitment: "confirmed",
-      commitment: "confirmed",
-      skipPreflight: true,
-      maxRetries: 3
-    };
-
-    const provider = new AnchorProvider(connection, wallet as any, opts);
-
-    return new Program(
-      SerumIDL,
-      "msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt",
-      provider
-    );
-
-  }, [
-    connection, 
-    wallet
-  ]);
 
   const parseSerumMultisigAccount = (info: any) => {
 
@@ -1646,6 +1706,7 @@ export const AccountsNewView = () => {
   const [isTransferTokenModalVisible, setIsTransferTokenModalVisible] = useState(false);
   const showTransferTokenModal = useCallback(() => {
     setIsTransferTokenModalVisible(true);
+    getMultisigTxProposalFees();
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
@@ -1653,7 +1714,7 @@ export const AccountsNewView = () => {
     };
     resetTransactionStatus();
     setTransactionFees(fees);
-  }, [resetTransactionStatus]);
+  }, [resetTransactionStatus, getMultisigTxProposalFees]);
 
   const onAcceptTransferToken = (params: any) => {
     consoleOut('params', params, 'blue');
@@ -1806,10 +1867,8 @@ export const AccountsNewView = () => {
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
 
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+        if (nativeBalance < minRequiredBalance) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1820,12 +1879,12 @@ export const AccountsNewView = () => {
               getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
               getTokenAmountAndSymbolByTokenAddress(
-                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+                minRequiredBalance, 
                 NATIVE_SOL_MINT.toBase58()
               )
             })`
           });
-          customLogger.logWarning('Transfer tokens transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create multisig transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2027,9 +2086,8 @@ export const AccountsNewView = () => {
     nativeBalance,
     multisigClient,
     selectedMultisig,
+    minRequiredBalance,
     transactionCancelled,
-    transactionFees.mspFlatFee,
-    transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
     clearTxConfirmationContext,
@@ -2714,27 +2772,31 @@ export const AccountsNewView = () => {
     t
   ]);
 
-  const getAllUserV2Treasuries = useCallback(async () => {
+  const getAllUserV2Treasuries = useCallback(async (addr?: string) => {
 
-    if (!accountAddress || loadingTreasuries || !msp) { return []; }
+    if (!msp) { return []; }
 
-    const pk = new PublicKey(accountAddress);
+    if (addr || (accountAddress && address && accountAddress === address)) {
+      const pk = new PublicKey(addr || accountAddress);
 
-    consoleOut('Fetching treasuries for address:', accountAddress, 'orange');
-    const treasuries = await msp.listTreasuries(pk, true, false, Category.default);
-    consoleOut('getAllUserV2Treasuries ->', treasuries, 'orange');
+      consoleOut('Fetching treasuries for:', addr || accountAddress, 'orange');
+      const treasuries = await msp.listTreasuries(pk, true, false, Category.default);
+      consoleOut('getAllUserV2Treasuries ->', treasuries, 'orange');
 
-    return treasuries;
+      return treasuries;
+    }
+
+    return [];
 
   }, [
     msp,
-    loadingTreasuries,
+    address,
     accountAddress
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
 
-    if (!publicKey || loadingTreasuries) { return; }
+    if (!publicKey) { return; }
 
     if (msp && ms) {
 
@@ -2762,7 +2824,7 @@ export const AccountsNewView = () => {
           setAutocloseTreasuries(autoclosables);
 
           const streamingAccounts = treasuryAccumulator.filter(t => !t.autoClose);
-      
+
           setTreasuryList(streamingAccounts);
           consoleOut('treasuryList:', streamingAccounts, 'blue');
         })
@@ -2776,7 +2838,6 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
-    loadingTreasuries,
     getAllUserV2Treasuries,
     getQueryAccountType,
   ]);
@@ -3021,7 +3082,6 @@ export const AccountsNewView = () => {
 
   const clearStateData = useCallback(() => {
     clearStreams();
-    setPathParamAsset('');
     setPathParamStreamId('');
     setPathParamTreasuryId('');
     setPathParamStreamingTab('');
@@ -3042,6 +3102,7 @@ export const AccountsNewView = () => {
     setStreamsSummary(initialSummary);
     setCanShowStreamingAccountBalance(false);
   }, [clearStreams, setStreamsSummary]);
+
 
   /////////////////////
   // Data management //
@@ -3070,9 +3131,7 @@ export const AccountsNewView = () => {
 
   // Load treasuries when account address changes
   useEffect(() => {
-    if (publicKey && accountAddress && address && !treasuriesLoaded && accountAddress === address) {
-
-      setTreasuriesLoaded(true);
+    if (publicKey && accountAddress && address && accountAddress === address) {
 
       if (!previousRoute.startsWith('/accounts')) {
         clearStateData();
@@ -3081,13 +3140,13 @@ export const AccountsNewView = () => {
       refreshTreasuries(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountAddress, address, previousRoute, publicKey, treasuriesLoaded]);
+  }, [accountAddress, address, previousRoute, publicKey]);
 
   // Treasury list refresh timeout
   useEffect(() => {
     let timer: any;
 
-    if (publicKey && treasuriesLoaded && !customStreamDocked) {
+    if (publicKey && !customStreamDocked) {
       timer = setInterval(() => {
         consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshTreasuries(false);
@@ -3098,7 +3157,6 @@ export const AccountsNewView = () => {
   }, [
     publicKey,
     accountAddress,
-    treasuriesLoaded,
     loadingTreasuries,
     customStreamDocked,
     refreshTreasuries
@@ -3812,17 +3870,15 @@ export const AccountsNewView = () => {
 
   // Preset token based on url param asset
   useEffect(() => {
-    if (asset && accountTokens && accountTokens.length > 0) {
-      if (!selectedAsset || (selectedAsset && selectedAsset.publicAddress !== asset)) {
-        consoleOut('Presetting token based on url...', '', 'crimson');
-        const inferredAsset = accountTokens.find(t => t.publicAddress === asset);
-        if (inferredAsset) {
-          selectAsset(inferredAsset);
-        }
+    if (pathParamAsset && accountTokens && accountTokens.length > 0) {
+      consoleOut('Presetting token based on url...', pathParamAsset, 'crimson');
+      const inferredAsset = accountTokens.find(t => t.publicAddress === pathParamAsset);
+      if (inferredAsset) {
+        selectAsset(inferredAsset);
       }
-    } else if (!asset && accountTokens && accountTokens.length > 0) {
+    } else if (!pathParamAsset && accountTokens && accountTokens.length > 0) {
       if (!selectedAsset) {
-        consoleOut('Presetting first token in the list...', '', 'crimson');
+        consoleOut('Presetting first token in the list...', accountTokens[0].publicAddress, 'crimson');
         selectAsset(accountTokens[0]);
       } else {
         const inferredAsset = accountTokens.find(t => t.publicAddress === accountAddress);
@@ -3832,7 +3888,7 @@ export const AccountsNewView = () => {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountAddress, accountTokens, asset]);
+  }, [accountAddress, accountTokens, pathParamAsset]);
 
   // Preset the selected streaming account from the list if provided in path param (treasuryId)
   useEffect(() => {
@@ -3865,7 +3921,7 @@ export const AccountsNewView = () => {
 
   // Create a combined list of streaming accounts with its 
   useEffect(() => {
-    if (!treasuryList || !streamList || !treasuriesLoaded) { return; }
+    if (!treasuryList || !streamList) { return; }
 
     const getFinalList = async (list: (Treasury | TreasuryInfo)[]) => {
       const finalList: CombinedStreamingAccounts[] = [];
@@ -3925,7 +3981,7 @@ export const AccountsNewView = () => {
       })
       .finally(() => setLoadingCombinedStreamingList(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streamList, treasuriesLoaded, treasuryList]);
+  }, [streamList, treasuryList]);
 
   // Set the list of incoming and outgoing streams
   useEffect(() => {
@@ -3999,8 +4055,9 @@ export const AccountsNewView = () => {
     streamListv2,
   ]);
 
+  // 
   useEffect(() => {
-    if (!publicKey || !treasuryList || !treasuriesLoaded) { return; }
+    if (!publicKey || !treasuryList) { return; }
 
     const timeout = setTimeout(() => {
       refreshTreasuriesSummary();
@@ -4010,7 +4067,7 @@ export const AccountsNewView = () => {
       clearTimeout(timeout);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey, treasuryList, treasuriesLoaded]);
+  }, [publicKey, treasuryList]);
 
   // Update total account balance
   useEffect(() => {
@@ -4048,8 +4105,6 @@ export const AccountsNewView = () => {
       // Net Worth
       const total = sumMeanTokens + totalAccountBalance;
       setNetWorth(total);
-    } else {
-      setNetWorth(0);
     }
 
   }, [accountTokens, getTokenPriceBySymbol, tokensLoaded, totalAccountBalance]);
@@ -4108,8 +4163,7 @@ export const AccountsNewView = () => {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       consoleOut('Clearing accounts state...', '', 'purple');
       clearStateData();
-      setSelectedAsset(undefined);
-      setTreasuriesLoaded(false);
+      // setSelectedAsset(undefined);
       setTokensLoaded(false);
       setCanSubscribe(true);
       isWorkflowLocked = false;
@@ -4380,10 +4434,39 @@ export const AccountsNewView = () => {
   //////////////
 
   const onBackButtonClicked = () => {
-    setDetailsPanelOpen(false);
-    setAutoOpenDetailsPanel(false);
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
-    navigate(url);
+    if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamId}`) {
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig`;
+      }
+      navigate(url);
+    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/${streamId}`) {
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig`;
+      }
+      navigate(url);
+    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId}`) {
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig`;
+      }
+      navigate(url);
+    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId}/${streamId}`) {
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/treasury/${treasuryId}`;
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig`;
+      }
+      navigate(url);
+    } else {
+      setDetailsPanelOpen(false);
+      setAutoOpenDetailsPanel(false);
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
+        url += `?account-type=multisig`;
+      }
+      navigate(url);
+    }
   }
 
   ///////////////
@@ -4511,14 +4594,16 @@ export const AccountsNewView = () => {
     </>
   );
 
-  const renderAsset = useCallback((asset: UserTokenAccount, index: number) => {
+  const renderAsset = useCallback((asset: UserTokenAccount) => {
     const onTokenAccountClick = () => {
       setSelectedCategory("assets");
-      if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
-        reloadSwitch();
-      }
+      consoleOut('clicked on asset:', asset.publicAddress, 'blue');
+      // if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
+      //   reloadSwitch();
+      // } else {
+      // }
+      // selectAsset(asset, true, true);
       navigateToAsset(asset);
-      selectAsset(asset, true, true);
     }
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
@@ -4533,13 +4618,15 @@ export const AccountsNewView = () => {
     }
 
     return (
-      <div key={`${index}`} onClick={onTokenAccountClick}
-          className={`transaction-list-row ${isSelectedToken() && selectedCategory === "assets"
-            ? 'selected'
-            : hideLowBalances && (shouldHideAsset(asset) || !asset.balance)
-              ? 'hidden'
-              : ''
-          }`
+      <div key={`${asset.displayIndex}`}
+            onClick={onTokenAccountClick}
+            id={asset.publicAddress}
+            className={`transaction-list-row ${isSelectedToken() && selectedCategory === "assets"
+              ? 'selected'
+              : hideLowBalances && (shouldHideAsset(asset) || !asset.balance)
+                ? 'hidden'
+                : ''
+            }`
         }>
         <div className="icon-cell">
           <div className="token-icon">
@@ -4613,7 +4700,7 @@ export const AccountsNewView = () => {
               </div>
           )}
           {/* Render user token accounts */}
-          {accountTokens.map((asset, index) => renderAsset(asset, index))}
+          {accountTokens.map(asset => renderAsset(asset))}
         </>
       ) : tokensLoaded ? (
         <div className="flex flex-center">
@@ -5184,7 +5271,11 @@ export const AccountsNewView = () => {
                             </Tooltip>
                           </span>
                         </div>
-                        <span className="title ml-2">Multisig safe</span>
+                        {selectedMultisig ? (
+                          <span className="title ml-2">{selectedMultisig.label}</span>
+                        ) : (
+                          <span className="title ml-2">Multisig safe</span>
+                        )}
                       </>
                     ) : (
                       <span className="title">{t('assets.screen-title')}</span>
@@ -5219,6 +5310,7 @@ export const AccountsNewView = () => {
                           />
                         </Tooltip>
                       </span>
+                      <div id="account-assets-refresh-cta" onClick={reloadTokensAndActivity}></div>
                     </div>
                   </div>
                   <div className="inner-container">
@@ -5320,11 +5412,11 @@ export const AccountsNewView = () => {
                               {renderCategoryMeta()}
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
-                            {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && (
+                            {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && selectedMultisig && (
                               (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
                                 <Row gutter={[8, 8]}>
-                                  <Col span={24} className="alert-info-message pr-2">
-                                    <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
+                                  <Col span={24} className={`alert-info-message pr-2 ${selectedMultisig ? "simplelink" : "disable-pointer"}`} onClick={showSolBalanceModal}>
+                                    <Alert message="SOL account balance is very low in the safe. Click here to add more SOL." type="info" showIcon />
                                   </Col>
                                 </Row>
                               ) : null
@@ -5505,12 +5597,13 @@ export const AccountsNewView = () => {
         <MultisigTransferTokensModal
           isVisible={isTransferTokenModalVisible}
           nativeBalance={nativeBalance}
-          transactionFees={transactionFees}
+          transactionFees={multisigTransactionFees}
           handleOk={onAcceptTransferToken}
           handleClose={() => {
             onAfterEveryModalClose();
             setIsTransferTokenModalVisible(false);
           }}
+          selectedMultisig={selectedMultisig || undefined}
           selectedVault={selectedAsset}
           isBusy={isBusy}
           assets={accountTokens}
@@ -5559,6 +5652,20 @@ export const AccountsNewView = () => {
           ownedTokenAccounts={userOwnedTokenAccounts}
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
+        />
+      )}
+
+      {(isSolBalanceModalOpen && selectedMultisig) && (
+        <SolBalanceModal
+          address={NATIVE_SOL.address || ''}
+          accountAddress={accountAddress}
+          multisigAddress={address as string}
+          isVisible={isSolBalanceModalOpen}
+          handleClose={hideSolBalanceModal}
+          tokenSymbol={NATIVE_SOL.symbol}
+          nativeBalance={selectedMultisig.balance}
+          selectedMultisig={selectedMultisig}
+          isStreamingAccount={false}
         />
       )}
 

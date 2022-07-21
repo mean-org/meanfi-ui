@@ -236,12 +236,13 @@ export const MoneyStreamsIncomingView = (props: {
   // Transfer stream modal
   const [isTransferStreamModalVisible, setIsTransferStreamModalVisibility] = useState(false);
   const showTransferStreamModal = useCallback(() => {
+    resetTransactionStatus();
     setIsTransferStreamModalVisibility(true);
     getTransactionFeesV2(MSP_ACTIONS_V2.transferStream).then(value => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [getTransactionFeesV2]);
+  }, [getTransactionFeesV2, resetTransactionStatus]);
   const closeTransferStreamModal = useCallback(() => setIsTransferStreamModalVisibility(false), []);
   const [isTransferStreamTransactionModalVisible, setTransferStreamTransactionModalVisibility] = useState(false);
   const showTransferStreamTransactionModal = useCallback(() => setTransferStreamTransactionModalVisibility(true), []);
@@ -270,7 +271,7 @@ export const MoneyStreamsIncomingView = (props: {
     resetTransactionStatus();
   }
 
-  const onExecuteTransferStreamTransaction = async (dataStream: any) => {
+  const onExecuteTransferStreamTransaction = useCallback(async (dataStream: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -278,13 +279,16 @@ export const MoneyStreamsIncomingView = (props: {
     let multisigAuth = '';
     const transactionLog: any[] = [];
 
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
     const transferOwnership = async (dataStream: any) => {
       if (!msp || !publicKey || !streamSelected) { return null; }
 
-      if (!isIncomingMultisigStream()) {
+      // TODO: validate that the stream is indeed an incoming stream for the wallet
+      if (param !== "multisig") {
+        consoleOut('Creating msp.transferStream() Tx...', '', 'blue');
         return await msp.transferStream(
           publicKey,                                       // beneficiary,
           new PublicKey(dataStream.address),               // newBeneficiary,
@@ -301,14 +305,14 @@ export const MoneyStreamsIncomingView = (props: {
 
       multisigAuth = multisig.authority.toBase58();
 
-      const transferOwnership = await msp.transferStream(
+      const ownershipTransfer = await msp.transferStream(
         multisig.authority,                              // beneficiary,
         new PublicKey(dataStream.address as string),     // newBeneficiary,
         new PublicKey(streamSelected.id as string),      // stream,
       );
 
-      const ixData = Buffer.from(transferOwnership.instructions[0].data);
-      const ixAccounts = transferOwnership.instructions[0].keys;
+      const ixData = Buffer.from(ownershipTransfer.instructions[0].data);
+      const ixAccounts = ownershipTransfer.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await multisigClient.createTransaction(
@@ -327,7 +331,7 @@ export const MoneyStreamsIncomingView = (props: {
     }
 
     const createTx = async (): Promise<boolean> => {
-      if (!publicKey || !streamSelected || !msp || !selectedToken) {
+      if (!publicKey || !streamSelected || !msp) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -570,16 +574,32 @@ export const MoneyStreamsIncomingView = (props: {
                 multisigAuthority: multisigAuth
               }
             });
-
-            setIsTransferStreamModalVisibility(false);
-            setLoadingStreamDetails(true);
-            onTransferStreamTransactionFinished();
+            // setLoadingStreamDetails(true);
             setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-  };
+  }, [
+    msp,
+    wallet,
+    publicKey,
+    connection,
+    selectedToken,
+    nativeBalance,
+    streamSelected,
+    multisigClient,
+    multisigAccounts,
+    transactionCancelled,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    showTransferStreamTransactionModal,
+    enqueueTransactionConfirmation,
+    isIncomingMultisigStream,
+    resetTransactionStatus,
+    setTransactionStatus,
+  ]);
 
   // Withdraw funds modal
   const [lastStreamDetail, setLastStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
@@ -1310,7 +1330,7 @@ export const MoneyStreamsIncomingView = (props: {
             type="default"
             shape="round"
             size="small"
-            className="thin-stroke"
+            className="thin-stroke btn-min-width"
             disabled={
               !canWithdraw(streamSelected) ||
               isBusy ||
@@ -1324,11 +1344,11 @@ export const MoneyStreamsIncomingView = (props: {
                 Withdraw funds
               </div>
           </Button>
-          <Button
+          {/* <Button
             type="default"
             shape="round"
             size="small"
-            className="thin-stroke"
+            className="thin-stroke btn-min-width"
             disabled={isBusy ||
               hasStreamPendingTx() ||
               !streamSelected
@@ -1345,7 +1365,7 @@ export const MoneyStreamsIncomingView = (props: {
                   View on Solscan
               </div>
               )}
-          </Button>
+          </Button> */}
         </Col>
   
         <Col xs={4} sm={6} md={4} lg={6}>
