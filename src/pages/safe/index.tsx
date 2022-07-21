@@ -1521,7 +1521,6 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -1834,7 +1833,6 @@ export const SafeView = () => {
       }
     }
   }, [
-    clearTxConfirmationContext, 
     resetTransactionStatus, 
     wallet, 
     publicKey, 
@@ -1851,7 +1849,6 @@ export const SafeView = () => {
     transactionFees.multisigFee, 
     transactionStatus.currentOperation, 
     transactionCancelled, 
-    // startFetchTxSignatureInfo, 
     enqueueTransactionConfirmation
   ]);
 
@@ -4224,9 +4221,16 @@ export const SafeView = () => {
     <>
       {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">nativeBalance:</span><span className="ml-1 font-bold fg-dark-active">{nativeBalance}</span>
-          <span className="ml-1">multisigTxs:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
-          <span className="ml-1">proposalLoadStatusRegister:</span><span className="ml-1 font-bold fg-dark-active">{proposalLoadStatusRegister.size}</span>
+          <span className="ml-1">proposal-&gt;status:</span><span className="ml-1 font-bold fg-dark-active">{proposalSelected ? MultisigTransactionStatus[proposalSelected.status] : '-'}</span>
+          <span className="ml-1">proposal-&gt;didSigned:</span><span className="ml-1 font-bold fg-dark-active">{
+            proposalSelected
+              ? proposalSelected.didSigned === null
+                ? 'null'
+                : proposalSelected.didSigned === true
+                  ? 'true'
+                  : 'false'
+              : '-'}
+          </span>
         </div>
       )}
 

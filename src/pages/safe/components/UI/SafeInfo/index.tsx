@@ -121,30 +121,22 @@ export const SafeInfo = (props: {
   // Fetch safe balance.
   useEffect(() => {
 
-    if (!selectedMultisig || !multisigVaults || !multisigVaults.length || multisigSolBalance === undefined) { return; }
+    if (!selectedMultisig || !multisigVaults || !multisigVaults.length) { return; }
     
     const timeout = setTimeout(() => {
       let usdValue = 0;
 
-      usdValue = (multisigSolBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
-      const cumulative = new Array<any>();
+      usdValue = multisigSolBalance ? (multisigSolBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL) : 0;
 
-      multisigVaults.forEach((item: any) => {
+      for (const item of multisigVaults) {
         const token = getTokenByMintAddress(item.mint.toBase58());
 
         if (token) {
           const rate = getPricePerToken(token);
           const balance = item.amount.toNumber() / 10 ** token.decimals;
           usdValue += balance * rate;
-
-          cumulative.push({
-            symbol: token.symbol,
-            address: item.mint,
-            balance: balance,
-            usdValue: balance * rate
-          })
         }
-      });
+      }
       
       setTotalSafeBalance(usdValue);
     });
@@ -199,7 +191,7 @@ export const SafeInfo = (props: {
     },
     {
       name: `Safe balance ${assetsAmout}`,
-      value: renderSafeBalance ? renderSafeBalance : "--"
+      value: renderSafeBalance
     },
     {
       name: "Deposit address",
