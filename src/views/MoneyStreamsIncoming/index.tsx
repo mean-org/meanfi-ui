@@ -1324,7 +1324,7 @@ export const MoneyStreamsIncomingView = (props: {
                 Withdraw funds
               </div>
           </Button>
-          <Button
+          {/* <Button
             type="default"
             shape="round"
             size="small"
@@ -1345,7 +1345,7 @@ export const MoneyStreamsIncomingView = (props: {
                   View on Solscan
               </div>
               )}
-          </Button>
+          </Button> */}
         </Col>
   
         <Col xs={4} sm={6} md={4} lg={6}>
