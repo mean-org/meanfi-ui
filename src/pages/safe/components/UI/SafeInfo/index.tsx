@@ -241,7 +241,7 @@ export const SafeInfo = (props: {
   const onGoToAccounts = () => {
     if (selectedMultisig) {
       onNavigateAway();
-      navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/assets?account-type=multisig`);
+      navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/streaming/summary?account-type=multisig`);
     }
   }
 
