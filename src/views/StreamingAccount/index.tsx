@@ -2973,10 +2973,12 @@ export const StreamingAccountView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="ms-00" onClick={showCreateStreamModal} disabled={hasStreamingAccountPendingTx() ||
-    (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)}>
-        <span className="menu-item-text">Create stream</span>
-      </Menu.Item>
+      {isXsDevice && (
+        <Menu.Item key="ms-00" onClick={showCreateStreamModal} disabled={hasStreamingAccountPendingTx() ||
+      (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)}>
+          <span className="menu-item-text">Create stream</span>
+        </Menu.Item>
+      )}
       <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={hasStreamingAccountPendingTx() || (streamingAccountStreams && streamingAccountStreams.length > 0) || !isTreasurer()}>
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
@@ -3388,6 +3390,7 @@ export const StreamingAccountView = (props: {
           tokenSymbol={NATIVE_SOL.symbol}
           nativeBalance={nativeBalance}
           selectedMultisig={selectedMultisig}
+          isStreamingAccount={true}
         />
       )}
 

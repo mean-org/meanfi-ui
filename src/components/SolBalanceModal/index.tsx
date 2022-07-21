@@ -3,7 +3,7 @@ import { Modal } from "antd";
 import BN from "bn.js";
 import { QRCodeSVG } from "qrcode.react";
 import { useContext } from "react";
-import { useTranslation } from "react-i18next";
+// import { useTranslation } from "react-i18next";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
@@ -21,11 +21,12 @@ export const SolBalanceModal = (props: {
   multisigAddress: string;
   nativeBalance: number;
   selectedMultisig: MultisigInfo | undefined;
+  isStreamingAccount: boolean;
 }) => {
-  const { t } = useTranslation("common");
+  // const { t } = useTranslation("common");
   const { theme } = useContext(AppStateContext);
 
-  const { handleClose, isVisible, multisigAddress, selectedMultisig } = props;
+  const { handleClose, isVisible, multisigAddress, selectedMultisig, isStreamingAccount } = props;
 
   return (
     <Modal
@@ -39,25 +40,33 @@ export const SolBalanceModal = (props: {
       <div className="buy-token-options">
         <div className="text-center">
           <div className="d-flex flex-column mb-1">
-            <span className="info-label">
-              Your SOL streaming account balance:
-            </span>
-            <span className="info-value">
-              {selectedMultisig && (
-                getTokenAmountAndSymbolByTokenAddress(
-                  toUiAmount(new BN(selectedMultisig.balance), NATIVE_SOL.decimals || 9),
-                  NATIVE_SOL_MINT.toBase58()
-                )
-              )}
-            </span>
-            {(selectedMultisig && (toUiAmount(new BN(selectedMultisig.balance), NATIVE_SOL.decimals || 9) < 0.05)) ? (
-              <span className="form-field-error">
-                You are running low on SOL needed <br />
-                to pay for transaction fees.
-              </span>
-            ) : null}
+            {isStreamingAccount && (
+              <>
+                <span className="info-label">
+                  Your SOL streaming account balance:
+                </span>
+                <span className="info-value">
+                  {selectedMultisig && (
+                    getTokenAmountAndSymbolByTokenAddress(
+                      toUiAmount(new BN(selectedMultisig.balance), NATIVE_SOL.decimals || 9),
+                      NATIVE_SOL_MINT.toBase58()
+                    )
+                  )}
+                </span>
+                {(selectedMultisig && (toUiAmount(new BN(selectedMultisig.balance), NATIVE_SOL.decimals || 9) < 0.05)) ? (
+                  <span className="form-field-error">
+                    You are running low on SOL needed <br />
+                    to pay for transaction fees.
+                  </span>
+                ) : null}
+              </>
+            )}
           </div>
-          <h4 className="mb-3">Scan the QR code to send SOL to this account</h4>
+          {!isStreamingAccount ? (
+            <h4 className="mb-3">Scan the QR code to send SOL to this multisig</h4>
+          ) : (
+            <h4 className="mb-3">Scan the QR code to send SOL to this account</h4>
+          )}
 
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
               <QRCodeSVG
@@ -75,7 +84,11 @@ export const SolBalanceModal = (props: {
               />
             </div>
 
-            <div className="font-light font-size-75 px-4">This address can only be used to receive SOL to pay for the transaction fees for this streaming account</div>
+            {!isStreamingAccount ? (
+              <div className="font-light font-size-75 px-4">This address can only be used to receive SOL  for this multisig</div>
+            ) : (
+              <div className="font-light font-size-75 px-4">This address can only be used to receive SOL to pay for the transaction fees for this streaming account</div>
+            )}
         </div>
       </div>
     </Modal>

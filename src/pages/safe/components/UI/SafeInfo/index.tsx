@@ -2,13 +2,15 @@ import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
 import { RightInfoDetails } from "../../../../../components/RightInfoDetails";
+import { SolBalanceModal } from "../../../../../components/SolBalanceModal";
 import { TabsMean } from "../../../../../components/TabsMean";
+import { useNativeAccount } from "../../../../../contexts/accounts";
 import { AppStateContext } from "../../../../../contexts/appstate";
-import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
+import { IconArrowForward, IconEllipsisVertical, IconLoading } from "../../../../../Icons";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
 import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
@@ -47,17 +49,53 @@ export const SafeInfo = (props: {
     splTokenList,
     isWhitelisted,
     multisigVaults,
+    accountAddress,
     totalSafeBalance,
     multisigSolBalance,
+    refreshTokenBalance,
     setTotalSafeBalance,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
   const navigate = useNavigate();
+  const { address } = useParams();
+  const { account } = useNativeAccount();
   const [selectedLabelName, setSelectedLabelName] = useState("");
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [nativeBalance, setNativeBalance] = useState(0);
 
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
   }
+
+  ////////////////
+  ///  MODALS  ///
+  ////////////////
+
+  // SOL Balance Modal
+  const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
+  const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
+  const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
 
   // Safe Name
   useEffect(() => {
@@ -300,8 +338,8 @@ export const SafeInfo = (props: {
       {multisigSolBalance !== undefined && (
         (multisigSolBalance / LAMPORTS_PER_SOL) <= 0.005 ? (
           <Row gutter={[8, 8]}>
-            <Col span={24} className="alert-info-message pr-6">
-              <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
+            <Col span={24} className="alert-info-message pr-6 simplelink" onClick={showSolBalanceModal}>
+              <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon />
             </Col>
           </Row>
         ) : null
@@ -312,6 +350,20 @@ export const SafeInfo = (props: {
         selectedTab={selectedTab}
         defaultTab="proposals"
       />
+
+      {isSolBalanceModalOpen && (
+        <SolBalanceModal
+          address={NATIVE_SOL.address || ''}
+          accountAddress={accountAddress}
+          multisigAddress={address as string}
+          isVisible={isSolBalanceModalOpen}
+          handleClose={hideSolBalanceModal}
+          tokenSymbol={NATIVE_SOL.symbol}
+          nativeBalance={nativeBalance}
+          selectedMultisig={selectedMultisig}
+          isStreamingAccount={false}
+        />
+      )}
     </>
   )
 }

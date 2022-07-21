@@ -92,6 +92,7 @@ import { StreamingAccountView } from '../../views/StreamingAccount';
 import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
 import notification, { IconType } from 'antd/lib/notification';
+import { SolBalanceModal } from '../../components/SolBalanceModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -261,6 +262,10 @@ export const AccountsNewView = () => {
   const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
 
+  // SOL Balance Modal
+  const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
+  const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
+  const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
 
   // Perform premature redirect here if no address was provided in path
   // to the current wallet address if the user is connected
@@ -2052,9 +2057,8 @@ export const AccountsNewView = () => {
     nativeBalance,
     multisigClient,
     selectedMultisig,
+    minRequiredBalance,
     transactionCancelled,
-    transactionFees.mspFlatFee,
-    transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
     clearTxConfirmationContext,
@@ -5383,8 +5387,8 @@ export const AccountsNewView = () => {
                             {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && (
                               (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
                                 <Row gutter={[8, 8]}>
-                                  <Col span={24} className="alert-info-message pr-2">
-                                    <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
+                                  <Col span={24} className="alert-info-message pr-2 simplelink" onClick={showSolBalanceModal}>
+                                    <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon />
                                   </Col>
                                 </Row>
                               ) : null
@@ -5620,6 +5624,20 @@ export const AccountsNewView = () => {
           ownedTokenAccounts={userOwnedTokenAccounts}
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
+        />
+      )}
+
+      {(isSolBalanceModalOpen && multisigSolBalance) && (
+        <SolBalanceModal
+          address={NATIVE_SOL.address || ''}
+          accountAddress={accountAddress}
+          multisigAddress={address as string}
+          isVisible={isSolBalanceModalOpen}
+          handleClose={hideSolBalanceModal}
+          tokenSymbol={NATIVE_SOL.symbol}
+          nativeBalance={multisigSolBalance}
+          selectedMultisig={selectedMultisig}
+          isStreamingAccount={false}
         />
       )}
 
