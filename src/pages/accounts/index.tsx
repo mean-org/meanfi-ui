@@ -371,6 +371,11 @@ export const AccountsNewView = () => {
     selectedMultisigRef.current = selectedMultisig;
   }, [selectedMultisig]);
 
+  const accountAddressRef = useRef(accountAddress);
+  useEffect(() => {
+    accountAddressRef.current = accountAddress;
+  }, [accountAddress]);
+
 
   ////////////////////////////
   //   Events and actions   //
@@ -1091,6 +1096,19 @@ export const AccountsNewView = () => {
           break;
         case OperationType.StreamClose:
         case OperationType.TreasuryClose:
+          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+          recordTxConfirmation(item, true);
+          if (item.extras && item.extras.multisigAuthority) {
+            setLoadingMultisigAccounts(true);
+            notifyMultisigActionFollowup(item);
+          } else {
+            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressRef.current}/streaming/outgoing`;
+            navigate(url);
+          }
+          setTimeout(() => {
+            hardReloadStreams();
+          }, 20);
+          break;
         case OperationType.StreamTransferBeneficiary:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
@@ -1098,7 +1116,7 @@ export const AccountsNewView = () => {
             setLoadingMultisigAccounts(true);
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/outgoing`;
+            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressRef.current}/streaming/incoming`;
             navigate(url);
           }
           setTimeout(() => {
