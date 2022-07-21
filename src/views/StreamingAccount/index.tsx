@@ -40,6 +40,8 @@ import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
 import { Identicon } from "../../components/Identicon";
 import { SolBalanceModal } from "../../components/SolBalanceModal";
 import { NATIVE_SOL } from "../../utils/tokens";
+import useWindowSize from "../../hooks/useWindowResize";
+import { isMobile } from "react-device-detect";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -81,6 +83,7 @@ export const StreamingAccountView = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const { width } = useWindowSize();
   const { address, treasuryId } = useParams();
   
   const { 
@@ -92,6 +95,7 @@ export const StreamingAccountView = (props: {
   } = props;
 
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
 
   // Streaming account
   const [highlightedStream, sethHighlightedStream] = useState<Stream | StreamInfo | undefined>();
@@ -125,6 +129,28 @@ export const StreamingAccountView = (props: {
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
   }
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
+
+  // const getQueryAccountType = useCallback(() => {
+  //   let accountTypeInQuery: string | null = null;
+  //   if (searchParams) {
+  //     accountTypeInQuery = searchParams.get('account-type');
+  //     if (accountTypeInQuery) {
+  //       return accountTypeInQuery;
+  //     }
+  //   }
+  //   return undefined;
+  // }, [searchParams]);
+
+  // const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const getQueryTabOption = useCallback(() => {
 
@@ -2947,6 +2973,12 @@ export const StreamingAccountView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
+      {isXsDevice && (
+        <Menu.Item key="ms-00" onClick={showCreateStreamModal} disabled={hasStreamingAccountPendingTx() ||
+      (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)}>
+          <span className="menu-item-text">Create stream</span>
+        </Menu.Item>
+      )}
       <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={hasStreamingAccountPendingTx() || (streamingAccountStreams && streamingAccountStreams.length > 0) || !isTreasurer()}>
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
@@ -3167,12 +3199,14 @@ export const StreamingAccountView = (props: {
   return (
     <>
       <Spin spinning={loadingStreamingAccountDetails}>
-        <Row gutter={[8, 8]} className="safe-details-resume">
-          <div onClick={hideDetailsHandler} className="back-button icon-button-container">
-            <IconArrowBack className="mean-svg-icons" />
-            <span className="ml-1">Back</span>
-          </div>
-        </Row>
+        {!isXsDevice && (
+          <Row gutter={[8, 8]} className="safe-details-resume">
+            <div onClick={hideDetailsHandler} className="back-button icon-button-container">
+              <IconArrowBack className="mean-svg-icons" />
+              <span className="ml-1">Back</span>
+            </div>
+          </Row>
+        )}
 
         {streamingAccountSelected && (
           <ResumeItem
@@ -3196,21 +3230,7 @@ export const StreamingAccountView = (props: {
               type="default"
               shape="round"
               size="small"
-              className="thin-stroke"
-              disabled={
-                hasStreamingAccountPendingTx() ||
-                (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)
-              }
-              onClick={showCreateStreamModal}>
-                <div className="btn-content">
-                  Create stream
-                </div>
-            </Button>
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
+              className="thin-stroke btn-min-width"
               disabled={hasStreamingAccountPendingTx()}
               onClick={showAddFundsModal}>
                 <div className="btn-content">
@@ -3221,7 +3241,7 @@ export const StreamingAccountView = (props: {
               type="default"
               shape="round"
               size="small"
-              className="thin-stroke"
+              className="thin-stroke btn-min-width"
               disabled={
                 hasStreamingAccountPendingTx() ||
                 getTreasuryUnallocatedBalance() <= 0
@@ -3231,6 +3251,22 @@ export const StreamingAccountView = (props: {
                   Withdraw funds
                 </div>
             </Button>
+            {!isXsDevice && (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke btn-min-width"
+                disabled={
+                  hasStreamingAccountPendingTx() ||
+                  (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)
+                }
+                onClick={showCreateStreamModal}>
+                  <div className="btn-content">
+                    Create stream
+                  </div>
+              </Button>
+            )}
           </Col>
 
           <Col xs={4} sm={6} md={4} lg={6}>
@@ -3354,6 +3390,7 @@ export const StreamingAccountView = (props: {
           tokenSymbol={NATIVE_SOL.symbol}
           nativeBalance={nativeBalance}
           selectedMultisig={selectedMultisig}
+          isStreamingAccount={true}
         />
       )}
 

@@ -1,5 +1,5 @@
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Row, Spin, Tabs } from "antd";
+import { Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
@@ -8,7 +8,7 @@ import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreate
 import { AppStateContext } from "../../contexts/appstate";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { IconArrowForward, IconLoading } from "../../Icons";
+import { IconArrowForward, IconEllipsisVertical, IconLoading } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import "./style.scss";
@@ -29,7 +29,7 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
+import { cutNumber, formatAmount, formatThousands, getCreateAtaInstructionIfNotExists, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
@@ -50,6 +50,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { TreasuryTopupParams } from "../../models/common-types";
+import useWindowSize from "../../hooks/useWindowResize";
+import { isMobile } from "react-device-detect";
 
 const { TabPane } = Tabs;
 
@@ -116,6 +118,7 @@ export const MoneyStreamsInfoView = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const { width } = useWindowSize();
   const { address } = useParams();
   const navigate = useNavigate();
 
@@ -154,6 +157,17 @@ export const MoneyStreamsInfoView = (props: {
   const [loadingMoneyStreamsDetails, setLoadingMoneyStreamsDetails] = useState(true);
   const [hasIncomingStreamsRunning, setHasIncomingStreamsRunning] = useState<number>();
   const [hasOutgoingStreamsRunning, setHasOutgoingStreamsRunning] = useState<number>();
+
+  const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -1168,10 +1182,11 @@ export const MoneyStreamsInfoView = (props: {
       if (!multisig) { return null; }
 
       // Create Streaming account
+      const treasuryAssociatedTokenMint = new PublicKey(data.associatedTokenAddress);
       const createTreasuryTx = await msp.createTreasury(
         publicKey,                                        // payer
         multisig.authority,                               // treasurer
-        new PublicKey(data.associatedTokenAddress),       // associatedToken
+        treasuryAssociatedTokenMint,                      // associatedToken
         data.label,                                       // label
         treasuryType,                                     // type
         true,                                             // solFeePayedByTreasury = true
@@ -1180,6 +1195,14 @@ export const MoneyStreamsInfoView = (props: {
       const ixData = Buffer.from(createTreasuryTx.instructions[0].data);
       const ixAccounts = createTreasuryTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      // Add a pre-instruction to create the treasurer ATA if it doesn't exist
+      const createTreasurerAtaIx = await getCreateAtaInstructionIfNotExists(
+        connection,
+        multisig.authority,
+        treasuryAssociatedTokenMint,
+        publicKey);
+      const preInstructions = createTreasurerAtaIx ? [createTreasurerAtaIx] : undefined;
 
       const tx = await multisigClient.createTransaction(
         publicKey,
@@ -1190,7 +1213,8 @@ export const MoneyStreamsInfoView = (props: {
         multisig.id,
         MSPV2Constants.MSP,
         ixAccounts,
-        ixData
+        ixData,
+        preInstructions
       );
 
       return tx;
@@ -1956,13 +1980,23 @@ export const MoneyStreamsInfoView = (props: {
   const renderProtocol = (
     <>
       {accountAddress && (
-        <CopyExtLinkGroup
-          content={accountAddress}
-          number={8}
-          externalLink={true}
-          isTx={false}
-          classNameContainer="mb-1"
-        />
+        !isXsDevice ? (
+          <CopyExtLinkGroup
+            content={accountAddress}
+            number={8}
+            externalLink={true}
+            isTx={false}
+            classNameContainer="mb-1"
+          />
+        ) : (
+          <CopyExtLinkGroup
+            content={accountAddress}
+            number={4}
+            externalLink={true}
+            isTx={false}
+            classNameContainer="mb-1"
+          />
+        )
       )}
       <div className="badge-container">
         {listOfBadges.map((badge, index) => (
@@ -1975,14 +2009,16 @@ export const MoneyStreamsInfoView = (props: {
   // Balance
   const renderBalance = (
     <>
-      {totalAccountBalance ? (
+      {loadingCombinedStreamingList || loadingStreams ? (
+        <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+      ) : (
         <>
-          {totalAccountBalance > 0 ? (
+          {totalAccountBalance && totalAccountBalance > 0 ? (
             <span>{toUsCurrency(totalAccountBalance)}</span>
           ) : (
-            <span>$0.00</span>
+            <span>$0.0</span>
           )}
-          {totalAccountBalance > 0 && (
+          {totalAccountBalance && totalAccountBalance > 0 && (
             (withdrawalBalance > unallocatedBalance) ? (
               <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
             ) : (
@@ -1990,8 +2026,6 @@ export const MoneyStreamsInfoView = (props: {
             )
           )}
         </>
-      ) : (
-        <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
       )}
     </>
   )
@@ -2136,7 +2170,12 @@ export const MoneyStreamsInfoView = (props: {
               <span className="incoming-amount">{rateIncomingPerDay ? `+ ${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
             <div className="info-value">
-              {`Total streams: ${incomingAmount ? incomingAmount : "0"}`}
+              <span className="mr-1">Total streams:</span>
+              <span>
+                {loadingCombinedStreamingList || loadingStreams ? (
+                  <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                ) : formatThousands(incomingAmount)}
+              </span>
             </div>
           </div>
           <div className="stream-balance">
@@ -2144,7 +2183,12 @@ export const MoneyStreamsInfoView = (props: {
               Available to withdraw:
             </div>
             <div className="info-value">
-              {withdrawalBalance ? toUsCurrency(withdrawalBalance) : "$0.00"}
+              {loadingCombinedStreamingList || loadingStreams ? (
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              ) : withdrawalBalance
+                ? toUsCurrency(withdrawalBalance)
+                : "$0.00"
+              }
             </div>
           </div>
           <div className="wave-container wave-green" id="wave">
@@ -2193,7 +2237,12 @@ export const MoneyStreamsInfoView = (props: {
               <span className="outgoing-amount">{rateOutgoingPerDay ? `- ${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
             <div className="info-value">
-              {`Total streams: ${outgoingAmount ? outgoingAmount : "0"}`}
+              <span className="mr-1">Total streams:</span>
+              <span>
+                {loadingCombinedStreamingList || loadingStreams ? (
+                  <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                ) : formatThousands(outgoingAmount)}
+              </span>
             </div>
           </div>
           <div className="stream-balance">
@@ -2201,7 +2250,12 @@ export const MoneyStreamsInfoView = (props: {
               Remaining balance:
             </div>
             <div className="info-value">
-              {unallocatedBalance ? toUsCurrency(unallocatedBalance) : "$0.00"}
+              {loadingCombinedStreamingList || loadingStreams ? (
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              ) : unallocatedBalance
+                ? toUsCurrency(unallocatedBalance)
+                : "$0.00"
+              }
             </div>
           </div>
           <div className="wave-container wave-red" id="wave">
@@ -2598,6 +2652,25 @@ export const MoneyStreamsInfoView = (props: {
     );
   }
 
+  // Dropdown (three dots button) inside outgoing stream list
+  const menu = (
+    <Menu>
+      {param === "multisig" ? (
+        <Menu.Item key="00" onClick={() => {
+          param === "multisig"
+            ? showCreateStreamModal()
+            : showCreateMoneyStreamModal()
+        }}>
+          <span className="menu-item-text">Create stream</span>
+        </Menu.Item>
+      ) : (
+        <Menu.Item key="00" onClick={showOpenStreamModal}>
+          <span className="menu-item-text">Find stream</span>
+        </Menu.Item>
+      )}
+    </Menu>
+  );
+
   return (
     <>
       <Spin spinning={loadingMoneyStreamsDetails || loadingCombinedStreamingList}>
@@ -2605,58 +2678,101 @@ export const MoneyStreamsInfoView = (props: {
           infoData={infoData}
         />
 
-        <Row gutter={[8, 8]} className="safe-btns-container mb-1">
-          <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
+        <Row gutter={[8, 8]} className="safe-btns-container d-flex align-items-center mb-1">
+          <Col xs={isXsDevice ? 20 : 24} sm={isXsDevice ? 18 : 24} md={isXsDevice ? 20 : 24} lg={isXsDevice ? 18 : 24} className="btn-group">
             <Button
               type="default"
               shape="round"
               size="small"
-              className="thin-stroke"
-              onClick={() => {
-                param === "multisig"
-                  ? showCreateStreamModal()
-                  : showCreateMoneyStreamModal()
-              }}>
-              <div className="btn-content">
-                {/* {param === "multisig" ? "Initiate stream" : "Create stream"} */}
-                Create stream
-              </div>
-            </Button>
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
+              className="thin-stroke btn-min-width"
               onClick={showCreateTreasuryModal}>
                 <div className="btn-content">
-                  Create streaming account
+                  Create account
                   {/* {param === "multisig" ? "Initiate streaming account" : "Create streaming account"} */}
                 </div>
             </Button>
-            {param === "multisig" ? (
+            {param !== "multisig" && (
               <Button
                 type="default"
                 shape="round"
                 size="small"
-                className="thin-stroke"
+                className="thin-stroke btn-min-width"
+                onClick={() => {
+                  param === "multisig"
+                    ? showCreateStreamModal()
+                    : showCreateMoneyStreamModal()
+                }}>
+                <div className="btn-content">
+                  {/* {param === "multisig" ? "Initiate stream" : "Create stream"} */}
+                  Create stream
+                </div>
+              </Button>
+            )}
+            {param === "multisig" && (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke btn-min-width"
                 onClick={showAddFundsModal}>
                   <div className="btn-content">
-                    Add funds
-                  </div>
-              </Button>
-            ) : (
-              <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke"
-                onClick={showOpenStreamModal}>
-                  <div className="btn-content">
-                    Find stream
+                    Fund account
                   </div>
               </Button>
             )}
+            {!isXsDevice && (
+              param === "multisig" && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke btn-min-width"
+                  onClick={() => {
+                    param === "multisig"
+                      ? showCreateStreamModal()
+                      : showCreateMoneyStreamModal()
+                  }}>
+                  <div className="btn-content">
+                    {/* {param === "multisig" ? "Initiate stream" : "Create stream"} */}
+                    Create stream
+                  </div>
+                </Button>
+              )
+            )}
+            {!isXsDevice && (
+              param !== "multisig" && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke btn-min-width"
+                  onClick={showOpenStreamModal}>
+                    <div className="btn-content">
+                      Find stream
+                    </div>
+                </Button>
+              )
+            )}
           </Col>
+
+          {isXsDevice && (
+            <Col xs={4} sm={6} md={4} lg={6}>
+              <Dropdown className="options-dropdown"
+                overlay={menu}
+                placement="bottomRight"
+                trigger={["click"]}>
+                <span className="icon-button-container ml-1">
+                  <Button
+                    type="default"
+                    shape="circle"
+                    size="middle"
+                    icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                    onClick={(e) => e.preventDefault()}
+                  />
+                </span>
+              </Dropdown>
+            </Col>
+          )}
         </Row>
 
         {renderTabset()}

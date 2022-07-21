@@ -102,6 +102,54 @@ export const ProposalDetailsView = (props: {
 
   }, [confirmationHistory]);
 
+  // Determine if the ApproveTransaction operation is in progress by searching
+  // into the confirmation history
+  const isApprovePendingConfirmation = useCallback(() => {
+    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
+
+    return confirmationHistory.some(h => h.operationType === OperationType.ApproveTransaction && h.txInfoFetchStatus === "fetching");
+
+  }, [confirmationHistory]);
+
+  const isApproveFinishedConfirmation = useCallback(() => {
+    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
+
+    return confirmationHistory.some(h => h.operationType === OperationType.ApproveTransaction && h.txInfoFetchStatus === "fetched");
+
+  }, [confirmationHistory]);
+
+  // Determine if the RejectTransaction operation is in progress by searching
+  // into the confirmation history
+  const isRejectPendingConfirmation = useCallback(() => {
+    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
+
+    return confirmationHistory.some(h => h.operationType === OperationType.RejectTransaction && h.txInfoFetchStatus === "fetching");
+
+  }, [confirmationHistory]);
+
+  const isRejectFinishedConfirmation = useCallback(() => {
+    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
+
+    return confirmationHistory.some(h => h.operationType === OperationType.RejectTransaction && h.txInfoFetchStatus === "fetched");
+
+  }, [confirmationHistory]);
+
+  // Determine if the CancelTransaction operation is in progress by searching
+  // into the confirmation history
+  const isCancelPendingConfirmation = useCallback(() => {
+    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
+
+    return confirmationHistory.some(h => h.operationType === OperationType.CancelTransaction && h.txInfoFetchStatus === "fetching");
+
+  }, [confirmationHistory]);
+
+  const isCancelFinishedConfirmation = useCallback(() => {
+    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
+
+    return confirmationHistory.some(h => h.operationType === OperationType.CancelTransaction && h.txInfoFetchStatus === "fetched");
+
+  }, [confirmationHistory]);
+
   useEffect(() => {
     if (transactionStatus.currentOperation === TransactionStatus.ConfirmTransaction) {
       setIsCancelRejectModalVisible(false);
@@ -541,7 +589,7 @@ export const ProposalDetailsView = (props: {
               <Col className="safe-details-left-container">
                 <IconLightning className="user-image mean-svg-icons bg-green" />
                 <div className="proposal-resume-left-text">
-                  <div className="info-label">Executed by</div>
+                  <div className="info-label">Proposed by</div>
                   <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                 </div>
               </Col>
@@ -572,7 +620,14 @@ export const ProposalDetailsView = (props: {
                   shape="round"
                   size="small"
                   className="thin-stroke d-flex justify-content-center align-items-center"
-                  disabled={hasMultisigPendingProposal}
+                  disabled={
+                    hasMultisigPendingProposal ||
+                    isBusy ||
+                    isCancelPendingConfirmation() ||
+                    isCancelFinishedConfirmation() ||
+                    loadingData
+                  }
+                  // disabled={hasMultisigPendingProposal}
                   onClick={() => setIsCancelRejectModalVisible(true)}>
                     <div className="btn-content">
                       Cancel
@@ -588,7 +643,17 @@ export const ProposalDetailsView = (props: {
                     shape="round"
                     size="small"
                     className="thin-stroke"
-                    disabled={selectedProposal.didSigned === true || hasMultisigPendingProposal}
+                    disabled={
+                      selectedProposal.didSigned === true ||
+                      hasMultisigPendingProposal || 
+                      isBusy ||
+                      isApprovePendingConfirmation() ||
+                      isRejectPendingConfirmation() ||
+                      isCancelPendingConfirmation() ||
+                      isApproveFinishedConfirmation() ||
+                      loadingData
+                    }
+                    // disabled={selectedProposal.didSigned === true || hasMultisigPendingProposal}
                     onClick={() => {
                       const operation = { transaction: selectedProposal };
                       onOperationStarted(operation)
@@ -613,7 +678,17 @@ export const ProposalDetailsView = (props: {
                     shape="round"
                     size="small"
                     className="thin-stroke"
-                    disabled={selectedProposal.didSigned === false || hasMultisigPendingProposal}
+                    disabled={
+                      selectedProposal.didSigned === false ||
+                      hasMultisigPendingProposal ||
+                      isBusy ||
+                      isApprovePendingConfirmation() ||
+                      isRejectPendingConfirmation() ||
+                      isCancelPendingConfirmation() ||
+                      isRejectFinishedConfirmation() ||
+                      loadingData
+                    }
+                    // disabled={selectedProposal.didSigned === false || hasMultisigPendingProposal}
                     onClick={() => {
                       const operation = { transaction: selectedProposal };
                       onOperationStarted(operation)
@@ -640,7 +715,13 @@ export const ProposalDetailsView = (props: {
                         shape="round"
                         size="small"
                         className="thin-stroke d-flex justify-content-center align-items-center"
-                        disabled={hasMultisigPendingProposal}
+                        disabled={
+                          hasMultisigPendingProposal ||
+                          isBusy ||
+                          isExecutionPendingConfirmation() ||
+                          loadingData
+                        }
+                        // disabled={hasMultisigPendingProposal}
                         onClick={() => setIsCancelRejectModalVisible(true)}>
                           <div className="btn-content">
                             Cancel
@@ -685,7 +766,10 @@ export const ProposalDetailsView = (props: {
                         disabled={
                           hasMultisigPendingProposal ||
                           isBusy ||
-                          isExecutionPendingConfirmation() ||
+                          isApprovePendingConfirmation() ||
+                          isRejectPendingConfirmation() ||
+                          isCancelPendingConfirmation() ||
+                          isCancelFinishedConfirmation() ||
                           loadingData
                         }
                         onClick={() => setIsCancelRejectModalVisible(true)}>

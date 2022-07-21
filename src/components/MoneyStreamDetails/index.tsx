@@ -6,7 +6,7 @@ import "./style.scss";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, shortenAddress, toUiAmount } from "../../utils/utils";
 import { getFormattedNumberToLocale, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
@@ -20,6 +20,8 @@ import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { Identicon } from "../Identicon";
 import Countdown from "react-countdown";
+import useWindowSize from "../../hooks/useWindowResize";
+import { isMobile } from "react-device-detect";
 
 const { TabPane } = Tabs;
 
@@ -41,8 +43,19 @@ export const MoneyStreamDetails = (props: {
     getStreamActivity,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { width } = useWindowSize();
   const { publicKey } = useWallet();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
 
   const getQueryTabOption = useCallback(() => {
 
@@ -636,12 +649,14 @@ export const MoneyStreamDetails = (props: {
           ) : null
         }
         
-        <Row gutter={[8, 8]} className="safe-details-resume">
-          <div onClick={hideDetailsHandler} className="back-button icon-button-container">
-            <IconArrowBack className="mean-svg-icons" />
-            <span className="ml-1">Back</span>
-          </div>
-        </Row>
+        {!isXsDevice && (
+          <Row gutter={[8, 8]} className="safe-details-resume">
+            <div onClick={hideDetailsHandler} className="back-button icon-button-container">
+              <IconArrowBack className="mean-svg-icons" />
+              <span className="ml-1">Back</span>
+            </div>
+          </Row>
+        )}
 
         {stream && (
           <ResumeItem

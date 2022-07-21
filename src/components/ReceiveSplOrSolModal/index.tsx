@@ -97,7 +97,12 @@ export const ReceiveSplOrSolModal = (props: {
             </div>
           )}
 
-          {(isWalletAddress() || overrideWithWallet) ? (
+          <>
+            <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
+            <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div>
+          </>
+
+          {/* {(isWalletAddress() || overrideWithWallet) ? (
             <>
               <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
               <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div>
@@ -111,7 +116,7 @@ export const ReceiveSplOrSolModal = (props: {
                 <div className="mt-2">Looking for your wallet address? 👉 [<span className="simplelink underline-on-hover" onClick={() => setOverrideWithWallet(true)}>here</span>]</div>
               )}
             </>
-          )}
+          )} */}
         </div>
       </div>
     </Modal>

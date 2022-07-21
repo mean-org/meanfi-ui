@@ -490,8 +490,7 @@ export const TreasuryCreateModal = (props: {
     <>
       <Modal
         className="mean-modal simple-modal"
-        title={<div className="modal-title">{ t('treasuries.create-treasury.modal-title')}</div>}
-        // title={<div className="modal-title">{param === "multisig" ? "Initiate streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
+        title={<div className="modal-title">{param === "multisig" ? "Propose create streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
         maskClosable={false}
         footer={null}
         visible={isVisible}
