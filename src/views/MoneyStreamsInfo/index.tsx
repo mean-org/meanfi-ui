@@ -2627,11 +2627,45 @@ export const MoneyStreamsInfoView = (props: {
 
         <Row gutter={[8, 8]} className="safe-btns-container mb-1">
           <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
+          <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke btn-min-width"
+              onClick={showCreateTreasuryModal}>
+                <div className="btn-content">
+                  Create account
+                  {/* {param === "multisig" ? "Initiate streaming account" : "Create streaming account"} */}
+                </div>
+            </Button>
+            {param === "multisig" ? (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke btn-min-width"
+                onClick={showAddFundsModal}>
+                  <div className="btn-content">
+                    Fund account
+                  </div>
+              </Button>
+            ) : (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke btn-min-width"
+                onClick={showOpenStreamModal}>
+                  <div className="btn-content">
+                    Find stream
+                  </div>
+              </Button>
+            )}
             <Button
               type="default"
               shape="round"
               size="small"
-              className="thin-stroke"
+              className="thin-stroke btn-min-width"
               onClick={() => {
                 param === "multisig"
                   ? showCreateStreamModal()
@@ -2642,40 +2676,6 @@ export const MoneyStreamsInfoView = (props: {
                 Create stream
               </div>
             </Button>
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              onClick={showCreateTreasuryModal}>
-                <div className="btn-content">
-                  Create streaming account
-                  {/* {param === "multisig" ? "Initiate streaming account" : "Create streaming account"} */}
-                </div>
-            </Button>
-            {param === "multisig" ? (
-              <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke"
-                onClick={showAddFundsModal}>
-                  <div className="btn-content">
-                    Add funds
-                  </div>
-              </Button>
-            ) : (
-              <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke"
-                onClick={showOpenStreamModal}>
-                  <div className="btn-content">
-                    Find stream
-                  </div>
-              </Button>
-            )}
           </Col>
         </Row>
 
