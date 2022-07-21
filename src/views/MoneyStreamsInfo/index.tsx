@@ -29,7 +29,7 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { cutNumber, formatAmount, formatThousands, getCreateAtaInstructionIfNotExists, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
+import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
@@ -1197,12 +1197,12 @@ export const MoneyStreamsInfoView = (props: {
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       // Add a pre-instruction to create the treasurer ATA if it doesn't exist
-      const createTreasurerAtaIx = await getCreateAtaInstructionIfNotExists(
-        connection,
-        multisig.authority,
-        treasuryAssociatedTokenMint,
-        publicKey);
-      const preInstructions = createTreasurerAtaIx ? [createTreasurerAtaIx] : undefined;
+      // const createTreasurerAtaIx = await getCreateAtaInstructionIfNotExists(
+      //   connection,
+      //   multisig.authority,
+      //   treasuryAssociatedTokenMint,
+      //   publicKey);
+      // const preInstructions = createTreasurerAtaIx ? [createTreasurerAtaIx] : undefined;
 
       const tx = await multisigClient.createTransaction(
         publicKey,
@@ -1214,7 +1214,7 @@ export const MoneyStreamsInfoView = (props: {
         MSPV2Constants.MSP,
         ixAccounts,
         ixData,
-        preInstructions
+        // preInstructions
       );
 
       return tx;
