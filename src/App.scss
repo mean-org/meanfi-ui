@@ -5470,15 +5470,16 @@ main section {
   width: 100%;
   max-width: 375px;
   margin: 0 auto;
-  .qr-container {
-    padding: 4px;
-    margin-bottom: 1.4rem;
-    display: inline-flex;
-    margin-left: auto;
-    margin-right: auto;
-    width: auto;
-    border-radius: 6px;
-  }
+}
+
+.qr-container {
+  padding: 4px;
+  margin-bottom: 1.4rem;
+  display: inline-flex;
+  margin-left: auto;
+  margin-right: auto;
+  width: auto;
+  border-radius: 6px;
 }
 
 .float-top-right {

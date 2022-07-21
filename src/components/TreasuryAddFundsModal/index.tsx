@@ -1254,7 +1254,7 @@ export const TreasuryAddFundsModal = (props: {
             </div>
           )}
 
-          {!isBusy && !highLightableStreamId && transactionStatus.currentOperation === TransactionStatus.Iddle && (
+          {!isBusy && !highLightableStreamId && workingTreasuryDetails && transactionStatus.currentOperation === TransactionStatus.Iddle && (
             <div className={`text-center mt-4 mb-2`}>
               <p>You can also fund this streaming account by sending {selectedToken?.symbol} tokens to:</p>
 

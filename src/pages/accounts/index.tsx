@@ -822,6 +822,11 @@ export const AccountsNewView = () => {
     setShouldLoadTransactions(true);
   }, [])
 
+  const reloadTokensAndActivity = () => {
+    setShouldLoadTokens(true);
+    reloadSwitch();
+  }
+
   const reloadSwitch = useCallback(() => {
     refreshAssetBalance();
     setSolAccountItems(0);
@@ -988,6 +993,13 @@ export const AccountsNewView = () => {
       return;
     }
 
+    const softReloadAssets = () => {
+      const streamsRefreshCta = document.getElementById("account-assets-refresh-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
     const softReloadStreams = () => {
       const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
       if (streamsRefreshCta) {
@@ -1056,15 +1068,13 @@ export const AccountsNewView = () => {
         case OperationType.Transfer:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
-          setShouldLoadTokens(true);
-          reloadSwitch();
+          softReloadAssets();
           break;
         case OperationType.CreateAsset:
         case OperationType.CloseTokenAccount:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
-          setShouldLoadTokens(true);
-          reloadSwitch();
+          softReloadAssets();
           break;
         case OperationType.DeleteAsset:
         case OperationType.SetAssetAuthority:
@@ -5301,6 +5311,7 @@ export const AccountsNewView = () => {
                           />
                         </Tooltip>
                       </span>
+                      <div id="account-assets-refresh-cta" onClick={reloadTokensAndActivity}></div>
                     </div>
                   </div>
                   <div className="inner-container">
