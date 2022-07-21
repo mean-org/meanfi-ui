@@ -589,7 +589,7 @@ export const ProposalDetailsView = (props: {
               <Col className="safe-details-left-container">
                 <IconLightning className="user-image mean-svg-icons bg-green" />
                 <div className="proposal-resume-left-text">
-                  <div className="info-label">Executed by</div>
+                  <div className="info-label">Proposed by</div>
                   <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                 </div>
               </Col>
