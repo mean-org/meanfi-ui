@@ -275,7 +275,6 @@ export const SafeView = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-
   }, [
     setTransactionStatus
   ]);
@@ -1888,7 +1887,6 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -2122,11 +2120,6 @@ export const SafeView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.ApproveTransaction,
@@ -2141,6 +2134,8 @@ export const SafeView = () => {
                 transactionId: data.transaction.id
               }
             });
+            setIsBusy(false);
+            resetTransactionStatus();
           } else { setIsBusy(false); }
         } else { 
           setIsBusy(false);
@@ -2150,7 +2145,6 @@ export const SafeView = () => {
     }
 
   }, [
-    clearTxConfirmationContext, 
     resetTransactionStatus, 
     wallet, 
     selectedMultisig, 
@@ -2419,11 +2413,6 @@ export const SafeView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.RejectTransaction,
@@ -2438,6 +2427,8 @@ export const SafeView = () => {
                 transactionId: data.transaction.id
               }
             });
+            setIsBusy(false);
+            resetTransactionStatus();
           } else { setIsBusy(false); }
         } else { 
           setIsBusy(false);
@@ -2786,10 +2777,6 @@ export const SafeView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature, 'blue');
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.ExecuteTransaction,
@@ -2804,6 +2791,8 @@ export const SafeView = () => {
                 transactionId: data.transaction.id
               }
             });
+            setIsBusy(false);
+            resetTransactionStatus();
           } else {
             setTimeout(() => {
               onExecuteFinishTxCancelled();
