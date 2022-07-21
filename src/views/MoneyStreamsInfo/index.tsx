@@ -1982,7 +1982,7 @@ export const MoneyStreamsInfoView = (props: {
           {totalAccountBalance && totalAccountBalance > 0 ? (
             <span>{toUsCurrency(totalAccountBalance)}</span>
           ) : (
-            <span>$0.00</span>
+            <span>$0.0</span>
           )}
           {totalAccountBalance && totalAccountBalance > 0 && (
             (withdrawalBalance > unallocatedBalance) ? (
@@ -2594,12 +2594,12 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       id: "incoming",
-      name: `Incoming ${(incomingAmount && incomingAmount > 0) ? `(${incomingAmount})` : ""}`,
+      name: `Incoming ${(incomingAmount && incomingAmount > 0) ? `(${incomingAmount})` : "(0)"}`,
       render: renderListOfIncomingStreams
     },
     {
       id: "outgoing",
-      name: `Outgoing ${(outgoingAmount && outgoingAmount > 0) ? `(${outgoingAmount})` : ""}`,
+      name: `Outgoing ${(outgoingAmount && outgoingAmount > 0) ? `(${outgoingAmount})` : "(0)"}`,
       render: renderListOfOutgoingStreams
     },
   ];
