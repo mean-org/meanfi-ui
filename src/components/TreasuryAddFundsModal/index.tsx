@@ -37,10 +37,13 @@ import { isError } from '../../utils/transactions';
 import { AllocationType, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { openNotification } from '../Notifications';
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { useSearchParams } from 'react-router-dom';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Identicon } from '../Identicon';
+import { QRCodeSVG } from 'qrcode.react';
+import { AddressDisplay } from '../AddressDisplay';
+import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -99,7 +102,7 @@ export const TreasuryAddFundsModal = (props: {
   const [tokenAmount, setTokenAmount] = useState<any>(0);
   const [searchParams] = useSearchParams();
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
-
+  const [showQrCode, setShowQrCode] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [workingAssociatedToken, setWorkingAssociatedToken] = useState('');
   const [workingTreasuryDetails, setWorkingTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
@@ -1153,57 +1156,6 @@ export const TreasuryAddFundsModal = (props: {
                   </div>
                 </div>
 
-                {/* Funds Allocation options */}
-                {/* {(numTreasuryStreams() > 0 && treasuryType === TreasuryType.Open) && (
-                  <div className="mb-3">
-                    <div className="form-label">{t('treasuries.add-funds.allocation-label')}</div>
-                    <div className="well">
-                      <Dropdown overlay={allocationOptionsMenu} trigger={["click"]}>
-                        <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                          <div className="left">
-                            <span className="capitalize-first-letter">{allocationOptions.find(o => o.key === allocationOption)?.label}</span>
-                          </div>
-                          <div className="right">
-                            <IconCaretDown className="mean-svg-icons" />
-                          </div>
-                        </span>
-                      </Dropdown>
-                    </div>
-                  </div>
-                )} */}
-
-                {/* {allocationOption === AllocationType.Specific && streamStats && streamStats.total > 0 && (
-                  <div className="mb-3">
-                    <div className="form-label">{t('treasuries.add-funds.allocation-select-stream-label')}</div>
-                    <div className="well">
-                      <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                        <div className="left mr-0">
-                          <AutoComplete
-                            bordered={false}
-                            style={{ width: '100%' }}
-                            dropdownClassName="stream-select-dropdown"
-                            options={renderStreamSelectOptions()}
-                            placeholder={t('treasuries.add-funds.search-streams-placeholder')}
-                            onChange={(inputValue, option) => {
-                              setSelectedStreamForAllocation(inputValue);
-                            }}
-                            filterOption={(inputValue, option) => {
-                              const originalItem = treasuryStreams.find(i => {
-                                const streamName = i.version < 2
-                                  ? (i as StreamInfo).streamName
-                                  : (i as Stream).name;
-                                return streamName === option!.key ? true : false;
-                              });
-                              return option!.value.indexOf(inputValue) !== -1 || getStreamName(originalItem).indexOf(inputValue) !== -1
-                            }}
-                            onSelect={onStreamSelected}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )} */}
-
                 {allocationOption === AllocationType.Specific && (
                   <div className="mb-3">
                     <div className="form-label">{t('treasuries.add-funds.money-stream-to-topup-label')}</div>
@@ -1227,16 +1179,6 @@ export const TreasuryAddFundsModal = (props: {
                   <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
                   {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                     <h4 className="mb-4">
-                      {/* {t('transactions.status.tx-start-failure', {
-                        accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                          nativeBalance,
-                          NATIVE_SOL_MINT.toBase58()
-                        ),
-                        feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                          transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                          NATIVE_SOL_MINT.toBase58()
-                        )})
-                      } */}
                       { transactionStatus.customError }
                     </h4>
                   ) : (
@@ -1311,6 +1253,40 @@ export const TreasuryAddFundsModal = (props: {
               )}
             </div>
           )}
+
+          {!isBusy && !highLightableStreamId && transactionStatus.currentOperation === TransactionStatus.Iddle && (
+            <div className={`text-center mt-4 mb-2`}>
+              <p>You can also fund this streaming account by sending {selectedToken?.symbol} tokens to:</p>
+
+              {showQrCode && workingTreasuryDetails && (
+                <>
+                  <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+                    <QRCodeSVG
+                      value={workingTreasuryDetails.id as string}
+                      size={200}
+                    />
+                  </div>
+                </>
+              )}
+
+              {workingTreasuryDetails && (
+                <div className="flex-center font-size-70 mb-2">
+                  <AddressDisplay
+                    address={workingTreasuryDetails.id as string}
+                    showFullAddress={true}
+                    iconStyles={{ width: "15", height: "15" }}
+                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${workingTreasuryDetails.id as string}${getSolanaExplorerClusterParam()}`}
+                  />
+                </div>
+              )}
+
+              {!showQrCode && (
+                <div className="simplelink underline" onClick={() => {setShowQrCode(true)}}>Scan QR code instead?</div>
+              )}
+
+            </div>
+          )}
+
         </>
       )}
     </Modal>
