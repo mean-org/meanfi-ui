@@ -5240,7 +5240,11 @@ export const AccountsNewView = () => {
                             </Tooltip>
                           </span>
                         </div>
-                        <span className="title ml-2">Multisig safe</span>
+                        {selectedMultisig ? (
+                          <span className="title ml-2">{selectedMultisig.label}</span>
+                        ) : (
+                          <span className="title ml-2">Multisig safe</span>
+                        )}
                       </>
                     ) : (
                       <span className="title">{t('assets.screen-title')}</span>
