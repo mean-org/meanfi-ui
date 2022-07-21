@@ -565,6 +565,10 @@ export const MoneyStreamDetails = (props: {
       label: stream && getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
       value: stream && getStreamStatus(stream) === "Stopped" && getRelativeDate(isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string)
     },
+    {
+      label: "Stream id:",
+      value: <span className="d-block text-truncate mr-2">{stream && stream.id}</span>
+    },
   ];
 
   // Render details
