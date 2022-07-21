@@ -26,7 +26,7 @@ import "./style.scss";
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
+import { fetchAccountTokens, formatThousands, getCreateAtaInstructionIfNotExists, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
 import { MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -1043,13 +1043,14 @@ export const VestingView = () => {
       //   true,                                             // solFeePayedByTreasury = true
       // );
 
+      const treasuryAssociatedTokenMint = new PublicKey(data.associatedTokenAddress);
       const createTreasuryTx = await msp.createVestingTreasury(
         publicKey,                                            // payer
         multisig.authority,                                   // treasurer
         data.label,                                           // label
         data.type,                                            // type
         solFeePayedByTreasury,                                // solFeePayedByTreasury
-        new PublicKey(data.associatedTokenAddress),           // treasuryAssociatedTokenMint
+        treasuryAssociatedTokenMint,                          // treasuryAssociatedTokenMint
         data.duration,                                        // duration
         data.durationUnit,                                    // durationUnit
         data.fundingAmount,                                   // fundingAmount
@@ -1063,6 +1064,14 @@ export const VestingView = () => {
       const ixAccounts = createTreasuryTx[0].instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
+      // Add a pre-instruction to create the treasurer ATA if it doesn't exist
+      const createTreasurerAtaIx = await getCreateAtaInstructionIfNotExists(
+        connection,
+        multisig.authority,
+        treasuryAssociatedTokenMint,
+        publicKey);
+      const preInstructions = createTreasurerAtaIx ? [createTreasurerAtaIx] : undefined;
+
       const tx = await multisigClient.createTransaction(
         publicKey,
         "Create Vesting Contract",
@@ -1073,6 +1082,7 @@ export const VestingView = () => {
         MSPV2Constants.MSP, // program
         ixAccounts,         // keys o accounts of the Ix
         ixData,             // data of the Ix
+        preInstructions
       );
 
       if (!tx) { return null; }
