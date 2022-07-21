@@ -1723,7 +1723,7 @@ export const TreasuryStreamCreateModal = (props: {
   return (
     <Modal
       className="mean-modal treasury-stream-create-modal"
-      title={(workingTreasuryType === TreasuryType.Open) ? (<div className="modal-title">{param === "multisig" ? "Propose stream to the account" : t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
+      title={(workingTreasuryType === TreasuryType.Open) ? (<div className="modal-title">{param === "multisig" ? "Propose outgoing stream" : t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
       maskClosable={false}
       footer={null}
       visible={isVisible}
