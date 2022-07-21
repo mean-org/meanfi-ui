@@ -364,6 +364,10 @@ export const MoneyStreamDetails = (props: {
                     rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
                     isLink={true}
                     className="resume-activity-item"
+                    xs={10}
+                    sm={10}
+                    md={10}
+                    lg={10}
                   />
                 </a>
             )})
