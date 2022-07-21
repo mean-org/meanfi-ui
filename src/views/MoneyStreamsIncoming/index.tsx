@@ -1310,7 +1310,7 @@ export const MoneyStreamsIncomingView = (props: {
             type="default"
             shape="round"
             size="small"
-            className="thin-stroke"
+            className="thin-stroke btn-min-width"
             disabled={
               !canWithdraw(streamSelected) ||
               isBusy ||
@@ -1328,7 +1328,7 @@ export const MoneyStreamsIncomingView = (props: {
             type="default"
             shape="round"
             size="small"
-            className="thin-stroke"
+            className="thin-stroke btn-min-width"
             disabled={isBusy ||
               hasStreamPendingTx() ||
               !streamSelected
