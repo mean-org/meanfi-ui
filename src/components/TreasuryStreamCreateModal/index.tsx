@@ -532,11 +532,25 @@ export const TreasuryStreamCreateModal = (props: {
         setSelectedStreamingAccountId(treasuryDetails.id as string);
         setWorkingAssociatedToken(treasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
         setWorkingTreasuryType(treasuryType);
-      } else {
-        consoleOut('treasuryDetails not set!', '', 'blue');
       }
     }
-  }, [isVisible, treasuryDetails]);
+  }, [isVisible, treasuryDetails, treasuryList]);
+
+  // Preset a working copy of the first available streaming account in the list in not passed in
+  useEffect(() => {
+    if (isVisible && !treasuryDetails && treasuryList && treasuryList.length > 0 && !workingTreasuryDetails) {
+      consoleOut('treasuryDetails not set!', 'Try to pick one from list', 'blue');
+      const selected = treasuryList[0];
+      const v1 = selected as TreasuryInfo;
+      const v2 = selected as Treasury;
+      const treasuryType = selected.version < 2 ? v1.type as TreasuryType : v2.treasuryType as TreasuryType;
+      consoleOut('treasuryDetails preset:', selected, 'blue');
+      setWorkingTreasuryDetails(selected);
+      setSelectedStreamingAccountId(selected.id as string);
+      setWorkingAssociatedToken(selected.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
+      setWorkingTreasuryType(treasuryType);
+    }
+  }, [isVisible, treasuryDetails, treasuryList, workingTreasuryDetails]);
 
   useEffect(() => {
     if (hasNoStreamingAccounts || workingAssociatedToken || !workingTreasuryDetails) {
@@ -1508,6 +1522,28 @@ export const TreasuryStreamCreateModal = (props: {
     return isRateAmountValid();
   }
 
+  const onStreamingAccountSelected = useCallback((e: any) => {
+    consoleOut('Selected streaming account:', e, 'blue');
+    setSelectedStreamingAccountId(e.id as string);
+    const item = treasuryList?.find(t => t.id === e);
+    consoleOut('item:', item, 'blue');
+    if (item) {
+      setWorkingTreasuryDetails(item);
+      setSelectedStreamingAccountId(item.id as string);
+      const v1 = item as TreasuryInfo;
+      const v2 = item as Treasury;
+      const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
+      const token = getTokenByMintAddress(tokenAddress);
+      if (token) {
+        consoleOut('Treasury workingAssociatedToken:', token, 'blue');
+        setSelectedToken(token);
+      } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
+        setCustomToken(tokenAddress);
+      }
+      setWorkingAssociatedToken(tokenAddress)
+    }
+  },[getTokenByMintAddress, selectedToken, setCustomToken, treasuryList, workingAssociatedToken]);
+
   ///////////////
   // Rendering //
   ///////////////
@@ -1545,27 +1581,27 @@ export const TreasuryStreamCreateModal = (props: {
     </Menu>
   );
 
-  const onStreamingAccountSelected = (e: any) => {
-    consoleOut('Selected streaming account:', e, 'blue');
-    setSelectedStreamingAccountId(e);
-    const item = treasuryList?.find(t => t.id === e);
-    consoleOut('item:', item, 'blue');
-    if (item) {
-      setWorkingTreasuryDetails(item);
-      setSelectedStreamingAccountId(item.id as string);
-      const v1 = item as TreasuryInfo;
-      const v2 = item as Treasury;
-      const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-      const token = getTokenByMintAddress(tokenAddress);
-      if (token) {
-        consoleOut('Treasury workingAssociatedToken:', token, 'blue');
-        setSelectedToken(token);
-      } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
-        setCustomToken(tokenAddress);
-      }
-      setWorkingAssociatedToken(tokenAddress)
-    }
-  }
+  // const onStreamingAccountSelected = (e: any) => {
+  //   consoleOut('Selected streaming account:', e, 'blue');
+  //   setSelectedStreamingAccountId(e);
+  //   const item = treasuryList?.find(t => t.id === e);
+  //   consoleOut('item:', item, 'blue');
+  //   if (item) {
+  //     setWorkingTreasuryDetails(item);
+  //     setSelectedStreamingAccountId(item.id as string);
+  //     const v1 = item as TreasuryInfo;
+  //     const v2 = item as Treasury;
+  //     const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
+  //     const token = getTokenByMintAddress(tokenAddress);
+  //     if (token) {
+  //       consoleOut('Treasury workingAssociatedToken:', token, 'blue');
+  //       setSelectedToken(token);
+  //     } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
+  //       setCustomToken(tokenAddress);
+  //     }
+  //     setWorkingAssociatedToken(tokenAddress)
+  //   }
+  // }
 
   const getStreamingAccountIcon = (item: Treasury | TreasuryInfo | undefined) => {
     if (!item) { return null; }
@@ -1644,29 +1680,45 @@ export const TreasuryStreamCreateModal = (props: {
     );
   }
 
-  const renderStreamSelectItem = (item: Treasury | TreasuryInfo) => ({
-    key: getStreamingAccountName(item) as string,
-    value: item.id as string,
-    label: (
-      <div className={`transaction-list-row`}>
-        <div className="icon-cell">{getStreamingAccountIcon(item)}</div>
-        <div className="description-cell">
-          {getStreamingAccountDescription(item)}
+  const renderStreamingAccountItem = (item: Treasury | TreasuryInfo) => {
+    return (
+      <Option key={`${item.id}`} value={item.id as string}>
+        <div className={`transaction-list-row no-pointer`}>
+          <div className="icon-cell">{getStreamingAccountIcon(item)}</div>
+          <div className="description-cell">
+            {getStreamingAccountDescription(item)}
+          </div>
+          <div className="rate-cell">
+            {getStreamingAccountStreamCount(item)}
+          </div>
         </div>
-        <div className="rate-cell">
-          {getStreamingAccountStreamCount(item)}
-        </div>
-      </div>
-    ),
-  });
-
-  const renderStreamingAccountsSelectOptions = () => {
-    if (!treasuryList) { return undefined; }
-    const options = treasuryList.map((stream: Treasury | TreasuryInfo, index: number) => {
-      return renderStreamSelectItem(stream);
-    });
-    return options;
+      </Option>
+    );
   }
+
+  // const renderStreamSelectItem = (item: Treasury | TreasuryInfo) => ({
+  //   key: getStreamingAccountName(item) as string,
+  //   value: item.id as string,
+  //   label: (
+  //     <div className={`transaction-list-row`}>
+  //       <div className="icon-cell">{getStreamingAccountIcon(item)}</div>
+  //       <div className="description-cell">
+  //         {getStreamingAccountDescription(item)}
+  //       </div>
+  //       <div className="rate-cell">
+  //         {getStreamingAccountStreamCount(item)}
+  //       </div>
+  //     </div>
+  //   ),
+  // });
+
+  // const renderStreamingAccountsSelectOptions = () => {
+  //   if (!treasuryList) { return undefined; }
+  //   const options = treasuryList.map((stream: Treasury | TreasuryInfo, index: number) => {
+  //     return renderStreamSelectItem(stream);
+  //   });
+  //   return options;
+  // }
 
   return (
     <Modal
@@ -1731,7 +1783,22 @@ export const TreasuryStreamCreateModal = (props: {
                         <div className="well">
                           <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                             <div className="left mr-0">
-                              <AutoComplete
+                              {treasuryList && treasuryList.length > 0 && (
+                                <Select className={`auto-height`} value={selectedStreamingAccountId}
+                                  style={{width:"100%", maxWidth:'none'}}
+                                  onChange={onStreamingAccountSelected}
+                                  bordered={false}
+                                  showArrow={false}
+                                  dropdownRender={menu => (
+                                  <div>{menu}</div>
+                                )}>
+                                  {treasuryList.map(option => {
+                                    return renderStreamingAccountItem(option);
+                                  })}
+                                </Select>
+                              )}
+
+                              {/* <AutoComplete
                                 bordered={false}
                                 style={{ width: '100%' }}
                                 allowClear={true}
@@ -1752,16 +1819,16 @@ export const TreasuryStreamCreateModal = (props: {
                                   return option?.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
                                 }}
                                 onSelect={onStreamingAccountSelected}
-                              />
+                              /> */}
                             </div>
                           </div>
-                          {
+                          {/* {
                             selectedStreamingAccountId && !isValidAddress(selectedStreamingAccountId) && (
                               <span className="form-field-error">
                                 {t('transactions.validation.address-validation')}
                               </span>
                             )
-                          }
+                          } */}
                         </div>
                       </div>
                     </>
