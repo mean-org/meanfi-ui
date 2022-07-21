@@ -322,7 +322,7 @@ export const TreasuryStreamCreateModal = (props: {
             : (enableMultipleStreamsOption && !validMultiRecipientsList)
               ? t('transactions.validation.select-address-list')
               : !selectedToken || unallocatedBalance.toNumber() === 0
-                ? t('transactions.validation.no-balance')
+                ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
                   : (!paymentRateAmount || parseFloat(paymentRateAmount) === 0)
                   ? t('transactions.validation.no-amount')
                     : !paymentStartDate
@@ -344,7 +344,7 @@ export const TreasuryStreamCreateModal = (props: {
             : (enableMultipleStreamsOption && !validMultiRecipientsList)
               ? t('transactions.validation.select-address-list')
               : !selectedToken || unallocatedBalance.toNumber() === 0
-                ? t('transactions.validation.no-balance')
+                ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
                 : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
                   ? t('transactions.validation.no-amount')
                   : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
