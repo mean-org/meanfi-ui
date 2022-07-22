@@ -55,6 +55,7 @@ import { u64 } from '@solana/spl-token';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, DEFAULT_EXPIRATION_TIME_SECONDS, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { InfoIcon } from '../InfoIcon';
 import { useSearchParams } from 'react-router-dom';
+import { InputMean } from '../InputMean';
 
 const { Option } = Select;
 
@@ -152,6 +153,7 @@ export const TreasuryStreamCreateModal = (props: {
   const [workingTreasuryDetails, setWorkingTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [workingTreasuryType, setWorkingTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] = useState('');
+  const [multisigTitle, setMultisigTitle] = useState('');
 
   const isNewTreasury = useCallback(() => {
     if (workingTreasuryDetails) {
@@ -835,6 +837,7 @@ export const TreasuryStreamCreateModal = (props: {
     setTimeout(() => {
       setRecipientAddress("");
       setRecipientNote("");
+      setMultisigTitle("");
       setPaymentRateAmount("");
       setFromCoinAmount("");
       setCsvArray([]);
@@ -1141,7 +1144,7 @@ export const TreasuryStreamCreateModal = (props: {
 
         const tx = await multisigClient.createMoneyStreamTransaction(
           publicKey,
-          "Create Stream",
+          multisigTitle === "" ? "Create Stream" : multisigTitle,
           "", // description
           new Date(expirationTime * 1_000),
           streamSeedData.timeStamp.toNumber(),
@@ -1518,6 +1521,10 @@ export const TreasuryStreamCreateModal = (props: {
     return isRateAmountValid();
   }
 
+  const onTitleInputValueChange = (e: any) => {
+    setMultisigTitle(e.target.value);
+  }
+
   const onStreamingAccountSelected = useCallback((e: any) => {
     consoleOut('Selected streaming account:', e, 'blue');
     setSelectedStreamingAccountId(e.id as string);
@@ -1701,6 +1708,21 @@ export const TreasuryStreamCreateModal = (props: {
 
               {(workingTreasuryType === TreasuryType.Lock) && (
                 <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel1-name')}</div>
+              )}
+
+              {/* Proposal title */}
+              {param === "multisig" && (
+                <div className="mb-3">
+                  <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+                  <InputMean
+                    id="proposal-title-field"
+                    name="Title"
+                    className="w-100 general-text-input"
+                    onChange={onTitleInputValueChange}
+                    placeholder="Add a proposal title (required)"
+                    value={multisigTitle}
+                  />
+                </div>
               )}
 
               {/* Create multi-recipient stream checkbox */}
