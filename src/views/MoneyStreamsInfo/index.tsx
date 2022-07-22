@@ -2623,10 +2623,6 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
-  console.log("======================");
-  console.log("incomingAmount test...", incomingAmount);
-  console.log("outgoingAmount test...", outgoingAmount);
-
   // Tabs
   const tabs = [
     {
