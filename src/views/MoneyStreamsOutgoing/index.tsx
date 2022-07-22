@@ -2671,7 +2671,6 @@ export const MoneyStreamsOutgoingView = (props: {
       {isPauseStreamModalVisible && (
         <StreamPauseModal
           isVisible={isPauseStreamModalVisible}
-          selectedToken={selectedToken}
           transactionFees={transactionFees}
           tokenBalance={tokenBalance}
           streamDetail={streamSelected}
