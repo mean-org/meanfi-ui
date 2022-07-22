@@ -220,7 +220,7 @@ export const TreasuryAddFundsModal = (props: {
       : !isStreamingAccountSelected()
         ? 'Select streaming account'
         : !selectedToken || !availableBalance || availableBalance.isZero()
-          ? t('transactions.validation.no-balance')
+          ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
           : !tokenAmount || tokenAmount.isZero()
             ? t('transactions.validation.no-amount')
             : tokenAmount.gt(getMaxAmount())
@@ -519,15 +519,29 @@ export const TreasuryAddFundsModal = (props: {
         setSelectedStreamingAccountId(treasuryDetails.id as string);
         setWorkingAssociatedToken(treasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
         setWorkingTreasuryType(treasuryType);
-      } else {
-        consoleOut('treasuryDetails not set!', '', 'blue');
       }
     }
-  }, [associatedToken, isVisible, treasuryDetails]);
+  }, [isVisible, treasuryDetails, treasuryList]);
+
+  // Preset a working copy of the first available streaming account in the list if treasuryDetails was not passed in
+  useEffect(() => {
+    if (isVisible && !treasuryDetails && treasuryList && treasuryList.length > 0 && !workingTreasuryDetails) {
+      consoleOut('treasuryDetails not set!', 'Try to pick one from list', 'blue');
+      const selected = treasuryList[0];
+      const v1 = selected as TreasuryInfo;
+      const v2 = selected as Treasury;
+      const treasuryType = selected.version < 2 ? v1.type as TreasuryType : v2.treasuryType as TreasuryType;
+      consoleOut('treasuryDetails preset:', selected, 'blue');
+      setWorkingTreasuryDetails(selected);
+      setSelectedStreamingAccountId(selected.id as string);
+      setWorkingAssociatedToken(selected.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
+      setWorkingTreasuryType(treasuryType);
+    }
+  }, [isVisible, treasuryDetails, treasuryList, workingTreasuryDetails]);
 
   // Set token based of selected treasury details
   useEffect(() => {
-    if (hasNoStreamingAccounts || workingAssociatedToken || !workingTreasuryDetails) {
+    if (hasNoStreamingAccounts || !workingAssociatedToken || !workingTreasuryDetails) {
       return;
     }
 
@@ -539,7 +553,6 @@ export const TreasuryAddFundsModal = (props: {
     token = getTokenByMintAddress(tokenAddress);
 
     if (token) {
-      consoleOut('Treasury workingAssociatedToken:', token, 'blue');
       setSelectedToken(token);
     } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
       setCustomToken(tokenAddress);
@@ -657,6 +670,28 @@ export const TreasuryAddFundsModal = (props: {
   //   Events   //
   ////////////////
 
+  const onStreamingAccountSelected = useCallback((e: any) => {
+    consoleOut('Selected streaming account:', e, 'blue');
+    setSelectedStreamingAccountId(e.id as string);
+    const item = treasuryList?.find(t => t.id === e);
+    consoleOut('item:', item, 'blue');
+    if (item) {
+      setWorkingTreasuryDetails(item);
+      setSelectedStreamingAccountId(item.id as string);
+      const v1 = item as TreasuryInfo;
+      const v2 = item as Treasury;
+      const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
+      const token = getTokenByMintAddress(tokenAddress);
+      if (token) {
+        consoleOut('Treasury workingAssociatedToken:', token, 'blue');
+        setSelectedToken(token);
+      } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
+        setCustomToken(tokenAddress);
+      }
+      setWorkingAssociatedToken(tokenAddress)
+    }
+  },[getTokenByMintAddress, selectedToken, setCustomToken, treasuryList, workingAssociatedToken]);
+
   const triggerWindowResize = () => {
     window.dispatchEvent(new Event('resize'));
   }
@@ -698,22 +733,6 @@ export const TreasuryAddFundsModal = (props: {
     window.location.reload();
   }
 
-  // const onStreamSelected = (e: any) => {
-  //   consoleOut('selectedStreamForAllocation:', e, 'blue');
-  //   setSelectedStreamForAllocation(e);
-  //   const stream = getSelectedStream(e);
-  //   if (stream && (stream as any).feePayedByTreasurer) {
-  //     if (availableBalance && tokenAmount && tokenAmount.eq(availableBalance)) {
-  //       setTimeout(() => {
-  //         const maxButton = document.getElementById("treasury-add-funds-max");
-  //         if (maxButton) {
-  //           maxButton.click();
-  //         }
-  //       }, 100);
-  //     }
-  //   }
-  // }
-
   const handleAmountChange = (e: any) => {
 
     let newValue = e.target.value;
@@ -743,10 +762,6 @@ export const TreasuryAddFundsModal = (props: {
       setTokenAmount(makeInteger(newValue, selectedToken?.decimals || 6));
     }
   };
-
-  // const handleAllocationOptionChange = (val: SelectOption) => {
-  //   setAllocationOption(val.value);
-  // }
 
   const onTokenChange = (e: any) => {
     consoleOut("token selected:", e, 'blue');
@@ -800,28 +815,6 @@ export const TreasuryAddFundsModal = (props: {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
     event.currentTarget.className = "error";
   };
-
-  const onStreamingAccountSelected = (e: any) => {
-    consoleOut('Selected streaming account:', e, 'blue');
-    setSelectedStreamingAccountId(e);
-    const item = treasuryList?.find(t => t.id === e);
-    consoleOut('item:', item, 'blue');
-    if (item) {
-      setWorkingTreasuryDetails(item);
-      setSelectedStreamingAccountId(item.id as string);
-      const v1 = item as TreasuryInfo;
-      const v2 = item as Treasury;
-      const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-      const token = getTokenByMintAddress(tokenAddress);
-      if (token) {
-        consoleOut('Treasury workingAssociatedToken:', token, 'blue');
-        setSelectedToken(token);
-      } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
-        setCustomToken(tokenAddress);
-      }
-      setWorkingAssociatedToken(tokenAddress)
-    }
-  }
 
   const renderStream = () => {
 
@@ -924,28 +917,20 @@ export const TreasuryAddFundsModal = (props: {
     );
   }
 
-  const renderStreamSelectItem = (item: Treasury | TreasuryInfo) => ({
-    key: getStreamingAccountName(item) as string,
-    value: item.id as string,
-    label: (
-      <div className={`transaction-list-row`}>
-        <div className="icon-cell">{getStreamingAccountIcon(item)}</div>
-        <div className="description-cell">
-          {getStreamingAccountDescription(item)}
+  const renderStreamingAccountItem = (item: Treasury | TreasuryInfo) => {
+    return (
+      <Option key={`${item.id}`} value={item.id as string}>
+        <div className={`transaction-list-row no-pointer`}>
+          <div className="icon-cell">{getStreamingAccountIcon(item)}</div>
+          <div className="description-cell">
+            {getStreamingAccountDescription(item)}
+          </div>
+          <div className="rate-cell">
+            {getStreamingAccountStreamCount(item)}
+          </div>
         </div>
-        <div className="rate-cell">
-          {getStreamingAccountStreamCount(item)}
-        </div>
-      </div>
-    ),
-  });
-
-  const renderStreamingAccountsSelectOptions = () => {
-    if (!treasuryList) { return undefined; }
-    const options = treasuryList.map((stream: Treasury | TreasuryInfo, index: number) => {
-      return renderStreamSelectItem(stream);
-    });
-    return options;
+      </Option>
+    );
   }
 
   return (
@@ -997,28 +982,20 @@ export const TreasuryAddFundsModal = (props: {
                       <div className={`well ${isBusy ? 'disabled' : ''}`}>
                         <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                           <div className="left mr-0">
-                            <AutoComplete
-                              bordered={false}
-                              style={{ width: '100%' }}
-                              allowClear={true}
-                              dropdownClassName="stream-select-dropdown"
-                              options={renderStreamingAccountsSelectOptions()}
-                              placeholder={t('treasuries.add-funds.search-streams-placeholder')}
-                              onChange={(inputValue, option) => {
-                                setSelectedStreamingAccountId(inputValue);
-                              }}
-                              filterOption={(inputValue, option) => {
-                                if (!treasuryList || treasuryList.length === 0) { return false; }
-                                const originalItem = treasuryList.find(i => {
-                                  const trsryName = i.version < 2
-                                    ? (i as TreasuryInfo).label
-                                    : (i as Treasury).name;
-                                  return trsryName === option?.key ? true : false;
-                                });
-                                return option?.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
-                              }}
-                              onSelect={onStreamingAccountSelected}
-                            />
+                            {treasuryList && treasuryList.length > 0 && (
+                              <Select className={`auto-height`} value={selectedStreamingAccountId}
+                                style={{width:"100%", maxWidth:'none'}}
+                                onChange={onStreamingAccountSelected}
+                                bordered={false}
+                                showArrow={false}
+                                dropdownRender={menu => (
+                                <div>{menu}</div>
+                              )}>
+                                {treasuryList.map(option => {
+                                  return renderStreamingAccountItem(option);
+                                })}
+                              </Select>
+                            )}
                           </div>
                         </div>
                         {
@@ -1207,50 +1184,24 @@ export const TreasuryAddFundsModal = (props: {
           </div>
 
           {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-            <div className="row two-col-ctas mt-3 transaction-progress p-0">
-              <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
-                <Button
-                  block
-                  type="text"
-                  shape="round"
-                  size="middle"
-                  className={isBusy ? 'inactive' : ''}
-                  onClick={() => isError(transactionStatus.currentOperation)
-                    ? onAcceptModal()
-                    : onCloseModal()}>
-                  {isError(transactionStatus.currentOperation)
-                    ? t('general.retry')
-                    : t('general.cta-close')
-                  }
-                </Button>
-              </div>
-              {!isError(transactionStatus.currentOperation) && (
-                <div className="col-6">
-                  <Button
-                    className={isBusy ? 'inactive' : ''}
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    disabled={!isStreamingAccountSelected() || !isTopupFormValid()}
-                    onClick={() => {
-                      if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                        onAcceptModal();
-                      } else {
-                        refreshPage();
-                      }
-                    }}>
-                    {isBusy
-                      ? allocationOption === AllocationType.Specific && highLightableStreamId
-                        ? t('treasuries.add-funds.main-cta-fund-stream-busy')
-                        : t('treasuries.add-funds.main-cta-busy')
-                      : transactionStatus.currentOperation === TransactionStatus.Iddle
-                        ? getTransactionStartButtonLabel()
-                        : t('general.refresh')
-                    }
-                  </Button>
-                </div>
-              )}
+            <div className="mt-3 transaction-progress p-0">
+              <Button
+                className={isBusy ? 'inactive' : ''}
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                disabled={!isStreamingAccountSelected() || !isTopupFormValid()}
+                onClick={onAcceptModal}>
+                {isBusy
+                  ? allocationOption === AllocationType.Specific && highLightableStreamId
+                    ? t('treasuries.add-funds.main-cta-fund-stream-busy')
+                    : t('treasuries.add-funds.main-cta-busy')
+                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    ? getTransactionStartButtonLabel()
+                    : t('general.retry')
+                }
+              </Button>
             </div>
           )}
 
