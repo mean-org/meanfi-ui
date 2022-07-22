@@ -1975,7 +1975,7 @@ export const MoneyStreamsInfoView = (props: {
   ]);
 
   // Protocol
-  const listOfBadges = ["MSP", "DEFI", "Money Streams"];
+  const listOfBadges = ["MSP", "DEFI", "Payment Streams"];
 
   const renderProtocol = (
     <>
