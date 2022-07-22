@@ -530,7 +530,7 @@ export const MoneyStreamDetails = (props: {
   // Tab details
   const detailsData = [
     {
-      label: stream ? isStartDateFuture(stream.startUtc as string) ? "Starting on:" : "Started on:" : "--",
+      label: stream ? (isStartDateFuture(stream.startUtc as string) ? "Starting on:" : "Started on:") : "--",
       value: stream ? getReadableDate(stream.startUtc as string, true) : "--"
     },
     {
@@ -567,13 +567,13 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: "Stream id:",
-      value: stream && <CopyExtLinkGroup
+      value: stream ? <CopyExtLinkGroup
         content={stream.id as string}
         externalLink={true}
         isTx={false}
         className="d-block text-truncate"
         classNameContainer="mb-1 mr-2"
-      />
+      /> : "--"
     },
   ];
 

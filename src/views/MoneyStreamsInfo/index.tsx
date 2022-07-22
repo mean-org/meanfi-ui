@@ -143,8 +143,8 @@ export const MoneyStreamsInfoView = (props: {
   const [rateOutgoingPerDay, setRateOutgoingPerDay] = useState(0);
   const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
-  const [incomingAmount, setIncomingAmount] = useState(0);
-  const [outgoingAmount, setOutgoingAmount] = useState(0);
+  const [incomingAmount, setIncomingAmount] = useState<number>();
+  const [outgoingAmount, setOutgoingAmount] = useState<number>();
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -2174,7 +2174,7 @@ export const MoneyStreamsInfoView = (props: {
               <span>
                 {loadingCombinedStreamingList || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-                ) : formatThousands(incomingAmount)}
+                ) : formatThousands(incomingAmount as number)}
               </span>
             </div>
           </div>
@@ -2243,7 +2243,7 @@ export const MoneyStreamsInfoView = (props: {
               <span>
                 {loadingCombinedStreamingList || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-                ) : formatThousands(outgoingAmount)}
+                ) : formatThousands(outgoingAmount as number)}
               </span>
             </div>
           </div>
@@ -2623,6 +2623,10 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
+  console.log("======================");
+  console.log("incomingAmount test...", incomingAmount);
+  console.log("outgoingAmount test...", outgoingAmount);
+
   // Tabs
   const tabs = [
     {
@@ -2632,12 +2636,16 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       id: "incoming",
-      name: `Incoming ${(incomingAmount && incomingAmount > 0) ? `(${incomingAmount})` : "(0)"}`,
+      name: `Incoming ${(!loadingCombinedStreamingList && !loadingStreams) 
+        ? `(${incomingAmount && incomingAmount >= 0 && incomingAmount})` 
+        : ""}`,
       render: renderListOfIncomingStreams
     },
     {
       id: "outgoing",
-      name: `Outgoing ${(outgoingAmount && outgoingAmount > 0) ? `(${outgoingAmount})` : "(0)"}`,
+      name: `Outgoing ${(!loadingCombinedStreamingList && !loadingStreams)
+        ? `(${outgoingAmount && outgoingAmount >= 0 && outgoingAmount})` 
+        : ""}`,
       render: renderListOfOutgoingStreams
     },
   ];
