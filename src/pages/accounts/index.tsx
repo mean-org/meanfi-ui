@@ -182,6 +182,7 @@ export const AccountsNewView = () => {
   const [isPageLoaded, setIsPageLoaded] = useState(true);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
+  const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
@@ -282,7 +283,7 @@ export const AccountsNewView = () => {
       setAutoOpenDetailsPanel(false);
       setTimeout(() => {
         setIsPageLoaded(true);
-      }, 5);
+      });
       navigate(url, { replace: true });
       // Ensure path: /accounts/:address/assets if address provided but not /assets or /streaming
     } else if (address && location.pathname.indexOf('/assets') === -1 && location.pathname.indexOf('/streaming') === -1) {
@@ -291,7 +292,7 @@ export const AccountsNewView = () => {
       setAutoOpenDetailsPanel(false);
       setTimeout(() => {
         setIsPageLoaded(true);
-      }, 5);
+      });
       navigate(url, { replace: true });
     } else {
       // If an asset is specified or user goes inside any tab of the streaming category, enable it
@@ -300,7 +301,7 @@ export const AccountsNewView = () => {
       }
       setTimeout(() => {
         setIsPageLoaded(true);
-      }, 5);
+      });
     }
   }, [address, asset, location.pathname, navigate, publicKey, streamId, streamingTab, treasuryId]);
 
@@ -3482,13 +3483,14 @@ export const AccountsNewView = () => {
         !splTokenList ||
         splTokenList.length === 0 ||
         !coinPrices ||
-        (selectedCategory !== "assets" && accountTokens && accountTokens.length > 0) ||
+        loadingTokenAccounts ||
         isPageLoaded
     ) {
       return;
     }
 
     const timeout = setTimeout(() => {
+      setLoadingTokenAccounts(true);
       setShouldLoadTokens(false);
       setTokensLoaded(false);
 
@@ -3734,6 +3736,7 @@ export const AccountsNewView = () => {
     accountAddress,
     shouldLoadTokens,
     selectedCategory,
+    loadingTokenAccounts,
     getTokenPriceByAddress,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
