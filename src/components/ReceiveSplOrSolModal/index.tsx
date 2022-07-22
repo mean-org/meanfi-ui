@@ -42,7 +42,7 @@ export const ReceiveSplOrSolModal = (props: {
           <h3 className="mb-3">Scan the QR code to receive funds</h3>
 
           {(isWalletAddress() || overrideWithWallet) ? (
-            <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+            <div className="qr-container bg-white">
               <>
                 {!props.multisigAddress ? (
                   <QRCodeSVG
@@ -58,7 +58,7 @@ export const ReceiveSplOrSolModal = (props: {
               </>
             </div>
           ) : (
-            <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+            <div className="qr-container bg-white">
               <QRCodeSVG
                 value={address}
                 size={200}

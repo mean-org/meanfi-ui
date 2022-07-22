@@ -823,11 +823,6 @@ export const AccountsNewView = () => {
     setShouldLoadTransactions(true);
   }, [])
 
-  const reloadTokensAndActivity = () => {
-    setShouldLoadTokens(true);
-    reloadSwitch();
-  }
-
   const reloadSwitch = useCallback(() => {
     refreshAssetBalance();
     setSolAccountItems(0);
@@ -838,6 +833,12 @@ export const AccountsNewView = () => {
     setTransactions,
     refreshAssetBalance,
   ]);
+
+  const reloadTokensAndActivity = useCallback(() => {
+    consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
+    setShouldLoadTokens(true);
+    reloadSwitch();
+  }, [reloadSwitch, setShouldLoadTokens]);
 
   const navigateToAsset = useCallback((asset: UserTokenAccount) => {
     const isMyWallet = isInspectedAccountTheConnectedWallet();
@@ -912,7 +913,6 @@ export const AccountsNewView = () => {
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
     let event: any = undefined;
 
-    // TODO: We must record to segment all success and all failures equally
     if (item) {
       switch (item.operationType) {
         case OperationType.Wrap:
@@ -996,9 +996,9 @@ export const AccountsNewView = () => {
     }
 
     const softReloadAssets = () => {
-      const streamsRefreshCta = document.getElementById("account-assets-refresh-cta");
-      if (streamsRefreshCta) {
-        streamsRefreshCta.click();
+      const tokensRefreshCta = document.getElementById("account-assets-refresh-cta");
+      if (tokensRefreshCta) {
+        tokensRefreshCta.click();
       }
     };
 
@@ -1099,8 +1099,6 @@ export const AccountsNewView = () => {
         case OperationType.TreasuryStreamCreate:
         case OperationType.TreasuryRefreshBalance:
         case OperationType.TreasuryAddFunds:
-        case OperationType.TreasuryCreate:
-        case OperationType.StreamWithdraw:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
@@ -1110,6 +1108,19 @@ export const AccountsNewView = () => {
             setLoadingMultisigAccounts(true);
             softReloadStreams();
           }, 20);
+          break;
+        case OperationType.TreasuryCreate:
+        case OperationType.StreamWithdraw:
+          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+          recordTxConfirmation(item, true);
+          if (item.extras && item.extras.multisigAuthority) {
+            notifyMultisigActionFollowup(item);
+          }
+          setTimeout(() => {
+            softReloadAssets();
+            setLoadingMultisigAccounts(true);
+            softReloadStreams();
+          }, 100);
           break;
         case OperationType.StreamClose:
         case OperationType.TreasuryClose:
@@ -3732,7 +3743,6 @@ export const AccountsNewView = () => {
     splTokenList,
     pathParamAsset,
     selectedAsset,
-    accountTokens,
     accountAddress,
     shouldLoadTokens,
     selectedCategory,
@@ -5082,7 +5092,7 @@ export const AccountsNewView = () => {
   const renderQrCodeAndAddress = (
     <div className="text-center mt-3">
       <h3 className="mb-3">{t('assets.no-balance.line3')}</h3>
-      <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+      <div className="qr-container bg-white">
         <QRCodeSVG
           value={accountAddress}
           size={200}

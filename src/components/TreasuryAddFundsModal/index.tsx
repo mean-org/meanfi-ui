@@ -1211,7 +1211,7 @@ export const TreasuryAddFundsModal = (props: {
 
               {showQrCode && workingTreasuryDetails && (
                 <>
-                  <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+                  <div className="qr-container bg-white">
                     <QRCodeSVG
                       value={workingTreasuryDetails.id as string}
                       size={200}
