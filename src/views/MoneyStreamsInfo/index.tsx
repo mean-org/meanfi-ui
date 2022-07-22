@@ -2191,9 +2191,7 @@ export const MoneyStreamsInfoView = (props: {
               }
             </div>
           </div>
-          {loadingCombinedStreamingList || loadingStreams ? (
-            <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-          ) : (
+          {(!loadingCombinedStreamingList && !loadingStreams) && (
             <div className="wave-container wave-green" id="wave">
               {/* <div className="wave wave-green"></div> */}
               <Wave fill="url(#gradient1)"
@@ -2262,9 +2260,7 @@ export const MoneyStreamsInfoView = (props: {
               }
             </div>
           </div>
-          {loadingCombinedStreamingList || loadingStreams ? (
-            <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-          ) : (
+          {(!loadingCombinedStreamingList && !loadingStreams) && (
             <div className="wave-container wave-red" id="wave">
               {/* <div className="wave wave-red"></div> */}
               <Wave fill="url(#gradient2)"
