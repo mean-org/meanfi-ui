@@ -567,7 +567,13 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: "Stream id:",
-      value: <span className="d-block text-truncate mr-2">{stream && stream.id}</span>
+      value: stream && <CopyExtLinkGroup
+        content={stream.id as string}
+        externalLink={true}
+        isTx={false}
+        className="d-block text-truncate"
+        classNameContainer="mb-1 mr-2"
+      />
     },
   ];
 
