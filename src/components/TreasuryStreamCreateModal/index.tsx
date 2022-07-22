@@ -366,7 +366,7 @@ export const TreasuryStreamCreateModal = (props: {
           : !recipientAddress
             ? t('transactions.validation.select-recipient')
             : !selectedToken || unallocatedBalance.toNumber() === 0
-              ? t('transactions.validation.no-balance')
+              ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
               : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
                 ? t('transactions.validation.no-amount')
                 : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
@@ -377,13 +377,11 @@ export const TreasuryStreamCreateModal = (props: {
                       ? 'Add cliff to release'
                       : (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals))
                         ? 'Invalid cliff amount'
-                        : !selectedToken || unallocatedBalance.toNumber() === 0
-                          ? t('transactions.validation.no-balance')
-                          : !paymentStartDate
-                            ? t('transactions.validation.no-valid-date')
-                            : !areSendAmountSettingsValid()
-                              ? getPaymentSettingsButtonLabel()
-                              : t('transactions.validation.valid-continue');
+                        : !paymentStartDate
+                          ? t('transactions.validation.no-valid-date')
+                          : !areSendAmountSettingsValid()
+                            ? getPaymentSettingsButtonLabel()
+                            : t('transactions.validation.valid-continue');
   }
 
   const getTransactionStartButtonLabel = (): string => {
@@ -425,7 +423,7 @@ export const TreasuryStreamCreateModal = (props: {
           : !recipientAddress
             ? t('transactions.validation.select-recipient') 
             : !selectedToken || unallocatedBalance.toNumber() === 0
-              ? t('transactions.validation.no-balance')
+              ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
               : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
                 ? t('transactions.validation.no-amount')
                 : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
@@ -536,7 +534,7 @@ export const TreasuryStreamCreateModal = (props: {
     }
   }, [isVisible, treasuryDetails, treasuryList]);
 
-  // Preset a working copy of the first available streaming account in the list in not passed in
+  // Preset a working copy of the first available streaming account in the list if treasuryDetails was not passed in
   useEffect(() => {
     if (isVisible && !treasuryDetails && treasuryList && treasuryList.length > 0 && !workingTreasuryDetails) {
       consoleOut('treasuryDetails not set!', 'Try to pick one from list', 'blue');
@@ -565,7 +563,6 @@ export const TreasuryStreamCreateModal = (props: {
     token = getTokenByMintAddress(tokenAddress);
 
     if (token) {
-      consoleOut('Treasury workingAssociatedToken:', token, 'blue');
       setSelectedToken(token);
     } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
       setCustomToken(tokenAddress);
@@ -609,7 +606,6 @@ export const TreasuryStreamCreateModal = (props: {
       const token = getTokenByMintAddress(workingAssociatedToken);
       if (token) {
         setSelectedToken(token);
-        consoleOut('Treasury workingAssociatedToken:', token, 'blue');
       } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
         setCustomToken(workingAssociatedToken);
       }
@@ -1581,28 +1577,6 @@ export const TreasuryStreamCreateModal = (props: {
     </Menu>
   );
 
-  // const onStreamingAccountSelected = (e: any) => {
-  //   consoleOut('Selected streaming account:', e, 'blue');
-  //   setSelectedStreamingAccountId(e);
-  //   const item = treasuryList?.find(t => t.id === e);
-  //   consoleOut('item:', item, 'blue');
-  //   if (item) {
-  //     setWorkingTreasuryDetails(item);
-  //     setSelectedStreamingAccountId(item.id as string);
-  //     const v1 = item as TreasuryInfo;
-  //     const v2 = item as Treasury;
-  //     const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-  //     const token = getTokenByMintAddress(tokenAddress);
-  //     if (token) {
-  //       consoleOut('Treasury workingAssociatedToken:', token, 'blue');
-  //       setSelectedToken(token);
-  //     } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
-  //       setCustomToken(tokenAddress);
-  //     }
-  //     setWorkingAssociatedToken(tokenAddress)
-  //   }
-  // }
-
   const getStreamingAccountIcon = (item: Treasury | TreasuryInfo | undefined) => {
     if (!item) { return null; }
     const isV2Treasury = item && item.version >= 2 ? true : false;
@@ -1696,30 +1670,6 @@ export const TreasuryStreamCreateModal = (props: {
     );
   }
 
-  // const renderStreamSelectItem = (item: Treasury | TreasuryInfo) => ({
-  //   key: getStreamingAccountName(item) as string,
-  //   value: item.id as string,
-  //   label: (
-  //     <div className={`transaction-list-row`}>
-  //       <div className="icon-cell">{getStreamingAccountIcon(item)}</div>
-  //       <div className="description-cell">
-  //         {getStreamingAccountDescription(item)}
-  //       </div>
-  //       <div className="rate-cell">
-  //         {getStreamingAccountStreamCount(item)}
-  //       </div>
-  //     </div>
-  //   ),
-  // });
-
-  // const renderStreamingAccountsSelectOptions = () => {
-  //   if (!treasuryList) { return undefined; }
-  //   const options = treasuryList.map((stream: Treasury | TreasuryInfo, index: number) => {
-  //     return renderStreamSelectItem(stream);
-  //   });
-  //   return options;
-  // }
-
   return (
     <Modal
       className="mean-modal treasury-stream-create-modal"
@@ -1780,7 +1730,7 @@ export const TreasuryStreamCreateModal = (props: {
                             </span>
                           </Tooltip>
                         </div>
-                        <div className="well">
+                        <div className={`well ${isBusy ? 'disabled' : ''}`}>
                           <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                             <div className="left mr-0">
                               {treasuryList && treasuryList.length > 0 && (
@@ -1797,38 +1747,8 @@ export const TreasuryStreamCreateModal = (props: {
                                   })}
                                 </Select>
                               )}
-
-                              {/* <AutoComplete
-                                bordered={false}
-                                style={{ width: '100%' }}
-                                allowClear={true}
-                                dropdownClassName="stream-select-dropdown"
-                                options={renderStreamingAccountsSelectOptions()}
-                                placeholder={t('treasuries.add-funds.search-streams-placeholder')}
-                                onChange={(inputValue, option) => {
-                                  setSelectedStreamingAccountId(inputValue);
-                                }}
-                                filterOption={(inputValue, option) => {
-                                  if (!treasuryList || treasuryList.length === 0) { return false; }
-                                  const originalItem = treasuryList.find(i => {
-                                    const trsryName = i.version < 2
-                                      ? (i as TreasuryInfo).label
-                                      : (i as Treasury).name;
-                                    return trsryName === option?.key ? true : false;
-                                  });
-                                  return option?.value.indexOf(inputValue) !== -1 || getStreamingAccountName(originalItem).indexOf(inputValue) !== -1
-                                }}
-                                onSelect={onStreamingAccountSelected}
-                              /> */}
                             </div>
                           </div>
-                          {/* {
-                            selectedStreamingAccountId && !isValidAddress(selectedStreamingAccountId) && (
-                              <span className="form-field-error">
-                                {t('transactions.validation.address-validation')}
-                              </span>
-                            )
-                          } */}
                         </div>
                       </div>
                     </>

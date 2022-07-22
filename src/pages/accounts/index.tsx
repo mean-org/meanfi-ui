@@ -182,6 +182,7 @@ export const AccountsNewView = () => {
   const [isPageLoaded, setIsPageLoaded] = useState(true);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
+  const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
@@ -282,7 +283,7 @@ export const AccountsNewView = () => {
       setAutoOpenDetailsPanel(false);
       setTimeout(() => {
         setIsPageLoaded(true);
-      }, 5);
+      });
       navigate(url, { replace: true });
       // Ensure path: /accounts/:address/assets if address provided but not /assets or /streaming
     } else if (address && location.pathname.indexOf('/assets') === -1 && location.pathname.indexOf('/streaming') === -1) {
@@ -291,7 +292,7 @@ export const AccountsNewView = () => {
       setAutoOpenDetailsPanel(false);
       setTimeout(() => {
         setIsPageLoaded(true);
-      }, 5);
+      });
       navigate(url, { replace: true });
     } else {
       // If an asset is specified or user goes inside any tab of the streaming category, enable it
@@ -300,7 +301,7 @@ export const AccountsNewView = () => {
       }
       setTimeout(() => {
         setIsPageLoaded(true);
-      }, 5);
+      });
     }
   }, [address, asset, location.pathname, navigate, publicKey, streamId, streamingTab, treasuryId]);
 
@@ -822,11 +823,6 @@ export const AccountsNewView = () => {
     setShouldLoadTransactions(true);
   }, [])
 
-  const reloadTokensAndActivity = () => {
-    setShouldLoadTokens(true);
-    reloadSwitch();
-  }
-
   const reloadSwitch = useCallback(() => {
     refreshAssetBalance();
     setSolAccountItems(0);
@@ -837,6 +833,12 @@ export const AccountsNewView = () => {
     setTransactions,
     refreshAssetBalance,
   ]);
+
+  const reloadTokensAndActivity = useCallback(() => {
+    consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
+    setShouldLoadTokens(true);
+    reloadSwitch();
+  }, [reloadSwitch, setShouldLoadTokens]);
 
   const navigateToAsset = useCallback((asset: UserTokenAccount) => {
     const isMyWallet = isInspectedAccountTheConnectedWallet();
@@ -911,7 +913,6 @@ export const AccountsNewView = () => {
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
     let event: any = undefined;
 
-    // TODO: We must record to segment all success and all failures equally
     if (item) {
       switch (item.operationType) {
         case OperationType.Wrap:
@@ -995,9 +996,9 @@ export const AccountsNewView = () => {
     }
 
     const softReloadAssets = () => {
-      const streamsRefreshCta = document.getElementById("account-assets-refresh-cta");
-      if (streamsRefreshCta) {
-        streamsRefreshCta.click();
+      const tokensRefreshCta = document.getElementById("account-assets-refresh-cta");
+      if (tokensRefreshCta) {
+        tokensRefreshCta.click();
       }
     };
 
@@ -1098,8 +1099,6 @@ export const AccountsNewView = () => {
         case OperationType.TreasuryStreamCreate:
         case OperationType.TreasuryRefreshBalance:
         case OperationType.TreasuryAddFunds:
-        case OperationType.TreasuryCreate:
-        case OperationType.StreamWithdraw:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
@@ -1109,6 +1108,19 @@ export const AccountsNewView = () => {
             setLoadingMultisigAccounts(true);
             softReloadStreams();
           }, 20);
+          break;
+        case OperationType.TreasuryCreate:
+        case OperationType.StreamWithdraw:
+          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+          recordTxConfirmation(item, true);
+          if (item.extras && item.extras.multisigAuthority) {
+            notifyMultisigActionFollowup(item);
+          }
+          setTimeout(() => {
+            softReloadAssets();
+            setLoadingMultisigAccounts(true);
+            softReloadStreams();
+          }, 100);
           break;
         case OperationType.StreamClose:
         case OperationType.TreasuryClose:
@@ -3482,13 +3494,14 @@ export const AccountsNewView = () => {
         !splTokenList ||
         splTokenList.length === 0 ||
         !coinPrices ||
-        (selectedCategory !== "assets" && accountTokens && accountTokens.length > 0) ||
+        loadingTokenAccounts ||
         isPageLoaded
     ) {
       return;
     }
 
     const timeout = setTimeout(() => {
+      setLoadingTokenAccounts(true);
       setShouldLoadTokens(false);
       setTokensLoaded(false);
 
@@ -3730,10 +3743,10 @@ export const AccountsNewView = () => {
     splTokenList,
     pathParamAsset,
     selectedAsset,
-    accountTokens,
     accountAddress,
     shouldLoadTokens,
     selectedCategory,
+    loadingTokenAccounts,
     getTokenPriceByAddress,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
@@ -5079,7 +5092,7 @@ export const AccountsNewView = () => {
   const renderQrCodeAndAddress = (
     <div className="text-center mt-3">
       <h3 className="mb-3">{t('assets.no-balance.line3')}</h3>
-      <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+      <div className="qr-container bg-white">
         <QRCodeSVG
           value={accountAddress}
           size={200}
