@@ -1099,6 +1099,7 @@ export const AccountsNewView = () => {
         case OperationType.TreasuryStreamCreate:
         case OperationType.TreasuryRefreshBalance:
         case OperationType.TreasuryAddFunds:
+        case OperationType.TreasuryWithdraw:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
