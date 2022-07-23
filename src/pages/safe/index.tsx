@@ -2712,10 +2712,10 @@ export const SafeView = () => {
                 ? 2
                 : 3;
             consoleOut('accounts:', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()), 'orange');
-            consoleOut('account index:', accountIndex, 'orange');
             const treasury = data.transaction.accounts[accountIndex]
               ? data.transaction.accounts[accountIndex].pubkey.toBase58()
               : '-';
+            consoleOut(`Selected account for index [${accountIndex}]`, treasury, 'orange');
             txStatus.customError = {
               title: '',
               message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
@@ -2735,10 +2735,10 @@ export const SafeView = () => {
                 ? 5
                 : 3;
             consoleOut('accounts:', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()), 'orange');
-            consoleOut('account index:', accountIndex, 'orange');
             const treasury = data.transaction.accounts[accountIndex]
               ? data.transaction.accounts[accountIndex].pubkey.toBase58()
               : '-';
+            consoleOut(`Selected account for index [${accountIndex}]`, treasury, 'orange');
             txStatus.customError = {
               message: 'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
               data: treasury
@@ -2756,8 +2756,8 @@ export const SafeView = () => {
           } else if (error.toString().indexOf('0x1') !== -1) {
             const accountIndex = data.transaction.operation === OperationType.TransferTokens ? 0 : 3;
             consoleOut('accounts:', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()), 'orange');
-            consoleOut('account index:', accountIndex, 'orange');
             const asset = data.transaction.accounts[accountIndex] ? data.transaction.accounts[accountIndex].pubkey.toBase58() : '-';
+            consoleOut(`Selected account for index [${accountIndex}]`, asset, 'orange');
             txStatus.customError = {
               message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
               data: asset
@@ -3062,10 +3062,10 @@ export const SafeView = () => {
           if (error.toString().indexOf('0x1794') !== -1) {
             const accountIndex = data.transaction.operation === OperationType.StreamClose ? 5 : 3;
             consoleOut('accounts:', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()), 'orange');
-            consoleOut('account index:', accountIndex, 'orange');
             const treasury = data.transaction.accounts[accountIndex]
               ? data.transaction.accounts[accountIndex].pubkey.toBase58()
               : '-';
+            consoleOut(`Selected account for index [${accountIndex}]`, treasury, 'orange');
             txStatus.customError = {
               message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
               data: treasury
