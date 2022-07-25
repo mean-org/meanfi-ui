@@ -3825,17 +3825,30 @@ export const AccountsNewView = () => {
       const inferredAsset = accountTokens.find(t => t.publicAddress === pathParamAsset);
       if (inferredAsset) {
         selectAsset(inferredAsset);
+      } else {
+        selectAsset(accountTokens[0]);
       }
     } else if (!pathParamAsset && accountTokens && accountTokens.length > 0) {
-      if (!selectedAsset) {
-        consoleOut('Presetting first token in the list...', accountTokens[0].publicAddress, 'crimson');
-        selectAsset(accountTokens[0]);
-      } else {
-        const inferredAsset = accountTokens.find(t => t.publicAddress === accountAddress);
-        if (inferredAsset) {
-          selectAsset(inferredAsset);
-        }
+      const inferredAsset = accountTokens.find(t => t.publicAddress === accountAddress);
+      if (inferredAsset) {
+        selectAsset(inferredAsset);
       }
+
+      // if (!selectedAsset) {
+      //   consoleOut('Presetting first token in the list...', accountTokens[0].publicAddress, 'crimson');
+      //   selectAsset(accountTokens[0]);
+      // } else {
+      //   const inferredAsset = accountTokens.find(t => t.publicAddress === accountAddress);
+      //   if (inferredAsset) {
+      //     selectAsset(inferredAsset);
+      //   }
+      // }
+    } else {
+      reloadTokensAndActivity();
+
+      // setShouldLoadTokens(true);
+      // setLoadingTokenAccounts(false);
+
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountAddress, accountTokens, pathParamAsset]);
