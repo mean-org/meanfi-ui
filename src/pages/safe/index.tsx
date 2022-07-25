@@ -2755,11 +2755,9 @@ export const SafeView = () => {
               data: selectedMultisig?.authority.toBase58()
             }; 
           } else if (error.toString().indexOf('0x1') !== -1) {
-            const accountIndex = data.transaction.operation === OperationType.TransferTokens
+            const accountIndex = data.transaction.operation === OperationType.TransferTokens || data.transaction.operation === OperationType.Transfer
               ? 0
-              : data.transaction.operation === OperationType.Transfer
-                ? 1
-                : 3;
+              : 3;
             consoleOut('accounts:', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()), 'orange');
             const asset = data.transaction.accounts[accountIndex] ? data.transaction.accounts[accountIndex].pubkey.toBase58() : '-';
             consoleOut(`Selected account for index [${accountIndex}]`, asset, 'orange');
