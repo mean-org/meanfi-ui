@@ -79,7 +79,7 @@ export const SolBalanceModal = (props: {
             <h4 className="mb-3">Scan the QR code to send SOL to this safe</h4>
           )}
 
-          <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+          <div className="qr-container bg-white">
             <QRCodeSVG
               value={multisigAddress as string}
               size={200}

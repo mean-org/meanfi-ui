@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
@@ -69,14 +69,12 @@ export const AppBar = (props: {
   onOpenDrawer: any;
 }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
   const { t } = useTranslation("common");
   const {
     isWhitelisted,
     isDepositOptionsModalVisible,
-    setShouldLoadTokens,
     hideDepositOptionsModal,
   } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -87,15 +85,6 @@ export const AppBar = (props: {
     if (mobileMenuTrigger) {
       mobileMenuTrigger?.click();
     }
-  }
-
-  const goToAccounts = (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setShouldLoadTokens(true);
-    setTimeout(() => {
-      navigate(ACCOUNTS_ROUTE_BASE_PATH);
-    }, 200);
   }
 
   useEffect(() => {
@@ -155,7 +144,7 @@ export const AppBar = (props: {
   const mainNav = (
     <Menu selectedKeys={selectedItems} mode="horizontal">
       <Menu.Item key="accounts">
-        <Link to={ACCOUNTS_ROUTE_BASE_PATH} onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
+        <Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>
       </Menu.Item>
       <Menu.Item key="exchange">
         <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>

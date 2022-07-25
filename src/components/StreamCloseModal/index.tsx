@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col, Radio } from 'antd';
 import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
@@ -8,25 +8,27 @@ import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
-import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { useConnection } from '../../contexts/connection';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { useSearchParams } from 'react-router-dom';
 import { StreamTreasuryType } from '../../models/treasuries';
+import { AppStateContext } from '../../contexts/appstate';
 
 export const StreamCloseModal = (props: {
   handleClose: any;
   handleOk: any;
   content: JSX.Element;
   isVisible: boolean;
-  selectedToken: TokenInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   mspClient: MoneyStreaming | MSP | undefined;
   transactionFees: TransactionFees;
   canCloseTreasury?: boolean;
 }) => {
+  const {
+    getTokenByMintAddress,
+  } = useContext(AppStateContext);
   const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -181,13 +183,14 @@ export const StreamCloseModal = (props: {
     if (fees && localStreamDetail) {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
+      const token = getTokenByMintAddress(localStreamDetail.associatedToken as string);
       const isTreasurer = amITreasurer();
       const isBeneficiary = amIBeneficiary();
       if (isBeneficiary) {
         if (v1.version < 2) {
           fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
         } else {
-          const wa = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+          const wa = toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
           fee = percentage(fees.mspPercentFee, wa) || 0;
         }
       } else if (isTreasurer) {
@@ -197,7 +200,7 @@ export const StreamCloseModal = (props: {
     return fee;
   }, [
     localStreamDetail,
-    props.selectedToken?.decimals,
+    getTokenByMintAddress,
     amIBeneficiary,
     amITreasurer,
   ]);
@@ -206,34 +209,41 @@ export const StreamCloseModal = (props: {
     if (localStreamDetail && publicKey) {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
+
+      const token = getTokenByMintAddress(localStreamDetail.associatedToken as string);
+
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+        return toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
       }
     }
     return 0;
   }, [
     publicKey,
     localStreamDetail,
-    props.selectedToken?.decimals
+    getTokenByMintAddress
+
   ]);
 
   const getUnvested = useCallback((): number => {
     if (localStreamDetail && publicKey) {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
+
+      const token = getTokenByMintAddress(localStreamDetail.associatedToken as string);
+
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount(new BN(v2.fundsLeftInStream), props.selectedToken?.decimals || 6);
+        return toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6);
       }
     }
     return 0;
   }, [
     publicKey,
     localStreamDetail,
-    props.selectedToken?.decimals
+    getTokenByMintAddress
   ]);
 
   // Set fee amount

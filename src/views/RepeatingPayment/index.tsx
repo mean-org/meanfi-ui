@@ -21,7 +21,7 @@ import {
   toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
@@ -1388,7 +1388,7 @@ export const RepeatingPayment = (props: {
                         mintAddress={selectedToken.address}
                         name={selectedToken.name}
                         showCaretDown={true}
-                        showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                        showName={selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? true : false}
                         fullTokenInfo={selectedToken}
                       />
                     )}
@@ -1560,7 +1560,7 @@ export const RepeatingPayment = (props: {
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showCaretDown={true}
-                    showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                    showName={selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? true : false}
                     fullTokenInfo={selectedToken}
                   />
                 )}

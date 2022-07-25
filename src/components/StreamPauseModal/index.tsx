@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { percentage } from '../../utils/ui';
-import { TokenInfo } from '@solana/spl-token-registry';
 import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -12,6 +11,7 @@ import { Stream } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { InputMean } from '../InputMean';
 import { useSearchParams } from 'react-router-dom';
+import { AppStateContext } from '../../contexts/appstate';
 
 export const StreamPauseModal = (props: {
   handleClose: any;
@@ -19,10 +19,12 @@ export const StreamPauseModal = (props: {
   tokenBalance: number;
   content: JSX.Element;
   isVisible: boolean;
-  selectedToken: TokenInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
 }) => {
+  const {
+    getTokenByMintAddress,
+  } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const [searchParams] = useSearchParams();
@@ -81,13 +83,14 @@ export const StreamPauseModal = (props: {
     if (fees && props.streamDetail) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
+      const token = getTokenByMintAddress(props.streamDetail.associatedToken as string);
       const isTreasurer = amITreasurer();
       const isBeneficiary = amIBeneficiary();
       if (isBeneficiary) {
         if (v1.version < 2) {
           fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
         } else {
-          const wa = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+          const wa = toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
           fee = percentage(fees.mspPercentFee, wa) || 0;
         }
       } else if (isTreasurer) {
@@ -97,7 +100,7 @@ export const StreamPauseModal = (props: {
     return fee;
   }, [
     props.streamDetail,
-    props.selectedToken?.decimals,
+    getTokenByMintAddress,
     amIBeneficiary,
     amITreasurer,
   ]);
@@ -106,34 +109,40 @@ export const StreamPauseModal = (props: {
     if (props.streamDetail && publicKey) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
+
+      const token = getTokenByMintAddress(props.streamDetail.associatedToken as string);
+
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+        return toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
       }
     }
     return 0;
   }, [
     publicKey,
     props.streamDetail,
-    props.selectedToken?.decimals
+    getTokenByMintAddress
   ]);
 
   const getUnvested = useCallback((): number => {
     if (props.streamDetail && publicKey) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
+
+      const token = getTokenByMintAddress(props.streamDetail.associatedToken as string);
+
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount(new BN(v2.fundsLeftInStream), props.selectedToken?.decimals || 6);
+        return toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6);
       }
     }
     return 0;
   }, [
     publicKey,
     props.streamDetail,
-    props.selectedToken?.decimals
+    getTokenByMintAddress
   ]);
 
   // Setup fees

@@ -1046,13 +1046,14 @@ export const ProgramDetailsView = (props: {
   return (
     <>
       <div className="program-details-container">
-        <Row gutter={[8, 8]} className="program-details-resume mb-1">
+        <Row gutter={[8, 8]} className="program-details-resume mb-1 mr-0 ml-0">
           <div onClick={hideProgramDetailsHandler} className="back-button icon-button-container">
             <IconArrowBack className="mean-svg-icons" />
             <span className="ml-1">Back</span>
           </div>
         </Row>
-        <Row gutter={[8, 8]} className="safe-info-container">
+
+        <Row gutter={[8, 8]} className="safe-info-container mr-0 ml-0">
           {infoProgramData.map((info, index) => (
             <Col xs={12} sm={12} md={12} lg={12} key={index}>
               <div className="info-safe-group">
@@ -1066,7 +1067,8 @@ export const ProgramDetailsView = (props: {
             </Col>
           ))}
         </Row>
-        <Row gutter={[8, 8]} className="programs-btns safe-btns-container mt-2 mb-1">
+
+        <Row gutter={[8, 8]} className="programs-btns safe-btns-container mt-2 mb-1 mr-0 ml-0">
           <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
             <Button
               type="default"
@@ -1105,6 +1107,7 @@ export const ProgramDetailsView = (props: {
             )}
           </Col>
         </Row>
+
         <TabsMean
           tabs={tabs}
           defaultTab="transactions"

@@ -323,18 +323,6 @@ export const MoneyStreamDetails = (props: {
     )
   }
 
-  const renderSendingTo = () => {
-    if (!stream) { return null; }
-
-    return (
-      <AddressDisplay
-        address={stream.beneficiary as string}
-        iconStyles={{ width: "15", height: "15" }}
-        newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
-      />
-    )
-  }
-
   const renderPaymentRate = () => {
     if (!stream) { return null; }
 
@@ -404,6 +392,34 @@ export const MoneyStreamDetails = (props: {
           : '--'
         }
       </>
+    )
+  }
+
+  const renderStreamId = () => {
+    if (!stream) { return null; }
+
+    return (
+      <>
+        <AddressDisplay
+          address={stream.id as string}
+          maxChars={8}
+          iconStyles={{ width: "15", height: "15", verticalAlign: 'text-top' }}
+          newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.id}${getSolanaExplorerClusterParam()}`}
+        />
+      </>
+    )
+  }
+
+  const renderSendingTo = () => {
+    if (!stream) { return null; }
+
+    return (
+      <AddressDisplay
+        address={stream.beneficiary as string}
+        maxChars={8}
+        iconStyles={{ width: "15", height: "15", verticalAlign: 'text-top' }}
+        newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
+      />
     )
   }
 
@@ -503,6 +519,10 @@ export const MoneyStreamDetails = (props: {
     {
       label: stream && stream.status === STREAM_STATUS.Paused && "Funds ran out on:",
       value: stream && stream.status === STREAM_STATUS.Paused && getRelativeDate(stream.estimatedDepletionDate as string)
+    },
+    {
+      label: "Stream id:",
+      value: renderStreamId()
     },
   ];
 

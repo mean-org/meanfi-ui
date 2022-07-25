@@ -29,7 +29,7 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { cutNumber, formatAmount, formatThousands, getCreateAtaInstructionIfNotExists, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
+import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
@@ -143,8 +143,8 @@ export const MoneyStreamsInfoView = (props: {
   const [rateOutgoingPerDay, setRateOutgoingPerDay] = useState(0);
   const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
-  const [incomingAmount, setIncomingAmount] = useState(0);
-  const [outgoingAmount, setOutgoingAmount] = useState(0);
+  const [incomingAmount, setIncomingAmount] = useState<number>();
+  const [outgoingAmount, setOutgoingAmount] = useState<number>();
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -1197,12 +1197,12 @@ export const MoneyStreamsInfoView = (props: {
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       // Add a pre-instruction to create the treasurer ATA if it doesn't exist
-      const createTreasurerAtaIx = await getCreateAtaInstructionIfNotExists(
-        connection,
-        multisig.authority,
-        treasuryAssociatedTokenMint,
-        publicKey);
-      const preInstructions = createTreasurerAtaIx ? [createTreasurerAtaIx] : undefined;
+      // const createTreasurerAtaIx = await getCreateAtaInstructionIfNotExists(
+      //   connection,
+      //   multisig.authority,
+      //   treasuryAssociatedTokenMint,
+      //   publicKey);
+      // const preInstructions = createTreasurerAtaIx ? [createTreasurerAtaIx] : undefined;
 
       const tx = await multisigClient.createTransaction(
         publicKey,
@@ -1214,7 +1214,7 @@ export const MoneyStreamsInfoView = (props: {
         MSPV2Constants.MSP,
         ixAccounts,
         ixData,
-        preInstructions
+        // preInstructions
       );
 
       return tx;
@@ -1975,7 +1975,7 @@ export const MoneyStreamsInfoView = (props: {
   ]);
 
   // Protocol
-  const listOfBadges = ["MSP", "DEFI", "Money Streams"];
+  const listOfBadges = ["MSP", "DEFI", "Payment Streams"];
 
   const renderProtocol = (
     <>
@@ -2143,7 +2143,7 @@ export const MoneyStreamsInfoView = (props: {
 
   const renderSummary = (
     <>
-      <Row gutter={[8, 8]}>
+      <Row gutter={[8, 8]} className="ml-0 mr-0">
         <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
         {/* Background animation */}
         {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
@@ -2174,7 +2174,7 @@ export const MoneyStreamsInfoView = (props: {
               <span>
                 {loadingCombinedStreamingList || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-                ) : formatThousands(incomingAmount)}
+                ) : formatThousands(incomingAmount as number)}
               </span>
             </div>
           </div>
@@ -2191,25 +2191,27 @@ export const MoneyStreamsInfoView = (props: {
               }
             </div>
           </div>
-          <div className="wave-container wave-green" id="wave">
-            {/* <div className="wave wave-green"></div> */}
-            <Wave fill="url(#gradient1)"
-              paused={isPaused}
-              className="svg-container"
-              style={{ height: `${withdrawalScale}vh`, position: "absolute", bottom: 0 }}
-              options={{
-                amplitude: 6,
-                speed: 0.25,
-                points: 6
-              }}>
-              <defs>
-                <linearGradient id="gradient1" gradientTransform="rotate(180)">
-                  <stop offset="10%"  stopColor="#006820" />
-                  <stop offset="100%" stopColor="#181a2a" />
-                </linearGradient>
-              </defs>
-            </Wave>
-          </div>
+          {(!loadingCombinedStreamingList && !loadingStreams) && (
+            <div className="wave-container wave-green" id="wave">
+              {/* <div className="wave wave-green"></div> */}
+              <Wave fill="url(#gradient1)"
+                paused={isPaused}
+                className="svg-container"
+                style={{ height: `${withdrawalScale}vh`, position: "absolute", bottom: 0 }}
+                options={{
+                  amplitude: 6,
+                  speed: 0.25,
+                  points: 6
+                }}>
+                <defs>
+                  <linearGradient id="gradient1" gradientTransform="rotate(180)">
+                    <stop offset="10%"  stopColor="#006820" />
+                    <stop offset="100%" stopColor="#181a2a" />
+                  </linearGradient>
+                </defs>
+              </Wave>
+            </div>
+          )}
         </Col>
         <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
           {/* Background animation */}
@@ -2241,7 +2243,7 @@ export const MoneyStreamsInfoView = (props: {
               <span>
                 {loadingCombinedStreamingList || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-                ) : formatThousands(outgoingAmount)}
+                ) : formatThousands(outgoingAmount as number)}
               </span>
             </div>
           </div>
@@ -2258,25 +2260,27 @@ export const MoneyStreamsInfoView = (props: {
               }
             </div>
           </div>
-          <div className="wave-container wave-red" id="wave">
-            {/* <div className="wave wave-red"></div> */}
-            <Wave fill="url(#gradient2)"
-              paused={isPaused}
-              className="svg-container"
-              style={{ height: `${unallocatedScale}vh`, position: "absolute", bottom: 0 }}
-              options={{
-                amplitude: 6,
-                speed: 0.25,
-                points: 6
-              }}>
-              <defs>
-                <linearGradient id="gradient2" gradientTransform="rotate(180)">
-                  <stop offset="10%"  stopColor="#b7001c" />
-                  <stop offset="100%" stopColor="#181a2a" />
-                </linearGradient>
-              </defs>
-            </Wave>
-          </div>
+          {(!loadingCombinedStreamingList && !loadingStreams) && (
+            <div className="wave-container wave-red" id="wave">
+              {/* <div className="wave wave-red"></div> */}
+              <Wave fill="url(#gradient2)"
+                paused={isPaused}
+                className="svg-container"
+                style={{ height: `${unallocatedScale}vh`, position: "absolute", bottom: 0 }}
+                options={{
+                  amplitude: 6,
+                  speed: 0.25,
+                  points: 6
+                }}>
+                <defs>
+                  <linearGradient id="gradient2" gradientTransform="rotate(180)">
+                    <stop offset="10%"  stopColor="#b7001c" />
+                    <stop offset="100%" stopColor="#181a2a" />
+                  </linearGradient>
+                </defs>
+              </Wave>
+            </div>
+          )}
         </Col>
       </Row>
 
@@ -2628,12 +2632,16 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       id: "incoming",
-      name: `Incoming ${(incomingAmount && incomingAmount > 0) ? `(${incomingAmount})` : "(0)"}`,
+      name: `Incoming ${(!loadingCombinedStreamingList && !loadingStreams) 
+        ? `(${incomingAmount && incomingAmount >= 0 && incomingAmount})` 
+        : ""}`,
       render: renderListOfIncomingStreams
     },
     {
       id: "outgoing",
-      name: `Outgoing ${(outgoingAmount && outgoingAmount > 0) ? `(${outgoingAmount})` : "(0)"}`,
+      name: `Outgoing ${(!loadingCombinedStreamingList && !loadingStreams)
+        ? `(${outgoingAmount && outgoingAmount >= 0 && outgoingAmount})` 
+        : ""}`,
       render: renderListOfOutgoingStreams
     },
   ];
@@ -2678,7 +2686,7 @@ export const MoneyStreamsInfoView = (props: {
           infoData={infoData}
         />
 
-        <Row gutter={[8, 8]} className="safe-btns-container d-flex align-items-center mb-1">
+        <Row gutter={[8, 8]} className="safe-btns-container d-flex align-items-center mb-1 ml-0 mr-0">
           <Col xs={isXsDevice ? 20 : 24} sm={isXsDevice ? 18 : 24} md={isXsDevice ? 20 : 24} lg={isXsDevice ? 18 : 24} className="btn-group">
             <Button
               type="default"
