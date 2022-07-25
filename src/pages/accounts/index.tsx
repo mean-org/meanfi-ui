@@ -59,7 +59,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, delay, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -91,13 +91,12 @@ import { MoneyStreamsOutgoingView } from '../../views/MoneyStreamsOutgoing';
 import { StreamingAccountView } from '../../views/StreamingAccount';
 import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
-import notification, { IconType } from 'antd/lib/notification';
+import notification from 'antd/lib/notification';
 import { SolBalanceModal } from '../../components/SolBalanceModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
 export type CategoryOption = "networth" | "assets" | "streaming" | "other-assets";
-export type OtherAssetsOption = "msp-streams" | "msp-treasuries" | "orca" | "solend" | "friktion" | undefined;
 export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
 let isWorkflowLocked = false;
 
@@ -171,7 +170,6 @@ export const AccountsNewView = () => {
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
-    confirmationHistory,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
@@ -192,8 +190,6 @@ export const AccountsNewView = () => {
   const [wSolBalance, setWsolBalance] = useState(0);
   const [refreshingBalance, setRefreshingBalance] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("assets");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
   const [inspectedAccountType, setInspectedAccountType] = useState<InspectedAccountType>(undefined);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [pathParamAsset, setPathParamAsset] = useState('');
@@ -201,7 +197,6 @@ export const AccountsNewView = () => {
   const [pathParamTreasuryId, setPathParamTreasuryId] = useState('');
   const [pathParamStreamingTab, setPathParamStreamingTab] = useState('');
   const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
-
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
@@ -209,17 +204,6 @@ export const AccountsNewView = () => {
   const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
-
-  // QR scan modal
-  // const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
-  // const showQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(true), []);
-  // const closeQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(false), []);
-  // const onAcceptQrScannerModal = (value: string) => {
-  //   setAccountAddressInput(value);
-  //   triggerWindowResize();
-  //   closeQrScannerModal();
-  // };
-
   const [nativeBalance, setNativeBalance] = useState(0);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [transactionAssetFees, setTransactionAssetFees] = useState<TransactionFees>(NO_FEES);
@@ -234,7 +218,6 @@ export const AccountsNewView = () => {
 
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [autocloseTreasuries, setAutocloseTreasuries] = useState<(Treasury | TreasuryInfo)[]>([]);
-  // const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
 
@@ -274,10 +257,7 @@ export const AccountsNewView = () => {
     if (!publicKey) { return; }
 
     consoleOut('pathname:', location.pathname, 'crimson');
-    if (location.pathname.endsWith('/streams')) {
-      return;
-      // Ensure path: /accounts/:address/assets if nothing provided
-    } else if (!address && publicKey) {
+    if (!address && publicKey) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${publicKey.toBase58()}/assets`;
       consoleOut('No account address, redirecting to:', url, 'orange');
       setAutoOpenDetailsPanel(false);
@@ -504,11 +484,6 @@ export const AccountsNewView = () => {
   const hideCloseAssetModal = useCallback(() => setIsCloseAssetModalOpen(false), []);
   const showCloseAssetModal = useCallback(() => setIsCloseAssetModalOpen(true), []);
 
-  // Exchange selected token
-  // const [isExchangeAssetModalOpen, setIsExchangeAssetModalOpen] = useState(false);
-  // const hideExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(false), []);
-  // const showExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(true), []);
-
   const onAfterWrap = () => {
     hideWrapSolModal();
   }
@@ -540,43 +515,6 @@ export const AccountsNewView = () => {
   const isSelectedAssetWsol = useCallback(() => {
     return selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS ? true : false;
   }, [selectedAsset]);
-
-  const hasMultisigProposalFinishedConfirmation = useCallback(() => {
-    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
-
-    const isTheReference = (item: TxConfirmationInfo) => {
-      return item && item.extras && item.extras.multisigAuthority && item.extras.multisigAuthority === selectedMultisigRef.current?.authority.toBase58()
-        ? true
-        : false;
-    }
-
-    const txItem = confirmationHistory.find(h => h.txInfoFetchStatus !== "fetching" && isTheReference(h));
-    if (txItem) {
-      return true;
-    }
-
-    return false;
-  }, [confirmationHistory]);
-
-  // const userHasAccess = useCallback (() => {
-  //   if (!publicKey || !accountAddress) { return false; }
-  //   const isUserWallet = isInspectedAccountTheConnectedWallet();
-  //   if (isUserWallet) { return true; }
-  //   // TODO: We should validate here if the user is part of the multisig
-  //   const param = getQueryAccountType();
-  //   if (param && param === "multisig") {
-  //     return true;
-  //   }
-  //   return false;
-  // }, [accountAddress, getQueryAccountType, isInspectedAccountTheConnectedWallet, publicKey]);
-
-  // const isAssetPurchasable = useCallback(() => {
-  //   if (!selectedAsset) { return false; }
-
-  //   const purchasableItems = ['SOL', 'USDT', 'USDC'];
-  //   return purchasableItems.includes(selectedAsset.symbol);
-
-  // }, [selectedAsset]);
 
   const goToExchangeWithPresetAsset = useCallback(() => {
     const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
@@ -716,21 +654,7 @@ export const AccountsNewView = () => {
     return transactions && transactions.length > 0 ? true : false;
   }, [transactions]);
 
-  // const getNativeAccountAsset = useCallback(() => {
-  //   if (!accountAddress || !accountTokens) { return undefined; }
-  //   return accountTokens.find(a => a.publicAddress === accountAddress);
-  // }, [accountAddress, accountTokens]);
-
   const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
-    /**
-     * If asset.ataAddress
-     *    If asset.ataAddress equals the SOL mint address
-     *      Use accountAddress
-     *    Else
-     *      Use asset.ataAddress 
-     * Else
-     *    Reflect no transactions
-     */
     return asset?.publicAddress
             ? asset.publicAddress !== NATIVE_SOL_MINT.toBase58()
               ? new PublicKey(asset.publicAddress)
@@ -834,12 +758,6 @@ export const AccountsNewView = () => {
     refreshAssetBalance,
   ]);
 
-  const reloadTokensAndActivity = useCallback(() => {
-    consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
-    setShouldLoadTokens(true);
-    reloadSwitch();
-  }, [reloadSwitch, setShouldLoadTokens]);
-
   const navigateToAsset = useCallback((asset: UserTokenAccount) => {
     const isMyWallet = isInspectedAccountTheConnectedWallet();
     const isAccountNative = isSelectedAssetNativeAccount(asset);
@@ -858,6 +776,21 @@ export const AccountsNewView = () => {
     consoleOut('Asset selected, redirecting to:', url, 'orange');
     navigate(url);
   }, [accountAddress, getQueryAccountType, isInspectedAccountTheConnectedWallet, isSelectedAssetNativeAccount, navigate])
+
+  const reloadTokensAndActivity = useCallback(() => {
+    consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
+    setShouldLoadTokens(true);
+    reloadSwitch();
+  }, [reloadSwitch, setShouldLoadTokens]);
+
+  const hardReloadTokensAndActivity = useCallback(() => {
+    consoleOut('Calling hardReloadTokensAndActivity...', '', 'orangered');
+    setShouldLoadTokens(true);
+    setLoadingTokenAccounts(false);
+    setDetailsPanelOpen(false);
+    setSelectedAsset(accountTokens[0]);
+    navigateToAsset(accountTokens[0]);
+  }, [accountTokens, navigateToAsset, setSelectedAsset, setShouldLoadTokens]);
 
   const navigateToStreaming = useCallback(() => {
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/summary`;
@@ -1002,6 +935,13 @@ export const AccountsNewView = () => {
       }
     };
 
+    const hardReloadAssets = () => {
+      const tokensRefreshCta = document.getElementById("account-assets-hard-refresh-cta");
+      if (tokensRefreshCta) {
+        tokensRefreshCta.click();
+      }
+    };
+
     const softReloadStreams = () => {
       const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
       if (streamsRefreshCta) {
@@ -1076,7 +1016,7 @@ export const AccountsNewView = () => {
         case OperationType.CloseTokenAccount:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
-          softReloadAssets();
+          hardReloadAssets();
           break;
         case OperationType.DeleteAsset:
         case OperationType.SetAssetAuthority:
@@ -3705,7 +3645,6 @@ export const AccountsNewView = () => {
 
                 // Update the state
                 setAccountTokens(finalList);
-                setTokensLoaded(true);
 
               } else {
                 pinnedTokens.forEach((item, index) => {
@@ -3713,20 +3652,23 @@ export const AccountsNewView = () => {
                 });
                 setAccountTokens(pinnedTokens);
                 selectAsset(pinnedTokens[0]);
-                setTokensLoaded(true);
                 consoleOut('No tokens found in account!', '', 'red');
-
               }
             })
             .catch(error => {
               console.error(error);
               setAccountTokens(pinnedTokens);
-              setTokensLoaded(true);
               selectAsset(pinnedTokens[0], true);
+            })
+            .finally(() => {
+              setTokensLoaded(true);
             });
         })
         .catch(error => {
           console.error(error);
+        })
+        .finally(() => {
+          setTokensLoaded(true);
         });
     });
 
@@ -5325,6 +5267,7 @@ export const AccountsNewView = () => {
                         </Tooltip>
                       </span>
                       <div id="account-assets-refresh-cta" onClick={reloadTokensAndActivity}></div>
+                      <div id="account-assets-hard-refresh-cta" onClick={hardReloadTokensAndActivity}></div>
                     </div>
                   </div>
                   <div className="inner-container">

@@ -2693,6 +2693,7 @@ export const SafeView = () => {
           return true;
         })
         .catch((error: any) => {
+          consoleOut('operation:', OperationType[data.transaction.operation], 'orange');
           const txStatus = {
             customError: undefined,
             lastOperation: TransactionStatus.SendTransaction,
