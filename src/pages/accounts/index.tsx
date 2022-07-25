@@ -59,7 +59,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -743,7 +743,6 @@ export const AccountsNewView = () => {
 
   const startSwitch = useCallback(() => {
     setStatus(FetchStatus.Fetching);
-    setLoadingTransactions(false);
     setShouldLoadTransactions(true);
   }, [])
 
@@ -780,6 +779,8 @@ export const AccountsNewView = () => {
   const reloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
     setShouldLoadTokens(true);
+    setLoadingTokenAccounts(false);
+    setDetailsPanelOpen(false);
     reloadSwitch();
   }, [reloadSwitch, setShouldLoadTokens]);
 
@@ -1010,6 +1011,7 @@ export const AccountsNewView = () => {
         case OperationType.Transfer:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
+          setIsUnwrapping(false);
           softReloadAssets();
           break;
         case OperationType.CreateAsset:
@@ -3627,6 +3629,14 @@ export const AccountsNewView = () => {
                 // Finally add all owned token accounts as custom tokens
                 const finalList = intersectedList.concat(custom);
 
+                // Find Wrapped sol token account and update state with its balance
+                const wSol = finalList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
+                if (wSol) {
+                  setWsolBalance(wSol.balance || 0);
+                } else {
+                  setWsolBalance(0);
+                }
+
                 // Report in the console for debugging
                 // if (isLocal()) {
                 //   const tokenTable: any[] = [];
@@ -3650,6 +3660,7 @@ export const AccountsNewView = () => {
                 pinnedTokens.forEach((item, index) => {
                   item.valueInUsd = 0;
                 });
+                setWsolBalance(0);
                 setAccountTokens(pinnedTokens);
                 selectAsset(pinnedTokens[0]);
                 consoleOut('No tokens found in account!', '', 'red');
@@ -3657,6 +3668,7 @@ export const AccountsNewView = () => {
             })
             .catch(error => {
               console.error(error);
+              setWsolBalance(0);
               setAccountTokens(pinnedTokens);
               selectAsset(pinnedTokens[0], true);
             })
@@ -3711,7 +3723,7 @@ export const AccountsNewView = () => {
 
       // Get the address to scan and ensure there is one
       const pk = getScanAddress(selectedAsset as UserTokenAccount);
-      consoleOut('pk:', pk ? pk.toBase58() : 'NONE', 'blue');
+      consoleOut('Load transactions for pk:', pk ? pk.toBase58() : 'NONE', 'blue');
       if (!pk) {
         consoleOut('Asset has no public address, aborting...', '', 'goldenrod');
         setTransactions(undefined);
@@ -3744,14 +3756,6 @@ export const AccountsNewView = () => {
           const validItems = getSolAccountItems(history.transactionMap);
           const nativeAccountTxItems = solAccountItems + validItems;
           setSolAccountItems(nativeAccountTxItems);
-          // If the valid items are less than 10, get more (only once after the first fetch)
-          // Only for the native account where some Txs might have no balance changes
-          // if (!history.before && nativeAccountTxItems < 10) {
-          //   setTimeout(() => {
-          //     consoleOut('Few items, loading more...', '', 'green');
-          //     startSwitch();
-          //   }, 100);
-          // }
         }
 
       })
@@ -3779,16 +3783,6 @@ export const AccountsNewView = () => {
     getScanAddress,
     startSwitch
   ]);
-
-  // Keep track of wSOL balance
-  useEffect(() => {
-    if (tokensLoaded && accountTokens && accountTokens.length > 0) {
-      const wSol = accountTokens.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
-      if (wSol) {
-        setWsolBalance(wSol.balance || 0);
-      }
-    }
-  }, [accountTokens, tokensLoaded]);
 
   // Hook on the wallet connect/disconnect
   useEffect(() => {
@@ -4137,6 +4131,7 @@ export const AccountsNewView = () => {
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
+    setIsUnwrapping(true);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
@@ -4342,7 +4337,6 @@ export const AccountsNewView = () => {
     };
 
     if (wallet) {
-      setIsUnwrapping(true);
       const create = await createTx();
       consoleOut('created:', create);
       if (create) {
@@ -4632,43 +4626,45 @@ export const AccountsNewView = () => {
     shouldHideAsset,
   ]);
 
-  const renderAssetsList = (
-    <>
-      {accountTokens && accountTokens.length > 0 ? (
-        <>
-          {isInspectedAccountTheConnectedWallet() && wSolBalance > 0 && (
-              <div className="utility-box">
-                  <div className="well mb-1">
-                      <div className="flex-fixed-right align-items-center">
-                          <div className="left">You have {formatThousands(wSolBalance, NATIVE_SOL.decimals, NATIVE_SOL.decimals)} <strong>wrapped SOL</strong> in your wallet. Click to unwrap to native SOL.</div>
-                          <div className="right">
-                              <Button
-                                  type="primary"
-                                  shape="round"
-                                  disabled={isUnwrapping}
-                                  onClick={onStartUnwrapTx}
-                                  size="small">
-                                  {isUnwrapping ? 'Unwrapping SOL' : 'Unwrap SOL'}
-                              </Button>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          )}
-          {/* Render user token accounts */}
-          {accountTokens.map(asset => renderAsset(asset))}
-        </>
-      ) : tokensLoaded ? (
-        <div className="flex flex-center">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-        </div>
-      ) : (
-        <div className="flex flex-center">
-          <Spin indicator={antIcon} />
-        </div>
-      )}
-    </>
-  );
+  const renderAssetsList = () => {
+    return (
+      <>
+        {accountTokens && accountTokens.length > 0 ? (
+          <>
+            {isInspectedAccountTheConnectedWallet() && wSolBalance > 0 && (
+                <div className="utility-box">
+                    <div className="well mb-1">
+                        <div className="flex-fixed-right align-items-center">
+                            <div className="left">You have {formatThousands(wSolBalance, NATIVE_SOL.decimals, NATIVE_SOL.decimals)} <strong>wrapped SOL</strong> in your wallet. Click to unwrap to native SOL.</div>
+                            <div className="right">
+                                <Button
+                                    type="primary"
+                                    shape="round"
+                                    disabled={isUnwrapping}
+                                    onClick={onStartUnwrapTx}
+                                    size="small">
+                                    {isUnwrapping ? 'Unwrapping SOL' : 'Unwrap SOL'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Render user token accounts */}
+            {accountTokens.map(asset => renderAsset(asset))}
+          </>
+        ) : tokensLoaded ? (
+          <div className="flex flex-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          </div>
+        ) : (
+          <div className="flex flex-center">
+            <Spin indicator={antIcon} />
+          </div>
+        )}
+      </>
+    );
+  }
 
   const renderActivityList = () => {
     const hasItems = hasItemsToRender();
@@ -5165,16 +5161,16 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">streamList:</span><span className="ml-1 font-bold fg-dark-active">{streamList ? `[${streamList.length}]` : '-'}</span>
+          {/* <span className="ml-1">streamList:</span><span className="ml-1 font-bold fg-dark-active">{streamList ? `[${streamList.length}]` : '-'}</span>
           <span className="ml-1">streamListv1:</span><span className="ml-1 font-bold fg-dark-active">{streamListv1 ? `[${streamListv1.length}]` : '-'}</span>
           <span className="ml-1">streamListv2:</span><span className="ml-1 font-bold fg-dark-active">{streamListv2 ? `[${streamListv2.length}]` : '-'}</span>
           <span className="ml-1">treasuryList:</span><span className="ml-1 font-bold fg-dark-active">{treasuryList ? `[${treasuryList.length}]` : '-'}</span>
-          <span className="ml-1">accountBalance:</span><span className="ml-1 font-bold fg-dark-active">{totalAccountBalance || 0}</span>
-          <span className="ml-1">tokenAccountsValue:</span><span className="ml-1 font-bold fg-dark-active">{totalTokenAccountsValue || 0}</span>
+          <span className="ml-1">accountBalance:</span><span className="ml-1 font-bold fg-dark-active">{totalAccountBalance || 0}</span> */}
+          <span className="ml-1">wSolBalance:</span><span className="ml-1 font-bold fg-dark-active">{wSolBalance}</span>
         </div>
-      )} */}
+      )}
 
       {detailsPanelOpen && (
         <Button
@@ -5301,7 +5297,7 @@ export const AccountsNewView = () => {
                         <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
                       </div>
                       <div className="asset-category flex-column">
-                        {renderAssetsList}
+                        {renderAssetsList()}
                       </div>
 
                     </div>

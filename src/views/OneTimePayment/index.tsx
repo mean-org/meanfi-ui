@@ -7,7 +7,7 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount } from "../../utils/utils";
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import {
@@ -1217,7 +1217,7 @@ export const OneTimePayment = (props: {
                     <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                       mintAddress={selectedToken.address}
                       showCaretDown={true}
-                      showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                      showName={selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? true : false}
                       fullTokenInfo={selectedToken}
                     />
                   </>
