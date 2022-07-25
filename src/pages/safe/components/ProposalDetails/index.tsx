@@ -515,12 +515,13 @@ export const ProposalDetailsView = (props: {
   return (
     <>
       <div className="safe-details-container">
-        <Row gutter={[8, 8]} className="safe-details-resume">
+        <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
           <div onClick={hideProposalDetailsHandler} className="back-button icon-button-container">
             <IconArrowBack className="mean-svg-icons" />
             <span className="ml-1">Back</span>
           </div>
         </Row>
+
         <ResumeItem
           id={selectedProposal.id}
           // src={selectedProposal.src}

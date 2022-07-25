@@ -2143,7 +2143,7 @@ export const MoneyStreamsInfoView = (props: {
 
   const renderSummary = (
     <>
-      <Row gutter={[8, 8]}>
+      <Row gutter={[8, 8]} className="ml-0 mr-0">
         <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
         {/* Background animation */}
         {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
@@ -2686,7 +2686,7 @@ export const MoneyStreamsInfoView = (props: {
           infoData={infoData}
         />
 
-        <Row gutter={[8, 8]} className="safe-btns-container d-flex align-items-center mb-1">
+        <Row gutter={[8, 8]} className="safe-btns-container d-flex align-items-center mb-1 ml-0 mr-0">
           <Col xs={isXsDevice ? 20 : 24} sm={isXsDevice ? 18 : 24} md={isXsDevice ? 20 : 24} lg={isXsDevice ? 18 : 24} className="btn-group">
             <Button
               type="default"

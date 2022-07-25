@@ -582,7 +582,7 @@ export const MoneyStreamDetails = (props: {
   const renderDetails = (
     <>
       {detailsData.map((detail: any, index: number) => (
-        <Row gutter={[8, 8]} key={index} className="pl-1 details-item">
+        <Row gutter={[8, 8]} key={index} className="pl-1 details-item mr-0 ml-0">
           <Col span={8} className="pr-1">
             <span className="info-label">{detail.label}</span>
           </Col>
@@ -665,7 +665,7 @@ export const MoneyStreamDetails = (props: {
         }
         
         {!isXsDevice && (
-          <Row gutter={[8, 8]} className="safe-details-resume">
+          <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
             <div onClick={hideDetailsHandler} className="back-button icon-button-container">
               <IconArrowBack className="mean-svg-icons" />
               <span className="ml-1">Back</span>
