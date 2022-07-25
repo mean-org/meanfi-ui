@@ -95,59 +95,38 @@ export const ProposalDetailsView = (props: {
 
   // Determine if the ExecuteTransaction operation is in progress by searching
   // into the confirmation history
-  const isExecutionPendingConfirmation = useCallback(() => {
-    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
-
-    return confirmationHistory.some(h => h.operationType === OperationType.ExecuteTransaction && h.txInfoFetchStatus === "fetching");
-
+  const isExecuteTxPendingConfirmation = useCallback(() => {
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.operationType === OperationType.ExecuteTransaction && h.txInfoFetchStatus === "fetching");
+    }
+    return false;
   }, [confirmationHistory]);
 
   // Determine if the ApproveTransaction operation is in progress by searching
   // into the confirmation history
-  const isApprovePendingConfirmation = useCallback(() => {
-    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
-
-    return confirmationHistory.some(h => h.operationType === OperationType.ApproveTransaction && h.txInfoFetchStatus === "fetching");
-
-  }, [confirmationHistory]);
-
-  const isApproveFinishedConfirmation = useCallback(() => {
-    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
-
-    return confirmationHistory.some(h => h.operationType === OperationType.ApproveTransaction && h.txInfoFetchStatus === "fetched");
-
+  const isApproveTxPendingConfirmation = useCallback(() => {
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.operationType === OperationType.ApproveTransaction && h.txInfoFetchStatus === "fetching");
+    }
+    return false;
   }, [confirmationHistory]);
 
   // Determine if the RejectTransaction operation is in progress by searching
   // into the confirmation history
-  const isRejectPendingConfirmation = useCallback(() => {
-    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
-
-    return confirmationHistory.some(h => h.operationType === OperationType.RejectTransaction && h.txInfoFetchStatus === "fetching");
-
-  }, [confirmationHistory]);
-
-  const isRejectFinishedConfirmation = useCallback(() => {
-    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
-
-    return confirmationHistory.some(h => h.operationType === OperationType.RejectTransaction && h.txInfoFetchStatus === "fetched");
-
+  const isRejectTxPendingConfirmation = useCallback(() => {
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.operationType === OperationType.RejectTransaction && h.txInfoFetchStatus === "fetching");
+    }
+    return false;
   }, [confirmationHistory]);
 
   // Determine if the CancelTransaction operation is in progress by searching
   // into the confirmation history
-  const isCancelPendingConfirmation = useCallback(() => {
-    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
-
-    return confirmationHistory.some(h => h.operationType === OperationType.CancelTransaction && h.txInfoFetchStatus === "fetching");
-
-  }, [confirmationHistory]);
-
-  const isCancelFinishedConfirmation = useCallback(() => {
-    if (!confirmationHistory || confirmationHistory.length === 0) { return false; }
-
-    return confirmationHistory.some(h => h.operationType === OperationType.CancelTransaction && h.txInfoFetchStatus === "fetched");
-
+  const isCancelTxPendingConfirmation = useCallback(() => {
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.operationType === OperationType.CancelTransaction && h.txInfoFetchStatus === "fetching");
+    }
+    return false;
   }, [confirmationHistory]);
 
   useEffect(() => {
@@ -536,12 +515,13 @@ export const ProposalDetailsView = (props: {
   return (
     <>
       <div className="safe-details-container">
-        <Row gutter={[8, 8]} className="safe-details-resume">
+        <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
           <div onClick={hideProposalDetailsHandler} className="back-button icon-button-container">
             <IconArrowBack className="mean-svg-icons" />
             <span className="ml-1">Back</span>
           </div>
         </Row>
+
         <ResumeItem
           id={selectedProposal.id}
           // src={selectedProposal.src}
@@ -623,8 +603,8 @@ export const ProposalDetailsView = (props: {
                   disabled={
                     hasMultisigPendingProposal ||
                     isBusy ||
-                    isCancelPendingConfirmation() ||
-                    isCancelFinishedConfirmation() ||
+                    isCancelTxPendingConfirmation() ||
+                    isExecuteTxPendingConfirmation() ||
                     loadingData
                   }
                   // disabled={hasMultisigPendingProposal}
@@ -647,10 +627,9 @@ export const ProposalDetailsView = (props: {
                       selectedProposal.didSigned === true ||
                       hasMultisigPendingProposal || 
                       isBusy ||
-                      isApprovePendingConfirmation() ||
-                      isRejectPendingConfirmation() ||
-                      isCancelPendingConfirmation() ||
-                      isApproveFinishedConfirmation() ||
+                      isApproveTxPendingConfirmation() ||
+                      isRejectTxPendingConfirmation() ||
+                      isExecuteTxPendingConfirmation() ||
                       loadingData
                     }
                     // disabled={selectedProposal.didSigned === true || hasMultisigPendingProposal}
@@ -682,10 +661,9 @@ export const ProposalDetailsView = (props: {
                       selectedProposal.didSigned === false ||
                       hasMultisigPendingProposal ||
                       isBusy ||
-                      isApprovePendingConfirmation() ||
-                      isRejectPendingConfirmation() ||
-                      isCancelPendingConfirmation() ||
-                      isRejectFinishedConfirmation() ||
+                      isApproveTxPendingConfirmation() ||
+                      isRejectTxPendingConfirmation() ||
+                      isCancelTxPendingConfirmation() ||
                       loadingData
                     }
                     // disabled={selectedProposal.didSigned === false || hasMultisigPendingProposal}
@@ -718,7 +696,7 @@ export const ProposalDetailsView = (props: {
                         disabled={
                           hasMultisigPendingProposal ||
                           isBusy ||
-                          isExecutionPendingConfirmation() ||
+                          isExecuteTxPendingConfirmation() ||
                           loadingData
                         }
                         // disabled={hasMultisigPendingProposal}
@@ -744,7 +722,7 @@ export const ProposalDetailsView = (props: {
                       hasMultisigPendingProposal || 
                       (!isProposer && !anyoneCanExecuteTx()) ||
                       isBusy ||
-                      isExecutionPendingConfirmation() ||
+                      isExecuteTxPendingConfirmation() ||
                       loadingData
                     }
                     onClick={() => {
@@ -766,10 +744,10 @@ export const ProposalDetailsView = (props: {
                         disabled={
                           hasMultisigPendingProposal ||
                           isBusy ||
-                          isApprovePendingConfirmation() ||
-                          isRejectPendingConfirmation() ||
-                          isCancelPendingConfirmation() ||
-                          isCancelFinishedConfirmation() ||
+                          isExecuteTxPendingConfirmation() ||
+                          isApproveTxPendingConfirmation() ||
+                          isRejectTxPendingConfirmation() ||
+                          isCancelTxPendingConfirmation() ||
                           loadingData
                         }
                         onClick={() => setIsCancelRejectModalVisible(true)}>

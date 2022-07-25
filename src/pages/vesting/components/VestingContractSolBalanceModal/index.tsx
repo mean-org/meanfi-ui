@@ -1,8 +1,7 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Modal } from "antd";
 import { useTranslation } from "react-i18next";
 import { QRCodeSVG } from 'qrcode.react';
-import { AppStateContext } from '../../../../contexts/appstate';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
@@ -15,7 +14,6 @@ export const VestingContractSolBalanceModal = (props: {
   treasuryBalance: number;
 }) => {
   const { t } = useTranslation("common");
-  const { theme } = useContext(AppStateContext);
   const { address, handleClose, isVisible, treasuryBalance } = props;
 
   return (
@@ -46,7 +44,7 @@ export const VestingContractSolBalanceModal = (props: {
 
           {address && (
             <>
-              <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+              <div className="qr-container bg-white">
                 <QRCodeSVG
                   value={address}
                   size={200}

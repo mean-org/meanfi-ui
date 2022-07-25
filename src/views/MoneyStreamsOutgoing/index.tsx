@@ -2570,7 +2570,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
   // Buttons
   const buttons = (
-    <Row gutter={[8, 8]} className="safe-btns-container mb-1">
+    <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
       <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
         <Button
           type="default"
@@ -2671,7 +2671,6 @@ export const MoneyStreamsOutgoingView = (props: {
       {isPauseStreamModalVisible && (
         <StreamPauseModal
           isVisible={isPauseStreamModalVisible}
-          selectedToken={selectedToken}
           transactionFees={transactionFees}
           tokenBalance={tokenBalance}
           streamDetail={streamSelected}
@@ -2684,7 +2683,6 @@ export const MoneyStreamsOutgoingView = (props: {
       {isResumeStreamModalVisible && (
         <StreamResumeModal
           isVisible={isResumeStreamModalVisible}
-          selectedToken={selectedToken}
           transactionFees={transactionFees}
           tokenBalance={tokenBalance}
           streamDetail={streamSelected}
@@ -2697,7 +2695,6 @@ export const MoneyStreamsOutgoingView = (props: {
       {isCloseStreamModalVisible && (
         <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
-          selectedToken={selectedToken}
           transactionFees={transactionFees}
           streamDetail={streamSelected}
           mspClient={

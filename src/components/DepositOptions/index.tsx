@@ -279,7 +279,7 @@ export const DepositOptions = (props: {
         <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>
           <div className="text-center">
             <h3 className="font-bold mb-3">{t('deposits.send-from-wallet-cta-label')}</h3>
-            <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+            <div className="qr-container bg-white">
               {publicKey && (
                 <QRCodeSVG
                   value={publicKey.toBase58()}

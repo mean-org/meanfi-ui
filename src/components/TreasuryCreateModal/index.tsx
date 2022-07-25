@@ -490,7 +490,7 @@ export const TreasuryCreateModal = (props: {
     <>
       <Modal
         className="mean-modal simple-modal"
-        title={<div className="modal-title">{param === "multisig" ? "Propose create streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
+        title={<div className="modal-title">{param === "multisig" ? "Propose streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
         maskClosable={false}
         footer={null}
         visible={isVisible}
@@ -542,7 +542,7 @@ export const TreasuryCreateModal = (props: {
               </div>
 
               <div className="form-label">{t('treasuries.create-treasury.treasury-token-label')}</div>
-              <div className={`well ${isBusy ? 'disabled' : ''}`}>
+              <div className={`well ${isBusy ? 'disabled' : ''} pt-2 pb-2`}>
                 <div className="flex-fixed-left">
                   <div className="left">
                     <span className="add-on simplelink">
@@ -551,14 +551,14 @@ export const TreasuryCreateModal = (props: {
                           mintAddress={workingToken.address}
                           name={workingToken.name}
                           showCaretDown={true}
-                          showName={workingToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                          nameInfoLabel={true}
                           fullTokenInfo={workingToken}
                         />
                       )}
                     </span>
                   </div>
                 </div>
-                <div className="flex-fixed-right">
+                {/* <div className="flex-fixed-right">
                   <div className="left inner-label">
                     <span>{t('add-funds.label-right')}:</span>
                     <span>
@@ -579,7 +579,7 @@ export const TreasuryCreateModal = (props: {
                         : "$0.00"}
                     </span>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Treasury type selector */}

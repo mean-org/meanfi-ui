@@ -76,7 +76,6 @@ export const VestingContractAddFundsModal = (props: {
     withdrawTransactionFees,
   } = props;
   const {
-    theme,
     tokenList,
     tokenBalance,
     selectedToken,
@@ -964,7 +963,7 @@ export const VestingContractAddFundsModal = (props: {
 
             {showQrCode && vestingContract && (
               <>
-                <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+                <div className="qr-container bg-white">
                   <QRCodeSVG
                     value={vestingContract.id as string}
                     size={200}

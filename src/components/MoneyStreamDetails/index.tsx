@@ -364,6 +364,10 @@ export const MoneyStreamDetails = (props: {
                     rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
                     isLink={true}
                     className="resume-activity-item"
+                    xs={10}
+                    sm={10}
+                    md={10}
+                    lg={10}
                   />
                 </a>
             )})
@@ -526,7 +530,7 @@ export const MoneyStreamDetails = (props: {
   // Tab details
   const detailsData = [
     {
-      label: stream ? isStartDateFuture(stream.startUtc as string) ? "Starting on:" : "Started on:" : "--",
+      label: stream ? (isStartDateFuture(stream.startUtc as string) ? "Starting on:" : "Started on:") : "--",
       value: stream ? getReadableDate(stream.startUtc as string, true) : "--"
     },
     {
@@ -561,13 +565,24 @@ export const MoneyStreamDetails = (props: {
       label: stream && getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
       value: stream && getStreamStatus(stream) === "Stopped" && getRelativeDate(isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string)
     },
+    {
+      label: "Stream id:",
+      value: stream ? <CopyExtLinkGroup
+        content={stream.id as string}
+        number={8}
+        externalLink={true}
+        isTx={false}
+        className="d-block text-truncate"
+        classNameContainer="mb-1 mr-2"
+      /> : "--"
+    },
   ];
 
   // Render details
   const renderDetails = (
     <>
       {detailsData.map((detail: any, index: number) => (
-        <Row gutter={[8, 8]} key={index} className="pl-1 details-item">
+        <Row gutter={[8, 8]} key={index} className="pl-1 details-item mr-0 ml-0">
           <Col span={8} className="pr-1">
             <span className="info-label">{detail.label}</span>
           </Col>
@@ -650,7 +665,7 @@ export const MoneyStreamDetails = (props: {
         }
         
         {!isXsDevice && (
-          <Row gutter={[8, 8]} className="safe-details-resume">
+          <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
             <div onClick={hideDetailsHandler} className="back-button icon-button-container">
               <IconArrowBack className="mean-svg-icons" />
               <span className="ml-1">Back</span>

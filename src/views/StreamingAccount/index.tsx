@@ -3200,7 +3200,7 @@ export const StreamingAccountView = (props: {
     <>
       <Spin spinning={loadingStreamingAccountDetails}>
         {!isXsDevice && (
-          <Row gutter={[8, 8]} className="safe-details-resume">
+          <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
             <div onClick={hideDetailsHandler} className="back-button icon-button-container">
               <IconArrowBack className="mean-svg-icons" />
               <span className="ml-1">Back</span>
@@ -3224,7 +3224,7 @@ export const StreamingAccountView = (props: {
           />
         )}
 
-        <Row gutter={[8, 8]} className="safe-btns-container mb-1">
+        <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
           <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
             <Button
               type="default"
