@@ -2755,7 +2755,11 @@ export const SafeView = () => {
               data: selectedMultisig?.authority.toBase58()
             }; 
           } else if (error.toString().indexOf('0x1') !== -1) {
-            const accountIndex = data.transaction.operation === OperationType.TransferTokens ? 0 : 3;
+            const accountIndex = data.transaction.operation === OperationType.TransferTokens
+              ? 0
+              : data.transaction.operation === OperationType.Transfer
+                ? 1
+                : 3;
             consoleOut('accounts:', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()), 'orange');
             const asset = data.transaction.accounts[accountIndex] ? data.transaction.accounts[accountIndex].pubkey.toBase58() : '-';
             consoleOut(`Selected account for index [${accountIndex}]`, asset, 'orange');
@@ -3567,6 +3571,7 @@ export const SafeView = () => {
               ? allAccounts.find(m => m.authority.equals(auth))
               : undefined;
             if (item) {
+              setNeedRefreshTxs(true);
               setSelectedMultisig(item);
             }
           }
@@ -3856,7 +3861,7 @@ export const SafeView = () => {
       setMultisigTxs([]);
     });
 
-    consoleOut('Trigger load proposals...', '', 'blue');
+    consoleOut('Triggered load proposals...', '', 'blue');
     getMultisigProposals(selectedMultisigRef.current)
       .then((response: MultisigProposalsWithAuthority) => {
         consoleOut('response:', response, 'orange');
