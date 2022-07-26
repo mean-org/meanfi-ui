@@ -26,7 +26,8 @@ import {
   getIntervalFromSeconds,
   getFormattedNumberToLocale,
   getTransactionOperationDescription,
-  isValidAddress
+  isValidAddress,
+  toUsCurrency
 } from '../../utils/ui';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryTopupParams } from '../../models/common-types';
@@ -151,6 +152,14 @@ export const TreasuryAddFundsModal = (props: {
     treasuryStreams,
     highLightableStreamId
   ]);
+
+  const getTokenPrice = useCallback(() => {
+    if (!topupAmount || !selectedToken) {
+        return 0;
+    }
+
+    return parseFloat(topupAmount) * getTokenPriceBySymbol(selectedToken.symbol);
+}, [topupAmount, selectedToken, getTokenPriceBySymbol]);
 
   const isfeePayedByTreasurerOn = useCallback(() => {
     if (highLightableStreamId) {
@@ -1123,11 +1132,18 @@ export const TreasuryAddFundsModal = (props: {
                         </span>
                       </div>
                       <div className="right inner-label">
-                        <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                          ~${topupAmount && effectiveRate
-                            ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-                            : "0.00"}
-                        </span>
+                        {publicKey ? (
+                          <>
+                            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                            ~{topupAmount
+                                ? toUsCurrency(getTokenPrice())
+                                : "$0.00"
+                            }
+                            </span>
+                          </>
+                        ) : (
+                          <span>~$0.00</span>
+                        )}
                       </div>
                     </div>
                   </div>
