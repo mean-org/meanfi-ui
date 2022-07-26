@@ -2167,7 +2167,7 @@ export const MoneyStreamsInfoView = (props: {
                   )}
                 </span>
               </div>
-              <span className="incoming-amount">{rateIncomingPerDay ? `+ ${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
+              <span className="incoming-amount">{rateIncomingPerDay ? `+ $${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
             <div className="info-value">
               <span className="mr-1">Total streams:</span>
@@ -2236,7 +2236,7 @@ export const MoneyStreamsInfoView = (props: {
                   )}
                 </span>
               </div>
-              <span className="outgoing-amount">{rateOutgoingPerDay ? `- ${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
+              <span className="outgoing-amount">{rateOutgoingPerDay ? `- $${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
             <div className="info-value">
               <span className="mr-1">Total streams:</span>
