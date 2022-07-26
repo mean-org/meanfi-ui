@@ -1,0 +1,20 @@
+.multisig-safe-owners {
+  @media (max-width: 575px) {
+    .container-owner-item {
+      align-items: start;
+    }
+  }
+  @media (min-width: 576px) {
+    .container-owner-item {
+      align-items: center;
+    }
+  }
+  .container-owner-item {
+    display: flex;
+    margin-bottom: 1em;
+
+    .trash-icon {
+      margin-left: 1em;
+    }
+  }
+}

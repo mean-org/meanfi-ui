@@ -75,6 +75,7 @@ import { ProgramAccounts } from '../../utils/accounts';
 import { MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
+import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -360,6 +361,11 @@ export const SafeView = () => {
 
     return false;
   }, [confirmationHistory]);
+
+  const onOpenMultisigModalClick = useCallback(() => {
+    resetTransactionStatus();
+    setIsMultisigCreateSafeModalVisible(true);
+  },[resetTransactionStatus]);
 
   const onCreateMultisigClick = useCallback(() => {
 
@@ -1033,6 +1039,7 @@ export const SafeView = () => {
   }
 
   // Modal visibility flags
+  const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
   const [isErrorReportingModalVisible, setIsErrorReportingModalVisible] = useState(false);
@@ -1849,7 +1856,6 @@ export const SafeView = () => {
   }, [resetTransactionStatus]);
 
   const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
-
 
   const saveOperationPayloadOnStart = (payload: any) => {
     setOperationPayload(payload);
@@ -4355,7 +4361,7 @@ export const SafeView = () => {
                       shape="round"
                       disabled={!connected}
                       className="flex-center mr-1"
-                      onClick={onCreateMultisigClick}>
+                      onClick={onOpenMultisigModalClick}>
                         <IconSafe className="mean-svg-icons" />
                         {connected
                           ? t('multisig.create-new-multisig-account-cta')
@@ -4482,17 +4488,40 @@ export const SafeView = () => {
 
       </div>
 
-      {isCreateMultisigModalVisible && (
-        <MultisigCreateModal
-          isVisible={isCreateMultisigModalVisible}
+      {isMultisigCreateSafeModalVisible && (
+        // <MultisigCreateModal
+        //   isVisible={isCreateMultisigModalVisible}
+        //   nativeBalance={nativeBalance}
+        //   transactionFees={transactionFees}
+        //   multisigAccounts={multisigAccounts}
+        //   handleOk={onAcceptCreateMultisig}
+        //   handleClose={() => setIsCreateMultisigModalVisible(false)}
+        //   isBusy={isBusy}
+        // />
+
+        <MultisigCreateSafeModal
+          isVisible={isMultisigCreateSafeModalVisible}
           nativeBalance={nativeBalance}
-          transactionFees={transactionFees}
+          // transactionFees={transactionFees}
           multisigAccounts={multisigAccounts}
-          handleOk={onAcceptCreateMultisig}
-          handleClose={() => setIsCreateMultisigModalVisible(false)}
+          // handleOk={onAcceptCreateMultisig}
+          handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
           isBusy={isBusy}
         />
       )}
+
+      {/* {isMultisigProposalModalVisible && (
+        <MultisigProposalModal
+          isVisible={isMultisigProposalModalVisible}
+          handleClose={() => setMultisigProposalModalVisible(false)}
+          isBusy={isBusy}
+          proposer={publicKey ? publicKey.toBase58() : ""}
+          appsProvider={appsProvider}
+          solanaApps={solanaApps.filter(app => app.active)}
+          handleOk={onAcceptCreateProposalModal}
+          selectedMultisig={selectedMultisig}
+        />
+      )} */}
 
       {(isEditMultisigModalVisible && selectedMultisig) && (
         <MultisigEditModal
