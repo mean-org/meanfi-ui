@@ -42,6 +42,7 @@ import { SolBalanceModal } from "../../components/SolBalanceModal";
 import { NATIVE_SOL } from "../../utils/tokens";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
+import { getTokenAccountBalanceByAddress } from "../../utils/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -124,8 +125,6 @@ export const StreamingAccountView = (props: {
   const [loadingStreamingAccountActivity, setLoadingStreamingAccountActivity] = useState(false);
   const [hasMoreStreamingAccountActivity, setHasMoreStreamingAccountActivity] = useState<boolean>(true);
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(0);
-
-  const V1_TREASURY_ID = useMemo(() => { return new PublicKey("DVhWHsWSybDD8n5P6ep7rP4bg7yj55MoeZGQrbLGpQtQ"); }, []);
 
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
@@ -445,18 +444,6 @@ export const StreamingAccountView = (props: {
     multisigAccounts,
     isMultisigTreasury
   ]);
-
-  const getTokenAccountBalanceByAddress = useCallback(async (tokenAddress: PublicKey | undefined | null): Promise<TokenAmount | null> => {
-    if (!connection || !tokenAddress) return null;
-    try {
-      const tokenAmount = (await connection.getTokenAccountBalance(tokenAddress)).value;
-      return tokenAmount;
-    } catch (error) {
-      consoleOut('getTokenAccountBalance failed for:', tokenAddress.toBase58(), 'red');
-      return null;
-    }
-  }, [connection]);
-
 
   ////////////////
   ///  MODALS  ///
@@ -2623,7 +2610,7 @@ export const StreamingAccountView = (props: {
         const tokenPk = new PublicKey(address);
         const saPk = new PublicKey(streamingAccountAddress);
         const saAtaTokenAddress = await findATokenAddress(saPk, tokenPk);
-        const ta = await getTokenAccountBalanceByAddress(saAtaTokenAddress);
+        const ta = await getTokenAccountBalanceByAddress(connection, saAtaTokenAddress);
         consoleOut('getTokenAccountBalanceByAddress ->', ta, 'blue');
         if (ta) {
           balance = new BN(ta.amount).toNumber();
@@ -3000,7 +2987,7 @@ export const StreamingAccountView = (props: {
       <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={hasStreamingAccountPendingTx() || (streamingAccountStreams && streamingAccountStreams.length > 0) || !isTreasurer()}>
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
-      {(streamingAccountSelected && streamingAccountSelected.id !== V1_TREASURY_ID.toBase58()) && (
+      {streamingAccountSelected && (
         <Menu.Item key="ms-01" disabled={hasStreamingAccountPendingTx()} onClick={() => onExecuteRefreshTreasuryBalance()}>
           <span className="menu-item-text">Refresh account data</span>
         </Menu.Item>
