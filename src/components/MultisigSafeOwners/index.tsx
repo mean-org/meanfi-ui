@@ -80,14 +80,6 @@ export const MultisigSafeOwners = (props: {
       <div className={`flex-fixed-right ${disabled ? 'click-disabled' : ''}`}>
         <div className="left">
           {label ? (
-            // <div className="form-label icon-label">
-            //   {t('multisig.create-multisig.multisig-threshold-input-label')}
-            //   <Tooltip placement="bottom" title={t("multisig.create-multisig.multisig-threshold-question-mark-tooltip")}>
-            //     <span>
-            //       <IconHelpCircle className="mean-svg-icons" />
-            //     </span>
-            //   </Tooltip>
-            // </div>
             <div className="form-label icon-label">
               {label}
               <Tooltip placement="bottom" title="">
@@ -138,7 +130,7 @@ export const MultisigSafeOwners = (props: {
                   <div className="right">
                     <InputMean
                       id={`participant-address-${index + 1}`}
-                      className=""
+                      className="mr-0"
                       type="text"
                       value={participant.address}
                       onChange={(e: any) => {
@@ -146,13 +138,8 @@ export const MultisigSafeOwners = (props: {
                         setSingleItemAddress(value, index);
                       }}
                       placeholder="Enter address of the owner"
-                      // error={
-                      //   isValidAddress(participant.address)
-                      //     ? isInputMultisigAddress(participant.address)
-                      //       ? t('multisig.create-multisig.multisig-address-used-as-participant')
-                      //       : ''
-                      //     : t('transactions.validation.valid-address-required')
-                      // }
+                      validationIcons={true}
+                      isValid={isValidAddress(participant.address)}
                     />
                   </div>
                 </div>

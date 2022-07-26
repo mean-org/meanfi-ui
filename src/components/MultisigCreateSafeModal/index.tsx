@@ -281,7 +281,8 @@ export const MultisigCreateSafeModal = (props: {
                     onClick={onContinueStepTwoButtonClick}
                     disabled={
                       !publicKey ||
-                      !safeName
+                      !safeName ||
+                      multisigOwners.length === 0
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
