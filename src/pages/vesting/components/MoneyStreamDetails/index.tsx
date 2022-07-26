@@ -20,6 +20,7 @@ const { TabPane } = Tabs;
 export type StreamDetailTab = "details" | "activity";
 
 export const MoneyStreamDetails = (props: {
+  cliffVestAmount: string;
   hasMoreStreamActivity: boolean;
   highlightedStream: Stream | undefined;
   isInboundStream: boolean;
@@ -30,6 +31,7 @@ export const MoneyStreamDetails = (props: {
   streamActivity: StreamActivity[];
 }) => {
   const {
+    cliffVestAmount,
     hasMoreStreamActivity,
     highlightedStream,
     isInboundStream,
@@ -495,6 +497,10 @@ export const MoneyStreamDetails = (props: {
     {
       label: !isInboundStream && "Sending to:",
       value: !isInboundStream && renderSendingTo()
+    },
+    {
+      label: "Cliff release:",
+      value: cliffVestAmount
     },
     {
       label: "Payment rate:",
