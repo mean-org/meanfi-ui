@@ -6,7 +6,7 @@ import { useWallet } from "../../contexts/wallet";
 import { TransactionStatus } from "../../models/enums";
 import { StepSelector } from "../StepSelector";
 import "./style.scss";
-import { IconWarning } from "../../Icons";
+import { IconKey, IconLock } from "../../Icons";
 import { MultisigInfo, MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
 import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
@@ -77,6 +77,8 @@ export const MultisigCreateSafeModal = (props: {
     isVisible,
     multisigAccounts
   ]);
+
+  const [currentPosition, setCurrentPosition] = useState(0);
 
   return (
     <Modal
@@ -177,12 +179,27 @@ export const MultisigCreateSafeModal = (props: {
                     multisigAddresses={multisigAddresses}
                     onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
                   />
-                  {/* {(multisigOwners.length >= 1 && multisigOwners.length === +multisigThreshold && multisigOwners[+multisigThreshold - 1].address !== '') && (
-                    <span className="warning-message icon-label">
-                      <IconWarning className="mean-svg-icons" />
-                      {t('multisig.create-multisig.multisig-participants-warning-message')}
-                    </span>
-                  )} */}
+
+                  {/* Minimum required signatures for proposal approval */}
+                  <div className="form-label">Minimum required signatures for proposal approval</div>
+                  <div className="required-signatures-icons">
+                    {multisigOwners.map((icon, index) => {
+                      const onSelectIcon = () => {
+                        setCurrentPosition(index + 1);
+                      }
+
+                      return (
+                        <div className="icon-container simplelink" key={index} onClick={onSelectIcon}>
+                          {(currentPosition >= (index + 1)) ? (
+                            <IconKey className="mean-svg-icons key-icon"/>
+                          ) : (
+                            <IconLock className="mean-svg-icons lock-icon"/>
+                          )}
+                          <span className="signatures-number">{index + 1}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </>
               </div>
 

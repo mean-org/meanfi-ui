@@ -44,4 +44,26 @@
       padding-top: 1em;
     }
   }
+
+  .required-signatures-icons {
+    display: flex;
+    svg {
+      padding: 0.25em;
+    }
+    .icon-container {
+      border: 1px solid #575757;
+      background: #b3b3b3;
+      width: 2.5em;
+      display: flex;
+      align-items: center;
+      color: black;
+      font-size: 17px;
+      .lock-icon {
+        color: #575757;
+      }
+      .key-icon {
+        color: #006820;
+      }
+    }
+  }
 }
