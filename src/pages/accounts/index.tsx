@@ -3866,7 +3866,7 @@ export const AccountsNewView = () => {
         setTreasuryDetail(item);
       }
     }
-  }, [pathParamTreasuryId, publicKey, treasuryDetail, treasuryId, treasuryList]);
+  }, [pathParamTreasuryId, publicKey, treasuryId, treasuryList]);
 
   // Preset the selected stream from the list if provided in path param (streamId)
   useEffect(() => {
@@ -5443,7 +5443,7 @@ export const AccountsNewView = () => {
                             multisigAccounts={multisigAccounts}
                             onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
                           />
-                        ) : pathParamTreasuryId && pathParamStreamingTab === "outgoing" ? (
+                        ) : pathParamTreasuryId && pathParamStreamingTab === "outgoing" && treasuryDetail && treasuryDetail.id === pathParamTreasuryId ? (
                           <StreamingAccountView
                             streamSelected={streamDetail}
                             treasuryList={treasuryList}

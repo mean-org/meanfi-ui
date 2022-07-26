@@ -1199,7 +1199,7 @@
 			"refreshing-account-balance": "",
 			"treasury-address-label": "",
 			"treasury-name-label": "Hazine adı",
-			"unallocated-treasury-balance": ""
+			"unallocated-treasury-balance": "Available streaming balance"
 		},
 		"treasury-detail-heading": "Hazine ayrıntıları",
 		"treasury-list": {

@@ -1629,11 +1629,12 @@ export const VestingContractStreamList = (props: {
 
             {isVestingContractStreamDetailModalVisible && highlightedStream && (
                 <VestingContractStreamDetailModal
-                    msp={msp}
-                    handleClose={closeVestingContractStreamDetailModal}
-                    isVisible={isVestingContractStreamDetailModalVisible}
                     accountAddress={accountAddress}
+                    handleClose={closeVestingContractStreamDetailModal}
                     highlightedStream={highlightedStream}
+                    isVisible={isVestingContractStreamDetailModalVisible}
+                    msp={msp}
+                    streamTemplate={streamTemplate}
                 />
             )}
 

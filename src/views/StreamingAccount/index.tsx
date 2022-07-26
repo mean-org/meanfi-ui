@@ -9,8 +9,8 @@ import {
 } from '@mean-dao/money-streaming';
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { Button, Col, Dropdown, Menu, Modal, Row, Spin, Tabs } from "antd";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, TokenAmount, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Alert, Button, Col, Dropdown, Menu, Modal, Row, Spin, Tabs } from "antd";
 import BN from "bn.js";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,7 +26,7 @@ import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
+import { findATokenAddress, formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, makeInteger, shortenAddress, toUiAmount } from "../../utils/utils";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
@@ -42,6 +42,7 @@ import { SolBalanceModal } from "../../components/SolBalanceModal";
 import { NATIVE_SOL } from "../../utils/tokens";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
+import { getTokenAccountBalanceByAddress } from "../../utils/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -123,8 +124,7 @@ export const StreamingAccountView = (props: {
   const [streamingAccountActivity, setStreamingAccountActivity] = useState<VestingTreasuryActivity[]>([]);
   const [loadingStreamingAccountActivity, setLoadingStreamingAccountActivity] = useState(false);
   const [hasMoreStreamingAccountActivity, setHasMoreStreamingAccountActivity] = useState<boolean>(true);
-
-  const V1_TREASURY_ID = useMemo(() => { return new PublicKey("DVhWHsWSybDD8n5P6ep7rP4bg7yj55MoeZGQrbLGpQtQ"); }, []);
+  const [associatedTokenBalance, setAssociatedTokenBalance] = useState(0);
 
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
@@ -444,7 +444,6 @@ export const StreamingAccountView = (props: {
     multisigAccounts,
     isMultisigTreasury
   ]);
-
 
   ////////////////
   ///  MODALS  ///
@@ -1866,44 +1865,10 @@ export const StreamingAccountView = (props: {
         return await refreshBalance(new PublicKey(data.treasury));
       }
 
-      if (!isMultisigTreasury()) {
-        return await msp.refreshTreasuryData(
-          new PublicKey(publicKey),
-          new PublicKey(data.treasurer),
-          new PublicKey(data.treasury)
-        );
-      }
-
-      if (!streamingAccountSelected || !multisigClient || !multisigAccounts || !publicKey) { return null; }
-
-      const treasury = streamingAccountSelected as Treasury;
-      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
-
-      if (!multisig) { return null; }
-
-      const refreshTreasury = await msp.refreshTreasuryData(
+      return await msp.refreshTreasuryData(
         new PublicKey(publicKey),
-        multisig.authority,
         new PublicKey(data.treasury)
       );
-
-      const ixData = Buffer.from(refreshTreasury.instructions[0].data);
-      const ixAccounts = refreshTreasury.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-
-      const tx = await multisigClient.createTransaction(
-        publicKey,
-        "Refresh Treasury Data",
-        "", // description
-        new Date(expirationTime * 1_000),
-        OperationType.TreasuryRefreshBalance,
-        multisig.id,
-        MSPV2Constants.MSP,
-        ixAccounts,
-        ixData
-      );
-
-      return tx;
     }
 
     const createTx = async (): Promise<boolean> => {
@@ -2122,10 +2087,6 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            const isMultisig = isMultisigTreasury(streamingAccountSelected) && selectedMultisig
-            ? selectedMultisig.authority.toBase58()
-            : "";
-
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryRefreshBalance,
@@ -2136,10 +2097,9 @@ export const StreamingAccountView = (props: {
               completedTitle: "Transaction confirmed",
               completedMessage: "Successfully refreshed data in streaming account",
               extras: {
-                multisigAuthority: isMultisig
+                multisigAuthority: ''
               }
             });
-
             onRefreshTreasuryBalanceTransactionFinished();
             setOngoingOperation(undefined);
             setLoadingStreamingAccountDetails(true);
@@ -2155,9 +2115,6 @@ export const StreamingAccountView = (props: {
     connection,
     nativeBalance,
     multisigTxFees,
-    multisigClient,
-    multisigAccounts,
-    selectedMultisig,
     transactionCancelled,
     streamingAccountSelected,
     transactionFees.mspFlatFee,
@@ -2635,6 +2592,54 @@ export const StreamingAccountView = (props: {
     refreshTokenBalance
   ]);
 
+  // Keep Streaming Account ATA balance
+  useEffect(() => {
+
+    const getStreamingAccountAtaBalance = async (address: string, streamingAccountAddress: string) => {
+
+      if (!connection || !publicKey || !address || !streamingAccountAddress) {
+        return 0;
+      }
+
+      let balance = 0;
+      consoleOut('got inside getStreamingAccountAtaBalance:', '', 'blue');
+
+      try {
+        consoleOut('address', address, 'blue');
+        consoleOut('streamingAccountAddress', streamingAccountAddress, 'blue');
+        const tokenPk = new PublicKey(address);
+        const saPk = new PublicKey(streamingAccountAddress);
+        const saAtaTokenAddress = await findATokenAddress(saPk, tokenPk);
+        const ta = await getTokenAccountBalanceByAddress(connection, saAtaTokenAddress);
+        consoleOut('getTokenAccountBalanceByAddress ->', ta, 'blue');
+        if (ta) {
+          balance = new BN(ta.amount).toNumber();
+        }
+        consoleOut('SA ATA balance:', balance, 'blue');
+        return balance;
+      } catch (error) {
+        return balance;
+      }
+
+    }
+
+    if (streamingAccountSelected) {
+      const v1 = streamingAccountSelected as TreasuryInfo;
+      const v2 = streamingAccountSelected as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      const tokenAddr = isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string;
+
+      getStreamingAccountAtaBalance(tokenAddr, streamingAccountSelected.id as string)
+      .then(value => setAssociatedTokenBalance(value))
+      .catch(err => {
+        console.error(err);
+        setAssociatedTokenBalance(0);
+      });
+
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connection, publicKey, streamingAccountSelected]);
+
   // Automatically update all token balances (in token list)
   useEffect(() => {
 
@@ -2903,7 +2908,7 @@ export const StreamingAccountView = (props: {
         return getAmountWithSymbol(getTreasuryUnallocatedBalance(), token ? token.address : '');
       }
     }
-    return "$0.00";
+    return "--";
   }, [getTokenByMintAddress, getTreasuryUnallocatedBalance, streamingAccountSelected]);
 
   const getStreamingAccountStreams = useCallback((treasuryPk: PublicKey, isNewTreasury: boolean) => {
@@ -2982,8 +2987,8 @@ export const StreamingAccountView = (props: {
       <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={hasStreamingAccountPendingTx() || (streamingAccountStreams && streamingAccountStreams.length > 0) || !isTreasurer()}>
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
-      {(streamingAccountSelected && streamingAccountSelected.id !== V1_TREASURY_ID.toBase58()) && (
-        <Menu.Item key="ms-01" disabled={hasStreamingAccountPendingTx() || !isTreasurer()} onClick={() => onExecuteRefreshTreasuryBalance()}>
+      {streamingAccountSelected && (
+        <Menu.Item key="ms-01" disabled={hasStreamingAccountPendingTx()} onClick={() => onExecuteRefreshTreasuryBalance()}>
           <span className="menu-item-text">Refresh account data</span>
         </Menu.Item>
       )}
@@ -3224,6 +3229,7 @@ export const StreamingAccountView = (props: {
           />
         )}
 
+        {/* CTAs row */}
         <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
           <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
             <Button
@@ -3287,10 +3293,22 @@ export const StreamingAccountView = (props: {
           </Col>
         </Row>
 
-        {/* <TabsMean
-          tabs={tabs}
-          defaultTab="streams"
-        /> */}
+        {/* Alert to offer refresh treasury */}
+        {streamingAccountSelected && associatedTokenBalance !== streamingAccountSelected.balance && (
+          <div className="alert-info-message mb-2 mr-2 pr-2">
+            <Alert message={(
+                <>
+                  <span>This streaming account received an incoming funds transfer.&nbsp;</span>
+                  <span className="simplelink underline" onClick={() => onExecuteRefreshTreasuryBalance()}>Refresh the account data</span>
+                  <span>&nbsp;to update the account balance.</span>
+                </>
+              )}
+              type="info"
+              showIcon
+            />
+          </div>
+        )}
+
         {tabs && renderTabset()}
       </Spin>
 
