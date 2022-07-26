@@ -239,13 +239,13 @@ export const MultisigCreateSafeModal = (props: {
 
                     {/* Signatures */}
                     <Row className="mb-1">
-                      {safeName && (
+                      {(currentPosition && multisigOwners) && (
                         <>
                           <Col span={8} className="text-right pr-1">
                             <span className="info-label">Signatures:</span>
                           </Col>
                           <Col span={16} className="text-left pl-1">
-                            <span>{safeName}</span>
+                            <span>{`${currentPosition}/${multisigOwners.length} ${currentPosition > 1 ? "signatures" : "signature"} to pass a proposal`}</span>
                           </Col>
                         </>
                       )}
@@ -299,7 +299,8 @@ export const MultisigCreateSafeModal = (props: {
                     disabled={
                       !publicKey ||
                       !safeName ||
-                      multisigOwners.length === 0
+                      multisigOwners.length === 0 ||
+                      currentPosition === 0
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
