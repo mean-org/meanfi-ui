@@ -1,14 +1,13 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { MSP, Stream, StreamActivity, StreamTemplate, STREAM_STATUS } from '@mean-dao/msp';
+import { MSP, Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut } from '../../../../utils/ui';
-import { cutNumber, makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { shortenAddress } from '../../../../utils/utils';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
 import { PublicKey } from '@solana/web3.js';
 import { CUSTOM_TOKEN_NAME } from '../../../../constants';
-import BN from 'bn.js';
 
 export const VestingContractStreamDetailModal = (props: {
   accountAddress: string;
@@ -16,7 +15,6 @@ export const VestingContractStreamDetailModal = (props: {
   highlightedStream: Stream | undefined;
   isVisible: boolean;
   msp: MSP | undefined;
-  streamTemplate: StreamTemplate | undefined
 }) => {
   const {
     accountAddress,
@@ -24,7 +22,6 @@ export const VestingContractStreamDetailModal = (props: {
     highlightedStream,
     isVisible,
     msp,
-    streamTemplate,
   } = props;
   const {
     getTokenByMintAddress,
@@ -36,7 +33,6 @@ export const VestingContractStreamDetailModal = (props: {
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(false);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
   const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(true);
-  const [cliffVestAmount, setCliffVestAmount] = useState('');
 
   const isInboundStream = useCallback((): boolean => {
     return streamDetail && accountAddress && streamDetail.beneficiary === accountAddress ? true : false;
@@ -126,26 +122,6 @@ export const VestingContractStreamDetailModal = (props: {
     }
   }, [getTokenByMintAddress, isVisible, selectedToken, setCustomToken, highlightedStream]);
 
-  // Set template data
-  useEffect(() => {
-    if (isVisible && streamTemplate && streamDetail && selectedToken) {
-      const decimals = selectedToken.decimals;
-      const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
-      const allocationAssigned = makeDecimal(new BN(streamDetail.allocationAssigned), decimals);
-      const percentageFromAllocation = allocationAssigned > 0 ? allocationAssigned * cliffPercent / 100 : 0;
-      const cliff = cutNumber(percentageFromAllocation, decimals);
-      setCliffVestAmount(`${cliff} ${selectedToken.symbol}`);
-    }
-  }, [
-    isVisible,
-    streamDetail,
-    selectedToken,
-    streamTemplate,
-  ]);
-
-
-
-
   // Live data calculation - Refresh Stream detail
   useEffect(() => {
 
@@ -177,7 +153,6 @@ export const VestingContractStreamDetailModal = (props: {
       onCancel={handleClose}
       width={480}>
       <MoneyStreamDetails
-        cliffVestAmount={cliffVestAmount}
         hasMoreStreamActivity={hasMoreStreamActivity}
         highlightedStream={highlightedStream}
         isInboundStream={isInboundStream()}

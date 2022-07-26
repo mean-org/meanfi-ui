@@ -20,7 +20,6 @@ const { TabPane } = Tabs;
 export type StreamDetailTab = "details" | "activity";
 
 export const MoneyStreamDetails = (props: {
-  cliffVestAmount: string;
   hasMoreStreamActivity: boolean;
   highlightedStream: Stream | undefined;
   isInboundStream: boolean;
@@ -31,7 +30,6 @@ export const MoneyStreamDetails = (props: {
   streamActivity: StreamActivity[];
 }) => {
   const {
-    cliffVestAmount,
     hasMoreStreamActivity,
     highlightedStream,
     isInboundStream,
@@ -218,22 +216,6 @@ export const MoneyStreamDetails = (props: {
     );
 
   }, [t]);
-
-  const getStreamResume = useCallback((item: Stream) => {
-    if (item) {
-      switch (item.status) {
-        case STREAM_STATUS.Schedule:
-          return `starts on ${getShortDate(item.startUtc as string)}`;
-        case STREAM_STATUS.Paused:
-          if (item.isManuallyPaused) {
-            return `paused on ${getShortDate(item.startUtc as string)}`;
-          }
-          return `out of funds on ${getShortDate(item.startUtc as string)}`;
-        default:
-          return `streaming since ${getShortDate(item.startUtc as string)}`;
-      }
-    }
-  }, []);
 
   const getStreamStatusSubtitle = useCallback((item: Stream) => {
     if (item) {
@@ -425,6 +407,17 @@ export const MoneyStreamDetails = (props: {
     )
   }
 
+  const renderCliffVestAmount = () => {
+    if (!stream || !selectedToken) { return null; }
+
+    return getTokenAmountAndSymbolByTokenAddress(
+      toUiAmount(new BN(stream.cliffVestAmount), selectedToken.decimals || 6),
+      stream.associatedToken as string,
+      false,
+      splTokenList
+    );
+  }
+
   const renderActivities = () => {
     return (
       <div className="stream-activity-list">
@@ -500,7 +493,7 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: "Cliff release:",
-      value: cliffVestAmount
+      value: renderCliffVestAmount()
     },
     {
       label: "Payment rate:",
