@@ -1049,7 +1049,7 @@ export const TreasuryAddFundsModal = (props: {
                                       <TokenDisplay onClick={() => {}}
                                         mintAddress={option.address}
                                         name={option.name}
-                                        showCaretDown={associatedToken ? false : true}
+                                        showCaretDown={false}
                                       />
                                       <div className="balance">
                                         {userBalances && userBalances[option.address] > 0 && (
