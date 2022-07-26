@@ -41,7 +41,7 @@ import { VestingContractCreateModal } from './components/VestingContractCreateMo
 import { VestingContractOverview } from './components/VestingContractOverview';
 import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
-import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
+import { useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../utils/ids';
 import { appConfig, customLogger } from '../..';
@@ -106,7 +106,6 @@ export const VestingView = () => {
   const { width } = useWindowSize();
   const { publicKey, wallet, connected } = useWallet();
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
   const [loadingTreasuries, setLoadingTreasuries] = useState(true);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
@@ -2943,44 +2942,10 @@ export const VestingView = () => {
         return await refreshBalance(new PublicKey(data.treasury));
       }
 
-      if (!isMultisigTreasury()) {
-        return await msp.refreshTreasuryData(
-          new PublicKey(publicKey),
-          new PublicKey(data.treasurer),
-          new PublicKey(data.treasury)
-        );
-      }
-
-      if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) { return null; }
-
-      const treasury = selectedVestingContract as Treasury;
-      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
-
-      if (!multisig) { return null; }
-
-      const refreshTreasury = await msp.refreshTreasuryData(
+      return await msp.refreshTreasuryData(
         new PublicKey(publicKey),
-        multisig.authority,
         new PublicKey(data.treasury)
       );
-
-      const ixData = Buffer.from(refreshTreasury.instructions[0].data);
-      const ixAccounts = refreshTreasury.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-
-      const tx = await multisigClient.createTransaction(
-        publicKey,
-        "Refresh Treasury Data",
-        "", // description
-        new Date(expirationTime * 1_000),
-        OperationType.TreasuryRefreshBalance,
-        multisig.id,
-        MSPV2Constants.MSP,
-        ixAccounts,
-        ixData
-      );
-
-      return tx;
     }
 
     const createTx = async (): Promise<boolean> => {
@@ -3217,7 +3182,7 @@ export const VestingView = () => {
               completedMessage: `Refresh balance successful for vesting contract ${selectedVestingContract.name}`,
               extras: {
                 vestingContractId: selectedVestingContract.id as string,
-                multisigId: getMultisigIdFromContext(), // params.multisig
+                multisigId: ''
               }
             });
             setIsBusy(false);
@@ -3235,9 +3200,7 @@ export const VestingView = () => {
     connection,
     nativeBalance,
     multisigTxFees,
-    multisigClient,
     selectedVestingContract,
-    multisigAccounts,
     transactionCancelled,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,

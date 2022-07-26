@@ -1866,44 +1866,10 @@ export const StreamingAccountView = (props: {
         return await refreshBalance(new PublicKey(data.treasury));
       }
 
-      if (!isMultisigTreasury()) {
-        return await msp.refreshTreasuryData(
-          new PublicKey(publicKey),
-          new PublicKey(data.treasurer),
-          new PublicKey(data.treasury)
-        );
-      }
-
-      if (!streamingAccountSelected || !multisigClient || !multisigAccounts || !publicKey) { return null; }
-
-      const treasury = streamingAccountSelected as Treasury;
-      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
-
-      if (!multisig) { return null; }
-
-      const refreshTreasury = await msp.refreshTreasuryData(
+      return await msp.refreshTreasuryData(
         new PublicKey(publicKey),
-        multisig.authority,
         new PublicKey(data.treasury)
       );
-
-      const ixData = Buffer.from(refreshTreasury.instructions[0].data);
-      const ixAccounts = refreshTreasury.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-
-      const tx = await multisigClient.createTransaction(
-        publicKey,
-        "Refresh Treasury Data",
-        "", // description
-        new Date(expirationTime * 1_000),
-        OperationType.TreasuryRefreshBalance,
-        multisig.id,
-        MSPV2Constants.MSP,
-        ixAccounts,
-        ixData
-      );
-
-      return tx;
     }
 
     const createTx = async (): Promise<boolean> => {
@@ -2155,8 +2121,6 @@ export const StreamingAccountView = (props: {
     connection,
     nativeBalance,
     multisigTxFees,
-    multisigClient,
-    multisigAccounts,
     selectedMultisig,
     transactionCancelled,
     streamingAccountSelected,
