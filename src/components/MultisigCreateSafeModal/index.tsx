@@ -1,4 +1,4 @@
-import { Button, Divider, Modal } from "antd";
+import { Button, Col, Divider, Modal, Row } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
@@ -10,6 +10,7 @@ import { IconWarning } from "../../Icons";
 import { MultisigInfo, MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
 import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
+import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 
 export const MultisigCreateSafeModal = (props: {
   handleClose: any;
@@ -37,6 +38,20 @@ export const MultisigCreateSafeModal = (props: {
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
   }
+
+  const onContinueStepOneButtonClick = () => {
+    setCurrentStep(1);  // Go to step 2
+  }
+
+  const onContinueStepTwoButtonClick = () => {
+    setCurrentStep(2);  // Go to step 3
+  }
+
+  const getStepTwoContinueButtonLabel = (): string => {
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : t('Continue')
+  };
 
   const onSafeNameInputValueChange = (e: any) => {
     setSafeName(e.target.value);
@@ -100,7 +115,7 @@ export const MultisigCreateSafeModal = (props: {
                         shape="round"
                         size="middle"
                         className="thin-stroke"
-                        onClick={() => onStepperChange(1)}>
+                        onClick={onContinueStepOneButtonClick}>
                           Create safe
                       </Button>
                     </div>
@@ -120,7 +135,7 @@ export const MultisigCreateSafeModal = (props: {
                         shape="round"
                         size="middle"
                         className="thin-stroke"
-                        onClick={() => onStepperChange(1)}>
+                        onClick={onContinueStepOneButtonClick}>
                           Import safe
                       </Button>
                     </div>
@@ -170,6 +185,145 @@ export const MultisigCreateSafeModal = (props: {
                   )} */}
                 </>
               </div>
+
+              <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
+                <>
+                  <h3 className="left-title">Summary</h3>
+                  <Divider plain />
+
+                  <div className="mt-2 mb-1">
+                    {/* Safe name */}
+                    <Row className="mb-1">
+                      {safeName && (
+                        <>
+                          <Col span={8} className="text-right pr-1">
+                            <span className="info-label">Safe name:</span>
+                          </Col>
+                          <Col span={16} className="text-left pl-1">
+                            <span>{safeName}</span>
+                          </Col>
+                        </>
+                      )}
+                    </Row>
+
+                    {/* Created by */}
+                    <Row className="mb-1">
+                      {safeName && (
+                        <>
+                          <Col span={8} className="text-right pr-1">
+                            <span className="info-label">Created by:</span>
+                          </Col>
+                          <Col span={16} className="text-left pl-1">
+                            <span>{safeName}</span>
+                          </Col>
+                        </>
+                      )}
+                    </Row>
+
+                    {/* Signatures */}
+                    <Row className="mb-1">
+                      {safeName && (
+                        <>
+                          <Col span={8} className="text-right pr-1">
+                            <span className="info-label">Signatures:</span>
+                          </Col>
+                          <Col span={16} className="text-left pl-1">
+                            <span>{safeName}</span>
+                          </Col>
+                        </>
+                      )}
+                    </Row>
+
+                    <Divider plain />
+
+                    <div className="well mt-2 mb-1 proposal-summary-container vertical-scroll">
+                      <div className="mb-1">
+                        {multisigOwners.map((owner, index) => (
+                          <div key={index}>
+                            <span className="info-label">{owner.name}:</span><br />
+                            <span className="info-data simplelink underline-on-hover" onClick={() => <CopyExtLinkGroup content={owner.address} externalLink={false} />}>{owner.address}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div>
+                        The creation will cost approximately 0.02583248 SOL. The exact amount will be determined by your wallet.
+                      </div>
+                    </div>
+                  </div>
+                </>
+              </div>
+            </div>
+
+            <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
+              <Row>
+                <Col span={12} className="d-flex justify-content-center">
+                  <Button
+                    block
+                    shape="round"
+                    type="ghost"
+                    size="middle"
+                    className="thin-stroke col-6"
+                    onClick={() => onStepperChange(0)}
+                    disabled={
+                      !publicKey
+                    }
+                  >
+                    Back
+                  </Button>
+                </Col>
+                <Col span={12} className="d-flex justify-content-center">
+                  <Button
+                    block
+                    type="primary"
+                    shape="round"
+                    size="middle"
+                    className="col-6"
+                    onClick={onContinueStepTwoButtonClick}
+                    disabled={
+                      !publicKey ||
+                      !safeName
+                    }
+                  >
+                    {getStepTwoContinueButtonLabel()}
+                  </Button>
+                </Col>
+              </Row>
+            </div>
+
+            <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
+              <Row>
+                <Col span={12} className="d-flex justify-content-center">
+                  <Button
+                    block
+                    shape="round"
+                    type="ghost"
+                    size="middle"
+                    className="thin-stroke col-6"
+                    onClick={() => onStepperChange(1)}
+                    disabled={
+                      !publicKey
+                    }
+                  >
+                    Back
+                  </Button>
+                </Col>
+                <Col span={12} className="d-flex justify-content-center">
+                  <Button
+                    block
+                    type="primary"
+                    shape="round"
+                    size="middle"
+                    className="col-6"
+                    onClick={() => {}}
+                    disabled={
+                      !publicKey ||
+                      !safeName
+                    }
+                  >
+                    {getStepTwoContinueButtonLabel()}
+                  </Button>
+                </Col>
+              </Row>
             </div>
           </>
         )}
