@@ -9,8 +9,8 @@ import {
 } from '@mean-dao/money-streaming';
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { Button, Col, Dropdown, Menu, Modal, Row, Spin, Tabs } from "antd";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, TokenAmount, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Alert, Button, Col, Dropdown, Menu, Modal, Row, Spin, Tabs } from "antd";
 import BN from "bn.js";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,7 +26,7 @@ import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
+import { findATokenAddress, formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, makeInteger, shortenAddress, toUiAmount } from "../../utils/utils";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
@@ -123,6 +123,7 @@ export const StreamingAccountView = (props: {
   const [streamingAccountActivity, setStreamingAccountActivity] = useState<VestingTreasuryActivity[]>([]);
   const [loadingStreamingAccountActivity, setLoadingStreamingAccountActivity] = useState(false);
   const [hasMoreStreamingAccountActivity, setHasMoreStreamingAccountActivity] = useState<boolean>(true);
+  const [associatedTokenBalance, setAssociatedTokenBalance] = useState(0);
 
   const V1_TREASURY_ID = useMemo(() => { return new PublicKey("DVhWHsWSybDD8n5P6ep7rP4bg7yj55MoeZGQrbLGpQtQ"); }, []);
 
@@ -444,6 +445,17 @@ export const StreamingAccountView = (props: {
     multisigAccounts,
     isMultisigTreasury
   ]);
+
+  const getTokenAccountBalanceByAddress = useCallback(async (tokenAddress: PublicKey | undefined | null): Promise<TokenAmount | null> => {
+    if (!connection || !tokenAddress) return null;
+    try {
+      const tokenAmount = (await connection.getTokenAccountBalance(tokenAddress)).value;
+      return tokenAmount;
+    } catch (error) {
+      consoleOut('getTokenAccountBalance failed for:', tokenAddress.toBase58(), 'red');
+      return null;
+    }
+  }, [connection]);
 
 
   ////////////////
@@ -2593,6 +2605,54 @@ export const StreamingAccountView = (props: {
     refreshTokenBalance
   ]);
 
+  // Keep Streaming Account ATA balance
+  useEffect(() => {
+
+    const getStreamingAccountAtaBalance = async (address: string, streamingAccountAddress: string) => {
+
+      if (!connection || !publicKey || !address || !streamingAccountAddress) {
+        return 0;
+      }
+
+      let balance = 0;
+      consoleOut('got inside getStreamingAccountAtaBalance:', '', 'blue');
+
+      try {
+        consoleOut('address', address, 'blue');
+        consoleOut('streamingAccountAddress', streamingAccountAddress, 'blue');
+        const tokenPk = new PublicKey(address);
+        const saPk = new PublicKey(streamingAccountAddress);
+        const saAtaTokenAddress = await findATokenAddress(saPk, tokenPk);
+        const ta = await getTokenAccountBalanceByAddress(saAtaTokenAddress);
+        consoleOut('getTokenAccountBalanceByAddress ->', ta, 'blue');
+        if (ta) {
+          balance = new BN(ta.amount).toNumber();
+        }
+        consoleOut('SA ATA balance:', balance, 'blue');
+        return balance;
+      } catch (error) {
+        return balance;
+      }
+
+    }
+
+    if (streamingAccountSelected) {
+      const v1 = streamingAccountSelected as TreasuryInfo;
+      const v2 = streamingAccountSelected as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      const tokenAddr = isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string;
+
+      getStreamingAccountAtaBalance(tokenAddr, streamingAccountSelected.id as string)
+      .then(value => setAssociatedTokenBalance(value))
+      .catch(err => {
+        console.error(err);
+        setAssociatedTokenBalance(0);
+      });
+
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connection, publicKey, streamingAccountSelected]);
+
   // Automatically update all token balances (in token list)
   useEffect(() => {
 
@@ -2861,7 +2921,7 @@ export const StreamingAccountView = (props: {
         return getAmountWithSymbol(getTreasuryUnallocatedBalance(), token ? token.address : '');
       }
     }
-    return "$0.00";
+    return "--";
   }, [getTokenByMintAddress, getTreasuryUnallocatedBalance, streamingAccountSelected]);
 
   const getStreamingAccountStreams = useCallback((treasuryPk: PublicKey, isNewTreasury: boolean) => {
@@ -2941,7 +3001,7 @@ export const StreamingAccountView = (props: {
         <span className="menu-item-text">Close account</span>
       </Menu.Item>
       {(streamingAccountSelected && streamingAccountSelected.id !== V1_TREASURY_ID.toBase58()) && (
-        <Menu.Item key="ms-01" disabled={hasStreamingAccountPendingTx() || !isTreasurer()} onClick={() => onExecuteRefreshTreasuryBalance()}>
+        <Menu.Item key="ms-01" disabled={hasStreamingAccountPendingTx()} onClick={() => onExecuteRefreshTreasuryBalance()}>
           <span className="menu-item-text">Refresh account data</span>
         </Menu.Item>
       )}
@@ -3182,6 +3242,7 @@ export const StreamingAccountView = (props: {
           />
         )}
 
+        {/* CTAs row */}
         <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
           <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
             <Button
@@ -3245,10 +3306,22 @@ export const StreamingAccountView = (props: {
           </Col>
         </Row>
 
-        {/* <TabsMean
-          tabs={tabs}
-          defaultTab="streams"
-        /> */}
+        {/* Alert to offer refresh treasury */}
+        {streamingAccountSelected && associatedTokenBalance !== streamingAccountSelected.balance && (
+          <div className="alert-info-message mb-2 mr-2 pr-2">
+            <Alert message={(
+                <>
+                  <span>This streaming account received an incoming funds transfer.&nbsp;</span>
+                  <span className="simplelink underline" onClick={() => onExecuteRefreshTreasuryBalance()}>Refresh the account data</span>
+                  <span>&nbsp;to update the account balance.</span>
+                </>
+              )}
+              type="info"
+              showIcon
+            />
+          </div>
+        )}
+
         {tabs && renderTabset()}
       </Spin>
 
