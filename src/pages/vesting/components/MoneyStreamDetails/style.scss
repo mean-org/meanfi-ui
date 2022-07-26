@@ -23,6 +23,11 @@
         flex-wrap: wrap;
       }
     }
+    .rate-cell {
+      .interval {
+        margin-top: 4px;
+      }
+    }
   }
   .transaction-detail-row {
     .info-data {
@@ -59,6 +64,9 @@
         flex: 0 0 auto !important;
         .rate-amount {
           font-size: 13px;
+        }
+        .interval {
+          margin-top: 4px;
         }
       }
       .actions-cell {
