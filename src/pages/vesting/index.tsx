@@ -504,7 +504,7 @@ export const VestingView = () => {
           );
         }
         setTimeout(() => {
-          hardReloadContracts();
+          softReloadContracts();
         }, 20);
         break;
       case OperationType.TreasuryWithdraw:
