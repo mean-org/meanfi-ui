@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
@@ -47,6 +47,7 @@ export const TreasuryTransferFundsModal = (props: {
     loadingPrices,
     effectiveRate,
     transactionStatus,
+    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshPrices,
@@ -261,6 +262,14 @@ export const TreasuryTransferFundsModal = (props: {
     unallocatedBalance,
     props.transactionFees,
   ]);
+
+  const getTokenPrice = useCallback(() => {
+    if (!topupAmount || !selectedToken) {
+        return 0;
+    }
+
+    return parseFloat(topupAmount) * getTokenPriceBySymbol(selectedToken.symbol);
+}, [topupAmount, selectedToken, getTokenPriceBySymbol]);
 
   const isNewTreasury = useCallback(() => {
     if (props.treasuryDetails) {
@@ -551,11 +560,18 @@ export const TreasuryTransferFundsModal = (props: {
                   )}
                 </div>
                 <div className="right inner-label">
-                  <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                    ~${topupAmount && effectiveRate
-                      ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-                      : "0.00"}
-                  </span>
+                  {publicKey ? (
+                    <>
+                      <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                      ~{topupAmount
+                          ? toUsCurrency(getTokenPrice())
+                          : "$0.00"
+                      }
+                      </span>
+                    </>
+                  ) : (
+                    <span>~$0.00</span>
+                  )}
                 </div>
               </div>
               {(parseFloat(topupAmount) > makeDecimal(unallocatedBalance, 6)) && (
