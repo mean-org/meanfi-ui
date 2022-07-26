@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
     calculateActionFees,
     MSP,
@@ -11,7 +11,7 @@ import {
     Constants as MSPV2Constants,
     StreamTemplate
 } from '@mean-dao/msp';
-import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTimeToNow, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../../../utils/ui';
+import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getShortDate, getTimeToNow, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, toTimestamp } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
@@ -22,7 +22,7 @@ import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
 import { IconVerticalEllipsis } from '../../../../Icons';
 import { getSolanaExplorerClusterParam, useConnection } from '../../../../contexts/connection';
-import { OperationType, TransactionStatus } from '../../../../models/enums';
+import { OperationType, PaymentRateType, TransactionStatus } from '../../../../models/enums';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TreasuryTopupParams } from '../../../../models/common-types';
 import { VestingContractAddFundsModal } from '../VestingContractAddFundsModal';
@@ -97,7 +97,11 @@ export const VestingContractStreamList = (props: {
     const [transactionCancelled, setTransactionCancelled] = useState(false);
     const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
     const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
-    // const [paymentStartDate, setPaymentStartDate] = useState<string>("");
+    const [paymentStartDate, setPaymentStartDate] = useState<string>("");
+    const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
+    const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
+    const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
+    const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
 
     const isDateInTheFuture = useCallback((date: string): boolean => {
         const now = new Date().toUTCString();
@@ -108,6 +112,28 @@ export const VestingContractStreamList = (props: {
         }
         return false;
     }, []);
+
+    const getContractFinishDate = useCallback(() => {
+        if (paymentStartDate && lockPeriodAmount && lockPeriodUnits) {
+            // Start date timestamp
+            const sdTimestamp = toTimestamp(paymentStartDate);
+            // Total length of vesting period in seconds
+            const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
+            // Final date = Start date + lockPeriod
+            const finishDate = new Date((sdTimestamp + lockPeriod) * 1000);
+            return finishDate;
+        }
+        return null;
+    }, [lockPeriodAmount, lockPeriodUnits, paymentStartDate]);
+
+    const isContractFinished = useCallback((): boolean => {
+        const now = new Date();
+        const comparedDate = getContractFinishDate();
+        if (!comparedDate || now > comparedDate) {
+            return true;
+        }
+        return false;
+    }, [getContractFinishDate]);
 
     const resetTransactionStatus = useCallback(() => {
 
@@ -337,6 +363,23 @@ export const VestingContractStreamList = (props: {
             }
         }
     }, [t]);
+
+    // Set template data
+    useEffect(() => {
+        if (vestingContract && streamTemplate) {
+            const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
+            setCliffReleasePercentage(cliffPercent);
+            setPaymentStartDate(streamTemplate.startUtc as string);
+            updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
+            setLockPeriodUnits(streamTemplate.rateIntervalInSeconds);
+            const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
+            setLockPeriodFrequency(periodFrequency);
+        }
+    }, [
+        streamTemplate,
+        vestingContract,
+    ]);
+
 
     //////////////
     //  Modals  //
@@ -1398,21 +1441,21 @@ export const VestingContractStreamList = (props: {
     }
 
     const getStreamClosureMessage = () => {
+        if (!paymentStartDate || !vestingContract) {
+            return <div>&nbsp;</div>;
+        }
+
         let message = '';
 
         if (publicKey && highlightedStream) {
-
-            const me = publicKey.toBase58();
-            // TODO: So, the message for a multisig treasury would be the same of that of a regular treasury???
-            // const treasurer = highlightedStream.treasurer as string;
             const beneficiary = highlightedStream.beneficiary as string;
-
-            if (beneficiary === me) {
-                message = t('close-stream.context-beneficiary', { beneficiary: shortenAddress(beneficiary) });
+            if (isDateInTheFuture(paymentStartDate)) {
+                message = t('vesting.close-account.close-stream-not-started');
+            } else if (isContractFinished()) {
+                message = t('vesting.close-account.close-stream-finished', { beneficiary: shortenAddress(beneficiary) });
             } else {
-                message = t('close-stream.context-treasurer-single-beneficiary', { beneficiary: shortenAddress(beneficiary) });
+                message = '';
             }
-
         }
 
         return (
