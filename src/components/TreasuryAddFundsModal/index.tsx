@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Divider, Input, Spin, Tooltip, AutoComplete } from 'antd';
+import { Modal, Button, Select, Divider, Input, Spin, Tooltip } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -9,22 +9,18 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, Warn
 import { TokenDisplay } from '../TokenDisplay';
 import {
   cutNumber,
-  formatAmount,
   formatThousands,
   getTokenAmountAndSymbolByTokenAddress,
-  getTokenSymbol,
   isValidNumber,
   makeDecimal,
   makeInteger,
-  shortenAddress,
-  toUiAmount
+  shortenAddress
 } from '../../utils/utils';
 import { IconCheckedBox, IconDownload, IconHelpCircle, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
 import {
   consoleOut,
   getShortDate,
   getIntervalFromSeconds,
-  getFormattedNumberToLocale,
   getTransactionOperationDescription,
   isValidAddress,
   toUsCurrency
@@ -34,7 +30,6 @@ import { TreasuryTopupParams } from '../../models/common-types';
 import { TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { isError } from '../../utils/transactions';
 import { AllocationType, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { openNotification } from '../Notifications';
@@ -82,7 +77,6 @@ export const TreasuryAddFundsModal = (props: {
   const {
     theme,
     tokenList,
-    effectiveRate,
     loadingPrices,
     transactionStatus,
     highLightableStreamId,
@@ -245,30 +239,44 @@ export const TreasuryAddFundsModal = (props: {
     let value = '';
 
     if (item) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
       if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+        value += formatThousands(item.rateAmount, token?.decimals, 2);
       } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+        value += formatThousands(makeDecimal(new BN(item.rateAmount), token?.decimals || 6), token?.decimals, 2);
       }
       value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
 
-  const getTransferAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+  const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
       if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+        value += formatThousands(item.allocationAssigned, token?.decimals, 2);
       } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+        value += formatThousands(makeDecimal(new BN(item.allocationAssigned), token?.decimals || 6), token?.decimals, 2);
       }
       value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -378,7 +386,7 @@ export const TreasuryAddFundsModal = (props: {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
       const isInbound = isInboundStream(item);
-      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getTransferAmountDisplay(item);
+      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
       if (item.rateAmount > 0) {
         rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, false, t);
       }
@@ -444,7 +452,7 @@ export const TreasuryAddFundsModal = (props: {
     t,
     isInboundStream,
     getRateAmountDisplay,
-    getTransferAmountDisplay,
+    getDepositAmountDisplay,
   ]);
 
   const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
@@ -839,7 +847,7 @@ export const TreasuryAddFundsModal = (props: {
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
-            {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getTransferAmountDisplay(item)}
+            {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
           </div>
           {item && item.rateAmount > 0 && (
             <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}</div>

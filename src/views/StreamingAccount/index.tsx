@@ -9,7 +9,7 @@ import {
 } from '@mean-dao/money-streaming';
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, TokenAmount, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Modal, Row, Spin, Tabs } from "antd";
 import BN from "bn.js";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -25,8 +25,8 @@ import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { findATokenAddress, formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, makeInteger, shortenAddress, toUiAmount } from "../../utils/utils";
+import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
+import { findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from "../../utils/utils";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
@@ -2722,6 +2722,7 @@ export const StreamingAccountView = (props: {
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
+
     if (item) {
       let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
 
@@ -2732,9 +2733,9 @@ export const StreamingAccountView = (props: {
       }
 
       if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+        value += formatThousands(item.rateAmount, token?.decimals, 2);
       } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+        value += formatThousands(makeDecimal(new BN(item.rateAmount), token?.decimals || 6), token?.decimals, 2);
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
@@ -2755,9 +2756,9 @@ export const StreamingAccountView = (props: {
       }
 
       if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+        value += formatThousands(item.allocationAssigned, token?.decimals, 2);
       } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+        value += formatThousands(makeDecimal(new BN(item.allocationAssigned), token?.decimals || 6), token?.decimals, 2);
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;

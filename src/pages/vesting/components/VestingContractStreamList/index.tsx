@@ -11,12 +11,12 @@ import {
     Constants as MSPV2Constants,
     StreamTemplate
 } from '@mean-dao/msp';
-import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getShortDate, getTimeToNow, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, toTimestamp } from '../../../../utils/ui';
+import { consoleOut, copyText, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getShortDate, getTimeToNow, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, toTimestamp } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { cutNumber, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../../../utils/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
@@ -173,7 +173,7 @@ export const VestingContractStreamList = (props: {
                 }) as TokenInfo;
             }
 
-            value += getFormattedNumberToLocale(cutNumber(makeDecimal(new BN(item.rateAmount), token?.decimals || 6), 2));
+            value += formatThousands(makeDecimal(new BN(item.rateAmount), token?.decimals || 6), token?.decimals, 2);
             value += ' ';
             value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
         }
@@ -192,7 +192,7 @@ export const VestingContractStreamList = (props: {
                 }) as TokenInfo;
             }
 
-            value += getFormattedNumberToLocale(cutNumber(makeDecimal(new BN(item.allocationAssigned), token?.decimals || 6), 2));
+            value += formatThousands(makeDecimal(new BN(item.allocationAssigned), token?.decimals || 6), token?.decimals, 2);
             value += ' ';
             value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
         }
@@ -1604,22 +1604,6 @@ export const VestingContractStreamList = (props: {
                                                 ? 'selected'
                                                 : ''}`
                                     }>
-                                    {/* <div className="icon-cell">
-                                        {getStreamTypeIcon(item)}
-                                        <div className="token-icon">
-                                            {item.associatedToken ? (
-                                                <>
-                                                    {token ? (
-                                                        <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-                                                    ) : (
-                                                        <Identicon address={item.associatedToken} style={{ width: "30", display: "inline-flex" }} />
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
-                                            )}
-                                        </div>
-                                    </div> */}
                                     <div className="description-cell no-padding simplelink" onClick={() => {
                                         sethHighlightedStream(item);
                                         setHighLightableStreamId(item.id as string);

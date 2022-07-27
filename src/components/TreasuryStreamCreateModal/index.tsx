@@ -1,28 +1,24 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import "./style.scss";
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col, AutoComplete } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
-  formatAmount,
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
-  getTokenSymbol,
   isValidNumber,
   makeDecimal,
   makeInteger,
   shortenAddress,
-  toTokenAmount,
-  toUiAmount
+  toTokenAmount
 } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import {
   consoleOut,
   disabledDate,
-  getFormattedNumberToLocale,
   getIntervalFromSeconds,
   getLockPeriodOptionLabel,
   getPaymentRateOptionLabel,
@@ -41,7 +37,7 @@ import { OperationType, PaymentRateType, TransactionStatus } from '../../models/
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
@@ -911,14 +907,21 @@ export const TreasuryStreamCreateModal = (props: {
     let value = '';
 
     if (item) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+          token = Object.assign({}, token, {
+              symbol: 'SOL'
+          }) as TokenInfo;
+      }
+
       if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+        value += formatThousands(item.rateAmount, token?.decimals, 2);
       } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+        value += formatThousands(makeDecimal(new BN(item.rateAmount), token?.decimals || 6), token?.decimals, 2);
       }
       value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);

@@ -6,9 +6,8 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
   cutNumber,
-  formatAmount,
+  formatThousands,
   getTokenAmountAndSymbolByTokenAddress,
-  getTokenSymbol,
   isValidNumber,
   makeDecimal,
   makeInteger,
@@ -20,7 +19,6 @@ import {
   consoleOut,
   getShortDate,
   getIntervalFromSeconds,
-  getFormattedNumberToLocale,
   getTransactionOperationDescription,
   isValidAddress,
   toUsCurrency
@@ -200,12 +198,12 @@ export const VestingContractAddFundsModal = (props: {
     if (item) {
       const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
       if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+        value += formatThousands(item.rateAmount, token?.decimals, 2);
       } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+        value += formatThousands(toUiAmount(new BN(item.rateAmount), token?.decimals || 6));
       }
       value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -216,12 +214,12 @@ export const VestingContractAddFundsModal = (props: {
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
       const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
       if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+        value += formatThousands(item.rateAmount, token?.decimals, 2);
       } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+        value += formatThousands(toUiAmount(new BN(item.rateAmount), token?.decimals || 6));
       }
       value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
