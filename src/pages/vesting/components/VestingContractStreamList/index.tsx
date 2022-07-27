@@ -166,6 +166,7 @@ export const VestingContractStreamList = (props: {
 
         if (item) {
             let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+            const decimals = token?.decimals || 6;
 
             if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
                 token = Object.assign({}, token, {
@@ -173,7 +174,7 @@ export const VestingContractStreamList = (props: {
                 }) as TokenInfo;
             }
 
-            value += formatThousands(makeDecimal(new BN(item.rateAmount), token?.decimals || 6), token?.decimals, 2);
+            value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
             value += ' ';
             value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
         }
@@ -185,6 +186,7 @@ export const VestingContractStreamList = (props: {
 
         if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
             let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+            const decimals = token?.decimals || 6;
 
             if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
                 token = Object.assign({}, token, {
@@ -192,7 +194,7 @@ export const VestingContractStreamList = (props: {
                 }) as TokenInfo;
             }
 
-            value += formatThousands(makeDecimal(new BN(item.allocationAssigned), token?.decimals || 6), token?.decimals, 2);
+            value += formatThousands(makeDecimal(new BN(item.allocationAssigned), decimals), decimals, 2);
             value += ' ';
             value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
         }

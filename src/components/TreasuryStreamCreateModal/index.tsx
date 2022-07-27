@@ -908,6 +908,7 @@ export const TreasuryStreamCreateModal = (props: {
 
     if (item) {
       let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      const decimals = token?.decimals || 6;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
           token = Object.assign({}, token, {
@@ -916,9 +917,9 @@ export const TreasuryStreamCreateModal = (props: {
       }
 
       if (item.version < 2) {
-        value += formatThousands(item.rateAmount, token?.decimals, 2);
+        value += formatThousands(item.rateAmount, decimals, 2);
       } else {
-        value += formatThousands(makeDecimal(new BN(item.rateAmount), token?.decimals || 6), token?.decimals, 2);
+        value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
