@@ -395,6 +395,7 @@ export const SafeView = () => {
   const onMultisigCreated = useCallback(() => {
 
     setIsCreateMultisigModalVisible(false);
+    setIsMultisigCreateSafeModalVisible(false);
     resetTransactionStatus();
     setIsBusy(false);
     // openNotification({
@@ -4509,19 +4510,6 @@ export const SafeView = () => {
           isBusy={isBusy}
         />
       )}
-
-      {/* {isMultisigProposalModalVisible && (
-        <MultisigProposalModal
-          isVisible={isMultisigProposalModalVisible}
-          handleClose={() => setMultisigProposalModalVisible(false)}
-          isBusy={isBusy}
-          proposer={publicKey ? publicKey.toBase58() : ""}
-          appsProvider={appsProvider}
-          solanaApps={solanaApps.filter(app => app.active)}
-          handleOk={onAcceptCreateProposalModal}
-          selectedMultisig={selectedMultisig}
-        />
-      )} */}
 
       {(isEditMultisigModalVisible && selectedMultisig) && (
         <MultisigEditModal

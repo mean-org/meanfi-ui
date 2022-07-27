@@ -68,7 +68,7 @@ export const MultisigCreateSafeModal = (props: {
   const onAcceptModal = () => {
     handleOk({
       label: safeName,
-      threshold: currentPosition,
+      threshold: multisigThreshold,
       owners: multisigOwners
     });
   }
@@ -78,10 +78,9 @@ export const MultisigCreateSafeModal = (props: {
   }
 
   const onAfterClose = () => {
-
     setTimeout(() => {
       setSafeName('');
-      setCurrentPosition(0);
+      setMultisigThreshold(0);
       setMultisigOwners([]);
 
     }, 50);
@@ -90,11 +89,6 @@ export const MultisigCreateSafeModal = (props: {
         lastOperation: TransactionStatus.Iddle,
         currentOperation: TransactionStatus.Iddle
     });
-  }
-
-  const refreshPage = () => {
-    handleClose();
-    window.location.reload();
   }
 
   const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
@@ -107,11 +101,11 @@ export const MultisigCreateSafeModal = (props: {
   }
 
   const isFormValid = () => {
-    return  currentPosition &&
-            currentPosition >= 1 &&
-            currentPosition <= MAX_MULTISIG_PARTICIPANTS &&
+    return  multisigThreshold &&
+            multisigThreshold >= 1 &&
+            multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
             safeName &&
-            multisigOwners.length >= currentPosition &&
+            multisigOwners.length >= multisigThreshold &&
             multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
             isOwnersListValid() &&
             noDuplicateExists(multisigOwners)
@@ -139,8 +133,6 @@ export const MultisigCreateSafeModal = (props: {
     isVisible,
     multisigAccounts
   ]);
-
-  const [currentPosition, setCurrentPosition] = useState(0);
 
   return (
     <Modal
@@ -244,12 +236,12 @@ export const MultisigCreateSafeModal = (props: {
                   <div className="required-signatures-icons">
                     {multisigOwners.map((icon, index) => {
                       const onSelectIcon = () => {
-                        setCurrentPosition(index + 1);
+                        setMultisigThreshold(index + 1);
                       }
 
                       return (
                         <div className="icon-container simplelink" key={index} onClick={onSelectIcon}>
-                          {(currentPosition >= (index + 1)) ? (
+                          {(multisigThreshold >= (index + 1)) ? (
                             <IconKey className="mean-svg-icons key-icon"/>
                           ) : (
                             <IconLock className="mean-svg-icons lock-icon"/>
@@ -298,13 +290,13 @@ export const MultisigCreateSafeModal = (props: {
 
                     {/* Signatures */}
                     <Row className="mb-1">
-                      {(currentPosition && multisigOwners) && (
+                      {(multisigThreshold && multisigOwners) && (
                         <>
                           <Col span={8} className="text-right pr-1">
                             <span className="info-label">Signatures:</span>
                           </Col>
                           <Col span={16} className="text-left pl-1">
-                            <span>{`${currentPosition}/${multisigOwners.length} ${currentPosition > 1 ? "signatures" : "signature"} to pass a proposal`}</span>
+                            <span>{`${multisigThreshold}/${multisigOwners.length} ${multisigThreshold > 1 ? "signatures" : "signature"} to pass a proposal`}</span>
                           </Col>
                         </>
                       )}
@@ -361,7 +353,7 @@ export const MultisigCreateSafeModal = (props: {
                     //   !publicKey ||
                     //   !safeName ||
                     //   multisigOwners.length === 0 ||
-                    //   currentPosition === 0
+                    //   multisigThreshold === 0
                     // }
                     disabled={!publicKey || !isFormValid()}
                   >
@@ -400,7 +392,7 @@ export const MultisigCreateSafeModal = (props: {
                       !publicKey ||
                       !safeName ||
                       multisigOwners.length === 0 ||
-                      currentPosition === 0
+                      multisigThreshold === 0
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
