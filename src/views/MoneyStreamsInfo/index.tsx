@@ -2187,17 +2187,17 @@ export const MoneyStreamsInfoView = (props: {
               </div>
             </div>
             <div className="d-flex justify-content-space-between">
-              <span className="incoming-amount">{rateIncomingPerSecond ? `+ $${cutNumber(rateIncomingPerSecond, 4)}/second` :  "$0.00"}</span>
-              <span className="incoming-amount">{rateIncomingPerDay ? `+ $${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
+              {loadingCombinedStreamingList || loadingStreams ? (
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              ) : (
+                <span className="incoming-amount">{rateIncomingPerSecond ? `+ $${cutNumber(rateIncomingPerSecond, 4)}/second` :  "$0.00"}</span>
+              )}
+              {loadingCombinedStreamingList || loadingStreams ? (
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              ) : (
+                <span className="incoming-amount">{rateIncomingPerDay ? `+ $${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
+              )}
             </div>
-            {/* <div className="info-value">
-              <span className="mr-1">Total streams:</span>
-              <span>
-                {loadingCombinedStreamingList || loadingStreams ? (
-                  <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-                ) : formatThousands(incomingAmount as number)}
-              </span>
-            </div> */}
           </div>
           <div className="stream-balance">
             <div className="info-label">
@@ -2264,17 +2264,17 @@ export const MoneyStreamsInfoView = (props: {
               </div>
             </div>
             <div className="d-flex justify-content-space-between">
-              <span className="outgoing-amount">{rateOutgoingPerSecond ? `+ $${cutNumber(rateOutgoingPerSecond, 4)}/second` :  "$0.00"}</span>
-              <span className="outgoing-amount">{rateOutgoingPerDay ? `+ $${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
-            </div>
-            {/* <div className="info-value">
-              <span className="mr-1">Total streams:</span>
-              <span>
+              {loadingCombinedStreamingList || loadingStreams ? (
+                  <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                ) : (
+                  <span className="outgoing-amount">{rateOutgoingPerSecond ? `+ $${cutNumber(rateOutgoingPerSecond, 4)}/second` :  "$0.00"}</span>
+                )}
                 {loadingCombinedStreamingList || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-                ) : formatThousands(outgoingAmount as number)}
-              </span>
-            </div> */}
+                ) : (
+                  <span className="outgoing-amount">{rateOutgoingPerDay ? `+ $${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
+                )}
+            </div>
           </div>
           <div className="stream-balance">
             <div className="info-label">
