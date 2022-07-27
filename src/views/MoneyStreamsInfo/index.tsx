@@ -139,7 +139,9 @@ export const MoneyStreamsInfoView = (props: {
   const [withdrawalBalance, setWithdrawalBalance] = useState(0);
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
   const [totalAccountBalance, setTotalAccountBalance] = useState<number | undefined>(undefined);
+  const [rateIncomingPerSecond, setRateIncomingPerSecond] = useState(0);
   const [rateIncomingPerDay, setRateIncomingPerDay] = useState(0);
+  const [rateOutgoingPerSecond, setRateOutgoingPerSecond] = useState(0);
   const [rateOutgoingPerDay, setRateOutgoingPerDay] = useState(0);
   const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
@@ -1890,7 +1892,8 @@ export const MoneyStreamsInfoView = (props: {
     if (incomingStreamList && !loadingStreams) {
       const runningIncomingStreams = incomingStreamList.filter((stream: Stream | StreamInfo) => isStreamRunning(stream));
 
-      let totalRateAmountValue = 0;
+      let totalRateAmountValuePerDay = 0;
+      let totalRateAmountValuePerSecond = 0;
 
       for (const stream of runningIncomingStreams) {
         const v1 = stream as StreamInfo;
@@ -1903,13 +1906,16 @@ export const MoneyStreamsInfoView = (props: {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
           const rateAmountValue = isNew ? toUiAmount(new BN(v2.rateAmount), token.decimals) : v1.rateAmount;
           const valueOfDay = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
-          totalRateAmountValue += valueOfDay
+          totalRateAmountValuePerDay += valueOfDay
+
+          const valueOfSeconds = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds;
+          totalRateAmountValuePerSecond += valueOfSeconds
         }
       }
 
       setHasIncomingStreamsRunning(runningIncomingStreams.length);
-
-      setRateIncomingPerDay(totalRateAmountValue);
+      setRateIncomingPerDay(totalRateAmountValuePerDay);
+      setRateIncomingPerSecond(totalRateAmountValuePerSecond);
     }
   }, [
     loadingStreams,
@@ -1941,6 +1947,7 @@ export const MoneyStreamsInfoView = (props: {
       }
 
       let totalRateAmountValue = 0;
+      let totalRateAmountValuePerSecond = 0;
 
       for (const stream of runningOutgoingStreams) {
         const v1 = stream as StreamInfo;
@@ -1954,11 +1961,15 @@ export const MoneyStreamsInfoView = (props: {
           const rateAmountValue = isNew ? toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount;
           const valueOfDay = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
           totalRateAmountValue += valueOfDay;
+
+          const valueOfSeconds = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds;
+          totalRateAmountValuePerSecond += valueOfSeconds;
         }
       }
 
       setHasOutgoingStreamsRunning(runningOutgoingStreams.length);
       setRateOutgoingPerDay(totalRateAmountValue);
+      setRateOutgoingPerSecond(totalRateAmountValuePerSecond);
     }
   }, [
     loadingStreams,
@@ -2175,7 +2186,8 @@ export const MoneyStreamsInfoView = (props: {
                 </span>
               </div>
             </div>
-            <div>
+            <div className="d-flex justify-content-space-between">
+              <span className="incoming-amount">{rateIncomingPerSecond ? `+ $${cutNumber(rateIncomingPerSecond, 4)}/second` :  "$0.00"}</span>
               <span className="incoming-amount">{rateIncomingPerDay ? `+ $${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
             {/* <div className="info-value">
@@ -2251,8 +2263,9 @@ export const MoneyStreamsInfoView = (props: {
                 </span>
               </div>
             </div>
-            <div>
-              <span className="outgoing-amount">{rateOutgoingPerDay ? `- $${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
+            <div className="d-flex justify-content-space-between">
+              <span className="outgoing-amount">{rateOutgoingPerSecond ? `+ $${cutNumber(rateOutgoingPerSecond, 4)}/second` :  "$0.00"}</span>
+              <span className="outgoing-amount">{rateOutgoingPerDay ? `+ $${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
             {/* <div className="info-value">
               <span className="mr-1">Total streams:</span>
