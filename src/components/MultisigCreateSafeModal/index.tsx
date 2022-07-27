@@ -12,7 +12,7 @@ import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { getTokenAmountAndSymbolByTokenAddress } from "../../utils/utils";
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { getTransactionOperationDescription, isValidAddress } from "../../utils/ui";
 import { isError } from "../../utils/transactions";
@@ -136,6 +136,15 @@ export const MultisigCreateSafeModal = (props: {
     isVisible,
     multisigAccounts
   ]);
+
+  const [createdByName, setCreatedByName] = useState<string>("");
+
+  useEffect(() => {
+    const owner = multisigOwners.filter((owner) => owner.address === publicKey?.toBase58());
+    const ownerName = Object.assign({}, ...owner);
+
+    setCreatedByName(ownerName.name);
+  }, [multisigOwners, publicKey]);
 
   return (
     <Modal
@@ -279,13 +288,17 @@ export const MultisigCreateSafeModal = (props: {
 
                     {/* Created by */}
                     <Row className="mb-1">
-                      {safeName && (
+                      {publicKey && (
                         <>
                           <Col span={8} className="text-right pr-1">
                             <span className="info-label">Created by:</span>
                           </Col>
                           <Col span={16} className="text-left pl-1">
-                            <span>{safeName}</span>
+                            {createdByName ? (
+                              <span>{`${createdByName} (${shortenAddress(publicKey.toBase58(), 4)})`}</span>
+                            ) : (
+                              <span>{shortenAddress(publicKey.toBase58(), 4)}</span>
+                            )}
                           </Col>
                         </>
                       )}

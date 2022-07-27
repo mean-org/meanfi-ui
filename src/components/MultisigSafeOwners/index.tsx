@@ -112,8 +112,8 @@ export const MultisigSafeOwners = (props: {
         <div id="multisig-participants-max-height" className={`mb-3 ${participants.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
           {participants.map((participant: MultisigParticipant, index: number) => {
             return (
-              <div className="container-owner-item">
-                <div className={`two-column-layout w-100 mb-0 ${disabled ? 'disabled' : ''}`} key={`${index}`}>
+              <div className="container-owner-item" key={index}>
+                <div className={`two-column-layout w-100 mb-0 ${disabled ? 'disabled' : ''}`}>
                   <div className="left">
                     <InputMean
                       id={`participant-name-${index + 1}`}
