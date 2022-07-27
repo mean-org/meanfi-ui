@@ -2190,12 +2190,18 @@ export const MoneyStreamsInfoView = (props: {
               {loadingCombinedStreamingList || loadingStreams ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : (
-                <span className="incoming-amount">{rateIncomingPerSecond ? `+ $${cutNumber(rateIncomingPerSecond, 4)}/second` :  "$0.00"}</span>
+                <span className="incoming-amount">{rateIncomingPerSecond ? (
+                    (rateIncomingPerSecond > 0 && rateIncomingPerSecond < 0.01) ? `< $0.01/second` : `+ $${cutNumber(rateIncomingPerSecond, 4)}/second`
+                  ) : "$0.00"}
+                </span>
               )}
               {loadingCombinedStreamingList || loadingStreams ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : (
-                <span className="incoming-amount">{rateIncomingPerDay ? `+ $${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
+                <span className="incoming-amount">{rateIncomingPerDay ? (
+                    (rateIncomingPerDay > 0 && rateIncomingPerDay < 0.01) ? `< $0.01/day` : `+ $${cutNumber(rateIncomingPerDay, 4)}/day`
+                  ) : "$0.00"}
+                </span>
               )}
             </div>
           </div>
@@ -2267,12 +2273,18 @@ export const MoneyStreamsInfoView = (props: {
               {loadingCombinedStreamingList || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : (
-                  <span className="outgoing-amount">{rateOutgoingPerSecond ? `+ $${cutNumber(rateOutgoingPerSecond, 4)}/second` :  "$0.00"}</span>
+                  <span className="outgoing-amount">{rateOutgoingPerSecond ? (
+                      (rateOutgoingPerSecond > 0 && rateOutgoingPerSecond < 0.01) ? `< $0.01/second` : `+ $${cutNumber(rateOutgoingPerSecond, 4)}/second`
+                    ) : "$0.00"}
+                  </span>
                 )}
                 {loadingCombinedStreamingList || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : (
-                  <span className="outgoing-amount">{rateOutgoingPerDay ? `+ $${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
+                  <span className="outgoing-amount">{rateOutgoingPerDay ? (
+                      (rateOutgoingPerDay > 0 && rateOutgoingPerDay < 0.01) ? `< $0.01/day` : `+ $${cutNumber(rateOutgoingPerDay, 4)}/day`
+                    ) : "$0.00"}
+                  </span>
                 )}
             </div>
           </div>
