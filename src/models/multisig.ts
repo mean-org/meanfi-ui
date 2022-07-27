@@ -1,4 +1,4 @@
-import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, Message, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { AnchorProvider, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
 import { IDL as SplTokenIdl } from "@project-serum/anchor/dist/cjs/spl/token";
 import { OperationType } from "./enums";
@@ -549,7 +549,19 @@ export const parseSerializedTx = async (
     }
 
     const buffer = Buffer.from(base64Str, 'base64');
-    const tx = Transaction.from(buffer);
+
+    let tx: Transaction | null = null;
+    
+    try {
+      tx = Transaction.from(buffer);
+    } catch (error) {
+      // Errors above indicate that the bytes do not encode a transaction.
+    }
+
+    if(!tx) {
+      const message = Message.from(buffer);
+      tx = Transaction.populate(message);
+    }
 
     return tx;
 
