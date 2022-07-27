@@ -2170,7 +2170,7 @@ export const MoneyStreamsInfoView = (props: {
           </div>
           ) : null}
           <div className="incoming-stream-amount">
-            <div className="incoming-stream-running">
+            <div className="incoming-stream-running mb-1">
               <div className="d-flex align-items-center text-center">
                 <h4>
                   {loadingCombinedStreamingList || loadingStreams ? (
@@ -2255,7 +2255,7 @@ export const MoneyStreamsInfoView = (props: {
             </div>
           ) : null}
           <div className="outgoing-stream-amount">
-            <div className="outgoing-stream-running">
+            <div className="outgoing-stream-running mb-1">
               <div className="d-flex align-items-center">
                 <h4>
                   {loadingCombinedStreamingList || loadingStreams ? (
@@ -2277,7 +2277,7 @@ export const MoneyStreamsInfoView = (props: {
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : (
                   <span className="outgoing-amount">{rateOutgoingPerSecond ? (
-                      (rateOutgoingPerSecond > 0 && rateOutgoingPerSecond < 0.01) ? `< $0.01/second` : `+ $${cutNumber(rateOutgoingPerSecond, 4)}/second`
+                      (rateOutgoingPerSecond > 0 && rateOutgoingPerSecond < 0.01) ? `< $0.01/second` : `- $${cutNumber(rateOutgoingPerSecond, 4)}/second`
                     ) : "$0.00"}
                   </span>
                 )}
@@ -2285,7 +2285,7 @@ export const MoneyStreamsInfoView = (props: {
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : (
                   <span className="outgoing-amount">{rateOutgoingPerDay ? (
-                      (rateOutgoingPerDay > 0 && rateOutgoingPerDay < 0.01) ? `< $0.01/day` : `+ $${cutNumber(rateOutgoingPerDay, 4)}/day`
+                      (rateOutgoingPerDay > 0 && rateOutgoingPerDay < 0.01) ? `< $0.01/day` : `- $${cutNumber(rateOutgoingPerDay, 4)}/day`
                     ) : "$0.00"}
                   </span>
                 )}
