@@ -119,8 +119,11 @@ export const MultisigCreateSafeModal = (props: {
       setMultisigThreshold(1);
       const items: MultisigParticipant[] = [];
       items.push({
-          name: `Owner 1`,
-          address: publicKey.toBase58()
+        name: `Owner 1`,
+        address: publicKey.toBase58()
+      }, {
+        name: `Owner 2`,
+        address: '' 
       });
       setMultisigOwners(items);
       if (multisigAccounts && multisigAccounts.length > 0) {
