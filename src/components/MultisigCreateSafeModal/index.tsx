@@ -1,4 +1,4 @@
-import { Button, Col, Divider, Modal, Row } from "antd";
+import { Button, Col, Divider, Modal, Row, Spin } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
@@ -7,17 +7,25 @@ import { TransactionStatus } from "../../models/enums";
 import { StepSelector } from "../StepSelector";
 import "./style.scss";
 import { IconKey, IconLock } from "../../Icons";
-import { MultisigInfo, MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
+import { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { getTokenAmountAndSymbolByTokenAddress } from "../../utils/utils";
+import { NATIVE_SOL_MINT } from "../../utils/ids";
+import { getTransactionOperationDescription, isValidAddress } from "../../utils/ui";
+import { isError } from "../../utils/transactions";
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigCreateSafeModal = (props: {
   handleClose: any;
-  // handleOk: any;
+  handleOk: any;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
+  transactionFees: MultisigTransactionFees;
   multisigAccounts: MultisigInfo[];
 }) => {
   const { t } = useTranslation('common');
@@ -27,7 +35,7 @@ export const MultisigCreateSafeModal = (props: {
     setTransactionStatus,
   } = useContext(AppStateContext);
 
-  const { handleClose, isVisible, isBusy, nativeBalance, multisigAccounts } = props;
+  const { handleClose, handleOk, isVisible, isBusy, nativeBalance, transactionFees, multisigAccounts } = props;
 
   const [currentStep, setCurrentStep] = useState(0);
   const [safeName, setSafeName] = useState('');
@@ -55,6 +63,60 @@ export const MultisigCreateSafeModal = (props: {
 
   const onSafeNameInputValueChange = (e: any) => {
     setSafeName(e.target.value);
+  }
+
+  const onAcceptModal = () => {
+    handleOk({
+      label: safeName,
+      threshold: currentPosition,
+      owners: multisigOwners
+    });
+  }
+
+  const onCloseModal = () => {
+    handleClose();
+  }
+
+  const onAfterClose = () => {
+
+    setTimeout(() => {
+      setSafeName('');
+      setCurrentPosition(0);
+      setMultisigOwners([]);
+
+    }, 50);
+
+    setTransactionStatus({
+        lastOperation: TransactionStatus.Iddle,
+        currentOperation: TransactionStatus.Iddle
+    });
+  }
+
+  const refreshPage = () => {
+    handleClose();
+    window.location.reload();
+  }
+
+  const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
+    const items = arr.map(i => i.address);
+    return new Set(items).size === items.length ? true : false;
+  }
+
+  const isOwnersListValid = () => {
+    return multisigOwners.every(o => o.address.length > 0 && isValidAddress(o.address));
+  }
+
+  const isFormValid = () => {
+    return  currentPosition &&
+            currentPosition >= 1 &&
+            currentPosition <= MAX_MULTISIG_PARTICIPANTS &&
+            safeName &&
+            multisigOwners.length >= currentPosition &&
+            multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
+            isOwnersListValid() &&
+            noDuplicateExists(multisigOwners)
+      ? true
+      : false;
   }
 
   // When modal goes visible, add current wallet address as first participant
@@ -87,15 +149,12 @@ export const MultisigCreateSafeModal = (props: {
       maskClosable={false}
       footer={null}
       visible={isVisible}
-      // onOk={onAcceptModal}
-      onCancel={handleClose}
-      // afterClose={onAfterClose}
+      onCancel={onCloseModal}
+      afterClose={onAfterClose}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-      {/* <Divider plain /> */}
-
       <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle && (
+        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             <div className="scrollable-content">
               <StepSelector step={currentStep} steps={3} onValueSelected={onStepperChange} />
@@ -153,7 +212,7 @@ export const MultisigCreateSafeModal = (props: {
                   {/* Safe name */}
                   <div className="mb-3 mt-2">
                     <div className="form-label">{t('multisig.create-multisig.multisig-label-input-label')}</div>
-                    <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+                    <div className={`well ${isBusy ? 'disabled' : ''}`}>
                       <div className="flex-fixed-right">
                         <div className="left">
                           <input
@@ -271,6 +330,8 @@ export const MultisigCreateSafeModal = (props: {
               </div>
             </div>
 
+            <Divider plain />
+
             <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
               <Row>
                 <Col span={12} className="d-flex justify-content-center">
@@ -296,12 +357,13 @@ export const MultisigCreateSafeModal = (props: {
                     size="middle"
                     className="col-6"
                     onClick={onContinueStepTwoButtonClick}
-                    disabled={
-                      !publicKey ||
-                      !safeName ||
-                      multisigOwners.length === 0 ||
-                      currentPosition === 0
-                    }
+                    // disabled={
+                    //   !publicKey ||
+                    //   !safeName ||
+                    //   multisigOwners.length === 0 ||
+                    //   currentPosition === 0
+                    // }
+                    disabled={!publicKey || !isFormValid()}
                   >
                     {getStepTwoContinueButtonLabel()}
                   </Button>
@@ -333,10 +395,12 @@ export const MultisigCreateSafeModal = (props: {
                     shape="round"
                     size="middle"
                     className="col-6"
-                    onClick={() => {}}
+                    onClick={() => onAcceptModal()}
                     disabled={
                       !publicKey ||
-                      !safeName
+                      !safeName ||
+                      multisigOwners.length === 0 ||
+                      currentPosition === 0
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
@@ -345,6 +409,88 @@ export const MultisigCreateSafeModal = (props: {
               </Row>
             </div>
           </>
+        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
+          <>
+            <div className="transaction-progress p-2">
+              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              <h4 className="font-bold">{t('multisig.update-multisig.success-message')}</h4>
+              <div className="row two-col-ctas mt-3 transaction-progress p-2">
+                <div className="col-12">
+                  <Button
+                    block
+                    type="text"
+                    shape="round"
+                    size="middle"
+                    className={isBusy ? 'inactive' : ''}
+                    onClick={() => onCloseModal()}>
+                    {t('general.cta-close')}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="transaction-progress p-2">
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      nativeBalance,
+                      NATIVE_SOL_MINT.toBase58()
+                    ),
+                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      transactionFees.networkFee + transactionFees.multisigFee + transactionFees.rentExempt,
+                      NATIVE_SOL_MINT.toBase58()
+                    )})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-3">
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                </h4>
+              )}
+              {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+                <div className="row two-col-ctas mt-3 transaction-progress p-2">
+                  <div className="col-12">
+                    <Button
+                      block
+                      type="text"
+                      shape="round"
+                      size="middle"
+                      className={isBusy ? 'inactive' : ''}
+                      onClick={() => (isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
+                        ? onAcceptModal()
+                        : onCloseModal()}>
+                      {(isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
+                        ? t('general.retry')
+                        : t('general.cta-close')
+                      }
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className={
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
+            ? "panel2 show" 
+            : "panel2 hide"
+          }>
+        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
+          <div className="transaction-progress">
+            <Spin indicator={bigLoadingIcon} className="icon m-2" />
+            <h4 className="font-bold mb-1">
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+            </h4>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            )}
+          </div>
         )}
       </div>
     </Modal>

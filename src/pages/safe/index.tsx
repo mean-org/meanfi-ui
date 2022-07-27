@@ -4502,9 +4502,9 @@ export const SafeView = () => {
         <MultisigCreateSafeModal
           isVisible={isMultisigCreateSafeModalVisible}
           nativeBalance={nativeBalance}
-          // transactionFees={transactionFees}
+          transactionFees={transactionFees}
           multisigAccounts={multisigAccounts}
-          // handleOk={onAcceptCreateMultisig}
+          handleOk={onAcceptCreateMultisig}
           handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
           isBusy={isBusy}
         />
