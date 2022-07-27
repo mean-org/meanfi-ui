@@ -5265,7 +5265,7 @@ export const AccountsNewView = () => {
                         </span>
                       )}
                       <span className="icon-button-container">
-                        <Tooltip placement="top" title={t('assets.account-address-copy-cta')}>
+                        <Tooltip placement="top" title={t('account-area.explorer-link')}>
                           <Button
                             type="default"
                             shape="circle"
