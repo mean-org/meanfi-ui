@@ -2157,8 +2157,15 @@ export const MoneyStreamsInfoView = (props: {
           ) : null}
           <div className="incoming-stream-amount">
             <div className="incoming-stream-running">
-              <div className="d-flex align-items-center">
-                <h4>Incoming streams</h4>
+              <div className="d-flex align-items-center text-center">
+                <h4>
+                  {loadingCombinedStreamingList || loadingStreams ? (
+                    <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                  ) : (
+                    formatThousands(incomingAmount as number)
+                  )}
+                  <span className="ml-1">Incoming streams</span>
+                </h4>
                 <span className="info-icon">
                   {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
                     <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
@@ -2167,16 +2174,18 @@ export const MoneyStreamsInfoView = (props: {
                   )}
                 </span>
               </div>
+            </div>
+            <div>
               <span className="incoming-amount">{rateIncomingPerDay ? `+ $${cutNumber(rateIncomingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
-            <div className="info-value">
+            {/* <div className="info-value">
               <span className="mr-1">Total streams:</span>
               <span>
                 {loadingCombinedStreamingList || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : formatThousands(incomingAmount as number)}
               </span>
-            </div>
+            </div> */}
           </div>
           <div className="stream-balance">
             <div className="info-label">
@@ -2227,7 +2236,12 @@ export const MoneyStreamsInfoView = (props: {
           <div className="outgoing-stream-amount">
             <div className="outgoing-stream-running">
               <div className="d-flex align-items-center">
-                <h4>Outgoing streams</h4>
+                <h4>
+                  {loadingCombinedStreamingList || loadingStreams ? (
+                    <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                  ) : formatThousands(outgoingAmount as number)}
+                  <span className="ml-1">Outgoing streams</span>
+                </h4>
                 <span className="info-icon">
                   {(hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0) ? (
                     <ArrowUpOutlined className="mean-svg-icons outgoing bounce ml-1" />
@@ -2236,16 +2250,18 @@ export const MoneyStreamsInfoView = (props: {
                   )}
                 </span>
               </div>
+            </div>
+            <div>
               <span className="outgoing-amount">{rateOutgoingPerDay ? `- $${cutNumber(rateOutgoingPerDay, 4)}/day` :  "$0.00"}</span>
             </div>
-            <div className="info-value">
+            {/* <div className="info-value">
               <span className="mr-1">Total streams:</span>
               <span>
                 {loadingCombinedStreamingList || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : formatThousands(outgoingAmount as number)}
               </span>
-            </div>
+            </div> */}
           </div>
           <div className="stream-balance">
             <div className="info-label">
