@@ -1324,7 +1324,7 @@ export const InvestView = () => {
                                     </a>
                                   ))}
                                   {orcaInfo.map((orca: any) => (
-                                    <a key={orca.name2} className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools">
+                                    <a key={orca.name2} className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools?pool=MEAN/USDC">
                                     <div className="std-table-cell responsive-cell pl-0">
                                       <div className="icon-cell pr-1 d-inline-block">
                                         <div className="token-icon">
