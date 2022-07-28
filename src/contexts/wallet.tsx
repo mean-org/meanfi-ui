@@ -221,9 +221,9 @@ export function WalletProvider({ children = null as any }) {
   const [providerName, setProviderName] = useLocalStorageState("providerName");
   const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
 
-  const resetWalletProvider = () => {
+  const resetWalletProvider = useCallback(() => {
     setProviderName(null);
-  }
+  }, [setProviderName]);
 
   const provider = useMemo(() => {
     const item = WALLET_PROVIDERS.find(({ name }) => name === providerName);
@@ -325,11 +325,16 @@ export function WalletProvider({ children = null as any }) {
       wallet.connect()
       .catch(error => {
         consoleOut('wallet.connect() error', error, 'red');
-      });
+      })
+      .finally(() => setTimeout(() => {
+        if (!wallet || !wallet.connected) {
+          resetWalletProvider();
+        }
+      }, 1000));
     }
 
     return () => {};
-  }, [wallet, autoConnect]);
+  }, [wallet, autoConnect, resetWalletProvider]);
 
   return (
     <WalletContext.Provider
