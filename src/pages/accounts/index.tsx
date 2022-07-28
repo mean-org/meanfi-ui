@@ -5196,6 +5196,8 @@ export const AccountsNewView = () => {
 
                 {/* Left / top panel */}
                 <div className="meanfi-two-panel-left">
+                  <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
+                  <div id="streams-refresh-reset-cta" onClick={onRefreshStreamsReset}></div>
                   <div className="meanfi-panel-heading">
                     {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" ? (
                       <>
@@ -5391,8 +5393,6 @@ export const AccountsNewView = () => {
                       </>
                     ) : selectedCategory === "streaming" ? (
                       <div className="scroll-wrapper vertical-scroll">
-                        <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
-                        <div id="streams-refresh-reset-cta" onClick={onRefreshStreamsReset}></div>
                         {!pathParamStreamId && !pathParamTreasuryId ? (
                           <MoneyStreamsInfoView
                             accountAddress={accountAddress}

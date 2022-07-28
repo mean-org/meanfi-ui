@@ -207,7 +207,7 @@ const WalletContext = React.createContext<{
 }>({
   wallet: undefined,
   connected: false,
-  connecting: false,
+  connecting: true,
   select() {},
   autoConnect: true,
   provider: undefined,
@@ -263,7 +263,7 @@ export function WalletProvider({ children = null as any }) {
   }, [provider, providerName, wallets]);
 
   const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(false);
+  const [connecting, setConnecting] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const select = useCallback(() => {
     setIsModalVisible(true);
