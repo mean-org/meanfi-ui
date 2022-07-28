@@ -1605,13 +1605,13 @@ export const TreasuryStreamCreateModal = (props: {
         {(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
           <>
             {token ? (
-              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+              <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
-              <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "30", display: "inline-flex" }} />
+              <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "20", display: "inline-flex" }} />
             )}
           </>
         ) : (
-          <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+          <Identicon address={item.id} style={{ width: "20", display: "inline-flex" }} />
         )}
       </div>
     );
@@ -1758,22 +1758,21 @@ export const TreasuryStreamCreateModal = (props: {
                         </div>
                         <div className={`well ${isBusy ? 'disabled' : ''}`}>
                           <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                            <div className="left mr-0">
-                              {treasuryList && treasuryList.length > 0 && (
-                                <Select className={`auto-height`} value={selectedStreamingAccountId}
-                                  style={{width:"100%", maxWidth:'none'}}
-                                  onChange={onStreamingAccountSelected}
-                                  bordered={false}
-                                  showArrow={false}
-                                  dropdownRender={menu => (
-                                  <div>{menu}</div>
-                                )}>
-                                  {treasuryList.map(option => {
-                                    return renderStreamingAccountItem(option);
-                                  })}
-                                </Select>
-                              )}
-                            </div>
+                            {treasuryList && treasuryList.length > 0 && (
+                              <Select className={`auto-height`} value={selectedStreamingAccountId}
+                                style={{width:"100%", maxWidth:'none'}}
+                                dropdownClassName="stream-select-dropdown"
+                                onChange={onStreamingAccountSelected}
+                                bordered={false}
+                                showArrow={false}
+                                dropdownRender={menu => (
+                                <div>{menu}</div>
+                              )}>
+                                {treasuryList.map(option => {
+                                  return renderStreamingAccountItem(option);
+                                })}
+                              </Select>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -26,7 +26,7 @@ import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from "../../utils/utils";
+import { fetchAccountTokens, findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from "../../utils/utils";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
@@ -226,25 +226,19 @@ export const StreamingAccountView = (props: {
 
   const refreshUserBalances = useCallback(() => {
 
-    if (!connection || !publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+    if (!connection || !publicKey || !tokenList) {
       return;
     }
 
     const balancesMap: any = {};
-    connection.getTokenAccountsByOwner(
-      publicKey, 
-      { programId: TOKEN_PROGRAM_ID }, 
-      connection.commitment
-    )
-    .then(response => {
-      for (const acc of response.value) {
-        const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-        const address = decoded.mint.toBase58();
-        const itemIndex = tokenList.findIndex(t => t.address === address);
-        if (itemIndex !== -1) {
-          balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-        } else {
-          balancesMap[address] = 0;
+
+    fetchAccountTokens(connection, publicKey)
+    .then(accTks => {
+      if (accTks) {
+        for (const item of accTks) {
+          const address = item.parsedInfo.mint;
+          const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+          balancesMap[address] = balance;
         }
       }
     })
@@ -257,7 +251,6 @@ export const StreamingAccountView = (props: {
     .finally(() => setUserBalances(balancesMap));
 
   }, [
-    accounts,
     publicKey,
     tokenList,
     connection,

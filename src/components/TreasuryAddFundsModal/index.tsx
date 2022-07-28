@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Divider, Input, Spin, Tooltip } from 'antd';
+import { Modal, Button, Select, Spin, Tooltip } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { NATIVE_SOL } from '../../utils/tokens';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import {
@@ -16,7 +15,7 @@ import {
   makeInteger,
   shortenAddress
 } from '../../utils/utils';
-import { IconCheckedBox, IconDownload, IconHelpCircle, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
+import { IconDownload, IconHelpCircle, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
 import {
   consoleOut,
   getShortDate,
@@ -457,25 +456,6 @@ export const TreasuryAddFundsModal = (props: {
     getDepositAmountDisplay,
   ]);
 
-  const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
-    const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
-    if (ellipsisElements && ellipsisElements.length) {
-      const element = ellipsisElements[0];
-      if (state) {
-        if (!element.classList.contains('overflow-ellipsis-middle')) {
-          element.classList.add('overflow-ellipsis-middle');
-        }
-      } else {
-        if (element.classList.contains('overflow-ellipsis-middle')) {
-          element.classList.remove('overflow-ellipsis-middle');
-        }
-      }
-      setTimeout(() => {
-        triggerWindowResize();
-      }, 10);
-    }
-  }, []);
-
   const setCustomToken = useCallback((address: string) => {
 
     if (address && isValidAddress(address)) {
@@ -489,7 +469,6 @@ export const TreasuryAddFundsModal = (props: {
       setSelectedToken(unkToken);
       consoleOut("token selected:", unkToken, 'blue');
       setEffectiveRate(0);
-      toggleOverflowEllipsisMiddle(true);
     } else {
       openNotification({
         title: t('notifications.error-title'),
@@ -498,7 +477,6 @@ export const TreasuryAddFundsModal = (props: {
       });
     }
   }, [
-    toggleOverflowEllipsisMiddle,
     setEffectiveRate,
     setSelectedToken,
     t,
@@ -506,6 +484,8 @@ export const TreasuryAddFundsModal = (props: {
 
   const selectFromTokenBalance = useCallback(() => {
     if (!selectedToken) { return nativeBalance; }
+    consoleOut(`selectedToken:`, selectedToken ? selectedToken.address : '-', 'blue');
+    consoleOut(`tokenBalance:`, tokenBalance || 0, 'blue');
     return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
       ? nativeBalance
       : tokenBalance
@@ -582,6 +562,7 @@ export const TreasuryAddFundsModal = (props: {
   // Keep token balance updated
   useEffect(() => {
     if (selectedToken && userBalances) {
+      consoleOut('userBalances:', userBalances, 'blue');
       if (userBalances[selectedToken.address]) {
         setSelectedTokenBalance(userBalances[selectedToken.address]);
       }
@@ -601,7 +582,7 @@ export const TreasuryAddFundsModal = (props: {
       } else {
         // Take source balance from the user's wallet
         const balance = makeInteger(selectFromTokenBalance(), decimals);
-        consoleOut('User\'s balance:', balance.toNumber(), 'blue');
+        consoleOut(`User's balance:`, balance.toNumber(), 'blue');
         setAvailableBalance(balance);
       }
     } else {
@@ -635,7 +616,6 @@ export const TreasuryAddFundsModal = (props: {
     associatedToken,
     setCustomToken,
     setSelectedToken,
-    toggleOverflowEllipsisMiddle
   ]);
 
   // When modal goes visible, update allocation type option
@@ -658,32 +638,6 @@ export const TreasuryAddFundsModal = (props: {
     treasuryStreams,
     highLightableStreamId,
   ]);
-
-  // Window resize listener
-  useEffect(() => {
-    const resizeListener = () => {
-      const NUM_CHARS = 4;
-      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (let i = 0; i < ellipsisElements.length; ++i){
-        const e = ellipsisElements[i] as HTMLElement;
-        if (e.offsetWidth < e.scrollWidth){
-          const text = e.textContent;
-          e.dataset.tail = text?.slice(text.length - NUM_CHARS);
-        }
-      }
-    };
-    // Call it a first time
-    resizeListener();
-
-    // set resize listener
-    window.addEventListener('resize', resizeListener);
-
-    // clean up function
-    return () => {
-      // remove resize listener
-      window.removeEventListener('resize', resizeListener);
-    }
-  }, []);
 
   ////////////////
   //   Events   //
@@ -788,7 +742,6 @@ export const TreasuryAddFundsModal = (props: {
     if (token) {
       setSelectedToken(token as TokenInfo);
       setEffectiveRate(getTokenPriceBySymbol(token.symbol));
-      toggleOverflowEllipsisMiddle(false);
     }
   }
 
@@ -876,13 +829,13 @@ export const TreasuryAddFundsModal = (props: {
         {(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
           <>
             {token ? (
-              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+              <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
-              <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "30", display: "inline-flex" }} />
+              <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "20", display: "inline-flex" }} />
             )}
           </>
         ) : (
-          <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+          <Identicon address={item.id} style={{ width: "20", display: "inline-flex" }} />
         )}
       </div>
     );
@@ -1000,22 +953,21 @@ export const TreasuryAddFundsModal = (props: {
                       </div>
                       <div className={`well ${isBusy ? 'disabled' : ''}`}>
                         <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                          <div className="left mr-0">
-                            {treasuryList && treasuryList.length > 0 && (
-                              <Select className={`auto-height`} value={selectedStreamingAccountId}
-                                style={{width:"100%", maxWidth:'none'}}
-                                onChange={onStreamingAccountSelected}
-                                bordered={false}
-                                showArrow={false}
-                                dropdownRender={menu => (
-                                <div>{menu}</div>
-                              )}>
-                                {treasuryList.map(option => {
-                                  return renderStreamingAccountItem(option);
-                                })}
-                              </Select>
-                            )}
-                          </div>
+                          {treasuryList && treasuryList.length > 0 && (
+                            <Select className={`auto-height`} value={selectedStreamingAccountId}
+                              style={{width:"100%", maxWidth:'none'}}
+                              dropdownClassName="stream-select-dropdown"
+                              onChange={onStreamingAccountSelected}
+                              bordered={false}
+                              showArrow={false}
+                              dropdownRender={menu => (
+                              <div>{menu}</div>
+                            )}>
+                              {treasuryList.map(option => {
+                                return renderStreamingAccountItem(option);
+                              })}
+                            </Select>
+                          )}
                         </div>
                         {
                           selectedStreamingAccountId && !isValidAddress(selectedStreamingAccountId) && (
@@ -1043,7 +995,15 @@ export const TreasuryAddFundsModal = (props: {
                     <div className="flex-fixed-left">
                       <div className="left">
                         <span className="add-on">
-                          {(selectedToken && tokenList) && (
+                          {selectedToken && (
+                            <TokenDisplay onClick={() => {}}
+                              mintAddress={selectedToken.address}
+                              showCaretDown={false}
+                              fullTokenInfo={selectedToken}
+                            />
+                          )}
+
+                          {/* {(selectedToken && tokenList) && (
                             <Select className="token-selector-dropdown click-disabled" value={selectedToken.address}
                                 onChange={onTokenChange} bordered={false} showArrow={false}
                                 dropdownRender={menu => (
@@ -1069,6 +1029,7 @@ export const TreasuryAddFundsModal = (props: {
                                         mintAddress={option.address}
                                         name={option.name}
                                         showCaretDown={false}
+
                                       />
                                       <div className="balance">
                                         {userBalances && userBalances[option.address] > 0 && (
@@ -1080,7 +1041,7 @@ export const TreasuryAddFundsModal = (props: {
                                 );
                               })}
                             </Select>
-                          )}
+                          )} */}
                           {selectedToken && availableBalance ? (
                             <div
                               id="treasury-add-funds-max"
