@@ -2195,7 +2195,7 @@ export const MoneyStreamsInfoView = (props: {
               ) : (
                 <span className="incoming-amount">{rateIncomingPerSecond ? (
                     (rateIncomingPerSecond > 0 && rateIncomingPerSecond < 0.01) ? `< $0.01/second` : `+ $${cutNumber(rateIncomingPerSecond, 4)}/second`
-                  ) : "$0.00"}
+                  ) : "$0.00/second"}
                 </span>
               )}
               {loadingCombinedStreamingList || loadingStreams ? (
@@ -2203,7 +2203,7 @@ export const MoneyStreamsInfoView = (props: {
               ) : (
                 <span className="incoming-amount">{rateIncomingPerDay ? (
                     (rateIncomingPerDay > 0 && rateIncomingPerDay < 0.01) ? `< $0.01/day` : `+ $${cutNumber(rateIncomingPerDay, 4)}/day`
-                  ) : "$0.00"}
+                  ) : "$0.00/day"}
                 </span>
               )}
             </div>
@@ -2278,7 +2278,7 @@ export const MoneyStreamsInfoView = (props: {
                 ) : (
                   <span className="outgoing-amount">{rateOutgoingPerSecond ? (
                       (rateOutgoingPerSecond > 0 && rateOutgoingPerSecond < 0.01) ? `< $0.01/second` : `- $${cutNumber(rateOutgoingPerSecond, 4)}/second`
-                    ) : "$0.00"}
+                    ) : "$0.00/second"}
                   </span>
                 )}
                 {loadingCombinedStreamingList || loadingStreams ? (
@@ -2286,7 +2286,7 @@ export const MoneyStreamsInfoView = (props: {
                 ) : (
                   <span className="outgoing-amount">{rateOutgoingPerDay ? (
                       (rateOutgoingPerDay > 0 && rateOutgoingPerDay < 0.01) ? `< $0.01/day` : `- $${cutNumber(rateOutgoingPerDay, 4)}/day`
-                    ) : "$0.00"}
+                    ) : "$0.00/day"}
                   </span>
                 )}
             </div>
