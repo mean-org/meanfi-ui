@@ -37,6 +37,7 @@ import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
+import { AccountTokenParsedInfo } from '../../models/token';
 
 const { Option } = Select;
 
@@ -196,7 +197,37 @@ export const OneTimePayment = (props: {
             return 0;
           });
 
-          setSelectedList(intersectedList);
+          const custom: TokenInfo[] = [];
+          // Build a list with all owned token accounts not already in intersectedList as custom tokens
+          accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
+            if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
+              const customToken: TokenInfo = {
+                address: item.parsedInfo.mint,
+                chainId: 0,
+                decimals: item.parsedInfo.tokenAmount.decimals,
+                name: 'Custom account',
+                symbol: shortenAddress(item.parsedInfo.mint),
+                tags: undefined,
+                logoURI: undefined,
+              };
+              custom.push(customToken);
+            }
+          });
+
+          // Sort by token balance
+          custom.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          // Finally add all owned token accounts as custom tokens
+          const finalList = intersectedList.concat(custom);
+
+          setSelectedList(finalList);
 
         } else {
           for (const t of tokenList) {
