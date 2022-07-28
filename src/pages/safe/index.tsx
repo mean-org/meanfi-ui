@@ -2700,11 +2700,6 @@ export const SafeView = () => {
             currentOperation: TransactionStatus.SendTransactionFailure
           } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
-            // const treasury = data.transaction.operation === OperationType.StreamClose
-            //   ? data.transaction.accounts[5].pubkey.toBase58()
-            //   : data.transaction.operation === OperationType.TreasuryStreamCreate || data.transaction.operation === OperationType.StreamCreate || data.transaction.operation === OperationType.StreamCreateWithTemplate
-            //     ? data.transaction.accounts[2].pubkey.toBase58()
-            //     : data.transaction.accounts[3].pubkey.toBase58();
             const accountIndex = data.transaction.operation === OperationType.StreamClose
               ? 5
               : data.transaction.operation === OperationType.TreasuryStreamCreate ||
@@ -2718,16 +2713,11 @@ export const SafeView = () => {
               : '-';
             consoleOut(`Selected account for index [${accountIndex}]`, treasury, 'orange');
             txStatus.customError = {
-              title: '',
+              title: 'Insufficient balance',
               message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
           } else if (error.toString().indexOf('0x1797') !== -1) {
-            // const treasury = data.transaction.operation === OperationType.TreasuryStreamCreate
-            //   ? data.transaction.accounts[2].pubkey.toBase58()
-            //   : data.transaction.operation === OperationType.TreasuryWithdraw
-            //   ? data.transaction.accounts[5].pubkey.toBase58()
-            //   : data.transaction.accounts[3].pubkey.toBase58();
             const accountIndex =  data.transaction.operation === OperationType.StreamCreate ||
                                   data.transaction.operation === OperationType.TreasuryStreamCreate ||
                                   data.transaction.operation === OperationType.StreamCreateWithTemplate
@@ -2741,6 +2731,7 @@ export const SafeView = () => {
               : '-';
             consoleOut(`Selected account for index [${accountIndex}]`, treasury, 'orange');
             txStatus.customError = {
+              title: 'Insufficient balance',
               message: 'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
@@ -2762,8 +2753,10 @@ export const SafeView = () => {
             const asset = data.transaction.accounts[accountIndex] ? data.transaction.accounts[accountIndex].pubkey.toBase58() : '-';
             consoleOut(`Selected account for index [${accountIndex}]`, asset, 'orange');
             txStatus.customError = {
-              message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
-              data: asset
+              title: 'Insufficient balance',
+              // message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
+              message: 'Your transaction failed to submit due to insufficient balance. Please add SOL to the safe and then retry this operation.\n\nSafe: ',
+              data: selectedMultisig?.authority.toBase58()
             };
           }
           consoleOut('setLastError ->', txStatus, 'blue');
