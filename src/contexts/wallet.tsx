@@ -325,16 +325,11 @@ export function WalletProvider({ children = null as any }) {
       wallet.connect()
       .catch(error => {
         consoleOut('wallet.connect() error', error, 'red');
-      })
-      .finally(() => setTimeout(() => {
-        if (!wallet || !wallet.connected) {
-          resetWalletProvider();
-        }
-      }, 1000));
+      });
     }
 
     return () => {};
-  }, [wallet, autoConnect, resetWalletProvider]);
+  }, [wallet, autoConnect]);
 
   return (
     <WalletContext.Provider

@@ -169,17 +169,13 @@ export const AccountsNewView = () => {
     clearStreams,
   } = useContext(AppStateContext);
   const {
-    fetchTxInfoStatus,
-    startFetchTxSignatureInfo,
-    clearTxConfirmationContext,
+    confirmationHistory,
+    enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
-  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
   const [isPageLoaded, setIsPageLoaded] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
@@ -352,6 +348,8 @@ export const AccountsNewView = () => {
     streamV2ProgramAddress
   ]);
 
+  const isCustomAsset = useMemo(() => selectedAsset && selectedAsset.name === 'Custom account' ? true : false, [selectedAsset]);
+
   const selectedMultisigRef = useRef(selectedMultisig);
   useEffect(() => {
     selectedMultisigRef.current = selectedMultisig;
@@ -367,12 +365,16 @@ export const AccountsNewView = () => {
   //   Events and actions   //
   ////////////////////////////
 
-  const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
-  }, [
-    isBusy,
-    fetchTxInfoStatus,
-  ]);
+  const isAnyTxPendingConfirmation = useCallback((operation?: OperationType) => {
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      if (operation !== undefined) {
+        return confirmationHistory.some(h => h.operationType === OperationType.ExecuteTransaction && h.txInfoFetchStatus === "fetching");
+      } else {
+        return confirmationHistory.some(h => h.txInfoFetchStatus === "fetching");
+      }
+    }
+    return false;
+  }, [confirmationHistory]);
 
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
     if (item && publicKey && accountAddress) {
@@ -1340,7 +1342,6 @@ export const AccountsNewView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -1623,11 +1624,27 @@ export const AccountsNewView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateAsset);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.CreateAsset,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Create asset ${data.token.symbol}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Asset ${data.token.symbol} successfully created`,
+            });
             setIsBusy(false);
             onAssetCreated();
             closeCreateAssetModal(true);
-          } else { setIsBusy(false); }
+          } else {
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: "error"
+            });
+            setIsBusy(false);
+          }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
@@ -1639,15 +1656,14 @@ export const AccountsNewView = () => {
     nativeBalance,
     selectedMultisig,
     transactionCancelled,
-    transactionAssetFees.mspFlatFee,
-    transactionAssetFees.blockchainFee,
+    transactionAssetFees,
     transactionStatus.currentOperation,
-    clearTxConfirmationContext,
-    startFetchTxSignatureInfo,
+    enqueueTransactionConfirmation,
     resetTransactionStatus,
     closeCreateAssetModal,
     setTransactionStatus,
     onAssetCreated,
+    t,
   ]);
 
   const onAcceptCreateVault = useCallback((params: any) => {
@@ -1684,7 +1700,6 @@ export const AccountsNewView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -2000,35 +2015,34 @@ export const AccountsNewView = () => {
           consoleOut('sent:', sent);
           if (sent) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            if (sent) {
-              enqueueTransactionConfirmation({
-                signature: signature,
-                operationType: OperationType.TransferTokens,
-                finality: "confirmed",
-                txInfoFetchStatus: "fetching",
-                loadingTitle: 'Confirming transaction',
-                loadingMessage: `Transferring ${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol} to ${shortenAddress(data.to)}`,
-                completedTitle: 'Transaction confirmed',
-                completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol}) successfully transferred to ${shortenAddress(data.to)}`,
-                extras: {
-                  multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
-                }
-              });
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.TransactionFinished
-              });
-              setIsTransferTokenModalVisible(false);
-            } else {
-              openNotification({
-                title: t('notifications.error-title'),
-                description: t('notifications.error-sending-transaction'),
-                type: "error"
-              });
-            }
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TransferTokens,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Transferring ${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol} to ${shortenAddress(data.to)}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol}) successfully transferred to ${shortenAddress(data.to)}`,
+              extras: {
+                multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+              }
+            });
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            setIsTransferTokenModalVisible(false);
             resetTransactionStatus();
             setIsBusy(false);
-          } else { setIsBusy(false); }
+          } else {
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: "error"
+            });
+            setIsBusy(false);
+          }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
@@ -2045,7 +2059,6 @@ export const AccountsNewView = () => {
     transactionCancelled,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
-    clearTxConfirmationContext,
     resetTransactionStatus,
     setTransactionStatus,
     t
@@ -2076,7 +2089,6 @@ export const AccountsNewView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -2369,7 +2381,6 @@ export const AccountsNewView = () => {
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
-    clearTxConfirmationContext,
     resetTransactionStatus,
     setTransactionStatus,
     t
@@ -3131,19 +3142,18 @@ export const AccountsNewView = () => {
     if (!selectedAsset) { return; }
 
     const numMaxCtas = isXsDevice ? 2 : 5;
-    const isCustomAsset = selectedAsset.name === 'Custom account' ? true : false;
     const actions: AssetCta[] = [];
     let ctaItems = 0;
 
     // Send
     actions.push({
       action: MetaInfoCtaAction.Send,
-      isVisible: isCustomAsset ? false : true,
+      isVisible: true,
       caption: 'Send',
       disabled: !isInspectedAccountTheConnectedWallet(),
       uiComponentType: 'button',
       uiComponentId: `button-${MetaInfoCtaAction.Send}`,
-      tooltip: '',
+      tooltip: isInspectedAccountTheConnectedWallet() ? '' : 'You can only send assets from your connected account',
       callBack: onSendAsset
     });
     ctaItems++;
@@ -3153,7 +3163,7 @@ export const AccountsNewView = () => {
       actions.push({
         action: MetaInfoCtaAction.UnwrapSol,
         caption: 'Unwrap',
-        isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol(),
+        isVisible: true,
         uiComponentType: 'button',
         disabled: false,
         uiComponentId: `button-${MetaInfoCtaAction.UnwrapSol}`,
@@ -3164,17 +3174,19 @@ export const AccountsNewView = () => {
     }
 
     // Buy
-    actions.push({
-      action: MetaInfoCtaAction.Buy,
-      caption: 'Buy',
-      isVisible: !isSelectedAssetWsol(),
-      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy}`,
-      tooltip: '',
-      callBack: showDepositOptionsModal
-    });
-    ctaItems++;
+    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
+      actions.push({
+        action: MetaInfoCtaAction.Buy,
+        caption: 'Buy',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy}`,
+        tooltip: '',
+        callBack: showDepositOptionsModal
+      });
+      ctaItems++;
+    }
 
     // Deposit
     actions.push({
@@ -3190,30 +3202,34 @@ export const AccountsNewView = () => {
     ctaItems++;
 
     // Exchange
-    actions.push({
-      action: MetaInfoCtaAction.Exchange,
-      caption: 'Exchange',
-      isVisible: isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol(),
-      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange}`,
-      tooltip: '',
-      callBack: onExchangeAsset
-    });
-    ctaItems++;
+    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
+      actions.push({
+        action: MetaInfoCtaAction.Exchange,
+        caption: 'Exchange',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange}`,
+        tooltip: '',
+        callBack: onExchangeAsset
+      });
+      ctaItems++;
+    }
 
     // Invest
-    actions.push({
-      action: MetaInfoCtaAction.Invest,
-      caption: 'Invest',
-      isVisible: investButtonEnabled() && !isSelectedAssetWsol(),
-      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest}`,
-      tooltip: '',
-      callBack: handleGoToInvestClick
-    });
-    ctaItems++;
+    if (investButtonEnabled() && !isSelectedAssetWsol() && !isCustomAsset) {
+      actions.push({
+        action: MetaInfoCtaAction.Invest,
+        caption: 'Invest',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest}`,
+        tooltip: '',
+        callBack: handleGoToInvestClick
+      });
+      ctaItems++;
+    }
 
     // Wrap
     if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() && isWhitelisted) {
@@ -3257,30 +3273,29 @@ export const AccountsNewView = () => {
     }
 
     // Close asset
-    // if (inspectedAccountType && inspectedAccountType === "multisig") {
-    //   actions.push({
-    //     action: MetaInfoCtaAction.Close,
-    //     caption: 'Close asset',
-    //     isVisible: true,
-    //     uiComponentType: 'menuitem',
-    //     disabled: isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid(),
-    //     uiComponentId: `menuitem-${MetaInfoCtaAction.Close}`,
-    //     tooltip: '',
-    //     callBack: showDeleteVaultModal
-    //   });
-    // }
-
-    // Close account
-    actions.push({
-      action: (inspectedAccountType && inspectedAccountType === "multisig") ? MetaInfoCtaAction.Close : MetaInfoCtaAction.CloseAccount,
-      caption: 'Close account',
-      isVisible: true,
-      uiComponentType: 'menuitem',
-      disabled: ((inspectedAccountType === "multisig") && (isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid())),
-      uiComponentId: (inspectedAccountType && inspectedAccountType === "multisig") ? `menuitem-${MetaInfoCtaAction.Close}` : `menuitem-${MetaInfoCtaAction.CloseAccount}`,
-      tooltip: '',
-      callBack: (inspectedAccountType && inspectedAccountType === "multisig") ? showDeleteVaultModal : showCloseAssetModal
-    });
+    if (inspectedAccountType && inspectedAccountType === "multisig") {
+      actions.push({
+        action: MetaInfoCtaAction.Close,
+        caption: 'Close account',
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: isAnyTxPendingConfirmation() || !canDeleteVault() || !isDeleteAssetValid(),
+        uiComponentId: `menuitem-${MetaInfoCtaAction.Close}`,
+        tooltip: '',
+        callBack: showDeleteVaultModal
+      });
+    } else if (isInspectedAccountTheConnectedWallet()) {
+      actions.push({
+        action: MetaInfoCtaAction.CloseAccount,
+        caption: 'Close account',
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: isAnyTxPendingConfirmation(),
+        uiComponentId: `menuitem-${MetaInfoCtaAction.CloseAccount}`,
+        tooltip: '',
+        callBack: showCloseAssetModal
+      });
+    }
 
     setAssetCtas(actions);
 
@@ -4072,39 +4087,6 @@ export const AccountsNewView = () => {
 
   }, [accountTokens, getTokenPriceBySymbol, tokensLoaded, totalAccountBalance]);
 
-  // Window resize listeners
-  useEffect(() => {
-    const resizeListener = () => {
-      const NUM_CHARS = 4;
-      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      if (isValidAddress(accountAddressInput)) {
-        for (let i = 0; i < ellipsisElements.length; ++i){
-          const e = ellipsisElements[i] as HTMLElement;
-          if (e.offsetWidth < e.scrollWidth){
-            const text = e.textContent;
-            e.dataset.tail = text?.slice(text.length - NUM_CHARS);
-          }
-        }
-      } else {
-        if (ellipsisElements?.length) {
-          const e = ellipsisElements[0] as HTMLElement;
-          e.dataset.tail = '';
-        }
-      }
-    };
-    // Call it a first time
-    resizeListener();
-
-    // set resize listener
-    window.addEventListener('resize', resizeListener);
-
-    // clean up function
-    return () => {
-      // remove resize listener
-      window.removeEventListener('resize', resizeListener);
-    }
-  }, [accountAddressInput]);
-
   // Setup event listeners
   useEffect(() => {
     if (canSubscribe && !isPageLoaded) {
@@ -4842,6 +4824,7 @@ export const AccountsNewView = () => {
         return false;
       }
     }
+    return false;
   }
 
   const isSendFundsValid = () => {
@@ -4889,7 +4872,7 @@ export const AccountsNewView = () => {
                   shape="round"
                   size="small"
                   className="thin-stroke asset-btn"
-                  disabled={isTxInProgress() || !isSendFundsValid()}
+                  disabled={isAnyTxPendingConfirmation() || !isSendFundsValid()}
                   onClick={showTransferTokenModal}>
                     <div className="btn-content">
                       Propose funds transfer
@@ -4900,7 +4883,7 @@ export const AccountsNewView = () => {
                   shape="round"
                   size="small"
                   className="thin-stroke asset-btn"
-                  disabled={isTxInProgress() || !isTransferOwnershipValid()}
+                  disabled={isAnyTxPendingConfirmation() || !isTransferOwnershipValid()}
                   onClick={showTransferVaultAuthorityModal}>
                     <div className="btn-content">
                       Change asset ownership
@@ -4908,40 +4891,36 @@ export const AccountsNewView = () => {
                 </Button>
               </Col>
             </Row>
-
-          ) : selectedAsset.name === 'Custom account' ? (
-            <h4 className="mb-0">The token for this Custom account was not found in the Solana token list</h4>
           ) : items.map(item => { // Draw the Asset CTAs here
-              if (item.tooltip) {
-                return (
-                  <Tooltip placement="bottom" title={item.tooltip} key={item.uiComponentId}>
-                    <Button
-                      type="default"
-                      shape="round"
-                      size="small"
-                      className="thin-stroke"
-                      disabled={item.disabled}
-                      onClick={item.callBack}>
-                      <span>{item.caption}</span>
-                    </Button>
-                  </Tooltip>
-                );
-              } else {
-                return (
+            if (item.tooltip) {
+              return (
+                <Tooltip placement="bottom" title={item.tooltip} key={item.uiComponentId}>
                   <Button
                     type="default"
                     shape="round"
                     size="small"
-                    key={item.uiComponentId}
                     className="thin-stroke"
                     disabled={item.disabled}
                     onClick={item.callBack}>
                     <span>{item.caption}</span>
                   </Button>
-                );
-              }
-            })
-          }
+                </Tooltip>
+              );
+            } else {
+              return (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  key={item.uiComponentId}
+                  className="thin-stroke"
+                  disabled={item.disabled}
+                  onClick={item.callBack}>
+                  <span>{item.caption}</span>
+                </Button>
+              );
+            }
+          })}
         </Space>
         <Dropdown
           overlay={renderUserAccountAssetMenu()}
@@ -5174,16 +5153,15 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
-          {/* <span className="ml-1">streamList:</span><span className="ml-1 font-bold fg-dark-active">{streamList ? `[${streamList.length}]` : '-'}</span>
+          <span className="ml-1">streamList:</span><span className="ml-1 font-bold fg-dark-active">{streamList ? `[${streamList.length}]` : '-'}</span>
           <span className="ml-1">streamListv1:</span><span className="ml-1 font-bold fg-dark-active">{streamListv1 ? `[${streamListv1.length}]` : '-'}</span>
           <span className="ml-1">streamListv2:</span><span className="ml-1 font-bold fg-dark-active">{streamListv2 ? `[${streamListv2.length}]` : '-'}</span>
           <span className="ml-1">treasuryList:</span><span className="ml-1 font-bold fg-dark-active">{treasuryList ? `[${treasuryList.length}]` : '-'}</span>
-          <span className="ml-1">accountBalance:</span><span className="ml-1 font-bold fg-dark-active">{totalAccountBalance || 0}</span> */}
-          <span className="ml-1">wSolBalance:</span><span className="ml-1 font-bold fg-dark-active">{wSolBalance}</span>
+          <span className="ml-1">accountBalance:</span><span className="ml-1 font-bold fg-dark-active">{totalAccountBalance || 0}</span>
         </div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button

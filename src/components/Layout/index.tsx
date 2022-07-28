@@ -9,7 +9,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { consoleOut, isProd, isValidAddress } from "../../utils/ui";
+import { consoleOut, isLocal, isProd, isValidAddress } from "../../utils/ui";
 import ReactGA from 'react-ga';
 // import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
@@ -34,7 +34,6 @@ const { Header, Content, Footer } = Layout;
 export const AppLayout = React.memo((props: any) => {
   const location = useLocation();
   const navigate = useNavigate();
-
   const {
     theme,
     tpsAvg,
@@ -445,6 +444,14 @@ export const AppLayout = React.memo((props: any) => {
   if (wallet && connected) {
     return (
       <>
+        {/* {isLocal() && (
+          <div className="debug-bar">
+            <span className="ml-1">wallet:</span><span className="ml-1 font-bold fg-dark-active">{wallet ? 'Yes' : 'No'}</span>
+            <span className="ml-1">connecting:</span><span className="ml-1 font-bold fg-dark-active">{connecting ? 'true' : 'false'}</span>
+            <span className="ml-1">connected:</span><span className="ml-1 font-bold fg-dark-active">{connected ? 'true' : 'false'}</span>
+          </div>
+        )} */}
+
         <div className="App">
           <Layout>
             {(isProd() && (tpsAvg !== undefined && tpsAvg !== null) && tpsAvg < PERFORMANCE_THRESHOLD) && (
@@ -494,12 +501,20 @@ export const AppLayout = React.memo((props: any) => {
     );
   } else {
 
-    if (!wallet && !connected && !connecting) {
+    if (!wallet || (wallet && !connected && !connecting)) {
       select();
     }
 
     return (
       <>
+        {/* {isLocal() && (
+          <div className="debug-bar">
+            <span className="ml-1">wallet:</span><span className="ml-1 font-bold fg-dark-active">{wallet ? 'Yes' : 'No'}</span>
+            <span className="ml-1">connecting:</span><span className="ml-1 font-bold fg-dark-active">{connecting ? 'true' : 'false'}</span>
+            <span className="ml-1">connected:</span><span className="ml-1 font-bold fg-dark-active">{connected ? 'true' : 'false'}</span>
+          </div>
+        )} */}
+
         <div className="background-logo-container">
           <img className="meanfi-bg-logo" src="/assets/mean-square.svg" alt="" />
         </div>
