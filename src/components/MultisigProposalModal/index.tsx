@@ -207,7 +207,7 @@ export const MultisigProposalModal = (props: {
   const getTransactionStartButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : t('Execute')
+      : t('Create')
   };
 
   const onProposalTitleValueChange = (e: any) => {
