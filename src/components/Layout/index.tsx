@@ -445,7 +445,7 @@ export const AppLayout = React.memo((props: any) => {
 
   }, []);
 
-  if (wallet && connected && publicKey && !connecting) {
+  if (wallet && connected) {
     return (
       <>
         {/* {isLocal() && (
@@ -505,9 +505,7 @@ export const AppLayout = React.memo((props: any) => {
     );
   } else {
 
-    if (!wallet && !connected && !connecting) {
-      connect();
-    }
+    connect();
 
     return (
       <>

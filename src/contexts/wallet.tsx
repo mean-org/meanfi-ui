@@ -300,7 +300,6 @@ export function WalletProvider({ children = null as any }) {
       wallet.on("error", () => {
         if (wallet.connecting) {
           setConnected(false);
-          setConnecting(false);
           wallet.removeAllListeners();
           resetWalletProvider();
           select();
@@ -323,12 +322,10 @@ export function WalletProvider({ children = null as any }) {
     // When a wallet is created, selected and the autoConnect is ON, lets connect
     if (wallet && autoConnect) {
       consoleOut('Auto-connecting...', '', 'blue');
-      setConnecting(true);
       wallet.connect()
       .catch(error => {
         consoleOut('wallet.connect() error', error, 'red');
-      })
-      .finally(() => setConnecting(false));
+      });
     }
 
     return () => {};
