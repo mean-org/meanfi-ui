@@ -395,7 +395,7 @@ export const MultisigProposalModal = (props: {
 
               <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
                 <>
-                  <h3>Select app</h3>
+                  <h3 className="left-title">Select app</h3>
                   <Row gutter={[8, 8]} className="step-one-select-app">
                     {renderSolanaApps}
                   </Row>
@@ -404,7 +404,7 @@ export const MultisigProposalModal = (props: {
 
               <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
                 <>
-                  <h3>Proposal setup</h3>
+                  <h3 className="left-title">Proposal setup</h3>
                   <div className="step-two-select-app">
                     <Row gutter={[8, 8]}>
                       <Col span={24} className="step-two-selected-app">
@@ -743,7 +743,7 @@ export const MultisigProposalModal = (props: {
 
               <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
                 <>
-                  <h3>Review proposal</h3>
+                  <h3 className="left-title">Review proposal</h3>
                   <div className="step-three-select-app">
 
                     {/* Title */}
