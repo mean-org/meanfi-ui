@@ -752,7 +752,7 @@ export const MultisigTransferTokensModal = (props: {
                         block
                         type="text"
                         shape="round"
-                        size="large"
+                        size="middle"
                         className={`center-text-in-btn thin-stroke ${isBusy ? 'inactive' : ''}`}
                         onClick={() => isError(transactionStatus.currentOperation)
                           ? onAcceptModal()
@@ -771,7 +771,7 @@ export const MultisigTransferTokensModal = (props: {
 
         </div>
 
-        <div className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>          
+        <div className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
           {isBusy && transactionStatus !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
