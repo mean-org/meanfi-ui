@@ -7,6 +7,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MEAN_MULTISIG_PROGRAM, MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
 import { MeanSplTokenInstructionCoder } from "./spl-token-coder/instruction";
 import { MeanSystemInstructionCoder } from "./system-program-coder/instruction";
+import { AppConfig, UiInstruction } from "@mean-dao/mean-multisig-apps";
 
 export const NATIVE_LOADER = new PublicKey("NativeLoader1111111111111111111111111111111");
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
@@ -148,6 +149,16 @@ export type MultisigTransactionFees = {
   networkFee: number,
   rentExempt: number,
   multisigFee: number,
+}
+
+export interface CreateNewProposalParams {
+  appId: string;
+  multisigId: string;
+  title: string;
+  description: string;
+  expires: number;
+  config: AppConfig;
+  instruction: UiInstruction;
 }
 
 export const getFees = async (

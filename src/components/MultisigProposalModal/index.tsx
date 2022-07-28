@@ -17,7 +17,7 @@ import { InputTextAreaMean } from '../InputTextAreaMean';
 import { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { getMultisigInstructionSummary, NATIVE_LOADER, parseSerializedTx } from '../../models/multisig';
+import { CreateNewProposalParams, getMultisigInstructionSummary, NATIVE_LOADER, parseSerializedTx } from '../../models/multisig';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { openNotification } from '../Notifications';
@@ -162,7 +162,7 @@ export const MultisigProposalModal = (props: {
   const onAcceptModal = () => {
     if (!selectedApp || !selectedAppConfig || !selectedUiIx) { return; }
     updateSelectedIx(inputState);
-    handleOk({
+    const options: CreateNewProposalParams = {
       appId: selectedApp.id,
       multisigId: selectedMultisig.id.toBase58(),
       title: proposalTitleValue,
@@ -170,7 +170,8 @@ export const MultisigProposalModal = (props: {
       expires: proposalExpiresValue.value,
       config: selectedAppConfig,
       instruction: selectedUiIx
-    });
+    };
+    handleOk(options);
   }
 
   const onCloseModal = () => {
@@ -817,9 +818,9 @@ export const MultisigProposalModal = (props: {
                           Object.keys(inputState).map((key, index) => (
                             <>
                               <div className="info-label text-center mt-2">
-                                {selectedAppConfig?.ui.map((ix: any) => (
-                                  ix.uiElements.map((element: any) => (
-                                    <span>{element.label}</span>
+                                {selectedAppConfig?.ui.map((ix: any, idx: number) => (
+                                  ix.uiElements.map((element: any, idx2: number) => (
+                                    <span key={`instruction-${idx}-${idx2}`}>{element.label}</span>
                                   ))
                                 ))}
                               </div>
@@ -840,7 +841,7 @@ export const MultisigProposalModal = (props: {
                                   </div>
                                 </div>
                                 {deserializedTx?.accounts.map((account: any) => (
-                                  <div className="mb-1" key={account.index}>
+                                  <div className="mb-1" key={`account-${account.index}`}>
                                     <span>{t('multisig.proposal-modal.instruction-account')} {account.index + 1}:</span><br />
                                     <div>
                                       <span onClick={() => copyAddressToClipboard(account.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
@@ -857,8 +858,8 @@ export const MultisigProposalModal = (props: {
                                 ))}
                                 <div className="mb-1">
                                   <span>{t('multisig.proposal-modal.instruction-data')}:</span><br />
-                                  {deserializedTx?.data.map((data: any) => (
-                                    <span key={data.value} onClick={() => copyAddressToClipboard(data.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                                  {deserializedTx?.data.map((data: any, idx3: number) => (
+                                    <span key={`txdata-item-${idx3}`} onClick={() => copyAddressToClipboard(data.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
                                       {data.value}
                                     </span>
                                   ))}
@@ -870,7 +871,7 @@ export const MultisigProposalModal = (props: {
                       </>
                     ) : (
                       Object.keys(inputState).map((key, index) => (
-                        <Row className="mb-1" key={index}>
+                        <Row className="mb-1" key={`uielement-${index}`}>
                           {key && (
                             <>
                               <Col span={8} className="text-right pr-1">

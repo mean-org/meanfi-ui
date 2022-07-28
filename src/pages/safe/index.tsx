@@ -72,7 +72,7 @@ import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
-import { MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
+import { CreateNewProposalParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
 
@@ -1400,7 +1400,7 @@ export const SafeView = () => {
     onExecuteEditMultisigTx(data);
   };
 
-  const onAcceptCreateProposalModal = (data: any) => {
+  const onAcceptCreateProposalModal = (data: CreateNewProposalParams) => {
     consoleOut('proposal data: ', data, 'blue');
     onExecuteCreateTransactionProposal(data);
   };
@@ -1508,7 +1508,7 @@ export const SafeView = () => {
   const [isMultisigTxResultModalVisible, setIsMultisigTxResultModalVisible] = useState(false);
   const showMultisigTxResultModal = useCallback(() => setIsMultisigTxResultModalVisible(true), []);
 
-  const onExecuteCreateTransactionProposal = useCallback(async (data: any) => {
+  const onExecuteCreateTransactionProposal = useCallback(async (data: CreateNewProposalParams) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1740,7 +1740,7 @@ export const SafeView = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (!wallet) {
         console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
@@ -4526,7 +4526,7 @@ export const SafeView = () => {
           proposer={publicKey ? publicKey.toBase58() : ""}
           appsProvider={appsProvider}
           solanaApps={solanaApps.filter(app => app.active)}
-          handleOk={onAcceptCreateProposalModal}
+          handleOk={(params: CreateNewProposalParams) => onAcceptCreateProposalModal(params)}
           selectedMultisig={selectedMultisig}
         />
       )}
