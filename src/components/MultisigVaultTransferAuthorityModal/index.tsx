@@ -82,6 +82,18 @@ export const MultisigVaultTransferAuthorityModal = (props: {
       : false;
   }
 
+  const getTransactionStartButtonLabel = () => {
+    return  !proposalTitle
+      ? 'Add proposal title'
+      : !selectedAuthority
+        ? 'Enter an authority address'
+        : selectedAuthority && !isValidAddress(selectedAuthority)
+          ? 'Invalid address'
+          : !destinationAddressDisclaimerAccepted
+            ? "Accept disclaimer"
+            : "Sign proposal"
+  }
+
   const refreshPage = () => {
     props.handleClose();
     window.location.reload();
@@ -278,7 +290,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                   {props.isBusy
                     ? t('multisig.transfer-authority.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                      ? t('multisig.transfer-authority.main-cta')
+                      ? getTransactionStartButtonLabel()
                       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                         ? t('general.cta-finish')
                         : t('general.refresh')
