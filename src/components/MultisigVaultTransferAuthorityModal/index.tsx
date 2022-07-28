@@ -74,24 +74,21 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   }
 
   const isValidForm = (): boolean => {
-    return proposalTitle && 
-          selectedAuthority &&
-          isValidAddress(selectedAuthority) &&
-          (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
+    return selectedAuthority &&
+           isValidAddress(selectedAuthority) &&
+           (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
       ? true
       : false;
   }
 
   const getTransactionStartButtonLabel = () => {
-    return  !proposalTitle
-      ? 'Add proposal title'
-      : !selectedAuthority
-        ? 'Enter an authority address'
-        : selectedAuthority && !isValidAddress(selectedAuthority)
-          ? 'Invalid address'
-          : !destinationAddressDisclaimerAccepted
-            ? "Accept disclaimer"
-            : "Sign proposal"
+    return !selectedAuthority
+      ? 'Enter an authority address'
+      : selectedAuthority && !isValidAddress(selectedAuthority)
+        ? 'Invalid address'
+        : !destinationAddressDisclaimerAccepted
+          ? "Accept disclaimer"
+          : "Sign proposal"
   }
 
   const refreshPage = () => {
@@ -211,7 +208,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                 name="Title"
                 className="w-100 general-text-input"
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title (required)"
+                placeholder="Add a proposal title"
                 value={proposalTitle}
               />
             </div>
