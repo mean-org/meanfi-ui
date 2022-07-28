@@ -1212,11 +1212,11 @@ export const TreasuryAddFundsModal = (props: {
           {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
             <div className="mt-3 transaction-progress p-0">
               <Button
-                className={isBusy ? 'inactive' : ''}
+                className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
                 block
                 type="primary"
                 shape="round"
-                size="middle"
+                size="large"
                 disabled={!isStreamingAccountSelected() || !isTopupFormValid()}
                 onClick={onAcceptModal}>
                 {isBusy

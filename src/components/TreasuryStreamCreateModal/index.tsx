@@ -2550,7 +2550,7 @@ export const TreasuryStreamCreateModal = (props: {
 
           <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
             <Button
-              className="main-cta"
+              className="main-cta center-text-in-btn"
               block
               type="primary"
               shape="round"
@@ -2579,7 +2579,7 @@ export const TreasuryStreamCreateModal = (props: {
 
           <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
             <Button
-              className={`main-cta ${isBusy ? 'inactive' : ''}`}
+              className={`main-cta center-text-in-btn ${isBusy ? 'inactive' : ''}`}
               block
               type="primary"
               shape="round"
@@ -2624,7 +2624,7 @@ export const TreasuryStreamCreateModal = (props: {
 
           <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
             <Button
-              className="main-cta"
+              className="main-cta center-text-in-btn"
               block
               type="primary"
               shape="round"

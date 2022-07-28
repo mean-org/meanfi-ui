@@ -7850,6 +7850,12 @@ code {
   }
 }
 
+.center-text-in-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .warning-message {
   color: var(--color-notify-warning);
   line-height: 1.3;
