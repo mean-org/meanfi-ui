@@ -2231,7 +2231,6 @@ export const MoneyStreamsInfoView = (props: {
           </div>
           {(!loadingCombinedStreamingList && !loadingStreams) && (
             <div className="wave-container wave-green" id="wave">
-              {/* <div className="wave wave-green"></div> */}
               <Wave fill="url(#gradient1)"
                 paused={isPaused}
                 className="svg-container"
@@ -2316,7 +2315,6 @@ export const MoneyStreamsInfoView = (props: {
           </div>
           {(!loadingCombinedStreamingList && !loadingStreams) && (
             <div className="wave-container wave-red" id="wave">
-              {/* <div className="wave wave-red"></div> */}
               <Wave fill="url(#gradient2)"
                 paused={isPaused}
                 className="svg-container"

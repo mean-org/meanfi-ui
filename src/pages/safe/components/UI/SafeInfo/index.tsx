@@ -1,3 +1,4 @@
+import { ReloadOutlined } from "@ant-design/icons";
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
@@ -75,6 +76,25 @@ export const SafeInfo = (props: {
   const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
   const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
   const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
+
+  const reloadSafe = () => {
+    const streamsRefreshCta = document.getElementById("multisig-hard-refresh-cta");
+    if (streamsRefreshCta) {
+      streamsRefreshCta.click();
+    }
+  };
+
+  const reloadProposal = () => {
+    const proposalRefreshCta = document.getElementById("refresh-selected-proposal-cta");
+    if (proposalRefreshCta) {
+      proposalRefreshCta.click();
+    }
+  };
+
+  const refreshSafeDetails = useCallback((reset = false) => {
+    reloadSafe();
+    reloadProposal();
+  }, []);
 
   // Keep account balance updated
   useEffect(() => {
@@ -272,6 +292,20 @@ export const SafeInfo = (props: {
 
   return (
     <>
+      <div className="float-top-right mr-2">
+        <span className="icon-button-container secondary-button">
+          <Tooltip placement="bottom" title="Refresh payment streams">
+            <Button
+              type="default"
+              shape="circle"
+              size="middle"
+              icon={<ReloadOutlined className="mean-svg-icons" />}
+              onClick={() => refreshSafeDetails(true)}
+            />
+          </Tooltip>
+        </span>
+      </div>
+
       <RightInfoDetails
         infoData={infoSafeData}
       /> 

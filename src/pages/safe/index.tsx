@@ -4316,7 +4316,7 @@ export const SafeView = () => {
                       <span className="incoming-transactions-amout">({formatThousands(multisigAccounts.length)})</span>
                     )}
                     <span className="transaction-legend">
-                      <span className="icon-button-container">
+                      {/* <span className="icon-button-container">
                         <Button
                           id="multisig-refresh-cta"
                           type="default"
@@ -4325,7 +4325,7 @@ export const SafeView = () => {
                           icon={<ReloadOutlined />}
                           onClick={() => refreshMultisigs()}
                         />
-                      </span>
+                      </span> */}
                       <span id="multisig-hard-refresh-cta" onClick={() => refreshMultisigs(true)}></span>
                     </span>
                   </div>
