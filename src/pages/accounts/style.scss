@@ -169,12 +169,25 @@
             }
         }
         .transaction-list-row {
-            margin-left: -5px !important;
-            margin-right: -4px !important;
+            margin-left: -2px !important;
+            margin-right: 0 !important;
             border: none !important;
             padding: 0 !important;
             height: auto;
+            .icon-cell {
+                position: relative;
+                flex: 0 0 24px;
+                display: flex;
+            }
+            .description-cell {
+                padding: 0 0 0 6px !important;
+                min-width: 100px;
+                @media (max-width: 575.98px) {
+                    max-width: 190px;
+                }
+            }
             .rate-cell {
+                padding: 0;
                 .interval {
                     font-size: 0.8rem;
                 }

@@ -1605,13 +1605,13 @@ export const TreasuryStreamCreateModal = (props: {
         {(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
           <>
             {token ? (
-              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+              <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
-              <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "30", display: "inline-flex" }} />
+              <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "20", display: "inline-flex" }} />
             )}
           </>
         ) : (
-          <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+          <Identicon address={item.id} style={{ width: "20", display: "inline-flex" }} />
         )}
       </div>
     );
@@ -1684,7 +1684,13 @@ export const TreasuryStreamCreateModal = (props: {
   return (
     <Modal
       className="mean-modal treasury-stream-create-modal"
-      title={(workingTreasuryType === TreasuryType.Open) ? (<div className="modal-title">{param === "multisig" ? "Propose outgoing stream" : t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
+      title={
+        (workingTreasuryType === TreasuryType.Open)
+          ? (<div className="modal-title">{param === "multisig"
+            ? "Propose outgoing stream"
+            : t('treasuries.treasury-streams.add-stream-modal-title')}</div>)
+          : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)
+      }
       maskClosable={false}
       footer={null}
       visible={isVisible}
@@ -1758,22 +1764,21 @@ export const TreasuryStreamCreateModal = (props: {
                         </div>
                         <div className={`well ${isBusy ? 'disabled' : ''}`}>
                           <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                            <div className="left mr-0">
-                              {treasuryList && treasuryList.length > 0 && (
-                                <Select className={`auto-height`} value={selectedStreamingAccountId}
-                                  style={{width:"100%", maxWidth:'none'}}
-                                  onChange={onStreamingAccountSelected}
-                                  bordered={false}
-                                  showArrow={false}
-                                  dropdownRender={menu => (
-                                  <div>{menu}</div>
-                                )}>
-                                  {treasuryList.map(option => {
-                                    return renderStreamingAccountItem(option);
-                                  })}
-                                </Select>
-                              )}
-                            </div>
+                            {treasuryList && treasuryList.length > 0 && (
+                              <Select className={`auto-height`} value={selectedStreamingAccountId}
+                                style={{width:"100%", maxWidth:'none'}}
+                                dropdownClassName="stream-select-dropdown"
+                                onChange={onStreamingAccountSelected}
+                                bordered={false}
+                                showArrow={false}
+                                dropdownRender={menu => (
+                                <div>{menu}</div>
+                              )}>
+                                {treasuryList.map(option => {
+                                  return renderStreamingAccountItem(option);
+                                })}
+                              </Select>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1880,7 +1885,15 @@ export const TreasuryStreamCreateModal = (props: {
                         <div className="flex-fixed-left">
                           <div className="left">
                             <span className="add-on">
-                              {(selectedToken && tokenList) && (
+                              {selectedToken && (
+                                <TokenDisplay onClick={() => {}}
+                                  mintAddress={selectedToken.address}
+                                  showCaretDown={false}
+                                  fullTokenInfo={selectedToken}
+                                />
+                              )}
+
+                              {/* {(selectedToken && tokenList) && (
                                 <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                                   {tokenList.map((option) => {
                                     if (option.address === NATIVE_SOL.address) {
@@ -1905,7 +1918,7 @@ export const TreasuryStreamCreateModal = (props: {
                                     );
                                   })}
                                 </Select>
-                              )}
+                              )} */}
                             </span>
                           </div>
                           <div className="right">
@@ -1956,7 +1969,15 @@ export const TreasuryStreamCreateModal = (props: {
                     <div className="flex-fixed-left">
                       <div className="left">
                         <span className="add-on">
-                          {(selectedToken && tokenList) && (
+                          {selectedToken && (
+                            <TokenDisplay onClick={() => {}}
+                              mintAddress={selectedToken.address}
+                              showCaretDown={false}
+                              fullTokenInfo={selectedToken}
+                            />
+                          )}
+
+                          {/* {(selectedToken && tokenList) && (
                             <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                               {tokenList.map((option) => {
                                 if (option.address === NATIVE_SOL.address) {
@@ -1980,7 +2001,7 @@ export const TreasuryStreamCreateModal = (props: {
                                 );
                               })}
                             </Select>
-                          )}
+                          )} */}
                           {
                             selectedToken && unallocatedBalance ? (
                               <div
@@ -2209,7 +2230,15 @@ export const TreasuryStreamCreateModal = (props: {
                     <div className="flex-fixed-left">
                       <div className="left">
                         <span className="add-on">
-                          {(selectedToken && tokenList) && (
+                          {selectedToken && (
+                            <TokenDisplay onClick={() => {}}
+                              mintAddress={selectedToken.address}
+                              showCaretDown={false}
+                              fullTokenInfo={selectedToken}
+                            />
+                          )}
+
+                          {/* {(selectedToken && tokenList) && (
                             <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                               {tokenList.map((option) => {
                                 if (option.address === NATIVE_SOL.address) {
@@ -2233,7 +2262,7 @@ export const TreasuryStreamCreateModal = (props: {
                                 );
                               })}
                             </Select>
-                          )}
+                          )} */}
                           {selectedToken && unallocatedBalance ? (
                             <div
                               className="token-max simplelink"

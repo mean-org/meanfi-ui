@@ -44,7 +44,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "../../constants";
 import { TokenListItem } from "../../components/TokenListItem";
 import { TextInput } from "../../components/TextInput";
-import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
+import { useNativeAccount } from "../../contexts/accounts";
 import { NATIVE_SOL } from "../../utils/tokens";
 
 type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
@@ -78,7 +78,6 @@ export const PlaygroundView = () => {
     setEffectiveRate,
   } = useContext(AppStateContext);
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);

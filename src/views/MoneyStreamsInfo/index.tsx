@@ -29,11 +29,9 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { cutNumber, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
+import { cutNumber, fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
-import { ACCOUNT_LAYOUT } from "../../utils/layouts";
+import { useNativeAccount } from "../../contexts/accounts";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { INITIAL_TREASURIES_SUMMARY, TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
 import { customLogger } from "../..";
@@ -117,7 +115,6 @@ export const MoneyStreamsInfoView = (props: {
   const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const { width } = useWindowSize();
   const { address } = useParams();
   const navigate = useNavigate();
@@ -263,25 +260,19 @@ export const MoneyStreamsInfoView = (props: {
 
   const refreshUserBalances = useCallback(() => {
 
-    if (!connection || !publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+    if (!connection || !publicKey || !tokenList) {
       return;
     }
 
     const balancesMap: any = {};
-    connection.getTokenAccountsByOwner(
-      publicKey, 
-      { programId: TOKEN_PROGRAM_ID }, 
-      connection.commitment
-    )
-    .then(response => {
-      for (const acc of response.value) {
-        const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-        const address = decoded.mint.toBase58();
-        const itemIndex = tokenList.findIndex(t => t.address === address);
-        if (itemIndex !== -1) {
-          balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-        } else {
-          balancesMap[address] = 0;
+
+    fetchAccountTokens(connection, publicKey)
+    .then(accTks => {
+      if (accTks) {
+        for (const item of accTks) {
+          const address = item.parsedInfo.mint;
+          const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+          balancesMap[address] = balance;
         }
       }
     })
@@ -294,7 +285,6 @@ export const MoneyStreamsInfoView = (props: {
     .finally(() => setUserBalances(balancesMap));
 
   }, [
-    accounts,
     publicKey,
     tokenList,
     connection,
