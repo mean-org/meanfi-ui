@@ -546,6 +546,12 @@ export const MoneyStreamsInfoView = (props: {
   };
 
   const refreshPaymentStreams = useCallback((reset = false) => {
+    setWithdrawalBalance(0);
+    setUnallocatedBalance(0);
+    setIncomingStreamList(undefined);
+    setOutgoingStreamList(undefined);
+    setIncomingAmount(0);
+    setOutgoingAmount(0);
     reloadStreams();
   }, []);
 
