@@ -19,11 +19,18 @@
     align-items: center;
     justify-content: center;
   }
+  .incoming-stream-rates,
+  .outgoing-stream-rates {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
 }
 .incoming-stream-amount {
   .incoming-amount {
     margin-right: 0.5em;
     margin-top: -0.5em;
+    margin-bottom: 0.5em;
     font-size: 0.9em;
     color: #49aa19;
   }
@@ -32,6 +39,7 @@
   .outgoing-amount {
     margin-right: 0.5em;
     margin-top: -0.5em;
+    margin-bottom: 0.5em;
     font-size: 0.9em;
     color: #e02020;
   }

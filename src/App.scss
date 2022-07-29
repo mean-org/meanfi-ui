@@ -5492,11 +5492,13 @@ main section {
   @media (max-width: 575.98px) {
     position: relative;
     text-align: right;
-    margin-bottom: 1rem;
+    // margin-bottom: 1rem;
+    margin-right: 1em;
   }
   @media (min-width: 576px) {
     position: absolute;
-    top: 0.3rem;
+    // top: 0.3rem;
+    top: 0;
     right: 1rem;
     z-index: 1;
   }

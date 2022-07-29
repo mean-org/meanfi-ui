@@ -1,5 +1,5 @@
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
+import { Button, Col, Dropdown, Menu, Row, Spin, Tabs, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
@@ -39,7 +39,7 @@ import { INITIAL_TREASURIES_SUMMARY, TreasuryCreateOptions, UserTreasuriesSummar
 import { customLogger } from "../..";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
-import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, ArrowUpOutlined, ReloadOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamOpenModal } from "../../components/StreamOpenModal";
 import { CreateStreamModal } from "../../components/CreateStreamModal";
@@ -548,6 +548,17 @@ export const MoneyStreamsInfoView = (props: {
     getTokenPriceByAddress,
   ]);
 
+  const reloadStreams = () => {
+    const streamsRefreshCta = document.getElementById("streams-refresh-reset-cta");
+    if (streamsRefreshCta) {
+      streamsRefreshCta.click();
+    }
+  };
+
+  const refreshPaymentStreams = useCallback((reset = false) => {
+    reloadStreams();
+  }, []);
+
   const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
@@ -575,7 +586,6 @@ export const MoneyStreamsInfoView = (props: {
     treasuryList,
     multisigAccounts,
   ]);
-
 
   //////////////////////
   // MODALS & ACTIONS //
@@ -2161,13 +2171,15 @@ export const MoneyStreamsInfoView = (props: {
         <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
         {/* Background animation */}
         {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
-          <div className="stream-background stream-background-incoming">
-            <img
-              className="inbound"
-              src="/assets/incoming-crypto.svg"
-              alt=""
-            />
-          </div>
+          (!loadingCombinedStreamingList && !loadingStreams) && (
+            <div className="stream-background stream-background-incoming">
+              <img
+                className="inbound"
+                src="/assets/incoming-crypto.svg"
+                alt=""
+              />
+            </div>
+          )
           ) : null}
           <div className="incoming-stream-amount">
             <div className="incoming-stream-running mb-1">
@@ -2189,7 +2201,7 @@ export const MoneyStreamsInfoView = (props: {
                 </span>
               </div>
             </div>
-            <div className="d-flex justify-content-space-between">
+            <div className="incoming-stream-rates">
               {loadingCombinedStreamingList || loadingStreams ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : (
@@ -2246,17 +2258,19 @@ export const MoneyStreamsInfoView = (props: {
         <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
           {/* Background animation */}
           {(hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0) ? (
-            <div className="stream-background stream-background-outgoing">
-              <img
-                className="inbound"
-                src="/assets/outgoing-crypto.svg"
-                alt=""
-              />
-            </div>
+            (!loadingCombinedStreamingList && !loadingStreams) && (
+              <div className="stream-background stream-background-outgoing">
+                <img
+                  className="inbound"
+                  src="/assets/outgoing-crypto.svg"
+                  alt=""
+                />
+              </div>
+            )
           ) : null}
           <div className="outgoing-stream-amount">
             <div className="outgoing-stream-running mb-1">
-              <div className="d-flex align-items-center">
+              <div className="d-flex align-items-center text-center">
                 <h4>
                   {loadingCombinedStreamingList || loadingStreams ? (
                     <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
@@ -2272,7 +2286,7 @@ export const MoneyStreamsInfoView = (props: {
                 </span>
               </div>
             </div>
-            <div className="d-flex justify-content-space-between">
+            <div className="outgoing-stream-rates">
               {loadingCombinedStreamingList || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : (
@@ -2726,6 +2740,20 @@ export const MoneyStreamsInfoView = (props: {
   return (
     <>
       <Spin spinning={loadingMoneyStreamsDetails || loadingCombinedStreamingList}>
+        <div className="float-top-right">
+          <span className="icon-button-container secondary-button">
+            <Tooltip placement="bottom" title="Refresh payment streams">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<ReloadOutlined className="mean-svg-icons" />}
+                onClick={() => refreshPaymentStreams(true)}
+              />
+            </Tooltip>
+          </span>
+        </div>
+        
         <RightInfoDetails
           infoData={infoData}
         />
