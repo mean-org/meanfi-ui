@@ -147,6 +147,7 @@
     "@saberhq/stableswap-sdk": "1.13.17",
     "@saberhq/token-utils": "1.13.17",
     "@saberhq/solana-contrib": "1.13.17",
-    "terser-webpack-plugin": "5.3.0"
+    "terser-webpack-plugin": "5.3.0",
+    "@solana/wallet-adapter-phantom": "0.9.2"
   }
 }
