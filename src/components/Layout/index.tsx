@@ -51,7 +51,7 @@ export const AppLayout = React.memo((props: any) => {
   const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { wallet, provider, connected, publicKey, select } = useWallet();
+  const { wallet, provider, connected, publicKey, connecting, select } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
@@ -439,10 +439,6 @@ export const AppLayout = React.memo((props: any) => {
     t
   ]);
 
-  useEffect(() => {
-
-  }, []);
-
   if (wallet && connected) {
     return (
       <>
@@ -495,7 +491,9 @@ export const AppLayout = React.memo((props: any) => {
     );
   } else {
 
-    select();
+    if (!wallet && !connected && !connecting) {
+      select();
+    }
 
     return (
       <>

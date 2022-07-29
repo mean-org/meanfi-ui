@@ -221,9 +221,9 @@ export function WalletProvider({ children = null as any }) {
   const [providerName, setProviderName] = useLocalStorageState("providerName");
   const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
 
-  const resetWalletProvider = useCallback(() => {
+  const resetWalletProvider = () => {
     setProviderName(null);
-  }, [setProviderName]);
+  }
 
   const provider = useMemo(() => {
     const item = WALLET_PROVIDERS.find(({ name }) => name === providerName);
