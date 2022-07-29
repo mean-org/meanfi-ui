@@ -773,10 +773,11 @@
 			"summary-title": "MEAN Token Özeti",
 			"token-address": "Adres",
 			"token-address-copy": "Token Adresini Kopyala",
-			"token-authority": "Yetki",
-			"token-authority-copy": "Token yetkisini kopyala",
-			"token-decimals": "Basamaklar",
-			"token-name": "isim"
+			"token-authority": "Yetkili",
+			"token-authority-copy": "Token yetkilisini kopyala",
+			"token-decimals": "Desimal",
+			"token-name": "İsim",
+			"token-symbol": "Simge"
 		},
 		"title": "İstatistikler",
 		"total-liquidity-btn": "Likidite Ekle"

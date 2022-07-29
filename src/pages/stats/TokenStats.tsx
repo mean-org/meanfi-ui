@@ -15,16 +15,17 @@ import { openNotification } from "../../components/Notifications";
 
 export const TokenStats = ({
   meanDecimals, 
-  meanMintAuth,
+  meanSymbol,
   meanTotalSupply,
   meanHolders,
-  meanToken
+  meanToken,
+  smeanSupply
 }: any) => {
   return (
     <>
       <FirstCardsLayout 
         meanDecimals={meanDecimals} 
-        meanMintAuth={meanMintAuth} 
+        meanSymbol={meanSymbol} 
         meanToken={meanToken}
       />
       <Divider />
@@ -41,7 +42,7 @@ export const TokenStats = ({
 /*********************** FIRST TYPE OF CARDS *************************/
 export const FirstCardsLayout = ({
   meanDecimals,
-  meanMintAuth,
+  meanSymbol,
   meanToken
 }: any) => {
   const { t } = useTranslation('common');
@@ -52,18 +53,21 @@ export const FirstCardsLayout = ({
       value: data.token_name
     },
     {
+      label: t('stats.summary.token-symbol'),
+      value: meanSymbol
+    },
+    {
       label: t('stats.summary.token-address'),
       value: data.token_address,
       tooltip: "stats.summary.token-address-copy"
     },
     {
-      label: t('stats.summary.token-authority'),
-      value: meanMintAuth,
-      tooltip: "stats.summary.token-authority-copy"
-    },
-    {
       label: t('stats.summary.token-decimals'),
       value: meanDecimals
+    },
+    {
+      label: '',
+      value: ''
     }
   ];
 
@@ -73,18 +77,6 @@ export const FirstCardsLayout = ({
   const onCopyText = (event: any) => { 
     if (event.currentTarget.name === "Address") {
       if (data.token_address && copyText(data.token_address)) {
-        openNotification({
-          description: t('notifications.account-address-copied-message'),
-          type: "info"
-        });
-      } else {
-        openNotification({
-          description: t('notifications.account-address-not-copied-message'),
-          type: "error"
-        });
-      }
-    } else if (event.currentTarget.name === "Authority") {
-      if (data.authority && copyText(data.authority)) {
         openNotification({
           description: t('notifications.account-address-copied-message'),
           type: "info"

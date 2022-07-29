@@ -73,7 +73,7 @@ export const meanFiHeaders = new Headers();
 meanFiHeaders.append('X-Api-Version', '1.0');
 meanFiHeaders.append('content-type', 'application/json;charset=UTF-8');
 export const requestOptions: RequestInit = {
-  headers: meanFiHeaders
+    headers: meanFiHeaders
 }
 
 export const LANGUAGES: Language[] = [
@@ -238,4 +238,9 @@ export const IDO_FETCH_FREQUENCY = 5 * 60 * 1000;       // IDO data fetch pollin
 
 export const NO_FEES = {
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+}
+
+export const MEANFI_TOKENS = {
+    MEAN: 'MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD',
+    sMEAN: 'sMEANebFMnd9uTYpyntGzBmTmzEukRFwCjEcnXT2E8z'
 }

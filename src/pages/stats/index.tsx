@@ -1,8 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
 import "./style.scss";
 import { IconStats } from '../../Icons';
-import { Col, Row } from 'antd';
+import { Col, Row, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useConnection } from '../../contexts/connection';
 import { Connection, ParsedAccountData, PublicKey } from '@solana/web3.js';
@@ -10,14 +10,14 @@ import { AppStateContext } from '../../contexts/appstate';
 import { UserTokenAccount } from '../../models/transactions';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TokenStats } from './TokenStats';
-import MeanDaoStats from './MeanDaoStats';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { BN } from 'bn.js';
 import { toUiAmount } from '../../utils/utils';
+import { MEANFI_TOKENS } from '../../constants'
 
-const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
+//const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
 
-export const StatsView = () => { 
+export const StatsView = () => {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const {
@@ -26,44 +26,48 @@ export const StatsView = () => {
 
   const [meanTotalSupply, setMeanTotalSupply] = useState<number | undefined>(undefined);
   const [meanDecimals, setMeanDecimals] = useState<number | undefined>(undefined);
-  const [meanMintAuth, setMeanMintAuth] = useState<string>('');
+  const [meanSymbol, setMeanSymbol] = useState<string>('');
   const [meanToken, setMeanToken] = useState<TokenInfo | UserTokenAccount | undefined>(undefined);
   const [meanHolders, setMeanHolders] = useState<number | undefined>(undefined);
-
-  const [activeTab, setActiveTab] = useState(tabs[0]);
-
-  const onClickHandler = (event: any) => {
-    if (event.target.innerHTML !== activeTab) {
-      setActiveTab(event.target.innerHTML);
-    }
-  };
+  const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | undefined>(undefined);
 
   // Getters
 
   // Data handling / fetching
 
-  // Get MEAN token info
+  // Get MEAN and sMEAN token info
   useEffect(() => {
     if (!connection) { return; }
 
     (async () => {
-      const token = userTokens.find(t => t.symbol === 'MEAN');
+      const meanSymbol = 'MEAN';
+      const token = userTokens.find(t => t.symbol === meanSymbol);
       if (!token) { return; }
 
-      const mint = new PublicKey(token.address);
       setMeanToken(token);
 
+      const meanPubKey = new PublicKey(MEANFI_TOKENS.MEAN);
+      const sMeanPubKey = new PublicKey(MEANFI_TOKENS.sMEAN);
+
       // use getParsedAccountInfo
-      const accountInfo = await connection.getParsedAccountInfo(mint);
-      if (accountInfo) {   
-        const totalSupply = (accountInfo as any).value.data["parsed"]["info"]["supply"];
-        
-        setMeanTotalSupply(toUiAmount(new BN(totalSupply), totalSupply.decimals || 6));
-        setMeanDecimals((accountInfo as any).value.data["parsed"]["info"]["decimals"]);
-        setMeanMintAuth((accountInfo as any).value.data["parsed"]["info"]["mintAuthority"]);
+      const meanInfo = await connection.getParsedAccountInfo(meanPubKey);
+      if (meanInfo) {
+        const meanValue = (meanInfo.value?.data as ParsedAccountData);
+        const totalSupply = meanValue.parsed["info"]["supply"];
+        const decimals = Number(meanValue.parsed["info"]["decimals"] || '6');
+        setMeanDecimals(decimals);
+        setMeanSymbol(meanSymbol);
+        setMeanTotalSupply(toUiAmount(new BN(totalSupply), decimals));
+      }
+
+      const sMeanInfo = await connection.getParsedAccountInfo(sMeanPubKey);
+      if (sMeanInfo) {
+        const sMeanValue = (sMeanInfo.value?.data as ParsedAccountData);
+        const totalSupply = sMeanValue.parsed["info"]["supply"];
+        const decimals = Number(sMeanValue.parsed["info"]["decimals"] || '6');
+        setSMeanTotalSupply(toUiAmount(new BN(totalSupply), decimals));
       }
     })();
-
   }, [
     meanToken,
     userTokens,
@@ -75,24 +79,24 @@ export const StatsView = () => {
       if (!meanToken) {
         return [];
       }
-  
+
       const accountInfos = await connection.getParsedProgramAccounts(TOKEN_PROGRAM_ID, {
         filters: [
           {
-            memcmp: { offset: 0, bytes: meanToken.address },
-          }, 
+            memcmp: { offset: 0, bytes: MEANFI_TOKENS.MEAN },
+          },
           {
             dataSize: AccountLayout.span
           }
         ],
       });
-  
+
       const results = accountInfos
         .filter(i => (i.account.data as ParsedAccountData).parsed.info.tokenAmount.uiAmount > 0);
-  
+
       return results;
     }
-  
+
     if (connection) {
       getAccounts(connection)
         .then(values => {
@@ -100,7 +104,7 @@ export const StatsView = () => {
         });
     }
   }, [connection, meanToken]);
-  
+
 
   return (
     <>
@@ -115,30 +119,14 @@ export const StatsView = () => {
               {t('stats.subtitle')}
             </div>
           </div>
-          <ul className="tabs ant-menu-overflow ant-menu-horizontal">
-            {tabs.map((tab, index) => (
-              <li 
-                key={index} 
-                className={`ant-menu-item ${activeTab === tab ? "active ant-menu-item-selected" : ""}`} 
-                tabIndex={0} 
-                onClick={onClickHandler}
-              >
-                <span className="ant-menu-title-content">{tab}</span>
-              </li>
-            ))}
-          </ul>
           <PromoSpace />
-          {activeTab === "Mean Token" &&           
-            <TokenStats 
-              meanTotalSupply={meanTotalSupply} 
-              meanDecimals={meanDecimals} 
-              meanMintAuth={meanMintAuth} 
-              meanHolders={meanHolders}
-              meanToken={meanToken}
-            />
-          }
-          {activeTab === "MeanFi" && "MeanFi"}
-          {activeTab === "Mean DAO" && <MeanDaoStats />}
+          <TokenStats
+            meanTotalSupply={meanTotalSupply}
+            meanDecimals={meanDecimals}
+            meanSymbol={meanSymbol}
+            meanHolders={meanHolders}
+            meanToken={meanToken}
+          />
         </div>
       </div>
       <PreFooter />
@@ -176,19 +164,19 @@ export const PromoSpace = () => {
     let currentIndex = array.length, temporaryValue, randomIndex;
 
     while (currentIndex !== 0) {
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-        temporaryValue = array[currentIndex];
-        array[currentIndex] = array[randomIndex];
-        array[randomIndex] = temporaryValue;
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+      temporaryValue = array[currentIndex];
+      array[currentIndex] = array[randomIndex];
+      array[randomIndex] = temporaryValue;
     }
 
     return array;
   };
 
-  const randomPromoCards = shuffle(promoCards).slice(0, 3);  
+  const randomPromoCards = shuffle(promoCards).slice(0, 3);
 
-  
+
   return (
     <>
       {randomPromoCards && (
@@ -196,11 +184,11 @@ export const PromoSpace = () => {
           {randomPromoCards.map((card: any, index: string) => (
             <Col xs={24} sm={12} md={8} lg={8} key={index}>
               <a href={card.ctaUrl} target="_blank" rel="noreferrer" className="promo-space_link">
-                <img src={card.imgUrl} alt="" width="100%" height="150"/>
+                <img src={card.imgUrl} alt="" width="100%" height="150" />
               </a>
             </Col>
           ))}
-        </Row> 
+        </Row>
       )}
     </>
   )

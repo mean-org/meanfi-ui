@@ -770,7 +770,8 @@
 			"token-authority": "اختیارات",
 			"token-authority-copy": "token authority را کپی کنید",
 			"token-decimals": "اعشار",
-			"token-name": "نام"
+			"token-name": "نام",
+			"token-symbol": "Symbol"
 		},
 		"title": "آمار",
 		"total-liquidity-btn": "نقدینگی را اضافه کنید"
