@@ -5,6 +5,7 @@ import {
   ArrowRightOutlined,
   EditOutlined,
   LoadingOutlined,
+  ReloadOutlined,
   SyncOutlined,
   WarningFilled
 } from '@ant-design/icons';
@@ -921,6 +922,18 @@ export const AccountsNewView = () => {
         segmentAnalytics.recordEvent(event, { signature: item.signature });
       }
     }
+  }, []);
+
+  const reloadAssets = () => {
+    const tokensRefreshCta = document.getElementById("account-assets-hard-refresh-cta");
+    if (tokensRefreshCta) {
+      tokensRefreshCta.click();
+    }
+  };
+
+  const refreshAssetBalances = useCallback((reset = false) => {
+    setAccountTokens([]);
+    reloadAssets();
   }, []);
 
   // Setup event handler for Tx confirmed
@@ -5352,12 +5365,27 @@ export const AccountsNewView = () => {
                 {/* Right / down panel */}
                 <div className="meanfi-two-panel-right">
                   <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
+
                   <div className="inner-container">
                     {selectedCategory === "assets" ? (
                       <>
                         {canShowBuyOptions() ? renderTokenBuyOptions() : (
                           <div className="flexible-column-bottom">
                             <div className="top">
+                              <div className="float-top-right mr-0">
+                                <span className="icon-button-container secondary-button">
+                                  <Tooltip placement="bottom" title="Refresh asset balances">
+                                    <Button
+                                      type="default"
+                                      shape="circle"
+                                      size="middle"
+                                      icon={<ReloadOutlined className="mean-svg-icons" />}
+                                      onClick={() => refreshAssetBalances(true)}
+                                    />
+                                  </Tooltip>
+                                </span>
+                              </div>
+                              
                               {renderCategoryMeta()}
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>

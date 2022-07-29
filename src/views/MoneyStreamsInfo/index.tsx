@@ -2736,7 +2736,7 @@ export const MoneyStreamsInfoView = (props: {
   return (
     <>
       <Spin spinning={loadingMoneyStreamsDetails || loadingCombinedStreamingList}>
-        <div className="float-top-right">
+        <div className="float-top-right mr-2">
           <span className="icon-button-container secondary-button">
             <Tooltip placement="bottom" title="Refresh payment streams">
               <Button
