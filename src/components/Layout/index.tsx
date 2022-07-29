@@ -25,7 +25,6 @@ import { AppUsageEvent } from "../../utils/segment-service";
 import { openNotification } from "../Notifications";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
-import { shortenAddress } from "../../utils/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { getDefaultRpc } from "../../services/connections-hq";
 
@@ -34,7 +33,6 @@ const { Header, Content, Footer } = Layout;
 export const AppLayout = React.memo((props: any) => {
   const location = useLocation();
   const navigate = useNavigate();
-
   const {
     theme,
     tpsAvg,
@@ -50,11 +48,10 @@ export const AppLayout = React.memo((props: any) => {
     setTpsAvg,
   } = useContext(AppStateContext);
   const { confirmationHistory, clearConfirmationHistory } = useContext(TxConfirmationContext);
-
   const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { wallet, provider, connected, connecting, publicKey, select } = useWallet();
+  const { wallet, provider, connected, publicKey, connecting, select } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
@@ -263,11 +260,6 @@ export const AppLayout = React.memo((props: any) => {
       if (!previousWalletConnectState && connected) {
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
-          openNotification({
-            type: "success",
-            title: t('notifications.wallet-connection-event-title'),
-            description: t('notifications.wallet-connect-message', {address: shortenAddress(walletAddress)}),
-          });
 
           // Record user login in Segment Analytics
           segmentAnalytics.recordIdentity(walletAddress, {
@@ -306,11 +298,6 @@ export const AppLayout = React.memo((props: any) => {
         setStreamList([]);
         clearConfirmationHistory();
         refreshTokenBalance();
-        openNotification({
-          type: "info",
-          title: t('notifications.wallet-connection-event-title'),
-          description: t('notifications.wallet-disconnect-message'),
-        });
         // Send identity to Segment if no wallew connection
         if (!publicKey) {
           segmentAnalytics.recordIdentity('', {

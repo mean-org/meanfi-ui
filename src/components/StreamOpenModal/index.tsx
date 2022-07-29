@@ -55,7 +55,7 @@ export const StreamOpenModal = (props: {
         </div>
       </div>
       <Button
-        className="main-cta"
+        className="main-cta center-text-in-btn"
         block
         type="primary"
         shape="round"

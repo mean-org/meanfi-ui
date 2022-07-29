@@ -17,7 +17,7 @@ import { InputTextAreaMean } from '../InputTextAreaMean';
 import { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { getMultisigInstructionSummary, NATIVE_LOADER, parseSerializedTx } from '../../models/multisig';
+import { CreateNewProposalParams, getMultisigInstructionSummary, NATIVE_LOADER, parseSerializedTx } from '../../models/multisig';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { openNotification } from '../Notifications';
@@ -162,7 +162,7 @@ export const MultisigProposalModal = (props: {
   const onAcceptModal = () => {
     if (!selectedApp || !selectedAppConfig || !selectedUiIx) { return; }
     updateSelectedIx(inputState);
-    handleOk({
+    const options: CreateNewProposalParams = {
       appId: selectedApp.id,
       multisigId: selectedMultisig.id.toBase58(),
       title: proposalTitleValue,
@@ -170,7 +170,8 @@ export const MultisigProposalModal = (props: {
       expires: proposalExpiresValue.value,
       config: selectedAppConfig,
       instruction: selectedUiIx
-    });
+    };
+    handleOk(options);
   }
 
   const onCloseModal = () => {
@@ -206,7 +207,7 @@ export const MultisigProposalModal = (props: {
   const getTransactionStartButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : t('Execute')
+      : t('Create')
   };
 
   const onProposalTitleValueChange = (e: any) => {
@@ -394,7 +395,7 @@ export const MultisigProposalModal = (props: {
 
               <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
                 <>
-                  <h3>Select app</h3>
+                  <h3 className="left-title">Select app</h3>
                   <Row gutter={[8, 8]} className="step-one-select-app">
                     {renderSolanaApps}
                   </Row>
@@ -403,7 +404,7 @@ export const MultisigProposalModal = (props: {
 
               <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
                 <>
-                  <h3>Proposal setup</h3>
+                  <h3 className="left-title">Proposal setup</h3>
                   <div className="step-two-select-app">
                     <Row gutter={[8, 8]}>
                       <Col span={24} className="step-two-selected-app">
@@ -742,7 +743,7 @@ export const MultisigProposalModal = (props: {
 
               <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
                 <>
-                  <h3>Review proposal</h3>
+                  <h3 className="left-title">Review proposal</h3>
                   <div className="step-three-select-app">
 
                     {/* Title */}
@@ -817,9 +818,9 @@ export const MultisigProposalModal = (props: {
                           Object.keys(inputState).map((key, index) => (
                             <>
                               <div className="info-label text-center mt-2">
-                                {selectedAppConfig?.ui.map((ix: any) => (
-                                  ix.uiElements.map((element: any) => (
-                                    <span>{element.label}</span>
+                                {selectedAppConfig?.ui.map((ix: any, idx: number) => (
+                                  ix.uiElements.map((element: any, idx2: number) => (
+                                    <span key={`instruction-${idx}-${idx2}`}>{element.label}</span>
                                   ))
                                 ))}
                               </div>
@@ -840,7 +841,7 @@ export const MultisigProposalModal = (props: {
                                   </div>
                                 </div>
                                 {deserializedTx?.accounts.map((account: any) => (
-                                  <div className="mb-1" key={account.index}>
+                                  <div className="mb-1" key={`account-${account.index}`}>
                                     <span>{t('multisig.proposal-modal.instruction-account')} {account.index + 1}:</span><br />
                                     <div>
                                       <span onClick={() => copyAddressToClipboard(account.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
@@ -857,8 +858,8 @@ export const MultisigProposalModal = (props: {
                                 ))}
                                 <div className="mb-1">
                                   <span>{t('multisig.proposal-modal.instruction-data')}:</span><br />
-                                  {deserializedTx?.data.map((data: any) => (
-                                    <span key={data.value} onClick={() => copyAddressToClipboard(data.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                                  {deserializedTx?.data.map((data: any, idx3: number) => (
+                                    <span key={`txdata-item-${idx3}`} onClick={() => copyAddressToClipboard(data.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
                                       {data.value}
                                     </span>
                                   ))}
@@ -870,7 +871,7 @@ export const MultisigProposalModal = (props: {
                       </>
                     ) : (
                       Object.keys(inputState).map((key, index) => (
-                        <Row className="mb-1" key={index}>
+                        <Row className="mb-1" key={`uielement-${index}`}>
                           {key && (
                             <>
                               <Col span={8} className="text-right pr-1">

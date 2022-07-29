@@ -109,7 +109,7 @@ export const StreamTransferOpenModal = (props: {
             name="Title"
             className="w-100 general-text-input"
             onChange={onTitleInputValueChange}
-            placeholder="Add a proposal title (required)"
+            placeholder="Add a proposal title"
             value={multisigTitle}
           />
         </div>

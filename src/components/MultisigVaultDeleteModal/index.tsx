@@ -67,9 +67,8 @@ export const MultisigVaultDeleteModal = (props: {
   }
 
   const isValidForm = (): boolean => {
-    return proposalTitle && 
-          props.selectedVault &&
-          props.selectedVault.balance as number === 0
+    return props.selectedVault &&
+           props.selectedVault.balance as number === 0
       ? true
       : false;
   }
@@ -138,7 +137,7 @@ export const MultisigVaultDeleteModal = (props: {
                 name="Title"
                 className="w-100 general-text-input"
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title (required)"
+                placeholder="Add a proposal title"
                 value={proposalTitle}
               />
             </div>

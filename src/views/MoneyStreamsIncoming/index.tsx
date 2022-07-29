@@ -1309,7 +1309,7 @@ export const MoneyStreamsIncomingView = (props: {
       </Menu.Item>
       <Menu.Item key="msi-02">
         <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-          <span className="menu-item-text">View on Solscan</span>
+          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
         </a>
       </Menu.Item>
     </Menu>
@@ -1357,12 +1357,12 @@ export const MoneyStreamsIncomingView = (props: {
               {streamSelected ? (
                 <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
                   <div className="btn-content">
-                      View on Solscan
+                      {t('account-area.explorer-link')}
                   </div>
                 </a>
               ) : (
                 <div className="btn-content">
-                  View on Solscan
+                  {t('account-area.explorer-link')}
               </div>
               )}
           </Button> */}
