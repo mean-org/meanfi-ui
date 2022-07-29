@@ -730,7 +730,15 @@ export const VestingContractAddFundsModal = (props: {
                   <div className="flex-fixed-left">
                     <div className="left">
                       <span className="add-on">
-                        {(selectedToken && tokenList) && (
+                        {selectedToken && (
+                          <TokenDisplay onClick={() => {}}
+                            mintAddress={selectedToken.address}
+                            showCaretDown={false}
+                            fullTokenInfo={selectedToken}
+                          />
+                        )}
+
+                        {/* {(selectedToken && tokenList) && (
                           <Select className={`token-selector-dropdown ${associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
                               onChange={onTokenChange} bordered={false} showArrow={false}
                               dropdownRender={menu => (
@@ -767,7 +775,7 @@ export const VestingContractAddFundsModal = (props: {
                               );
                             })}
                           </Select>
-                        )}
+                        )} */}
                         {selectedToken && availableBalance ? (
                           <div
                             id="treasury-add-funds-max"

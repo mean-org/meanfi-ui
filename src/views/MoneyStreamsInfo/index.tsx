@@ -31,9 +31,7 @@ import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusF
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cutNumber, fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
-import { ACCOUNT_LAYOUT } from "../../utils/layouts";
+import { useNativeAccount } from "../../contexts/accounts";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
 import { INITIAL_TREASURIES_SUMMARY, TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
 import { customLogger } from "../..";
@@ -117,7 +115,6 @@ export const MoneyStreamsInfoView = (props: {
   const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const { width } = useWindowSize();
   const { address } = useParams();
   const navigate = useNavigate();

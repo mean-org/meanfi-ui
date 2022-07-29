@@ -562,7 +562,6 @@ export const TreasuryAddFundsModal = (props: {
   // Keep token balance updated
   useEffect(() => {
     if (selectedToken && userBalances) {
-      consoleOut('userBalances:', userBalances, 'blue');
       if (userBalances[selectedToken.address]) {
         setSelectedTokenBalance(userBalances[selectedToken.address]);
       }
