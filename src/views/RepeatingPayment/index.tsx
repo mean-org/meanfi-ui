@@ -61,6 +61,7 @@ import { NATIVE_SOL } from '../../utils/tokens';
 import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 import { AccountTokenParsedInfo } from '../../models/token';
+import { RecipientAddressInfo } from '../../models/common-types';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -122,190 +123,8 @@ export const RepeatingPayment = (props: {
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+  const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '' });
 
-  // Process inputs
-  useEffect(() => {
-    if (token && inModal) {
-      setSelectedToken(token);
-      return;
-    } else {
-      let from: TokenInfo | undefined = undefined;
-      if (token) {
-        from = token
-          ? token.symbol === 'SOL'
-            ? getTokenBySymbol('wSOL')
-            : getTokenBySymbol(token.symbol)
-          : getTokenBySymbol('MEAN');
-
-        if (from) {
-          setSelectedToken(from);
-        }
-      } else {
-        from = getTokenBySymbol('MEAN');
-        if (from) {
-          setSelectedToken(from);
-        }
-      }
-    }
-  }, [token, selectedToken, inModal]);
-
-  // Keep account balance updated
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-  ]);
-
-  // Automatically update all token balances and rebuild token list
-  useEffect(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!publicKey || !userTokens || !tokenList || !accounts || !accounts.tokenAccounts) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      const balancesMap: any = {};
-
-      fetchAccountTokens(connection, publicKey)
-      .then(accTks => {
-        if (accTks) {
-
-          const meanTokensCopy = new Array<TokenInfo>();
-          const intersectedList = new Array<TokenInfo>();
-          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
-
-          // Build meanTokensCopy including the MeanFi pinned tokens
-          userTokensCopy.forEach(item => {
-            meanTokensCopy.push(item);
-          });
-
-          // Now add all other items but excluding those in userTokens
-          splTokenList.forEach(item => {
-            if (!userTokens.includes(item)) {
-              meanTokensCopy.push(item);
-            }
-          });
-
-          intersectedList.unshift(userTokensCopy[0]);
-          balancesMap[userTokensCopy[0].address] = nativeBalance;          
-          // Create a list containing tokens for the user owned token accounts
-          accTks.forEach(item => {
-            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
-            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-              intersectedList.push(tokenFromMeanTokensCopy);
-            }
-          });
-
-          intersectedList.sort((a, b) => {
-            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
-              return 1;
-            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
-              return -1;
-            }
-            return 0;
-          });
-
-          const custom: TokenInfo[] = [];
-          // Build a list with all owned token accounts not already in intersectedList as custom tokens
-          accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
-            if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
-              const customToken: TokenInfo = {
-                address: item.parsedInfo.mint,
-                chainId: 0,
-                decimals: item.parsedInfo.tokenAmount.decimals,
-                name: 'Custom account',
-                symbol: shortenAddress(item.parsedInfo.mint),
-                tags: undefined,
-                logoURI: undefined,
-              };
-              custom.push(customToken);
-            }
-          });
-
-          // Sort by token balance
-          custom.sort((a, b) => {
-            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
-              return 1;
-            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
-              return -1;
-            }
-            return 0;
-          });
-
-          // Finally add all owned token accounts as custom tokens
-          const finalList = intersectedList.concat(custom);
-
-          setSelectedList(finalList);
-
-        } else {
-          for (const t of tokenList) {
-            balancesMap[t.address] = 0;
-          }
-          // set the list to the userTokens list
-          setSelectedList(tokenList);
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (const t of tokenList) {
-          balancesMap[t.address] = 0;
-        }
-        setSelectedList(tokenList);
-      })
-      .finally(() => setUserBalances(balancesMap));
-
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    accounts,
-    publicKey,
-    tokenList,
-    userTokens,
-    connection,
-    splTokenList,
-    nativeBalance,
-  ]);
-
-  // Keep token balance updated
-  useEffect(() => {
-
-    if (!connection || !publicKey || !userBalances || !selectedToken) {
-      setSelectedTokenBalance(0);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      setSelectedTokenBalance(userBalances[selectedToken.address]);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [connection, publicKey, selectedToken, userBalances]);
 
   const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -314,16 +133,6 @@ export const RepeatingPayment = (props: {
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return await calculateActionFees(connection, action);
   }, [connection]);
-
-  useEffect(() => {
-    getTransactionFees(MSP_ACTIONS.createStreamWithFunds).then(value => {
-      setRepeatingPaymentFees(value);
-      consoleOut("repeatingPaymentFees:", value, 'orange');
-    });
-  }, [
-    repeatingPaymentFees.mspFlatFee,
-    getTransactionFees,
-  ]);
 
   const getFeeAmount = useCallback(() => {
     return repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee;
@@ -611,6 +420,249 @@ export const RepeatingPayment = (props: {
     return outStr;
   }, [paymentRateAmount, paymentRateFrequency, selectedToken, t]);
 
+
+  /////////////////////
+  // Data management //
+  /////////////////////
+
+  useEffect(() => {
+    getTransactionFees(MSP_ACTIONS.createStreamWithFunds).then(value => {
+      setRepeatingPaymentFees(value);
+      consoleOut("repeatingPaymentFees:", value, 'orange');
+    });
+  }, [
+    repeatingPaymentFees.mspFlatFee,
+    getTransactionFees,
+  ]);
+
+  // Process inputs
+  useEffect(() => {
+    if (token && inModal) {
+      setSelectedToken(token);
+      return;
+    } else {
+      let from: TokenInfo | undefined = undefined;
+      if (token) {
+        from = token
+          ? token.symbol === 'SOL'
+            ? getTokenBySymbol('wSOL')
+            : getTokenBySymbol(token.symbol)
+          : getTokenBySymbol('MEAN');
+
+        if (from) {
+          setSelectedToken(from);
+        }
+      } else {
+        from = getTokenBySymbol('MEAN');
+        if (from) {
+          setSelectedToken(from);
+        }
+      }
+    }
+  }, [token, selectedToken, inModal]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+  ]);
+
+  // Automatically update all token balances and rebuild token list
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !userTokens || !tokenList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const balancesMap: any = {};
+
+      fetchAccountTokens(connection, publicKey)
+      .then(accTks => {
+        if (accTks) {
+
+          const meanTokensCopy = new Array<TokenInfo>();
+          const intersectedList = new Array<TokenInfo>();
+          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+
+          // Build meanTokensCopy including the MeanFi pinned tokens
+          userTokensCopy.forEach(item => {
+            meanTokensCopy.push(item);
+          });
+
+          // Now add all other items but excluding those in userTokens
+          splTokenList.forEach(item => {
+            if (!userTokens.includes(item)) {
+              meanTokensCopy.push(item);
+            }
+          });
+
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;          
+          // Create a list containing tokens for the user owned token accounts
+          accTks.forEach(item => {
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromMeanTokensCopy);
+            }
+          });
+
+          intersectedList.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          const custom: TokenInfo[] = [];
+          // Build a list with all owned token accounts not already in intersectedList as custom tokens
+          accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
+            if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
+              const customToken: TokenInfo = {
+                address: item.parsedInfo.mint,
+                chainId: 0,
+                decimals: item.parsedInfo.tokenAmount.decimals,
+                name: 'Custom account',
+                symbol: shortenAddress(item.parsedInfo.mint),
+                tags: undefined,
+                logoURI: undefined,
+              };
+              custom.push(customToken);
+            }
+          });
+
+          // Sort by token balance
+          custom.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          // Finally add all owned token accounts as custom tokens
+          const finalList = intersectedList.concat(custom);
+
+          consoleOut('finalList items:', finalList.length, 'blue');
+          setSelectedList(finalList);
+
+        } else {
+          for (const t of tokenList) {
+            balancesMap[t.address] = 0;
+          }
+          // set the list to the userTokens list
+          setSelectedList(tokenList);
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (const t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+        setSelectedList(tokenList);
+      })
+      .finally(() => setUserBalances(balancesMap));
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    publicKey,
+    tokenList,
+    userTokens,
+    connection,
+    splTokenList,
+    nativeBalance,
+  ]);
+
+  // Keep token balance updated
+  useEffect(() => {
+
+    if (!connection || !publicKey || !userBalances || !selectedToken) {
+      setSelectedTokenBalance(0);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setSelectedTokenBalance(userBalances[selectedToken.address]);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [connection, publicKey, selectedToken, userBalances]);
+
+  // Fetch and store information about the destination address
+  useEffect(() => {
+
+    if (!connection) { return; }
+
+    const getInfo = async (address: string) => {
+      try {
+        const accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+        consoleOut('accountInfo:', accountInfo, 'blue');
+        return accountInfo;
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    }
+
+    if (recipientAddress && isValidAddress(recipientAddress)) {
+      let type = '';
+      let mint = '';
+      getInfo(recipientAddress)
+      .then(info => {
+        if (info) {
+          if ((info as any).data["program"] &&
+              (info as any).data["program"] === "spl-token" &&
+              (info as any).data["parsed"] &&
+              (info as any).data["parsed"]["type"]) {
+            type = (info as any).data["parsed"]["type"];
+          }
+          if ((info as any).data["program"] &&
+              (info as any).data["program"] === "spl-token" &&
+              (info as any).data["parsed"] &&
+              (info as any).data["parsed"]["type"] &&
+              (info as any).data["parsed"]["type"] === "account") {
+            mint = (info as any).data["parsed"]["info"]["mint"];
+          }
+        }
+        setRecipientAddressInfo({
+          type,
+          mint
+        });
+      })
+    }
+  }, [connection, recipientAddress]);
+
   // Hook on wallet connect/disconnect
   useEffect(() => {
 
@@ -720,9 +772,18 @@ export const RepeatingPayment = (props: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  //////////////////
-  //  Validation  //
-  //////////////////
+  /////////////////////////////
+  //  Events and validation  //
+  /////////////////////////////
+
+  const getRecipientAddressValidation = () => {
+    if (recipientAddressInfo.type === "mint") {
+      return 'Recipient cannot be a mint address'
+    } else if (recipientAddressInfo.type === "account" && recipientAddressInfo.mint && recipientAddressInfo.mint === selectedToken?.address) {
+      return 'Recipient cannot be the selected token mint';
+    }
+    return '';
+  }
 
   const isMemoValid = (): boolean => {
     return recipientNote && recipientNote.length <= 32
@@ -770,15 +831,17 @@ export const RepeatingPayment = (props: {
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
         ? t('transactions.validation.select-recipient')
-        : !selectedToken || !tokenBalance
-          ? t('transactions.validation.no-balance')
-          : !paymentStartDate
-            ? t('transactions.validation.no-valid-date')
-            : !recipientNote
-              ? t('transactions.validation.memo-empty')
-              : !arePaymentSettingsValid()
-                ? getPaymentSettingsButtonLabel()
-                : t('transactions.validation.valid-continue');
+        : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
+          ? 'Invalid recipient address'
+          : !selectedToken || !tokenBalance
+            ? t('transactions.validation.no-balance')
+            : !paymentStartDate
+              ? t('transactions.validation.no-valid-date')
+              : !recipientNote
+                ? t('transactions.validation.memo-empty')
+                : !arePaymentSettingsValid()
+                  ? getPaymentSettingsButtonLabel()
+                  : t('transactions.validation.valid-continue');
   }
 
   const getTransactionStartButtonLabel = (): string => {
@@ -786,24 +849,26 @@ export const RepeatingPayment = (props: {
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
         ? t('transactions.validation.select-recipient')
-        : !selectedToken || !tokenBalance
-          ? t('transactions.validation.no-balance')
-          : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
-            ? t('transactions.validation.no-amount')
-            : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
-               (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) > tokenBalance))
-              ? t('transactions.validation.amount-high')
-              : !paymentStartDate
-                ? t('transactions.validation.no-valid-date')
-                : !recipientNote
-                  ? t('transactions.validation.memo-empty')
-                  : !arePaymentSettingsValid()
-                    ? getPaymentSettingsButtonLabel()
-                    : !isVerifiedRecipient
-                      ? t('transactions.validation.verified-recipient-unchecked')
-                      : nativeBalance < getMinSolBlanceRequired()
-                        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
-                        : t('transactions.validation.valid-approve');
+        : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
+          ? 'Invalid recipient address'
+          : !selectedToken || !tokenBalance
+            ? t('transactions.validation.no-balance')
+            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+              ? t('transactions.validation.no-amount')
+              : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
+                (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) > tokenBalance))
+                ? t('transactions.validation.amount-high')
+                : !paymentStartDate
+                  ? t('transactions.validation.no-valid-date')
+                  : !recipientNote
+                    ? t('transactions.validation.memo-empty')
+                    : !arePaymentSettingsValid()
+                      ? getPaymentSettingsButtonLabel()
+                      : !isVerifiedRecipient
+                        ? t('transactions.validation.verified-recipient-unchecked')
+                        : nativeBalance < getMinSolBlanceRequired()
+                          ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
+                          : t('transactions.validation.valid-approve');
   }
 
   const getPaymentSettingsButtonLabel = (): string => {
@@ -1400,6 +1465,10 @@ export const RepeatingPayment = (props: {
             ) : isAddressOwnAccount() ? (
               <span className="form-field-error">
                 {t('transactions.recipient.recipient-is-own-account')}
+              </span>
+            ) : recipientAddress && getRecipientAddressValidation() ? (
+              <span className="form-field-error">
+                {getRecipientAddressValidation()}
               </span>
             ) : (null)
           }

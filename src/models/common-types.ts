@@ -72,3 +72,8 @@ export type TimeData = {
     minutes: number;
     seconds: number;
 }
+
+export type RecipientAddressInfo = {
+    type: string;
+    mint: string;
+}
