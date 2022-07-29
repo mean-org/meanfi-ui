@@ -27,7 +27,7 @@
 		"account-add-cta-label": "Go!",
 		"account-add-heading": "View account details for any address in",
 		"account-address-change-cta": "Scan another address",
-		"account-address-copy-cta": "View on Solscan",
+		"account-address-copy-cta": "Copy account address",
 		"account-address-label": "Account address",
 		"account-address-placeholder": "Enter your account address",
 		"accounts-label": "accounts",
@@ -1400,6 +1400,8 @@
 			"close-cta-busy": "Closing contract",
 			"close-stream-also-closes-account-label": "Also close the vesting contract",
 			"cant-close-stream-message": "You cannot close a vesting stream once started",
+			"close-stream-not-started": "Closing a stream before it has started will return the entire allocated amount back to the vesting contract and cancel the stream.",
+			"close-stream-finished": "Closing a stream after it has completed will send the remaining vested amount left in the account to the beneficiary's account ({{beneficiary}}).",
 			"option-close-stream": "Close stream",
 			"option-copy-stream-id": "Copy stream ID",
 			"option-show-stream": "Show stream"

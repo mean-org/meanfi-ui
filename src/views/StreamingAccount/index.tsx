@@ -9,7 +9,7 @@ import {
 } from '@mean-dao/money-streaming';
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, TokenAmount, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Modal, Row, Spin, Tabs } from "antd";
 import BN from "bn.js";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -17,16 +17,15 @@ import { useTranslation } from "react-i18next";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
-import { FALLBACK_COIN_IMAGE, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
-import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { findATokenAddress, formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, makeInteger, shortenAddress, toUiAmount } from "../../utils/utils";
+import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd, isValidAddress } from "../../utils/ui";
+import { fetchAccountTokens, findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from "../../utils/utils";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
@@ -73,8 +72,6 @@ export const StreamingAccountView = (props: {
   } = useContext(AppStateContext);
   const {
     confirmationHistory,
-    startFetchTxSignatureInfo,
-    clearTxConfirmationContext,
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
 
@@ -125,6 +122,7 @@ export const StreamingAccountView = (props: {
   const [loadingStreamingAccountActivity, setLoadingStreamingAccountActivity] = useState(false);
   const [hasMoreStreamingAccountActivity, setHasMoreStreamingAccountActivity] = useState<boolean>(true);
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(0);
+  const [associatedTokenDecimals, setAssociatedTokenDecimals] = useState(6);
 
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
@@ -226,25 +224,19 @@ export const StreamingAccountView = (props: {
 
   const refreshUserBalances = useCallback(() => {
 
-    if (!connection || !publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+    if (!connection || !publicKey || !tokenList) {
       return;
     }
 
     const balancesMap: any = {};
-    connection.getTokenAccountsByOwner(
-      publicKey, 
-      { programId: TOKEN_PROGRAM_ID }, 
-      connection.commitment
-    )
-    .then(response => {
-      for (const acc of response.value) {
-        const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-        const address = decoded.mint.toBase58();
-        const itemIndex = tokenList.findIndex(t => t.address === address);
-        if (itemIndex !== -1) {
-          balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-        } else {
-          balancesMap[address] = 0;
+
+    fetchAccountTokens(connection, publicKey)
+    .then(accTks => {
+      if (accTks) {
+        for (const item of accTks) {
+          const address = item.parsedInfo.mint;
+          const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+          balancesMap[address] = balance;
         }
       }
     })
@@ -257,7 +249,6 @@ export const StreamingAccountView = (props: {
     .finally(() => setUserBalances(balancesMap));
 
   }, [
-    accounts,
     publicKey,
     tokenList,
     connection,
@@ -542,7 +533,6 @@ export const StreamingAccountView = (props: {
     let multisigAuthority = '';
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryAddFunds);
@@ -1806,7 +1796,6 @@ export const StreamingAccountView = (props: {
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
-    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryRefreshBalance);
     setIsBusy(true);
@@ -2100,6 +2089,7 @@ export const StreamingAccountView = (props: {
                 multisigAuthority: ''
               }
             });
+            setIsBusy(false);
             onRefreshTreasuryBalanceTransactionFinished();
             setOngoingOperation(undefined);
             setLoadingStreamingAccountDetails(true);
@@ -2122,7 +2112,6 @@ export const StreamingAccountView = (props: {
     transactionStatus.currentOperation,
     onRefreshTreasuryBalanceTransactionFinished,
     enqueueTransactionConfirmation,
-    clearTxConfirmationContext,
     resetTransactionStatus,
     setTransactionStatus,
     isMultisigTreasury
@@ -2148,399 +2137,6 @@ export const StreamingAccountView = (props: {
     }
     resetTransactionStatus();
   }
-
-  const onExecuteCloseStreamTransaction = async (closeTreasury: any) => {
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
-    let encodedTx: string;
-    const transactionLog: any[] = [];
-
-    clearTxConfirmationContext();
-    setTransactionCancelled(false);
-    setOngoingOperation(OperationType.StreamClose);
-    setRetryOperationPayload(closeTreasury);
-    setIsBusy(true);
-
-    const createTxV1 = async (): Promise<boolean> => {
-      if (wallet && publicKey && highlightedStream) {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
-        const streamPublicKey = new PublicKey(highlightedStream.id as string);
-
-        const data = {
-          stream: streamPublicKey.toBase58(),                     // stream
-          initializer: publicKey.toBase58(),               // initializer
-          closeTreasury: closeTreasury.closeTreasuryOption        // closeTreasury
-        }
-        consoleOut('data:', data);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-
-        const bf = transactionFees.blockchainFee;       // Blockchain fee
-        const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
-        const minRequired = isMultisigTreasury() ? mp : bf + ff;
-
-        setMinRequiredBalance(minRequired);
-
-        consoleOut('Min balance required:', minRequired, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-  
-        if (nativeBalance < minRequired) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        consoleOut('Starting Close Stream using MSP V1...', '', 'blue');
-        // Create a transaction
-        return await ms.closeStream(
-          publicKey as PublicKey,                           // Initializer public key
-          streamPublicKey,                                  // Stream ID
-          closeTreasury                                     // closeTreasury
-        )
-        .then((value: any) => {
-          consoleOut('closeStream returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch((error: any) => {
-          console.error('closeStream error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    const closeStream = async (data: any) => {
-
-      if (!msp) { return null; }
-
-      if (!isMultisigTreasury()) {        
-        return await msp.closeStream(
-          new PublicKey(data.payer),              // payer
-          new PublicKey(data.payer),              // destination
-          new PublicKey(data.stream),             // stream,
-          data.closeTreasury,                     // closeTreasury
-          true                                    // TODO: Define if the user can determine this
-        );
-      }
-
-      if (!streamingAccountSelected || !multisigClient || !multisigAccounts || !publicKey) { return null; }
-
-      const treasury = streamingAccountSelected as Treasury;
-      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
-
-      if (!multisig) { return null; }
-
-      const closeStream = await msp.closeStream(
-        new PublicKey(data.payer),              // payer
-        new PublicKey(data.payer),              // TODO: This should come from the UI 
-        new PublicKey(data.stream),             // stream,
-        data.closeTreasury,                     // closeTreasury
-        false
-      );
-
-      const ixData = Buffer.from(closeStream.instructions[0].data);
-      const ixAccounts = closeStream.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-
-      const tx = await multisigClient.createTransaction(
-        publicKey,
-        "Close Stream",
-        "", // description
-        new Date(expirationTime * 1_000),
-        OperationType.StreamClose,
-        multisig.id,
-        MSPV2Constants.MSP,
-        ixAccounts,
-        ixData
-      );
-
-      return tx;
-    }
-
-    const createTxV2 = async (): Promise<boolean> => {
-      if (!publicKey || !highlightedStream || !msp) {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-        return false;
-      }
-
-      setTransactionStatus({
-        lastOperation: TransactionStatus.TransactionStart,
-        currentOperation: TransactionStatus.InitTransaction
-      });
-      const streamPublicKey = new PublicKey(highlightedStream.id as string);
-
-      const data = {
-        stream: streamPublicKey.toBase58(),                     // stream
-        payer: publicKey.toBase58(),                            // initializer
-        closeTreasury: closeTreasury.closeTreasuryOption        // closeTreasury
-      }
-
-      consoleOut('data:', data);
-
-      // Log input data
-      transactionLog.push({
-        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-        inputs: data
-      });
-
-      transactionLog.push({
-        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-        result: ''
-      });
-
-      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-
-      const bf = transactionFees.blockchainFee;       // Blockchain fee
-      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
-
-      setMinRequiredBalance(minRequired);
-
-      consoleOut('Min balance required:', minRequired, 'blue');
-      consoleOut('nativeBalance:', nativeBalance, 'blue');
-
-      if (nativeBalance < minRequired) {
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.TransactionStartFailure
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-          }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
-          })`
-        });
-        customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
-        return false;
-      }
-
-      consoleOut('Starting Close Stream using MSP V2...', '', 'blue');
-      // Create a transaction
-      const result = await closeStream(data)
-        .then(value => {
-          if (!value) { return false; }
-          consoleOut('closeStream returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('closeStream error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-          return false;
-        });
-
-      return result;
-    }
-
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: publicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
-            });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!'
-        });
-        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    if (wallet && highlightedStream) {
-      showTransactionExecutionModal();
-      let created: boolean;
-      if (highlightedStream.version < 2) {
-        created = await createTxV1();
-      } else {
-        created = await createTxV2();
-      }
-      consoleOut('created:', created, 'blue');
-      if (created && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('sign:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamClose);
-            setIsBusy(false);
-            onCloseStreamTransactionFinished();
-            setOngoingOperation(undefined);
-          } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
-    }
-  };
 
   // confirmationHistory
   const hasStreamingAccountPendingTx = useCallback(() => {
@@ -2598,11 +2194,8 @@ export const StreamingAccountView = (props: {
     const getStreamingAccountAtaBalance = async (address: string, streamingAccountAddress: string) => {
 
       if (!connection || !publicKey || !address || !streamingAccountAddress) {
-        return 0;
+        return null;
       }
-
-      let balance = 0;
-      consoleOut('got inside getStreamingAccountAtaBalance:', '', 'blue');
 
       try {
         consoleOut('address', address, 'blue');
@@ -2612,13 +2205,9 @@ export const StreamingAccountView = (props: {
         const saAtaTokenAddress = await findATokenAddress(saPk, tokenPk);
         const ta = await getTokenAccountBalanceByAddress(connection, saAtaTokenAddress);
         consoleOut('getTokenAccountBalanceByAddress ->', ta, 'blue');
-        if (ta) {
-          balance = new BN(ta.amount).toNumber();
-        }
-        consoleOut('SA ATA balance:', balance, 'blue');
-        return balance;
+        return ta;
       } catch (error) {
-        return balance;
+        return null;
       }
 
     }
@@ -2629,11 +2218,24 @@ export const StreamingAccountView = (props: {
       const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
       const tokenAddr = isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string;
 
+      let balance = 0;
+      let decimals = 0;
+
       getStreamingAccountAtaBalance(tokenAddr, streamingAccountSelected.id as string)
-      .then(value => setAssociatedTokenBalance(value))
+      .then(value => {
+        if (value) {
+          balance = new BN(value.amount).toNumber();
+          decimals = value.decimals || 0;
+        }
+      })
       .catch(err => {
         console.error(err);
         setAssociatedTokenBalance(0);
+      })
+      .finally(() => {
+        consoleOut('SA ATA balance:', balance, 'blue');
+        setAssociatedTokenBalance(balance);
+        setAssociatedTokenDecimals(decimals);
       });
 
     }
@@ -2668,19 +2270,50 @@ export const StreamingAccountView = (props: {
     refreshUserBalances
   ]);
 
-  // Auto select a token
+  // Set a working token based on the Vesting Contract's Associated Token
   useEffect(() => {
 
-    if (tokenList && !selectedToken) {
-      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
+    if (!streamingAccountSelected || associatedTokenDecimals === undefined) {
+      return;
     }
 
-    return () => { };
-  }, [
-    tokenList,
-    selectedToken,
-    setSelectedToken
-  ]);
+    const getCustomToken = (address: string, decimals: number) => {
+      if (!address || !isValidAddress(address)) {
+        return undefined;
+      }
+
+      const unknownToken: TokenInfo = {
+        address: address,
+        name: CUSTOM_TOKEN_NAME,
+        chainId: 101,
+        decimals: decimals,
+        symbol: shortenAddress(address),
+      };
+      return unknownToken;
+    }
+
+    const v1 = streamingAccountSelected as TreasuryInfo;
+    const v2 = streamingAccountSelected as Treasury;
+    const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+    const ata = isNewTreasury
+      ? v2.associatedToken as string
+      : v1.associatedTokenAddress as string;
+    let token = getTokenByMintAddress(ata);
+
+    if (!token) {
+      token = getCustomToken(ata, associatedTokenDecimals);
+    } else if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+      token = Object.assign({}, token, {
+        symbol: 'SOL'
+      }) as TokenInfo;
+    }
+
+    consoleOut("Using token:", token, 'blue');
+    setSelectedToken(token);
+
+    return () => { }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [associatedTokenDecimals, streamingAccountSelected]);
 
   const getStreamTitle = (item: Stream | StreamInfo): string => {
     let title = '';
@@ -2722,8 +2355,10 @@ export const StreamingAccountView = (props: {
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
+
     if (item) {
       let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      const decimals = token?.decimals || 6;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
@@ -2732,9 +2367,9 @@ export const StreamingAccountView = (props: {
       }
 
       if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+        value += formatThousands(item.rateAmount, decimals, 2);
       } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+        value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
@@ -2747,6 +2382,7 @@ export const StreamingAccountView = (props: {
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
       let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      const decimals = token?.decimals || 6;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
@@ -2755,9 +2391,9 @@ export const StreamingAccountView = (props: {
       }
 
       if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+        value += formatThousands(item.allocationAssigned, decimals, 2);
       } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+        value += formatThousands(makeDecimal(new BN(item.allocationAssigned), decimals), decimals, 2);
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
@@ -2840,39 +2476,18 @@ export const StreamingAccountView = (props: {
   }, [t]);
 
   const getTreasuryUnallocatedBalance = useCallback(() => {
-    if (streamingAccountSelected) {
-      const v1 = streamingAccountSelected as TreasuryInfo;
-      const v2 = streamingAccountSelected as Treasury;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-  
-      const token = isNewTreasury
-      ? v2.associatedToken
-        ? getTokenByMintAddress(v2.associatedToken as string)
-        : undefined
-      : v1.associatedTokenAddress
-        ? getTokenByMintAddress(v1.associatedTokenAddress as string)
-        : undefined;
-
-      if (token) {
-        if (!selectedToken || selectedToken.address !== token.address) {
-          setSelectedToken(token);
-        }
-      }
-
-      const decimals = selectedToken ? selectedToken.decimals : 6;
-      const unallocated = streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned;
-      const ub = isNewTreasury
-        ? makeDecimal(new BN(unallocated), decimals)
-        : unallocated;
-      return ub;
+    if (!streamingAccountSelected || !selectedToken) {
+      return 0;
     }
-    return 0;
-  }, [
-    selectedToken, 
-    streamingAccountSelected,
-    getTokenByMintAddress, 
-    setSelectedToken,
-  ]);
+
+    const isNewTreasury = streamingAccountSelected.version && streamingAccountSelected.version >= 2 ? true : false;
+    const decimals = selectedToken ? selectedToken.decimals : 6;
+    const unallocated = streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned;
+    const ub = isNewTreasury
+      ? makeDecimal(new BN(unallocated), decimals)
+      : unallocated;
+    return ub;
+  }, [selectedToken, streamingAccountSelected]);
 
   const getTreasuryClosureMessage = () => {
     return (
@@ -2891,25 +2506,16 @@ export const StreamingAccountView = (props: {
   }, [streamingAccountSelected]);
 
   const getStreamingAccountResume = useCallback(() => {
-    if (streamingAccountSelected) {
-      const v1 = streamingAccountSelected as TreasuryInfo;
-      const v2 = streamingAccountSelected as Treasury;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-
-      const token = isNewTreasury
-      ? v2.associatedToken
-        ? getTokenByMintAddress(v2.associatedToken as string)
-        : undefined
-      : v1.associatedTokenAddress
-        ? getTokenByMintAddress(v1.associatedTokenAddress as string)
-        : undefined;
-
-      if (token) {
-        return getAmountWithSymbol(getTreasuryUnallocatedBalance(), token ? token.address : '');
-      }
+    if (selectedToken) {
+      return getAmountWithSymbol(
+        getTreasuryUnallocatedBalance(),
+        selectedToken.address,
+        false,
+        tokenList
+      );
     }
     return "--";
-  }, [getTokenByMintAddress, getTreasuryUnallocatedBalance, streamingAccountSelected]);
+  }, [getTreasuryUnallocatedBalance, selectedToken, tokenList]);
 
   const getStreamingAccountStreams = useCallback((treasuryPk: PublicKey, isNewTreasury: boolean) => {
     if (!publicKey || !ms) { return; }

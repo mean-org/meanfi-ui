@@ -74,12 +74,21 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   }
 
   const isValidForm = (): boolean => {
-    return proposalTitle && 
-          selectedAuthority &&
-          isValidAddress(selectedAuthority) &&
-          (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
+    return selectedAuthority &&
+           isValidAddress(selectedAuthority) &&
+           (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
       ? true
       : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !selectedAuthority
+      ? 'Enter an authority address'
+      : selectedAuthority && !isValidAddress(selectedAuthority)
+        ? 'Invalid address'
+        : !destinationAddressDisclaimerAccepted
+          ? "Accept disclaimer"
+          : "Sign proposal"
   }
 
   const refreshPage = () => {
@@ -199,7 +208,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                 name="Title"
                 className="w-100 general-text-input"
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title (required)"
+                placeholder="Add a proposal title"
                 value={proposalTitle}
               />
             </div>
@@ -257,6 +266,35 @@ export const MultisigVaultTransferAuthorityModal = (props: {
               </Checkbox>
             </div>
 
+            {!isError(transactionStatus.currentOperation) && (
+              <div className="col-12 p-0 mt-3">
+                <Button
+                  className={`center-text-in-btn ${props.isBusy ? 'inactive' : ''}`}
+                  block
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  disabled={!isValidForm() || !destinationAddressDisclaimerAccepted}
+                  onClick={() => {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                      onAcceptModal();
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                      onCloseModal();
+                    } else {
+                      refreshPage();
+                    }
+                  }}>
+                  {props.isBusy
+                    ? t('multisig.transfer-authority.main-cta-busy')
+                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                      ? getTransactionStartButtonLabel()
+                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                        ? t('general.cta-finish')
+                        : t('general.refresh')
+                  }
+                </Button>
+              </div>
+            )}
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
@@ -287,6 +325,26 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
+              {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+                <div className="row two-col-ctas mt-3 transaction-progress p-2">
+                  <div className="col-12">
+                    <Button
+                      block
+                      type="text"
+                      shape="round"
+                      size="middle"
+                      className={`center-text-in-btn thin-stroke ${props.isBusy ? 'inactive' : ''}`}
+                      onClick={() => isError(transactionStatus.currentOperation)
+                        ? onAcceptModal()
+                        : onCloseModal()}>
+                      {(isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
+                        ? t('general.retry')
+                        : t('general.cta-close')
+                      }
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -311,56 +369,6 @@ export const MultisigVaultTransferAuthorityModal = (props: {
         </div>
         )}
       </div>
-
-      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-        <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
-            <Button
-              block
-              type="text"
-              shape="round"
-              size="middle"
-              className={props.isBusy ? 'inactive' : ''}
-              onClick={() => isError(transactionStatus.currentOperation)
-                ? onAcceptModal()
-                : onCloseModal()}>
-              {isError(transactionStatus.currentOperation)
-                ? t('general.retry')
-                : t('general.cta-close')
-              }
-            </Button>
-          </div>
-          {!isError(transactionStatus.currentOperation) && (
-            <div className="col-6">
-              <Button
-                className={props.isBusy ? 'inactive' : ''}
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                disabled={!isValidForm() || !destinationAddressDisclaimerAccepted}
-                onClick={() => {
-                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                    onAcceptModal();
-                  } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                    onCloseModal();
-                  } else {
-                    refreshPage();
-                  }
-                }}>
-                {props.isBusy
-                  ? t('multisig.transfer-authority.main-cta-busy')
-                  : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? t('multisig.transfer-authority.main-cta')
-                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                      ? t('general.cta-finish')
-                      : t('general.refresh')
-                }
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
     </Modal>
   );
 };

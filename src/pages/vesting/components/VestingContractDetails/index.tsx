@@ -272,7 +272,7 @@ export const VestingContractDetails = (props: {
                                     )}
                                 </>
                             )}
-                            {vestingContract.totalStreams > 0 && (
+                            {!isDateInTheFuture(paymentStartDate) && vestingContract.totalStreams > 0 && (
                                 <div className="vesting-progress">
                                     <Progress
                                         percent={completedVestingPercentage}

@@ -148,7 +148,6 @@ export const MultisigEditModal = (props: {
   const isFormValid = () => {
     return  multisigThreshold &&
             multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
-            multisigTitle &&
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
             multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
@@ -212,7 +211,7 @@ export const MultisigEditModal = (props: {
                 name="Title"
                 className="w-100 general-text-input"
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title (required)"
+                placeholder="Add a proposal title"
                 value={multisigTitle}
               />
             </div>

@@ -2557,7 +2557,7 @@ export const MoneyStreamsOutgoingView = (props: {
       </Menu.Item>
       <Menu.Item key="mso-01">
         <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-          <span className="menu-item-text">View on Solscan</span>
+          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
         </a>
       </Menu.Item>
       {(getTreasuryType() === "open" || (getTreasuryType() === "locked" && streamSelected && (getStreamStatus(streamSelected) === "Stopped" || getStreamStatus(streamSelected) === "Paused"))) && (

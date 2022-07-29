@@ -18,7 +18,8 @@
       .flexible-left {
         display: block !important;
         float: right;
-        // margin-bottom: 2em;
+        // margin-bottom: 0.5em;
+        // margin-top: -0.6em;
         .stepper-label {
           font-size: 12px !important;
         }
@@ -27,15 +28,11 @@
     .contract-wrapper {
       padding: 1.5em;
     }
-    .contract-wrapper.panel1.show {
-      h3 {
-        margin-top: -2.4em;
-      }
-    }
+    .contract-wrapper.panel1.show,
     .contract-wrapper.panel2.show,
     .contract-wrapper.panel3.show {
-      h3 {
-        margin-top: -3.8em;
+      .left-title {
+        margin-top: -2.4em;
       }
     }
   }

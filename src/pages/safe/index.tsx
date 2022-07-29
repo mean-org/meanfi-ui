@@ -72,7 +72,7 @@ import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
-import { MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
+import { CreateNewProposalParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
 
@@ -1400,7 +1400,7 @@ export const SafeView = () => {
     onExecuteEditMultisigTx(data);
   };
 
-  const onAcceptCreateProposalModal = (data: any) => {
+  const onAcceptCreateProposalModal = (data: CreateNewProposalParams) => {
     consoleOut('proposal data: ', data, 'blue');
     onExecuteCreateTransactionProposal(data);
   };
@@ -1508,7 +1508,7 @@ export const SafeView = () => {
   const [isMultisigTxResultModalVisible, setIsMultisigTxResultModalVisible] = useState(false);
   const showMultisigTxResultModal = useCallback(() => setIsMultisigTxResultModalVisible(true), []);
 
-  const onExecuteCreateTransactionProposal = useCallback(async (data: any) => {
+  const onExecuteCreateTransactionProposal = useCallback(async (data: CreateNewProposalParams) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1740,7 +1740,7 @@ export const SafeView = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (!wallet) {
         console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
@@ -2700,11 +2700,6 @@ export const SafeView = () => {
             currentOperation: TransactionStatus.SendTransactionFailure
           } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
-            // const treasury = data.transaction.operation === OperationType.StreamClose
-            //   ? data.transaction.accounts[5].pubkey.toBase58()
-            //   : data.transaction.operation === OperationType.TreasuryStreamCreate || data.transaction.operation === OperationType.StreamCreate || data.transaction.operation === OperationType.StreamCreateWithTemplate
-            //     ? data.transaction.accounts[2].pubkey.toBase58()
-            //     : data.transaction.accounts[3].pubkey.toBase58();
             const accountIndex = data.transaction.operation === OperationType.StreamClose
               ? 5
               : data.transaction.operation === OperationType.TreasuryStreamCreate ||
@@ -2718,16 +2713,11 @@ export const SafeView = () => {
               : '-';
             consoleOut(`Selected account for index [${accountIndex}]`, treasury, 'orange');
             txStatus.customError = {
-              title: '',
+              title: 'Insufficient balance',
               message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
           } else if (error.toString().indexOf('0x1797') !== -1) {
-            // const treasury = data.transaction.operation === OperationType.TreasuryStreamCreate
-            //   ? data.transaction.accounts[2].pubkey.toBase58()
-            //   : data.transaction.operation === OperationType.TreasuryWithdraw
-            //   ? data.transaction.accounts[5].pubkey.toBase58()
-            //   : data.transaction.accounts[3].pubkey.toBase58();
             const accountIndex =  data.transaction.operation === OperationType.StreamCreate ||
                                   data.transaction.operation === OperationType.TreasuryStreamCreate ||
                                   data.transaction.operation === OperationType.StreamCreateWithTemplate
@@ -2741,6 +2731,7 @@ export const SafeView = () => {
               : '-';
             consoleOut(`Selected account for index [${accountIndex}]`, treasury, 'orange');
             txStatus.customError = {
+              title: 'Insufficient balance',
               message: 'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
@@ -2762,8 +2753,10 @@ export const SafeView = () => {
             const asset = data.transaction.accounts[accountIndex] ? data.transaction.accounts[accountIndex].pubkey.toBase58() : '-';
             consoleOut(`Selected account for index [${accountIndex}]`, asset, 'orange');
             txStatus.customError = {
-              message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
-              data: asset
+              title: 'Insufficient balance',
+              // message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
+              message: 'Your transaction failed to submit due to insufficient balance. Please add SOL to the safe and then retry this operation.\n\nSafe: ',
+              data: selectedMultisig?.authority.toBase58()
             };
           }
           consoleOut('setLastError ->', txStatus, 'blue');
@@ -4323,7 +4316,7 @@ export const SafeView = () => {
                       <span className="incoming-transactions-amout">({formatThousands(multisigAccounts.length)})</span>
                     )}
                     <span className="transaction-legend">
-                      <span className="icon-button-container">
+                      {/* <span className="icon-button-container">
                         <Button
                           id="multisig-refresh-cta"
                           type="default"
@@ -4332,7 +4325,7 @@ export const SafeView = () => {
                           icon={<ReloadOutlined />}
                           onClick={() => refreshMultisigs()}
                         />
-                      </span>
+                      </span> */}
                       <span id="multisig-hard-refresh-cta" onClick={() => refreshMultisigs(true)}></span>
                     </span>
                   </div>
@@ -4526,7 +4519,7 @@ export const SafeView = () => {
           proposer={publicKey ? publicKey.toBase58() : ""}
           appsProvider={appsProvider}
           solanaApps={solanaApps.filter(app => app.active)}
-          handleOk={onAcceptCreateProposalModal}
+          handleOk={(params: CreateNewProposalParams) => onAcceptCreateProposalModal(params)}
           selectedMultisig={selectedMultisig}
         />
       )}
