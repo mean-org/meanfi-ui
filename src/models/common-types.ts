@@ -76,4 +76,5 @@ export type TimeData = {
 export type RecipientAddressInfo = {
     type: string;
     mint: string;
+    owner: string;
 }

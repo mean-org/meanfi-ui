@@ -123,7 +123,7 @@ export const RepeatingPayment = (props: {
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
-  const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '' });
+  const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
 
 
   const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>({
@@ -638,6 +638,7 @@ export const RepeatingPayment = (props: {
     if (recipientAddress && isValidAddress(recipientAddress)) {
       let type = '';
       let mint = '';
+      let owner = '';
       getInfo(recipientAddress)
       .then(info => {
         if (info) {
@@ -653,11 +654,13 @@ export const RepeatingPayment = (props: {
               (info as any).data["parsed"]["type"] &&
               (info as any).data["parsed"]["type"] === "account") {
             mint = (info as any).data["parsed"]["info"]["mint"];
+            owner = (info as any).data["parsed"]["info"]["owner"];
           }
         }
         setRecipientAddressInfo({
           type,
-          mint
+          mint,
+          owner
         });
       })
     }
@@ -779,7 +782,10 @@ export const RepeatingPayment = (props: {
   const getRecipientAddressValidation = () => {
     if (recipientAddressInfo.type === "mint") {
       return 'Recipient cannot be a mint address'
-    } else if (recipientAddressInfo.type === "account" && recipientAddressInfo.mint && recipientAddressInfo.mint === selectedToken?.address) {
+    } else if (recipientAddressInfo.type === "account" &&
+               recipientAddressInfo.mint &&
+               recipientAddressInfo.mint === selectedToken?.address &&
+               recipientAddressInfo.owner === publicKey?.toBase58()) {
       return 'Recipient cannot be the selected token mint';
     }
     return '';

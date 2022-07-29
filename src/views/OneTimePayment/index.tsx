@@ -23,7 +23,7 @@ import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
+import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -82,7 +82,6 @@ export const OneTimePayment = (props: {
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [userBalances, setUserBalances] = useState<any>();
@@ -96,7 +95,7 @@ export const OneTimePayment = (props: {
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
-  const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '' });
+  const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
 
 
   const [otpFees, setOtpFees] = useState<TransactionFees>({
@@ -476,6 +475,7 @@ export const OneTimePayment = (props: {
     if (recipientAddress && isValidAddress(recipientAddress)) {
       let type = '';
       let mint = '';
+      let owner = '';
       getInfo(recipientAddress)
       .then(info => {
         if (info) {
@@ -491,11 +491,13 @@ export const OneTimePayment = (props: {
               (info as any).data["parsed"]["type"] &&
               (info as any).data["parsed"]["type"] === "account") {
             mint = (info as any).data["parsed"]["info"]["mint"];
+            owner = (info as any).data["parsed"]["info"]["owner"];
           }
         }
         setRecipientAddressInfo({
           type,
-          mint
+          mint,
+          owner
         });
       })
     }
@@ -694,7 +696,10 @@ export const OneTimePayment = (props: {
   const getRecipientAddressValidation = () => {
     if (recipientAddressInfo.type === "mint") {
       return 'Recipient cannot be a mint address'
-    } else if (recipientAddressInfo.type === "account" && recipientAddressInfo.mint && recipientAddressInfo.mint === selectedToken?.address) {
+    } else if (recipientAddressInfo.type === "account" &&
+               recipientAddressInfo.mint &&
+               recipientAddressInfo.mint === selectedToken?.address &&
+               recipientAddressInfo.owner === publicKey?.toBase58()) {
       return 'Recipient cannot be the selected token mint';
     }
     return '';
