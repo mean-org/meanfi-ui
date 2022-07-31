@@ -1,28 +1,24 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import "./style.scss";
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col, AutoComplete } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
-  formatAmount,
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
-  getTokenSymbol,
   isValidNumber,
   makeDecimal,
   makeInteger,
   shortenAddress,
-  toTokenAmount,
-  toUiAmount
+  toTokenAmount
 } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import {
   consoleOut,
   disabledDate,
-  getFormattedNumberToLocale,
   getIntervalFromSeconds,
   getLockPeriodOptionLabel,
   getPaymentRateOptionLabel,
@@ -41,7 +37,7 @@ import { OperationType, PaymentRateType, TransactionStatus } from '../../models/
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
@@ -911,14 +907,22 @@ export const TreasuryStreamCreateModal = (props: {
     let value = '';
 
     if (item) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      const decimals = token?.decimals || 6;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+          token = Object.assign({}, token, {
+              symbol: 'SOL'
+          }) as TokenInfo;
+      }
+
       if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+        value += formatThousands(item.rateAmount, decimals, 2);
       } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+        value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
       }
       value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -1601,13 +1605,13 @@ export const TreasuryStreamCreateModal = (props: {
         {(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
           <>
             {token ? (
-              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+              <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
-              <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "30", display: "inline-flex" }} />
+              <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "20", display: "inline-flex" }} />
             )}
           </>
         ) : (
-          <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+          <Identicon address={item.id} style={{ width: "20", display: "inline-flex" }} />
         )}
       </div>
     );
@@ -1680,7 +1684,13 @@ export const TreasuryStreamCreateModal = (props: {
   return (
     <Modal
       className="mean-modal treasury-stream-create-modal"
-      title={(workingTreasuryType === TreasuryType.Open) ? (<div className="modal-title">{param === "multisig" ? "Propose outgoing stream" : t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
+      title={
+        (workingTreasuryType === TreasuryType.Open)
+          ? (<div className="modal-title">{param === "multisig"
+            ? "Propose outgoing stream"
+            : t('treasuries.treasury-streams.add-stream-modal-title')}</div>)
+          : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)
+      }
       maskClosable={false}
       footer={null}
       visible={isVisible}
@@ -1719,7 +1729,7 @@ export const TreasuryStreamCreateModal = (props: {
                     name="Title"
                     className="w-100 general-text-input"
                     onChange={onTitleInputValueChange}
-                    placeholder="Add a proposal title (required)"
+                    placeholder="Add a proposal title"
                     value={multisigTitle}
                   />
                 </div>
@@ -1754,22 +1764,21 @@ export const TreasuryStreamCreateModal = (props: {
                         </div>
                         <div className={`well ${isBusy ? 'disabled' : ''}`}>
                           <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                            <div className="left mr-0">
-                              {treasuryList && treasuryList.length > 0 && (
-                                <Select className={`auto-height`} value={selectedStreamingAccountId}
-                                  style={{width:"100%", maxWidth:'none'}}
-                                  onChange={onStreamingAccountSelected}
-                                  bordered={false}
-                                  showArrow={false}
-                                  dropdownRender={menu => (
-                                  <div>{menu}</div>
-                                )}>
-                                  {treasuryList.map(option => {
-                                    return renderStreamingAccountItem(option);
-                                  })}
-                                </Select>
-                              )}
-                            </div>
+                            {treasuryList && treasuryList.length > 0 && (
+                              <Select className={`auto-height`} value={selectedStreamingAccountId}
+                                style={{width:"100%", maxWidth:'none'}}
+                                dropdownClassName="stream-select-dropdown"
+                                onChange={onStreamingAccountSelected}
+                                bordered={false}
+                                showArrow={false}
+                                dropdownRender={menu => (
+                                <div>{menu}</div>
+                              )}>
+                                {treasuryList.map(option => {
+                                  return renderStreamingAccountItem(option);
+                                })}
+                              </Select>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1876,7 +1885,15 @@ export const TreasuryStreamCreateModal = (props: {
                         <div className="flex-fixed-left">
                           <div className="left">
                             <span className="add-on">
-                              {(selectedToken && tokenList) && (
+                              {selectedToken && (
+                                <TokenDisplay onClick={() => {}}
+                                  mintAddress={selectedToken.address}
+                                  showCaretDown={false}
+                                  fullTokenInfo={selectedToken}
+                                />
+                              )}
+
+                              {/* {(selectedToken && tokenList) && (
                                 <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                                   {tokenList.map((option) => {
                                     if (option.address === NATIVE_SOL.address) {
@@ -1901,7 +1918,7 @@ export const TreasuryStreamCreateModal = (props: {
                                     );
                                   })}
                                 </Select>
-                              )}
+                              )} */}
                             </span>
                           </div>
                           <div className="right">
@@ -1952,7 +1969,15 @@ export const TreasuryStreamCreateModal = (props: {
                     <div className="flex-fixed-left">
                       <div className="left">
                         <span className="add-on">
-                          {(selectedToken && tokenList) && (
+                          {selectedToken && (
+                            <TokenDisplay onClick={() => {}}
+                              mintAddress={selectedToken.address}
+                              showCaretDown={false}
+                              fullTokenInfo={selectedToken}
+                            />
+                          )}
+
+                          {/* {(selectedToken && tokenList) && (
                             <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                               {tokenList.map((option) => {
                                 if (option.address === NATIVE_SOL.address) {
@@ -1976,7 +2001,7 @@ export const TreasuryStreamCreateModal = (props: {
                                 );
                               })}
                             </Select>
-                          )}
+                          )} */}
                           {
                             selectedToken && unallocatedBalance ? (
                               <div
@@ -2205,7 +2230,15 @@ export const TreasuryStreamCreateModal = (props: {
                     <div className="flex-fixed-left">
                       <div className="left">
                         <span className="add-on">
-                          {(selectedToken && tokenList) && (
+                          {selectedToken && (
+                            <TokenDisplay onClick={() => {}}
+                              mintAddress={selectedToken.address}
+                              showCaretDown={false}
+                              fullTokenInfo={selectedToken}
+                            />
+                          )}
+
+                          {/* {(selectedToken && tokenList) && (
                             <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                               {tokenList.map((option) => {
                                 if (option.address === NATIVE_SOL.address) {
@@ -2229,7 +2262,7 @@ export const TreasuryStreamCreateModal = (props: {
                                 );
                               })}
                             </Select>
-                          )}
+                          )} */}
                           {selectedToken && unallocatedBalance ? (
                             <div
                               className="token-max simplelink"
@@ -2546,7 +2579,7 @@ export const TreasuryStreamCreateModal = (props: {
 
           <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
             <Button
-              className="main-cta"
+              className="main-cta center-text-in-btn"
               block
               type="primary"
               shape="round"
@@ -2575,7 +2608,7 @@ export const TreasuryStreamCreateModal = (props: {
 
           <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
             <Button
-              className={`main-cta ${isBusy ? 'inactive' : ''}`}
+              className={`main-cta center-text-in-btn ${isBusy ? 'inactive' : ''}`}
               block
               type="primary"
               shape="round"
@@ -2620,7 +2653,7 @@ export const TreasuryStreamCreateModal = (props: {
 
           <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
             <Button
-              className="main-cta"
+              className="main-cta center-text-in-btn"
               block
               type="primary"
               shape="round"

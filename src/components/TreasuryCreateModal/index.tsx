@@ -512,7 +512,7 @@ export const TreasuryCreateModal = (props: {
                     name="Title"
                     className="w-100 general-text-input"
                     onChange={onTitleInputValueChange}
-                    placeholder="Add a proposal title (required)"
+                    placeholder="Add a proposal title"
                     value={multisigTitle}
                   />
                 </div>
@@ -697,8 +697,8 @@ export const TreasuryCreateModal = (props: {
                   block
                   type="text"
                   shape="round"
-                  size="middle"
-                  className={isBusy ? 'inactive' : ''}
+                  size="large"
+                  className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
                   onClick={onAcceptModal}>
                   {t('general.retry')}
                 </Button>
@@ -706,11 +706,11 @@ export const TreasuryCreateModal = (props: {
             ) : (
               <div className="col-12">
                 <Button
-                  className={isBusy ? 'inactive' : ''}
+                  className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
                   block
                   type="primary"
                   shape="round"
-                  size="middle"
+                  size="large"
                   disabled={!treasuryName}
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {

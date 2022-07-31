@@ -14,6 +14,8 @@ import { segmentAnalytics } from "../App";
 import { AppUsageEvent } from "../utils/segment-service";
 import { consoleOut, isProd } from "../utils/ui";
 import {
+  BitKeepWalletAdapter,
+  BitKeepWalletName,
   Coin98WalletAdapter,
   Coin98WalletName,
   ExodusWalletAdapter,
@@ -35,14 +37,15 @@ import {
   SolongWalletAdapter,
   SolongWalletName
 } from "@solana/wallet-adapter-wallets";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { WalletAdapterNetwork, WalletNotReadyError } from "@solana/wallet-adapter-base";
 import { useNavigate } from "react-router-dom";
 import { getDefaultRpc } from "../services/connections-hq";
 import { environment } from "../environments/environment";
 
 export type MeanFiWallet = PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
                           | SlopeWalletAdapter | Coin98WalletAdapter | SolongWalletAdapter | SolletWalletAdapter
-                          | SolletExtensionWalletAdapter | MathWalletAdapter | LedgerWalletAdapter | undefined;
+                          | SolletExtensionWalletAdapter | MathWalletAdapter | LedgerWalletAdapter
+                          | BitKeepWalletAdapter | undefined;
 
 export const WALLET_PROVIDERS = [
   {
@@ -83,6 +86,18 @@ export const WALLET_PROVIDERS = [
   },
   // These ones go into the [more] CTA
   {
+    name: BitKeepWalletName,
+    url: 'https://bitkeep.com',
+    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiByeD0iNjQiIGZpbGw9IiM3NTI0RjkiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMDIgNDUuNjAyN1Y0OS44MjA0QzEwMi4wMDEgNTAuMjI4MyAxMDEuODkzIDUwLjYyOTIgMTAxLjY4NyA1MC45ODI3QzEwMS40ODEgNTEuMzM2MSAxMDEuMTg1IDUxLjYyOTYgMTAwLjgyOCA1MS44MzM1TDg3LjA5MDggNTkuNjgwMUw5OS4zNjMzIDY2LjY3MUMxMDAuMTY1IDY3LjEyOTUgMTAwLjgzMSA2Ny43ODkyIDEwMS4yOTQgNjguNTgzNkMxMDEuNzU3IDY5LjM3OCAxMDIuMDAxIDcwLjI3OTEgMTAyIDcxLjE5NjJWODIuNDQyNEMxMDIuMDAxIDgzLjM2IDEwMS43NTggODQuMjYxNyAxMDEuMjk1IDg1LjA1NjdDMTAwLjgzMiA4NS44NTE2IDEwMC4xNjYgODYuNTExNyA5OS4zNjMzIDg2Ljk3MDVMNjcuMDg2OSAxMDUuM0M2Ni4yODUzIDEwNS43NTkgNjUuMzc1OSAxMDYgNjQuNDUwMiAxMDZDNjMuNTI0NSAxMDYgNjIuNjE1MSAxMDUuNzU5IDYxLjgxMzUgMTA1LjNMNTEuMjUyIDk5LjI2MTFDNTEuMDczNyA5OS4xNTkzIDUwLjkyNTYgOTkuMDEyOCA1MC44MjI3IDk4LjgzNjNDNTAuNzE5OCA5OC42NTk5IDUwLjY2NTYgOTguNDU5NyA1MC42NjU2IDk4LjI1NkM1MC42NjU2IDk4LjA1MjIgNTAuNzE5OCA5Ny44NTIgNTAuODIyNyA5Ny42NzU2QzUwLjkyNTYgOTcuNDk5MSA1MS4wNzM3IDk3LjM1MjcgNTEuMjUyIDk3LjI1MDhMODYuMTE1MiA3Ny4zODM1Qzg2LjIwNCA3Ny4zMzI1IDg2LjI3NzcgNzcuMjU5MyA4Ni4zMjkgNzcuMTcxMkM4Ni4zODAyIDc3LjA4MzIgODYuNDA3MiA3Ni45ODMzIDg2LjQwNzIgNzYuODgxN0M4Ni40MDcyIDc2Ljc4IDg2LjM4MDIgNzYuNjgwMiA4Ni4zMjkgNzYuNTkyMUM4Ni4yNzc3IDc2LjUwNCA4Ni4yMDQgNzYuNDMwOCA4Ni4xMTUyIDc2LjM3OThMNzMuMTcxOSA2OC45NzcxQzcyLjgxNTYgNjguNzczNCA3Mi40MTE0IDY4LjY2NjIgNzIgNjguNjY2MkM3MS41ODg2IDY4LjY2NjIgNzEuMTg0NCA2OC43NzM0IDcwLjgyODEgNjguOTc3MUwzNS40MTcgODkuMTcyMkMzNS4xNDk4IDg5LjMyNSAzNC44NDY3IDg5LjQwNTQgMzQuNTM4MSA4OS40MDU0QzM0LjIyOTUgODkuNDA1NCAzMy45MjY0IDg5LjMyNSAzMy42NTkyIDg5LjE3MjJMMjkuNjQ4NCA4Ni45MDA5QzI4Ljg0MjQgODYuNDQyOCAyOC4xNzI5IDg1Ljc4MiAyNy43MDc4IDg0Ljk4NTNDMjcuMjQyNyA4NC4xODg2IDI2Ljk5ODUgODMuMjg0MyAyNyA4Mi4zNjQxVjc3Ljc2NjRDMjYuOTk5OCA3Ny40NjA3IDI3LjA4MDkgNzcuMTYwMyAyNy4yMzUyIDc2Ljg5NTVDMjcuMzg5NSA3Ni42MzA3IDI3LjYxMTUgNzYuNDEwOSAyNy44Nzg5IDc2LjI1OEw3OC42NTA0IDQ3LjM2OTNDNzguNzM5MiA0Ny4zMTgzIDc4LjgxMjkgNDcuMjQ1MSA3OC44NjQxIDQ3LjE1N0M3OC45MTU0IDQ3LjA2ODkgNzguOTQyMyA0Ni45NjkxIDc4Ljk0MjMgNDYuODY3NEM3OC45NDIzIDQ2Ljc2NTggNzguOTE1NCA0Ni42NjU5IDc4Ljg2NDEgNDYuNTc3OUM3OC44MTI5IDQ2LjQ4OTggNzguNzM5MiA0Ni40MTY2IDc4LjY1MDQgNDYuMzY1Nkw2NS42ODY1IDM4LjkzNjdDNjUuMzMwMiAzOC43MzMxIDY0LjkyNjEgMzguNjI1OCA2NC41MTQ2IDM4LjYyNThDNjQuMTAzMiAzOC42MjU4IDYzLjY5OTEgMzguNzMzMSA2My4zNDI4IDM4LjkzNjdMMjguNzU3OCA1OC42M0MyOC41Nzk4IDU4LjczMTggMjguMzc3OCA1OC43ODU0IDI4LjE3MjIgNTguNzg1NUMyNy45NjY2IDU4Ljc4NTUgMjcuNzY0NiA1OC43MzIgMjcuNTg2NSA1OC42MzAzQzI3LjQwODQgNTguNTI4NiAyNy4yNjA0IDU4LjM4MjMgMjcuMTU3NSA1OC4yMDYxQzI3LjA1NDUgNTguMDI5OSAyNy4wMDAyIDU3LjgzIDI3IDU3LjYyNjRWNDUuNTQ3NkMyNi45OTg5IDQ0LjYzIDI3LjI0MiA0My43MjgzIDI3LjcwNDkgNDIuOTMzNEMyOC4xNjc4IDQyLjEzODQgMjguODM0MSA0MS40NzgzIDI5LjYzNjcgNDEuMDE5NUw2MS45MDcyIDIyLjY5NTRDNjIuNzA3MSAyMi4yMzk4IDYzLjYxMzggMjIgNjQuNTM2NiAyMkM2NS40NTk0IDIyIDY2LjM2NjEgMjIuMjM5OCA2Ny4xNjYgMjIuNjk1NEw5OS4zNjMzIDQxLjA4MzNDMTAwLjE2NSA0MS41NDE0IDEwMC44MyA0Mi4yMDAxIDEwMS4yOTMgNDIuOTkzNEMxMDEuNzU2IDQzLjc4NjcgMTAyIDQ0LjY4NjYgMTAyIDQ1LjYwMjdaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K',
+    adapter: BitKeepWalletAdapter,
+    adapterParams: undefined,
+    hideOnDesktop: false,
+    hideOnMobile: false,
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: false
+  },
+  {
     name: SlopeWalletName,
     url: 'https://slope.finance',
     icon: 'data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIHdpZHRoPSIxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNjQiIGN5PSI2NCIgZmlsbD0iIzZlNjZmYSIgcj0iNjQiLz48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMzUuMTk2MyA1NC4zOTk4aDE5LjJ2MTkuMmgtMTkuMnoiLz48cGF0aCBkPSJtNzMuNTk3IDU0LjM5OTgtMTkuMiAxOS4ydi0xOS4ybDE5LjItMTkuMnoiIGZpbGwtb3BhY2l0eT0iLjQiLz48cGF0aCBkPSJtNzMuNTk3IDczLjU5OTgtMTkuMiAxOS4ydi0xOS4ybDE5LjItMTkuMnoiIGZpbGwtb3BhY2l0eT0iLjc1Ii8+PHBhdGggZD0ibTczLjYwNCA1NC4zOTk4aDE5LjJ2MTkuMmgtMTkuMnoiLz48cGF0aCBkPSJtNTQuMzk2OCAzNS4yIDE5LjItMTkuMnYxOS4ybC0xOS4yIDE5LjJoLTE5LjJ6IiBmaWxsLW9wYWNpdHk9Ii43NSIvPjxwYXRoIGQ9Im03My41OTE1IDkyLjgtMTkuMiAxOS4ydi0xOS4ybDE5LjItMTkuMmgxOS4yeiIgZmlsbC1vcGFjaXR5PSIuNCIvPjwvZz48L3N2Zz4=',
@@ -122,7 +137,7 @@ export const WALLET_PROVIDERS = [
     name: SolletWalletName,
     url: 'https://www.sollet.io',
     icon: 'data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjUzMCIgd2lkdGg9IjUzMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtLTEtMWg1MzJ2NTMyaC01MzJ6IiBmaWxsPSJub25lIi8+PGcgZmlsbD0iIzAwZmZhMyI+PHBhdGggZD0ibTg4Ljg4OTM1IDM3Mi45ODIwMWMzLjE5My0zLjE5IDcuNTIyLTQuOTgyIDEyLjAzNS00Ljk4Mmg0MTYuNDYxYzcuNTg2IDAgMTEuMzg0IDkuMTc0IDYuMDE3IDE0LjUzNmwtODIuMjkxIDgyLjIyNmMtMy4xOTMgMy4xOTEtNy41MjIgNC45ODMtMTIuMDM2IDQuOTgzaC00MTYuNDYwMWMtNy41ODY2IDAtMTEuMzg0NS05LjE3NC02LjAxNzgtMTQuNTM3bDgyLjI5MTktODIuMjI2eiIvPjxwYXRoIGQ9Im04OC44ODkzNSA2NS45ODI1YzMuMTkzLTMuMTkwNCA3LjUyMi00Ljk4MjUgMTIuMDM1LTQuOTgyNWg0MTYuNDYxYzcuNTg2IDAgMTEuMzg0IDkuMTczOSA2LjAxNyAxNC41MzYzbC04Mi4yOTEgODIuMjI2N2MtMy4xOTMgMy4xOS03LjUyMiA0Ljk4Mi0xMi4wMzYgNC45ODJoLTQxNi40NjAxYy03LjU4NjYgMC0xMS4zODQ1LTkuMTc0LTYuMDE3OC0xNC41MzZsODIuMjkxOS04Mi4yMjY1eiIvPjxwYXRoIGQ9Im00NDEuMTExMzUgMjE5LjEwOTVjLTMuMTkzLTMuMTktNy41MjItNC45ODItMTIuMDM2LTQuOTgyaC00MTYuNDYwMWMtNy41ODY2IDAtMTEuMzg0NSA5LjE3My02LjAxNzggMTQuNTM2bDgyLjI5MTkgODIuMjI2YzMuMTkzIDMuMTkgNy41MjIgNC45ODMgMTIuMDM1IDQuOTgzaDQxNi40NjFjNy41ODYgMCAxMS4zODQtOS4xNzQgNi4wMTctMTQuNTM3eiIvPjwvZz48L3N2Zz4=',
-    adpter: SolletWalletAdapter,
+    adapter: SolletWalletAdapter,
     adapterParams: { provider: 'https://www.sollet.io', timeout: 10000, network: environment === 'production' ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet },
     hideOnDesktop: false,
     hideOnMobile: false,
@@ -159,8 +174,8 @@ export const WALLET_PROVIDERS = [
     url: 'https://www.ledger.com',
     icon: 'data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzUgMzUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0iI2ZmZiI+PHBhdGggZD0ibTIzLjU4OCAwaC0xNnYyMS41ODNoMjEuNnYtMTZhNS41ODUgNS41ODUgMCAwIDAgLTUuNi01LjU4M3oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUuNzM5KSIvPjxwYXRoIGQ9Im04LjM0MiAwaC0yLjc1N2E1LjU4NSA1LjU4NSAwIDAgMCAtNS41ODUgNS41ODV2Mi43NTdoOC4zNDJ6Ii8+PHBhdGggZD0ibTAgNy41OWg4LjM0MnY4LjM0MmgtOC4zNDJ6IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwIDUuNzM5KSIvPjxwYXRoIGQ9Im0xNS4xOCAyMy40NTFoMi43NTdhNS41ODUgNS41ODUgMCAwIDAgNS41ODUtNS42di0yLjY3MWgtOC4zNDJ6IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMS40NzggMTEuNDc4KSIvPjxwYXRoIGQ9Im03LjU5IDE1LjE4aDguMzQydjguMzQyaC04LjM0MnoiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUuNzM5IDExLjQ3OCkiLz48cGF0aCBkPSJtMCAxNS4xOHYyLjc1N2E1LjU4NSA1LjU4NSAwIDAgMCA1LjU4NSA1LjU4NWgyLjc1N3YtOC4zNDJ6IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwIDExLjQ3OCkiLz48L2c+PC9zdmc+',
     adapter: LedgerWalletAdapter,
-    hideOnDesktop: true,
-    hideOnMobile: true,
+    hideOnDesktop: false,
+    hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
     hideIfUnavailable: true
@@ -186,7 +201,10 @@ const getIsProviderInstalled = (provider: any): boolean => {
       case Coin98WalletName:
         return !!(window as any).coin98?.sol;
       case SolflareWalletName:
-        return !!(window as any).solflare?.isSolflare || !!(window as any).SolflareApp
+        return !!(window as any).solflare?.isSolflare || !!(window as any).SolflareApp;
+      case BitKeepWalletName:
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return !!(window as any).bitkeep?.solana;
       case LedgerWalletName:
         return true;
       default:
@@ -220,6 +238,16 @@ export function WalletProvider({ children = null as any }) {
   const [autoConnect, setAutoConnect] = useState(true);
   const [providerName, setProviderName] = useLocalStorageState("providerName");
   const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
+  const [connected, setConnected] = useState(false);
+  const [connecting, setConnecting] = useState(true);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const select = useCallback(() => {
+    setIsModalVisible(true);
+  }, []);
+  const close = useCallback(() => {
+    setIsModalVisible(false);
+  }, []);
+  const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
 
   const resetWalletProvider = () => {
     setProviderName(null);
@@ -238,6 +266,7 @@ export function WalletProvider({ children = null as any }) {
           new PhantomWalletAdapter(),
           new ExodusWalletAdapter(),
           new SolflareWalletAdapter({ network }),
+          new BitKeepWalletAdapter(),
           new SlopeWalletAdapter(),
           new Coin98WalletAdapter(),
           new SolongWalletAdapter(),
@@ -250,30 +279,25 @@ export function WalletProvider({ children = null as any }) {
   );
 
   useEffect(() => {
-    if (providerName && provider && wallets) {
-      consoleOut('providerName:', providerName, 'blue');
-      consoleOut('provider:', provider, 'blue');
-      const wa = wallets.find(w => w.name === providerName);
-      if (wa) {
-        setWallet(wa);
+    if (wallets) {
+      if (providerName) {
+        consoleOut('providerName:', providerName, 'blue');
+        const wa = wallets.find(w => w.name === providerName);
+        consoleOut('provider:', wa, 'blue');
+        if (wa) {
+          setWallet(wa);
+        } else {
+          setProviderName(null);
+          setWallet(undefined);
+        }
+      } else {
+        setProviderName(null);
+        setWallet(undefined);
       }
-    } else if (!providerName) {
-      setWallet(undefined);
     }
-  }, [provider, providerName, wallets]);
+  }, [providerName, setProviderName, wallets]);
 
-  const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(true);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const select = useCallback(() => {
-    setIsModalVisible(true);
-  }, []);
-  const close = useCallback(() => {
-    setIsModalVisible(false);
-  }, []);
-  const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
-
-  // Keep up with connecint flag
+  // Keep up with connecting flag
   useEffect(() => {
     if (wallet) {
       setConnecting(wallet.connecting);
@@ -324,11 +348,18 @@ export function WalletProvider({ children = null as any }) {
       consoleOut('Auto-connecting...', '', 'blue');
       wallet.connect()
       .catch(error => {
-        consoleOut('wallet.connect() error', error, 'red');
+        console.error('wallet.connect() error', error);
+        if (error.toString().indexOf('WalletNotReadyError') !== -1) {
+          console.warn('Forcing selection...');
+          setConnected(false);
+          setProviderName(null);
+          setWallet(undefined);
+        }
       });
     }
 
     return () => {};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet, autoConnect]);
 
   return (
@@ -383,13 +414,13 @@ export function WalletProvider({ children = null as any }) {
                 });
 
                 // Only for the Exodus Wallet (if not installed take the user to its extension url)
-                if (!isInstalled && (item.name === ExodusWalletName || item.name === PhantomWalletName)) {
+                if (!isInstalled && (item.name === ExodusWalletName || item.name === PhantomWalletName || item.name === BitKeepWalletName)) {
                   window.open(item.url, '_blank');
                 }
 
                 consoleOut('Selected wallet:', item.name, 'blue');
                 setProviderName(item.name);
-                setAutoConnect(true);
+                setWallet(wallets.find(w => w.name === item.name));
 
               };
 

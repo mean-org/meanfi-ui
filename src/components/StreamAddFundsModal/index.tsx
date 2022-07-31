@@ -12,7 +12,7 @@ import { StreamTreasuryType } from '../../models/treasuries';
 import { useWallet } from '../../contexts/wallet';
 import { useConnection } from '../../contexts/connection';
 import { PublicKey } from '@solana/web3.js';
-import { consoleOut } from '../../utils/ui';
+import { consoleOut, toUsCurrency } from '../../utils/ui';
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import BN from 'bn.js';
 import { StreamTopupParams } from '../../models/common-types';
@@ -35,6 +35,7 @@ export const StreamAddFundsModal = (props: {
     selectedToken,
     effectiveRate,
     isWhitelisted,
+    getTokenPriceBySymbol,
     refreshPrices,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -175,6 +176,14 @@ export const StreamAddFundsModal = (props: {
     unallocatedBalance,
     props.withdrawTransactionFees,
   ]);
+
+  const getTokenPrice = useCallback(() => {
+    if (!topupAmount || !selectedToken) {
+        return 0;
+    }
+
+    return parseFloat(topupAmount) * getTokenPriceBySymbol(selectedToken.symbol);
+}, [topupAmount, selectedToken, getTokenPriceBySymbol]);
 
   const shouldFundFromTreasury = useCallback(() => {
     if (!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose)) {
@@ -501,11 +510,18 @@ export const StreamAddFundsModal = (props: {
                 )}
               </div>
               <div className="right inner-label">
-                <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                  ~${topupAmount && effectiveRate
-                    ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-                    : "0.00"}
-                </span>
+                {publicKey ? (
+                  <>
+                    <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                    ~{topupAmount
+                        ? toUsCurrency(getTokenPrice())
+                        : "$0.00"
+                    }
+                    </span>
+                  </>
+                ) : (
+                  <span>~$0.00</span>
+                )}
               </div>
             </div>
           </div>

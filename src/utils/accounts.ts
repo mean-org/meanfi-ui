@@ -7,6 +7,7 @@ import {
   ParsedAccountData,
   PublicKey,
   sendAndConfirmTransaction,
+  TokenAmount,
   Transaction,
   TransactionInstruction
 } from "@solana/web3.js"
@@ -302,6 +303,17 @@ export async function readAccountInfo(
       return accInfo as AccountInfo<ParsedAccountData>;
     }
   } else {
+    return null;
+  }
+}
+
+export const getTokenAccountBalanceByAddress = async (connection: Connection, tokenAddress: PublicKey | undefined | null): Promise<TokenAmount | null> => {
+  if (!connection || !tokenAddress) return null;
+  try {
+    const tokenAmount = (await connection.getTokenAccountBalance(tokenAddress)).value;
+    return tokenAmount;
+  } catch (error) {
+    consoleOut('getTokenAccountBalance failed for:', tokenAddress.toBase58(), 'red');
     return null;
   }
 }

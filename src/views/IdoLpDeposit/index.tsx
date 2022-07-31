@@ -1,10 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { Button } from 'antd';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
+import { formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getFormattedNumberToLocale, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -366,7 +366,7 @@ export const IdoLpDeposit = (props: {
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Max: {getFormattedNumberToLocale(formatAmount(Math.floor(props.idoStatus.currentMaxUsdcContribution), 2))}
+              Max: {formatThousands(Math.floor(props.idoStatus.currentMaxUsdcContribution), 2, 2)}
             </div>
           </div>
         )}
@@ -410,7 +410,7 @@ export const IdoLpDeposit = (props: {
             <span>{t('add-funds.label-right')}:</span>
             <span>
               {props.tokenBalance
-                ? getFormattedNumberToLocale(formatAmount(props.tokenBalance, 2))
+                ? formatThousands(props.tokenBalance, 2, 2)
                 : '0'
               }
             </span>
