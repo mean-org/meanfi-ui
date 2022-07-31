@@ -239,8 +239,3 @@ export const IDO_FETCH_FREQUENCY = 5 * 60 * 1000;       // IDO data fetch pollin
 export const NO_FEES = {
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
 }
-
-export const MEANFI_TOKENS = {
-    MEAN: 'MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD',
-    sMEAN: 'sMEANebFMnd9uTYpyntGzBmTmzEukRFwCjEcnXT2E8z'
-}

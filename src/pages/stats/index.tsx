@@ -1,34 +1,28 @@
-import { useContext, useEffect, useState } from 'react';
-import { PreFooter } from "../../components/PreFooter";
+import { ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
+import { Col, Row } from 'antd';
+import { BN } from 'bn.js';
+
 import "./style.scss";
 import { IconStats } from '../../Icons';
-import { Col, Row, Space } from 'antd';
-import { useTranslation } from 'react-i18next';
+import { PreFooter } from "../../components/PreFooter";
 import { useConnection } from '../../contexts/connection';
-import { Connection, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { AppStateContext } from '../../contexts/appstate';
-import { UserTokenAccount } from '../../models/transactions';
-import { TokenInfo } from '@solana/spl-token-registry';
 import { TokenStats } from './TokenStats';
-import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { BN } from 'bn.js';
 import { toUiAmount } from '../../utils/utils';
-import { MEANFI_TOKENS } from '../../constants'
+import { SMEAN_TOKEN } from '../../constants/token-list';
+import { getMeanStats } from '../../utils/api';
+import { MeanFiStatsModel } from '../../models/meanfi-stats';
 
 //const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
 
 export const StatsView = () => {
   const { t } = useTranslation('common');
   const connection = useConnection();
-  const {
-    userTokens
-  } = useContext(AppStateContext);
 
-  const [meanTotalSupply, setMeanTotalSupply] = useState<number | undefined>(undefined);
-  const [meanDecimals, setMeanDecimals] = useState<number | undefined>(undefined);
-  const [meanSymbol, setMeanSymbol] = useState<string>('');
-  const [meanToken, setMeanToken] = useState<TokenInfo | UserTokenAccount | undefined>(undefined);
-  const [meanHolders, setMeanHolders] = useState<number | undefined>(undefined);
+  const [totalVolume, setTotalVolume] = useState<number>();
+  const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel>();
   const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | undefined>(undefined);
 
   // Getters
@@ -40,71 +34,24 @@ export const StatsView = () => {
     if (!connection) { return; }
 
     (async () => {
-      const meanSymbol = 'MEAN';
-      const token = userTokens.find(t => t.symbol === meanSymbol);
-      if (!token) { return; }
-
-      setMeanToken(token);
-
-      const meanPubKey = new PublicKey(MEANFI_TOKENS.MEAN);
-      const sMeanPubKey = new PublicKey(MEANFI_TOKENS.sMEAN);
-
-      // use getParsedAccountInfo
-      const meanInfo = await connection.getParsedAccountInfo(meanPubKey);
-      if (meanInfo) {
-        const meanValue = (meanInfo.value?.data as ParsedAccountData);
-        const totalSupply = meanValue.parsed["info"]["supply"];
-        const decimals = Number(meanValue.parsed["info"]["decimals"] || '6');
-        setMeanDecimals(decimals);
-        setMeanSymbol(meanSymbol);
-        setMeanTotalSupply(toUiAmount(new BN(totalSupply), decimals));
+      const meanStats = await getMeanStats();
+      console.log(meanStats);      
+      if(meanStats){
+        setMeanfiStats(meanStats);
       }
 
-      const sMeanInfo = await connection.getParsedAccountInfo(sMeanPubKey);
+      setTotalVolume(0);
+      
+      // use getParsedAccountInfo
+      const sMeanInfo = await connection.getParsedAccountInfo(new PublicKey(SMEAN_TOKEN.address));
       if (sMeanInfo) {
-        const sMeanValue = (sMeanInfo.value?.data as ParsedAccountData);
-        const totalSupply = sMeanValue.parsed["info"]["supply"];
-        const decimals = Number(sMeanValue.parsed["info"]["decimals"] || '6');
-        setSMeanTotalSupply(toUiAmount(new BN(totalSupply), decimals));
+        const totalSupply = (sMeanInfo.value?.data as ParsedAccountData).parsed["info"]["supply"];
+        setSMeanTotalSupply(toUiAmount(new BN(totalSupply), SMEAN_TOKEN.decimals));
       }
     })();
   }, [
-    meanToken,
-    userTokens,
     connection,
   ]);
-
-  useEffect(() => {
-    const getAccounts = async (connection: Connection) => {
-      if (!meanToken) {
-        return [];
-      }
-
-      const accountInfos = await connection.getParsedProgramAccounts(TOKEN_PROGRAM_ID, {
-        filters: [
-          {
-            memcmp: { offset: 0, bytes: MEANFI_TOKENS.MEAN },
-          },
-          {
-            dataSize: AccountLayout.span
-          }
-        ],
-      });
-
-      const results = accountInfos
-        .filter(i => (i.account.data as ParsedAccountData).parsed.info.tokenAmount.uiAmount > 0);
-
-      return results;
-    }
-
-    if (connection) {
-      getAccounts(connection)
-        .then(values => {
-          setMeanHolders(values.length);
-        });
-    }
-  }, [connection, meanToken]);
-
 
   return (
     <>
@@ -121,11 +68,9 @@ export const StatsView = () => {
           </div>
           <PromoSpace />
           <TokenStats
-            meanTotalSupply={meanTotalSupply}
-            meanDecimals={meanDecimals}
-            meanSymbol={meanSymbol}
-            meanHolders={meanHolders}
-            meanToken={meanToken}
+            meanfiStats={meanfiStats}
+            smeanSupply={sMeanTotalSupply}
+            totalVolume={totalVolume}
           />
         </div>
       </div>

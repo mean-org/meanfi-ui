@@ -1,37 +1,30 @@
+import { useContext } from "react";
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { CopyOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
+
 import "./style.scss";
 import { data } from "./data";
-import { IconInfoCircle } from '../../Icons';
-import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
-import { CopyOutlined } from '@ant-design/icons';
 import { copyText } from '../../utils/ui';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import { PriceGraph } from './PriceGraph';
+import { IconInfoCircle } from '../../Icons';
 import CardStats from './components/CardStats';
-import { AppStateContext } from "../../contexts/appstate";
-import { useContext } from "react";
 import { formatThousands } from "../../utils/utils";
+import { MEAN_TOKEN } from "../../constants/token-list";
+import { AppStateContext } from "../../contexts/appstate";
 import { openNotification } from "../../components/Notifications";
+import { MeanFiStatsModel } from "../../models/meanfi-stats";
 
-export const TokenStats = ({
-  meanDecimals, 
-  meanSymbol,
-  meanTotalSupply,
-  meanHolders,
-  meanToken,
-  smeanSupply
-}: any) => {
+export const TokenStats = ({meanfiStats, smeanSupply, totalVolume}: any) => {
   return (
     <>
-      <FirstCardsLayout 
-        meanDecimals={meanDecimals} 
-        meanSymbol={meanSymbol} 
-        meanToken={meanToken}
-      />
+      <FirstCardsLayout />
       <Divider />
-      <SecondCardsLayout 
-        meanTotalSupply={meanTotalSupply} 
-        meanHolders={meanHolders}
+      <SecondCardsLayout
+        meanStats={meanfiStats}
+        sMeanTotalSupply={smeanSupply}
+        totalVolume={totalVolume}
       />
       <Divider />
       <ThirdCardsLayout />
@@ -40,34 +33,26 @@ export const TokenStats = ({
 };
 
 /*********************** FIRST TYPE OF CARDS *************************/
-export const FirstCardsLayout = ({
-  meanDecimals,
-  meanSymbol,
-  meanToken
-}: any) => {
+export const FirstCardsLayout = () => {
   const { t } = useTranslation('common');
 
   const summaries = [
     {
       label: t('stats.summary.token-name'),
-      value: data.token_name
+      value: MEAN_TOKEN.name
     },
     {
       label: t('stats.summary.token-symbol'),
-      value: meanSymbol
+      value: MEAN_TOKEN.symbol
     },
     {
       label: t('stats.summary.token-address'),
-      value: data.token_address,
+      value: MEAN_TOKEN.address,
       tooltip: "stats.summary.token-address-copy"
     },
     {
       label: t('stats.summary.token-decimals'),
-      value: meanDecimals
-    },
-    {
-      label: '',
-      value: ''
+      value: MEAN_TOKEN.decimals
     }
   ];
 
@@ -132,11 +117,7 @@ export const FirstCardsLayout = ({
     <div className="ant-card-head-title">
       <span>{t("stats.price.price-title")}</span>
       {
-        meanToken ? (
-          <span>$ {getTokenPriceBySymbol(meanToken.symbol)}</span>
-          ) : (
-          <span>0</span>
-        )
+        <span>$ {getTokenPriceBySymbol(MEAN_TOKEN.symbol)}</span>
       }
     </div>
   );
@@ -176,46 +157,51 @@ export const FirstCardsLayout = ({
 
 /*********************** SECOND TYPE OF CARDS *************************/
 export const SecondCardsLayout = ({ 
-  meanTotalSupply, 
-  meanHolders 
+  meanStats,
+  sMeanTotalSupply,
+  totalVolume
 }: any) => {
   const { t } = useTranslation('common');
-
   const cards = [
     {
       label: t('stats.market.market-cap-title'),
-      value: `$ ${formatThousands(data.fully_dilluted_market_cap)}`,
+      value: `$ ${formatThousands(meanStats.marketCapFD)}`,
       description: "stats.market.token-fully_dilluted_market_cap"
     },
     {
       label: t('stats.market.holders-title'),
-      value: formatThousands(meanHolders),
+      value: formatThousands(meanStats.holders),
       description: "stats.market.token-holders"
     },
     {
       label: t('stats.market.volume-title'),
-      value: `$ ${formatThousands(data.total_volume)}`,
+      value: `$ ${formatThousands(totalVolume)}`,
       description: "stats.market.token-total-volume"
     },
     {
       label: t('stats.market.total-supply-title'),
-      value: formatThousands(meanTotalSupply),
+      value: formatThousands(meanStats.totalSupply),
       description: "stats.market.token-total-supply"
     },
     {
       label: t('stats.market.circulating-supply-title'),
-      value: formatThousands(data.circulating_supply),
+      value: formatThousands(meanStats.circulatingSupply),
       description: "stats.market.token-circulating-suppply"
     },
     {
       label: t('stats.market.total-money-streams-title'),
-      value: formatThousands(data.total_money_streams),
+      value: formatThousands(meanStats.totalMoneyStreams),
       description: "stats.market.token-total-money-streams"
     },
     {
       label: t('stats.market.total-value-locked-title'),
-      value: `$ ${formatThousands(data.total_value_locked)}`,
+      value: `$ ${formatThousands(meanStats.tvl.total)}`,
       description: "stats.market.token-total-value-locked"
+    },
+    {
+      label: t('invest.panel-right.stats.total-mean-rewards'),
+      value: `${formatThousands(sMeanTotalSupply)}`,
+      description: "invest.panel-right.stats.total-mean-rewards"
     },
   ];
 

@@ -4,6 +4,8 @@ import { Allocation } from "../models/common-types";
 import { getDefaultRpc, RpcConfig } from "../services/connections-hq";
 import { WhitelistClaimType } from "../models/enums";
 import { TokenPrice } from "../models/token";
+import { PriceGraphModel } from "../models/price-graph";
+import { MeanFiStatsModel } from "../models/meanfi-stats";
 
 declare interface RequestInit { }
 
@@ -166,4 +168,33 @@ export const sendRecordClaimTxRequest = async (address: string, claimTxId: strin
     .catch(error => {
       throw (error);
     });
+}
+
+export const getMeanStats = async (): Promise<MeanFiStatsModel | null> => {
+  const path = `https://raw.githubusercontent.com/mean-dao/meanfi-stats/main/meanfi-stats.json`;
+  const res = await fetch(path, { method: "GET" });
+  // 400+ status codes are failed
+  if (res.status >= 400) {
+    console.error(`Error getMeanStats: ${res.status}: ${res.statusText}`);
+    return null;
+  }
+  return await res.json();
+}
+
+export const getCoingeckoMarketChart = async (coinGeckoId: string = 'meanfi', decimals: number = 6, days: number = 30, interval: 'daily' | 'hourly' = 'daily'): Promise<PriceGraphModel[] | null> => {
+  const path = `https://api.coingecko.com/api/v3/coins/${coinGeckoId}/market_chart?vs_currency=usd&days=${days}&interval=${interval}`;
+  const res = await fetch(path, { method: "GET" });
+  // 400+ status codes are failed
+  if (res.status >= 400) {
+    console.error(`Error getCoingeckoMarketChart: ${res.status}: ${res.statusText}`);
+    return null;
+  }
+  const { prices } = await res.json();
+  const formatedChartData = prices.map((x: number[]) => {
+    return {
+      priceData: x[1].toFixed(decimals),
+      dateData: new Date(x[0]).toISOString()
+    }
+  });
+  return formatedChartData;
 }
