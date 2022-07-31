@@ -171,30 +171,39 @@ export const sendRecordClaimTxRequest = async (address: string, claimTxId: strin
 }
 
 export const getMeanStats = async (): Promise<MeanFiStatsModel | null> => {
-  const path = `https://raw.githubusercontent.com/mean-dao/meanfi-stats/main/meanfi-stats.json`;
-  const res = await fetch(path, { method: "GET" });
-  // 400+ status codes are failed
-  if (res.status >= 400) {
-    console.error(`Error getMeanStats: ${res.status}: ${res.statusText}`);
+  try {
+    const path = `https://raw.githubusercontent.com/mean-dao/meanfi-stats/main/meanfi-stats.json`;
+    const res = await fetch(path, { method: "GET" });
+    // 400+ status codes are failed
+    if (res.status >= 400) {
+      throw new Error(`Error getMeanStats: ${res.status}: ${res.statusText}`)
+    }
+    return await res.json();
+  } catch (error) {
+    console.error(error);
     return null;
   }
-  return await res.json();
 }
 
 export const getCoingeckoMarketChart = async (coinGeckoId: string = 'meanfi', decimals: number = 6, days: number = 30, interval: 'daily' | 'hourly' = 'daily'): Promise<PriceGraphModel[] | null> => {
-  const path = `https://api.coingecko.com/api/v3/coins/${coinGeckoId}/market_chart?vs_currency=usd&days=${days}&interval=${interval}`;
-  const res = await fetch(path, { method: "GET" });
-  // 400+ status codes are failed
-  if (res.status >= 400) {
-    console.error(`Error getCoingeckoMarketChart: ${res.status}: ${res.statusText}`);
-    return null;
-  }
-  const { prices } = await res.json();
-  const formatedChartData = prices.map((x: number[]) => {
-    return {
-      priceData: x[1].toFixed(decimals),
-      dateData: new Date(x[0]).toISOString()
+  try {
+    const path = `https://api.coingecko.com/api/v3/coins/${coinGeckoId}/market_chart?vs_currency=usd&days=${days}&interval=${interval}`;
+    const res = await fetch(path, { method: "GET" });
+    // 400+ status codes are failed
+    if (res.status >= 400) {
+      throw new Error(`Error getCoingeckoMarketChart: ${res.status}: ${res.statusText}`);
     }
-  });
-  return formatedChartData;
+    const { prices } = await res.json();
+    const formatedChartData = prices.map((x: number[]) => {
+      return {
+        priceData: x[1].toFixed(decimals),
+        dateData: new Date(x[0]).toISOString()
+      }
+    });
+    return formatedChartData;
+  } catch (error) {
+    console.error(error);
+    return null;
+
+  }
 }

@@ -22,7 +22,7 @@ export const StatsView = () => {
   const connection = useConnection();
 
   const [totalVolume, setTotalVolume] = useState<number>();
-  const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel>();
+  const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel | null>(null);
   const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | undefined>(undefined);
 
   // Getters
@@ -35,7 +35,7 @@ export const StatsView = () => {
 
     (async () => {
       const meanStats = await getMeanStats();
-      console.log(meanStats);      
+      console.log('****************** meanStats:', meanStats, '********************');      
       if(meanStats){
         setMeanfiStats(meanStats);
       }
@@ -69,8 +69,8 @@ export const StatsView = () => {
           <PromoSpace />
           <TokenStats
             meanfiStats={meanfiStats}
-            smeanSupply={sMeanTotalSupply}
             totalVolume={totalVolume}
+            smeanSupply={sMeanTotalSupply}
           />
         </div>
       </div>
