@@ -30,7 +30,7 @@ export const StreamPauseModal = (props: {
   const { publicKey } = useWallet();
   const [searchParams] = useSearchParams();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
-  const [multisigTitle, setMultisigTitle] = useState('');
+  const [proposalTitle, setProposalTitle] = useState('');
 
   const getQueryAccountType = useCallback(() => {
     let accountTypeInQuery: string | null = null;
@@ -157,10 +157,22 @@ export const StreamPauseModal = (props: {
     getFeeAmount
   ]);
 
+  const isValidForm = (): boolean => {
+    return proposalTitle
+      ? true
+      : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !proposalTitle
+      ? 'Add a proposal title'
+      : "Sign proposal"
+  }
+
   const onAcceptModal = () => {
-    props.handleOk(multisigTitle);
+    props.handleOk(proposalTitle);
     setTimeout(() => {
-      setMultisigTitle('');
+      setProposalTitle('');
     }, 50);
   }
 
@@ -169,7 +181,7 @@ export const StreamPauseModal = (props: {
   }
 
   const onTitleInputValueChange = (e: any) => {
-    setMultisigTitle(e.target.value);
+    setProposalTitle(e.target.value);
   }
 
   const infoRow = (caption: string, value: string) => {
@@ -228,7 +240,7 @@ export const StreamPauseModal = (props: {
               className="w-100 general-text-input"
               onChange={onTitleInputValueChange}
               placeholder="Add a proposal title"
-              value={multisigTitle}
+              value={proposalTitle}
             />
           </div>
         )}
@@ -247,8 +259,9 @@ export const StreamPauseModal = (props: {
             type="primary"
             shape="round"
             size="large"
+            disabled={param === "multisig" && !isValidForm()}
             onClick={() => onAcceptModal()}>
-            {param === "multisig" ? "Sign proposal" : t('streams.pause-stream-cta')}
+            {param === "multisig" ? getTransactionStartButtonLabel() : t('streams.pause-stream-cta')}
           </Button>
         </div>
       </div>
