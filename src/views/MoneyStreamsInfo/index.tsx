@@ -1,5 +1,5 @@
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Dropdown, Menu, Row, Spin, Tabs, Tooltip } from "antd";
+import { Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
@@ -37,7 +37,7 @@ import { INITIAL_TREASURIES_SUMMARY, TreasuryCreateOptions, UserTreasuriesSummar
 import { customLogger } from "../..";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
-import { ArrowDownOutlined, ArrowUpOutlined, ReloadOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamOpenModal } from "../../components/StreamOpenModal";
 import { CreateStreamModal } from "../../components/CreateStreamModal";
@@ -538,22 +538,22 @@ export const MoneyStreamsInfoView = (props: {
     getTokenPriceByAddress,
   ]);
 
-  const reloadStreams = () => {
-    const streamsRefreshCta = document.getElementById("streams-refresh-reset-cta");
-    if (streamsRefreshCta) {
-      streamsRefreshCta.click();
-    }
-  };
+  // const reloadStreams = () => {
+  //   const streamsRefreshCta = document.getElementById("streams-refresh-reset-cta");
+  //   if (streamsRefreshCta) {
+  //     streamsRefreshCta.click();
+  //   }
+  // };
 
-  const refreshPaymentStreams = useCallback((reset = false) => {
-    setWithdrawalBalance(0);
-    setUnallocatedBalance(0);
-    setIncomingStreamList(undefined);
-    setOutgoingStreamList(undefined);
-    setIncomingAmount(0);
-    setOutgoingAmount(0);
-    reloadStreams();
-  }, []);
+  // const refreshPaymentStreams = useCallback((reset = false) => {
+  //   setWithdrawalBalance(0);
+  //   setUnallocatedBalance(0);
+  //   setIncomingStreamList(undefined);
+  //   setOutgoingStreamList(undefined);
+  //   setIncomingAmount(0);
+  //   setOutgoingAmount(0);
+  //   reloadStreams();
+  // }, []);
 
   const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
     return await calculateActionFeesV2(connection, action);
@@ -2734,20 +2734,7 @@ export const MoneyStreamsInfoView = (props: {
   return (
     <>
       <Spin spinning={loadingMoneyStreamsDetails || loadingCombinedStreamingList}>
-        <div className="float-top-right mr-2">
-          <span className="icon-button-container secondary-button">
-            <Tooltip placement="bottom" title="Refresh payment streams">
-              <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<ReloadOutlined className="mean-svg-icons" />}
-                onClick={() => refreshPaymentStreams(true)}
-              />
-            </Tooltip>
-          </span>
-        </div>
-        
+
         <RightInfoDetails
           infoData={infoData}
         />
