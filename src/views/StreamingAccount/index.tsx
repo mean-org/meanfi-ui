@@ -2491,7 +2491,8 @@ export const StreamingAccountView = (props: {
 
   const getTreasuryClosureMessage = () => {
     return (
-      <div>{t('treasuries.close-account.close-treasury-confirmation')}</div>
+      // <div>{t('treasuries.close-account.close-treasury-confirmation')}</div>
+      <div>Since your streaming account has no streams you are able to close it</div>
     );
   };
 
@@ -3001,6 +3002,7 @@ export const StreamingAccountView = (props: {
           content={getTreasuryClosureMessage()}
           transactionStatus={transactionStatus.currentOperation}
           isBusy={isBusy}
+          selectedMultisig={selectedMultisig || undefined}
         />
       )}
 

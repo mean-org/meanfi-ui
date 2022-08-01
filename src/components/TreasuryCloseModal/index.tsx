@@ -1,7 +1,7 @@
 import React, { useCallback, useContext } from 'react';
 import { useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
-import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { getTransactionOperationDescription } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
@@ -13,6 +13,7 @@ import { Treasury } from '@mean-dao/msp';
 import { AppStateContext } from '../../contexts/appstate';
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
+import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -27,10 +28,12 @@ export const TreasuryCloseModal = (props: {
   transactionFees: TransactionFees;
   transactionStatus: TransactionStatus | undefined;
   isBusy: boolean;
+  selectedMultisig: MultisigInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
   const [searchParams] = useSearchParams();
   const {
+    theme,
     transactionStatus
   } = useContext(AppStateContext);
   // const { publicKey } = useWallet();
@@ -84,6 +87,10 @@ export const TreasuryCloseModal = (props: {
 
   const param = getQueryAccountType();
 
+  const v1 = props.treasuryDetails as TreasuryInfo;
+  const v2 = props.treasuryDetails  as Treasury;
+  const isNewTreasury = props.treasuryDetails  && props.treasuryDetails .version >= 2 ? true : false;
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -99,12 +106,23 @@ export const TreasuryCloseModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             <div className="mb-3 text-center">
-              <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3" />
-              <h4 className="mb-4">{props.content}</h4>
+            {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3" /> */}
+            {theme === 'light' ? (
+                <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+              ) : (
+                <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+              )}
+              <div className="mb-3 fg-warning operation">
+                <span>{props.content}</span>
+              </div>
+
+              {props.selectedMultisig && (
+                <div className="operation">{`Closing streaming account ${isNewTreasury ? v2.name : v1.label} will remove it completely from the multisig safe ${props.selectedMultisig?.label}`}</div>
+              )}
 
               {/* Proposal title */}
               {param === "multisig" && (
-                <div className="mb-3">
+                <div className="mb-3 mt-3">
                   <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
                   <InputMean
                     id="proposal-title-field"
@@ -114,6 +132,28 @@ export const TreasuryCloseModal = (props: {
                     placeholder="Add a proposal title"
                     value={multisigTitle}
                   />
+                </div>
+              )}
+
+              {!isError(transactionStatus.currentOperation) && (
+                <div className="col-12 p-0 mt-3">
+                  <Button
+                    className={`center-text-in-btn ${props.isBusy ? 'inactive' : ''}`}
+                    block
+                    type="primary"
+                    shape="round"
+                    size="large"
+                    onClick={() => onAcceptModal()}>
+                    {props.isBusy && (
+                      <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                    )}
+                    {props.isBusy
+                      ? t('treasuries.close-account.cta-close-busy')
+                      : isError(transactionStatus.currentOperation)
+                        ? t('general.retry')
+                        : (param === "multisig" ? "Sign proposal" : t('treasuries.close-account.cta-close'))
+                    }
+                  </Button>
                 </div>
               )}
             </div>
@@ -147,6 +187,34 @@ export const TreasuryCloseModal = (props: {
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
+              {/**
+               * NOTE: CTAs block may be required or not when Tx status is Finished!
+               * I choose to set transactionStatus.currentOperation to TransactionStatus.TransactionFinished
+               * and auto-close the modal after 1s. If we chose to NOT auto-close the modal
+               * Uncommenting the commented lines below will do it!
+               */}
+              {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+                <div className="row two-col-ctas mt-3 transaction-progress p-2">
+                  <div className="col-12">
+                    <Button
+                      block
+                      type="text"
+                      shape="round"
+                      size="middle"
+                      className={`center-text-in-btn thin-stroke ${props.isBusy ? 'inactive' : ''}`}
+                      onClick={() => isError(transactionStatus.currentOperation)
+                        ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                          ? onCloseModal()
+                          : onAcceptModal()
+                        : onCloseModal()}>
+                      {(isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
+                        ? t('general.retry')
+                        : t('general.cta-close')
+                      }
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -165,57 +233,6 @@ export const TreasuryCloseModal = (props: {
         </div>
         )}
       </div>
-
-      {/**
-       * NOTE: CTAs block may be required or not when Tx status is Finished!
-       * I choose to set transactionStatus.currentOperation to TransactionStatus.TransactionFinished
-       * and auto-close the modal after 1s. If we chose to NOT auto-close the modal
-       * Uncommenting the commented lines below will do it!
-       */}
-        {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-          <div className="row two-col-ctas mt-3 transaction-progress p-0">
-            <div className={!isError(transactionStatus.currentOperation) ?  "col-6" : "col-12"}>
-              <Button
-                block
-                type="text"
-                shape="round"
-                size="middle"
-                className={props.isBusy ? 'inactive' : ''}
-                onClick={() => isError(transactionStatus.currentOperation)
-                  ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                    ? onCloseModal()
-                    : onAcceptModal()
-                  : onCloseModal()}>
-                {isError(transactionStatus.currentOperation)
-                  ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                    ? t('general.cta-close')
-                    : t('general.retry')
-                  : t('general.cta-close')
-                }
-              </Button>
-            </div>
-            {!isError(transactionStatus.currentOperation) && (
-              <div className="col-6">
-                <Button
-                  className={props.isBusy ? 'inactive' : ''}
-                  block
-                  type="primary"
-                  shape="round"
-                  onClick={() => onAcceptModal()}>
-                  {props.isBusy && (
-                    <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-                  )}
-                  {props.isBusy
-                    ? t('treasuries.close-account.cta-close-busy')
-                    : isError(transactionStatus.currentOperation)
-                      ? t('general.retry')
-                      : (param === "multisig" ? "Submit proposal" : t('treasuries.close-account.cta-close'))
-                  }
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
     </Modal>
   );
 };

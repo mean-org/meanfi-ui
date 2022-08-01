@@ -423,8 +423,8 @@ export const StreamCloseModal = (props: {
 
           {/* Proposal title */}
           {param === "multisig" && (
-            <div className="mb-3 mt-3 text-left">
-              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+            <div className="mb-3 mt-3">
+              <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
               <InputMean
                 id="proposal-title-field"
                 name="Title"
