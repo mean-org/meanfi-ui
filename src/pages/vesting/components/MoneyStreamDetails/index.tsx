@@ -3,8 +3,8 @@ import BN from 'bn.js';
 import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity } from '@mean-dao/msp';
-import { cutNumber, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress, toUiAmount } from '../../../../utils/utils';
-import { getFormattedNumberToLocale, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../utils/ui';
+import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress, toUiAmount } from '../../../../utils/utils';
+import { getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
@@ -20,7 +20,6 @@ const { TabPane } = Tabs;
 export type StreamDetailTab = "details" | "activity";
 
 export const MoneyStreamDetails = (props: {
-  cliffVestAmount: string;
   hasMoreStreamActivity: boolean;
   highlightedStream: Stream | undefined;
   isInboundStream: boolean;
@@ -31,7 +30,6 @@ export const MoneyStreamDetails = (props: {
   streamActivity: StreamActivity[];
 }) => {
   const {
-    cliffVestAmount,
     hasMoreStreamActivity,
     highlightedStream,
     isInboundStream,
@@ -113,6 +111,7 @@ export const MoneyStreamDetails = (props: {
 
     if (item) {
       let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      const decimals = token?.decimals || 6;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
@@ -120,7 +119,7 @@ export const MoneyStreamDetails = (props: {
         }) as TokenInfo;
       }
 
-      value += getFormattedNumberToLocale(cutNumber(makeDecimal(new BN(item.rateAmount), token?.decimals || 6), 2));
+      value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
@@ -132,6 +131,7 @@ export const MoneyStreamDetails = (props: {
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
       let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      const decimals = token?.decimals || 6;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
@@ -139,7 +139,7 @@ export const MoneyStreamDetails = (props: {
         }) as TokenInfo;
       }
 
-      value += getFormattedNumberToLocale(cutNumber(makeDecimal(new BN(item.allocationAssigned), token?.decimals || 6), 2));
+      value += formatThousands(makeDecimal(new BN(item.allocationAssigned), decimals), decimals, 2);
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
@@ -218,22 +218,6 @@ export const MoneyStreamDetails = (props: {
     );
 
   }, [t]);
-
-  const getStreamResume = useCallback((item: Stream) => {
-    if (item) {
-      switch (item.status) {
-        case STREAM_STATUS.Schedule:
-          return `starts on ${getShortDate(item.startUtc as string)}`;
-        case STREAM_STATUS.Paused:
-          if (item.isManuallyPaused) {
-            return `paused on ${getShortDate(item.startUtc as string)}`;
-          }
-          return `out of funds on ${getShortDate(item.startUtc as string)}`;
-        default:
-          return `streaming since ${getShortDate(item.startUtc as string)}`;
-      }
-    }
-  }, []);
 
   const getStreamStatusSubtitle = useCallback((item: Stream) => {
     if (item) {
@@ -425,6 +409,17 @@ export const MoneyStreamDetails = (props: {
     )
   }
 
+  const renderCliffVestAmount = () => {
+    if (!stream || !selectedToken) { return null; }
+
+    return getTokenAmountAndSymbolByTokenAddress(
+      toUiAmount(new BN(stream.cliffVestAmount), selectedToken.decimals || 6),
+      stream.associatedToken as string,
+      false,
+      splTokenList
+    );
+  }
+
   const renderActivities = () => {
     return (
       <div className="stream-activity-list">
@@ -500,7 +495,7 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: "Cliff release:",
-      value: cliffVestAmount
+      value: renderCliffVestAmount()
     },
     {
       label: "Payment rate:",

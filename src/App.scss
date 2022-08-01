@@ -3061,11 +3061,6 @@ main section {
       }
     }
   }
-  &:not(.stream-select-dropdown) {
-    width: auto !important;
-    min-width: 260px !important;
-    max-width: 400px !important;
-  }
   &.stream-select-dropdown {
     .ant-select-item.ant-select-item-option {
       padding: 0;
@@ -5492,12 +5487,14 @@ main section {
   @media (max-width: 575.98px) {
     position: relative;
     text-align: right;
-    margin-bottom: 1rem;
+    // margin-bottom: 1rem;
+    margin-right: 1em;
   }
   @media (min-width: 576px) {
     position: absolute;
-    top: 0.3rem;
-    right: 1rem;
+    // top: 0.3rem;
+    top: 0;
+    right: 0;
     z-index: 1;
   }
 }
@@ -7848,6 +7845,12 @@ code {
     display: flex;
     margin: 0.5em;
   }
+}
+
+.center-text-in-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .warning-message {

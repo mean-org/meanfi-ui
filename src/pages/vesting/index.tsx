@@ -151,6 +151,7 @@ export const VestingView = () => {
   const [hasMoreContractActivity, setHasMoreContractActivity] = useState<boolean>(true);
   const [availableStreamingBalance, setAvailableStreamingBalance] = useState(0);
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(0);
+  const [associatedTokenDecimals, setAssociatedTokenDecimals] = useState(6);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
@@ -504,7 +505,7 @@ export const VestingView = () => {
           );
         }
         setTimeout(() => {
-          hardReloadContracts();
+          softReloadContracts();
         }, 20);
         break;
       case OperationType.TreasuryWithdraw:
@@ -3614,7 +3615,7 @@ export const VestingView = () => {
         if (ta) {
           balance = new BN(ta.amount).toNumber();
         }
-        consoleOut('SA ATA balance:', balance, 'blue');
+        consoleOut('VC ATA balance:', balance, 'blue');
         return balance;
       } catch (error) {
         return balance;
@@ -3800,6 +3801,7 @@ export const VestingView = () => {
   // Keep the available streaming balance for the current vesting contract updated
   useEffect(() => {
     let streamingBalance = 0;
+    let tokenDecimals = 6;
 
     if (!connection || !selectedVestingContract) {
       setAvailableStreamingBalance(streamingBalance);
@@ -3811,6 +3813,7 @@ export const VestingView = () => {
       const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
       const ub = makeDecimal(new BN(unallocated), token.decimals);
       streamingBalance = ub >= 0 ? ub : 0;
+      tokenDecimals = token.decimals;
       consoleOut('Available streaming balance:', streamingBalance, 'blue');
       setAvailableStreamingBalance(streamingBalance);
     } else {
@@ -3821,11 +3824,13 @@ export const VestingView = () => {
           const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
           const ub = makeDecimal(new BN(unallocated), decimals);
           streamingBalance = ub >= 0 ? ub : 0;
+          tokenDecimals = decimals;
         }
       })
       .finally(() => {
         consoleOut('Available streaming balance:', streamingBalance, 'blue');
         setAvailableStreamingBalance(streamingBalance);
+        setAssociatedTokenDecimals(tokenDecimals);
       });
     }
 
@@ -4014,6 +4019,7 @@ export const VestingView = () => {
       <Tabs activeKey={accountDetailTab} onChange={onTabChange} className="neutral stretch-content">
         <TabPane tab="Overview" key={"overview"}>
           <VestingContractOverview
+            associatedTokenDecimals={associatedTokenDecimals}
             isXsDevice={isXsDevice}
             streamTemplate={streamTemplate}
             vestingContract={selectedVestingContract}

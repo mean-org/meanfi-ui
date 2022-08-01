@@ -1,4 +1,4 @@
-import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, Message, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { AnchorProvider, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
 import { IDL as SplTokenIdl } from "@project-serum/anchor/dist/cjs/spl/token";
 import { OperationType } from "./enums";
@@ -7,6 +7,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MEAN_MULTISIG_PROGRAM, MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
 import { MeanSplTokenInstructionCoder } from "./spl-token-coder/instruction";
 import { MeanSystemInstructionCoder } from "./system-program-coder/instruction";
+import { AppConfig, UiInstruction } from "@mean-dao/mean-multisig-apps";
 
 export const NATIVE_LOADER = new PublicKey("NativeLoader1111111111111111111111111111111");
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
@@ -148,6 +149,16 @@ export type MultisigTransactionFees = {
   networkFee: number,
   rentExempt: number,
   multisigFee: number,
+}
+
+export interface CreateNewProposalParams {
+  appId: string;
+  multisigId: string;
+  title: string;
+  description: string;
+  expires: number;
+  config: AppConfig;
+  instruction: UiInstruction;
 }
 
 export const getFees = async (
@@ -549,7 +560,19 @@ export const parseSerializedTx = async (
     }
 
     const buffer = Buffer.from(base64Str, 'base64');
-    const tx = Transaction.from(buffer);
+
+    let tx: Transaction | null = null;
+    
+    try {
+      tx = Transaction.from(buffer);
+    } catch (error) {
+      // Errors above indicate that the bytes do not encode a transaction.
+    }
+
+    if(!tx) {
+      const message = Message.from(buffer);
+      tx = Transaction.populate(message);
+    }
 
     return tx;
 

@@ -388,7 +388,6 @@ export const MultisigTransferTokensModal = (props: {
 
   const isValidForm = (): boolean => {
     return (
-      proposalTitle &&
       fromVault &&
       to &&
       isValidAddress(fromVault.publicAddress) &&
@@ -400,15 +399,17 @@ export const MultisigTransferTokensModal = (props: {
   }
 
   const getTransactionStartButtonLabel = () => {
-    return  !proposalTitle
-      ? 'Add proposal title'
-      : !fromVault || !fromVault.publicAddress || !isValidAddress(fromVault.publicAddress)
-        ? 'Invalid from address'
-          : !amount || +amount === 0 || +amount > (fromVault.balance || 0)
-          ? 'Invalid amount'
-          : !to || !isValidAddress(to)
-            ? 'Invalid to address'
-            : t('multisig.multisig-assets.main-cta')
+    return  !amount || +amount === 0
+      ? 'Enter amount'
+      : fromVault && fromVault.balance === 0
+        ? 'No balance'
+        : (amount && fromVault && +amount > (fromVault.balance || 0))
+          ? 'Amount exceeded'
+          : !to
+            ? 'Enter an address'
+            : to && !isValidAddress(to)
+              ? 'Invalid address'
+              : t('multisig.multisig-assets.main-cta')
   }
 
   const refreshPage = () => {
@@ -571,7 +572,7 @@ export const MultisigTransferTokensModal = (props: {
                   name="Title"
                   className="w-100 general-text-input"
                   onChange={onTitleInputValueChange}
-                  placeholder="Add a proposal title (required)"
+                  placeholder="Add a proposal title"
                   value={proposalTitle}
                 />
               </div>
@@ -681,6 +682,36 @@ export const MultisigTransferTokensModal = (props: {
 
               {/* explanatory paragraph */}
               <p>{t("multisig.multisig-assets.explanatory-paragraph")}</p>
+
+              {!isError(transactionStatus.currentOperation) && (
+                <div className="col-12 p-0 mt-3">
+                  <Button
+                    className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
+                    block
+                    type="primary"
+                    shape="round"
+                    size="large"
+                    disabled={!isValidForm()}
+                    onClick={() => {
+                      if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                        onAcceptModal();
+                      } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                        onCloseModal();
+                      } else {
+                        refreshPage();
+                      }
+                    }}>
+                    {isBusy
+                      ? t('multisig.transfer-tokens.main-cta-busy')
+                      : transactionStatus.currentOperation === TransactionStatus.Iddle
+                        ? getTransactionStartButtonLabel()
+                        : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                          ? t('general.cta-finish')
+                          : t('general.refresh')
+                    }
+                  </Button>
+                </div>
+              )}
             </>
           ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
             <>
@@ -711,13 +742,33 @@ export const MultisigTransferTokensModal = (props: {
                     {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
                 )}
+                {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+                  <div className="row two-col-ctas mt-3 transaction-progress p-2">
+                    <div className="col-12">
+                      <Button
+                        block
+                        type="text"
+                        shape="round"
+                        size="middle"
+                        className={`center-text-in-btn thin-stroke ${isBusy ? 'inactive' : ''}`}
+                        onClick={() => isError(transactionStatus.currentOperation)
+                          ? onAcceptModal()
+                          : onCloseModal()}>
+                        {(isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
+                          ? t('general.retry')
+                          : t('general.cta-close')
+                        }
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}
 
         </div>
 
-        <div className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>          
+        <div className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
           {isBusy && transactionStatus !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
@@ -730,56 +781,6 @@ export const MultisigTransferTokensModal = (props: {
           </div>
           )}
         </div>
-
-        {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-          <div className="row two-col-ctas mt-3 transaction-progress p-0">
-            <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
-              <Button
-                block
-                type="text"
-                shape="round"
-                size="middle"
-                className={isBusy ? 'inactive' : ''}
-                onClick={() => isError(transactionStatus.currentOperation)
-                  ? onAcceptModal()
-                  : onCloseModal()}>
-                {isError(transactionStatus.currentOperation)
-                  ? t('general.retry')
-                  : t('general.cta-close')
-                }
-              </Button>
-            </div>
-            {!isError(transactionStatus.currentOperation) && (
-              <div className="col-6">
-                <Button
-                  className={`extra-height ${isBusy ? 'inactive' : ''}`}
-                  block
-                  type="primary"
-                  shape="round"
-                  size="middle"
-                  disabled={!isValidForm()}
-                  onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                      onAcceptModal();
-                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                      onCloseModal();
-                    } else {
-                      refreshPage();
-                    }
-                  }}>
-                  {isBusy
-                    ? t('multisig.transfer-tokens.main-cta-busy')
-                    : transactionStatus.currentOperation === TransactionStatus.Iddle
-                      ? getTransactionStartButtonLabel()
-                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                        ? t('general.cta-finish')
-                        : t('general.refresh')
-                  }
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
 
         {isTokenSelectorVisible && (
           <Drawer

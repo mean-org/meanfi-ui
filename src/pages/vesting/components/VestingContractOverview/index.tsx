@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { StreamTemplate, Treasury } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { useTranslation } from 'react-i18next';
-import { WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TimeData } from '../../../../models/common-types';
 import { PaymentRateType } from '../../../../models/enums';
@@ -17,9 +17,11 @@ import {
     getlllDate,
     relativeTimeFromDates,
     friendlyDisplayDecimalPlaces,
-    percentage
+    percentage,
+    consoleOut,
+    isValidAddress
 } from '../../../../utils/ui';
-import { formatThousands, getAmountWithSymbol, makeDecimal } from '../../../../utils/utils';
+import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../utils/utils';
 import BN from 'bn.js';
 import { Alert, Progress } from 'antd';
 import { TokenIcon } from '../../../../components/TokenIcon';
@@ -28,12 +30,14 @@ import { IconInfoCircle } from '../../../../Icons';
 import { VestingFlowRateInfo } from '../../../../models/vesting';
 
 export const VestingContractOverview = (props: {
+    associatedTokenDecimals: number | undefined;
     isXsDevice: boolean;
     streamTemplate: StreamTemplate | undefined;
     vestingContract: Treasury | undefined;
     vestingContractFlowRate: VestingFlowRateInfo | undefined;
 }) => {
     const {
+        associatedTokenDecimals,
         isXsDevice,
         streamTemplate,
         vestingContract,
@@ -42,6 +46,7 @@ export const VestingContractOverview = (props: {
     const { t } = useTranslation('common');
     const {
         theme,
+        splTokenList,
         getTokenByMintAddress
     } = useContext(AppStateContext);
     const [today, setToday] = useState(new Date());
@@ -61,6 +66,9 @@ export const VestingContractOverview = (props: {
     /////////////////
 
     const getAvailableStreamingBalance = useCallback((item: Treasury, token: TokenInfo | undefined) => {
+        // if (!token) {
+        //     consoleOut('No token passed-in to getAvailableStreamingBalance!', '', 'darkred');
+        // }
         if (item) {
             const decimals = token ? token.decimals : 6;
             const unallocated = item.balance - item.allocationAssigned;
@@ -204,18 +212,40 @@ export const VestingContractOverview = (props: {
 
     // Set a working token based on the Vesting Contract's Associated Token
     useEffect(() => {
-        if (vestingContract) {
-            let token = getTokenByMintAddress(vestingContract.associatedToken as string);
-            if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+
+        const getCustomToken = (address: string, decimals: number) => {
+            if (!address || !isValidAddress(address)) {
+                return undefined;
+            }
+
+            const unknownToken: TokenInfo = {
+                address: address,
+                name: CUSTOM_TOKEN_NAME,
+                chainId: 101,
+                decimals: decimals,
+                symbol: shortenAddress(address),
+            };
+            return unknownToken;
+        }
+
+        if (vestingContract && associatedTokenDecimals !== undefined) {
+            const ata = vestingContract.associatedToken as string;
+            let token = getTokenByMintAddress(ata);
+
+            if (!token) {
+                token = getCustomToken(ata, associatedTokenDecimals);
+            } else if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
                 token = Object.assign({}, token, {
                     symbol: 'SOL'
                 }) as TokenInfo;
             }
+
+            consoleOut("Using token:", token, 'blue');
             setSelectedToken(token);
         }
 
         return () => { }
-    }, [getTokenByMintAddress, vestingContract])
+    }, [associatedTokenDecimals, getTokenByMintAddress, vestingContract]);
 
     // Set isContractRunning flag based on completed percentage
     useEffect(() => {
@@ -332,11 +362,13 @@ export const VestingContractOverview = (props: {
                                 Unallocated tokens
                             </div>
                             <div className="font-size-100 fg-secondary-50">
-                                {
+                                {selectedToken ?
                                     getAmountWithSymbol(
                                         getAvailableStreamingBalance(vestingContract, selectedToken),
-                                        selectedToken ? selectedToken.address : ''
-                                    )
+                                        selectedToken.address,
+                                        false,
+                                        splTokenList,
+                                    ) : '--'
                                 }
                             </div>
                         </div>

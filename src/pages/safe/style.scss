@@ -32,18 +32,20 @@
   }
 }
 @media (max-width: 575px) {
-  .ant-select-dropdown {
-    .transaction-list-row {
-      flex-wrap: wrap;
-      height: fit-content;
-      align-items: flex-start;
-      .icon-cell {
-        padding-top: 0.5em;
-      }
-      .description-cell {
-        padding-top: 0.25em;
-      }
-    }   
+  .multisig {
+    .ant-select-dropdown {
+      .transaction-list-row {
+        flex-wrap: wrap;
+        height: fit-content;
+        align-items: flex-start;
+        .icon-cell {
+          padding-top: 0.5em;
+        }
+        .description-cell {
+          padding-top: 0.25em;
+        }
+      }   
+    }
   }
 }
 .ant-select-dropdown {

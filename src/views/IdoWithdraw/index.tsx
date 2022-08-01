@@ -1,10 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { Button } from 'antd';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
+import { formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getFormattedNumberToLocale, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -90,7 +90,7 @@ export const IdoWithdraw = (props: {
           : amount > props.idoStatus.userUsdcContributedAmount
             ? `Max is ${formatAmount(props.idoStatus.userUsdcContributedAmount, 2, true)}`
             : amount > 0 && amountLeft < props.idoDetails.usdcPerUserMin && amount !== props.idoStatus.userUsdcContributedAmount
-              ? `Min is ${getFormattedNumberToLocale(formatAmount(props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin, 2))}`
+              ? `Min is ${formatThousands(props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin, 2, 2)}`
               : t('transactions.validation.valid-approve');
   }
 
@@ -333,7 +333,7 @@ export const IdoWithdraw = (props: {
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Min: {getFormattedNumberToLocale(formatAmount(props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin, 2))}
+              Min: {formatThousands(props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin, 2, 2)}
             </div>
             <div
               className={`token-max ${connected && props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
@@ -343,7 +343,7 @@ export const IdoWithdraw = (props: {
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Max: {getFormattedNumberToLocale(formatAmount(Math.floor(props.idoStatus.userUsdcContributedAmount), 2))}
+              Max: {formatThousands(Math.floor(props.idoStatus.userUsdcContributedAmount), 2, 2)}
             </div>
           </div>
         )}
