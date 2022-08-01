@@ -1,19 +1,21 @@
 import React, { useCallback, useContext } from 'react';
 import { useEffect, useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
+import { Modal, Button, Spin, Select } from 'antd';
 import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { getTransactionOperationDescription } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../utils/transactions';
 import { TransactionStatus } from '../../models/enums';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { Treasury } from '@mean-dao/msp';
+import { Treasury, TreasuryType } from '@mean-dao/msp';
 import { AppStateContext } from '../../contexts/appstate';
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { Identicon } from '../Identicon';
+import { FALLBACK_COIN_IMAGE } from '../../constants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -34,7 +36,8 @@ export const TreasuryCloseModal = (props: {
   const [searchParams] = useSearchParams();
   const {
     theme,
-    transactionStatus
+    transactionStatus,
+    getTokenByMintAddress
   } = useContext(AppStateContext);
   // const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
@@ -48,6 +51,88 @@ export const TreasuryCloseModal = (props: {
   //   }
   //   return false;
   // }
+  
+  const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    event.currentTarget.src = FALLBACK_COIN_IMAGE;
+    event.currentTarget.className = "error";
+  };
+
+  const getStreamingAccountIcon = (item: Treasury | TreasuryInfo | undefined) => {
+    if (!item) { return null; }
+    const isV2Treasury = item && item.version >= 2 ? true : false;
+    const v1 = item as TreasuryInfo;
+    const v2 = item as Treasury;
+    const token = isV2Treasury
+      ? v2.associatedToken
+        ? getTokenByMintAddress(v2.associatedToken as string)
+        : undefined
+      : v1.associatedTokenAddress
+        ? getTokenByMintAddress(v1.associatedTokenAddress as string)
+        : undefined;
+    return (
+      <div className="token-icon">
+        {(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
+          <>
+            {token ? (
+              <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
+            ) : (
+              <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "20", display: "inline-flex" }} />
+            )}
+          </>
+        ) : (
+          <Identicon address={item.id} style={{ width: "20", display: "inline-flex" }} />
+        )}
+      </div>
+    );
+  }
+
+  const getStreamingAccountDescription = (item: Treasury | TreasuryInfo | undefined) => {
+    if (!item) { return null; }
+    const isV2Treasury = item && item.version >= 2 ? true : false;
+    const v1 = item as TreasuryInfo;
+    const v2 = item as Treasury;
+    return (
+      <>
+        {(isV2Treasury && item ? v2.name : v1.label) ? (
+          <>
+            <div className="title text-truncate">
+              {isV2Treasury ? v2.name : v1.label}
+              <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                {isV2Treasury
+                  ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+                  : v1.type === TreasuryType.Open ? 'Open' : 'Locked'
+                }
+              </span>
+            </div>
+            <div className="subtitle text-truncate">{shortenAddress(item.id as string, 8)}</div>
+          </>
+        ) : (
+          <div className="title text-truncate">{shortenAddress(item.id as string, 8)}</div>
+        )}
+      </>
+    );
+  }
+
+  const getStreamingAccountStreamCount = (item: Treasury | TreasuryInfo | undefined) => {
+    if (!item) { return null; }
+    const isV2Treasury = item && item.version >= 2 ? true : false;
+    const v1 = item as TreasuryInfo;
+    const v2 = item as Treasury;
+    return (
+      <>
+        {!isV2Treasury && v1.upgradeRequired ? (
+          <span>&nbsp;</span>
+        ) : (
+          <>
+          <div className="rate-amount">
+            {formatThousands(isV2Treasury ? v2.totalStreams : v1.streamsAmount)}
+          </div>
+          <div className="interval">streams</div>
+          </>
+        )}
+      </>
+    );
+  }
 
   const isValidForm = (): boolean => {
     return proposalTitle
@@ -110,7 +195,6 @@ export const TreasuryCloseModal = (props: {
       maskClosable={false}
       footer={null}
       visible={props.isVisible}
-      onOk={props.handleOk}
       onCancel={props.handleClose}
       width={380}>
 
@@ -146,6 +230,27 @@ export const TreasuryCloseModal = (props: {
                   />
                 </div>
               )}
+
+              <div className="mb-3">
+                <div className="form-label icon-label">
+                  {t('treasuries.add-funds.select-streaming-account-label')}
+                </div>
+                <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+                  <div className="text-left">
+                    {props.treasuryDetails && (
+                        <div className="transaction-list-row no-pointer">
+                          <div className="icon-cell">{getStreamingAccountIcon(props.treasuryDetails)}</div>
+                          <div className="description-cell">
+                            {getStreamingAccountDescription(props.treasuryDetails)}
+                          </div>
+                          <div className="rate-cell">
+                            {getStreamingAccountStreamCount(props.treasuryDetails)}
+                          </div>
+                        </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {!isError(transactionStatus.currentOperation) && (
                 <div className="col-12 p-0 mt-3">
