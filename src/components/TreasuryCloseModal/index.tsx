@@ -38,7 +38,7 @@ export const TreasuryCloseModal = (props: {
   } = useContext(AppStateContext);
   // const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
-  const [multisigTitle, setMultisigTitle] = useState('');
+  const [proposalTitle, setProposalTitle] = useState("");
 
   // const isUserTreasurer = (): boolean => {
   //   if (publicKey && props.treasuryDetails) {
@@ -49,10 +49,22 @@ export const TreasuryCloseModal = (props: {
   //   return false;
   // }
 
+  const isValidForm = (): boolean => {
+    return proposalTitle
+      ? true
+      : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !proposalTitle
+      ? 'Add a proposal title'
+      : "Sign proposal"
+  }
+
   const onAcceptModal = () => {
-    props.handleOk(multisigTitle);
+    props.handleOk(proposalTitle);
     setTimeout(() => {
-      setMultisigTitle('');
+      setProposalTitle('');
     }, 50);
   }
 
@@ -61,7 +73,7 @@ export const TreasuryCloseModal = (props: {
   }
 
   const onTitleInputValueChange = (e: any) => {
-    setMultisigTitle(e.target.value);
+    setProposalTitle(e.target.value);
   }
 
   // Preset fee amount
@@ -89,7 +101,7 @@ export const TreasuryCloseModal = (props: {
 
   const v1 = props.treasuryDetails as TreasuryInfo;
   const v2 = props.treasuryDetails  as Treasury;
-  const isNewTreasury = props.treasuryDetails  && props.treasuryDetails .version >= 2 ? true : false;
+  const isNewTreasury = props.treasuryDetails  && props.treasuryDetails.version >= 2 ? true : false;
 
   return (
     <Modal
@@ -129,8 +141,8 @@ export const TreasuryCloseModal = (props: {
                     name="Title"
                     className="w-100 general-text-input"
                     onChange={onTitleInputValueChange}
-                    placeholder="Add a proposal title"
-                    value={multisigTitle}
+                    placeholder="Add a proposal title (required)"
+                    value={proposalTitle}
                   />
                 </div>
               )}
@@ -143,6 +155,7 @@ export const TreasuryCloseModal = (props: {
                     type="primary"
                     shape="round"
                     size="large"
+                    disabled={param === "multisig" && !isValidForm()}
                     onClick={() => onAcceptModal()}>
                     {props.isBusy && (
                       <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
@@ -151,7 +164,7 @@ export const TreasuryCloseModal = (props: {
                       ? t('treasuries.close-account.cta-close-busy')
                       : isError(transactionStatus.currentOperation)
                         ? t('general.retry')
-                        : (param === "multisig" ? "Sign proposal" : t('treasuries.close-account.cta-close'))
+                        : (param === "multisig" ? getTransactionStartButtonLabel() : t('treasuries.close-account.cta-close'))
                     }
                   </Button>
                 </div>
