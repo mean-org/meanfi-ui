@@ -1871,6 +1871,7 @@ export const MoneyStreamsOutgoingView = (props: {
     let multisigAuthority = '';
     const transactionLog: any[] = [];
 
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -1885,7 +1886,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
         const data = {
           stream: streamPublicKey.toBase58(),                         // stream
-          initializer: publicKey.toBase58(),                   // initializer
+          initializer: publicKey.toBase58(),                          // initializer
           autoCloseTreasury: closeTreasuryData.closeTreasuryOption    // closeTreasury
         }
         consoleOut('data:', data);

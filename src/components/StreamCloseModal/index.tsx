@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col, Radio } from 'antd';
-import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { ExclamationCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { consoleOut, percentage } from '../../utils/ui';
 import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
@@ -27,6 +27,7 @@ export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;
 }) => {
   const {
+    theme,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
   const [searchParams] = useSearchParams();
@@ -311,7 +312,13 @@ export const StreamCloseModal = (props: {
       ) : streamTreasuryType === "locked" && streamState !== STREAM_STATUS.Paused ? (
         // The user can't close the stream
         <div className="transaction-progress p-0">
-          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+          {/* Warning icon */}
+          {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" /> */}
+          {theme === 'light' ? (
+            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+          ) : (
+            <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+          )}
           <h4 className="operation">{t('close-stream.cant-close-message')}</h4>
           <div className="mt-3">
             <Button
@@ -326,7 +333,15 @@ export const StreamCloseModal = (props: {
       ) : (
         // The normal stuff
         <div className="transaction-progress p-0">
-          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+          {/* Warning icon */}
+          {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" /> */}
+          <div className="text-center">
+            {theme === 'light' ? (
+              <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+            ) : (
+              <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+            )}
+          </div>
           <h4 className="operation">{props.content}</h4>
 
           {/* Info */}
@@ -368,20 +383,21 @@ export const StreamCloseModal = (props: {
           )}
 
           <div className="mt-3">
-            <Button
+            {/* <Button
                 className="mr-3"
                 type="text"
                 shape="round"
                 size="large"
                 onClick={props.handleClose}>
                 {t('close-stream.secondary-cta')}
-            </Button>
+            </Button> */}
             <Button
-                type="primary"
-                shape="round"
-                size="large"
-                onClick={onAcceptModal}>
-                {param === "multisig" ? "Submit proposal" : t('close-stream.primary-cta')}
+              block
+              type="primary"
+              shape="round"
+              size="large"
+              onClick={onAcceptModal}>
+              {param === "multisig" ? "Sign proposal" : t('close-stream.primary-cta')}
             </Button>
           </div>
         </div>
