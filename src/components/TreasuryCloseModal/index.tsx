@@ -231,6 +231,7 @@ export const TreasuryCloseModal = (props: {
                 </div>
               )}
 
+              {/* Streaming account */}
               <div className="mb-3">
                 <div className="form-label icon-label">
                   {t('treasuries.add-funds.select-streaming-account-label')}
@@ -238,15 +239,15 @@ export const TreasuryCloseModal = (props: {
                 <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                   <div className="text-left">
                     {props.treasuryDetails && (
-                        <div className="transaction-list-row no-pointer">
-                          <div className="icon-cell">{getStreamingAccountIcon(props.treasuryDetails)}</div>
-                          <div className="description-cell">
-                            {getStreamingAccountDescription(props.treasuryDetails)}
-                          </div>
-                          <div className="rate-cell">
-                            {getStreamingAccountStreamCount(props.treasuryDetails)}
-                          </div>
+                      <div className="transaction-list-row no-pointer">
+                        <div className="icon-cell">{getStreamingAccountIcon(props.treasuryDetails)}</div>
+                        <div className="description-cell">
+                          {getStreamingAccountDescription(props.treasuryDetails)}
                         </div>
+                        <div className="rate-cell">
+                          {getStreamingAccountStreamCount(props.treasuryDetails)}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
-import { ExclamationCircleOutlined } from "@ant-design/icons";
+import { ExclamationCircleOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { percentage } from '../../utils/ui';
 import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
@@ -23,6 +23,7 @@ export const StreamPauseModal = (props: {
   transactionFees: TransactionFees;
 }) => {
   const {
+    theme,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -183,16 +184,25 @@ export const StreamPauseModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{param === "multisig" ? "Proposal to pause stream" : t('streams.pause-stream-modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Propose pause stream" : t('streams.pause-stream-modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
-      onOk={props.handleOk}
-      onCancel={props.handleClose}
+      onCancel={onCloseModal}
       width={400}>
 
       <div className="transaction-progress p-0">
-        <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-        <h4>{props.content}</h4>
+        {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" /> */}
+        <div className="text-center">
+          {theme === 'light' ? (
+            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+          ) : (
+            <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+          )}
+        </div>
+        <div className="mb-2 fg-warning">
+          <span>{props.content}</span>
+        </div>
+        {/* <h4>{props.content}</h4> */}
 
         {/* Info */}
         {props.streamDetail && props.streamDetail.associatedToken && (
@@ -224,24 +234,24 @@ export const StreamPauseModal = (props: {
         )}
 
         <div className="mt-3">
-          <Button
+          {/* <Button
               className="mr-3"
               type="text"
               shape="round"
               size="large"
               onClick={onCloseModal}>
               {t('close-stream.secondary-cta')}
-          </Button>
+          </Button> */}
           <Button
-              type="primary"
-              shape="round"
-              size="large"
-              onClick={() => onAcceptModal()}>
-              {param === "multisig" ? "Submit proposal" : t('streams.pause-stream-cta')}
+            block
+            type="primary"
+            shape="round"
+            size="large"
+            onClick={() => onAcceptModal()}>
+            {param === "multisig" ? "Sign proposal" : t('streams.pause-stream-cta')}
           </Button>
         </div>
       </div>
-
     </Modal>
   );
 };
