@@ -146,7 +146,8 @@ export const MultisigEditModal = (props: {
   }
 
   const isFormValid = () => {
-    return  multisigThreshold &&
+    return  multisigTitle &&
+            multisigThreshold &&
             multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
@@ -190,7 +191,7 @@ export const MultisigEditModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.update-multisig.modal-title')}</div>}
+      title={<div className="modal-title">Propose edit safe</div>}
       maskClosable={false}
       footer={null}
       visible={props.isVisible}
@@ -211,7 +212,7 @@ export const MultisigEditModal = (props: {
                 name="Title"
                 className="w-100 general-text-input"
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title"
+                placeholder="Add a proposal title (required)"
                 value={multisigTitle}
               />
             </div>
@@ -377,7 +378,7 @@ export const MultisigEditModal = (props: {
                 {props.isBusy
                   ? t('multisig.update-multisig.main-cta-busy')
                   : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? t('multisig.update-multisig.main-cta')
+                    ? "Sign proposal"
                     : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                       ? t('general.cta-finish')
                       : t('general.refresh')
