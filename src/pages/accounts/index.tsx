@@ -5615,6 +5615,7 @@ export const AccountsNewView = () => {
           }}
           isBusy={isBusy}
           selectedVault={selectedAsset}
+          selectedMultisig={selectedMultisig || undefined}
         />
       )}
 
