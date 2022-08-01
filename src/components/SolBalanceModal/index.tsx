@@ -1,33 +1,37 @@
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { Modal } from "antd";
-import BN from "bn.js";
 import { QRCodeSVG } from "qrcode.react";
-import { useContext } from "react";
-// import { useTranslation } from "react-i18next";
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
-import { AppStateContext } from "../../contexts/appstate";
+import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { IconLoading } from "../../Icons";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { getTokenAmountAndSymbolByTokenAddress, toUiAmount } from "../../utils/utils";
 import { AddressDisplay } from "../AddressDisplay";
+import BN from "bn.js";
 
 export const SolBalanceModal = (props: {
-  handleClose: any;
-  isVisible: boolean;
-  address: string;
   accountAddress: string;
-  tokenSymbol: string;
+  address: string;
+  handleClose: any;
+  isStreamingAccount: boolean;
+  isVisible: boolean;
   multisigAddress: string;
   nativeBalance: number;
   selectedMultisig: MultisigInfo | undefined;
-  isStreamingAccount: boolean;
+  tokenSymbol: string;
+  treasuryBalance?: number;
 }) => {
-  // const { t } = useTranslation("common");
-  const { theme } = useContext(AppStateContext);
 
-  const { handleClose, isVisible, multisigAddress, selectedMultisig, isStreamingAccount } = props;
+  const {
+    address,
+    handleClose,
+    isStreamingAccount,
+    isVisible,
+    multisigAddress,
+    selectedMultisig,
+    treasuryBalance
+  } = props;
 
   return (
     <Modal
@@ -41,6 +45,7 @@ export const SolBalanceModal = (props: {
       <div className="buy-token-options">
         <div className="text-center">
           <div className="d-flex flex-column mb-1">
+            {/* Balance title */}
             {isStreamingAccount ? (
               <span className="info-label">
                 Your SOL streaming account balance:
@@ -50,21 +55,40 @@ export const SolBalanceModal = (props: {
                 Balance of SOL in safe:
               </span>
             )}
+            {/* Balance value */}
             <span className="info-value">
-              {(selectedMultisig && selectedMultisig !== undefined) ? (
+              {isStreamingAccount ? (
                 <>
-                  {getTokenAmountAndSymbolByTokenAddress(
-                    toUiAmount(new BN(selectedMultisig.balance), NATIVE_SOL.decimals || 9),
-                    NATIVE_SOL_MINT.toBase58()
+                  {treasuryBalance !== undefined ? (
+                    <>
+                      {getTokenAmountAndSymbolByTokenAddress(
+                        treasuryBalance,
+                        NATIVE_SOL_MINT.toBase58()
+                      )}
+                    </>
+                  ) : (
+                    <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                   )}
                 </>
               ) : (
-                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                <>
+                  {selectedMultisig && selectedMultisig !== undefined ? (
+                    <>
+                      {getTokenAmountAndSymbolByTokenAddress(
+                        toUiAmount(new BN(selectedMultisig.balance), NATIVE_SOL.decimals || 9),
+                        NATIVE_SOL_MINT.toBase58()
+                      )}
+                    </>
+                  ) : (
+                    <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                  )}
+                </>
               )}
             </span>
+            {/* Warn if Safe balance is low */}
             {isStreamingAccount && (
               <>
-                {(selectedMultisig && (toUiAmount(new BN(selectedMultisig.balance), NATIVE_SOL.decimals || 9) < 0.05)) ? (
+                {(selectedMultisig && (toUiAmount(new BN(selectedMultisig.balance), NATIVE_SOL.decimals) < MIN_SOL_BALANCE_REQUIRED)) ? (
                   <span className="form-field-error">
                     You are running low on SOL needed <br />
                     to pay for transaction fees.
@@ -81,22 +105,22 @@ export const SolBalanceModal = (props: {
 
           <div className="qr-container bg-white">
             <QRCodeSVG
-              value={multisigAddress as string}
+              value={isStreamingAccount ? address : multisigAddress as string}
               size={200}
             />
           </div>
 
           <div className="flex-center font-size-70 mb-2">
             <AddressDisplay
-              address={multisigAddress as string}
+              address={isStreamingAccount ? address : multisigAddress as string}
               showFullAddress={true}
               iconStyles={{ width: "15", height: "15" }}
-              newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${multisigAddress}${getSolanaExplorerClusterParam()}`}
+              newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${isStreamingAccount ? address : multisigAddress}${getSolanaExplorerClusterParam()}`}
             />
           </div>
 
           {!isStreamingAccount ? (
-            <div className="font-light font-size-75 px-4">This address can only be used to receive SOL  for this safe</div>
+            <div className="font-light font-size-75 px-4">This address can only be used to receive SOL for this safe</div>
           ) : (
             <div className="font-light font-size-75 px-4">This address can only be used to receive SOL to pay for the transaction fees for this streaming account</div>
           )}

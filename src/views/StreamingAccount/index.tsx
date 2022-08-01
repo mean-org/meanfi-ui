@@ -123,6 +123,7 @@ export const StreamingAccountView = (props: {
   const [hasMoreStreamingAccountActivity, setHasMoreStreamingAccountActivity] = useState<boolean>(true);
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(0);
   const [associatedTokenDecimals, setAssociatedTokenDecimals] = useState(6);
+  const [treasuryEffectiveBalance, setTreasuryEffectiveBalance] = useState(0);
 
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
@@ -2582,6 +2583,40 @@ export const StreamingAccountView = (props: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, msp, publicKey, streamingAccountSelected]);
 
+  // Get the effective balance of the treasury
+  useEffect(() => {
+    if (!connection || !publicKey) { return; }
+
+    if (streamingAccountSelected) {
+      let balance = 0;
+      connection.getBalance(new PublicKey(streamingAccountSelected.id))
+      .then(solBalance => {
+        balance = solBalance / LAMPORTS_PER_SOL;
+        connection.getMinimumBalanceForRentExemption(300)
+        .then(value => {
+          const re = value / LAMPORTS_PER_SOL;
+          const eb = balance - re;
+          consoleOut('treasuryRentExcemption:', re, 'darkgreen');
+          consoleOut('Treasury native balance:', balance, 'darkgreen');
+          consoleOut('Effective account balance:', eb, 'darkgreen');
+          setTreasuryEffectiveBalance(eb);
+        })
+        .catch(error => {
+          console.error('Failure fetching minimum balance for rent exemption', error);
+        });
+      })
+      .catch(error => {
+        console.error('Failure fetching native account balance for Streaming Account', error);
+      });
+    }
+
+  }, [connection, publicKey, streamingAccountSelected]);
+
+
+  ///////////////
+  // Rendering //
+  ///////////////
+
   // Dropdown (three dots button)
   const menu = (
     <Menu>
@@ -3008,7 +3043,7 @@ export const StreamingAccountView = (props: {
 
       {isSolBalanceModalOpen && (
         <SolBalanceModal
-          address={NATIVE_SOL.address || ''}
+          address={streamingAccountSelected ? streamingAccountSelected.id as string : ''}
           accountAddress={accountAddress}
           multisigAddress={address as string}
           isVisible={isSolBalanceModalOpen}
@@ -3016,6 +3051,7 @@ export const StreamingAccountView = (props: {
           tokenSymbol={NATIVE_SOL.symbol}
           nativeBalance={nativeBalance}
           selectedMultisig={selectedMultisig}
+          treasuryBalance={treasuryEffectiveBalance}
           isStreamingAccount={true}
         />
       )}
