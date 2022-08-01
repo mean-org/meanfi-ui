@@ -21,37 +21,43 @@ export const StatsView = () => {
   const { t } = useTranslation('common');
   const connection = useConnection();
 
-  const [totalVolume, setTotalVolume] = useState<number>();
-  const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel | null>(null);
+  const [totalVolume24h, setTotalVolume24h] = useState<number>();
+  const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel | undefined>(undefined);
   const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | undefined>(undefined);
 
   // Getters
 
   // Data handling / fetching
+  useEffect(() => {
+    (async () => {
+      const meanStats = await getMeanStats();
+      console.log('****************** meanStats:', meanStats, '********************');
+      if(meanStats){
+        setMeanfiStats(meanStats);
+      }
+      //TODO: pull this info
+      setTotalVolume24h(0);
+    })();
+  }, [getMeanStats]);
 
-  // Get MEAN and sMEAN token info
+  // Get sMEAN token info
   useEffect(() => {
     if (!connection) { return; }
 
     (async () => {
-      const meanStats = await getMeanStats();
-      console.log('****************** meanStats:', meanStats, '********************');      
-      if(meanStats){
-        setMeanfiStats(meanStats);
-      }
-
-      setTotalVolume(0);
-      
       // use getParsedAccountInfo
       const sMeanInfo = await connection.getParsedAccountInfo(new PublicKey(SMEAN_TOKEN.address));
-      if (sMeanInfo) {
+      if (sMeanInfo && sMeanInfo.value) {
         const totalSupply = (sMeanInfo.value?.data as ParsedAccountData).parsed["info"]["supply"];
+        console.log('****************** sMean Supply:', totalSupply, '********************');
         setSMeanTotalSupply(toUiAmount(new BN(totalSupply), SMEAN_TOKEN.decimals));
       }
     })();
   }, [
-    connection,
+    connection
   ]);
+
+  if (!meanfiStats) { return; }
 
   return (
     <>
@@ -68,9 +74,9 @@ export const StatsView = () => {
           </div>
           <PromoSpace />
           <TokenStats
-            meanfiStats={meanfiStats}
-            totalVolume={totalVolume}
+            meanStats={meanfiStats}
             smeanSupply={sMeanTotalSupply}
+            totalVolume24h={totalVolume24h}
           />
         </div>
       </div>

@@ -14,17 +14,16 @@ import { formatThousands } from "../../utils/utils";
 import { MEAN_TOKEN } from "../../constants/token-list";
 import { AppStateContext } from "../../contexts/appstate";
 import { openNotification } from "../../components/Notifications";
-import { MeanFiStatsModel } from "../../models/meanfi-stats";
 
-export const TokenStats = ({meanfiStats, smeanSupply, totalVolume}: any) => {
+export const TokenStats = ({meanStats, smeanSupply, totalVolume24h}: any) => {
   return (
     <>
       <FirstCardsLayout />
       <Divider />
       <SecondCardsLayout
-        meanStats={meanfiStats}
+        meanStats={meanStats}
         sMeanTotalSupply={smeanSupply}
-        totalVolume={totalVolume}
+        totalVolume24h={totalVolume24h}
       />
       <Divider />
       <ThirdCardsLayout />
@@ -159,7 +158,7 @@ export const FirstCardsLayout = () => {
 export const SecondCardsLayout = ({ 
   meanStats,
   sMeanTotalSupply,
-  totalVolume
+  totalVolume24h
 }: any) => {
   const { t } = useTranslation('common');
   const cards = [
@@ -175,7 +174,7 @@ export const SecondCardsLayout = ({
     },
     {
       label: t('stats.market.volume-title'),
-      value: `$ ${formatThousands(totalVolume)}`,
+      value: `$ ${formatThousands(totalVolume24h)}`,
       description: "stats.market.token-total-volume"
     },
     {
