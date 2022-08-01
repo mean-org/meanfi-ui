@@ -1885,6 +1885,7 @@ export const MoneyStreamsOutgoingView = (props: {
         const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
 
         const data = {
+          title: closeTreasuryData.title,                             // title
           stream: streamPublicKey.toBase58(),                         // stream
           initializer: publicKey.toBase58(),                          // initializer
           autoCloseTreasury: closeTreasuryData.closeTreasuryOption    // closeTreasury
@@ -2023,7 +2024,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Close Stream",
+        data.title === "" ? "Close Stream" : data.title,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.StreamClose,
@@ -2047,6 +2048,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
         consoleOut('createTxV2 received params:', closeTreasuryData, 'blue');
         const data = {
+          title: closeTreasuryData.title,                              // title
           payer: publicKey.toBase58(),                                 // payer
           stream: streamPublicKey.toBase58(),                          // stream
           closeTreasury: closeTreasuryData.closeTreasuryOption         // closeTreasury

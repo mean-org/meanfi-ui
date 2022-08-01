@@ -15,6 +15,8 @@ import { PublicKey } from '@solana/web3.js';
 import { useSearchParams } from 'react-router-dom';
 import { StreamTreasuryType } from '../../models/treasuries';
 import { AppStateContext } from '../../contexts/appstate';
+import { InputMean } from '../InputMean';
+import { TransactionStatus } from '../../models/enums';
 
 export const StreamCloseModal = (props: {
   handleClose: any;
@@ -28,6 +30,7 @@ export const StreamCloseModal = (props: {
 }) => {
   const {
     theme,
+    setTransactionStatus,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
   const [searchParams] = useSearchParams();
@@ -41,6 +44,7 @@ export const StreamCloseModal = (props: {
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [streamState, setStreamState] = useState<STREAM_STATE | STREAM_STATUS | undefined>(undefined);
+  const [proposalTitle, setProposalTitle] = useState("");
 
   const getTreasuryTypeByTreasuryId = useCallback(async (treasuryId: string, streamVersion: number): Promise<StreamTreasuryType | undefined> => {
     if (!connection || !publicKey || !props.mspClient) { return undefined; }
@@ -260,11 +264,32 @@ export const StreamCloseModal = (props: {
 
   const onAcceptModal = () => {
     props.handleOk({
+      title: proposalTitle,
       closeTreasuryOption,
       vestedReturns: getWithdrawableAmount(),
       unvestedReturns: amITreasurer() ? getUnvested() : 0,
       feeAmount: amIBeneficiary() && getWithdrawableAmount() > 0 ? feeAmount : 0
     });
+  }
+
+  const onCloseModal = () => {
+    props.handleClose();
+    onAfterClose();
+  }
+
+  const onAfterClose = () => {
+    setTimeout(() => {
+      setProposalTitle("");
+    });
+
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setProposalTitle(e.target.value);
   }
 
   const onCloseTreasuryOptionChanged = (e: any) => {
@@ -299,8 +324,7 @@ export const StreamCloseModal = (props: {
       title={<div className="modal-title">{param === "multisig" ? "Propose close stream" : t('close-stream.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
-      onOk={props.handleOk}
-      onCancel={props.handleClose}
+      onCancel={onCloseModal}
       width={400}>
 
       {loadingTreasuryDetails ? (
@@ -325,7 +349,7 @@ export const StreamCloseModal = (props: {
                 type="primary"
                 shape="round"
                 size="large"
-                onClick={props.handleClose}>
+                onClick={onCloseModal}>
                 {t('general.cta-close')}
             </Button>
           </div>
@@ -379,6 +403,21 @@ export const StreamCloseModal = (props: {
                   <Radio value={false}>{t('general.no')}</Radio>
                 </Radio.Group>
               </div>
+            </div>
+          )}
+
+          {/* Proposal title */}
+          {param === "multisig" && (
+            <div className="mb-3 mt-3 text-left">
+              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+              <InputMean
+                id="proposal-title-field"
+                name="Title"
+                className="w-100 general-text-input"
+                onChange={onTitleInputValueChange}
+                placeholder="Add a proposal title"
+                value={proposalTitle}
+              />
             </div>
           )}
 
