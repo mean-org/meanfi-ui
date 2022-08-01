@@ -70,10 +70,17 @@ export const MultisigVaultDeleteModal = (props: {
   }
 
   const isValidForm = (): boolean => {
-    return props.selectedVault &&
+    return proposalTitle &&
+           props.selectedVault &&
            props.selectedVault.balance as number === 0
       ? true
       : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !proposalTitle
+      ? 'Add a proposal title'
+      : "Sign delete proposal"
   }
 
   const renderVault = (item: UserTokenAccount) => {
@@ -154,7 +161,7 @@ export const MultisigVaultDeleteModal = (props: {
                 name="Title"
                 className="w-100 general-text-input"
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title"
+                placeholder="Add a proposal title (required)"
                 value={proposalTitle}
               />
             </div>
@@ -195,7 +202,7 @@ export const MultisigVaultDeleteModal = (props: {
                   {props.isBusy
                     ? t('multisig.transfer-tokens.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                      ? "Sign delete proposal"
+                      ?  getTransactionStartButtonLabel()
                       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                         ? t('general.cta-finish')
                         : t('general.refresh')
