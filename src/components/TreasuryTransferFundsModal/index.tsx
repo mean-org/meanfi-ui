@@ -61,7 +61,7 @@ export const TreasuryTransferFundsModal = (props: {
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
-  const [multisigTitle, setMultisigTitle] = useState('');
+  const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
     const treasuryInfo: any = treasury ?? props.treasuryDetails;
@@ -93,7 +93,7 @@ export const TreasuryTransferFundsModal = (props: {
 
   const onAcceptWithdrawTreasuryFunds = () => {
     props.handleOk({
-      title: multisigTitle,
+      title: proposalTitle,
       amount: topupAmount,
       tokenAmount: tokenAmount,
       destinationAccount: to
@@ -120,7 +120,7 @@ export const TreasuryTransferFundsModal = (props: {
 
   const onAfterClose = () => {
     setTimeout(() => {
-      setMultisigTitle("");
+      setProposalTitle("");
       setTopupAmount("");
       setTo("");
       setIsVerifiedRecipient(false);
@@ -132,7 +132,7 @@ export const TreasuryTransferFundsModal = (props: {
   }
 
   const onTitleInputValueChange = (e: any) => {
-    setMultisigTitle(e.target.value);
+    setProposalTitle(e.target.value);
   }
 
   const onMintToAddressChange = (e: any) => {
@@ -194,6 +194,26 @@ export const TreasuryTransferFundsModal = (props: {
     return  publicKey &&
             to &&
             isValidAddress(to) &&
+            selectedToken && 
+            isVerifiedRecipient &&
+            ((shouldFundFromTreasury() && unallocatedBalance.toNumber() > 0) ||
+            (!shouldFundFromTreasury() && userBalance.toNumber() > 0)) &&
+            tokenAmount && tokenAmount.toNumber() > 0 &&
+            ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
+            (shouldFundFromTreasury() && ((isfeePayedByTreasurerOn() && tokenAmount.lte(maxAllocatableAmount)) ||
+            (!isfeePayedByTreasurerOn() && tokenAmount.lte(unallocatedBalance)))))
+      ? true
+      : false;
+  }
+
+  // Validation if multisig
+  const isValidFormMultisig = (): boolean => {
+    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
+    return  publicKey &&
+            proposalTitle &&
+            to &&
+            isValidAddress(to) &&
+            !isInputMultisigAddress(to) &&
             selectedToken && 
             isVerifiedRecipient &&
             ((shouldFundFromTreasury() && unallocatedBalance.toNumber() > 0) ||
@@ -405,8 +425,8 @@ export const TreasuryTransferFundsModal = (props: {
                   name="Title"
                   className="w-100 general-text-input"
                   onChange={onTitleInputValueChange}
-                  placeholder="Add a proposal title"
-                  value={multisigTitle}
+                  placeholder="Add a proposal title (required)"
+                  value={proposalTitle}
                 />
               </div>
             )}
@@ -676,7 +696,7 @@ export const TreasuryTransferFundsModal = (props: {
                 type="primary"
                 shape="round"
                 size="middle"
-                disabled={!isValidForm() || isInputMultisigAddress(to)}
+                disabled={param === "multisig" ? !isValidFormMultisig() : !isValidForm()}
                 onClick={() => {
                   if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                     onAcceptWithdrawTreasuryFunds();
@@ -689,7 +709,7 @@ export const TreasuryTransferFundsModal = (props: {
                 {props.isBusy
                   ? ('multisig.transfer-tokens.main-cta-busy')
                   : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? (param === "multisig" ? "Submit proposal" : t('treasuries.withdraw-funds.main-cta'))
+                    ? (param === "multisig" ? "Sign proposal" : t('treasuries.withdraw-funds.main-cta'))
                     : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                       ? t('general.cta-finish')
                       : t('general.refresh')
