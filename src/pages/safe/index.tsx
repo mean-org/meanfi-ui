@@ -127,7 +127,7 @@ export const SafeView = () => {
   const [transactionFees, setTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   // Multisig accounts
   const [needReloadMultisigAccounts, setNeedReloadMultisigAccounts] = useState(true);
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   // Active Txs
@@ -4071,8 +4071,8 @@ export const SafeView = () => {
               consoleOut('=======================================', '', 'green');
               consoleOut('selected multisig:', item, 'blue');
               setDetailsPanelOpen(true);
-              // setIsProposalDetails(false);
-              // setIsProgramDetails(false);
+              setIsProposalDetails(false);
+              setIsProgramDetails(false);
               setMultisigSolBalance(undefined);
               setTotalSafeBalance(undefined);
   
