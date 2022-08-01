@@ -239,7 +239,7 @@ export const StreamPauseModal = (props: {
               name="Title"
               className="w-100 general-text-input"
               onChange={onTitleInputValueChange}
-              placeholder="Add a proposal title"
+              placeholder="Add a proposal title (required)"
               value={proposalTitle}
             />
           </div>

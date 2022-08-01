@@ -30,7 +30,7 @@ export const StreamResumeModal = (props: {
   const { publicKey } = useWallet();
   const [searchParams] = useSearchParams();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
-  const [multisigTitle, setMultisigTitle] = useState('');
+  const [proposalTitle, setProposalTitle] = useState('');
 
   const getQueryAccountType = useCallback(() => {
     let accountTypeInQuery: string | null = null;
@@ -157,10 +157,22 @@ export const StreamResumeModal = (props: {
     getFeeAmount
   ]);
 
+  const isValidForm = (): boolean => {
+    return proposalTitle
+      ? true
+      : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !proposalTitle
+      ? 'Add a proposal title'
+      : "Sign proposal"
+  }
+
   const onAcceptModal = () => {
-    props.handleOk(multisigTitle);
+    props.handleOk(proposalTitle);
     setTimeout(() => {
-      setMultisigTitle('');
+      setProposalTitle('');
     }, 50);
   }
 
@@ -169,7 +181,7 @@ export const StreamResumeModal = (props: {
   }
 
   const onTitleInputValueChange = (e: any) => {
-    setMultisigTitle(e.target.value);
+    setProposalTitle(e.target.value);
   }
 
   const infoRow = (caption: string, value: string) => {
@@ -184,11 +196,10 @@ export const StreamResumeModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{param === "multisig" ? "Proposal to resume stream" : t('streams.resume-stream-modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Propose resume stream" : t('streams.resume-stream-modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
-      onOk={props.handleOk}
-      onCancel={props.handleClose}
+      onCancel={onCloseModal}
       width={400}>
 
       <div className="transaction-progress p-0">
@@ -228,8 +239,8 @@ export const StreamResumeModal = (props: {
               name="Title"
               className="w-100 general-text-input"
               onChange={onTitleInputValueChange}
-              placeholder="Add a proposal title"
-              value={multisigTitle}
+              placeholder="Add a proposal title (required)"
+              value={proposalTitle}
             />
           </div>
         )}
@@ -248,8 +259,9 @@ export const StreamResumeModal = (props: {
               type="primary"
               shape="round"
               size="large"
+              disabled={param === "multisig" && !isValidForm()}
               onClick={() => onAcceptModal()}>
-              {param === "multisig" ? "Sign proposal" : t('streams.resume-stream-cta')}
+              {param === "multisig" ? getTransactionStartButtonLabel() : t('streams.resume-stream-cta')}
           </Button>
         </div>
       </div>
