@@ -57,7 +57,7 @@ export const StatsView = () => {
     connection
   ]);
 
-  if (!meanfiStats) { return; }
+  if (!meanfiStats) { return <><p>{t('general.loading')}...</p></>; }
 
   return (
     <>
