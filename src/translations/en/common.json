@@ -472,7 +472,8 @@
 		"multisig-accounts": {
 			"no-accounts": "No multisig accounts available",
 			"not-connected": "Please connect your wallet to see your multisig accounts",
-			"pending-transactions": "{{txs}} pending transactions"
+			"pending-transactions": "{{txs}} pending transactions",
+			"loading-multisig-accounts": "Loading multisig accounts"
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Asset details",
