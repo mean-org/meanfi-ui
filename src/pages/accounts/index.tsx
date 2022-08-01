@@ -42,7 +42,8 @@ import {
   ACCOUNTS_LOW_BALANCE_LIMIT,
   NO_FEES,
   ONE_MINUTE_REFRESH_TIMEOUT,
-  MEAN_MULTISIG_ACCOUNT_LAMPORTS
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  MIN_SOL_BALANCE_REQUIRED
 } from '../../constants';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
@@ -5390,7 +5391,7 @@ export const AccountsNewView = () => {
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
                             {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && selectedMultisig && (
-                              (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
+                              (multisigSolBalance !== undefined && multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED) ? (
                                 <Row gutter={[8, 8]}>
                                   <Col span={24} className={`alert-info-message pr-2 ${selectedMultisig ? "simplelink" : "disable-pointer"}`} onClick={showSolBalanceModal}>
                                     <Alert message="SOL account balance is very low in the safe. Click here to add more SOL." type="info" showIcon />

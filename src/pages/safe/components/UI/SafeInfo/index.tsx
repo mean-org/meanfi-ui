@@ -1,4 +1,3 @@
-import { ReloadOutlined } from "@ant-design/icons";
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
@@ -9,9 +8,10 @@ import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView
 import { RightInfoDetails } from "../../../../../components/RightInfoDetails";
 import { SolBalanceModal } from "../../../../../components/SolBalanceModal";
 import { TabsMean } from "../../../../../components/TabsMean";
+import { MIN_SOL_BALANCE_REQUIRED } from "../../../../../constants";
 import { useNativeAccount } from "../../../../../contexts/accounts";
 import { AppStateContext } from "../../../../../contexts/appstate";
-import { IconArrowForward, IconEllipsisVertical, IconLoading } from "../../../../../Icons";
+import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
 import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
@@ -335,7 +335,7 @@ export const SafeInfo = (props: {
       </Row>
 
       {multisigSolBalance !== undefined && (
-        (multisigSolBalance / LAMPORTS_PER_SOL) <= 0.005 ? (
+        (multisigSolBalance / LAMPORTS_PER_SOL) <= MIN_SOL_BALANCE_REQUIRED ? (
           <Row gutter={[8, 8]} className="mr-0 ml-0">
             <Col span={24} className="alert-info-message pr-6 simplelink" onClick={showSolBalanceModal}>
               <Alert message="SOL account balance is very low in the safe. Click here to add more SOL." type="info" showIcon />
