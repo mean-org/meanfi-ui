@@ -412,7 +412,7 @@ export const MultisigTransferTokensModal = (props: {
               ? 'Enter an address'
               : to && !isValidAddress(to)
                 ? 'Invalid address'
-                : t('multisig.multisig-assets.main-cta')
+                : 'Sign proposal'
   }
 
   const refreshPage = () => {
