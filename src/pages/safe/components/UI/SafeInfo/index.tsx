@@ -77,25 +77,6 @@ export const SafeInfo = (props: {
   const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
   const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
 
-  const reloadSafe = () => {
-    const streamsRefreshCta = document.getElementById("multisig-hard-refresh-cta");
-    if (streamsRefreshCta) {
-      streamsRefreshCta.click();
-    }
-  };
-
-  const reloadProposal = () => {
-    const proposalRefreshCta = document.getElementById("refresh-selected-proposal-cta");
-    if (proposalRefreshCta) {
-      proposalRefreshCta.click();
-    }
-  };
-
-  const refreshSafeDetails = useCallback((reset = false) => {
-    reloadSafe();
-    reloadProposal();
-  }, []);
-
   // Keep account balance updated
   useEffect(() => {
 
@@ -292,20 +273,6 @@ export const SafeInfo = (props: {
 
   return (
     <>
-      <div className="float-top-right mr-2">
-        <span className="icon-button-container secondary-button">
-          <Tooltip placement="bottom" title="Refresh safes">
-            <Button
-              type="default"
-              shape="circle"
-              size="middle"
-              icon={<ReloadOutlined className="mean-svg-icons" />}
-              onClick={() => refreshSafeDetails(true)}
-            />
-          </Tooltip>
-        </span>
-      </div>
-
       <RightInfoDetails
         infoData={infoSafeData}
       /> 
@@ -319,9 +286,7 @@ export const SafeInfo = (props: {
             className="thin-stroke"
             disabled={isTxInProgress()}
             onClick={onNewProposalMultisigClick}>
-              <div className="btn-content">
-                New proposal
-              </div>
+              New proposal
           </Button>
           <Button
             type="default"

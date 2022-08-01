@@ -3229,34 +3229,6 @@ export const SafeView = () => {
       return;
     }
 
-    const reloadMultisigs = () => {
-      const refreshCta = document.getElementById("multisig-refresh-cta");
-      if (refreshCta) {
-        refreshCta.click();
-      }
-    };
-
-    const hardReloadMultisigs = () => {
-      const streamsRefreshCta = document.getElementById("multisig-hard-refresh-cta");
-      if (streamsRefreshCta) {
-        streamsRefreshCta.click();
-      }
-    };
-
-    const reloadSelectedProposal = () => {
-      const proposalRefreshCta = document.getElementById("refresh-selected-proposal-cta");
-      if (proposalRefreshCta) {
-        proposalRefreshCta.click();
-      }
-    };
-
-    const goToProposals = () => {
-      const backCta = document.querySelector("div.back-button") as HTMLElement;
-      if (backCta) {
-        backCta.click();
-      }
-    }
-
     console.log("onTxConfirmed event handled:", item);
     recordTxConfirmation(item.signature, item.operationType, true);
 
@@ -3311,6 +3283,39 @@ export const SafeView = () => {
   }, [
     recordTxConfirmation
   ]);
+
+  const reloadMultisigs = () => {
+    const refreshCta = document.getElementById("multisig-refresh-cta");
+    if (refreshCta) {
+      refreshCta.click();
+    }
+  };
+
+  const hardReloadMultisigs = () => {
+    const streamsRefreshCta = document.getElementById("multisig-hard-refresh-cta");
+    if (streamsRefreshCta) {
+      streamsRefreshCta.click();
+    }
+  };
+
+  const reloadSelectedProposal = () => {
+    const proposalRefreshCta = document.getElementById("refresh-selected-proposal-cta");
+    if (proposalRefreshCta) {
+      proposalRefreshCta.click();
+    }
+  };
+
+  const goToProposals = () => {
+    const backCta = document.querySelector("div.back-button") as HTMLElement;
+    if (backCta) {
+      backCta.click();
+    }
+  }
+
+  const refreshSafeDetails = useCallback((reset = false) => {
+    reloadMultisigs();
+    reloadSelectedProposal();
+  }, []);
 
   // SERUM ACCOUNTS
   useEffect(() => {
@@ -4269,7 +4274,7 @@ export const SafeView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">proposal-&gt;status:</span><span className="ml-1 font-bold fg-dark-active">{selectedProposal ? MultisigTransactionStatus[selectedProposal.status] : '-'}</span>
           <span className="ml-1">proposal-&gt;didSigned:</span><span className="ml-1 font-bold fg-dark-active">{
@@ -4283,7 +4288,7 @@ export const SafeView = () => {
           </span>
           <span className="ml-1">loadingProposalDetails:</span><span className="ml-1 font-bold fg-dark-active">{loadingProposalDetails ? 'true' : 'false'}</span>
         </div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button
@@ -4316,16 +4321,16 @@ export const SafeView = () => {
                       <span className="incoming-transactions-amout">({formatThousands(multisigAccounts.length)})</span>
                     )}
                     <span className="transaction-legend">
-                      {/* <span className="icon-button-container">
+                      <span className="icon-button-container hidden-sm">
                         <Button
                           id="multisig-refresh-cta"
                           type="default"
                           shape="circle"
                           size="small"
                           icon={<ReloadOutlined />}
-                          onClick={() => refreshMultisigs()}
+                          onClick={() => refreshMultisigs(false)}
                         />
-                      </span> */}
+                      </span>
                       <span id="multisig-hard-refresh-cta" onClick={() => refreshMultisigs(true)}></span>
                     </span>
                   </div>
@@ -4385,6 +4390,20 @@ export const SafeView = () => {
 
               <div className="inner-container">
                 <span id="refresh-selected-proposal-cta" onClick={() => refreshSelectedProposal()}></span>
+                <div className="float-top-right mr-1 mt-1">
+                  <span className="icon-button-container secondary-button">
+                    <Tooltip placement="bottom" title="Refresh safes">
+                      <Button
+                        type="default"
+                        shape="circle"
+                        size="middle"
+                        icon={<ReloadOutlined className="mean-svg-icons" />}
+                        onClick={() => refreshSafeDetails(true)}
+                      />
+                    </Tooltip>
+                  </span>
+                </div>
+
                 <div className="scroll-wrapper vertical-scroll">
                   {connected && multisigClient && selectedMultisig ? (
                     <>
