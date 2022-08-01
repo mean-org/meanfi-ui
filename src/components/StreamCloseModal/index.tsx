@@ -262,6 +262,18 @@ export const StreamCloseModal = (props: {
     getFeeAmount
   ]);
 
+  const isValidForm = (): boolean => {
+    return proposalTitle
+      ? true
+      : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !proposalTitle
+      ? 'Add a proposal title'
+      : "Sign proposal"
+  }
+
   const onAcceptModal = () => {
     props.handleOk({
       title: proposalTitle,
@@ -366,7 +378,10 @@ export const StreamCloseModal = (props: {
               <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
             )}
           </div>
-          <h4 className="operation">{props.content}</h4>
+          <div className="mb-2 fg-warning operation">
+            <span>{props.content}</span>
+          </div>
+          {/* <h4 className="operation">{props.content}</h4> */}
 
           {/* Info */}
           {localStreamDetail && localStreamDetail.associatedToken && (
@@ -415,7 +430,7 @@ export const StreamCloseModal = (props: {
                 name="Title"
                 className="w-100 general-text-input"
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title"
+                placeholder="Add a proposal title (required)"
                 value={proposalTitle}
               />
             </div>
@@ -435,8 +450,9 @@ export const StreamCloseModal = (props: {
               type="primary"
               shape="round"
               size="large"
+              disabled={param === "multisig" && !isValidForm()}
               onClick={onAcceptModal}>
-              {param === "multisig" ? "Sign proposal" : t('close-stream.primary-cta')}
+              {param === "multisig" ? getTransactionStartButtonLabel() : t('close-stream.primary-cta')}
             </Button>
           </div>
         </div>
