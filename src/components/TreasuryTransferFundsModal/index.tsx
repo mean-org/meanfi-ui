@@ -579,12 +579,12 @@ export const TreasuryTransferFundsModal = (props: {
                   {props.treasuryDetails && props.treasuryDetails.autoClose ? (
                     <span>
                       {`${tokenBalance && selectedToken
-                          ? getTokenAmountAndSymbolByTokenAddress(
-                              tokenBalance,
-                              selectedToken?.address,
-                              true
-                            )
-                          : "0"
+                        ? getTokenAmountAndSymbolByTokenAddress(
+                            tokenBalance,
+                            selectedToken?.address,
+                            true
+                          )
+                        : "0"
                       }`}
                     </span>
                   ) : (
@@ -715,11 +715,6 @@ export const TreasuryTransferFundsModal = (props: {
                       shape="round"
                       size="middle"
                       className={props.isBusy ? 'inactive' : ''}
-                      // onClick={() => isError(transactionStatus.currentOperation)
-                      //   ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                      //     ? onCloseModal()
-                      //     : onAcceptWithdrawTreasuryFunds()
-                      //   : onCloseModal()}>
                       onClick={() => isError(transactionStatus.currentOperation)
                         ? onAcceptWithdrawTreasuryFunds()
                         : onCloseModal()}>
