@@ -1788,17 +1788,17 @@ export const VestingView = () => {
 
       if (!msp) { return null; }
 
-      if (data.stream === '') {
-        return await msp.addFunds(
-          new PublicKey(data.payer),                    // payer
-          new PublicKey(data.contributor),              // contributor
-          new PublicKey(data.treasury),                 // treasury
-          new PublicKey(data.associatedToken),          // associatedToken
-          data.amount,                                  // amount
-        );
-      }
-
       if (!isMultisigTreasury()) {
+        if (data.stream === '') {
+          return await msp.addFunds(
+            new PublicKey(data.payer),                    // payer
+            new PublicKey(data.contributor),              // contributor
+            new PublicKey(data.treasury),                 // treasury
+            new PublicKey(data.associatedToken),          // associatedToken
+            data.amount,                                  // amount
+          );
+        }
+
         return await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(data.contributor),             // treasurer
@@ -1814,17 +1814,30 @@ export const VestingView = () => {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
+      let operationType = OperationType.StreamAddFunds;
+      let addFundsTx: Transaction;
 
-      const allocateTx = await msp.allocate(
-        new PublicKey(data.payer),                   // payer
-        new PublicKey(multisig.authority),           // treasurer
-        new PublicKey(data.treasury),                // treasury
-        new PublicKey(data.stream),                  // stream
-        data.amount,                                 // amount
-      );
+      if (data.stream) {
+        addFundsTx = await msp.allocate(
+          new PublicKey(data.payer),                   // payer
+          new PublicKey(multisig.authority),           // treasurer
+          new PublicKey(data.treasury),                // treasury
+          new PublicKey(data.stream),                  // stream
+          data.amount,                                 // amount
+        );
+      } else {
+        operationType = OperationType.TreasuryAddFunds;
+        addFundsTx = await msp.addFunds(
+          new PublicKey(data.payer),                    // payer
+          new PublicKey(data.contributor),              // contributor
+          new PublicKey(data.treasury),                 // treasury
+          new PublicKey(data.associatedToken),          // associatedToken
+          data.amount,                                  // amount
+        );
+      }
 
-      const ixData = Buffer.from(allocateTx.instructions[0].data);
-      const ixAccounts = allocateTx.instructions[0].keys;
+      const ixData = Buffer.from(addFundsTx.instructions[0].data);
+      const ixAccounts = addFundsTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await multisigClient.createTransaction(
@@ -1832,7 +1845,7 @@ export const VestingView = () => {
         "Add Funds",
         "", // description
         new Date(expirationTime * 1_000),
-        OperationType.StreamAddFunds,
+        operationType,
         multisig.id,
         MSPV2Constants.MSP,
         ixAccounts,
@@ -1866,10 +1879,11 @@ export const VestingView = () => {
       const amount = params.tokenAmount.toNumber();
       const token = params.associatedToken;
       const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+      const contributor = params.contributor || publicKey.toBase58();
 
       const data = {
         payer: publicKey.toBase58(),                              // payer
-        contributor: publicKey.toBase58(),                        // contributor
+        contributor: contributor,                                 // contributor
         treasury: treasury.toBase58(),                            // treasury
         associatedToken: associatedToken.toBase58(),              // associatedToken
         stream: params.streamId ? params.streamId : '',

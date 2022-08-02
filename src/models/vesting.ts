@@ -147,6 +147,7 @@ export interface VestingContractTopupParams {
     allocationType: AllocationType;
     streamId: string;
     associatedToken: TokenInfo | undefined;
+    contributor?: string;
 }
 
 // Map cache to maintain the vesting flow rates between reloads of the vesting accounts' list

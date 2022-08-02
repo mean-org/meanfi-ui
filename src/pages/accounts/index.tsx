@@ -785,6 +785,7 @@ export const AccountsNewView = () => {
     setShouldLoadTokens(true);
     setLoadingTokenAccounts(false);
     setDetailsPanelOpen(false);
+    setAutoOpenDetailsPanel(true);
     reloadSwitch();
   }, [reloadSwitch, setShouldLoadTokens]);
 
@@ -952,13 +953,6 @@ export const AccountsNewView = () => {
       }
     };
 
-    const hardReloadAssets = () => {
-      const tokensRefreshCta = document.getElementById("account-assets-hard-refresh-cta");
-      if (tokensRefreshCta) {
-        tokensRefreshCta.click();
-      }
-    };
-
     const softReloadStreams = () => {
       const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
       if (streamsRefreshCta) {
@@ -1034,7 +1028,7 @@ export const AccountsNewView = () => {
         case OperationType.CloseTokenAccount:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
-          hardReloadAssets();
+          reloadAssets();
           break;
         case OperationType.DeleteAsset:
         case OperationType.SetAssetAuthority:
@@ -5248,27 +5242,28 @@ export const AccountsNewView = () => {
                           {shortenAddress(accountAddress, 5)}
                         </span>)
                       </span>
-                      {!connected && (
-                        <span className="icon-button-container">
-                          <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<EditOutlined />}
-                              onClick={handleScanAnotherAddressButtonClick}
-                            />
-                          </Tooltip>
-                        </span>
-                      )}
                       <span className="icon-button-container">
-                        <Tooltip placement="top" title={t('account-area.explorer-link')}>
+                        <Tooltip placement="bottom" title={t('account-area.explorer-link')}>
                           <Button
                             type="default"
                             shape="circle"
                             size="middle"
-                            icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
+                            icon={<IconExternalLink className="mean-svg-icons" style={{width: "16", height: "16"}} />}
                             onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
+                          />
+                        </Tooltip>
+                      </span>
+                      <span className="icon-button-container hidden-sm simplelink">
+                        <Tooltip placement="bottom" title="Refresh payment streams">
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<ReloadOutlined />}
+                            onClick={() => {
+                              reloadTokensAndActivity();
+                              onRefreshStreamsNoReset();
+                            }}
                           />
                         </Tooltip>
                       </span>
@@ -5285,7 +5280,7 @@ export const AccountsNewView = () => {
                     {renderNetworth()}
 
                     {/* Middle area (vertically flexible block of items) */}
-                    <div className="item-block vertical-scroll">
+                    <div className={`item-block${!isXsDevice ? ' vertical-scroll' : ''}`}>
 
                       <div className="asset-category-title flex-fixed-right">
                         <div className="title">Streaming Assets</div>
@@ -5368,25 +5363,29 @@ export const AccountsNewView = () => {
                   <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
 
                   <div className="inner-container">
+
+                    <div className="float-top-right mr-1 mt-1">
+                      <span className="icon-button-container secondary-button">
+                        <Tooltip placement="bottom" title="Refresh payment streams">
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<ReloadOutlined className="mean-svg-icons" />}
+                            onClick={() => {
+                              reloadTokensAndActivity();
+                              onRefreshStreamsNoReset();
+                            }}
+                          />
+                        </Tooltip>
+                      </span>
+                    </div>
+
                     {selectedCategory === "assets" ? (
                       <>
                         {canShowBuyOptions() ? renderTokenBuyOptions() : (
                           <div className="flexible-column-bottom">
-                            <div className="top">
-                              <div className="float-top-right mr-0">
-                                <span className="icon-button-container secondary-button">
-                                  <Tooltip placement="bottom" title="Refresh asset balances">
-                                    <Button
-                                      type="default"
-                                      shape="circle"
-                                      size="middle"
-                                      icon={<ReloadOutlined className="mean-svg-icons" />}
-                                      onClick={() => refreshAssetBalances(true)}
-                                    />
-                                  </Tooltip>
-                                </span>
-                              </div>
-                              
+                            <div className="top">                              
                               {renderCategoryMeta()}
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
