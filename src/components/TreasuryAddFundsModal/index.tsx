@@ -969,6 +969,19 @@ export const TreasuryAddFundsModal = (props: {
 
             {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
               <>
+                {/* Fund from Wallet/Safe switch */}
+                {param === "multisig" && selectedMultisig && workingTreasuryDetails && !highLightableStreamId && (
+                  <div className="mb-2 flex-fixed-right">
+                    <div className="form-label left m-0">Get funds from:</div>
+                    <div className="right">
+                      <Radio.Group onChange={onFundFromSafeOptionChanged} value={fundFromSafeOption}>
+                        <Radio value={true}>Safe</Radio>
+                        <Radio value={false}>User wallet</Radio>
+                      </Radio.Group>
+                    </div>
+                  </div>
+                )}
+
                 {/* Proposal title */}
                 {param === "multisig" && selectedMultisig && (
                   <div className="mb-3 mt-3">
@@ -976,7 +989,7 @@ export const TreasuryAddFundsModal = (props: {
                     <InputMean
                       id="proposal-title-field"
                       name="Title"
-                      className="w-100 general-text-input"
+                      className={`w-100 general-text-input${!fundFromSafeOption ? ' disabled' : ''}`}
                       onChange={onTitleInputValueChange}
                       placeholder="Add a proposal title (required)"
                       value={proposalTitle}
@@ -1023,18 +1036,6 @@ export const TreasuryAddFundsModal = (props: {
                       </div>
                     </div>
                   </>
-                )}
-
-                {param === "multisig" && selectedMultisig && workingTreasuryDetails && !highLightableStreamId && (
-                  <div className="mb-2 flex-fixed-right">
-                    <div className="form-label left m-0 p-0">Get funds from:</div>
-                    <div className="right">
-                      <Radio.Group onChange={onFundFromSafeOptionChanged} value={fundFromSafeOption}>
-                        <Radio value={true}>Safe</Radio>
-                        <Radio value={false}>User wallet</Radio>
-                      </Radio.Group>
-                    </div>
-                  </div>
                 )}
 
                 {/* Top up amount */}

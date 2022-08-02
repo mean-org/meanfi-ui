@@ -3929,6 +3929,7 @@ export const VestingView = () => {
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       setCanSubscribe(true);
+      notification.destroy();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -4076,10 +4077,9 @@ export const VestingView = () => {
             userBalances={userBalances}
             vestingContract={selectedVestingContract}
             onReloadTokenBalances={(option: string) => {
-              if (option === "safe") {
-                if (selectedMultisig) {
-                  setBalancesSource(selectedMultisig.authority.toBase58());
-                }
+              consoleOut('setting balances source to:', option, 'blue');
+              if (option === "safe" && selectedMultisig) {
+                setBalancesSource(selectedMultisig.authority.toBase58());
               } else {
                 setBalancesSource('');
               }
@@ -4449,10 +4449,9 @@ export const VestingView = () => {
             vestingContract={selectedVestingContract}
             withdrawTransactionFees={withdrawTransactionFees}
             onReloadTokenBalances={(option: string) => {
-              if (option === "safe") {
-                if (selectedMultisig) {
-                  setBalancesSource(selectedMultisig.authority.toBase58());
-                }
+              consoleOut('setting balances source to:', option, 'blue');
+              if (option === "safe" && selectedMultisig) {
+                setBalancesSource(selectedMultisig.authority.toBase58());
               } else {
                 setBalancesSource('');
               }

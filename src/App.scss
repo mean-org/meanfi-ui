@@ -7708,9 +7708,15 @@ code {
   color: inherit;
   .ant-radio-wrapper {
     color: var(--text-color);
+    &:last-of-type {
+      margin: 0;
+    }
     .ant-radio {
       color: inherit;
       &.ant-radio-checked {
+        .ant-radio-input:focus + .ant-radio-inner {
+          box-shadow: 0 0 1px 1px var(--color-secondary-alpha-40);
+        }
         .ant-radio-inner {
           background-color: var(--color-primary-highlight);
           border: 1px solid var(--color-primary-highlight);
@@ -7727,6 +7733,9 @@ code {
           background-color: var(--color-component-background);
           border: 1px solid var(--color-secondary-alpha-20) !important;
         }
+      }
+      + span {
+        padding-right: 2px;
       }
     }
   }
