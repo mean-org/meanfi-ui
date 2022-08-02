@@ -777,7 +777,8 @@
 			"token-authority-copy": "Token yetkilisini kopyala",
 			"token-decimals": "Desimal",
 			"token-name": "İsim",
-			"token-symbol": "Simge"
+			"token-symbol": "Simge",
+			"token-audits": "Denetim"
 		},
 		"title": "İstatistikler",
 		"total-liquidity-btn": "Likidite Ekle"

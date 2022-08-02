@@ -22,8 +22,8 @@ export const StatsView = () => {
   const connection = useConnection();
 
   const [totalVolume24h, setTotalVolume24h] = useState<number>(0);
+  const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | undefined>(0);
   const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel | undefined>(undefined);
-  const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | undefined>(undefined);
 
   // Getters
 
@@ -38,7 +38,7 @@ export const StatsView = () => {
       //TODO: pull this info
       const [_, marketVolumeData] = await getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, 1, 'daily');
       if (marketVolumeData && marketVolumeData.length > 0) {
-        setTotalVolume24h(marketVolumeData[marketVolumeData.length - 1].priceData);
+        setTotalVolume24h(Number(marketVolumeData[marketVolumeData.length - 1].priceData));
       }
     })();
   }, [getMeanStats, getCoingeckoMarketChart]);
@@ -60,7 +60,7 @@ export const StatsView = () => {
     connection
   ]);
 
-  if (!meanfiStats) { return <><p>{t('general.loading')}...</p></>; }
+  if (!meanfiStats) { return <p>{t('general.loading')}...</p>; }
 
   return (
     <>

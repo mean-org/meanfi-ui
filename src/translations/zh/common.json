@@ -777,7 +777,8 @@
 			"token-authority-copy": "复制代币权限",
 			"token-decimals": "小数位",
 			"token-name": "名称",
-			"token-symbol": "Symbol"
+			"token-symbol": "Symbol",
+			"token-audits": "Audits"
 		},
 		"title": "统计数据",
 		"total-liquidity-btn": "增加流动性"

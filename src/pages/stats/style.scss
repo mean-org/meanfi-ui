@@ -140,6 +140,15 @@ ul.tabs {
           button {
             float: right;
           }
+          span .audit-links {
+            padding: 6px 0px;
+            img {
+              max-height: 35px;
+              padding: 6px;
+              background-color:#1c1f30;
+              margin-right: 5px;
+            }
+          }
         }
         .anticon svg {
           font-size: 18px;

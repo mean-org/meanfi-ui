@@ -40,7 +40,7 @@ export const MEAN_TOKEN = {
     chainId: 101,
     address: 'MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD',
     symbol: 'MEAN',
-    name: 'MEAN',
+    name: 'Meanfi',
     decimals: 6,
     logoURI: `${LOGO_BASE_URL}/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg`,
     extensions: {

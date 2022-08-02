@@ -50,8 +50,15 @@ export const FirstCardsLayout = () => {
       value: MEAN_TOKEN.decimals
     },
     {
-      label: t('stats.summary.token-symbol'),
-      value: MEAN_TOKEN.symbol
+      label: t('stats.summary.token-audits'),
+      value: <span>
+        <a href="https://www.certik.com/projects/meanfinance#audit" target={"_blank"} rel="noopener noreferrer" title="CetriK" className="audit-links">
+          <img src="https://www.certik.com/certik-logotype-h-w.svg" alt="" />
+        </a>
+        <a href="#" target={"_blank"} rel="noopener noreferrer" title="Sec3" className="audit-links">
+          <img src="https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg" alt="" />
+        </a>
+        </span>
     },
   ];
 

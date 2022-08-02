@@ -863,7 +863,8 @@
 			"token-authority-copy": "Sao chép token authority",
 			"token-decimals": "Số thập phân",
 			"token-name": "Tên",
-			"token-symbol": "Symbol"
+			"token-symbol": "Symbol",
+			"token-audits": "Audits"
 		},
 		"title": "Thống kê",
 		"total-liquidity-btn": "Thêm thanh khoản"

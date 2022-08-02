@@ -777,7 +777,8 @@
 			"token-authority-copy": "Copiar autoridade de token",
 			"token-decimals": "Decimais",
 			"token-name": "Nome",
-			"token-symbol": "Symbol"
+			"token-symbol": "Symbol",
+			"token-audits": "Audits"
 		},
 		"title": "Estatísticos",
 		"total-liquidity-btn": "Adicionar liquidez"

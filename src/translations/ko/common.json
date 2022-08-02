@@ -863,7 +863,8 @@
 			"token-authority-copy": "토큰 권한 복사",
 			"token-decimals": "소수",
 			"token-name": "이름",
-			"token-symbol": "Symbol"
+			"token-symbol": "Symbol",
+			"token-audits": "Audits"
 		},
 		"title": "스탯",
 		"total-liquidity-btn": "유동성 추가"
