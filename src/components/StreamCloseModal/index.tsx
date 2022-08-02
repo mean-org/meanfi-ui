@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col, Radio } from 'antd';
-import { ExclamationCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
+import { LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { consoleOut, percentage } from '../../utils/ui';
 import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';

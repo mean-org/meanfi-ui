@@ -50,6 +50,7 @@ import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { TreasuryTopupParams } from "../../models/common-types";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
+import { NATIVE_SOL } from "../../utils/tokens";
 
 const { TabPane } = Tabs;
 
@@ -91,7 +92,7 @@ export const MoneyStreamsInfoView = (props: {
     treasuryList,
   } = props;
   const {
-    tokenList,
+    splTokenList,
     streamListv1,
     streamListv2,
     treasuryOption,
@@ -258,27 +259,39 @@ export const MoneyStreamsInfoView = (props: {
     refreshTokenBalance
   ]);
 
-  const refreshUserBalances = useCallback(() => {
+  const refreshUserBalances = useCallback((source?: PublicKey) => {
 
-    if (!connection || !publicKey || !tokenList) {
+    if (!connection || !publicKey || !splTokenList) {
       return;
     }
 
     const balancesMap: any = {};
+    const pk = source || publicKey;
+    consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
 
-    fetchAccountTokens(connection, publicKey)
+    connection.getBalance(pk)
+    .then(solBalance => {
+      balancesMap[NATIVE_SOL.address] = solBalance / LAMPORTS_PER_SOL;
+    })
+
+    fetchAccountTokens(connection, pk)
     .then(accTks => {
+      consoleOut('Token accounts:', accTks, 'darkpurple');
       if (accTks) {
         for (const item of accTks) {
           const address = item.parsedInfo.mint;
           const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
           balancesMap[address] = balance;
         }
+      } else {
+        for (const t of splTokenList) {
+          balancesMap[t.address] = 0;
+        }
       }
     })
     .catch(error => {
       console.error(error);
-      for (const t of tokenList) {
+      for (const t of splTokenList) {
         balancesMap[t.address] = 0;
       }
     })
@@ -286,7 +299,7 @@ export const MoneyStreamsInfoView = (props: {
 
   }, [
     publicKey,
-    tokenList,
+    splTokenList,
     connection,
   ]);
 
@@ -538,23 +551,6 @@ export const MoneyStreamsInfoView = (props: {
     getTokenPriceByAddress,
   ]);
 
-  // const reloadStreams = () => {
-  //   const streamsRefreshCta = document.getElementById("streams-refresh-reset-cta");
-  //   if (streamsRefreshCta) {
-  //     streamsRefreshCta.click();
-  //   }
-  // };
-
-  // const refreshPaymentStreams = useCallback((reset = false) => {
-  //   setWithdrawalBalance(0);
-  //   setUnallocatedBalance(0);
-  //   setIncomingStreamList(undefined);
-  //   setOutgoingStreamList(undefined);
-  //   setIncomingAmount(0);
-  //   setOutgoingAmount(0);
-  //   reloadStreams();
-  // }, []);
-
   const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
@@ -596,7 +592,11 @@ export const MoneyStreamsInfoView = (props: {
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
-    refreshUserBalances();
+    if (selectedMultisig) {
+      refreshUserBalances(selectedMultisig.authority);
+    } else {
+      refreshUserBalances();
+    }
     refreshTokenBalance();
     getTransactionFeesV2(MSP_ACTIONS_V2.addFunds).then(value => {
       setTransactionFees(value);
@@ -608,6 +608,7 @@ export const MoneyStreamsInfoView = (props: {
     });
     setIsAddFundsModalVisibility(true);
   }, [
+    selectedMultisig,
     refreshTokenBalance,
     refreshUserBalances,
     getTransactionFeesV2,
@@ -756,17 +757,17 @@ export const MoneyStreamsInfoView = (props: {
 
       if (!msp) { return null; }
 
-      if (data.stream === '') {
-        return await msp.addFunds(
-          new PublicKey(data.payer),                    // payer
-          new PublicKey(data.contributor),              // contributor
-          new PublicKey(data.treasury),                 // treasury
-          new PublicKey(data.associatedToken),          // associatedToken
-          data.amount,                                  // amount
-        );
-      }
-
       if (!isMultisigTreasury(data.treasury.toBase58())) {
+        if (data.stream === '') {
+          return await msp.addFunds(
+            new PublicKey(data.payer),                    // payer
+            new PublicKey(data.contributor),              // contributor
+            new PublicKey(data.treasury),                 // treasury
+            new PublicKey(data.associatedToken),          // associatedToken
+            data.amount,                                  // amount
+          );
+        }
+
         return await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(data.contributor),             // treasurer
@@ -786,16 +787,30 @@ export const MoneyStreamsInfoView = (props: {
 
       multisigAuthority = multisig.authority.toBase58();
 
-      const allocateTx = await msp.allocate(
-        new PublicKey(data.payer),                   // payer
-        new PublicKey(multisig.authority),           // treasurer
-        new PublicKey(data.treasury),                // treasury
-        new PublicKey(data.stream),                  // stream
-        data.amount,                                 // amount
-      );
+      let operationType = OperationType.StreamAddFunds;
+      let addFundsTx: Transaction;
 
-      const ixData = Buffer.from(allocateTx.instructions[0].data);
-      const ixAccounts = allocateTx.instructions[0].keys;
+      if (data.stream) {
+        addFundsTx = await msp.allocate(
+          new PublicKey(data.payer),                   // payer
+          new PublicKey(multisig.authority),           // treasurer
+          new PublicKey(data.treasury),                // treasury
+          new PublicKey(data.stream),                  // stream
+          data.amount,                                 // amount
+        );
+      } else {
+        operationType = OperationType.TreasuryAddFunds;
+        addFundsTx = await msp.addFunds(
+          new PublicKey(data.payer),                    // payer
+          new PublicKey(data.contributor),              // contributor
+          new PublicKey(data.treasury),                 // treasury
+          new PublicKey(data.associatedToken),          // associatedToken
+          data.amount,                                  // amount
+        );
+      }
+
+      const ixData = Buffer.from(addFundsTx.instructions[0].data);
+      const ixAccounts = addFundsTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await multisigClient.createTransaction(
@@ -803,7 +818,7 @@ export const MoneyStreamsInfoView = (props: {
         "Add Funds",
         "", // description
         new Date(expirationTime * 1_000),
-        OperationType.StreamAddFunds,
+        operationType,
         multisig.id,
         MSPV2Constants.MSP,
         ixAccounts,
@@ -835,9 +850,10 @@ export const MoneyStreamsInfoView = (props: {
       const treasury = new PublicKey(params.treasuryId);
       const associatedToken = new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toNumber();
+      const contributor = params.contributor || publicKey.toBase58();
       const data = {
         payer: publicKey.toBase58(),                              // payer
-        contributor: publicKey.toBase58(),                        // contributor
+        contributor: contributor,                                 // contributor
         treasury: treasury.toBase58(),                            // treasury
         associatedToken: associatedToken.toBase58(),              // associatedToken
         stream: params.streamId ? params.streamId : '',
@@ -2895,7 +2911,7 @@ export const MoneyStreamsInfoView = (props: {
 
       {isAddFundsModalVisible && (
         <TreasuryAddFundsModal
-          handleOk={onAcceptAddFunds}
+          handleOk={(params: TreasuryTopupParams) => onAcceptAddFunds(params)}
           handleClose={closeAddFundsModal}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
@@ -2908,6 +2924,17 @@ export const MoneyStreamsInfoView = (props: {
           treasuryStreams={undefined}
           associatedToken=""
           isBusy={isBusy}
+          onReloadTokenBalances={(option: string) => {
+            if (option === "safe") {
+              if (selectedMultisig) {
+                refreshUserBalances(selectedMultisig.authority);
+              }
+            } else {
+              if (publicKey) {
+                refreshUserBalances(publicKey);
+              }
+            }
+          }}
         />
       )}
 
