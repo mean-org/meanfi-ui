@@ -1057,6 +1057,21 @@ export const MoneyStreamsInfoView = (props: {
       if (created && !transactionCancelled) {
         const sign = await signTx();
         consoleOut('sign:', sign);
+        const loadingMessage = multisigAuthority
+          ? `Create proposal to fund streaming account with ${formatThousands(
+              parseFloat(params.amount),
+              token?.decimals
+            )} ${token?.symbol}`
+          : `Fund streaming account with ${formatThousands(
+              parseFloat(params.amount),
+              token?.decimals
+            )} ${token?.symbol}`;
+        const completed = multisigAuthority
+          ? `Streaming account funding has been submitted for approval.`
+          : `Streaming account funded with ${formatThousands(
+            parseFloat(params.amount),
+            token?.decimals
+          )} ${token?.symbol}`;
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           consoleOut('sent:', sent);
@@ -1068,15 +1083,9 @@ export const MoneyStreamsInfoView = (props: {
               finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Fund streaming account with ${formatThousands(
-                parseFloat(params.amount),
-                token?.decimals
-              )} ${token?.symbol}`,
+              loadingMessage: loadingMessage,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Streaming account funded with ${formatThousands(
-                parseFloat(params.amount),
-                token?.decimals
-              )} ${token?.symbol}`,
+              completedMessage: completed,
               extras: {
                 treasuryId: treasury.id as string,
                 multisigAuthority: multisigAuthority

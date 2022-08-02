@@ -455,6 +455,20 @@ export const VestingView = () => {
 
     switch (item.operationType) {
       case OperationType.TreasuryAddFunds:
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+        recordTxConfirmation(item.signature, item.operationType, true);
+        if (!isWorkflowLocked) {
+          isWorkflowLocked = true;
+          notifyMultisigVestingContractActionFollowup(
+            'To complete the funding, the other Multisig owners need to approve the proposal.',
+            'After the proposal has been approved and executed, the streaming account will be funded.',
+            item
+          );
+        }
+        setTimeout(() => {
+          hardReloadContracts();
+        }, 20);
+        break;
       case OperationType.TreasuryRefreshBalance:
       case OperationType.StreamClose:
       case OperationType.StreamAddFunds:

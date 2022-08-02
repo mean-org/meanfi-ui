@@ -752,8 +752,7 @@ export const TreasuryAddFundsModal = (props: {
 
   const isValidInput = (): boolean => {
     return publicKey &&
-           ((param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle) ||
-            (!proposalTitle && (!fundFromSafeOption || param !== "multisig"))) &&
+           (!fundFromSafeOption || (param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
            selectedToken &&
            availableBalance && availableBalance.toNumber() > 0 &&
            nativeBalance > MIN_SOL_BALANCE_REQUIRED &&

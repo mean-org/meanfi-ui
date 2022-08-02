@@ -974,21 +974,30 @@ export const StreamingAccountView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const loadingMessage = multisigAuthority
+              ? `Create proposal to fund streaming account with ${formatThousands(
+                  parseFloat(params.amount),
+                  selectedToken?.decimals
+                )} ${selectedToken?.symbol}`
+              : `Fund streaming account with ${formatThousands(
+                  parseFloat(params.amount),
+                  selectedToken?.decimals
+                )} ${selectedToken?.symbol}`;
+            const completed = multisigAuthority
+              ? `Streaming account funding has been submitted for approval.`
+              : `Streaming account funded with ${formatThousands(
+                parseFloat(params.amount),
+                selectedToken?.decimals
+              )} ${selectedToken?.symbol}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryAddFunds,
               finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Fund streaming account with ${formatThousands(
-                parseFloat(params.amount),
-                selectedToken.decimals
-              )} ${selectedToken.symbol}`,
+              loadingMessage: loadingMessage,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Streaming account funded with ${formatThousands(
-                parseFloat(params.amount),
-                selectedToken.decimals
-              )} ${selectedToken.symbol}`,
+              completedMessage: completed,
               extras: {
                 multisigAuthority: multisigAuthority
               }
