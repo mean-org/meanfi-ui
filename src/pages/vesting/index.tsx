@@ -131,6 +131,7 @@ export const VestingView = () => {
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [treasuryEffectiveBalance, setTreasuryEffectiveBalance] = useState(0);
+  const [balancesSource, setBalancesSource] = useState<string>('');
   // Transactions
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -1842,7 +1843,7 @@ export const VestingView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Add Funds",
+        data.proposalTitle || "Add Funds",
         "", // description
         new Date(expirationTime * 1_000),
         operationType,
@@ -1882,11 +1883,12 @@ export const VestingView = () => {
       const contributor = params.contributor || publicKey.toBase58();
 
       const data = {
+        proposalTitle: params.proposalTitle,                      // proposalTitle
         payer: publicKey.toBase58(),                              // payer
         contributor: contributor,                                 // contributor
         treasury: treasury.toBase58(),                            // treasury
         associatedToken: associatedToken.toBase58(),              // associatedToken
-        stream: params.streamId ? params.streamId : '',
+        stream: params.streamId ? params.streamId : '',           // stream
         amount,                                                   // amount
       }
       consoleOut('data:', data);
@@ -3303,7 +3305,10 @@ export const VestingView = () => {
     const balancesMap: any = {};
     balancesMap[userTokensCopy[0].address] = nativeBalance;
 
-    fetchAccountTokens(connection, publicKey)
+    const pk = balancesSource
+      ? new PublicKey(balancesSource)
+      : publicKey;
+    fetchAccountTokens(connection, pk)
       .then(accTks => {
         if (accTks) {
 
@@ -3372,6 +3377,7 @@ export const VestingView = () => {
     publicKey,
     connection,
     nativeBalance,
+    balancesSource,
   ]);
 
   // Build CTAs
@@ -4047,6 +4053,7 @@ export const VestingView = () => {
             loadingTreasuryStreams={loadingTreasuryStreams}
             minRequiredBalance={minRequiredBalance}
             msp={msp}
+            selectedMultisig={selectedMultisig}
             multisigAccounts={multisigAccounts}
             multisigClient={multisigClient}
             nativeBalance={nativeBalance}
@@ -4054,6 +4061,15 @@ export const VestingView = () => {
             treasuryStreams={treasuryStreams}
             userBalances={userBalances}
             vestingContract={selectedVestingContract}
+            onReloadTokenBalances={(option: string) => {
+              if (option === "safe") {
+                if (selectedMultisig) {
+                  setBalancesSource(selectedMultisig.authority.toBase58());
+                }
+              } else {
+                setBalancesSource('');
+              }
+            }}
           />
         </TabPane>
         <TabPane tab="Activity" key={"activity"}>
@@ -4411,12 +4427,22 @@ export const VestingView = () => {
             isVisible={isAddFundsModalVisible}
             nativeBalance={nativeBalance}
             minRequiredBalance={minRequiredBalance}
+            selectedMultisig={selectedMultisig}
             streamTemplate={streamTemplate}
             transactionFees={transactionFees}
             treasuryStreams={treasuryStreams}
             userBalances={userBalances}
             vestingContract={selectedVestingContract}
             withdrawTransactionFees={withdrawTransactionFees}
+            onReloadTokenBalances={(option: string) => {
+              if (option === "safe") {
+                if (selectedMultisig) {
+                  setBalancesSource(selectedMultisig.authority.toBase58());
+                }
+              } else {
+                setBalancesSource('');
+              }
+            }}
           />
         )}
 

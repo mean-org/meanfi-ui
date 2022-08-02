@@ -728,7 +728,7 @@ export const StreamingAccountView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Add Funds",
+        data.proposalTitle || "Add Funds",
         "", // description
         new Date(expirationTime * 1_000),
         operationType,
@@ -765,11 +765,12 @@ export const StreamingAccountView = (props: {
       const amount = params.tokenAmount.toNumber();
       const contributor = params.contributor || publicKey.toBase58();
       const data = {
+        proposalTitle: params.proposalTitle,                      // proposalTitle
         payer: publicKey.toBase58(),                              // payer
         contributor: contributor,                                 // contributor
         treasury: treasury.toBase58(),                            // treasury
         associatedToken: associatedToken.toBase58(),              // associatedToken
-        stream: params.streamId ? params.streamId : '',
+        stream: params.streamId ? params.streamId : '',           // stream
         amount,                                                   // amount
       }
 

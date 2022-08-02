@@ -157,7 +157,6 @@ export const MoneyStreamsInfoView = (props: {
   const [loadingMoneyStreamsDetails, setLoadingMoneyStreamsDetails] = useState(true);
   const [hasIncomingStreamsRunning, setHasIncomingStreamsRunning] = useState<number>();
   const [hasOutgoingStreamsRunning, setHasOutgoingStreamsRunning] = useState<number>();
-
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
 
   // Detect XS screen
@@ -757,7 +756,7 @@ export const MoneyStreamsInfoView = (props: {
 
       if (!msp) { return null; }
 
-      if (!isMultisigTreasury(data.treasury.toBase58())) {
+      if (!isMultisigTreasury(data.treasury)) {
         if (data.stream === '') {
           return await msp.addFunds(
             new PublicKey(data.payer),                    // payer
@@ -779,7 +778,7 @@ export const MoneyStreamsInfoView = (props: {
 
       if (!treasuryList || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      const treasury = treasuryList.find(t => t.id === data.treasury.toBase58()) as Treasury | undefined;
+      const treasury = treasuryList.find(t => t.id === data.treasury) as Treasury | undefined;
       if (!treasury) { return null; }
 
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
@@ -815,7 +814,7 @@ export const MoneyStreamsInfoView = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Add Funds",
+        data.proposalTitle || "Add Funds",
         "", // description
         new Date(expirationTime * 1_000),
         operationType,
@@ -847,16 +846,16 @@ export const MoneyStreamsInfoView = (props: {
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      const treasury = new PublicKey(params.treasuryId);
       const associatedToken = new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toNumber();
       const contributor = params.contributor || publicKey.toBase58();
       const data = {
+        proposalTitle: params.proposalTitle,                      // proposalTitle
         payer: publicKey.toBase58(),                              // payer
         contributor: contributor,                                 // contributor
-        treasury: treasury.toBase58(),                            // treasury
+        treasury: params.treasuryId,                              // treasury
         associatedToken: associatedToken.toBase58(),              // associatedToken
-        stream: params.streamId ? params.streamId : '',
+        stream: params.streamId ? params.streamId : '',           // stream
         amount,                                                   // amount
       }
 

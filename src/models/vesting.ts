@@ -142,6 +142,7 @@ export interface VestingContractCloseStreamOptions {
 }
 
 export interface VestingContractTopupParams {
+    proposalTitle?: string;
     amount: string;
     tokenAmount: any;
     allocationType: AllocationType;

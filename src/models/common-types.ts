@@ -16,6 +16,7 @@ export interface SelectOption {
 }
 
 export interface TreasuryTopupParams {
+    proposalTitle?: string;
     amount: string;
     tokenAmount: any;
     allocationType: AllocationType;
