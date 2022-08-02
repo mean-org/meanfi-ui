@@ -1765,6 +1765,11 @@ export const VestingView = () => {
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
     setHighLightableStreamId(undefined);
+    if (isMultisigContext && selectedMultisig) {
+      setBalancesSource(selectedMultisig.authority.toBase58());
+    } else {
+      setBalancesSource('');
+    }
     if (vestingContract) {
       getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
         setTransactionFees(value);
@@ -1776,7 +1781,7 @@ export const VestingView = () => {
       });
       setIsAddFundsModalVisibility(true);
     }
-  }, [getTransactionFees, resetTransactionStatus, setHighLightableStreamId, vestingContract]);
+  }, [getTransactionFees, isMultisigContext, resetTransactionStatus, selectedMultisig, setHighLightableStreamId, vestingContract]);
 
   const onAcceptAddFunds = (params: VestingContractTopupParams) => {
     consoleOut('AddFunds params:', params, 'blue');

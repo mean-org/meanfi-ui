@@ -80,7 +80,6 @@ export const VestingContractAddFundsModal = (props: {
     withdrawTransactionFees,
   } = props;
   const {
-    tokenList,
     selectedToken,
     loadingPrices,
     transactionStatus,
@@ -97,7 +96,6 @@ export const VestingContractAddFundsModal = (props: {
   const [searchParams] = useSearchParams();
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
-  const [customTokenInput, setCustomTokenInput] = useState("");
   const [, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [availableBalance, setAvailableBalance] = useState<any>();
   const [tokenAmount, setTokenAmount] = useState<any>(0);
@@ -483,7 +481,6 @@ export const VestingContractAddFundsModal = (props: {
       } else {
         // Take source balance from the user's wallet
         const balance = makeInteger(selectFromTokenBalance(), decimals);
-        consoleOut(`User's balance:`, balance.toNumber(), 'blue');
         setAvailableBalance(balance);
       }
     } else {
@@ -815,45 +812,6 @@ export const VestingContractAddFundsModal = (props: {
                             fullTokenInfo={selectedToken}
                           />
                         )}
-
-                        {/* {(selectedToken && tokenList) && (
-                          <Select className={`token-selector-dropdown ${associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
-                              onChange={onTokenChange} bordered={false} showArrow={false}
-                              dropdownRender={menu => (
-                              <div>
-                                {menu}
-                                <Divider style={{ margin: '4px 0' }} />
-                                <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                                  <Input style={{ flex: 'auto' }} value={customTokenInput} onChange={onCustomTokenChange} />
-                                  <div style={{ flex: '0 0 auto' }} className="flex-row align-items-center">
-                                    <span className="flat-button icon-button ml-1" onClick={() => setCustomToken(customTokenInput)}><IconCheckedBox className="normal"/></span>
-                                  </div>
-                                </div>
-                              </div>
-                            )}>
-                            {tokenList.map((option) => {
-                              if (option.address === NATIVE_SOL.address) {
-                                return null;
-                              }
-                              return (
-                                <Option key={option.address} value={option.address}>
-                                  <div className="option-container">
-                                    <TokenDisplay onClick={() => {}}
-                                      mintAddress={option.address}
-                                      name={option.name}
-                                      showCaretDown={associatedToken ? false : true}
-                                    />
-                                    <div className="balance">
-                                      {userBalances && userBalances[option.address] > 0 && (
-                                        <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </Option>
-                              );
-                            })}
-                          </Select>
-                        )} */}
                         {selectedToken && availableBalance ? (
                           <div
                             id="treasury-add-funds-max"
