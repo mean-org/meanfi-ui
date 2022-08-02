@@ -45,9 +45,9 @@ export const PriceGraph = () => {
         days = Number(activeBtn.substring(0, activeBtn.length - 1)) / 24;
       }
       const marketChartData = await getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, days, interval);
-      if (marketChartData) {
-        setPriceData(marketChartData);
-        const lastItem = marketChartData[marketChartData.length - 1];
+      if (marketChartData?.prices) {
+        setPriceData(marketChartData.prices);
+        const lastItem = marketChartData.prices[marketChartData.prices.length - 1];
         setDateShownOnTop(moment(lastItem.dateData).format(dateFormat));
         setPriceShownOnTop(lastItem.priceData);
       }

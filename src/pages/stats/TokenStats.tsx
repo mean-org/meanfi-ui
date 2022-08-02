@@ -38,11 +38,7 @@ export const FirstCardsLayout = () => {
   const summaries = [
     {
       label: t('stats.summary.token-name'),
-      value: MEAN_TOKEN.name
-    },
-    {
-      label: t('stats.summary.token-symbol'),
-      value: MEAN_TOKEN.symbol
+      value: `${MEAN_TOKEN.name} (${MEAN_TOKEN.symbol})`
     },
     {
       label: t('stats.summary.token-address'),
@@ -52,7 +48,11 @@ export const FirstCardsLayout = () => {
     {
       label: t('stats.summary.token-decimals'),
       value: MEAN_TOKEN.decimals
-    }
+    },
+    {
+      label: t('stats.summary.token-symbol'),
+      value: MEAN_TOKEN.symbol
+    },
   ];
 
   const { getTokenPriceBySymbol } = useContext(AppStateContext);
@@ -189,7 +189,7 @@ export const SecondCardsLayout = ({
     },
     {
       label: t('stats.market.total-money-streams-title'),
-      value: formatThousands(meanStats.totalMoneyStreams),
+      value: formatThousands(meanStats.tvl.totalStreams),
       description: "stats.market.token-total-money-streams"
     },
     {

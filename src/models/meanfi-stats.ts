@@ -12,6 +12,7 @@ export interface MeanFiStatsModel {
     tvl: {
         total: number;
         symbol: string;
+        totalStreams: number;
         lastUpdateUtc: string;
     };
     version: string;

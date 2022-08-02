@@ -185,7 +185,12 @@ export const getMeanStats = async (): Promise<MeanFiStatsModel | null> => {
   }
 }
 
-export const getCoingeckoMarketChart = async (coinGeckoId: string = 'meanfi', decimals: number = 6, days: number = 30, interval: 'daily' | 'hourly' = 'daily'): Promise<PriceGraphModel[] | null> => {
+export const getCoingeckoMarketChart = async (
+  coinGeckoId: string = 'meanfi',
+  decimals: number = 6,
+  days: number = 30,
+  interval: 'daily' | 'hourly' = 'daily'
+): Promise<{ prices: PriceGraphModel[], volumes: PriceGraphModel[] } | null> => {
   try {
     const path = `https://api.coingecko.com/api/v3/coins/${coinGeckoId}/market_chart?vs_currency=usd&days=${days}&interval=${interval}`;
     const res = await fetch(path, { method: "GET" });
@@ -193,14 +198,20 @@ export const getCoingeckoMarketChart = async (coinGeckoId: string = 'meanfi', de
     if (res.status >= 400) {
       throw new Error(`Error getCoingeckoMarketChart: ${res.status}: ${res.statusText}`);
     }
-    const { prices } = await res.json();
-    const formatedChartData = prices.map((x: number[]) => {
+    const { prices, total_volumes } = await res.json();
+    const formatedPriceData = prices.map((x: number[]) => {
       return {
         priceData: x[1].toFixed(decimals),
         dateData: new Date(x[0]).toISOString()
       }
     });
-    return formatedChartData;
+    const formatedVolumeData = total_volumes.map((x: number[]) => {
+      return {
+        priceData: x[1].toFixed(decimals),
+        dateData: new Date(x[0]).toISOString()
+      }
+    });
+    return { prices: formatedPriceData, volumes: formatedVolumeData };
   } catch (error) {
     console.error(error);
     return null;
