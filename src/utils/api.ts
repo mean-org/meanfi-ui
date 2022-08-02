@@ -190,7 +190,7 @@ export const getCoingeckoMarketChart = async (
   decimals: number = 6,
   days: number = 30,
   interval: 'daily' | 'hourly' = 'daily'
-): Promise<{ prices: PriceGraphModel[], volumes: PriceGraphModel[] } | null> => {
+): Promise<[PriceGraphModel[], PriceGraphModel[]] | []> => {
   try {
     const path = `https://api.coingecko.com/api/v3/coins/${coinGeckoId}/market_chart?vs_currency=usd&days=${days}&interval=${interval}`;
     const res = await fetch(path, { method: "GET" });
@@ -211,10 +211,9 @@ export const getCoingeckoMarketChart = async (
         dateData: new Date(x[0]).toISOString()
       }
     });
-    return { prices: formatedPriceData, volumes: formatedVolumeData };
+    return [formatedPriceData, formatedVolumeData];
   } catch (error) {
     console.error(error);
-    return null;
-
+    return [];
   }
 }

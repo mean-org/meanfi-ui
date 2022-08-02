@@ -40,14 +40,14 @@ export const PriceGraph = () => {
       let interval: 'daily' | 'hourly' = 'daily';
       if (activeBtn.endsWith('D')) {
         days = Number(activeBtn.substring(0, activeBtn.length - 1));
-      } else if(activeBtn.endsWith('H')){
+      } else if (activeBtn.endsWith('H')) {
         interval = 'hourly';
         days = Number(activeBtn.substring(0, activeBtn.length - 1)) / 24;
       }
-      const marketChartData = await getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, days, interval);
-      if (marketChartData?.prices) {
-        setPriceData(marketChartData.prices);
-        const lastItem = marketChartData.prices[marketChartData.prices.length - 1];
+      const [marketPriceData] = await getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, days, interval);
+      if (marketPriceData && marketPriceData.length > 0) {
+        setPriceData(marketPriceData);
+        const lastItem = marketPriceData[marketPriceData.length - 1];
         setDateShownOnTop(moment(lastItem.dateData).format(dateFormat));
         setPriceShownOnTop(lastItem.priceData);
       }
@@ -69,7 +69,7 @@ export const PriceGraph = () => {
     useEffect(() => {
       window.addEventListener("click", onSelectedInfo);
       return () => {
-          window.removeEventListener("click", onSelectedInfo);
+        window.removeEventListener("click", onSelectedInfo);
       };
     });
 
@@ -104,15 +104,15 @@ export const PriceGraph = () => {
         </div>
         <div className="price-items_right">
           {buttons.map((btn, index) => (
-            <Button 
-              key={index}   
+            <Button
+              key={index}
               type="ghost"
-              shape="round" 
-              size="small" 
+              shape="round"
+              size="small"
               onClick={onClickHandler}
               className={`thin-stroke ${activeBtn === btn ? "active" : ""}`}
             >
-                {btn}
+              {btn}
             </Button>
           ))}
         </div>
@@ -136,7 +136,7 @@ export const PriceGraph = () => {
             height={40}
             tickFormatter={(date) => {
               const d = new Date(date);
-              
+
               if (activeBtn === "24H") {
                 return moment(d).format("hha");
               } else {

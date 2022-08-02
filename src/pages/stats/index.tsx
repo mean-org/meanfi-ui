@@ -11,8 +11,8 @@ import { PreFooter } from "../../components/PreFooter";
 import { useConnection } from '../../contexts/connection';
 import { TokenStats } from './TokenStats';
 import { toUiAmount } from '../../utils/utils';
-import { SMEAN_TOKEN } from '../../constants/token-list';
-import { getMeanStats } from '../../utils/api';
+import { MEAN_TOKEN, SMEAN_TOKEN } from '../../constants/token-list';
+import { getCoingeckoMarketChart, getMeanStats } from '../../utils/api';
 import { MeanFiStatsModel } from '../../models/meanfi-stats';
 
 //const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
@@ -21,7 +21,7 @@ export const StatsView = () => {
   const { t } = useTranslation('common');
   const connection = useConnection();
 
-  const [totalVolume24h, setTotalVolume24h] = useState<number>();
+  const [totalVolume24h, setTotalVolume24h] = useState<number>(0);
   const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel | undefined>(undefined);
   const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | undefined>(undefined);
 
@@ -32,13 +32,16 @@ export const StatsView = () => {
     (async () => {
       const meanStats = await getMeanStats();
       console.log('****************** meanStats:', meanStats, '********************');
-      if(meanStats){
+      if (meanStats) {
         setMeanfiStats(meanStats);
       }
       //TODO: pull this info
-      setTotalVolume24h(0);
+      const [_, marketVolumeData] = await getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, 1, 'daily');
+      if (marketVolumeData && marketVolumeData.length > 0) {
+        setTotalVolume24h(marketVolumeData[marketVolumeData.length - 1].priceData);
+      }
     })();
-  }, [getMeanStats]);
+  }, [getMeanStats, getCoingeckoMarketChart]);
 
   // Get sMEAN token info
   useEffect(() => {
