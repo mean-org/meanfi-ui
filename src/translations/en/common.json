@@ -1094,7 +1094,7 @@
 			"valid-start-funding": "Start funding",
 			"valid-start-withdrawal": "Start withdrawal",
 			"valid-submit-proposal": "",
-			"verified-recipient-unchecked": "Recipient Unchecked"
+			"verified-recipient-unchecked": "Recipient unchecked"
 		}
 	},
 	"transfer-stream": {

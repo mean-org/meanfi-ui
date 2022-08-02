@@ -100,6 +100,40 @@ export const TreasuryTransferFundsModal = (props: {
     });
   }
 
+  const getTransactionStartButtonLabel = () => {
+    return !to
+      ? 'Enter an address'
+      : to && !isValidAddress(to)
+        ? 'Invalid address'
+        : !tokenAmount || +tokenAmount === 0
+          ? 'Enter amount'
+          : unallocatedBalance && unallocatedBalance.toNumber() === 0
+            ? 'No balance'
+            : (tokenAmount && unallocatedBalance && +tokenAmount > (unallocatedBalance.toNumber() || 0))
+              ? 'Amount exceeded'
+              : !isVerifiedRecipient
+                ? t('transactions.validation.verified-recipient-unchecked')
+                : t('treasuries.withdraw-funds.main-cta')
+  }
+
+  const getTransactionStartButtonLabelMultisig = () => {
+    return !proposalTitle
+      ? "Add a proposal title"
+      : !to
+        ? 'Enter an address'
+        : to && !isValidAddress(to)
+          ? 'Invalid address'
+          : !tokenAmount || +tokenAmount === 0
+            ? 'Enter amount'
+            : unallocatedBalance && unallocatedBalance.toNumber() === 0
+              ? 'No balance'
+              : (tokenAmount && unallocatedBalance && +tokenAmount > (unallocatedBalance.toNumber() || 0))
+                ? 'Amount exceeded'
+                : !isVerifiedRecipient
+                  ? t('transactions.validation.verified-recipient-unchecked')
+                  : 'Sign proposal'
+  }
+
   useEffect(() => {
     if (props.isVisible) {
       if (props.multisigAccounts && props.multisigAccounts.length > 0) {
@@ -612,6 +646,36 @@ export const TreasuryTransferFundsModal = (props: {
                 {t("treasuries.withdraw-funds.verified-label")}
               </Checkbox>
             </div>
+
+            {!isError(transactionStatus.currentOperation) && (
+              <div className="col-12 p-0 mt-3">
+                <Button
+                  className={`center-text-in-btn ${props.isBusy ? 'inactive' : ''}`}
+                  block
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  disabled={param === "multisig" ? !isValidFormMultisig() : !isValidForm()}
+                  onClick={() => {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                      onAcceptWithdrawTreasuryFunds();
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                      onCloseModal();
+                    } else {
+                      refreshPage();
+                    }
+                  }}>
+                  {props.isBusy
+                    ? ('multisig.transfer-tokens.main-cta-busy')
+                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                      ? (param === "multisig" ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel())
+                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                        ? t('general.cta-finish')
+                        : t('general.refresh')
+                  }
+                </Button>
+              </div>
+            )}
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
@@ -642,6 +706,31 @@ export const TreasuryTransferFundsModal = (props: {
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
+              {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+                <div className="row two-col-ctas mt-3 transaction-progress p-2">
+                  <div className="col-12">
+                    <Button
+                      block
+                      type="text"
+                      shape="round"
+                      size="middle"
+                      className={props.isBusy ? 'inactive' : ''}
+                      // onClick={() => isError(transactionStatus.currentOperation)
+                      //   ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                      //     ? onCloseModal()
+                      //     : onAcceptWithdrawTreasuryFunds()
+                      //   : onCloseModal()}>
+                      onClick={() => isError(transactionStatus.currentOperation)
+                        ? onAcceptWithdrawTreasuryFunds()
+                        : onCloseModal()}>
+                      {(isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
+                        ? t('general.retry')
+                        : t('general.cta-close')
+                      }
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -652,7 +741,7 @@ export const TreasuryTransferFundsModal = (props: {
           props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
             ? "panel2 show" 
             : "panel2 hide"
-          }>          
+          }>
         {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
         <div className="transaction-progress">
           <Spin indicator={bigLoadingIcon} className="icon mt-0" />
@@ -665,60 +754,6 @@ export const TreasuryTransferFundsModal = (props: {
         </div>
         )}
       </div>
-
-      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-        <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
-            <Button
-              block
-              type="text"
-              shape="round"
-              size="middle"
-              className={props.isBusy ? 'inactive' : ''}
-              onClick={() => isError(transactionStatus.currentOperation)
-                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                  ? onCloseModal()
-                  : onAcceptWithdrawTreasuryFunds()
-                : onCloseModal()}>
-              {isError(transactionStatus.currentOperation)
-                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                  ? t('general.cta-close')
-                  : t('general.retry')
-                : t('general.cta-close')
-              }
-            </Button>
-          </div>
-          {!isError(transactionStatus.currentOperation) && (
-            <div className="col-6">
-              <Button
-                className={`extra-height ${props.isBusy ? 'inactive' : ''}`}
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                disabled={param === "multisig" ? !isValidFormMultisig() : !isValidForm()}
-                onClick={() => {
-                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                    onAcceptWithdrawTreasuryFunds();
-                  } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                    onCloseModal();
-                  } else {
-                    refreshPage();
-                  }
-                }}>
-                {props.isBusy
-                  ? ('multisig.transfer-tokens.main-cta-busy')
-                  : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? (param === "multisig" ? "Sign proposal" : t('treasuries.withdraw-funds.main-cta'))
-                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                      ? t('general.cta-finish')
-                      : t('general.refresh')
-                }
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
     </Modal>
   );
 };
