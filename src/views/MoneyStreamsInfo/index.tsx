@@ -756,7 +756,7 @@ export const MoneyStreamsInfoView = (props: {
 
       if (!msp) { return null; }
 
-      if (!isMultisigTreasury(data.treasury)) {
+      if (!isMultisigTreasury(data.treasury) || !params.fundFromSafe) {
         if (data.stream === '') {
           return await msp.addFunds(
             new PublicKey(data.payer),                    // payer

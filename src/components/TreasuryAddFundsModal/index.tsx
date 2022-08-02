@@ -638,12 +638,12 @@ export const TreasuryAddFundsModal = (props: {
 
   useEffect(() => {
     if (isVisible) {
-      if (param === "multisig" && selectedMultisig && workingTreasuryDetails && !highLightableStreamId) {
+      if (param === "multisig" && selectedMultisig && !treasuryDetails && !highLightableStreamId) {
         consoleOut('Getting funds from safe...', '', 'blue');
         setFundFromSafeOption(true);
       }
     }
-  }, [highLightableStreamId, isVisible, param, selectedMultisig, workingTreasuryDetails]);
+  }, [highLightableStreamId, isVisible, param, selectedMultisig, treasuryDetails]);
 
   ////////////////
   //   Events   //
@@ -687,7 +687,8 @@ export const TreasuryAddFundsModal = (props: {
       treasuryId: selectedStreamingAccountId || '',
       contributor: fundFromSafeOption && selectedMultisig
         ? selectedMultisig.authority.toBase58()
-        : ''
+        : '',
+      fundFromSafe: fundFromSafeOption
     };
     handleOk(params);
   }
@@ -751,7 +752,8 @@ export const TreasuryAddFundsModal = (props: {
 
   const isValidInput = (): boolean => {
     return publicKey &&
-           ((param === "multisig" && selectedMultisig && proposalTitle) || (!proposalTitle && param !== "multisig")) &&
+           ((param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle) ||
+            (!proposalTitle && (!fundFromSafeOption || param !== "multisig"))) &&
            selectedToken &&
            availableBalance && availableBalance.toNumber() > 0 &&
            nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
@@ -791,7 +793,7 @@ export const TreasuryAddFundsModal = (props: {
         ? 'Select streaming account'
         : !selectedToken || !availableBalance || availableBalance.isZero()
           ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
-            : param === "multisig" && selectedMultisig && !proposalTitle
+            : fundFromSafeOption && param === "multisig" && selectedMultisig && !proposalTitle
             ? 'Add a proposal title'
               : !tokenAmount || tokenAmount.isZero()
               ? t('transactions.validation.no-amount')

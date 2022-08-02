@@ -3838,11 +3838,9 @@ export const SafeView = () => {
       return;
     }
 
-    setTimeout(() => {
-      setNeedRefreshTxs(false);
-      setProposalsLoading(true);
-      setMultisigTxs([]);
-    });
+    setNeedRefreshTxs(false);
+    setProposalsLoading(true);
+    setMultisigTxs([]);
 
     consoleOut('Triggered load proposals...', '', 'blue');
     getMultisigProposals(selectedMultisigRef.current)

@@ -568,6 +568,15 @@ export const VestingContractAddFundsModal = (props: {
     }
   }, []);
 
+  useEffect(() => {
+    if (isVisible) {
+      if (param === "multisig" && selectedMultisig && !highLightableStreamId) {
+        consoleOut('Getting funds from safe...', '', 'blue');
+        setFundFromSafeOption(true);
+      }
+    }
+  }, [highLightableStreamId, isVisible, param, selectedMultisig]);
+
   ////////////////
   //   Events   //
   ////////////////
@@ -587,7 +596,8 @@ export const VestingContractAddFundsModal = (props: {
           : selectedToken
         : undefined,
       streamId: highLightableStreamId && allocationOption === AllocationType.Specific
-                ? highLightableStreamId : ''
+                ? highLightableStreamId : '',
+      fundFromSafe: fundFromSafeOption
     };
     handleOk(params);
   }
@@ -662,7 +672,8 @@ export const VestingContractAddFundsModal = (props: {
 
   const isValidInput = (): boolean => {
     return publicKey &&
-           ((param === "multisig" && selectedMultisig && proposalTitle) || (!proposalTitle && param !== "multisig")) &&
+           ((param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle) ||
+            (!proposalTitle && (!fundFromSafeOption || param !== "multisig"))) &&
            selectedToken &&
            availableBalance && availableBalance.toNumber() > 0 &&
            tokenAmount && tokenAmount.toNumber() > 0 &&
@@ -683,7 +694,7 @@ export const VestingContractAddFundsModal = (props: {
   const getTransactionStartButtonLabel = (): string => {
     return !selectedToken || !availableBalance || availableBalance.isZero()
       ? t('transactions.validation.no-balance')
-        : param === "multisig" && selectedMultisig && !proposalTitle
+        : fundFromSafeOption && param === "multisig" && selectedMultisig && !proposalTitle
         ? 'Add a proposal title'
         : !tokenAmount || tokenAmount.isZero()
           ? t('transactions.validation.no-amount')

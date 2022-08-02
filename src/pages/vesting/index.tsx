@@ -1789,7 +1789,7 @@ export const VestingView = () => {
 
       if (!msp) { return null; }
 
-      if (!isMultisigTreasury()) {
+      if (!isMultisigTreasury() || !params.fundFromSafe) {
         if (data.stream === '') {
           return await msp.addFunds(
             new PublicKey(data.payer),                    // payer
