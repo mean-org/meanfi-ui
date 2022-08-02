@@ -22,7 +22,7 @@ export const StatsView = () => {
   const connection = useConnection();
 
   const [totalVolume24h, setTotalVolume24h] = useState<number>(0);
-  const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | undefined>(0);
+  const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | null>(0);
   const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel | undefined>(undefined);
 
   // Getters
@@ -49,11 +49,9 @@ export const StatsView = () => {
 
     (async () => {
       // use getParsedAccountInfo
-      const sMeanInfo = await connection.getParsedAccountInfo(new PublicKey(SMEAN_TOKEN.address));
+      const sMeanInfo = await connection.getTokenSupply(new PublicKey(SMEAN_TOKEN.address));
       if (sMeanInfo && sMeanInfo.value) {
-        const totalSupply = (sMeanInfo.value?.data as ParsedAccountData).parsed["info"]["supply"];
-        console.log('****************** sMean Supply:', totalSupply, '********************');
-        setSMeanTotalSupply(toUiAmount(new BN(totalSupply), SMEAN_TOKEN.decimals));
+        setSMeanTotalSupply(sMeanInfo.value.uiAmount);
       }
     })();
   }, [

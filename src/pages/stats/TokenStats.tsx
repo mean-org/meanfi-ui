@@ -67,7 +67,7 @@ export const FirstCardsLayout = () => {
   // Returns an information or error notification each time the copy icon is clicked
   const onCopyText = (event: any) => { 
     if (event.currentTarget.name === "Address") {
-      if (data.token_address && copyText(data.token_address)) {
+      if (MEAN_TOKEN.address && copyText(MEAN_TOKEN.address)) {
         openNotification({
           description: t('notifications.account-address-copied-message'),
           type: "info"
