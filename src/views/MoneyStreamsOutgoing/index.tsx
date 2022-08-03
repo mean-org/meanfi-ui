@@ -370,6 +370,7 @@ export const MoneyStreamsOutgoingView = (props: {
     let multisigAuth = '';
     const transactionLog: any[] = [];
 
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
