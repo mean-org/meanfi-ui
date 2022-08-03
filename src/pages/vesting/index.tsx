@@ -1855,6 +1855,7 @@ export const VestingView = () => {
         );
       }
 
+      consoleOut('Returned multisig Tx:', addFundsTx, 'blue');
       const ixData = Buffer.from(addFundsTx.instructions[0].data);
       const ixAccounts = addFundsTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
