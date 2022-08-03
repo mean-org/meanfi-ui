@@ -3,11 +3,10 @@ import { useTranslation } from "react-i18next";
 import { PlusOutlined } from "@ant-design/icons";
 import { MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
 import { isValidAddress, scrollToBottom } from "../../utils/ui";
-import { TextInput } from "../TextInput";
 import { InputMean } from "../InputMean";
 import { isMobile } from "react-device-detect";
 import useWindowSize from "../../hooks/useWindowResize";
-import { IconHelpCircle, IconTrash } from "../../Icons";
+import { IconHelpCircle, IconInfoCircle, IconTrash } from "../../Icons";
 import "./style.scss";
 import { Tooltip } from "antd";
 
@@ -84,7 +83,7 @@ export const MultisigSafeOwners = (props: {
               {label}
               <Tooltip placement="bottom" title="">
                 <span>
-                  <IconHelpCircle className="mean-svg-icons" />
+                  <IconInfoCircle className="mean-svg-icons" />
                 </span>
               </Tooltip>
             </div>

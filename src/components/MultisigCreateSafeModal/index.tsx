@@ -61,6 +61,12 @@ export const MultisigCreateSafeModal = (props: {
       : t('Continue')
   };
 
+  const getStepThreeContinueButtonLabel = (): string => {
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : t('Create')
+  };
+
   const onSafeNameInputValueChange = (e: any) => {
     setSafeName(e.target.value);
   }
@@ -186,7 +192,7 @@ export const MultisigCreateSafeModal = (props: {
                     </div>
                   </div>
 
-                  <Divider plain />
+                  {/* <Divider plain />
 
                   <div className="two-column-form-layout">
                     <div className="left">
@@ -204,7 +210,7 @@ export const MultisigCreateSafeModal = (props: {
                           Import safe
                       </Button>
                     </div>
-                  </div>
+                  </div> */}
                 </>
               </div>
 
@@ -411,7 +417,7 @@ export const MultisigCreateSafeModal = (props: {
                       multisigThreshold === 0
                     }
                   >
-                    {getStepTwoContinueButtonLabel()}
+                    {getStepThreeContinueButtonLabel()}
                   </Button>
                 </Col>
               </Row>
