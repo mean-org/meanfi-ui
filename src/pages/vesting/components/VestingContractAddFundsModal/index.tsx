@@ -30,7 +30,7 @@ import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { isError } from '../../../../utils/transactions';
 import { AllocationType, Stream, StreamTemplate, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
-import { CUSTOM_TOKEN_NAME, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { openNotification } from '../../../../components/Notifications';
 import { NATIVE_SOL } from '../../../../utils/tokens';
@@ -679,7 +679,8 @@ export const VestingContractAddFundsModal = (props: {
     return publicKey &&
           (!fundFromSafeOption || (param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
            selectedToken &&
-           availableBalance && availableBalance.toNumber() > 0 &&
+           ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && availableBalance.toNumber() > 0))) &&
+           nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
            tokenAmount && tokenAmount.toNumber() > 0 &&
            tokenAmount.lte(getMaxAmount())
             ? true
@@ -696,20 +697,28 @@ export const VestingContractAddFundsModal = (props: {
   }
 
   const getTransactionStartButtonLabel = (): string => {
-    return !selectedToken || !availableBalance || availableBalance.isZero()
-      ? t('transactions.validation.no-balance')
-        : fundFromSafeOption && param === "multisig" && selectedMultisig && !proposalTitle
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : fundFromSafeOption && param === "multisig" && selectedMultisig && !proposalTitle
         ? 'Add a proposal title'
-        : !tokenAmount || tokenAmount.isZero()
-          ? t('transactions.validation.no-amount')
-          : tokenAmount.gt(getMaxAmount())
-            ? t('transactions.validation.amount-high')
-            : allocationOption === AllocationType.Specific && !highLightableStreamId
-              ? t('transactions.validation.select-stream')
-              : allocationOption === AllocationType.Specific && highLightableStreamId
-                ? t('treasuries.add-funds.main-cta-fund-stream')
-                : t('treasuries.add-funds.main-cta');
+        : !selectedToken || (
+            (fundFromSafeOption && !tokenBalance) ||
+            (!fundFromSafeOption && (!availableBalance || availableBalance.isZero()))
+          )
+          ? t('transactions.validation.no-balance')
+          : !tokenAmount || tokenAmount.isZero()
+            ? t('transactions.validation.no-amount')
+            : tokenAmount.gt(getMaxAmount())
+              ? t('transactions.validation.amount-high')
+              : nativeBalance <= MIN_SOL_BALANCE_REQUIRED
+                ? t('transactions.validation.amount-sol-low')
+                : allocationOption === AllocationType.Specific && !highLightableStreamId
+                  ? t('transactions.validation.select-stream')
+                  : allocationOption === AllocationType.Specific && highLightableStreamId
+                    ? t('treasuries.add-funds.main-cta-fund-stream')
+                    : t('treasuries.add-funds.main-cta');
   }
+
 
   ///////////////
   // Rendering //
