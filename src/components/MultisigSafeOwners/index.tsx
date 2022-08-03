@@ -132,6 +132,7 @@ export const MultisigSafeOwners = (props: {
                       className="pt-2 pb-2"
                       type="text"
                       value={participant.address}
+                      maxLength={100}
                       onChange={(e: any) => {
                         const value = e.target.value;
                         setSingleItemAddress(value, index);
@@ -140,6 +141,13 @@ export const MultisigSafeOwners = (props: {
                       validationIcons={true}
                       isValid={isValidAddress(participant.address)}
                     />
+                    {isValidAddress(participant.address) ? (
+                      isInputMultisigAddress(participant.address) && (
+                        <small className="form-field-error ml-1">{t('multisig.create-multisig.multisig-address-used-as-participant')}</small>
+                      )
+                    ) : (
+                      <small className="form-field-error ml-1">Please enter a valid Solana address</small>
+                    )}
                   </div>
                 </div>
                 <div className="trash-icon" onClick={() => onRemoveSingleItem(index)}>
