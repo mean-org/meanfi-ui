@@ -34,7 +34,6 @@ export const TokenStats = ({meanStats, smeanSupply, totalVolume24h}: any) => {
 /*********************** FIRST TYPE OF CARDS *************************/
 export const FirstCardsLayout = () => {
   const { t } = useTranslation('common');
-
   const summaries = [
     {
       label: t('stats.summary.token-name'),
@@ -52,10 +51,10 @@ export const FirstCardsLayout = () => {
     {
       label: t('stats.summary.token-audits'),
       value: <span>
-        <a href="https://www.certik.com/projects/meanfinance#audit" target={"_blank"} rel="noopener noreferrer" title="CetriK" className="audit-links">
+        <a href="https://docs.meanfi.com/products/safety-and-security#audits" target={"_blank"} rel="noopener noreferrer" title="CetriK" className="audit-links">
           <img src="https://www.certik.com/certik-logotype-h-w.svg" alt="" />
         </a>
-        <a href="#" target={"_blank"} rel="noopener noreferrer" title="Sec3" className="audit-links">
+        <a href="https://docs.meanfi.com/products/safety-and-security#audits" target={"_blank"} rel="noopener noreferrer" title="Sec3" className="audit-links">
           <img src="https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg" alt="" />
         </a>
         </span>
@@ -65,19 +64,12 @@ export const FirstCardsLayout = () => {
   const { getTokenPriceBySymbol } = useContext(AppStateContext);
 
   // Returns an information or error notification each time the copy icon is clicked
-  const onCopyText = (event: any) => { 
-    if (event.currentTarget.name === "Address") {
-      if (MEAN_TOKEN.address && copyText(MEAN_TOKEN.address)) {
-        openNotification({
-          description: t('notifications.account-address-copied-message'),
-          type: "info"
-        });
-      } else {
-        openNotification({
-          description: t('notifications.account-address-not-copied-message'),
-          type: "error"
-        });
-      }
+  const onCopyText = (event: any) => {
+    if (event.currentTarget.name && copyText(event.currentTarget.name)) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
     }
   };
 
@@ -107,8 +99,8 @@ export const FirstCardsLayout = () => {
                     shape="circle"
                     size="middle"
                     icon={<CopyOutlined className="mean-svg-icons" />}
-                    onClick={onCopyText}
-                    name={summary.label}
+                    onClick={onCopyText}                    
+                    name={summary.value}
                   />
                 </Tooltip>
               </span>
@@ -170,44 +162,44 @@ export const SecondCardsLayout = ({
   const { t } = useTranslation('common');
   const cards = [
     {
-      label: t('stats.market.market-cap-title'),
+      label: 'stats.market.market-cap-title',
       value: `$ ${formatThousands(meanStats.marketCapFD)}`,
       description: "stats.market.token-fully_dilluted_market_cap"
     },
     {
-      label: t('stats.market.holders-title'),
+      label: 'stats.market.holders-title',
       value: formatThousands(meanStats.holders),
       description: "stats.market.token-holders"
     },
     {
-      label: t('stats.market.volume-title'),
+      label: 'stats.market.volume-title',
       value: `$ ${formatThousands(totalVolume24h)}`,
       description: "stats.market.token-total-volume"
     },
     {
-      label: t('stats.market.total-supply-title'),
+      label: 'stats.market.total-supply-title',
       value: formatThousands(meanStats.totalSupply),
       description: "stats.market.token-total-supply"
     },
     {
-      label: t('stats.market.circulating-supply-title'),
+      label: 'stats.market.circulating-supply-title',
       value: formatThousands(meanStats.circulatingSupply),
       description: "stats.market.token-circulating-suppply"
     },
     {
-      label: t('stats.market.total-money-streams-title'),
+      label: 'stats.market.total-money-streams-title',
       value: formatThousands(meanStats.tvl.totalStreams),
       description: "stats.market.token-total-money-streams"
     },
     {
-      label: t('stats.market.total-value-locked-title'),
+      label: 'stats.market.total-value-locked-title',
       value: `$ ${formatThousands(meanStats.tvl.total)}`,
       description: "stats.market.token-total-value-locked"
     },
     {
-      label: t('invest.panel-right.stats.total-mean-rewards'),
+      label: 'invest.panel-right.stats.total-mean-rewards',
       value: `${formatThousands(sMeanTotalSupply)}`,
-      description: "invest.panel-right.stats.total-mean-rewards"
+      description: "stats.market.token-smean-supply"
     },
   ];
 
@@ -218,7 +210,7 @@ export const SecondCardsLayout = ({
           <Card className="ant-card card info-cards">
             <div className="ant-card-body card-body">
               <div className="card-content">
-                <span className="info-label">{card.label}</span>
+                <span className="info-label">{t(card.label)}</span>
                 <Tooltip placement="top" title={t(card.description)}>
                   <span>
                     <IconInfoCircle className="mean-svg-icons" />

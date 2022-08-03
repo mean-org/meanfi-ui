@@ -760,7 +760,8 @@
 			"total-money-streams-title": "总资金流",
 			"total-supply-title": "总供应量",
 			"total-value-locked-title": "锁定的总值",
-			"volume-title": "体积（24小时）"
+			"volume-title": "体积（24小时）",
+			"token-smean-supply": "The total amount of MEAN tokens currently being staked"
 		},
 		"pairs": {
 			"total-liquidity": "总流动性"

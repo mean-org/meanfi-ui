@@ -760,7 +760,8 @@
 			"total-money-streams-title": "Flujo total de dinero",
 			"total-supply-title": "Acciones totales",
 			"total-value-locked-title": "Valor total bloqueado",
-			"volume-title": "Volumen (24H)"
+			"volume-title": "Volumen (24H)",
+			"token-smean-supply": "The total amount of MEAN tokens currently being staked"
 		},
 		"pairs": {
 			"total-liquidity": "Liquidez Total"

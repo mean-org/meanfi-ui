@@ -40,7 +40,7 @@ export const MEAN_TOKEN = {
     chainId: 101,
     address: 'MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD',
     symbol: 'MEAN',
-    name: 'Meanfi',
+    name: 'Mean Finance',
     decimals: 6,
     logoURI: `${LOGO_BASE_URL}/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg`,
     extensions: {
@@ -680,7 +680,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         chainId: 103,
         address: 'MNZeoVuS87pFssHCbxKHfddvJk4MjmM2RHjQskrk7qs',
         symbol: 'MEAN',
-        name: 'MEAN',
+        name: 'Mean Finance',
         decimals: 6,
         logoURI: `${LOGO_BASE_URL}/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg`,
         extensions: {

@@ -846,7 +846,8 @@
 			"total-money-streams-title": "Tổng Money Streams",
 			"total-supply-title": "Tổng cung",
 			"total-value-locked-title": "Tổng tài sản bị khóa",
-			"volume-title": "Volume (24H)"
+			"volume-title": "Volume (24H)",
+			"token-smean-supply": "The total amount of MEAN tokens currently being staked"
 		},
 		"pairs": {
 			"total-liquidity": "Tổng thanh khoản"

@@ -1,17 +1,14 @@
-import { ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { PublicKey } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { Col, Row } from 'antd';
-import { BN } from 'bn.js';
 
 import "./style.scss";
 import { IconStats } from '../../Icons';
 import { PreFooter } from "../../components/PreFooter";
-import { useConnection } from '../../contexts/connection';
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { TokenStats } from './TokenStats';
-import { toUiAmount } from '../../utils/utils';
-import { MEAN_TOKEN, SMEAN_TOKEN } from '../../constants/token-list';
+import { MEAN_TOKEN, MEAN_TOKEN_LIST, SMEAN_TOKEN } from '../../constants/token-list';
 import { getCoingeckoMarketChart, getMeanStats } from '../../utils/api';
 import { MeanFiStatsModel } from '../../models/meanfi-stats';
 
@@ -21,6 +18,7 @@ export const StatsView = () => {
   const { t } = useTranslation('common');
   const connection = useConnection();
 
+  const { cluster } = useConnectionConfig();
   const [totalVolume24h, setTotalVolume24h] = useState<number>(0);
   const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | null>(0);
   const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel | undefined>(undefined);
@@ -31,7 +29,6 @@ export const StatsView = () => {
   useEffect(() => {
     (async () => {
       const meanStats = await getMeanStats();
-      console.log('****************** meanStats:', meanStats, '********************');
       if (meanStats) {
         setMeanfiStats(meanStats);
       }
@@ -47,9 +44,13 @@ export const StatsView = () => {
   useEffect(() => {
     if (!connection) { return; }
 
+    const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(cluster))
+    const stakedToken = tokenList.find(t => t.symbol === SMEAN_TOKEN.symbol);
+    
     (async () => {
-      // use getParsedAccountInfo
-      const sMeanInfo = await connection.getTokenSupply(new PublicKey(SMEAN_TOKEN.address));
+      // use getTokenSupply
+      const sMeanPubKey = new PublicKey(stakedToken ? stakedToken.address : SMEAN_TOKEN.address);
+      const sMeanInfo = await connection.getTokenSupply(sMeanPubKey, 'confirmed');
       if (sMeanInfo && sMeanInfo.value) {
         setSMeanTotalSupply(sMeanInfo.value.uiAmount);
       }
@@ -58,7 +59,7 @@ export const StatsView = () => {
     connection
   ]);
 
-  if (!meanfiStats) { return <p>{t('general.loading')}...</p>; }
+  if (!meanfiStats || sMeanTotalSupply == 0) { return <p>{t('general.loading')}...</p>; }
 
   return (
     <>

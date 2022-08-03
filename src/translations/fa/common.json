@@ -754,7 +754,8 @@
 			"total-money-streams-title": "مجموع Money Streams",
 			"total-supply-title": "عرضه کل",
 			"total-value-locked-title": "ارزش کل قفل شده است",
-			"volume-title": "حجم (24 ساعت)"
+			"volume-title": "حجم (24 ساعت)",
+			"token-smean-supply": "The total amount of MEAN tokens currently being staked"
 		},
 		"pairs": {
 			"total-liquidity": "نقدینگی کل"

@@ -752,7 +752,7 @@
 			"market-cap-title": "Piyasa Değeri",
 			"token-circulating-suppply": "Piyasada dolaşan ve halkın elinde olan madeni para miktarı. Borsada akan hisselere benzer.",
 			"token-fully_dilluted_market_cap": "Bir kripto para biriminin dolaşımdaki arzının toplam piyasa değeri. Borsadaki serbest dolaşımdaki kapitalizasyona benzer. Piyasa Değeri = Mevcut Fiyat x Dönen Arz",
-			"token-holders": "Meraklılar kripto para birimi yatırımına uzun vadeli bir yaklaşım getiriyor\t\t\t",
+			"token-holders": "Meraklılar kripto para birimi yatırımına uzun vadeli bir yaklaşım getiriyor",
 			"token-total-money-streams": "Para Akışı Programı tarafından oluşturulan zaman içinde toplam sürekli ödeme sayısı",
 			"token-total-supply": "Halihazırda yaratılmış olan madeni para miktarı eksi yakılan madeni paralar. Bu, borsadaki ödenmemiş hisselere benzer",
 			"token-total-value-locked": "Şu anda belirli bir protokolde kilitlenen varlıkların sayısı",
@@ -760,7 +760,8 @@
 			"total-money-streams-title": "Toplam Para Akışı",
 			"total-supply-title": "Toplam Arz",
 			"total-value-locked-title": "Toplam Kilitli Değer",
-			"volume-title": "Hacim (24S)"
+			"volume-title": "Hacim (24S)",
+			"token-smean-supply": "The total amount of MEAN tokens currently being staked"
 		},
 		"pairs": {
 			"total-liquidity": "Toplam Likidite"
