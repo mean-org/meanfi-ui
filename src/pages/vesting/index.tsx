@@ -426,10 +426,9 @@ export const VestingView = () => {
         duration: 8,
       });
       await delay(8000);
-      const myNotifyKey = `notify-${Date.now()}`;
       openNotification({
         type: "info",
-        key: myNotifyKey,
+        key: 'goto-proposals-notify',
         description: (
           <>
             <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
@@ -439,10 +438,10 @@ export const VestingView = () => {
               shape="round"
               className="extra-small"
               onClick={() => {
+                notification.close('goto-proposals-notify');
                 const url = `/multisig/${item.extras.multisigId}?v=proposals`;
                 setHighLightableMultisigId(item.extras.multisigId);
                 navigate(url);
-                notification.close(myNotifyKey);
               }}>
               See proposals
             </Button>
@@ -3935,7 +3934,6 @@ export const VestingView = () => {
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       setCanSubscribe(true);
-      notification.destroy();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

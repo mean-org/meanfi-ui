@@ -70,7 +70,7 @@ import { MultisigTxResultModal } from '../../components/MultisigTxResultModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
 import { CreateNewProposalParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
@@ -117,6 +117,7 @@ export const SafeView = () => {
 
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
+  const location = useLocation();
   const navigate = useNavigate();
   // Misc hooks
   const { width } = useWindowSize();
@@ -3522,7 +3523,6 @@ export const SafeView = () => {
     connection,
     multisigClient,
     selectedMultisig,
-    highLightableMultisigId,
     needReloadMultisigAccounts,
   ]);
 
@@ -3862,56 +3862,23 @@ export const SafeView = () => {
     needRefreshTxs,
   ]);
 
-  /////////////////
-  //   Getters   //
-  /////////////////
-
-  // Scroll to a given multisig is specified as highLightableMultisigId
-  useEffect(() => {
-
-    if (loadingMultisigAccounts || multisigAccounts.length === 0 || !highLightableMultisigId || !selectedMultisig) {
-      return;
-    }
-
-    // consoleOut('Try to scroll multisig into view...', '', 'green');
-    const timeout = setTimeout(() => {
-      const highlightTarget = document.getElementById(selectedMultisig.id.toBase58());
-      if (highlightTarget) {
-        highlightTarget.scrollIntoView({ behavior: 'smooth' });
-      }
-      setHighLightableMultisigId(undefined);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    selectedMultisig,
-    multisigAccounts,
-    loadingMultisigAccounts,
-    highLightableMultisigId,
-    setHighLightableMultisigId,
-  ]);
-
   // Actually selects a multisig base on url
   useEffect(() => {
 
     if (multisigAccounts) {
       let item: MultisigInfo | undefined = undefined;
 
-      if (highLightableMultisigId) {
-        // Select a multisig that was instructed to highlight when entering this feature
-        // either by its ID or by its authority
-        item = multisigAccounts.find(m => m.id.toBase58() === highLightableMultisigId || m.authority.toBase58() === highLightableMultisigId);
-        if (item) {
-          consoleOut('selected via highLightableMultisigId:', item, 'purple');
-          consoleOut('Making multisig active:', item, 'blue');
-          setSelectedMultisig(item);
-          setNeedRefreshTxs(true);
-          setNeedReloadPrograms(true);
-        }
-      } else if (address) {
+      // if (highLightableMultisigId) {
+      //   item = multisigAccounts.find(m => m.id.toBase58() === highLightableMultisigId || m.authority.toBase58() === highLightableMultisigId);
+      //   if (item) {
+      //     consoleOut('selected via highLightableMultisigId:', item, 'purple');
+      //     consoleOut('Making multisig active:', item, 'blue');
+      //     setSelectedMultisig(item);
+      //     setNeedRefreshTxs(true);
+      //     setNeedReloadPrograms(true);
+      //   }
+      // } else
+      if (address) {
         // Re-select the one active
         if (multisigAccounts && multisigAccounts.length > 0) {
           item = multisigAccounts.find(m => m.authority.toBase58() === address);
@@ -3937,7 +3904,7 @@ export const SafeView = () => {
         }
       }
 
-      if (address && !id) {
+      if (address && location.pathname.indexOf('/proposals') !== -1 && location.pathname.indexOf('/programs') !== -1 && !id) {
         const isProposalsFork = queryParamV === "proposals" || queryParamV === "instruction" || queryParamV === "activity" ? true : false;
         const isProgramsFork = queryParamV === "programs" || queryParamV === "transactions" || queryParamV === "anchor-idl" ? true : false;
         const isValidParam = isProposalsFork || isProgramsFork ? true : false;
@@ -3948,7 +3915,35 @@ export const SafeView = () => {
       }
     }
 
-  }, [address, highLightableMultisigId, id, multisigAccounts, navigate, queryParamV]);
+  }, [address, id, location.pathname, multisigAccounts, navigate, queryParamV]);
+
+  // Scroll to a given multisig is specified as highLightableMultisigId
+  useEffect(() => {
+
+    if (loadingMultisigAccounts || multisigAccounts.length === 0 || !highLightableMultisigId || !selectedMultisig) {
+      return;
+    }
+
+    // consoleOut('Try to scroll multisig into view...', '', 'green');
+    const timeout = setTimeout(() => {
+      const highlightTarget = document.getElementById(selectedMultisig.authority.toBase58());
+      if (highlightTarget) {
+        highlightTarget.scrollIntoView({ behavior: 'smooth' });
+      }
+      setHighLightableMultisigId(undefined);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    selectedMultisig,
+    multisigAccounts,
+    loadingMultisigAccounts,
+    highLightableMultisigId,
+    setHighLightableMultisigId,
+  ]);
 
   // Process route params and set item (proposal) specified in the url by id
   useEffect(() => {
