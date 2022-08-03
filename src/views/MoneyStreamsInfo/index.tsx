@@ -135,6 +135,7 @@ export const MoneyStreamsInfoView = (props: {
     rentExempt: 0
   } as MultisigTransactionFees);
 
+  const [canDisplayWithdrawalBalance, setCanDisplayWithdrawalBalance] = useState(false);
   const [withdrawalBalance, setWithdrawalBalance] = useState(0);
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
   const [totalAccountBalance, setTotalAccountBalance] = useState<number | undefined>(undefined);
@@ -370,12 +371,13 @@ export const MoneyStreamsInfoView = (props: {
     // Update state
     setStreamingAccountsSummary(resume);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [
-      getTokenPriceBySymbol,
-      getTokenByMintAddress,
-      getTreasuryUnallocatedBalance,
-      treasuryList
+    treasuryList,
+    getTokenByMintAddress,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    getTreasuryUnallocatedBalance
   ]);
 
   const refreshIncomingStreamSummary = useCallback(async () => {
@@ -452,7 +454,7 @@ export const MoneyStreamsInfoView = (props: {
 
     // Update state
     setIncomingStreamsSummary(resume);
-
+    setCanDisplayWithdrawalBalance(true);
   }, [
     ms,
     msp,
@@ -1904,10 +1906,14 @@ export const MoneyStreamsInfoView = (props: {
 
   // Update incoming balance
   useEffect(() => {
-    if (!incomingStreamsSummary) { return; }
+    if (!incomingStreamsSummary || !streamList || loadingStreams || loadingCombinedStreamingList) { return; }
 
     setWithdrawalBalance(parseFloat(incomingStreamsSummary.totalNet.toFixed(2)));
-  }, [incomingStreamsSummary]);
+
+    // console.log("incomingStreamsSummary.totalNet test...", incomingStreamsSummary.totalNet)
+
+    // setCanDisplayWithdrawalBalance(true);
+  }, [incomingStreamsSummary, loadingCombinedStreamingList, loadingStreams, streamList]);
 
   // Update outgoing balance
   useEffect(() => {
@@ -2246,7 +2252,7 @@ export const MoneyStreamsInfoView = (props: {
               Available to withdraw:
             </div>
             <div className="info-value">
-              {loadingCombinedStreamingList || loadingStreams ? (
+              {loadingCombinedStreamingList || loadingStreams || !canDisplayWithdrawalBalance ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : withdrawalBalance
                 ? toUsCurrency(withdrawalBalance)
