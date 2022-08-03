@@ -95,6 +95,7 @@ export const MoneyStreamsInfoView = (props: {
     splTokenList,
     streamListv1,
     streamListv2,
+    selectedToken,
     treasuryOption,
     transactionStatus,
     streamProgramAddress,
@@ -903,6 +904,7 @@ export const MoneyStreamsInfoView = (props: {
       }
 
       consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
+      consoleOut('onExecuteAddFundsTransaction ->','/src/views/MoneyStreamsInfo/index.tsx', 'darkcyan');
       // Create a transaction
       const result = await addFunds(data)
         .then((value: Transaction | null) => {
@@ -1043,10 +1045,9 @@ export const MoneyStreamsInfoView = (props: {
       }
     }
 
-    if (publicKey && params) {
+    if (publicKey && params && selectedToken) {
       const treasury = treasuryList.find(t => t.id === params.treasuryId);
       if (!treasury) { return null; }
-      const token = getTokenByMintAddress(params.associatedToken);
       let created: boolean;
       if ((treasury as Treasury).version && (treasury as Treasury).version >= 2) {
         created = await createTxV2();
@@ -1057,26 +1058,26 @@ export const MoneyStreamsInfoView = (props: {
       if (created && !transactionCancelled) {
         const sign = await signTx();
         consoleOut('sign:', sign);
-        const loadingMessage = multisigAuthority
-          ? `Create proposal to fund streaming account with ${formatThousands(
-              parseFloat(params.amount),
-              token?.decimals
-            )} ${token?.symbol}`
-          : `Fund streaming account with ${formatThousands(
-              parseFloat(params.amount),
-              token?.decimals
-            )} ${token?.symbol}`;
-        const completed = multisigAuthority
-          ? `Streaming account funding has been submitted for approval.`
-          : `Streaming account funded with ${formatThousands(
-            parseFloat(params.amount),
-            token?.decimals
-          )} ${token?.symbol}`;
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const loadingMessage = multisigAuthority
+              ? `Create proposal to fund streaming account with ${formatThousands(
+                  parseFloat(params.amount),
+                  selectedToken?.decimals
+                )} ${selectedToken?.symbol}`
+              : `Fund streaming account with ${formatThousands(
+                  parseFloat(params.amount),
+                  selectedToken?.decimals
+                )} ${selectedToken?.symbol}`;
+            const completed = multisigAuthority
+              ? `Streaming account funding has been submitted for approval.`
+              : `Streaming account funded with ${formatThousands(
+                parseFloat(params.amount),
+                selectedToken?.decimals
+              )} ${selectedToken?.symbol}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryAddFunds,

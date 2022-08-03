@@ -121,6 +121,7 @@ export interface VestingContractStreamCreateOptions {
     tokenAmount: number;
     txConfirmDescription: string;
     txConfirmedDescription: string;
+    proposalTitle?: string;
 }
 
 export interface CreateVestingStreamParams {

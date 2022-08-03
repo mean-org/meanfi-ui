@@ -18,6 +18,7 @@ import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME } from '../../../../constants';
 import { InfoIcon } from '../../../../components/InfoIcon';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { InputMean } from '../../../../components/InputMean';
 
 export const VestingContractCreateStreamModal = (props: {
     handleClose: any;
@@ -77,7 +78,6 @@ export const VestingContractCreateStreamModal = (props: {
     const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
     const [tokenAmount, setTokenAmount] = useState(new BN(0));
     const [maxAllocatableAmount, setMaxAllocatableAmount] = useState(new BN(0));
-
     // Setting from the vesting contract
     const [treasuryOption, setTreasuryOption] = useState<TreasuryType | undefined>(undefined);
     const [paymentStartDate, setPaymentStartDate] = useState<string>("");
@@ -86,6 +86,7 @@ export const VestingContractCreateStreamModal = (props: {
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("");
     const [cliffRelease, setCliffRelease] = useState<string>("")
     const [paymentRateAmount, setPaymentRateAmount] = useState<string>("");
+    const [proposalTitle, setProposalTitle] = useState('');
 
     const isFeePaidByTreasurer = useMemo(() => {
         return streamTemplate
@@ -400,6 +401,7 @@ export const VestingContractCreateStreamModal = (props: {
             tokenAmount: tokenAmount.toNumber(),
             txConfirmDescription: getStreamTxConfirmDescription(multisig),
             txConfirmedDescription: getStreamTxConfirmedDescription(multisig),
+            proposalTitle: proposalTitle || ''
         };
         handleOk(options);
     }
@@ -486,6 +488,8 @@ export const VestingContractCreateStreamModal = (props: {
         const mAa = new BN(maxAllocatableAmount || 0);
         const ub = new BN(unallocatedBalance || 0);
         return  publicKey &&
+                ((isMultisigTreasury && selectedMultisig && proposalTitle) ||
+                 (!isMultisigTreasury && !proposalTitle)) &&
                 selectedToken &&
                 vestingStreamName && vestingStreamName.length <= 32 &&
                 recipientAddress &&
@@ -511,22 +515,24 @@ export const VestingContractCreateStreamModal = (props: {
         const ub = new BN(unallocatedBalance || 0);
         return  !publicKey
             ? t('transactions.validation.not-connected')
-            : !vestingStreamName || vestingStreamName.length > 32
-                ? t('vesting.create-stream.stream-name-empty')
-                : !recipientAddress || !isValidAddress(recipientAddress)
-                    ? t('vesting.create-stream.beneficiary-address-missing')
-                    : isAddressOwnAccount()
-                        ? t('vesting.create-stream.cannot-send-to-yourself')
-                        : !selectedToken || unallocatedBalance.isZero()
-                            ? t('transactions.validation.no-balance')
-                            : !tokenAmount || tokenAmount.isZero()
-                                ? t('transactions.validation.no-amount')
-                                : (isFeePaidByTreasurer && tokenAmount.gt(mAa)) ||
-                                  (!isFeePaidByTreasurer && tokenAmount.gt(ub))
-                                    ? t('transactions.validation.amount-high')
-                                    : nativeBalance < getMinBalanceRequired()
-                                        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-                                        : t('vesting.create-stream.step-one-validation-pass');
+                : (isMultisigTreasury && selectedMultisig && !proposalTitle)
+                ? 'Add a proposal title'
+                    : !vestingStreamName || vestingStreamName.length > 32
+                        ? t('vesting.create-stream.stream-name-empty')
+                        : !recipientAddress || !isValidAddress(recipientAddress)
+                            ? t('vesting.create-stream.beneficiary-address-missing')
+                            : isAddressOwnAccount()
+                                ? t('vesting.create-stream.cannot-send-to-yourself')
+                                : !selectedToken || unallocatedBalance.isZero()
+                                    ? t('transactions.validation.no-balance')
+                                    : !tokenAmount || tokenAmount.isZero()
+                                        ? t('transactions.validation.no-amount')
+                                        : (isFeePaidByTreasurer && tokenAmount.gt(mAa)) ||
+                                        (!isFeePaidByTreasurer && tokenAmount.gt(ub))
+                                            ? t('transactions.validation.amount-high')
+                                            : nativeBalance < getMinBalanceRequired()
+                                                ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
+                                                : t('vesting.create-stream.step-one-validation-pass');
     }
 
     const getStepTwoButtonLabel = (): string => {
@@ -535,6 +541,10 @@ export const VestingContractCreateStreamModal = (props: {
             : !isVerifiedRecipient
                 ? t('transactions.validation.verified-recipient-unchecked')
                 : t('vesting.create-stream.create-cta');
+    }
+
+    const onTitleInputValueChange = (e: any) => {
+        setProposalTitle(e.target.value);
     }
 
 
@@ -580,6 +590,21 @@ export const VestingContractCreateStreamModal = (props: {
                 <div className={`panel1 ${currentStep === 0 ? 'show' : 'hide'}`}>
 
                     {vestingContract && renderVcName()}
+
+                    {/* Proposal title */}
+                    {isMultisigTreasury && selectedMultisig && (
+                        <div className="mb-3">
+                            <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+                            <InputMean
+                                id="proposal-title-field"
+                                name="Title"
+                                className="w-100 general-text-input"
+                                onChange={onTitleInputValueChange}
+                                placeholder="Add a proposal title (required)"
+                                value={proposalTitle}
+                            />
+                        </div>
+                    )}
 
                     {/* Vesting Stream name */}
                     <div className="form-label">{t('vesting.create-stream.vesting-stream-name-label')}</div>

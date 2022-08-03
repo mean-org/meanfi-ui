@@ -2253,7 +2253,7 @@ export const VestingView = () => {
 
       const tx = await multisigClient.createMoneyStreamTransaction(
         publicKey,
-        "Create Vesting Stream",
+        data.proposalTitle || "Create Vesting Stream",
         "", // description
         new Date(expirationTime * 1_000),
         timeStampCounter.toNumber(),
@@ -2302,6 +2302,7 @@ export const VestingView = () => {
 
       // Create a transaction
       const data = {
+        proposalTitle: params.proposalTitle,                            // proposal title
         payer: publicKey.toBase58(),                                    // payer
         treasurer: treasurer.toBase58(),                                // treasurer
         treasury: treasury.toBase58(),                                  // treasury
