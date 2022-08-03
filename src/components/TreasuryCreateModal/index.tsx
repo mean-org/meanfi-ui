@@ -65,7 +65,7 @@ export const TreasuryCreateModal = (props: {
   const accounts = useAccountsContext();
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
-  const [multisigTitle, setMultisigTitle] = useState('');
+  const [proposalTitle, setProposalTitle] = useState('');
   const [treasuryName, setTreasuryName] = useState('');
   const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
   const [localSelectedMultisig, setLocalSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
@@ -303,7 +303,7 @@ export const TreasuryCreateModal = (props: {
 
   const onAcceptModal = () => {
     const options: TreasuryCreateOptions = {
-      treasuryTitle: multisigTitle,
+      treasuryTitle: proposalTitle,
       treasuryName: treasuryName,
       token: workingToken as TokenInfo,
       treasuryType: treasuryOption ? treasuryOption.type : TreasuryType.Open,
@@ -318,7 +318,7 @@ export const TreasuryCreateModal = (props: {
 
   const onAfterClose = () => {
     setTimeout(() => {
-      setMultisigTitle('');
+      setProposalTitle('');
       setTreasuryName('');
     }, 50);
     setTransactionStatus({
@@ -332,8 +332,37 @@ export const TreasuryCreateModal = (props: {
     window.location.reload();
   }
 
+  // Validation
+  const isValidForm = (): boolean => {
+    return treasuryName
+      ? true
+      : false;
+  }
+
+  // Validation if multisig
+  const isValidFormMultisig = (): boolean => {
+    return treasuryName &&
+      proposalTitle
+      ? true
+      : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !treasuryName
+      ? "Add an account name"
+      : t('treasuries.create-treasury.main-cta')
+  }
+
+  const getTransactionStartButtonLabelMultisig = () => {
+    return !proposalTitle
+      ? "Add a proposal title"
+      : !treasuryName
+        ? "Add an account name"
+        : 'Sign proposal'
+  }
+
   const onTitleInputValueChange = (e: any) => {
-    setMultisigTitle(e.target.value);
+    setProposalTitle(e.target.value);
   }
 
   const onInputValueChange = (e: any) => {
@@ -512,8 +541,8 @@ export const TreasuryCreateModal = (props: {
                     name="Title"
                     className="w-100 general-text-input"
                     onChange={onTitleInputValueChange}
-                    placeholder="Add a proposal title"
-                    value={multisigTitle}
+                    placeholder="Add a proposal title (required)"
+                    value={proposalTitle}
                   />
                 </div>
               )}
@@ -711,26 +740,23 @@ export const TreasuryCreateModal = (props: {
                   type="primary"
                   shape="round"
                   size="large"
-                  disabled={!treasuryName}
+                  disabled={param === "multisig" ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                       onAcceptModal();
-                    // } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                    //   onCloseModal();
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                      onCloseModal();
                     } else {
                       refreshPage();
                     }
                   }}>
-                  {/* {isBusy && (
-                    <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-                  )} */}
                   {isBusy
                     ? t('treasuries.create-treasury.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                      ? enableMultisigTreasuryOption && multisigAccounts && multisigAccounts.length > 0
-                        ? (param === "multisig" ? "Submit proposal" : t('treasuries.create-treasury.create-multisig-cta'))
-                        : (param === "multisig" ? "Submit proposal" : t('treasuries.create-treasury.main-cta'))
-                      : t('general.refresh')
+                      ? (param === "multisig" ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel())
+                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                        ? t('general.cta-finish')
+                        : t('general.refresh')
                   }
                 </Button>
               </div>

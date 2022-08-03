@@ -472,7 +472,8 @@
 		"multisig-accounts": {
 			"no-accounts": "Nenhuma conta multisig disponível",
 			"not-connected": "Por favor, conecte sua carteira para ver suas contas multisig",
-			"pending-transactions": "{{txs}} transações pendentes"
+			"pending-transactions": "{{txs}} transações pendentes",
+			"loading-multisig-accounts": "Loading multisig accounts"
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Detalhes do cofre",

@@ -472,7 +472,8 @@
 		"multisig-accounts": {
 			"no-accounts": "没有可用的多重签名帐户",
 			"not-connected": "请连接您的钱包以查看您的多重签名帐户",
-			"pending-transactions": "{{txs}}未决事务"
+			"pending-transactions": "{{txs}}未决事务",
+			"loading-multisig-accounts": "Loading multisig accounts"
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Asset details",

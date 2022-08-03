@@ -43,7 +43,7 @@ export const StreamWithdrawModal = (props: {
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [feePayedByTreasurer, setFeePayedByTreasurer] = useState(false);
-  const [multisigTitle, setMultisigTitle] = useState('');
+  const [proposalTitle, setProposalTitle] = useState('');
 
   const getQueryAccountType = useCallback(() => {
     let accountTypeInQuery: string | null = null;
@@ -180,7 +180,7 @@ export const StreamWithdrawModal = (props: {
       ? true : false;
     setWithdrawAmountInput('');
     const withdrawData: StreamWithdrawData = {
-      title: multisigTitle,
+      title: proposalTitle,
       token: props.selectedToken ? props.selectedToken.symbol || '-' : '-',
       amount: isMaxAmount ? `${maxAmount}` : withdrawAmountInput,
       inputAmount: parseFloat(withdrawAmountInput),
@@ -198,7 +198,7 @@ export const StreamWithdrawModal = (props: {
   const onAfterClose = () => {
 
     setTimeout(() => {
-      setMultisigTitle('');
+      setProposalTitle('');
       setWithdrawAmountInput('');
     }, 50);
 
@@ -209,7 +209,7 @@ export const StreamWithdrawModal = (props: {
   }
 
   const onTitleInputValueChange = (e: any) => {
-    setMultisigTitle(e.target.value);
+    setProposalTitle(e.target.value);
   }
 
   const setValue = (value: string) => {
@@ -262,13 +262,46 @@ export const StreamWithdrawModal = (props: {
   };
 
   // Validation
-  const isValidInput = (): boolean => {
+  const isValidForm = (): boolean => {
     return props.startUpData &&
       withdrawAmountInput &&
       parseFloat(withdrawAmountInput) <= parseFloat(getDisplayAmount(maxAmount)) &&
       parseFloat(withdrawAmountInput) > (feeAmount as number)
       ? true
       : false;
+  }
+
+  // Validation if multisig
+  const isValidFormMultisig = (): boolean => {
+    return proposalTitle &&
+      props.startUpData &&
+      withdrawAmountInput &&
+      parseFloat(withdrawAmountInput) <= parseFloat(getDisplayAmount(maxAmount)) &&
+      parseFloat(withdrawAmountInput) > (feeAmount as number)
+      ? true
+      : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !withdrawAmountInput || +withdrawAmountInput === 0
+        ? 'Enter amount'
+        : parseFloat(getDisplayAmount(maxAmount)) === 0
+          ? 'No balance'
+          : parseFloat(withdrawAmountInput) > parseFloat(getDisplayAmount(maxAmount))
+            ? 'Amount exceeded'
+            : t('transactions.validation.valid-start-withdrawal')
+  }
+
+  const getTransactionStartButtonLabelMultisig = () => {
+    return !proposalTitle
+      ? "Add a proposal title"
+      : !withdrawAmountInput || +withdrawAmountInput === 0
+        ? 'Enter amount'
+        : parseFloat(getDisplayAmount(maxAmount)) === 0
+          ? 'No balance'
+          : parseFloat(withdrawAmountInput) > parseFloat(getDisplayAmount(maxAmount))
+            ? 'Amount exceeded'
+            : 'Sign proposal'
   }
 
   const getDisplayAmount = (amount: number, addSymbol = false): string => {
@@ -300,7 +333,7 @@ export const StreamWithdrawModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">{t('withdraw-funds.modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Propose withdraw funds" : t('withdraw-funds.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptWithdrawal}
@@ -315,8 +348,8 @@ export const StreamWithdrawModal = (props: {
               name="Title"
               className="w-100 general-text-input"
               onChange={onTitleInputValueChange}
-              placeholder="Add a proposal title"
-              value={multisigTitle}
+              placeholder="Add a proposal title (required)"
+              value={proposalTitle}
             />
           </div>
         )}
@@ -391,11 +424,11 @@ export const StreamWithdrawModal = (props: {
       {/* Info */}
       {props.selectedToken && (
         <div className="p-2 mb-2">
-          {isValidInput() && infoRow(
+          {(isValidForm() || isValidFormMultisig()) && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
             `~${getDisplayAmount((feeAmount as number), true)}`
           )}
-          {isValidInput() && infoRow(
+          {(isValidForm() || isValidFormMultisig()) && infoRow(
             t('transactions.transaction-info.you-receive') + ':',
             `~${getDisplayAmount(parseFloat(withdrawAmountInput) - (feeAmount as number), true)}`
           )}
@@ -408,9 +441,9 @@ export const StreamWithdrawModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!isValidInput()}
+        disabled={param === "multisig" ? !isValidFormMultisig() : !isValidForm()}
         onClick={onAcceptWithdrawal}>
-        {isValidInput() ? param === "multisig" ? "Propose withdrawal" : t('transactions.validation.valid-start-withdrawal') : t('transactions.validation.invalid-amount')}
+        {param === "multisig" ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel()}
       </Button>
     </Modal>
   );

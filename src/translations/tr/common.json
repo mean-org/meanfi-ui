@@ -472,7 +472,8 @@
 		"multisig-accounts": {
 			"no-accounts": "Çoklu-İmza hesabı mevcut değil",
 			"not-connected": "Çoklu-İmza hesaplarınızı görmek için lütfen cüzdanınızı bağlayın",
-			"pending-transactions": "{{txs}} devam eden işlem"
+			"pending-transactions": "{{txs}} devam eden işlem",
+			"loading-multisig-accounts": "Loading multisig accounts"
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Kasa detayları",

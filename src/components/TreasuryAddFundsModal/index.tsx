@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Spin, Tooltip } from 'antd';
+import { Modal, Button, Select, Spin, Tooltip, Radio } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -32,13 +32,15 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { AllocationType, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { openNotification } from '../Notifications';
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { useSearchParams } from 'react-router-dom';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Identicon } from '../Identicon';
 import { QRCodeSVG } from 'qrcode.react';
 import { AddressDisplay } from '../AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
+import { NATIVE_SOL } from '../../utils/tokens';
+import { InputMean } from '../InputMean';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -50,6 +52,7 @@ export const TreasuryAddFundsModal = (props: {
   isBusy: boolean;
   isVisible: boolean;
   nativeBalance: number;
+  onReloadTokenBalances: any;
   selectedMultisig: MultisigInfo | undefined;
   transactionFees: TransactionFees;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
@@ -65,6 +68,7 @@ export const TreasuryAddFundsModal = (props: {
     isBusy,
     isVisible,
     nativeBalance,
+    onReloadTokenBalances,
     selectedMultisig,
     transactionFees,
     treasuryDetails,
@@ -102,6 +106,8 @@ export const TreasuryAddFundsModal = (props: {
   const [workingTreasuryDetails, setWorkingTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [workingTreasuryType, setWorkingTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] = useState('');
+  const [fundFromSafeOption, setFundFromSafeOption] = useState(false);
+  const [proposalTitle, setProposalTitle] = useState("");
 
 
   /////////////////
@@ -215,24 +221,6 @@ export const TreasuryAddFundsModal = (props: {
     }
     return false;
   }, [publicKey]);
-
-  const getTransactionStartButtonLabel = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : !isStreamingAccountSelected()
-        ? 'Select streaming account'
-        : !selectedToken || !availableBalance || availableBalance.isZero()
-          ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
-          : !tokenAmount || tokenAmount.isZero()
-            ? t('transactions.validation.no-amount')
-            : tokenAmount.gt(getMaxAmount())
-              ? t('transactions.validation.amount-high')
-              : allocationOption === AllocationType.Specific && !highLightableStreamId
-                ? t('transactions.validation.select-stream')
-                : allocationOption === AllocationType.Specific && highLightableStreamId
-                  ? t('treasuries.add-funds.main-cta-fund-stream')
-                  : t('treasuries.add-funds.main-cta');
-  }
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
@@ -486,10 +474,18 @@ export const TreasuryAddFundsModal = (props: {
     if (!selectedToken) { return nativeBalance; }
     consoleOut(`selectedToken:`, selectedToken ? selectedToken.address : '-', 'blue');
     consoleOut(`tokenBalance:`, tokenBalance || 0, 'blue');
-    return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-      ? nativeBalance
-      : tokenBalance
-  }, [nativeBalance, selectedToken, tokenBalance]);
+    if (fundFromSafeOption) {
+      return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+        ? userBalances
+          ? userBalances[NATIVE_SOL.address] || 0
+          : 0
+        : tokenBalance
+    } else {
+      return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+        ? nativeBalance
+        : tokenBalance
+    }
+  }, [fundFromSafeOption, nativeBalance, selectedToken, tokenBalance, userBalances]);
 
   const getStreamingAccountName = useCallback((item: Treasury | TreasuryInfo | undefined) => {
     if (item) {
@@ -564,6 +560,8 @@ export const TreasuryAddFundsModal = (props: {
     if (selectedToken && userBalances) {
       if (userBalances[selectedToken.address]) {
         setSelectedTokenBalance(userBalances[selectedToken.address]);
+      } else {
+        setSelectedTokenBalance(0);
       }
     }
   }, [selectedToken, userBalances]);
@@ -638,6 +636,15 @@ export const TreasuryAddFundsModal = (props: {
     highLightableStreamId,
   ]);
 
+  useEffect(() => {
+    if (isVisible) {
+      if (param === "multisig" && selectedMultisig && !treasuryDetails && !highLightableStreamId) {
+        consoleOut('Getting funds from safe...', '', 'blue');
+        setFundFromSafeOption(true);
+      }
+    }
+  }, [highLightableStreamId, isVisible, param, selectedMultisig, treasuryDetails]);
+
   ////////////////
   //   Events   //
   ////////////////
@@ -664,12 +671,9 @@ export const TreasuryAddFundsModal = (props: {
     }
   },[getTokenByMintAddress, selectedToken, setCustomToken, treasuryList, workingAssociatedToken]);
 
-  const triggerWindowResize = () => {
-    window.dispatchEvent(new Event('resize'));
-  }
-
   const onAcceptModal = () => {
     const params: TreasuryTopupParams = {
+      proposalTitle: proposalTitle || '',
       amount: topupAmount,
       tokenAmount: tokenAmount,
       allocationType: allocationOption,
@@ -680,29 +684,13 @@ export const TreasuryAddFundsModal = (props: {
         : '',
       streamId: highLightableStreamId && allocationOption === AllocationType.Specific
                 ? highLightableStreamId : '',
-      treasuryId: selectedStreamingAccountId || ''
+      treasuryId: selectedStreamingAccountId || '',
+      contributor: fundFromSafeOption && selectedMultisig
+        ? selectedMultisig.authority.toBase58()
+        : '',
+      fundFromSafe: fundFromSafeOption
     };
     handleOk(params);
-  }
-
-  const onCloseModal = () => {
-    handleClose();
-  }
-
-  const onAfterClose = () => {
-    setTimeout(() => {
-      setTopupAmount('');
-      setTokenAmount(new BN(0));
-    }, 50);
-    setTransactionStatus({
-        lastOperation: TransactionStatus.Iddle,
-        currentOperation: TransactionStatus.Iddle
-    });
-  }
-
-  const refreshPage = () => {
-    handleClose();
-    window.location.reload();
   }
 
   const handleAmountChange = (e: any) => {
@@ -735,18 +723,6 @@ export const TreasuryAddFundsModal = (props: {
     }
   };
 
-  const onTokenChange = (e: any) => {
-    consoleOut("token selected:", e, 'blue');
-    const token = getTokenByMintAddress(e);
-    if (token) {
-      setSelectedToken(token as TokenInfo);
-      setEffectiveRate(getTokenPriceBySymbol(token.symbol));
-    }
-  }
-
-  const onCustomTokenChange = (e: any) => {
-    setCustomTokenInput(e.target.value);
-  }
 
   //////////////////
   //  Validation  //
@@ -761,8 +737,10 @@ export const TreasuryAddFundsModal = (props: {
 
   const isValidInput = (): boolean => {
     return publicKey &&
+           (!fundFromSafeOption || (param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
            selectedToken &&
-           availableBalance && availableBalance.toNumber() > 0 &&
+           ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && availableBalance.toNumber() > 0))) &&
+           nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
            tokenAmount && tokenAmount.toNumber() > 0 &&
            tokenAmount.lte(getMaxAmount())
             ? true
@@ -777,6 +755,46 @@ export const TreasuryAddFundsModal = (props: {
           ? true
           : false;
   }
+
+  const onTitleInputValueChange = (e: any) => {
+    setProposalTitle(e.target.value);
+  }
+
+  const onFundFromSafeOptionChanged = (e: any) => {
+    const newValue = e.target.value;
+    setFundFromSafeOption(newValue);
+    if (newValue) {
+      onReloadTokenBalances('safe');
+    } else {
+      onReloadTokenBalances('wallet');
+    }
+  }
+
+  const getTransactionStartButtonLabel = (): string => {
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : !isStreamingAccountSelected()
+        ? 'Select streaming account'
+        : fundFromSafeOption && param === "multisig" && selectedMultisig && !proposalTitle
+          ? 'Add a proposal title'
+          : !selectedToken || (
+              (fundFromSafeOption && !tokenBalance) ||
+              (!fundFromSafeOption && (!availableBalance || availableBalance.isZero()))
+            )
+            ? t('transactions.validation.no-balance')
+            : !tokenAmount || tokenAmount.isZero()
+              ? t('transactions.validation.no-amount')
+              : tokenAmount.gt(getMaxAmount())
+                ? t('transactions.validation.amount-high')
+                : nativeBalance <= MIN_SOL_BALANCE_REQUIRED
+                  ? t('transactions.validation.amount-sol-low')
+                  : allocationOption === AllocationType.Specific && !highLightableStreamId
+                    ? t('transactions.validation.select-stream')
+                    : allocationOption === AllocationType.Specific && highLightableStreamId
+                      ? t('treasuries.add-funds.main-cta-fund-stream')
+                      : t('treasuries.add-funds.main-cta');
+  }
+
 
   ///////////////
   // Rendering //
@@ -919,8 +937,7 @@ export const TreasuryAddFundsModal = (props: {
       footer={null}
       visible={isVisible}
       onOk={onAcceptModal}
-      onCancel={onCloseModal}
-      afterClose={onAfterClose}
+      onCancel={handleClose}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
       {hasNoStreamingAccounts && !treasuryDetails ? (
@@ -939,6 +956,34 @@ export const TreasuryAddFundsModal = (props: {
 
             {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
               <>
+                {/* Fund from Wallet/Safe switch */}
+                {param === "multisig" && selectedMultisig && workingTreasuryDetails && !highLightableStreamId && (
+                  <div className="mb-2 flex-fixed-right">
+                    <div className="form-label left m-0">Get funds from:</div>
+                    <div className="right">
+                      <Radio.Group onChange={onFundFromSafeOptionChanged} value={fundFromSafeOption}>
+                        <Radio value={true}>Safe</Radio>
+                        <Radio value={false}>User wallet</Radio>
+                      </Radio.Group>
+                    </div>
+                  </div>
+                )}
+
+                {/* Proposal title */}
+                {param === "multisig" && selectedMultisig && (
+                  <div className="mb-3 mt-3">
+                    <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+                    <InputMean
+                      id="proposal-title-field"
+                      name="Title"
+                      className={`w-100 general-text-input${!fundFromSafeOption ? ' disabled' : ''}`}
+                      onChange={onTitleInputValueChange}
+                      placeholder="Add a proposal title (required)"
+                      value={proposalTitle}
+                    />
+                  </div>
+                )}
+
                 {param === "multisig" && selectedMultisig && !treasuryDetails && (
                   <>
                     <div className="mb-3">
@@ -1207,7 +1252,7 @@ export const TreasuryAddFundsModal = (props: {
               )}
 
               {workingTreasuryDetails && (
-                <div className="flex-center font-size-70 mb-2">
+                <div className="flex-center mb-2">
                   <AddressDisplay
                     address={workingTreasuryDetails.id as string}
                     showFullAddress={true}

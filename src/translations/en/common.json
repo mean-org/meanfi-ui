@@ -472,7 +472,8 @@
 		"multisig-accounts": {
 			"no-accounts": "No multisig accounts available",
 			"not-connected": "Please connect your wallet to see your multisig accounts",
-			"pending-transactions": "{{txs}} pending transactions"
+			"pending-transactions": "{{txs}} pending transactions",
+			"loading-multisig-accounts": "Loading multisig accounts"
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Asset details",
@@ -671,7 +672,7 @@
 			"main-cta": "Propose changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit safe",
-			"success-message": "Your changes to the multisig account were saved!"
+			"success-message": "To complete the update to the safe, the other Multisig owners need to approve the proposal."
 		},
 		"upgrade-program": {
 			"buffer-account-label": "New program buffer",
@@ -1096,7 +1097,7 @@
 			"valid-start-funding": "Start funding",
 			"valid-start-withdrawal": "Start withdrawal",
 			"valid-submit-proposal": "",
-			"verified-recipient-unchecked": "Recipient Unchecked"
+			"verified-recipient-unchecked": "Recipient unchecked"
 		}
 	},
 	"transfer-stream": {

@@ -559,7 +559,8 @@
 		"multisig-accounts": {
 			"no-accounts": "Không có tài khoản multisig khả dụng",
 			"not-connected": "Vui lòng kết nối ví của bạn để xem tài khoản multisig",
-			"pending-transactions": "{{txs}} giao dịch đang chờ xử lý"
+			"pending-transactions": "{{txs}} giao dịch đang chờ xử lý",
+			"loading-multisig-accounts": "Loading multisig accounts"
 		},
 		"multisig-detail-heading": "Chi tiết tài khoản multisig",
 		"multisig-mints": {
