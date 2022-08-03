@@ -693,21 +693,6 @@ export const TreasuryAddFundsModal = (props: {
     handleOk(params);
   }
 
-  const onCloseModal = () => {
-    handleClose();
-  }
-
-  const onAfterClose = () => {
-    setTimeout(() => {
-      setTopupAmount('');
-      setTokenAmount(new BN(0));
-    }, 50);
-    setTransactionStatus({
-        lastOperation: TransactionStatus.Iddle,
-        currentOperation: TransactionStatus.Iddle
-    });
-  }
-
   const handleAmountChange = (e: any) => {
 
     let newValue = e.target.value;
@@ -952,8 +937,7 @@ export const TreasuryAddFundsModal = (props: {
       footer={null}
       visible={isVisible}
       onOk={onAcceptModal}
-      onCancel={onCloseModal}
-      afterClose={onAfterClose}
+      onCancel={handleClose}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
       {hasNoStreamingAccounts && !treasuryDetails ? (

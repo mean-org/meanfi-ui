@@ -652,7 +652,8 @@ export const MoneyStreamsInfoView = (props: {
 
   const closeAddFundsModal = useCallback(() => {
     setIsAddFundsModalVisibility(false);
-  }, []);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
 
   const onAddFundsTransactionFinished = () => {
     closeAddFundsModal();
@@ -1081,7 +1082,7 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     if (publicKey && params) {
-      const token = await getTokenOrCustomToken(params.associatedToken);
+      const token = getTokenOrCustomToken(params.associatedToken);
       consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
       const treasury = treasuryList.find(t => t.id === params.treasuryId);
       if (!treasury) { return null; }

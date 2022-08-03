@@ -9,7 +9,7 @@ import {
 } from '@mean-dao/money-streaming';
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Modal, Row, Spin, Tabs } from "antd";
 import BN from "bn.js";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -40,7 +40,7 @@ import { Identicon } from "../../components/Identicon";
 import { SolBalanceModal } from "../../components/SolBalanceModal";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
-import { getTokenAccountBalanceByAddress } from "../../utils/accounts";
+import { getTokenAccountBalanceByAddress, readAccountInfo } from "../../utils/accounts";
 import { NATIVE_SOL } from "../../utils/tokens";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -222,6 +222,38 @@ export const StreamingAccountView = (props: {
       currentOperation: TransactionStatus.Iddle
     });
   }, [setTransactionStatus]);
+
+  const getTokenOrCustomToken = useCallback((address: string) => {
+
+    const token = getTokenByMintAddress(address);
+
+    const unkToken = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: 6,
+      symbol: shortenAddress(address),
+    };
+
+    if (token) {
+      return token;
+    } else {
+      readAccountInfo(connection, address)
+      .then(info => {
+        if ((info as any).data["parsed"]) {
+          const decimals = (info as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+          unkToken.decimals = decimals || 0;
+          return unkToken as TokenInfo;
+        } else {
+          return unkToken;
+        }
+      })
+      .catch(err => {
+        console.error('Could not get token info, assuminf decimals = 6');
+        return unkToken;
+      });
+    }
+  }, [connection, getTokenByMintAddress]);
 
   const refreshUserBalances = useCallback((source?: PublicKey) => {
 
@@ -530,7 +562,8 @@ export const StreamingAccountView = (props: {
     setIsAddFundsModalVisibility(false);
     setHighLightableStreamId(undefined);
     sethHighlightedStream(undefined);
-  }, [setHighLightableStreamId]);
+    resetTransactionStatus();
+  }, [resetTransactionStatus, setHighLightableStreamId]);
 
   const onAddFundsTransactionFinished = () => {
     closeAddFundsModal();
@@ -959,7 +992,8 @@ export const StreamingAccountView = (props: {
       }
     }
 
-    if (publicKey && streamingAccountSelected && selectedToken) {
+    if (publicKey && streamingAccountSelected) {
+      const token = getTokenOrCustomToken(params.associatedToken);
       let created: boolean;
       if ((streamingAccountSelected as Treasury).version && (streamingAccountSelected as Treasury).version >= 2) {
         created = await createTxV2();
@@ -978,18 +1012,18 @@ export const StreamingAccountView = (props: {
             const loadingMessage = multisigAuthority
               ? `Create proposal to fund streaming account with ${formatThousands(
                   parseFloat(params.amount),
-                  selectedToken?.decimals
-                )} ${selectedToken?.symbol}`
+                  token?.decimals
+                )} ${token?.symbol}`
               : `Fund streaming account with ${formatThousands(
                   parseFloat(params.amount),
-                  selectedToken?.decimals
-                )} ${selectedToken?.symbol}`;
+                  token?.decimals
+                )} ${token?.symbol}`;
             const completed = multisigAuthority
               ? `Streaming account funding has been submitted for approval.`
               : `Streaming account funded with ${formatThousands(
                 parseFloat(params.amount),
-                selectedToken?.decimals
-              )} ${selectedToken?.symbol}`;
+                token?.decimals
+              )} ${token?.symbol}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryAddFunds,
