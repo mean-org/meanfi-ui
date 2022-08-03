@@ -3,7 +3,6 @@ import "./style.scss";
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
-  EditOutlined,
   LoadingOutlined,
   ReloadOutlined,
   SyncOutlined,
@@ -42,7 +41,8 @@ import {
   ACCOUNTS_LOW_BALANCE_LIMIT,
   NO_FEES,
   ONE_MINUTE_REFRESH_TIMEOUT,
-  MEAN_MULTISIG_ACCOUNT_LAMPORTS
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  MIN_SOL_BALANCE_REQUIRED
 } from '../../constants';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
@@ -60,7 +60,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -784,6 +784,7 @@ export const AccountsNewView = () => {
     setShouldLoadTokens(true);
     setLoadingTokenAccounts(false);
     setDetailsPanelOpen(false);
+    setAutoOpenDetailsPanel(true);
     reloadSwitch();
   }, [reloadSwitch, setShouldLoadTokens]);
 
@@ -951,13 +952,6 @@ export const AccountsNewView = () => {
       }
     };
 
-    const hardReloadAssets = () => {
-      const tokensRefreshCta = document.getElementById("account-assets-hard-refresh-cta");
-      if (tokensRefreshCta) {
-        tokensRefreshCta.click();
-      }
-    };
-
     const softReloadStreams = () => {
       const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
       if (streamsRefreshCta) {
@@ -1033,7 +1027,7 @@ export const AccountsNewView = () => {
         case OperationType.CloseTokenAccount:
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
-          hardReloadAssets();
+          reloadAssets();
           break;
         case OperationType.DeleteAsset:
         case OperationType.SetAssetAuthority:
@@ -4773,7 +4767,7 @@ export const AccountsNewView = () => {
         });
       } else {
         // Render the transactions collection
-        return transactions?.map((trans: MappedTransaction, index: number) => {
+        return transactions.map((trans: MappedTransaction, index: number) => {
           if (trans.parsedTransaction && trans.parsedTransaction.meta && trans.parsedTransaction.meta.err === null) {
             return <TransactionItemView
                       key={`${index}`}
@@ -5169,15 +5163,12 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">streamList:</span><span className="ml-1 font-bold fg-dark-active">{streamList ? `[${streamList.length}]` : '-'}</span>
-          <span className="ml-1">streamListv1:</span><span className="ml-1 font-bold fg-dark-active">{streamListv1 ? `[${streamListv1.length}]` : '-'}</span>
-          <span className="ml-1">streamListv2:</span><span className="ml-1 font-bold fg-dark-active">{streamListv2 ? `[${streamListv2.length}]` : '-'}</span>
-          <span className="ml-1">treasuryList:</span><span className="ml-1 font-bold fg-dark-active">{treasuryList ? `[${treasuryList.length}]` : '-'}</span>
-          <span className="ml-1">accountBalance:</span><span className="ml-1 font-bold fg-dark-active">{totalAccountBalance || 0}</span>
+          <span className="ml-1">transactions:</span><span className="ml-1 font-bold fg-dark-active">{transactions ? `[${transactions.length}]` : '-'}</span>
+          <span className="ml-1">transactionStatus:</span><span className="ml-1 font-bold fg-dark-active">{transactionStatus && transactionStatus.currentOperation ? TransactionStatus[transactionStatus.currentOperation] : '-'}</span>
         </div>
-      )} */}
+      )}
 
       {detailsPanelOpen && (
         <Button
@@ -5247,27 +5238,28 @@ export const AccountsNewView = () => {
                           {shortenAddress(accountAddress, 5)}
                         </span>)
                       </span>
-                      {!connected && (
-                        <span className="icon-button-container">
-                          <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<EditOutlined />}
-                              onClick={handleScanAnotherAddressButtonClick}
-                            />
-                          </Tooltip>
-                        </span>
-                      )}
                       <span className="icon-button-container">
-                        <Tooltip placement="top" title={t('account-area.explorer-link')}>
+                        <Tooltip placement="bottom" title={t('account-area.explorer-link')}>
                           <Button
                             type="default"
                             shape="circle"
                             size="middle"
-                            icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
+                            icon={<IconExternalLink className="mean-svg-icons" style={{width: "16", height: "16"}} />}
                             onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
+                          />
+                        </Tooltip>
+                      </span>
+                      <span className="icon-button-container hidden-sm simplelink">
+                        <Tooltip placement="bottom" title="Refresh payment streams">
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<ReloadOutlined />}
+                            onClick={() => {
+                              reloadTokensAndActivity();
+                              onRefreshStreamsNoReset();
+                            }}
                           />
                         </Tooltip>
                       </span>
@@ -5284,7 +5276,7 @@ export const AccountsNewView = () => {
                     {renderNetworth()}
 
                     {/* Middle area (vertically flexible block of items) */}
-                    <div className="item-block vertical-scroll">
+                    <div className={`item-block${!isXsDevice ? ' vertical-scroll' : ''}`}>
 
                       <div className="asset-category-title flex-fixed-right">
                         <div className="title">Streaming Assets</div>
@@ -5367,30 +5359,34 @@ export const AccountsNewView = () => {
                   <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
 
                   <div className="inner-container">
+
+                    <div className="float-top-right mr-1 mt-1">
+                      <span className="icon-button-container secondary-button">
+                        <Tooltip placement="bottom" title="Refresh payment streams">
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<ReloadOutlined className="mean-svg-icons" />}
+                            onClick={() => {
+                              reloadTokensAndActivity();
+                              onRefreshStreamsNoReset();
+                            }}
+                          />
+                        </Tooltip>
+                      </span>
+                    </div>
+
                     {selectedCategory === "assets" ? (
                       <>
                         {canShowBuyOptions() ? renderTokenBuyOptions() : (
                           <div className="flexible-column-bottom">
-                            <div className="top">
-                              <div className="float-top-right mr-0">
-                                <span className="icon-button-container secondary-button">
-                                  <Tooltip placement="bottom" title="Refresh asset balances">
-                                    <Button
-                                      type="default"
-                                      shape="circle"
-                                      size="middle"
-                                      icon={<ReloadOutlined className="mean-svg-icons" />}
-                                      onClick={() => refreshAssetBalances(true)}
-                                    />
-                                  </Tooltip>
-                                </span>
-                              </div>
-                              
+                            <div className="top">                              
                               {renderCategoryMeta()}
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
                             {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && selectedMultisig && (
-                              (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
+                              (multisigSolBalance !== undefined && multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED) ? (
                                 <Row gutter={[8, 8]}>
                                   <Col span={24} className={`alert-info-message pr-2 ${selectedMultisig ? "simplelink" : "disable-pointer"}`} onClick={showSolBalanceModal}>
                                     <Alert message="SOL account balance is very low in the safe. Click here to add more SOL." type="info" showIcon />
@@ -5615,6 +5611,7 @@ export const AccountsNewView = () => {
           }}
           isBusy={isBusy}
           selectedVault={selectedAsset}
+          selectedMultisig={selectedMultisig || undefined}
         />
       )}
 

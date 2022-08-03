@@ -30,6 +30,7 @@ import { environment } from '../../../../environments/environment';
 import { PendingProposalsComponent } from '../PendingProposalsComponent';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Identicon } from '../../../../components/Identicon';
+import { InputMean } from '../../../../components/InputMean';
 
 const timeFormat="hh:mm A"
 
@@ -96,6 +97,7 @@ export const VestingContractCreateForm = (props: {
     const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
     const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption>(VESTING_ACCOUNT_TYPE_OPTIONS[0]);
     const [contractTime, setContractTime] = useState<string | undefined>(undefined);
+    const [proposalTitle, setProposalTitle] = useState("");
 
     const getFeeAmount = useCallback(() => {
         return transactionFees.blockchainFee + transactionFees.mspFlatFee;
@@ -456,6 +458,7 @@ export const VestingContractCreateForm = (props: {
             }
         }
         return  publicKey &&
+                ((!proposalTitle && !isMultisigContext) || (proposalTitle && isMultisigContext)) &&
                 vestingLockName &&
                 selectedToken &&
                 nativeBalance > 0 && nativeBalance >= getMinSolBlanceRequired() &&
@@ -496,13 +499,15 @@ export const VestingContractCreateForm = (props: {
         }
         return  !publicKey
             ? t('transactions.validation.not-connected')
-            : !vestingLockName
-                ? 'Add contract name'
-                : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
-                    ? t('transactions.validation.amount-sol-low')
-                    : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
-                        ? t('transactions.validation.amount-high')
-                        : t('transactions.validation.valid-continue');
+            : isMultisigContext && !proposalTitle
+                ? 'Add a proposal title'
+                : !vestingLockName
+                    ? 'Add contract name'
+                    : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
+                        ? t('transactions.validation.amount-sol-low')
+                        : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
+                            ? t('transactions.validation.amount-high')
+                            : t('transactions.validation.valid-continue');
 
     }
 
@@ -518,17 +523,19 @@ export const VestingContractCreateForm = (props: {
         }
         return  !publicKey
             ? t('transactions.validation.not-connected')
-            : !vestingLockName
-                ? 'Add contract name'
-                : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
-                    ? t('transactions.validation.amount-sol-low')
-                    : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
-                        ? t('transactions.validation.amount-high')
-                        : !lockPeriodAmount
-                            ? 'Set vesting period'
-                            : !lockPeriodFrequency
+            : isMultisigContext && !proposalTitle
+                ? 'Add a proposal title'
+                : !vestingLockName
+                    ? 'Add contract name'
+                    : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
+                        ? t('transactions.validation.amount-sol-low')
+                        : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
+                            ? t('transactions.validation.amount-high')
+                            : !lockPeriodAmount
                                 ? 'Set vesting period'
-                                : t('vesting.create-account.create-cta');
+                                : !lockPeriodFrequency
+                                    ? 'Set vesting period'
+                                    : t('vesting.create-account.create-cta');
 
     }
 
@@ -540,6 +547,10 @@ export const VestingContractCreateForm = (props: {
     const onResetDate = () => {
         const date = addDays(new Date(), 1).toLocaleDateString("en-US");
         setPaymentStartDate(date);
+    }
+
+    const onTitleInputValueChange = (e: any) => {
+        setProposalTitle(e.target.value);
     }
 
     ///////////////
@@ -762,13 +773,19 @@ export const VestingContractCreateForm = (props: {
                             {renderTreasuryOption(treasuryOption)}
                         </div>
 
+                        {/* Proposal title */}
                         {isMultisigContext && selectedMultisig && (
-                            <>
-                                <div className="form-label">Multisig account</div>
-                                <div className="well">
-                                    {renderSelectedMultisig()}
-                                </div>
-                            </>
+                            <div className="mb-3 mt-3">
+                                <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+                                <InputMean
+                                    id="proposal-title-field"
+                                    name="Title"
+                                    className="w-100 general-text-input"
+                                    onChange={onTitleInputValueChange}
+                                    placeholder="Title for the multisig proposal"
+                                    value={proposalTitle}
+                                />
+                            </div>
                         )}
 
                         {/* Vesting Lock name */}
@@ -881,6 +898,16 @@ export const VestingContractCreateForm = (props: {
                                 <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
                             )}
                         </div>
+
+                        {/* Display Multisig account */}
+                        {isMultisigContext && selectedMultisig && (
+                            <>
+                                <div className="form-label">Multisig account</div>
+                                <div className="well">
+                                    {renderSelectedMultisig()}
+                                </div>
+                            </>
+                        )}
 
                         {/* CTA */}
                         <div className="cta-container">

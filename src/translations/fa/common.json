@@ -467,7 +467,8 @@
 		"multisig-accounts": {
 			"no-accounts": "هیچ حساب Multisig در دسترس نیست",
 			"not-connected": "لطفاً کیف پول خود را وصل کنید تا حساب‌های Multisig خود را ببینید",
-			"pending-transactions": "{{txs}} تراکنش های معلق"
+			"pending-transactions": "{{txs}} تراکنش های معلق",
+			"loading-multisig-accounts": "Loading multisig accounts"
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "جزئیات خزانه",

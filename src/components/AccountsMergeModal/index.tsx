@@ -300,13 +300,15 @@ export const AccountsMergeModal = (props: {
             footer={null}
             visible={props.isVisible}
             onCancel={props.handleClose}
-            width={330}>
+            width={360}>
 
             <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
                 {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
-                <div className="transaction-progress">
-                    <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                    <h4 className="font-bold">Token accounts that will be merged</h4>
+                  <>
+                    <div className="transaction-progress">
+                      <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                      <h4 className="font-bold">Token accounts that will be merged</h4>
+                    </div>
                     {/* List of token accounts that will be merged */}
                     {props.tokenGroup && props.tokenGroup.length > 0 && (
                         <div className="well merged-token-list">
@@ -342,14 +344,14 @@ export const AccountsMergeModal = (props: {
                         })}
                         </div>
                     )}
-                    <div className="operation">
-                        <p><strong>WARNING</strong>: This action may break apps that depend on your existing token accounts.</p>
-                        {props.tokenGroup && props.tokenGroup.length > 4 && (
-                            <p>Up to 4 token accounts can be merged at once. Please review your remaining tokens after the merge and run merge again as needed.</p>
-                        )}
-                        <p>Merging your {props.tokenGroup && props.tokenGroup[0].description} token accounts will send funds to the <strong>Associated Token Account</strong>.</p>
+                    <div className="text-center">
+                      <p><strong>WARNING</strong>: This action may break apps that depend on your existing token accounts.</p>
+                      {props.tokenGroup && props.tokenGroup.length > 4 && (
+                        <p>Up to 4 token accounts can be merged at once. Please review your remaining tokens after the merge and run merge again as needed.</p>
+                      )}
+                      <p>Merging your {props.tokenGroup && props.tokenGroup[0].description} token accounts will send funds to the <strong>Associated Token Account</strong>.</p>
                     </div>
-                </div>
+                  </>
                 ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
                 <div className="transaction-progress">
                     <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
