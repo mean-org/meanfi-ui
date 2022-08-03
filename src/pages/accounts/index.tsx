@@ -5166,6 +5166,7 @@ export const AccountsNewView = () => {
       {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">transactions:</span><span className="ml-1 font-bold fg-dark-active">{transactions ? `[${transactions.length}]` : '-'}</span>
+          <span className="ml-1">transactionStatus:</span><span className="ml-1 font-bold fg-dark-active">{transactionStatus ? TransactionStatus[transactionStatus.currentOperation] : '-'}</span>
         </div>
       )}
 
