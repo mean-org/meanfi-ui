@@ -1,4 +1,4 @@
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
@@ -45,12 +45,13 @@ import { initialSummary, StreamsSummary } from "../../models/streams";
 import { Identicon } from "../../components/Identicon";
 import { openNotification } from "../../components/Notifications";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { TreasuryTopupParams } from "../../models/common-types";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { NATIVE_SOL } from "../../utils/tokens";
+import { readAccountInfo } from "../../utils/accounts";
 
 const { TabPane } = Tabs;
 
@@ -238,6 +239,38 @@ export const MoneyStreamsInfoView = (props: {
       currentOperation: TransactionStatus.Iddle
     });
   }, [setTransactionStatus]);
+
+  const getTokenOrCustomToken = useCallback((address: string) => {
+
+    const token = getTokenByMintAddress(address);
+
+    const unkToken = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: 6,
+      symbol: shortenAddress(address),
+    };
+
+    if (token) {
+      return token;
+    } else {
+      readAccountInfo(connection, address)
+      .then(info => {
+        if ((info as any).data["parsed"]) {
+          const decimals = (info as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+          unkToken.decimals = decimals || 0;
+          return unkToken as TokenInfo;
+        } else {
+          return unkToken;
+        }
+      })
+      .catch(err => {
+        console.error('Could not get token info, assuminf decimals = 6');
+        return unkToken;
+      });
+    }
+  }, [connection, getTokenByMintAddress]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -1047,7 +1080,9 @@ export const MoneyStreamsInfoView = (props: {
       }
     }
 
-    if (publicKey && params && selectedToken) {
+    if (publicKey && params) {
+      const token = await getTokenOrCustomToken(params.associatedToken);
+      consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
       const treasury = treasuryList.find(t => t.id === params.treasuryId);
       if (!treasury) { return null; }
       let created: boolean;
@@ -1068,18 +1103,18 @@ export const MoneyStreamsInfoView = (props: {
             const loadingMessage = multisigAuthority
               ? `Create proposal to fund streaming account with ${formatThousands(
                   parseFloat(params.amount),
-                  selectedToken?.decimals
-                )} ${selectedToken?.symbol}`
+                  token?.decimals
+                )} ${token?.symbol}`
               : `Fund streaming account with ${formatThousands(
                   parseFloat(params.amount),
-                  selectedToken?.decimals
-                )} ${selectedToken?.symbol}`;
+                  token?.decimals
+                )} ${token?.symbol}`;
             const completed = multisigAuthority
               ? `Streaming account funding has been submitted for approval.`
               : `Streaming account funded with ${formatThousands(
                 parseFloat(params.amount),
-                selectedToken?.decimals
-              )} ${selectedToken?.symbol}`;
+                token?.decimals
+              )} ${token?.symbol}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryAddFunds,
