@@ -672,7 +672,7 @@
 			"main-cta": "Propose changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit safe",
-			"success-message": "Your changes to the multisig account were saved!"
+			"success-message": "To complete the update to the safe, the other Multisig owners need to approve the proposal."
 		},
 		"upgrade-program": {
 			"buffer-account-label": "New program buffer",

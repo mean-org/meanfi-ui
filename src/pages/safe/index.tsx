@@ -35,7 +35,8 @@ import {
   getTransactionStatusForLogs,
   isLocal,
   isDev,
-  toUsCurrency
+  toUsCurrency,
+  delay
 } from '../../utils/ui';
 
 import { MEAN_MULTISIG_ACCOUNT_LAMPORTS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
@@ -400,18 +401,45 @@ export const SafeView = () => {
 
   },[resetTransactionStatus])
 
-  const onMultisigModified = useCallback(() => {
+  const onMultisigModified = useCallback(async () => {
     setIsBusy(false);
     setIsEditMultisigModalVisible(false);
     resetTransactionStatus();
+
     openNotification({
       description: t('multisig.update-multisig.success-message'),
+      duration: 10,
+      type: "success"
+    });
+    await delay(150);
+    openNotification({
+      description: "The proposal's status can be reviewed in the Multisig Safe's proposal list.",
+      duration: 15,
       type: "success"
     });
   },[
     t,
     resetTransactionStatus
-  ])
+  ]);
+
+  // const stackedMessagesAndNavigate = async () => {
+  //   openNotification({
+  //     type: "info",
+  //     description: t(
+  //       "treasuries.create-treasury.multisig-treasury-created-info"
+  //     ),
+  //     duration: 10,
+  //   });
+  //   await delay(1500);
+  //   openNotification({
+  //     type: "info",
+  //     description: t(
+  //       "treasuries.create-treasury.multisig-treasury-created-instructions"
+  //     ),
+  //     duration: null,
+  //   });
+  //   navigate("/custody");
+  // };
 
   const onExecuteCreateMultisigTx = useCallback(async (data: any) => {
 
@@ -1353,7 +1381,7 @@ export const SafeView = () => {
       }
     }
 
-    if (wallet) {
+    if (wallet && selectedMultisig) {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -1370,10 +1398,14 @@ export const SafeView = () => {
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Edit safe ${data.label}`,
+              loadingMessage: `Editing the safe ${selectedMultisig.label}`,
               completedTitle: 'Transaction confirmed',
-              completedMessage: `Safe ${data.label} successfully modified`
+              completedMessage: `The changes to the ${selectedMultisig.label} Multisig Safe have been submitted for approval.`,
+              extras: {
+                multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+              }
             });
+            await delay(500);
             onMultisigModified();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
