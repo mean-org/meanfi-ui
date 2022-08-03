@@ -8,7 +8,7 @@ import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '.
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
-import { CUSTOM_TOKEN_NAME, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
@@ -566,7 +566,7 @@ export const UnwrapSolModal = (props: {
   const isUnwrapValid = (): boolean => {
     return unwrapAmount &&
       nativeBalance &&
-      nativeBalance > (feeAmount || 0.005) &&
+      nativeBalance > (feeAmount || MIN_SOL_BALANCE_REQUIRED) &&
       parseFloat(unwrapAmount) > 0 &&
       parseFloat(unwrapAmount) <= wSolBalance
       ? true
@@ -578,7 +578,7 @@ export const UnwrapSolModal = (props: {
       ? t('transactions.validation.not-connected')
       : nativeBalance === 0
         ? t('transactions.validation.amount-sol-low')
-        : nativeBalance < (feeAmount || 0.005)
+        : nativeBalance < (feeAmount || MIN_SOL_BALANCE_REQUIRED)
           ? t('transactions.validation.amount-sol-low')
           : !wSolBalance
             ? t('transactions.validation.no-balance')

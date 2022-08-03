@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col, Radio } from 'antd';
-import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { consoleOut, percentage } from '../../utils/ui';
 import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
@@ -15,6 +15,8 @@ import { PublicKey } from '@solana/web3.js';
 import { useSearchParams } from 'react-router-dom';
 import { StreamTreasuryType } from '../../models/treasuries';
 import { AppStateContext } from '../../contexts/appstate';
+import { InputMean } from '../InputMean';
+import { TransactionStatus } from '../../models/enums';
 
 export const StreamCloseModal = (props: {
   handleClose: any;
@@ -27,6 +29,8 @@ export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;
 }) => {
   const {
+    theme,
+    setTransactionStatus,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
   const [searchParams] = useSearchParams();
@@ -40,6 +44,7 @@ export const StreamCloseModal = (props: {
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [streamState, setStreamState] = useState<STREAM_STATE | STREAM_STATUS | undefined>(undefined);
+  const [proposalTitle, setProposalTitle] = useState("");
 
   const getTreasuryTypeByTreasuryId = useCallback(async (treasuryId: string, streamVersion: number): Promise<StreamTreasuryType | undefined> => {
     if (!connection || !publicKey || !props.mspClient) { return undefined; }
@@ -257,13 +262,46 @@ export const StreamCloseModal = (props: {
     getFeeAmount
   ]);
 
+  const isValidForm = (): boolean => {
+    return proposalTitle
+      ? true
+      : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !proposalTitle
+      ? 'Add a proposal title'
+      : "Sign proposal"
+  }
+
   const onAcceptModal = () => {
     props.handleOk({
+      title: proposalTitle,
       closeTreasuryOption,
       vestedReturns: getWithdrawableAmount(),
       unvestedReturns: amITreasurer() ? getUnvested() : 0,
       feeAmount: amIBeneficiary() && getWithdrawableAmount() > 0 ? feeAmount : 0
     });
+  }
+
+  const onCloseModal = () => {
+    props.handleClose();
+    onAfterClose();
+  }
+
+  const onAfterClose = () => {
+    setTimeout(() => {
+      setProposalTitle("");
+    });
+
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setProposalTitle(e.target.value);
   }
 
   const onCloseTreasuryOptionChanged = (e: any) => {
@@ -298,8 +336,7 @@ export const StreamCloseModal = (props: {
       title={<div className="modal-title">{param === "multisig" ? "Propose close stream" : t('close-stream.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
-      onOk={props.handleOk}
-      onCancel={props.handleClose}
+      onCancel={onCloseModal}
       width={400}>
 
       {loadingTreasuryDetails ? (
@@ -311,14 +348,20 @@ export const StreamCloseModal = (props: {
       ) : streamTreasuryType === "locked" && streamState !== STREAM_STATUS.Paused ? (
         // The user can't close the stream
         <div className="transaction-progress p-0">
-          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+          {/* Warning icon */}
+          {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" /> */}
+          {theme === 'light' ? (
+            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+          ) : (
+            <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+          )}
           <h4 className="operation">{t('close-stream.cant-close-message')}</h4>
           <div className="mt-3">
             <Button
                 type="primary"
                 shape="round"
                 size="large"
-                onClick={props.handleClose}>
+                onClick={onCloseModal}>
                 {t('general.cta-close')}
             </Button>
           </div>
@@ -326,8 +369,19 @@ export const StreamCloseModal = (props: {
       ) : (
         // The normal stuff
         <div className="transaction-progress p-0">
-          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-          <h4 className="operation">{props.content}</h4>
+          {/* Warning icon */}
+          {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" /> */}
+          <div className="text-center">
+            {theme === 'light' ? (
+              <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+            ) : (
+              <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+            )}
+          </div>
+          <div className="mb-2 fg-warning operation">
+            <span>{props.content}</span>
+          </div>
+          {/* <h4 className="operation">{props.content}</h4> */}
 
           {/* Info */}
           {localStreamDetail && localStreamDetail.associatedToken && (
@@ -367,21 +421,38 @@ export const StreamCloseModal = (props: {
             </div>
           )}
 
+          {/* Proposal title */}
+          {param === "multisig" && (
+            <div className="mb-3 mt-3">
+              <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+              <InputMean
+                id="proposal-title-field"
+                name="Title"
+                className="w-100 general-text-input"
+                onChange={onTitleInputValueChange}
+                placeholder="Add a proposal title (required)"
+                value={proposalTitle}
+              />
+            </div>
+          )}
+
           <div className="mt-3">
-            <Button
+            {/* <Button
                 className="mr-3"
                 type="text"
                 shape="round"
                 size="large"
                 onClick={props.handleClose}>
                 {t('close-stream.secondary-cta')}
-            </Button>
+            </Button> */}
             <Button
-                type="primary"
-                shape="round"
-                size="large"
-                onClick={onAcceptModal}>
-                {param === "multisig" ? "Submit proposal" : t('close-stream.primary-cta')}
+              block
+              type="primary"
+              shape="round"
+              size="large"
+              disabled={param === "multisig" && !isValidForm()}
+              onClick={onAcceptModal}>
+              {param === "multisig" ? getTransactionStartButtonLabel() : t('close-stream.primary-cta')}
             </Button>
           </div>
         </div>

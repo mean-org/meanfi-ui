@@ -1263,7 +1263,7 @@ export const InvestView = () => {
 
                         <p>{t("invest.panel-right.liquidity-pool.text-three")}</p>
 
-                        <div className="float-top-right">
+                        <div className="float-top-right mr-1 mt-1">
                           <span className="icon-button-container secondary-button">
                             <Tooltip placement="bottom" title={t("invest.panel-right.liquidity-pool.refresh-tooltip")}>
                               <Button
@@ -1369,7 +1369,7 @@ export const InvestView = () => {
 
                         <p>{t("invest.panel-right.staking-sol.text-two")}</p>
 
-                        <div className="float-top-right">
+                        <div className="float-top-right mr-1 mt-1">
                           <span className="icon-button-container secondary-button">
                             <Tooltip placement="bottom" title={t("invest.panel-right.staking-sol.refresh-tooltip")}>
                               <Button

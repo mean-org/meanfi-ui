@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Divider, Input, Spin } from 'antd';
+import { Modal, Button, Spin, Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -14,7 +14,7 @@ import {
   shortenAddress,
   toUiAmount
 } from '../../../../utils/utils';
-import { IconCheckedBox, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../../../Icons';
+import { IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../../../Icons';
 import {
   consoleOut,
   getShortDate,
@@ -30,7 +30,7 @@ import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { isError } from '../../../../utils/transactions';
 import { AllocationType, Stream, StreamTemplate, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
-import { CUSTOM_TOKEN_NAME, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { openNotification } from '../../../../components/Notifications';
 import { NATIVE_SOL } from '../../../../utils/tokens';
@@ -39,8 +39,10 @@ import { QRCodeSVG } from 'qrcode.react';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { VestingContractTopupParams } from '../../../../models/vesting';
+import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { useSearchParams } from 'react-router-dom';
+import { InputMean } from '../../../../components/InputMean';
 
-const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const VestingContractAddFundsModal = (props: {
@@ -49,8 +51,10 @@ export const VestingContractAddFundsModal = (props: {
   handleOk: any;
   isBusy: boolean;
   isVisible: boolean;
-  nativeBalance: number;
   minRequiredBalance: number;
+  nativeBalance: number;
+  onReloadTokenBalances: any;
+  selectedMultisig: MultisigInfo | undefined;
   streamTemplate: StreamTemplate | undefined;
   transactionFees: TransactionFees;
   treasuryStreams: Stream[];
@@ -64,8 +68,10 @@ export const VestingContractAddFundsModal = (props: {
     handleOk,
     isBusy,
     isVisible,
-    nativeBalance,
     minRequiredBalance,
+    nativeBalance,
+    onReloadTokenBalances,
+    selectedMultisig,
     streamTemplate,
     transactionFees,
     treasuryStreams,
@@ -74,8 +80,6 @@ export const VestingContractAddFundsModal = (props: {
     withdrawTransactionFees,
   } = props;
   const {
-    tokenList,
-    tokenBalance,
     selectedToken,
     loadingPrices,
     transactionStatus,
@@ -89,18 +93,34 @@ export const VestingContractAddFundsModal = (props: {
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
+  const [searchParams] = useSearchParams();
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
-  const [customTokenInput, setCustomTokenInput] = useState("");
   const [, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [availableBalance, setAvailableBalance] = useState<any>();
   const [tokenAmount, setTokenAmount] = useState<any>(0);
+  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [showQrCode, setShowQrCode] = useState(false);
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
+  const [fundFromSafeOption, setFundFromSafeOption] = useState(false);
+  const [proposalTitle, setProposalTitle] = useState("");
 
   /////////////////
   //   Getters   //
   /////////////////
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const getTokenPrice = useCallback((inputAmount: string) => {
     if (!selectedToken) { return 0; }
@@ -177,20 +197,6 @@ export const VestingContractAddFundsModal = (props: {
     }
     return false;
   }, [publicKey]);
-
-  const getTransactionStartButtonLabel = (): string => {
-    return !selectedToken || !availableBalance || availableBalance.isZero()
-      ? t('transactions.validation.no-balance')
-      : !tokenAmount || tokenAmount.isZero()
-        ? t('transactions.validation.no-amount')
-        : tokenAmount.gt(getMaxAmount())
-          ? t('transactions.validation.amount-high')
-          : allocationOption === AllocationType.Specific && !highLightableStreamId
-            ? t('transactions.validation.select-stream')
-            : allocationOption === AllocationType.Specific && highLightableStreamId
-            ? t('treasuries.add-funds.main-cta-fund-stream')
-            : t('treasuries.add-funds.main-cta');
-  }
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
@@ -445,10 +451,18 @@ export const VestingContractAddFundsModal = (props: {
 
   const selectFromTokenBalance = useCallback(() => {
     if (!selectedToken) { return nativeBalance; }
-    return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-      ? nativeBalance
-      : tokenBalance
-  }, [nativeBalance, selectedToken, tokenBalance]);
+    if (fundFromSafeOption) {
+      return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+        ? userBalances
+          ? userBalances[NATIVE_SOL.address]
+          : 0
+        : tokenBalance
+    } else {
+      return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+        ? nativeBalance
+        : tokenBalance
+    }
+  }, [fundFromSafeOption, nativeBalance, selectedToken, tokenBalance, userBalances]);
 
   /////////////////////
   // Data management //
@@ -467,14 +481,12 @@ export const VestingContractAddFundsModal = (props: {
       } else {
         // Take source balance from the user's wallet
         const balance = makeInteger(selectFromTokenBalance(), decimals);
-        consoleOut(`User's balance:`, balance.toNumber(), 'blue');
         setAvailableBalance(balance);
       }
     } else {
       setAvailableBalance(new BN(0));
     }
   }, [
-    tokenBalance,
     selectedToken,
     isVisible,
     vestingContract,
@@ -498,6 +510,17 @@ export const VestingContractAddFundsModal = (props: {
     isVisible,
     associatedToken,
   ]);
+
+  // Keep token balance updated
+  useEffect(() => {
+    if (selectedToken && userBalances) {
+      if (userBalances[selectedToken.address]) {
+        setSelectedTokenBalance(userBalances[selectedToken.address]);
+      } else {
+        setSelectedTokenBalance(0);
+      }
+    }
+  }, [selectedToken, userBalances]);
 
   // When modal goes visible, update allocation type option
   useEffect(() => {
@@ -550,6 +573,15 @@ export const VestingContractAddFundsModal = (props: {
     }
   }, []);
 
+  useEffect(() => {
+    if (isVisible) {
+      if (param === "multisig" && selectedMultisig && !highLightableStreamId) {
+        consoleOut('Getting funds from safe...', '', 'blue');
+        setFundFromSafeOption(true);
+      }
+    }
+  }, [highLightableStreamId, isVisible, param, selectedMultisig]);
+
   ////////////////
   //   Events   //
   ////////////////
@@ -569,7 +601,8 @@ export const VestingContractAddFundsModal = (props: {
           : selectedToken
         : undefined,
       streamId: highLightableStreamId && allocationOption === AllocationType.Specific
-                ? highLightableStreamId : ''
+                ? highLightableStreamId : '',
+      fundFromSafe: fundFromSafeOption
     };
     handleOk(params);
   }
@@ -624,21 +657,18 @@ export const VestingContractAddFundsModal = (props: {
     }
   };
 
-  // const handleAllocationOptionChange = (val: SelectOption) => {
-  //   setAllocationOption(val.value);
-  // }
-
-  const onTokenChange = (e: any) => {
-    consoleOut("token selected:", e, 'blue');
-    const token = getTokenByMintAddress(e);
-    if (token) {
-      setSelectedToken(token as TokenInfo);
-      toggleOverflowEllipsisMiddle(false);
-    }
+  const onTitleInputValueChange = (e: any) => {
+    setProposalTitle(e.target.value);
   }
 
-  const onCustomTokenChange = (e: any) => {
-    setCustomTokenInput(e.target.value);
+  const onFundFromSafeOptionChanged = (e: any) => {
+    const newValue = e.target.value;
+    setFundFromSafeOption(newValue);
+    if (newValue) {
+      onReloadTokenBalances('safe');
+    } else {
+      onReloadTokenBalances('wallet');
+    }
   }
 
   //////////////////
@@ -647,8 +677,10 @@ export const VestingContractAddFundsModal = (props: {
 
   const isValidInput = (): boolean => {
     return publicKey &&
+          (!fundFromSafeOption || (param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
            selectedToken &&
-           availableBalance && availableBalance.toNumber() > 0 &&
+           ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && availableBalance.toNumber() > 0))) &&
+           nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
            tokenAmount && tokenAmount.toNumber() > 0 &&
            tokenAmount.lte(getMaxAmount())
             ? true
@@ -663,6 +695,30 @@ export const VestingContractAddFundsModal = (props: {
           ? true
           : false;
   }
+
+  const getTransactionStartButtonLabel = (): string => {
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : fundFromSafeOption && param === "multisig" && selectedMultisig && !proposalTitle
+        ? 'Add a proposal title'
+        : !selectedToken || (
+            (fundFromSafeOption && !tokenBalance) ||
+            (!fundFromSafeOption && (!availableBalance || availableBalance.isZero()))
+          )
+          ? t('transactions.validation.no-balance')
+          : !tokenAmount || tokenAmount.isZero()
+            ? t('transactions.validation.no-amount')
+            : tokenAmount.gt(getMaxAmount())
+              ? t('transactions.validation.amount-high')
+              : nativeBalance <= MIN_SOL_BALANCE_REQUIRED
+                ? t('transactions.validation.amount-sol-low')
+                : allocationOption === AllocationType.Specific && !highLightableStreamId
+                  ? t('transactions.validation.select-stream')
+                  : allocationOption === AllocationType.Specific && highLightableStreamId
+                    ? t('treasuries.add-funds.main-cta-fund-stream')
+                    : t('treasuries.add-funds.main-cta');
+  }
+
 
   ///////////////
   // Rendering //
@@ -716,6 +772,34 @@ export const VestingContractAddFundsModal = (props: {
 
           {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
             <>
+              {/* Fund from Wallet/Safe switch */}
+              {param === "multisig" && selectedMultisig && vestingContract && !highLightableStreamId && (
+                <div className="mb-2 flex-fixed-right">
+                  <div className="form-label left m-0">Get funds from:</div>
+                  <div className="right">
+                    <Radio.Group onChange={onFundFromSafeOptionChanged} value={fundFromSafeOption}>
+                      <Radio value={true}>Safe</Radio>
+                      <Radio value={false}>User wallet</Radio>
+                    </Radio.Group>
+                  </div>
+                </div>
+              )}
+
+              {/* Proposal title */}
+              {param === "multisig" && selectedMultisig && (
+                <div className="mb-3 mt-3">
+                  <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+                  <InputMean
+                    id="proposal-title-field"
+                    name="Title"
+                    className={`w-100 general-text-input${!fundFromSafeOption ? ' disabled' : ''}`}
+                    onChange={onTitleInputValueChange}
+                    placeholder="Add a proposal title (required)"
+                    value={proposalTitle}
+                  />
+                </div>
+              )}
+
               {/* Top up amount */}
               <div className="mb-3">
                 {highLightableStreamId ? (
@@ -737,45 +821,6 @@ export const VestingContractAddFundsModal = (props: {
                             fullTokenInfo={selectedToken}
                           />
                         )}
-
-                        {/* {(selectedToken && tokenList) && (
-                          <Select className={`token-selector-dropdown ${associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
-                              onChange={onTokenChange} bordered={false} showArrow={false}
-                              dropdownRender={menu => (
-                              <div>
-                                {menu}
-                                <Divider style={{ margin: '4px 0' }} />
-                                <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                                  <Input style={{ flex: 'auto' }} value={customTokenInput} onChange={onCustomTokenChange} />
-                                  <div style={{ flex: '0 0 auto' }} className="flex-row align-items-center">
-                                    <span className="flat-button icon-button ml-1" onClick={() => setCustomToken(customTokenInput)}><IconCheckedBox className="normal"/></span>
-                                  </div>
-                                </div>
-                              </div>
-                            )}>
-                            {tokenList.map((option) => {
-                              if (option.address === NATIVE_SOL.address) {
-                                return null;
-                              }
-                              return (
-                                <Option key={option.address} value={option.address}>
-                                  <div className="option-container">
-                                    <TokenDisplay onClick={() => {}}
-                                      mintAddress={option.address}
-                                      name={option.name}
-                                      showCaretDown={associatedToken ? false : true}
-                                    />
-                                    <div className="balance">
-                                      {userBalances && userBalances[option.address] > 0 && (
-                                        <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </Option>
-                              );
-                            })}
-                          </Select>
-                        )} */}
                         {selectedToken && availableBalance ? (
                           <div
                             id="treasury-add-funds-max"
@@ -979,7 +1024,7 @@ export const VestingContractAddFundsModal = (props: {
             )}
 
             {vestingContract && (
-              <div className="flex-center font-size-70 mb-2">
+              <div className="flex-center mb-2">
                 <AddressDisplay
                   address={vestingContract.id as string}
                   showFullAddress={true}

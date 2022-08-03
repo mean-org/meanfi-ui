@@ -1355,7 +1355,10 @@ const AppStateProvider: React.FC = ({ children }) => {
       } else {
         setLastTxSignature('');
       }
-      updateTransactions(map);
+      // Get a unique set of items
+      const filtered = new Set(map);
+      // Convert iterable to array
+      updateTransactions(Array.from(filtered));
     } else {
       if (map && map.length) {
         const lastSignature = map[map.length - 1].signature;
@@ -1366,7 +1369,10 @@ const AppStateProvider: React.FC = ({ children }) => {
         } else {
           setLastTxSignature('');
         }
-        updateTransactions(jointArray);
+        // Get a unique set of items
+        const filtered = new Set(jointArray);
+        // Convert iterable to array
+        updateTransactions(Array.from(filtered));
       }
     }
   }

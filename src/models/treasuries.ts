@@ -19,6 +19,7 @@ export interface TreasuryCreateOptions {
 }
 
 export interface CloseStreamTransactionParams {
+    title: string,
     payer: string;
     stream: string;
     closeTreasury: boolean;

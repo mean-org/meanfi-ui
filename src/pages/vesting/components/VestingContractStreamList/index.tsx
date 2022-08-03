@@ -52,6 +52,8 @@ export const VestingContractStreamList = (props: {
     multisigAccounts: MultisigInfo[] | undefined;
     multisigClient: MeanMultisig | null;
     nativeBalance: number;
+    onReloadTokenBalances: any;
+    selectedMultisig: MultisigInfo | undefined;
     streamTemplate: StreamTemplate | undefined;
     treasuryStreams: Stream[];
     userBalances: any;
@@ -66,6 +68,8 @@ export const VestingContractStreamList = (props: {
         multisigAccounts,
         multisigClient,
         nativeBalance,
+        onReloadTokenBalances,
+        selectedMultisig,
         streamTemplate,
         treasuryStreams,
         userBalances,
@@ -1647,12 +1651,14 @@ export const VestingContractStreamList = (props: {
                     isVisible={isAddFundsModalVisible}
                     nativeBalance={nativeBalance}
                     minRequiredBalance={minRequiredBalance}
+                    selectedMultisig={selectedMultisig}
                     streamTemplate={streamTemplate}
                     transactionFees={transactionFees}
                     treasuryStreams={treasuryStreams}
                     userBalances={userBalances}
                     vestingContract={vestingContract}
                     withdrawTransactionFees={withdrawTransactionFees}
+                    onReloadTokenBalances={(option: string) => onReloadTokenBalances(option)}
                 />
             )}
 

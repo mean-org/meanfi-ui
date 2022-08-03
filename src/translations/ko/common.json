@@ -559,7 +559,8 @@
 		"multisig-accounts": {
 			"no-accounts": "이용가능한 멀티시그 계정이 없습니다",
 			"not-connected": "멀티시그 계좌를 보기 위해 지갑을 연동하세요",
-			"pending-transactions": "{{txs}}미결 거래"
+			"pending-transactions": "{{txs}}미결 거래",
+			"loading-multisig-accounts": "Loading multisig accounts"
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Vault details",

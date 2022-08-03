@@ -121,6 +121,7 @@ export interface VestingContractStreamCreateOptions {
     tokenAmount: number;
     txConfirmDescription: string;
     txConfirmedDescription: string;
+    proposalTitle?: string;
 }
 
 export interface CreateVestingStreamParams {
@@ -147,6 +148,9 @@ export interface VestingContractTopupParams {
     allocationType: AllocationType;
     streamId: string;
     associatedToken: TokenInfo | undefined;
+    contributor?: string;
+    proposalTitle?: string;
+    fundFromSafe?: boolean;
 }
 
 // Map cache to maintain the vesting flow rates between reloads of the vesting accounts' list

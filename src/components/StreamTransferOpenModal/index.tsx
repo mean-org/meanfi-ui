@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useState } from 'react';
 import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -29,7 +29,7 @@ export const StreamTransferOpenModal = (props: {
 
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
   const [queryAccountType, setQueryAccountType] = useState<string | undefined>(undefined);
-  const [multisigTitle, setMultisigTitle] = useState('');
+  const [proposalTitle, setProposalTitle] = useState('');
 
   const isAddressTreasurer = useCallback((address: string): boolean => {
     if (streamDetail && address) {
@@ -44,7 +44,7 @@ export const StreamTransferOpenModal = (props: {
   }, [streamDetail]);
 
   const onTitleInputValueChange = (e: any) => {
-    setMultisigTitle(e.target.value);
+    setProposalTitle(e.target.value);
   }
 
   const handleAddressChange = (e: any) => {
@@ -56,16 +56,61 @@ export const StreamTransferOpenModal = (props: {
       ? true : false;
   }
 
+  // Validation
+  const isValidForm = (): boolean => {
+    return address &&
+      isValidAddress(address) &&
+      !isAddressOwnAccount() &&
+      !isAddressTreasurer(address) &&
+      isVerifiedRecipient
+      ? true
+      : false;
+  }
+
+  // Validation if multisig
+  const isValidFormMultisig = (): boolean => {
+    return proposalTitle &&
+      address &&
+      isValidAddress(address) &&
+      !isAddressOwnAccount() &&
+      !isAddressTreasurer(address) &&
+      isVerifiedRecipient
+      ? true
+      : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !address
+        ? t('transfer-stream.streamid-empty')
+        : (!isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address))
+          ? 'Invalid address'
+          : !isVerifiedRecipient
+            ? t('transactions.validation.verified-recipient-unchecked')
+            : t('transfer-stream.streamid-open-cta')
+  }
+
+  const getTransactionStartButtonLabelMultisig = () => {
+    return !proposalTitle
+      ? "Add a proposal title"
+      : !address
+        ? t('transfer-stream.streamid-empty')
+        : (!isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address))
+          ? 'Invalid address'
+          : !isVerifiedRecipient
+            ? t('transactions.validation.verified-recipient-unchecked')
+            : 'Sign proposal'
+  }
+
   const onAcceptModal = () => {
     handleOk({
-      title: multisigTitle,
+      title: proposalTitle,
       address: address
     });
   }
 
   const onCloseModal = () => {
     setAddress('');
-    setMultisigTitle("");
+    setProposalTitle("");
     setIsVerifiedRecipient(false);
     handleClose();
   }
@@ -84,6 +129,8 @@ export const StreamTransferOpenModal = (props: {
     }
     return undefined;
   }, [searchParams]);
+
+  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   useEffect(() => {
     if (isVisible) {
@@ -109,8 +156,8 @@ export const StreamTransferOpenModal = (props: {
             name="Title"
             className="w-100 general-text-input"
             onChange={onTitleInputValueChange}
-            placeholder="Add a proposal title"
-            value={multisigTitle}
+            placeholder="Add a proposal title (required)"
+            value={proposalTitle}
           />
         </div>
       )}
@@ -160,9 +207,9 @@ export const StreamTransferOpenModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!address || !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address) || !isVerifiedRecipient}
+        disabled={param === "multisig" ? !isValidFormMultisig() : !isValidForm()}
         onClick={onAcceptModal}>
-        {queryAccountType === "multisig" ? "Submit proposal" : !address ? t('transfer-stream.streamid-empty') : t('transfer-stream.streamid-open-cta')}
+        {param === "multisig" ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel()}
       </Button>
     </Modal>
   );

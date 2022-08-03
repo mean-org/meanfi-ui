@@ -388,6 +388,7 @@ export const MultisigTransferTokensModal = (props: {
 
   const isValidForm = (): boolean => {
     return (
+      proposalTitle &&
       fromVault &&
       to &&
       isValidAddress(fromVault.publicAddress) &&
@@ -399,17 +400,19 @@ export const MultisigTransferTokensModal = (props: {
   }
 
   const getTransactionStartButtonLabel = () => {
-    return  !amount || +amount === 0
-      ? 'Enter amount'
-      : fromVault && fromVault.balance === 0
-        ? 'No balance'
-        : (amount && fromVault && +amount > (fromVault.balance || 0))
-          ? 'Amount exceeded'
-          : !to
-            ? 'Enter an address'
-            : to && !isValidAddress(to)
-              ? 'Invalid address'
-              : t('multisig.multisig-assets.main-cta')
+    return !proposalTitle
+      ? "Add a proposal title"
+      : !amount || +amount === 0
+        ? 'Enter amount'
+        : fromVault && fromVault.balance === 0
+          ? 'No balance'
+          : (amount && fromVault && +amount > (fromVault.balance || 0))
+            ? 'Amount exceeded'
+            : !to
+              ? 'Enter an address'
+              : to && !isValidAddress(to)
+                ? 'Invalid address'
+                : 'Sign proposal'
   }
 
   const refreshPage = () => {
@@ -572,7 +575,7 @@ export const MultisigTransferTokensModal = (props: {
                   name="Title"
                   className="w-100 general-text-input"
                   onChange={onTitleInputValueChange}
-                  placeholder="Add a proposal title"
+                  placeholder="Add a proposal title (required)"
                   value={proposalTitle}
                 />
               </div>
