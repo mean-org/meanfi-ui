@@ -1,0 +1,70 @@
+.multisig-create-safe-modal {
+  .ant-modal-header,
+  .ant-modal-body {
+    .ant-divider.ant-divider-horizontal.ant-divider-plain {
+      margin: 0 !important;
+    }
+  }
+  .ant-modal-body {
+    padding: 0.25em !important;
+    .stepper-wrapper {
+      padding: 1.5em 1.75em 0 !important;
+      .flexible-left {
+        display: block !important;
+        float: right;
+        margin-bottom: 0.5em;
+        margin-top: -0.6em;
+        .stepper-label {
+          font-size: 12px !important;
+        }
+      }
+    }
+    .contract-wrapper {
+      padding: 1.5em;
+    }
+    .contract-wrapper.panel1.show,
+    .contract-wrapper.panel2.show,
+    .contract-wrapper.panel3.show {
+      .left-title {
+        margin-top: -2.4em;
+      }
+    }
+  }
+  .two-column-form-layout {
+    display: flex;
+    margin: 1em auto;
+    
+    @media (min-width: 576px) {
+      .right {
+        display: flex;
+        align-items: center;
+      }
+    }
+    .right {
+      padding-top: 1em;
+    }
+  }
+
+  .required-signatures-icons {
+    display: flex;
+    margin-left: 0.25em;
+    svg {
+      padding: 0.25em;
+    }
+    .icon-container {
+      border: 1px solid #575757;
+      background: #b3b3b3;
+      width: 2.5em;
+      display: flex;
+      align-items: center;
+      color: black;
+      font-size: 17px;
+      .lock-icon {
+        color: #575757;
+      }
+      .key-icon {
+        color: #006820;
+      }
+    }
+  }
+}

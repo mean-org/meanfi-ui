@@ -90,4 +90,5 @@ export { IconUsers } from "./IconUsers";
 export { IconVerticalEllipsis } from "./IconVerticalEllipsis";
 export { IconWallet } from "./IconWallet";
 export { IconWarning } from "./IconWarning";
+export { IconWarningCover } from "./IconWarningCover";
 export { IconWhatsapp } from "./IconWhatsapp";
