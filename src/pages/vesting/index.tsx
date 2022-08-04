@@ -500,7 +500,6 @@ export const VestingView = () => {
         }, 20);
         break;
       case OperationType.TreasuryRefreshBalance:
-      case OperationType.StreamClose:
       case OperationType.StreamAddFunds:
       case OperationType.StreamPause:
       case OperationType.StreamResume:
@@ -536,6 +535,21 @@ export const VestingView = () => {
         }
         setTimeout(() => {
           hardReloadContracts();
+        }, 20);
+        break;
+      case OperationType.StreamClose:
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+        recordTxConfirmation(item.signature, item.operationType, true);
+        if (!isWorkflowLocked) {
+          isWorkflowLocked = true;
+          notifyMultisigVestingContractActionFollowup(
+            'To close the vesting stream, the other Multisig owners need to approve the proposal.',
+            'After the proposal has been approved and executed, the vesting stream will be closed.',
+            item
+          );
+        }
+        setTimeout(() => {
+          softReloadContracts();
         }, 20);
         break;
       case OperationType.TreasuryStreamCreate:

@@ -794,7 +794,7 @@ export const VestingContractAddFundsModal = (props: {
                     name="Title"
                     className={`w-100 general-text-input${!fundFromSafeOption ? ' disabled' : ''}`}
                     onChange={onTitleInputValueChange}
-                    placeholder="Add a proposal title (required)"
+                    placeholder="Title for the multisig proposal"
                     value={proposalTitle}
                   />
                 </div>

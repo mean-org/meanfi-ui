@@ -4221,7 +4221,7 @@ export const SafeView = () => {
           <span className={`status position-relative align-middle ${loadingProposals ? 'error' : 'success'}`}></span>
           <span className="mx-1 align-middle">loadingPrograms</span>
           <span className={`status position-relative align-middle ${loadingPrograms ? 'error' : 'success'}`}></span>
-          <span className="ml-1">multisigTxs:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
+          <span className="ml-1">proposals:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
         </div>
       )}
 

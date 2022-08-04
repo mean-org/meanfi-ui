@@ -600,7 +600,7 @@ export const VestingContractCreateStreamModal = (props: {
                                 name="Title"
                                 className="w-100 general-text-input"
                                 onChange={onTitleInputValueChange}
-                                placeholder="Add a proposal title (required)"
+                                placeholder="Title for the multisig proposal"
                                 value={proposalTitle}
                             />
                         </div>
