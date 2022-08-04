@@ -74,7 +74,7 @@ export const StatsView = () => {
               {t('stats.subtitle')}
             </div>
           </div>
-          <PromoSpace />
+          
           <TokenStats
             meanStats={meanfiStats}
             smeanSupply={sMeanTotalSupply}

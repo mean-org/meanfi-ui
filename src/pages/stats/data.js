@@ -182,7 +182,7 @@ export const data = {
       "type": "DEX",
       "buy": "https://www.orca.so/",
       "img1": "https://www.gate.io/images/coin_icon/64/mean.png",
-      "img2": "https://www.orca.so/static/media/usdc.3b5972c1.svg",
+      "img2": "https://www.orca.so/static/media/usdc.f08e02b1.svg",
       "total_liquidity": 1184277,
       "total_value_locked": ""
     },
@@ -204,7 +204,7 @@ export const data = {
       "type": "DEX",
       "buy": "https://raydium.io/",
       "img1": "https://www.gate.io/images/coin_icon/64/mean.png",
-      "img2": "https://www.orca.so/static/media/usdc.3b5972c1.svg",
+      "img2": "https://www.orca.so/static/media/usdc.f08e02b1.svg",
       "total_liquidity": 193023.19,
       "total_value_locked": ""
     },

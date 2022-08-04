@@ -104,6 +104,9 @@ ul.tabs {
     .slide {
       margin-bottom: 4em;
     }
+    .slider-row {
+      padding-left: 10px;
+    }
   }
   .avatar-coin {
     border-radius: 50%;
@@ -178,15 +181,19 @@ ul.tabs {
   }
   /*************** SLIDER CARDS ***************/
   .slider-row {
-    margin-left: 0px !important;
-    margin-right: -30px !important;
+    padding-left: 10px;
+    scroll-behavior: auto;
+    scroll-behavior: smooth;
     .slide {
-      overflow-x: scroll;
+      overflow: hidden;
+      overflow-x: auto;
       flex-wrap: nowrap !important;
       width: 100%;
       display: flex;
       justify-content: center;
       .slide-card {
+        padding-left: 2px;
+        padding-right: 2px;
         min-height: 20em;
         height: fit-content;
         margin: 0.25em auto 1.25em;
