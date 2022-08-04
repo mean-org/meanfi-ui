@@ -1,4 +1,4 @@
-import { Button, Col, Divider, Modal, Row, Spin } from "antd";
+import { Button, Col, Divider, Modal, Row, Spin, Switch, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
@@ -6,7 +6,7 @@ import { useWallet } from "../../contexts/wallet";
 import { TransactionStatus } from "../../models/enums";
 import { StepSelector } from "../StepSelector";
 import "./style.scss";
-import { IconKey, IconLock } from "../../Icons";
+import { IconInfoCircle, IconKey, IconLock } from "../../Icons";
 import { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
@@ -118,6 +118,10 @@ export const MultisigCreateSafeModal = (props: {
       ? true
       : false;
   }
+
+  const onChangeSwitch = (value: boolean) => {
+    console.log(`switch to ${value}`);
+  };
 
   // When modal goes visible, add current wallet address as first participant
   useEffect(() => {
@@ -269,6 +273,22 @@ export const MultisigCreateSafeModal = (props: {
                       )
                     })}
                   </div>
+
+                  {/* Allow owners to Reject a Proposal */}
+                  <div className="d-flex align-items-center mt-3">
+                    <div className="icon-label info-label">
+                      Allow owners to Reject a Proposal
+                      <Tooltip placement="bottom" title="Owners can reject a proposal before it has enough signatures and move to Passed status or failed. Otherwise only the proposal originator is able to Reject it.">
+                        <span className="icon-info-circle simplelink">
+                          <IconInfoCircle className="mean-svg-icons" />
+                        </span>
+                      </Tooltip>
+                    </div>
+                    <Switch 
+                      size="small"
+                      defaultChecked
+                      onChange={onChangeSwitch} />
+                  </div>
                 </>
               </div>
 
@@ -371,12 +391,6 @@ export const MultisigCreateSafeModal = (props: {
                     size="middle"
                     className="col-6"
                     onClick={onContinueStepTwoButtonClick}
-                    // disabled={
-                    //   !publicKey ||
-                    //   !safeName ||
-                    //   multisigOwners.length === 0 ||
-                    //   multisigThreshold === 0
-                    // }
                     disabled={!publicKey || !isFormValid()}
                   >
                     {getStepTwoContinueButtonLabel()}

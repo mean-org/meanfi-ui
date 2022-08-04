@@ -17,8 +17,13 @@
       margin-left: 1em;
     }
   }
-  .icon-label svg {
-    height: 14px !important;
+  .add-owners-row {
+    display: flex;
+    align-items: baseline;
+    font-size: 12px;
+    .icon-label svg {
+      height: 14px !important;
+    }
   }
   svg.mean-svg-icons.simplelink {
     width: 1.5em;

@@ -76,13 +76,13 @@ export const MultisigSafeOwners = (props: {
 
   return (
     <div className={`multisig-safe-owners ${participants.length > 2 ? 'mb-1' : 'mb-3'}`}>
-      <div className={`flex-fixed-right ${disabled ? 'click-disabled' : ''}`}>
+      <div className={`flex-fixed-right add-owners-row ${disabled ? 'click-disabled' : ''}`}>
         <div className="left">
           {label ? (
             <div className="form-label icon-label">
               {label}
               <Tooltip placement="bottom" title="">
-                <span>
+                <span className="simplelink">
                   <IconInfoCircle className="mean-svg-icons" />
                 </span>
               </Tooltip>
