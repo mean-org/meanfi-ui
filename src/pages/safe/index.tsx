@@ -73,7 +73,7 @@ import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
-import { CreateNewProposalParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
+import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
 import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
@@ -384,7 +384,7 @@ export const SafeView = () => {
 
   },[multisigClient, resetTransactionStatus]);
 
-  const onAcceptCreateMultisig = (data: any) => {
+  const onAcceptCreateMultisig = (data: CreateNewSafeParams) => {
     consoleOut('multisig:', data, 'blue');
     onExecuteCreateMultisigTx(data);
   };
@@ -448,7 +448,7 @@ export const SafeView = () => {
   //   navigate("/custody");
   // };
 
-  const onExecuteCreateMultisigTx = useCallback(async (data: any) => {
+  const onExecuteCreateMultisigTx = useCallback(async (data: CreateNewSafeParams) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -460,22 +460,23 @@ export const SafeView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createMultisig = async (data: any) => {
+    const createMultisig = async (createParams: any) => {
 
       if (!multisigClient || !publicKey) { return; }
 
-      const owners = data.owners.map((p: MultisigParticipant) => {
+      const owners = createParams.owners.map((p: MultisigParticipant) => {
         return {
           address: new PublicKey(p.address),
           name: p.name
         }
       });
 
+      // TODO: add parameter to accept isAllowedRejectProposal (Irshad)
       const tx = await multisigClient.createFundedMultisig(
         publicKey,
         MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-        data.label, 
-        data.threshold, 
+        createParams.label, 
+        createParams.threshold, 
         owners
       );
 
@@ -498,7 +499,8 @@ export const SafeView = () => {
           wallet: publicKey.toBase58(),                               // wallet
           label: data.label,                                          // multisig label
           threshold: data.threshold,
-          owners: data.owners
+          owners: data.owners,
+          isAllowRejectProposal: data.isAllowToRejectProposal
         };
 
         consoleOut('data:', payload);
@@ -546,7 +548,7 @@ export const SafeView = () => {
           return false;
         }
 
-        return await createMultisig(data)
+        return await createMultisig(payload)
           .then(value => {
             if (!value) { return false; }
             consoleOut('createMultisig returned transaction:', value);
@@ -4491,7 +4493,7 @@ export const SafeView = () => {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           multisigAccounts={multisigAccounts}
-          handleOk={onAcceptCreateMultisig}
+          handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
           handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
           isBusy={isBusy}
         />

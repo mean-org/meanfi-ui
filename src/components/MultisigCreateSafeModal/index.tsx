@@ -16,6 +16,7 @@ import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../uti
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { getTransactionOperationDescription, isValidAddress } from "../../utils/ui";
 import { isError } from "../../utils/transactions";
+import { CreateNewSafeParams } from "../../models/multisig";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -42,6 +43,7 @@ export const MultisigCreateSafeModal = (props: {
   const [multisigThreshold, setMultisigThreshold] = useState(0);
   const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
+  const [isAllowToRejectProposal, setAllowToRejectProposal] = useState<boolean>(true);
 
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
@@ -72,11 +74,13 @@ export const MultisigCreateSafeModal = (props: {
   }
 
   const onAcceptModal = () => {
-    handleOk({
+    const options: CreateNewSafeParams = {
       label: safeName,
       threshold: multisigThreshold,
-      owners: multisigOwners
-    });
+      owners: multisigOwners,
+      isAllowToRejectProposal: isAllowToRejectProposal
+    }
+    handleOk(options);
   }
 
   const onCloseModal = () => {
@@ -88,7 +92,6 @@ export const MultisigCreateSafeModal = (props: {
       setSafeName('');
       setMultisigThreshold(0);
       setMultisigOwners([]);
-
     }, 50);
 
     setTransactionStatus({
@@ -120,7 +123,7 @@ export const MultisigCreateSafeModal = (props: {
   }
 
   const onChangeSwitch = (value: boolean) => {
-    console.log(`switch to ${value}`);
+    setAllowToRejectProposal(value);
   };
 
   // When modal goes visible, add current wallet address as first participant
