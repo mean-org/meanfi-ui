@@ -400,32 +400,32 @@ export const SafeView = () => {
     setIsMultisigCreateSafeModalVisible(false);
     resetTransactionStatus();
     setIsBusy(false);
-    // openNotification({
-    //   description: t('multisig.create-multisig.success-message'),
-    //   type: "success"
-    // });
     setTransactionFees(ZERO_FEES);
 
   },[resetTransactionStatus])
 
-  const onMultisigModified = useCallback(async () => {
+  const onMultisigModified = useCallback(() => {
     setIsBusy(false);
     setIsEditMultisigModalVisible(false);
     resetTransactionStatus();
 
+    // openNotification({
+    //   description: t('multisig.update-multisig.success-message'),
+    //   duration: 10,
+    //   type: "success"
+    // });
+    // await delay(150);
+    // openNotification({
+    //   description: "The proposal's status can be reviewed in the Multisig Safe's proposal list.",
+    //   duration: 15,
+    //   type: "success"
+    // });
     openNotification({
-      description: t('multisig.update-multisig.success-message'),
+      description: "The proposal can be reviewed in the Multisig's proposal list for other owners to approve.",
       duration: 10,
       type: "success"
     });
-    await delay(150);
-    openNotification({
-      description: "The proposal's status can be reviewed in the Multisig Safe's proposal list.",
-      duration: 15,
-      type: "success"
-    });
   },[
-    t,
     resetTransactionStatus
   ]);
 
