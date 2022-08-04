@@ -162,7 +162,7 @@ export const MultisigCreateSafeModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal multisig-create-safe-modal"
-      title={<div className="modal-title">{currentStep === 1 ? "Create multisig safe" : "Add safe"}</div>}
+      title={<div className="modal-title">{currentStep === 0 ? "Create multisig safe" : "Add safe"}</div>}
       maskClosable={false}
       footer={null}
       visible={isVisible}
@@ -174,9 +174,9 @@ export const MultisigCreateSafeModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             <div className="scrollable-content">
-              <StepSelector step={currentStep} steps={3} onValueSelected={onStepperChange} />
+              <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
-              <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
+              {/* <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
                 <>
                   <h3 className="left-title">Getting started</h3>
                   <Divider plain />
@@ -197,7 +197,7 @@ export const MultisigCreateSafeModal = (props: {
                           Create safe
                       </Button>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* <Divider plain />
 
@@ -218,10 +218,11 @@ export const MultisigCreateSafeModal = (props: {
                       </Button>
                     </div>
                   </div> */}
-                </>
-              </div>
+                {/* </>
+              </div> */}
 
-              <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
+              {/* <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}> */}
+              <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
                 <>
                   <h3 className="left-title">Safe details</h3>
                   <Divider plain />
@@ -295,7 +296,8 @@ export const MultisigCreateSafeModal = (props: {
                 </>
               </div>
 
-              <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
+              {/* <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}> */}
+              <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}> 
                 <>
                   <h3 className="left-title">Summary</h3>
                   <Divider plain />
@@ -369,7 +371,8 @@ export const MultisigCreateSafeModal = (props: {
 
             <Divider plain />
 
-            <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
+            {/* <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}> */}
+            <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
               <Row>
                 <Col span={12} className="d-flex justify-content-center">
                   <Button
@@ -393,7 +396,8 @@ export const MultisigCreateSafeModal = (props: {
                     shape="round"
                     size="middle"
                     className="col-6"
-                    onClick={onContinueStepTwoButtonClick}
+                    // onClick={onContinueStepTwoButtonClick}
+                    onClick={onContinueStepOneButtonClick}
                     disabled={!publicKey || !isFormValid()}
                   >
                     {getStepTwoContinueButtonLabel()}
@@ -402,7 +406,8 @@ export const MultisigCreateSafeModal = (props: {
               </Row>
             </div>
 
-            <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
+            {/* <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}> */}
+            <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
               <Row>
                 <Col span={12} className="d-flex justify-content-center">
                   <Button
@@ -411,7 +416,8 @@ export const MultisigCreateSafeModal = (props: {
                     type="ghost"
                     size="middle"
                     className="thin-stroke col-6"
-                    onClick={() => onStepperChange(1)}
+                    // onClick={() => onStepperChange(1)}
+                    onClick={() => onStepperChange(0)}
                     disabled={
                       !publicKey
                     }
