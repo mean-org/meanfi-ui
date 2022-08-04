@@ -472,7 +472,8 @@
 		"multisig-accounts": {
 			"no-accounts": "Aucun compte multisig disponible",
 			"not-connected": "Veuillez connecter votre portefeuille pour voir vos comptes multisig",
-			"pending-transactions": "{{txs}} transactions en attente"
+			"pending-transactions": "{{txs}} transactions en attente",
+			"loading-multisig-accounts": "Loading multisig accounts"
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Détails de l'actif",

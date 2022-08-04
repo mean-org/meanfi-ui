@@ -30,6 +30,9 @@
         .item-block {
             padding-bottom: 0 !important;
             position: relative;
+            @media (max-width: 575.98px) {
+                width: calc(100% - 13px);
+            }
         }
 
         .bottom-ctas {
@@ -125,7 +128,11 @@
         flex: 0 0 auto;
         background-color: var(--bg-color);
 
-        @media (max-width: 767.98px) {
+        @media (max-width: 575.98px) {
+            margin: -0.6rem 1rem -0.2rem 0;
+        }
+
+        @media (min-width: 576px) and (max-width: 767.98px) {
             margin: -0.6rem 0px -0.2rem 0;
         }
 

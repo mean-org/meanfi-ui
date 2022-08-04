@@ -9,9 +9,10 @@ import { isError } from '../../utils/transactions';
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { consoleOut, getTransactionOperationDescription } from '../../utils/ui';
-import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { UserTokenAccount } from '../../models/transactions';
 import { InputMean } from '../InputMean';
+import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -22,9 +23,11 @@ export const MultisigVaultDeleteModal = (props: {
   isVisible: boolean;
   isBusy: boolean;
   selectedVault: UserTokenAccount | undefined;
+  selectedMultisig: MultisigInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
   const {
+    theme,
     transactionStatus,
     getTokenByMintAddress,
     setTransactionStatus
@@ -67,10 +70,17 @@ export const MultisigVaultDeleteModal = (props: {
   }
 
   const isValidForm = (): boolean => {
-    return props.selectedVault &&
+    return proposalTitle &&
+           props.selectedVault &&
            props.selectedVault.balance as number === 0
       ? true
       : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !proposalTitle
+      ? 'Add a proposal title'
+      : "Sign delete proposal"
   }
 
   const renderVault = (item: UserTokenAccount) => {
@@ -117,7 +127,7 @@ export const MultisigVaultDeleteModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.multisig-assets.delete-asset.modal-title')}</div>}
+      title={<div className="modal-title">Propose asset deletion</div>}
       maskClosable={false}
       footer={null}
       visible={props.isVisible}
@@ -129,6 +139,20 @@ export const MultisigVaultDeleteModal = (props: {
       <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
+            {/* Warning icon and message */}
+            <div className="text-center">
+              {theme === 'light' ? (
+                <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+              ) : (
+                <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+              )}
+
+              {/* <h3 className="mb-3 fg-warning">{`Closing this account will remove this asset completely from the list of assets of this multisig ${props.selectedMultisig?.label}`}</h3> */}
+              <div className="mb-3 fg-warning">
+                <span>{`Closing this account will remove this asset completely from the list of assets of this multisig ${props.selectedMultisig?.label}`}</span>
+              </div>
+            </div>
+
             {/* Proposal title */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.proposal-modal.title')}</div>
@@ -137,7 +161,7 @@ export const MultisigVaultDeleteModal = (props: {
                 name="Title"
                 className="w-100 general-text-input"
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title"
+                placeholder="Add a proposal title (required)"
                 value={proposalTitle}
               />
             </div>
@@ -156,6 +180,45 @@ export const MultisigVaultDeleteModal = (props: {
 
             {/* explanatory paragraph */}
             <p>{t('multisig.multisig-assets.delete-asset.explanatory-paragraph')}</p>
+
+            {!isError(transactionStatus.currentOperation) && (
+              <div className="col-12 p-0 mt-3">
+                <Button
+                  className={`center-text-in-btn ${props.isBusy ? 'inactive' : ''}`}
+                  block
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  disabled={!isValidForm()}
+                  onClick={() => {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                      onAcceptDeleteVault();
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                      onCloseModal();
+                    } else {
+                      refreshPage();
+                    }
+                  }}>
+                  {props.isBusy
+                    ? t('multisig.transfer-tokens.main-cta-busy')
+                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                      ?  getTransactionStartButtonLabel()
+                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                        ? t('general.cta-finish')
+                        : t('general.refresh')
+                  }
+                </Button>
+              </div>
+            )}
+          </>
+        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
+          <>
+            <div className="transaction-progress">
+              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              <h4 className="font-bold">
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+              </h4>
+            </div>
           </>
         ) : (
           <>
@@ -164,6 +227,27 @@ export const MultisigVaultDeleteModal = (props: {
               <h4 className="font-bold mb-3">
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
+
+              {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+                <div className="row two-col-ctas mt-3 transaction-progress p-2">
+                  <div className="col-12">
+                    <Button
+                      block
+                      type="text"
+                      shape="round"
+                      size="middle"
+                      className={`center-text-in-btn thin-stroke ${props.isBusy ? 'inactive' : ''}`}
+                      onClick={() => isError(transactionStatus.currentOperation)
+                        ? onAcceptDeleteVault()
+                        : onCloseModal()}>
+                      {(isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
+                        ? t('general.retry')
+                        : t('general.cta-close')
+                      }
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -177,7 +261,7 @@ export const MultisigVaultDeleteModal = (props: {
           }>          
         {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
         <div className="transaction-progress">
-          <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+          <Spin indicator={bigLoadingIcon} className="icon mt-0 mb-2" />
           <h4 className="font-bold mb-1">
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
@@ -187,56 +271,6 @@ export const MultisigVaultDeleteModal = (props: {
         </div>
         )}
       </div>
-
-      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-        <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
-            <Button
-              block
-              type="text"
-              shape="round"
-              size="middle"
-              className={props.isBusy ? 'inactive' : ''}
-              onClick={() => isError(transactionStatus.currentOperation)
-                ? onAcceptDeleteVault()
-                : onCloseModal()}>
-              {isError(transactionStatus.currentOperation)
-                ? t('general.retry')
-                : t('general.cta-close')
-              }
-            </Button>
-          </div>
-          {!isError(transactionStatus.currentOperation) && (
-            <div className="col-6">
-              <Button
-                className={`extra-height ${props.isBusy ? 'inactive' : ''}`}
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                disabled={!isValidForm()}
-                onClick={() => {
-                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                    onAcceptDeleteVault();
-                  } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                    onCloseModal();
-                  } else {
-                    refreshPage();
-                  }
-                }}>
-                {props.isBusy
-                  ? t('multisig.transfer-tokens.main-cta-busy')
-                  : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? t('multisig.multisig-assets.delete-asset.main-cta')
-                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                      ? t('general.cta-finish')
-                      : t('general.refresh')
-                }
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
     </Modal>
   )
 };

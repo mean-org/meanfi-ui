@@ -22,6 +22,9 @@ export interface TreasuryTopupParams {
     streamId: string;
     associatedToken: string;
     treasuryId?: string;
+    contributor?: string;
+    proposalTitle?: string;
+    fundFromSafe?: boolean;
 }
 
 export interface StreamTopupParams {
