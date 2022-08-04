@@ -75,7 +75,7 @@ export const MultisigSafeOwners = (props: {
   }
 
   return (
-    <div className="multisig-safe-owners">
+    <div className={`multisig-safe-owners ${participants.length > 2 ? 'mb-1' : 'mb-3'}`}>
       <div className={`flex-fixed-right ${disabled ? 'click-disabled' : ''}`}>
         <div className="left">
           {label ? (
@@ -108,7 +108,8 @@ export const MultisigSafeOwners = (props: {
         </div>
       )}
       {participants && participants.length > 0 ? (
-        <div id="multisig-participants-max-height" className={`mb-3 ${participants.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
+        // <div id="multisig-participants-max-height" className={`mb-3 ${participants.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
+        <div className={`${participants.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
           {participants.map((participant: MultisigParticipant, index: number) => {
             return (
               <div className="container-owner-item" key={index}>
