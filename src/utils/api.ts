@@ -1,11 +1,34 @@
 import { appConfig } from "..";
 import { meanFiHeaders } from "../constants";
 import { Allocation } from "../models/common-types";
-import { getDefaultRpc, RpcConfig } from "../models/connections-hq";
+import { getDefaultRpc, RpcConfig } from "../services/connections-hq";
 import { WhitelistClaimType } from "../models/enums";
+import { TokenPrice } from "../models/token";
+import { PriceGraphModel } from "../models/price-graph";
+import { MeanFiStatsModel } from "../models/meanfi-stats";
 
-export const getPrices = async (path?: string): Promise<any> => {
-  return fetch(path || "https://api.raydium.io/coin/price", {
+declare interface RequestInit { }
+
+export const getPrices = async (): Promise<TokenPrice[]> => {
+
+  const options: RequestInit = {
+    method: "GET",
+    headers: meanFiHeaders
+  };
+  const url = appConfig.getConfig().apiUrl + '/coin-prices';
+
+  return fetch(url, options)
+    .then((response) => response.json())
+    .then((response) => {
+      return response;
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+};
+
+export const getJupiterTokenList = async (path: string): Promise<any> => {
+  return fetch(path, {
     method: "GET",
   })
     .then((response) => response.json())
@@ -17,7 +40,22 @@ export const getPrices = async (path?: string): Promise<any> => {
     });
 };
 
-export const getJupiterTokenList = async (path: string): Promise<any> => {
+export const getRaydiumLiquidityPools = async (): Promise<any> => {
+  const path = 'https://api.raydium.io/v2/sdk/liquidity/mainnet.json';
+  return fetch(path, {
+    method: "GET",
+  })
+    .then((response) => response.json())
+    .then((response) => {
+      return response;
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+};
+
+export const getRaydiumLpPairs = async (): Promise<any> => {
+  const path = 'https://api.raydium.io/v2/main/pairs';
   return fetch(path, {
     method: "GET",
   })
@@ -49,22 +87,24 @@ export const reportConnectedAccount = async (address: string, refBy?: string): P
   const options: RequestInit = {
     method: "POST",
     headers: meanFiHeaders
-  }
+  };
   let url = appConfig.getConfig().apiUrl + '/meanfi-connected-accounts';
   url += `?networkId=${getDefaultRpc().networkId}&a=${address}`;
   if (refBy) {
     url += `&refBy=${refBy}`;
   }
-  try {
-    const response = await fetch(url, options)
-    if (response && response.status === 200) {
-      return true;
-    }
-    return false;
-  } catch (error) {
-    throw(error);
-  }
-};
+
+  return fetch(url, options)
+    .then(response => {
+      if (response && response.status === 200) {
+        return true;
+      }
+      return false;
+    })
+    .catch(error => {
+      throw (error);
+    });
+}
 
 // GET /whitelists/{address} - Gets whitelist allocation - Allocation
 export const getWhitelistAllocation = async (address: string, claimType: WhitelistClaimType): Promise<Allocation | null> => {
@@ -72,7 +112,7 @@ export const getWhitelistAllocation = async (address: string, claimType: Whiteli
     method: "GET",
     headers: meanFiHeaders
   }
-  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?claimType=${claimType}`;
+  const url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?claimType=${claimType}`;
   try {
     const response = await fetch(url, options)
     if (response && response.status === 200) {
@@ -85,7 +125,7 @@ export const getWhitelistAllocation = async (address: string, claimType: Whiteli
   }
 };
 
-export async function sendSignClaimTxRequest(address: string, base64ClaimTx: string): Promise<any> {
+export const sendSignClaimTxRequest = async (address: string, base64ClaimTx: string): Promise<any> => {
   const options: RequestInit = {
     method: "POST",
     headers: meanFiHeaders,
@@ -95,18 +135,19 @@ export async function sendSignClaimTxRequest(address: string, base64ClaimTx: str
     }),
   }
 
-  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}`;
+  const url = `${appConfig.getConfig().apiUrl}/whitelists/${address}`;
 
-  try {
-    const response = await fetch(url, options)
-    if (response.status !== 200) {
-      throw new Error(`Error: request response status: ${response.status}`);
-    }
-    const signedClaimTxResponse = (await response.json()) as any;
-    return signedClaimTxResponse;
-  } catch (error) {
-    throw (error);
-  }
+  return fetch(url, options)
+    .then(async response => {
+      if (response.status !== 200) {
+        throw new Error(`Error: request response status: ${response.status}`);
+      }
+      const signedClaimTxResponse = (await response.json()) as any;
+      return signedClaimTxResponse;
+    })
+    .catch(error => {
+      throw (error);
+    });
 }
 
 export const sendRecordClaimTxRequest = async (address: string, claimTxId: string): Promise<any> => {
@@ -115,17 +156,64 @@ export const sendRecordClaimTxRequest = async (address: string, claimTxId: strin
     headers: meanFiHeaders,
   }
 
-  let url = `${appConfig.getConfig().apiUrl}/airdrop-claim-tx/${address}?txId=${claimTxId}`;
+  const url = `${appConfig.getConfig().apiUrl}/airdrop-claim-tx/${address}?txId=${claimTxId}`;
 
+  fetch(url, options)
+    .then(response => {
+      if (response.status !== 200) {
+        throw new Error(`Error: request response status: ${response.status}`);
+      }
+      return response;
+    })
+    .catch(error => {
+      throw (error);
+    });
+}
+
+export const getMeanStats = async (): Promise<MeanFiStatsModel | null> => {
   try {
-    const response = await fetch(url, options)
-    if (response.status !== 200) {
-      throw new Error(`Error: request response status: ${response.status}`);
+    const path = `https://raw.githubusercontent.com/mean-dao/meanfi-stats/main/meanfi-stats.json`;
+    const res = await fetch(path, { method: "GET" });
+    // 400+ status codes are failed
+    if (res.status >= 400) {
+      throw new Error(`Error getMeanStats: ${res.status}: ${res.statusText}`)
     }
-
-    return response;
-
+    return await res.json();
   } catch (error) {
-    throw (error);
+    console.error(error);
+    return null;
+  }
+}
+
+export const getCoingeckoMarketChart = async (
+  coinGeckoId: string = 'meanfi',
+  decimals: number = 6,
+  days: number = 30,
+  interval: 'daily' | 'hourly' = 'daily'
+): Promise<[PriceGraphModel[], PriceGraphModel[]] | []> => {
+  try {
+    const path = `https://api.coingecko.com/api/v3/coins/${coinGeckoId}/market_chart?vs_currency=usd&days=${days}&interval=${interval}`;
+    const res = await fetch(path, { method: "GET" });
+    // 400+ status codes are failed
+    if (res.status >= 400) {
+      throw new Error(`Error getCoingeckoMarketChart: ${res.status}: ${res.statusText}`);
+    }
+    const { prices, total_volumes } = await res.json();
+    const formatedPriceData = prices.map((x: number[]) => {
+      return {
+        priceData: x[1].toFixed(decimals),
+        dateData: new Date(x[0]).toISOString()
+      }
+    });
+    const formatedVolumeData = total_volumes.map((x: number[]) => {
+      return {
+        priceData: x[1].toFixed(decimals),
+        dateData: new Date(x[0]).toISOString()
+      }
+    });
+    return [formatedPriceData, formatedVolumeData];
+  } catch (error) {
+    console.error(error);
+    return [];
   }
 }

@@ -3,7 +3,7 @@ import { SwapSettings } from "../../components/SwapSettings";
 import { ExchangeInput } from "../../components/ExchangeInput";
 import { TextInput } from "../../components/TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { formatAmount, isValidNumber } from "../../utils/utils";
+import { formatAmount, formatThousands, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { InfoCircleOutlined, WarningFilled } from "@ant-design/icons";
 import { consoleOut, getTxPercentFeeAmount } from "../../utils/ui";
@@ -25,7 +25,7 @@ import { calculateActionFees as calculateDdcaActionFees, TransactionFees as Ddca
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
-import "./style.less";
+import "./style.scss";
 
 import {
   getClients,
@@ -52,6 +52,8 @@ import { ExchangeOutput } from "../../components/ExchangeOutput";
 import { SABER } from "@mean-dao/hybrid-liquidity-ag/lib/types";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 
+let inputDebounceTimeout: any;
+
 export const RecurringExchange = (props: {
   queryFromMint: string | null;
   queryToMint: string | null;
@@ -63,10 +65,10 @@ export const RecurringExchange = (props: {
   const { t } = useTranslation("common");
   const { publicKey, connected } = useWallet();
   const {
-    coinPrices,
     ddcaOption,
     previousWalletConnectState,
     setPreviousWalletConnectState,
+    getTokenPriceBySymbol,
     setDdcaOption,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -246,7 +248,7 @@ export const RecurringExchange = (props: {
     }
 
     let maxAmount = 0;
-    let balance = parseFloat(fromBalance);
+    const balance = parseFloat(fromBalance);
 
     if (fromMint === NATIVE_SOL_MINT.toBase58()) {
       maxAmount = balance - feesInfo.network;
@@ -280,7 +282,7 @@ export const RecurringExchange = (props: {
     }
 
     let valid = false;
-    let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
+    const balance = userBalances[NATIVE_SOL_MINT.toBase58()];
 
     if (isWrap() || fromMint !== NATIVE_SOL_MINT.toBase58()) {
       valid = balance >= feesInfo.network;
@@ -473,8 +475,8 @@ export const RecurringExchange = (props: {
       const list: any = { };
 
       //TODO: Remove token filtering when HLA program implementation covers all tokens
-      for (let info of TOKENS) {
-        let mint = Object.assign({}, info);
+      for (const info of TOKENS) {
+        const mint = Object.assign({}, info);
         if (mint.logoURI) {
           list[mint.address] = mint;
         }
@@ -731,13 +733,13 @@ export const RecurringExchange = (props: {
 
       const error = (_error: any, tokens: PublicKey[]) => {
         console.error(_error);
-        for (let t of tokens) {
+        for (const t of tokens) {
           balancesMap[t.toBase58()] = 0;
         }
       };
 
       const success = (response: any) => {
-        for (let acc of response.value) {
+        for (const acc of response.value) {
           const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
           const address = decoded.mint.toBase58();
 
@@ -959,7 +961,7 @@ export const RecurringExchange = (props: {
           needed = parseFloat(needed.toFixed(9));
         }
 
-        label = t('transactions.validation.insufficient-balance-needed', { balance: needed.toString() });
+        label = t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(needed, 4) });
 
       } else if (fromSwapAmount === 0) {
         label = t('transactions.validation.no-amount');
@@ -1068,7 +1070,7 @@ export const RecurringExchange = (props: {
       
       if (subjectTokenSelection === 'source') {
 
-        let showFromList = !tokenFilter 
+        const showFromList = !tokenFilter 
           ? mintList
           : Object.values(mintList)
             .filter((t: any) => filter(t));
@@ -1079,7 +1081,7 @@ export const RecurringExchange = (props: {
       
       if (subjectTokenSelection === 'destination') {
 
-        let showToList = !tokenFilter 
+        const showToList = !tokenFilter 
           ? mintList 
           : Object.values(mintList)
             .filter((t: any) => filter(t));
@@ -1136,14 +1138,32 @@ export const RecurringExchange = (props: {
 
   }, []);
 
+  const debounceInputOnChange = (value: string) => {
+    clearTimeout(inputDebounceTimeout);
+    inputDebounceTimeout = setTimeout(() => {
+      consoleOut('input ====>', value, 'orange');
+      setFromSwapAmount(parseFloat(value));
+    }, 500);
+  }
+
   // Event handling
   const handleSwapFromAmountChange = useCallback((e: any) => {
 
-    const input = e.target;
+    let newValue = e.target.value;
 
-    if (!input) { return; }
-
-    const newValue = input.value;
+    const decimals = fromMint && mintList ? (mintList[fromMint] as TokenInfo).decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    } else if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    }
 
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromAmount('');
@@ -1153,10 +1173,10 @@ export const RecurringExchange = (props: {
       setFromSwapAmount(0);
     } else if (isValidNumber(newValue)) {
       setFromAmount(newValue);
-      setFromSwapAmount(parseFloat(newValue));
+      debounceInputOnChange(newValue);
     }
 
-  },[]);
+  },[fromMint, mintList]);
 
   const onTokenSearchInputChange = useCallback((e: any) => {
 
@@ -1217,16 +1237,7 @@ export const RecurringExchange = (props: {
     ) ? true : false;
   }
 
-  const getPricePerToken = (token: TokenInfo): number => {
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
-      : 0;
-  }
-
-  const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
+  const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
     return (
       <Row>
         <Col span={11} className="text-right">
@@ -1297,9 +1308,9 @@ export const RecurringExchange = (props: {
     setSlippage(value);
   };
 
-  const onShowLpListToggled = (value: boolean) => {
-    setShowLpList(value);
-  };
+  // const onShowLpListToggled = (value: boolean) => {
+  //   setShowLpList(value);
+  // };
 
   const renderSourceTokenList = (
     <>
@@ -1344,7 +1355,7 @@ export const RecurringExchange = (props: {
               </div>
               <div className="token-description">
                 <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
+                <div className="token-name m-0">{token.name}</div>
               </div>
               {
                 connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
@@ -1409,7 +1420,7 @@ export const RecurringExchange = (props: {
               </div>
               <div className="token-description">
                 <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
+                <div className="token-name m-0">{token.name}</div>
               </div>
               {
                 connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
@@ -1430,10 +1441,6 @@ export const RecurringExchange = (props: {
       )}
     </>
   );
-
-  // TODO: Convert the input field class "transaction-field" to the new general purpose class "well"
-  // Kept for compatibility but it must be removed after conversion
-  const inputPosition = "right";
 
   return (
     <>
@@ -1481,15 +1488,7 @@ export const RecurringExchange = (props: {
               showTokenSelector();
             }}
             onPriceClick={() => refreshPrices()}
-            inputPosition={inputPosition}
-            translationId="source"
-            inputLabel={
-              fromMint && mintList[fromMint]
-                ? `~$${fromAmount
-                  ? formatAmount(parseFloat(fromAmount) * getPricePerToken(mintList[fromMint] as TokenInfo), 2)
-                  : '0.00' }`
-                : ''
-            }
+            className="mb-0"
           />
 
           <div className="flip-button-container">
@@ -1529,7 +1528,7 @@ export const RecurringExchange = (props: {
                 toMint && mintList[toMint]
                   ? `~$${
                     exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
-                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
+                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getTokenPriceBySymbol(mintList[toMint].symbol), 2)
                     : '0.00'}`
                   : ''
               }
@@ -1585,18 +1584,18 @@ export const RecurringExchange = (props: {
             size="large"
             onClick={showDdcaSetup}
             disabled={
-              !isValidBalance() || 
-              !isSwapAmountValid() || 
-              !exchangeInfo || 
-              !exchangeInfo?.amountOut || 
-              (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange) 
+              !isValidBalance() ||
+              !isSwapAmountValid() ||
+              !exchangeInfo ||
+              !exchangeInfo?.amountOut ||
+              (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange)
             }>
             {transactionStartButtonLabel}
           </Button>
 
           {/* Warning */}
           {environment !== 'production' && (
-            <div className="notifications">
+            <div className="mt-3">
               <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
                 <span role="img" aria-label="exclamation-circle" className="anticon anticon-exclamation-circle ant-alert-icon">
                   <WarningFilled />

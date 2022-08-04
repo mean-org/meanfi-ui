@@ -1,9 +1,27 @@
 const fs = require('fs-extra');
 
-const webConfigPath = './build/web.config';
+const buildOutputPath = './build/';
+const buildEnvironment = process.env.REACT_APP_ENV;
 
-if (fs.existsSync(webConfigPath)) {
-    fs.unlinkSync(webConfigPath);
+console.log('Running post-build script...\n');
+console.log('Build environment:', buildEnvironment);
+
+if (fs.existsSync(buildOutputPath + 'web.config')) {
+    fs.unlinkSync(buildOutputPath + 'web.config');
 }
 
-fs.copySync('./ci/web.config', webConfigPath);
+if (fs.existsSync(buildOutputPath + 'robots.txt')) {
+    fs.unlinkSync(buildOutputPath + 'robots.txt');
+}
+
+console.log('Copying file:', 'web.config');
+
+fs.copySync('./ci/web.config', buildOutputPath + 'web.config');
+
+console.log('Copying file:', 'robots.txt');
+
+if (buildEnvironment === 'production') {
+    fs.copySync('./ci/robots_allow.txt', buildOutputPath + 'robots.txt');
+} else {
+    fs.copySync('./ci/robots_disallow.txt', buildOutputPath + 'robots.txt');
+}

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { useTranslation } from "react-i18next";
-import "./style.less";
+import "./style.scss";
 import { IconCopy, IconFacebook, IconLinkedin, IconTelegram, IconTwitter, IconWhatsapp } from '../../Icons';
-import { notify } from '../../utils/notifications';
 import { copyText } from '../../utils/ui';
 import {
   FacebookShareButton,
@@ -14,6 +13,7 @@ import {
 } from "react-share";
 import { useWallet } from '../../contexts/wallet';
 import { appConfig } from '../..';
+import { openNotification } from '../Notifications';
 
 export const ReferFriendModal = (props: {
   handleClose: any;
@@ -35,12 +35,12 @@ export const ReferFriendModal = (props: {
 
   const onCopyReferralLink = () => {
     if (referralLink && copyText(referralLink)) {
-      notify({
+      openNotification({
         description: t('notifications.referral-link-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.referral-link-not-copied-message'),
         type: "error"
       });
@@ -63,13 +63,17 @@ export const ReferFriendModal = (props: {
                 )} */}
             </div>
             <h4 className="refer-friend-hint">{t('referrals.refer-friend-hint')}</h4>
-            <div className="transaction-field">
-              <div className="transaction-field-row main-row">
-                <span className="input-left recipient-field-wrapper">
-                  <span className="referral-link text-monospace">{referralLink}</span>
-                </span>
-                <div className="addon-right simplelink" onClick={onCopyReferralLink}>
-                  <IconCopy className="mean-svg-icons" />
+            <div className="well small mb-2">
+              <div className="flex-fixed-right">
+                <div className="left position-relative">
+                  <span className="recipient-field-wrapper">
+                    <span className="referral-link font-size-75 text-monospace">{referralLink}</span>
+                  </span>
+                </div>
+                <div className="right">
+                  <div className="add-on simplelink" onClick={onCopyReferralLink}>
+                    <IconCopy className="mean-svg-icons" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -106,12 +110,12 @@ export const ReferFriendModal = (props: {
                 <IconLinkedin className="mean-svg-icons" />
               </LinkedinShareButton>
             </div>
-            <div className="text-center mt-1">
+            {/* <div className="text-center mt-1">
               <a className="simplelink underline-on-hover"
                   target="_blank" rel="noopener noreferrer"
                   href="https://docs.meanfi.com/governance/mean-token/tge-and-airdrop">{t('referrals.see-rules')}
               </a>
-            </div>
+            </div> */}
         </div>
     </Modal>
   );

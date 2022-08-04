@@ -6,7 +6,6 @@ import { AccountLayout, u64, MintInfo, MintLayout } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
 import { chunks } from "./../utils/utils";
 import { EventEmitter } from "./../utils/eventEmitter";
-import { useUserAccounts } from "../hooks/useUserAccounts";
 import { WRAPPED_SOL_MINT, programIds } from "../utils/ids";
 
 const AccountsContext = React.createContext<any>(null);
@@ -105,7 +104,7 @@ export const cache = {
 
     const address = id.toBase58();
 
-    let account = genericCache.get(address);
+    const account = genericCache.get(address);
     if (account) {
       return account;
     }
@@ -335,7 +334,7 @@ const precacheUserTokenAccounts = async (
       cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser);
     });
   } catch (error) {
-    console.log('getTokenAccountsByOwner failed.', error);
+    console.error('getTokenAccountsByOwner failed.', error);
     throw(error);
   }
 };
@@ -372,8 +371,8 @@ export function AccountsProvider({ children = null as any }) {
     const subs: number[] = [];
     cache.emitter.onCache((args) => {
       if (args.isNew) {
-        let id = args.id;
-        let deserialize = args.parser;
+        const id = args.id;
+        const deserialize = args.parser;
         const listenerId = connection.onAccountChange(new PublicKey(id), (info) => {
           cache.add(id, info, deserialize);
         });
@@ -621,9 +620,6 @@ const deserializeAccount = (data: Buffer) => {
 
 // TODO: expose in spl package
 export const deserializeMint = (data: Buffer) => {
-  if (data.length !== MintLayout.span) {
-    throw new Error("Not a valid Mint");
-  }
 
   const mintInfo = MintLayout.decode(data);
 
@@ -644,3 +640,11 @@ export const deserializeMint = (data: Buffer) => {
 
   return mintInfo as MintInfo;
 };
+
+export function useUserAccounts() {
+  const context = useAccountsContext();
+  return {
+    userAccounts: context.userAccounts as TokenAccount[],
+    tokenAccounts: context.tokenAccounts as TokenAccount[],
+  };
+}

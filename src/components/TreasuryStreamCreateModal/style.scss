@@ -1,0 +1,14 @@
+.treasury-stream-create-modal {
+  .ant-modal-body {
+    padding: 0.25em !important;
+    .stepper-wrapper {
+      padding: 1.5em 1.75em 0 !important;
+    }
+    .contract-wrapper {
+      padding: 1.5em;
+    }
+    .ant-divider.ant-divider-horizontal.ant-divider-plain {
+      margin: 0 !important;
+    }
+  }
+}

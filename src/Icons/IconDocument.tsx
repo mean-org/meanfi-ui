@@ -1,4 +1,6 @@
-export const IconDocument = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconDocument = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15.75 13C15.75 12.5858 15.4142 12.25 15 12.25H9C8.58579 12.25 8.25 12.5858 8.25 13C8.25 13.4142 8.58579 13.75 9 13.75H15C15.4142 13.75 15.75 13.4142 15.75 13Z" fill="currentColor"/>

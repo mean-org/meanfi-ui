@@ -1,6 +1,7 @@
 import { TokenAmount } from './safe-math';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from './ids';
-import { MEAN_TOKEN_LIST } from '../constants/token-list';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { isProd } from './ui';
 
 interface Tokens {
   [key: string]: any
@@ -12,7 +13,7 @@ export const TOKENS_TAGS: { [key: string]: { mustShow: boolean; show: boolean; o
   solana: { mustShow: false, show: false, outName: 'Solana Token List' },
 }
 
-export interface TokenInfo {
+export interface CustomTokenInfo {
   symbol: string
   name: string
   address: string
@@ -28,52 +29,14 @@ export interface TokenInfo {
   tags: string[]
 }
 
-/**
- * Get token use symbol
- * @param {string} symbol
- * @returns {TokenInfo | null} tokenInfo
- */
-export function getTokenBySymbol(symbol: string): TokenInfo | null {
-  if (symbol === 'SOL') {
-    return JSON.parse(JSON.stringify(NATIVE_SOL));
-  }
-
-  let token = MEAN_TOKEN_LIST.find(t => t.symbol === symbol);
-
-  if (!token) { return null; }
-
-  return token as TokenInfo;
-}
-
-/**
- * Get token use mint addresses
- * @param {string} address
- * @returns {TokenInfo | null} tokenInfo
- */
-export function getTokenByMintAddress(address: string): TokenInfo | null {
-  if (!address) { return null; }
-
-  if (address === NATIVE_SOL.address) {
-    return JSON.parse(JSON.stringify(NATIVE_SOL));
-  }
-
-  let token = null;
-
-  for (const info of MEAN_TOKEN_LIST) {
-    if (info.address === address) {
-      token = info as TokenInfo;
-    }
-  }
-
-  return token;
-}
-
+const LOGO_BASE_URL = "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet";
 export const NATIVE_SOL: TokenInfo = {
+  chainId: isProd() ? 101 : 103,
   symbol: 'SOL',
   name: 'Native SOL',
   address: NATIVE_SOL_MINT.toString(),
   decimals: 9,
-  logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+  logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
   tags: ['raydium']
 }
 
@@ -84,7 +47,7 @@ export const TOKENS: Tokens = {
     address: WRAPPED_SOL_MINT.toBase58(),
     decimals: 9,
     referrer: 'HTcarLHe7WRxBQCWvhVB8AP56pnEtJUV2jDGvcpY3xo5',
-    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+    logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
     tags: ['raydium']
   },
   BTC: {
@@ -93,7 +56,7 @@ export const TOKENS: Tokens = {
     address: '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
     decimals: 6,
     referrer: 'GZpS8cY8Nt8HuqxzJh6PXTdSxc38vFUjBmi7eEUkkQtG',
-    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png",
+    logoURI: `${LOGO_BASE_URL}/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png`,
     tags: ['raydium']
   },
   ETH: {
@@ -102,7 +65,7 @@ export const TOKENS: Tokens = {
     address: '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk',
     decimals: 6,
     referrer: 'CXPTcSxxh4AT38gtv3SPbLS7oZVgXzLbMb83o4ziXjjN',
-    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk/logo.png",
+    logoURI: `${LOGO_BASE_URL}/2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk/logo.png`,
     tags: ['raydium']
   },
   USDT: {
@@ -111,7 +74,7 @@ export const TOKENS: Tokens = {
     address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
     decimals: 6,
     referrer: '8DwwDNagph8SdwMUdcXS5L9YAyutTyDJmK6cTKrmNFk3',
-    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg",
+    logoURI: `${LOGO_BASE_URL}/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg`,
     tags: ['raydium']
   },
   USDC: {
@@ -120,7 +83,7 @@ export const TOKENS: Tokens = {
     address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     decimals: 6,
     referrer: '92vdtNjEg6Zth3UU1MgPgTVFjSEzTHx66aCdqWdcRkrg',
-    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+    logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
     tags: ['raydium']
   },
 }
@@ -181,104 +144,3 @@ export const LP_TOKENS: Tokens = {
     decimals: TOKENS.ETH.decimals
   },
 }
-
-function addUserLocalCoinMint() {
-  const localMintStr = window.localStorage.user_add_coin_mint
-  const localMintList = (localMintStr ?? '').split('---')
-  if (localMintList.length % 3 !== 0) {
-    window.localStorage.removeItem('user_add_coin_mint')
-  } else {
-    for (let index = 0; index < Math.floor(localMintList.length / 3); index += 1) {
-      const name = localMintList[index * 3 + 0]
-      const address = localMintList[index * 3 + 1]
-      const decimals = localMintList[index * 3 + 2]
-      if (!Object.values(TOKENS).find((item) => item.address === address)) {
-        TOKENS[name + address + 'unofficialUserAdd'] = {
-          name,
-          symbol: name,
-          decimals: parseInt(decimals),
-          address,
-          tags: ['userAdd']
-        }
-      } else if (
-        !Object.values(TOKENS)
-          .find((item) => item.address === address)
-          .tags.includes('userAdd')
-      ) {
-        TOKENS[name].tags.push('userAdd')
-      }
-    }
-  }
-}
-
-function addTokensSolana() {
-  fetch('https://api.raydium.io/cache/solana-token-list')
-    .then(async (response) => {
-      addTokensSolanaFunc((await response.json()).tokens)
-    })
-    .catch(() => {
-      fetch('https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json')
-        .then(function (response) {
-          return response.json()
-        })
-        .then(function (myJson) {
-          addTokensSolanaFunc(myJson.tokens)
-        })
-    })
-}
-
-function addTokensSolanaFunc(tokens: any[]) {
-  tokens.forEach((itemToken: any) => {
-    if (itemToken.tags && itemToken.tags.includes('lp-token')) {
-      return
-    }
-    if (!Object.values(TOKENS).find((item) => item.address === itemToken.address)) {
-      TOKENS[itemToken.symbol + itemToken.address + 'solana'] = {
-        symbol: itemToken.symbol,
-        name: itemToken.name,
-        address: itemToken.address,
-        decimals: itemToken.decimals,
-        picUrl: itemToken.logoURI,
-        tags: ['solana']
-      }
-    } else {
-      const token = Object.values(TOKENS).find((item) => item.address === itemToken.address)
-      if (token.symbol !== itemToken.symbol && !token.tags.includes('raydium')) {
-        token.symbol = itemToken.symbol
-        token.name = itemToken.name
-        token.decimals = itemToken.decimals
-        token.tags.push('solana')
-      }
-      const picToken = Object.values(TOKENS).find((item) => item.address === itemToken.address)
-      if (picToken) {
-        picToken.picUrl = itemToken.logoURI
-      }
-    }
-  })
-
-  if (window.localStorage.addSolanaCoin) {
-    window.localStorage.addSolanaCoin.split('---').forEach((itemMint: string) => {
-      if (itemMint === NATIVE_SOL.address) NATIVE_SOL.tags.push('userAdd')
-      else
-        Object.keys(TOKENS).forEach((item) => {
-          if (TOKENS[item].address === itemMint) {
-            TOKENS[item].tags.push('userAdd')
-          }
-        })
-    })
-  }
-}
-
-function updateTokenTagsChange() {
-  const userSelectSource = window.localStorage.userSelectSource ?? ''
-  const userSelectSourceList: string[] = userSelectSource.split('---')
-  for (const itemSource of userSelectSourceList) {
-    if (TOKENS_TAGS[itemSource] && !TOKENS_TAGS[itemSource].mustShow) {
-      TOKENS_TAGS[itemSource].show = true
-    }
-  }
-}
-
-addUserLocalCoinMint();
-// addTokensSolana();
-updateTokenTagsChange();

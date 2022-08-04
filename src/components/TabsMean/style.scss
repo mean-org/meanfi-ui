@@ -1,0 +1,22 @@
+.tabs-container {
+  width: 100%;
+  ul.tabs {
+    margin: 0.5em auto 1em 0.25em !important;
+    width: fit-content !important;
+    li {
+      display: flex;
+      justify-content: flex-start;
+      min-width: fit-content !important;
+      margin-right: 2em !important;
+      &::after {
+        left: 0 !important;
+        right: 0 !important;
+      }
+    }
+  }
+  .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item-selected::after,
+  .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item:active::after,
+  .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item:hover::after {
+    border-bottom: 3px solid #6b6c77 !important;
+  }
+}

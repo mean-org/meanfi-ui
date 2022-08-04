@@ -1,0 +1,23 @@
+@media (max-width: 575px) {
+  .ant-select-dropdown .transaction-list-row {
+      align-items: center !important;
+  }
+}
+
+.transfer-proposal-select {
+  align-items: center !important;
+  margin: -5px 0 !important;
+  .left {
+    width: 50% !important;
+    .transaction-list-row {
+      align-items: center !important;
+      padding-left: 0 !important;
+      .rate-cell {
+        display: none !important;
+      }
+    }
+  }
+  .right {
+    width: 50% !important;
+  }
+}

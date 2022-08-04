@@ -1,106 +1,65 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { PreFooter } from "../../components/PreFooter";
-import "./style.less";
-import { IconStats } from '../../Icons';
-import { Col, Row } from 'antd';
+import { PublicKey } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
-import { useConnection } from '../../contexts/connection';
-import { Connection, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { AppStateContext } from '../../contexts/appstate';
-import { UserTokenAccount } from '../../models/transactions';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { useEffect, useState } from 'react';
+import { Col, Row } from 'antd';
+
+import "./style.scss";
+import { IconStats } from '../../Icons';
+import { PreFooter } from "../../components/PreFooter";
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { TokenStats } from './TokenStats';
-import MeanDaoStats from './MeanDaoStats';
-import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { BN } from 'bn.js';
-import { toUiAmount } from '../../utils/utils';
+import { MEAN_TOKEN, MEAN_TOKEN_LIST, SMEAN_TOKEN } from '../../constants/token-list';
+import { getCoingeckoMarketChart, getMeanStats } from '../../utils/api';
+import { MeanFiStatsModel } from '../../models/meanfi-stats';
 
-const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
+//const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
 
-export const StatsView = () => { 
+export const StatsView = () => {
   const { t } = useTranslation('common');
   const connection = useConnection();
-  const {
-    userTokens
-  } = useContext(AppStateContext);
 
-  const [meanTotalSupply, setMeanTotalSupply] = useState<number | undefined>(undefined);
-  const [meanDecimals, setMeanDecimals] = useState<number | undefined>(undefined);
-  const [meanMintAuth, setMeanMintAuth] = useState<string>('');
-  const [meanToken, setMeanToken] = useState<TokenInfo | UserTokenAccount | undefined>(undefined);
-  const [meanHolders, setMeanHolders] = useState<number | undefined>(undefined);
-
-  const [activeTab, setActiveTab] = useState(tabs[0]);
-
-  const onClickHandler = (event: any) => {
-    if (event.target.innerHTML !== activeTab) {
-      setActiveTab(event.target.innerHTML);
-    }
-  };
+  const { cluster } = useConnectionConfig();
+  const [totalVolume24h, setTotalVolume24h] = useState<number>(0);
+  const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | null>(0);
+  const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel | undefined>(undefined);
 
   // Getters
 
   // Data handling / fetching
+  useEffect(() => {
+    (async () => {
+      const meanStats = await getMeanStats();
+      if (meanStats) {
+        setMeanfiStats(meanStats);
+      }
+      //TODO: pull this info
+      const [_, marketVolumeData] = await getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, 1, 'daily');
+      if (marketVolumeData && marketVolumeData.length > 0) {
+        setTotalVolume24h(Number(marketVolumeData[marketVolumeData.length - 1].priceData));
+      }
+    })();
+  }, [getMeanStats, getCoingeckoMarketChart]);
 
-  // Get MEAN token info
+  // Get sMEAN token info
   useEffect(() => {
     if (!connection) { return; }
 
+    const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(cluster))
+    const stakedToken = tokenList.find(t => t.symbol === SMEAN_TOKEN.symbol);
+    
     (async () => {
-      const token = userTokens.find(t => t.symbol === 'MEAN');
-      if (!token) { return; }
-
-      const mint = new PublicKey(token.address);
-      setMeanToken(token);
-
-      // use getParsedAccountInfo
-      let accountInfo = await connection.getParsedAccountInfo(mint);
-      if (accountInfo) {   
-        let totalSupply = (accountInfo as any).value.data["parsed"]["info"]["supply"];
-        
-        setMeanTotalSupply(toUiAmount(new BN(totalSupply), totalSupply.decimals || 6));
-        setMeanDecimals((accountInfo as any).value.data["parsed"]["info"]["decimals"]);
-        setMeanMintAuth((accountInfo as any).value.data["parsed"]["info"]["mintAuthority"]);
+      // use getTokenSupply
+      const sMeanPubKey = new PublicKey(stakedToken ? stakedToken.address : SMEAN_TOKEN.address);
+      const sMeanInfo = await connection.getTokenSupply(sMeanPubKey, 'confirmed');
+      if (sMeanInfo && sMeanInfo.value) {
+        setSMeanTotalSupply(sMeanInfo.value.uiAmount);
       }
     })();
-
   }, [
-    meanToken,
-    userTokens,
-    connection,
+    connection
   ]);
 
-  useEffect(() => {
-    const getAccounts = async (connection: Connection) => {
-      if (!meanToken) {
-        return [];
-      }
-  
-      const accountInfos = await connection.getParsedProgramAccounts(TOKEN_PROGRAM_ID, {
-        filters: [
-          {
-            memcmp: { offset: 0, bytes: meanToken.address },
-          }, 
-          {
-            dataSize: AccountLayout.span
-          }
-        ],
-      });
-  
-      const results = accountInfos
-        .filter(i => (i.account.data as ParsedAccountData).parsed.info.tokenAmount.uiAmount > 0);
-  
-      return results;
-    }
-  
-    if (connection) {
-      getAccounts(connection)
-        .then(values => {
-          setMeanHolders(values.length);
-        });
-    }
-  }, [connection, meanToken]);
-  
+  if (!meanfiStats || sMeanTotalSupply == 0) { return <p>{t('general.loading')}...</p>; }
 
   return (
     <>
@@ -115,30 +74,12 @@ export const StatsView = () => {
               {t('stats.subtitle')}
             </div>
           </div>
-          <ul className="tabs ant-menu-overflow ant-menu-horizontal">
-            {tabs.map((tab, index) => (
-              <li 
-                key={index} 
-                className={`ant-menu-item ${activeTab === tab ? "active ant-menu-item-selected" : ""}`} 
-                tabIndex={0} 
-                onClick={onClickHandler}
-              >
-                <span className="ant-menu-title-content">{tab}</span>
-              </li>
-            ))}
-          </ul>
-          <PromoSpace />
-          {activeTab === "Mean Token" &&           
-            <TokenStats 
-              meanTotalSupply={meanTotalSupply} 
-              meanDecimals={meanDecimals} 
-              meanMintAuth={meanMintAuth} 
-              meanHolders={meanHolders}
-              meanToken={meanToken}
-            />
-          }
-          {activeTab === "MeanFi" && "MeanFi"}
-          {activeTab === "Mean DAO" && <MeanDaoStats />}
+          
+          <TokenStats
+            meanStats={meanfiStats}
+            smeanSupply={sMeanTotalSupply}
+            totalVolume24h={totalVolume24h}
+          />
         </div>
       </div>
       <PreFooter />
@@ -176,19 +117,19 @@ export const PromoSpace = () => {
     let currentIndex = array.length, temporaryValue, randomIndex;
 
     while (currentIndex !== 0) {
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-        temporaryValue = array[currentIndex];
-        array[currentIndex] = array[randomIndex];
-        array[randomIndex] = temporaryValue;
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+      temporaryValue = array[currentIndex];
+      array[currentIndex] = array[randomIndex];
+      array[randomIndex] = temporaryValue;
     }
 
     return array;
   };
 
-  let randomPromoCards = shuffle(promoCards).slice(0, 3);  
+  const randomPromoCards = shuffle(promoCards).slice(0, 3);
 
-  
+
   return (
     <>
       {randomPromoCards && (
@@ -196,11 +137,11 @@ export const PromoSpace = () => {
           {randomPromoCards.map((card: any, index: string) => (
             <Col xs={24} sm={12} md={8} lg={8} key={index}>
               <a href={card.ctaUrl} target="_blank" rel="noreferrer" className="promo-space_link">
-                <img src={card.imgUrl} alt="" width="100%" height="150"/>
+                <img src={card.imgUrl} alt="" width="100%" height="150" />
               </a>
             </Col>
           ))}
-        </Row> 
+        </Row>
       )}
     </>
   )

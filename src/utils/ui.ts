@@ -1,13 +1,12 @@
-import { TokenInfo } from "@solana/spl-token-registry";
 import bs58 from "bs58";
 import moment from "moment";
 import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
-import { formatAmount } from "./utils";
 import { environment } from "../environments/environment";
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
 import dateFormat from "dateformat";
+import { TimeData } from "../models/common-types";
 
 export const isDev = (): boolean => {
     return environment === 'development';
@@ -17,12 +16,22 @@ export const isProd = (): boolean => {
     return environment === 'production';
 }
 
+const isLocalhost = Boolean(
+    window.location.hostname === "localhost" ||
+      // [::1] is the IPv6 localhost address.
+      window.location.hostname === "[::1]" ||
+      // 127.0.0.0/8 are considered localhost for IPv4.
+      window.location.hostname.match(
+        /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
+      )
+);
+
 export const isLocal = (): boolean => {
-    return window.location.hostname === 'localhost' ? true : false;
+    return isLocalhost;
 }
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (isLocal() || isDev()) {
+    if (!isProd() || isLocal()) {
         if (msg) {
             if (value === 'NOT_SPECIFIED') {
                 console.log(`%c${msg}`, `color: ${color}`);
@@ -49,12 +58,33 @@ export class PaymentRateTypeOption {
     }
 }
 
-export const formatters = {
-    default: new Intl.NumberFormat(),
-    currency: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }),
-    whole: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 }),
-    oneDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-    twoDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+export class LockPeriodTypeOption {
+    key: number;
+    value: PaymentRateType;
+    text: string;
+
+    constructor(
+        public _key: number,
+        public _value: PaymentRateType,
+        public _text: string
+    ) {
+        this.key = _key;
+        this.value = _value;
+        this.text = _text;
+    }
+}
+
+export const friendlyDisplayDecimalPlaces = (amount: number) => {
+    const value = Math.abs(amount);
+    if (value < 1) {
+        return null;
+    } else if (value < 1000) {
+        return 5;
+    } else if (value >= 1000 && value < 1000000) {
+        return 4;
+    } else {
+        return 2;
+    }
 };
 
 export const twoDigits = (num: number) => String(num).padStart(2, '0')
@@ -99,9 +129,9 @@ export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: 
         }
     }
     return title;
-};
+}
 
-export function getTransactionStatusForLogs (status: TransactionStatus): string {
+export function getTransactionStatusForLogs(status: TransactionStatus): string {
     switch (status) {
         case TransactionStatus.WalletNotFound:
             return 'Wallet not found';
@@ -177,7 +207,7 @@ export function getRemainingDays(targetDate?: string): number {
     const date = new Date();
     const time = new Date(date.getTime());
     const toDate = targetDate ? new Date(targetDate) : null;
-    if ( toDate ) {
+    if (toDate) {
         time.setMonth(toDate.getMonth());
     } else {
         time.setMonth(date.getMonth() + 1);
@@ -186,29 +216,47 @@ export function getRemainingDays(targetDate?: string): number {
     return time.getDate() > date.getDate() ? time.getDate() - date.getDate() : 0;
 }
 
-export function timeConvert(n: number, decimals = 0, abbr = false): string {
-    const num = n;
-    const hours = (num / 60);
-    const rhours = Math.floor(hours);
-    const minutes = (hours - rhours) * 60;
-    const rminutes = Math.round(minutes);
-    const rdays = Math.round(rhours / 24);
-    let returnString = '';
-    if (num === 1) {
-        returnString = `${num} minute.`;
-    } else if (num === 60) {
-        returnString = '1 hour.';
-    } else if (num > 60) {
-        returnString = `${formatAmount(num, decimals, abbr)} minutes`;
-        if (rdays > 1) {
-            returnString += `. ~${rdays} days.`;
-        } else {
-            returnString = ` = ${formatAmount(rhours, decimals, abbr)} hour(s) and ${rminutes} minutes.`;
-        }
-    } else {
-        returnString = `${rminutes} minutes.`;
-    }
-    return returnString;
+export function msToTime(ms: number) {
+    const seconds = (ms / 1000).toFixed(1);
+    const minutes = (ms / (1000 * 60)).toFixed(1);
+    const hours = (ms / (1000 * 60 * 60)).toFixed(1);
+    const days = (ms / (1000 * 60 * 60 * 24)).toFixed(1);
+    if (+seconds < 60) return seconds + " Sec";
+    else if (+minutes < 60) return minutes + " Min";
+    else if (+hours < 24) return hours + " Hrs";
+    else return days + " Days"
+}
+
+export function getTimeRemaining(endtime: string): TimeData {
+    const total = Date.parse(endtime) - Date.now();
+    const seconds = Math.floor((total / 1000) % 60);
+    const minutes = Math.floor((total / 1000 / 60) % 60);
+    const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(total / (1000 * 60 * 60 * 24));
+
+    return {
+        total,
+        days,
+        hours,
+        minutes,
+        seconds
+    };
+}
+
+export function getTimeEllapsed(endtime: string): TimeData {
+    const total = Date.now() - Date.parse(endtime);
+    const seconds = Math.floor((total / 1000) % 60);
+    const minutes = Math.floor((total / 1000 / 60) % 60);
+    const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(total / (1000 * 60 * 60 * 24));
+
+    return {
+        total,
+        days,
+        hours,
+        minutes,
+        seconds
+    };
 }
 
 export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: any): string => {
@@ -238,16 +286,97 @@ export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: any): st
     return result;
 }
 
-export const getAmountWithTokenSymbol = (
-    amount: any,
-    token: TokenInfo,
-    decimals = 2,
-    abbr = false
-): string => {
-    if (!token) { return '--'; }
-    const converted = amount ? amount.toString() : '0';
-    const parsed = parseFloat(converted);
-    return `${formatAmount(parsed, decimals, abbr)} ${token.symbol}`;
+export const getLockPeriodOptionLabel = (val: PaymentRateType, trans?: any): string => {
+    let result = '';
+    switch (val) {
+        case PaymentRateType.PerMinute:
+            result = trans ? trans('treasuries.create-treasury.lock-period.minutes') : 'minutes';
+            break;
+        case PaymentRateType.PerHour:
+            result = trans ? trans('treasuries.create-treasury.lock-period.hours') : 'hours';
+            break;
+        case PaymentRateType.PerDay:
+            result = trans ? trans('treasuries.create-treasury.lock-period.days') : 'days';
+            break;
+        case PaymentRateType.PerWeek:
+            result = trans ? trans('treasuries.create-treasury.lock-period.weeks') : 'weeks';
+            break;
+        case PaymentRateType.PerMonth:
+            result = trans ? trans('treasuries.create-treasury.lock-period.months') : 'months';
+            break;
+        case PaymentRateType.PerYear:
+            result = trans ? trans('treasuries.create-treasury.lock-period.years') : 'years';
+            break;
+        default:
+            break;
+    }
+    return result;
+}
+
+export const getLockPeriodOptionLabelByAmount = (val: PaymentRateType, periodAmount: number, trans?: any): string => {
+    let result = '';
+    switch (val) {
+        case PaymentRateType.PerMinute:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.minute')
+                    : trans('general.minutes')
+                : periodAmount === 1
+                    ? 'minute'
+                    : 'minutes';
+            break;
+        case PaymentRateType.PerHour:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.hour')
+                    : trans('general.hours')
+                : periodAmount === 1
+                    ? 'hour'
+                    : 'hours';
+            break;
+        case PaymentRateType.PerDay:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.day')
+                    : trans('general.days')
+                : periodAmount === 1
+                    ? 'day'
+                    : 'days';
+
+            break;
+        case PaymentRateType.PerWeek:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.week')
+                    : trans('general.weeks')
+                : periodAmount === 1
+                    ? 'week'
+                    : 'weeks';
+
+            break;
+        case PaymentRateType.PerMonth:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.month')
+                    : trans('general.months')
+                : periodAmount === 1
+                    ? 'month'
+                    : 'months';
+            break;
+        case PaymentRateType.PerYear:
+            result = trans
+                ? periodAmount === 1
+                    ? trans('general.year')
+                    : trans('general.years')
+                : periodAmount === 1
+                    ? 'year'
+                    : 'years';
+
+            break;
+        default:
+            break;
+    }
+    return result;
 }
 
 export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOption, trans?: any): string => {
@@ -295,6 +424,44 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
     return value;
 }
 
+export const getPaymentIntervalFromSeconds = (value: number): PaymentRateType => {
+    switch (value) {
+        case 60:
+            return PaymentRateType.PerMinute;
+        case 3600:
+            return PaymentRateType.PerHour;
+        case 86400:
+            return PaymentRateType.PerDay;
+        case 604800:
+            return PaymentRateType.PerWeek;
+        case 2629750:
+            return PaymentRateType.PerMonth;
+        case 31557000:
+            return PaymentRateType.PerYear;
+        default:
+            return PaymentRateType.PerMonth;    // Default
+    }
+}
+
+export const getDurationUnitFromSeconds = (value: number, trans?: any): string => {
+    switch (value) {
+        case 60:
+            return trans ? trans('general.minute') : 'minute';
+        case 3600:
+            return trans ? trans('general.hour') : 'hour';
+        case 86400:
+            return trans ? trans('general.day') : 'day';
+        case 604800:
+            return trans ? trans('general.week') : 'week';
+        case 2629750:
+            return trans ? trans('general.month') : 'month';
+        case 31557000:
+            return trans ? trans('general.year') : 'year';
+        default:
+            return trans ? trans('general.month') : 'month';
+    }
+}
+
 export const getTransactionOperationDescription = (status: TransactionStatus | undefined, trans?: any): string => {
     switch (status) {
         case TransactionStatus.TransactionStart:
@@ -311,7 +478,7 @@ export const getTransactionOperationDescription = (status: TransactionStatus | u
             return trans ? trans('transactions.status.tx-init-failure') : 'Could not init transaction';
         case TransactionStatus.SignTransactionFailure:
             return trans ? trans('transactions.status.tx-rejected') : 'Transaction rejected';
-        case TransactionStatus.SendTransactionFailure :
+        case TransactionStatus.SendTransactionFailure:
             return trans ? trans('transactions.status.tx-send-failure') : 'Failure submitting transaction';
         case TransactionStatus.CreateRecurringBuySchedule:
             return trans ? trans('transactions.status.ddca-create-tx') : 'Create scheduled recurring exchange';
@@ -332,28 +499,28 @@ export const getIntervalFromSeconds = (seconds: number, slash = false, trans?: a
     switch (seconds) {
         case 60:
             return trans
-                    ? slash ? ` / ${trans('general.minute')}` : trans('transactions.rate-and-frequency.payment-rates.per-minute')
-                    : slash ? ' / minute' : 'per minute';
+                ? slash ? ` / ${trans('general.minute')}` : trans('transactions.rate-and-frequency.payment-rates.per-minute')
+                : slash ? ' / minute' : 'per minute';
         case 3600:
             return trans
-                    ? slash ? ` / ${trans('general.hour')}` : trans('transactions.rate-and-frequency.payment-rates.per-hour')
-                    : slash ? ' / hour' : 'per hour';
+                ? slash ? ` / ${trans('general.hour')}` : trans('transactions.rate-and-frequency.payment-rates.per-hour')
+                : slash ? ' / hour' : 'per hour';
         case 86400:
             return trans
-                    ? slash ? ` / ${trans('general.day')}` : trans('transactions.rate-and-frequency.payment-rates.per-day')
-                    : slash ? ' / day' : 'per day';
+                ? slash ? ` / ${trans('general.day')}` : trans('transactions.rate-and-frequency.payment-rates.per-day')
+                : slash ? ' / day' : 'per day';
         case 604800:
             return trans
-                    ? slash ? ` / ${trans('general.week')}` : trans('transactions.rate-and-frequency.payment-rates.per-week')
-                    : slash ? ' / week' : 'per week';
+                ? slash ? ` / ${trans('general.week')}` : trans('transactions.rate-and-frequency.payment-rates.per-week')
+                : slash ? ' / week' : 'per week';
         case 2629750:
             return trans
-                    ? slash ? ` / ${trans('general.month')}` : trans('transactions.rate-and-frequency.payment-rates.per-month')
-                    : slash ? ' / month' : 'per month';
+                ? slash ? ` / ${trans('general.month')}` : trans('transactions.rate-and-frequency.payment-rates.per-month')
+                : slash ? ' / month' : 'per month';
         case 31557000:
             return trans
-                    ? slash ? ` / ${trans('general.year')}` : trans('transactions.rate-and-frequency.payment-rates.per-year')
-                    : slash ? ' / year' : 'per year';
+                ? slash ? ` / ${trans('general.year')}` : trans('transactions.rate-and-frequency.payment-rates.per-year')
+                : slash ? ' / year' : 'per year';
         default:
             return '';
     }
@@ -371,24 +538,6 @@ export function convertLocalDateToUTCIgnoringTimezone(date: Date) {
     );
 
     return new Date(timestamp);
-}
-
-export const getFairPercentForInterval = (frequency: PaymentRateType): number => {
-    let value = 10;
-    switch (frequency) {
-        case PaymentRateType.PerMinute:
-            value = 500;
-            break;
-        case PaymentRateType.PerHour:
-            value = 100;
-            break;
-        case PaymentRateType.PerDay:
-            value = 50;
-            break;
-        default:
-            break;
-    }
-    return value / 100;
 }
 
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -454,27 +603,53 @@ export const getFormattedNumberToLocale = (value: any, digits = 0) => {
 }
 
 export const toUsCurrency = (value: any) => {
+    if (!value) { return ''; }
     const converted = parseFloat(value.toString());
     const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(converted);
     return formatted || '';
 }
 
-export const getShortDate = (date: string, includeTime = false): string => {
+export const getShortDate = (date: string, includeTime = false, isUtc = false): string => {
     if (!date) { return ''; }
+
     const localDate = new Date(date);
-    return dateFormat(
-        localDate,
-        includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
-    );
+    if (isUtc) {
+        const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+        const displayDate = dateWithoutOffset.toUTCString();
+        return dateFormat(
+            displayDate,
+            includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
+        );
+    } else {
+        return dateFormat(
+            localDate,
+            includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
+        );
+    }
 }
 
-export const getReadableDate = (date: string, includeTime = false): string => {
+export const getReadableDate = (date: string, includeTime = false, isUtc = false): string => {
     if (!date) { return ''; }
+
     const localDate = new Date(date);
-    return dateFormat(
-        localDate,
-        includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
-    );
+    if (isUtc) {
+        const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+        const displayDate = dateWithoutOffset.toUTCString();
+        return dateFormat(
+            displayDate,
+            includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
+        );
+    } else {
+        return dateFormat(
+            localDate,
+            includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
+        );
+    }
+}
+
+export const getlllDate = (date: any): string => {
+    // Month name, day of month, year, time
+    return moment(date).format("MMM D YYYY HH:mm");
 }
 
 export const getOrdinalDay = (date: Date): string => {
@@ -491,13 +666,35 @@ export function disabledDate(current: any) {
     return current && current < moment().subtract(1, 'days').endOf('day');
 }
 
+export function disabledBeforeTomorrowDate(current: any) {
+    // Can not select days before tomorrow
+    return current && current < moment().add(0, 'days').endOf('day');
+}
+
+export function disabledTime(current: any) {
+    // Can not select time before now
+    return current && current < moment().fromNow(true);
+}
+
 export const isToday = (someDate: string): boolean => {
     if (!someDate) { return false; }
     const inputDate = new Date(someDate);
     const today = new Date();
     return inputDate.getDate() === today.getDate() &&
-      inputDate.getMonth() === today.getMonth() &&
-      inputDate.getFullYear() === today.getFullYear()
+        inputDate.getMonth() === today.getMonth() &&
+        inputDate.getFullYear() === today.getFullYear()
+}
+
+/**
+ * Get timestamp in seconds from a date string
+ * @param {string} date  - A parseable date string using Date.parse()
+ * @returns {number} - The number of seconds for a timestamp
+ */
+export const toTimestamp = (date?: string): number => {
+    const dt = date
+        ? Date.parse(date)
+        : Date.now();
+    return Math.floor(dt / 1000);
 }
 
 export function displayTimestamp(
@@ -506,32 +703,68 @@ export function displayTimestamp(
 ): string {
     const expireDate = new Date(unixTimestamp);
     const dateString = new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
     }).format(expireDate);
     const timeString = new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric",
-      hourCycle: "h23",
-      timeZoneName: shortTimeZoneName ? "short" : "long",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+        hourCycle: "h23",
+        timeZoneName: shortTimeZoneName ? "short" : "long",
     }).format(expireDate);
 
     return `${dateString} at ${timeString}`;
 }
 
+/**
+ * Should I use this format?
+ * console.log(moment().endOf('day').fromNow());                // in 9 hours
+ * console.log(moment("2020-04-04 11:45:26.123").fromNow());    // 6 minutes ago
+ * console.log(moment().startOf('hour').fromNow());             // an hour ago
+ * console.log(moment().startOf('day').fromNow());              // 15 hours ago
+ * console.log(moment("20111031", "YYYYMMDD").fromNow());       // 10 years ago
+ */
+
+export const getTimeFromNow = (date: string, withoutSuffix = false): string => {
+    const parsedDate = Date.parse(date);
+    return moment(parsedDate).fromNow(withoutSuffix);
+}
+
+export const getTimeToNow = (date: string): string => {
+    const parsedDate = Date.parse(date);
+    return moment(parsedDate).toNow(true);
+}
+
 export function addMinutes(date: Date, minutes: number) {
-    return new Date(date.getTime() + minutes*60000);
+    return new Date(date.getTime() + minutes * 60000);
 }
 
 export function addHours(date: Date, hours: number) {
     return new Date(date.setUTCHours(date.getUTCHours() + hours));
 }
 
+export const getTodayPercentualBetweenTwoDates = (starDate: string, endDate: string) => {
+    const start = toTimestamp(starDate);
+    const end = toTimestamp(endDate);
+    const delta = Math.abs(end - start);
+    const today = toTimestamp();
+    const todayPartial = Math.abs(today - start);
+    return percentual(todayPartial, delta);
+}
+
+export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number) => {
+    const start = toTimestamp(starDate);
+    const end = toTimestamp(endDate);
+    const delta = Math.abs(end - start);
+    const pctTs = percentage(percent, delta);
+    return start + pctTs;
+}
+
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
     if (fees && fees.mspPercentFee) {
         fee = percentage(fees.mspPercentFee, inputAmount);
     }
@@ -540,20 +773,113 @@ export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): numb
 
 export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
     if (fees) {
-      if (fees.mspPercentFee) {
-        fee = percentage(fees.mspPercentFee, inputAmount);
-      } else if (fees.mspFlatFee) {
-        fee = fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
-      }
+        if (fees.mspPercentFee) {
+            fee = percentage(fees.mspPercentFee, inputAmount);
+        } else if (fees.mspFlatFee) {
+            fee = fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
+        }
     }
     return fee;
 };
 
 export function scrollToBottom(id: string) {
-    var div = document.getElementById(id);
+    const div = document.getElementById(id);
     if (div) {
         div.scrollTop = div.scrollHeight - div.clientHeight;
     }
+}
+
+
+const units: { unit: Intl.RelativeTimeFormatUnit; ms: number }[] = [
+    { unit: "year", ms: 31536000000 },
+    { unit: "month", ms: 2628000000 },
+    { unit: "day", ms: 86400000 },
+    { unit: "hour", ms: 3600000 },
+    { unit: "minute", ms: 60000 },
+    { unit: "second", ms: 1000 },
+];
+
+const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+/**
+ * Get language-sensitive relative time message from Dates.
+ * @param relative  - the relative dateTime, generally is in the past or future
+ * @param pivot     - the dateTime of reference, generally is the current time
+ */
+export function relativeTimeFromDates(relative: Date | null, pivot: Date = new Date()): string {
+    if (!relative) return "";
+    const elapsed = relative.getTime() - pivot.getTime();
+    return relativeTimeFromElapsed(elapsed);
+}
+
+/**
+ * Get language-sensitive relative time message from elapsed time.
+ * @param elapsed   - the elapsed time in milliseconds
+ */
+export function relativeTimeFromElapsed(elapsed: number): string {
+    for (const { unit, ms } of units) {
+        if (Math.abs(elapsed) >= ms || unit === "second") {
+            const difference = elapsed / ms;
+            return rtf.format(difference ? Math.round(difference) : 0, unit);
+        }
+    }
+    return "";
+}
+
+export const getRelativeDate = (timestamp: number) => {
+    const reference = new Date(timestamp);
+    return relativeTimeFromDates(reference);
+}
+
+
+function numberFormat(value: any, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',', hideDecimalsIfZero = true) {
+    if (!value) {
+        return '0';
+    }
+    value = parseFloat(value).toFixed(~~dec);
+    const parts = value.split('.');
+    const fnums = parts[0];
+    let decimals = '';
+    if (parts[1] && (+parts[1] !== 0 || !hideDecimalsIfZero)) {
+        decimals = decimalsSeparator + parts[1];
+    }
+    return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + thowsendsSeparator) + decimals;
+}
+
+export function kFormatter(num: number) {
+    let tempNum: number;
+    if (num > 999 && num < 1000000) {
+        tempNum = num / 1000;
+        return numberFormat(tempNum, 1) + 'k';
+    }
+
+    if (num >= 1000000) {
+        tempNum = num / 1000000;
+        return numberFormat(tempNum, 1) + 'M';
+    }
+    return numberFormat(num);
+}
+
+export function intToString(value: number, decimals: number) {
+    const num = value.toString().replace(/[^0-9.]/g, '');
+    if (value < 1000) {
+        return num;
+    }
+    const si = [
+      {v: 1E3, s: "k"},
+      {v: 1E6, s: "M"},
+      {v: 1E9, s: "B"},
+      {v: 1E12, s: "T"},
+      {v: 1E15, s: "P"},
+      {v: 1E18, s: "E"}
+      ];
+    let index;
+    for (index = si.length - 1; index > 0; index--) {
+        if (value >= si[index].v) {
+            break;
+        }
+    }
+    return (value / si[index].v).toFixed(decimals).replace(/\.0+$|(\.[0-9]*[1-9])0+$/, "$1") + si[index].s;
 }

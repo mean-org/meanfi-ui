@@ -1,4 +1,6 @@
-export const IconSort = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconSort = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M13.4697 7.53033C13.7626 7.82322 14.2374 7.82322 14.5303 7.53033L15.25 6.81066L15.25 17C15.25 17.4142 15.5858 17.75 16 17.75C16.4142 17.75 16.75 17.4142 16.75 17L16.75 6.81066L17.4697 7.53033C17.7626 7.82322 18.2374 7.82322 18.5303 7.53033C18.8232 7.23744 18.8232 6.76256 18.5303 6.46967L16.5303 4.46967C16.2374 4.17678 15.7626 4.17678 15.4697 4.46967L13.4697 6.46967C13.1768 6.76256 13.1768 7.23744 13.4697 7.53033Z" fill="currentColor"/>

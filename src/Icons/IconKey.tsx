@@ -1,4 +1,6 @@
-export const IconKey = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconKey = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 10C5.89543 10 5 10.8954 5 12C5 13.1046 5.89543 14 7 14C8.10457 14 9 13.1046 9 12C9 10.8954 8.10457 10 7 10Z" fill="currentColor"/>

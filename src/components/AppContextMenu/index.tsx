@@ -17,15 +17,16 @@ import { MEAN_FINANCE_DISCORD_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_DAO_GITBOOKS_UR
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "../LanguageSelector";
 import { ReferFriendModal } from '../ReferFriendModal';
-import { notify } from '../../utils/notifications';
-import { isLocal } from '../../utils/ui';
+import { isProd } from '../../utils/ui';
 import { Link } from 'react-router-dom';
+import { openNotification } from '../Notifications';
 
 export const AppContextMenu = () => {
 
   const { connected } = useWallet();
   const {
     theme,
+    isWhitelisted,
     setTheme,
   } = useContext(AppStateContext);
 
@@ -67,7 +68,6 @@ export const AppContextMenu = () => {
 
   // const onDisconnectWallet = () => {
   //   disconnect();
-  //   resetWalletProvider();
   // }
 
   const onSwitchTheme = () => {
@@ -91,7 +91,10 @@ export const AppContextMenu = () => {
     if (connected) {
       showFriendReferralModal();
     } else {
-      notify({
+      // Welcome to MeanFi
+      // Please connect your wallet to get started.
+      openNotification({
+        title: t('notifications.friend-referral-completed'),
         description: t('referrals.connect-to-refer-friend'),
         type: 'error'
       });
@@ -145,25 +148,34 @@ export const AppContextMenu = () => {
           <span className="menu-item-text">{t('ui-menus.app-context-menu.help-support')}</span>
         </a>
       </Menu.Item>
-      {isLocal() && (
-        <Menu.Item key="/playground">
-          <Link to="/playground">Playground</Link>
-        </Menu.Item>
+      {(isWhitelisted) && (
+        <>
+          <Menu.Divider />
+          <Menu.Item key="/staking-rewards">
+            <IconCodeBlock className="mean-svg-icons" />
+            <Link to="/staking-rewards">Staking rewards</Link>
+          </Menu.Item>
+          {!isProd() && (
+            <Menu.Item key="/playground">
+              <IconCodeBlock className="mean-svg-icons" />
+              <Link to="/playground">Playground</Link>
+            </Menu.Item>
+          )}
+        </>
       )}
     </Menu>
   );
 
   return (
     <>
-      <Dropdown overlay={menu} trigger={["click"]}>
+      <Dropdown overlay={menu} placement="bottomRight" trigger={["click"]}>
         <Button
           shape="round"
           type="text"
           size="middle"
           className="ant-btn-shaded"
           onClick={(e) => e.preventDefault()}
-          icon={<EllipsisOutlined />}
-        ></Button>
+          icon={<EllipsisOutlined />}/>
       </Dropdown>
       <LanguageSelector
         isVisible={isLanguageModalVisible}

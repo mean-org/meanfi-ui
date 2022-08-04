@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { PreFooter } from "../../components/PreFooter";
 import { IDO_FETCH_FREQUENCY } from "../../constants";
 import { consoleOut, isLocal, isProd, isValidAddress } from '../../utils/ui';
-import "./style.less";
+import "./style.scss";
 import { IdoLpDeposit, IdoLpWithdraw } from '../../views';
 import Countdown from 'react-countdown';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -11,13 +11,13 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import { useNavigate } from 'react-router';
 import { useLocation } from 'react-router-dom';
-import { notify } from '../../utils/notifications';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { CUSTOM_USDC_TEST_IDO_DEVNET, MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled } from '@ant-design/icons';
+import { openNotification } from '../../components/Notifications';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -43,7 +43,7 @@ export const IdoLpView = () => {
   const {
     fetchTxInfoStatus,
     lastSentTxSignature,
-  } = useContext(TransactionStatusContext);
+  } = useContext(TxConfirmationContext);
   const [currentTheme] = useState(theme);
   const [idoAccountAddress, setIdoAccountAddress] = useState('');
   const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);
@@ -90,8 +90,8 @@ export const IdoLpView = () => {
       } else {
         setIdoAccountAddress('');
         consoleOut('Invalid IDO address', address, 'red');
-        notify({
-          message: 'Error',
+        openNotification({
+          title: 'Error',
           description: 'The supplied IDO address is not a valid solana address',
           type: "error"
         });
@@ -130,9 +130,9 @@ export const IdoLpView = () => {
         setSelectedToken(usdc);
       }
     } else {
-      if (!selectedToken || selectedToken.address !== CUSTOM_USDC.address) {
+      if (!selectedToken || selectedToken.address !== CUSTOM_USDC_TEST_IDO_DEVNET.address) {
         consoleOut('Selecting custom USDC');
-        setSelectedToken(CUSTOM_USDC);
+        setSelectedToken(CUSTOM_USDC_TEST_IDO_DEVNET);
       }
     }
   },[
@@ -326,7 +326,7 @@ export const IdoLpView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Nothing to do yet...', '', 'blue');
-        setSelectedToken(CUSTOM_USDC);
+        setSelectedToken(CUSTOM_USDC_TEST_IDO_DEVNET);
         setIdoEngineInitStatus("uninitialized");
         setForceRefreshIdoStatus(true);
       } else if (previousWalletConnectState && !connected) {

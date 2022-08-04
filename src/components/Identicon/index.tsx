@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import Jazzicon from "jazzicon";
 import bs58 from "bs58";
-import "./style.less";
+import "./style.scss";
 import { PublicKey } from "@solana/web3.js";
 import { isValidAddress } from "../../utils/ui";
 

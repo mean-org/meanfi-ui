@@ -1,0 +1,162 @@
+.invest {
+  .meanfi-two-panel-layout {
+    &.invest-layout {
+      margin-bottom: 1.5em;
+      max-height: fit-content !important;
+    }
+  }
+  .stats-row {
+    display: inline-block !important;
+    @media (min-width: 768px) {
+      .invest-col {
+        width: 6em;
+      }
+    }
+    .std-table-cell.first-cell {
+      width: 25px;
+    }
+    .reload {
+      margin-top: 12.5vh;
+    }
+  }
+  .meanfi-two-panel-right .inner-container .invest-fields-container {
+    position: relative;
+    .transaction-detail-row {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.1rem;
+      color: #212121;
+      color: var(--color-secondary);
+      height: 24px;
+      line-height: 22px;
+    }
+    .info-label {
+      text-align: center;
+      height: 24px;
+    }
+  }
+  .flexible-left {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    .left {
+      flex: 1 1 auto;
+    }
+  }
+  
+  .flexible-right {
+    justify-content: flex-end !important;
+  }
+  
+  .token-group {
+    display: flex;
+    align-items: center;
+    flex-flow: wrap;
+    .token-max {
+      margin: 0.25em;
+      min-width: 45px;
+      padding: 3px 6px;
+      color: var(--color-white);
+      font-weight: 800;
+      font-size: 10px;
+      line-height: 11px;
+      white-space: nowrap;
+      text-align: center;
+      background: var(--color-primary);
+      border-radius: var(--custom-border-radius);
+    }
+    span {
+      font-size: 10px;
+    }
+  }
+  
+  .info-label {
+    width: 100%;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.5);
+    color: var(--color-secondary-alpha-50);
+    margin-bottom: 4px;
+  }
+  
+  .staking-data {
+    margin: 0 1em 1em 1em;
+    .staking-number {
+      float: right;
+    }
+    .staking-value {
+      font-size: 1.8rem;
+    }
+    span.anticon.anticon-arrow-down.mean-svg-icons {
+      font-size: 1.4rem;
+      margin-right: 4px;
+    }
+  }
+  
+  .staking-background {
+    pointer-events: none;
+    position: absolute;
+    top: 2em;
+    width: calc(100% - 2rem);
+    height: calc(100% - 2rem);
+    left: 1rem;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.25;
+    img.inbound {
+      height: 110%;
+    }
+  }
+  
+  @media (min-width: 991px) and (max-width: 1120px) {
+    .column-width {
+      min-width: 35em;
+      width: auto;
+    }
+  }
+  
+  @media (min-width: 1121px) {
+    .column-width {
+      min-width: 20em;
+      width: auto;
+    }
+  }
+  
+  .confirm-terms {
+    justify-content: space-between;
+    align-items: center;
+    svg.mean-svg-icons {
+      width: 14px;
+      height: 16px;
+      margin: 0 0.25em;
+      display: flex;
+    }
+  }
+  
+  .contain-icons {
+    display: flex;
+    justify-content: center;
+    margin-left: 0.8em;
+    .token-icon {
+      border-radius: 50%;
+      display: inline-block;
+      font-size: 35px;
+      height: 1em;
+      position: relative;
+      vertical-align: middle;
+      width: 1em;
+      margin-left: -0.25em;
+    }
+  }
+  
+  .transaction-list-row .rate-cell {
+    flex: auto !important;
+  }
+}

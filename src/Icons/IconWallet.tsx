@@ -1,4 +1,6 @@
-export const IconWallet = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconWallet = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15.5 12C15.5 11.1716 16.1716 10.5 17 10.5C17.8284 10.5 18.5 11.1716 18.5 12C18.5 12.8284 17.8284 13.5 17 13.5C16.1716 13.5 15.5 12.8284 15.5 12Z" fill="currentColor"/>

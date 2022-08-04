@@ -1,3 +1,5 @@
+import { SubCategory } from "@mean-dao/msp";
+
 export enum PaymentStartPlan {
     Now = 0,
     Schedle = 1
@@ -10,12 +12,12 @@ export enum PaymentScheme {
 
 // In seconds for the API
 export enum PaymentRateType {
-    PerMinute = 0,  // 60
-    PerHour = 1,    // 3600
-    PerDay = 2,     // 86400
-    PerWeek = 3,    // 604800
-    PerMonth = 4,   // 2629750
-    PerYear = 5,    // 31557000
+    PerMinute = 1,  // 60
+    PerHour = 2,    // 3600
+    PerDay = 3,     // 86400
+    PerWeek = 4,    // 604800
+    PerMonth = 5,   // 2629750
+    PerYear = 6,    // 31557000
 }
 
 export enum TimesheetRequirementOption {
@@ -60,6 +62,7 @@ export enum OperationType {
     StreamPause = 5,
     StreamResume = 6,
     StreamTransferBeneficiary = 7,
+    StreamCreateWithTemplate = 8,
     // Treasury options
     TreasuryCreate = 10,
     TreasuryStreamCreate = 11,
@@ -74,20 +77,42 @@ export enum OperationType {
     DdcaClose = 23,
     // Multisig options
     CreateMultisig = 30,
-    MintTokens = 31,
-    TransferTokens = 32,
-    UpgradeProgram = 33,
-    CreateVault = 34,
-    UpgradeIDL = 35,
-    SetMultisigAuthority = 36,
-    SetVaultAuthority = 37,
-    EditMultisig = 39,
+    EditMultisig = 31,
+    CreateMint = 32,
+    MintTokens = 33,
+    TransferTokens = 34,
+    SetMintAuthority = 35,
+    UpgradeProgram = 36,
+    UpgradeIDL = 37,
+    SetMultisigAuthority = 38,
+    SetAssetAuthority = 39,
+    ApproveTransaction = 40,
+    ExecuteTransaction = 41,
+    CancelTransaction = 42,
+    DeleteAsset = 43,
+    CreateTransaction = 44,
+    RejectTransaction = 45,
+    UpdateSettings = 46,
+    Custom = 49,
+    // Tools
+    Wrap = 50,
+    Unwrap = 51,
+    Swap = 52,
+    CreateAsset = 37,
+    CloseTokenAccount = 38,
+    // Invest
+    Stake = 53,
+    Unstake = 54,
+    Deposit = 55,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,
     IdoClaim = 102,
     IdoLpClaim = 103,
-    IdoCollectFunds = 104
+    IdoCollectFunds = 104,
+    // Credix
+    CredixDepositFunds = 110,
+    CredixWithdrawFunds = 111,
 }
 
 export enum WhitelistClaimType
@@ -95,4 +120,88 @@ export enum WhitelistClaimType
     Solanium = 0,
     Airdrop = 1,
     IDO = 2
+}
+
+export enum InvestItemPaths {
+    StakeMean = "stake-mean",
+    MeanLiquidityPools = "mean-liquidity",
+    StakeSol = "stake-sol",
+    DiscountedMean = "discounted-mean"
+}
+
+export enum EventType {
+    TxConfirmSuccess = 'txConfirmed',
+    TxConfirmTimeout = 'txTimedout',
+}
+
+export enum MetaInfoCtaAction {
+    Send = 0,
+    Buy = 1,
+    Exchange = 2,
+    Invest = 3,
+    Deposit = 4,
+    UnwrapSol = 5,
+    WrapSol = 6,
+    MergeAccounts = 7,
+    Divider = 10,
+    Refresh = 11,
+    CloseAccount = 12,
+    Share = 13,
+    Close = 14,
+    VestingContractCreateStreamOnce = 20,
+    VestingContractCreateStreamBulk = 21,
+    VestingContractAddFunds = 21,
+    VestingContractViewSolBalance = 22,
+    VestingContractWithdrawFunds = 23,
+    VestingContractRefreshAccount = 24,
+    VestingContractClose = 25,
+    VestingContractEditSettings = 26,
+}
+
+export type VestingContractCategory = {
+    label: string;
+    value: SubCategory;
+}
+
+export const VESTING_CATEGORIES: VestingContractCategory[] = [
+    {
+        label: 'Advisor',
+        value: SubCategory.advisor
+    },
+    {
+        label: 'Development',
+        value: SubCategory.development
+    },
+    {
+        label: 'Foundation',
+        value: SubCategory.foundation
+    },
+    {
+        label: 'Investor',
+        value: SubCategory.investor
+    },
+    {
+        label: 'Marketing',
+        value: SubCategory.marketing
+    },
+    {
+        label: 'Partnership',
+        value: SubCategory.partnership
+    },
+    {
+        label: 'Seed round',
+        value: SubCategory.seed
+    },
+    {
+        label: 'Team',
+        value: SubCategory.team
+    }
+];
+
+export const getCategoryLabelByValue = (value: SubCategory) => {
+    const item = VESTING_CATEGORIES.find(c => c.value === value);
+    if (item) {
+        return item.label;
+    }
+    return '-';
 }

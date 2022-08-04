@@ -1,18 +1,21 @@
 import React from "react";
 import { PreFooter } from "../../components/PreFooter";
 import { Helmet } from "react-helmet";
-import "./style.less";
+import "./style.scss";
 import { CustomCSSProps } from "../../utils/css-custom-props";
 import { Link } from "react-router-dom";
 import { Button } from "antd";
+import { useTranslation } from 'react-i18next';
 
 export const NotFoundView = () => {
+  const { t } = useTranslation('common');
+
   return (
     <>
       <Helmet>
-        <title>Page not found (404) - Mean Finance</title>
+        <title>{t("page-not-found.title")}</title>
         <link rel="canonical" href="https://app.meanfi.com/404" />
-        <meta name="description" content="Water flows, and now, money does too. Welcome to Mean Finance, your money unleashed!" />
+        <meta name="description" content="Water flows, and now, money does too. Welcome to Mean Finance. Are you lost?" />
       </Helmet>
       <div className="container main-container">
         <div className="not-found-container">
@@ -62,9 +65,9 @@ export const NotFoundView = () => {
   s25.3-11.3,25.3-25.3C125.3,29,115.9,18.5,103.8,16.7z" />
             </g>
           </svg>
-          <div className="message">Page not found</div>
+          <div className="message">{t("page-not-found.message")}</div>
           <Link to="/" className="cta-container">
-              <Button type="primary" size="large" shape="round">Go Home</Button>
+              <Button type="primary" size="large" shape="round">{t("page-not-found.button")}</Button>
           </Link>
         </div>
       </div>

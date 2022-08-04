@@ -14,7 +14,7 @@ import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { AppStateContext } from '../../contexts/appstate';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 
 export const DdcaAddFundsModal = (props: {
   endpoint: string;
@@ -34,14 +34,14 @@ export const DdcaAddFundsModal = (props: {
   } = useContext(AppStateContext);
   const {
     lastSentTxSignature,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
-  } = useContext(TransactionStatusContext);
+  } = useContext(TxConfirmationContext);
 
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(0);
   const [marks, setMarks] = useState<SliderMarks>();
-  const [recurrencePeriod, setRecurrencePeriod] = useState(0);
+  const [, setRecurrencePeriod] = useState(0);
   const [lockedSliderValue, setLockedSliderValue] = useState(0);
   const [fromTokenBalance, setFromTokenBalance] = useState(0);
   const [usableTokenAmount, setUsableTokenAmount] = useState(0);
@@ -52,14 +52,18 @@ export const DdcaAddFundsModal = (props: {
 
   const fromToken = useMemo(() => MEAN_TOKEN_LIST.find(t => t.address === props.ddcaDetails?.fromMint), [props.ddcaDetails]);
 
-  const getModalHeadline = () => {
+  const getModalHeadline = useCallback(() => {
     if (!props.ddcaDetails) { return ''; }
     return `<span>${t('ddcas.add-funds.headline', {
       fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
         props.ddcaDetails.amountPerSwap * lockedSliderValue,
         props.ddcaDetails.fromMint)
     })}</span>`;
-  }
+  }, [
+    lockedSliderValue,
+    props.ddcaDetails,
+    t,
+  ]);
 
   const getGasFeeAmount = (): number => {
     return props.ddcaTxFees.maxBlockchainFee + (props.ddcaTxFees.maxFeePerSwap * (lockedSliderValue));
@@ -298,7 +302,7 @@ export const DdcaAddFundsModal = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -369,7 +373,7 @@ export const DdcaAddFundsModal = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -387,7 +391,7 @@ export const DdcaAddFundsModal = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
             return false;
@@ -398,7 +402,7 @@ export const DdcaAddFundsModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -410,9 +414,9 @@ export const DdcaAddFundsModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -486,7 +490,7 @@ export const DdcaAddFundsModal = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaAddFunds);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaAddFunds);
             onFinishedAddFundsTx();
           } else { onFinishedAddFundsTx(); }
         } else { onFinishedAddFundsTx(); }
@@ -520,7 +524,7 @@ export const DdcaAddFundsModal = (props: {
     return hasEnoughFromTokenBalance && props.userBalance > gasFeeAmount ? true : false;
   }
 
-  const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
+  const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
     return (
       <Row>
         <Col span={11} className="text-right">
@@ -628,7 +632,7 @@ export const DdcaAddFundsModal = (props: {
           <li>
             {
               t('ddca-setup-modal.help.help-item-02', {
-                lockedSliderValue: getRecurrencePeriod(),
+                recurrencePeriod: getRecurrencePeriod(),
               })
             }
           </li>

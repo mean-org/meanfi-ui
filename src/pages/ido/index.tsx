@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
 import { IDO_START_DATE, UTC_FULL_DATE_TIME_FORMAT } from "../../constants";
-import "./style.less";
+import "./style.scss";
 import Countdown from 'react-countdown';
 import dateFormat from "dateformat";
 import { AppStateContext } from '../../contexts/appstate';
@@ -75,7 +75,7 @@ export const IdoView = () => {
       <div className="content-area">
         <div className="text-center mb-4">
           <Link to="/">
-            <img className="ido-app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
+            <img className="ido-app-logo" src={theme === 'dark' ? '/assets/mean-logo-color-light.svg' : '/assets/mean-logo-color-dark.svg'} alt="Mean Finance" />
           </Link>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -8,19 +8,20 @@ import { getTransactionOperationDescription, isValidAddress } from '../../utils/
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
-import { MintTokensInfo } from '../../models/multisig';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../utils/utils';
+import { MintTokensInfo, MultisigMint } from '../../models/multisig';
+import { Identicon } from '../Identicon';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigMintTokenModal = (props: {
   handleClose: any;
   handleOk: any;
-  handleAfterClose: any;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+  selectedMint: MultisigMint | undefined;
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -29,6 +30,16 @@ export const MultisigMintTokenModal = (props: {
   const [tokenAddress, setTokenAddress] = useState('');
   const [mintToAddress, setMintToAddress] = useState('');
   const [mintAmount, setMintAmount] = useState('');
+
+  // Store selectedMint address when modal goes visible
+  useEffect(() => {
+    if (props.isVisible && props.selectedMint) {
+      setTokenAddress(props.selectedMint.address.toBase58());
+    }
+  }, [
+    props.isVisible,
+    props.selectedMint
+  ]);
 
   const onAcceptModal = () => {
     props.handleOk({
@@ -43,13 +54,11 @@ export const MultisigMintTokenModal = (props: {
   }
 
   const onAfterClose = () => {
-
     setTimeout(() => {
       setTokenAddress('');
       setMintToAddress('');
       setMintAmount('');
     }, 50);
-    props.handleAfterClose();
   }
 
   const onTokenAddressChange = (e: any) => {
@@ -65,7 +74,14 @@ export const MultisigMintTokenModal = (props: {
   }
 
   const onMintAmountChange = (e: any) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
     if (newValue === null || newValue === undefined || newValue === "") {
       setMintAmount('');
     } else if (isValidNumber(newValue)) {
@@ -79,7 +95,7 @@ export const MultisigMintTokenModal = (props: {
             isValidAddress(tokenAddress) &&
             isValidAddress(mintToAddress) &&
             mintAmount &&
-            +mintAmount > 0
+            parseFloat(mintAmount) > 0
       ? true
       : false;
   }
@@ -89,10 +105,37 @@ export const MultisigMintTokenModal = (props: {
     window.location.reload();
   }
 
+  const renderMint = (item: MultisigMint) => {
+    return (
+      <div className="transaction-list-row no-pointer">
+        <div className="icon-cell">
+          <div className="token-icon">
+            <Identicon address={item.address} style={{
+              width: "28px",
+              display: "inline-flex",
+              height: "26px",
+              overflow: "hidden",
+              borderRadius: "50%"
+            }} />
+          </div>
+        </div>
+        <div className="description-cell">
+          <div className="title text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="subtitle text-truncate">decimals: {item.decimals}</div>
+        </div>
+        <div className="rate-cell">
+          <div className="rate-amount text-uppercase">{formatThousands(item.supply, item.decimals)}</div>
+          <div className="interval">supply</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('multisig.mint-tokens.modal-title')}</div>}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -105,7 +148,7 @@ export const MultisigMintTokenModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Token address */}
-            <div className="form-label">{t('multisig.mint-tokens.token-address-label')}</div>
+            {/* <div className="form-label">{t('multisig.mint-tokens.token-address-label')}</div>
             <div className="well">
               <input id="token-address-field"
                 className="general-text-input"
@@ -122,7 +165,17 @@ export const MultisigMintTokenModal = (props: {
                   {t('transactions.validation.address-validation')}
                 </span>
               )}
-            </div>
+            </div> */}
+
+            {props.selectedMint && (
+              <div className="mb-3">
+                <div className="form-label">{t('multisig.multisig-mints.selected-mint-label')}</div>
+                <div className="well">
+                  {renderMint(props.selectedMint)}
+                </div>
+              </div>
+            )}
+
             {/* Mint To Address */}
             <div className="form-label">{t('multisig.mint-tokens.mint-to-label')}</div>
             <div className="well">
@@ -169,7 +222,7 @@ export const MultisigMintTokenModal = (props: {
           </>
         ) : (
           <>
-            <div className="transaction-progress">
+            <div className="transaction-progress p-0">
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
@@ -214,52 +267,55 @@ export const MultisigMintTokenModal = (props: {
         )}
       </div>
 
-      <div className="row two-col-ctas mt-3 transaction-progress">
-        <div className="col-6">
-          <Button
-            block
-            type="text"
-            shape="round"
-            size="middle"
-            className={props.isBusy ? 'inactive' : ''}
-            onClick={() => isError(transactionStatus.currentOperation)
-              ? onAcceptModal()
-              : onCloseModal()}>
-            {isError(transactionStatus.currentOperation)
-              ? t('general.retry')
-              : t('general.cta-close')
-            }
-          </Button>
-        </div>
-        <div className="col-6">
-          <Button
-            className={props.isBusy ? 'inactive' : ''}
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            disabled={!isValidForm()}
-            onClick={() => {
-              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                onAcceptModal();
-              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                onCloseModal();
-              } else {
-                refreshPage();
+      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+        <div className="row two-col-ctas mt-3 transaction-progress p-0">
+          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
+            <Button
+              block
+              type="text"
+              shape="round"
+              size="middle"
+              className={props.isBusy ? 'inactive' : ''}
+              onClick={() => isError(transactionStatus.currentOperation)
+                ? onAcceptModal()
+                : onCloseModal()}>
+              {isError(transactionStatus.currentOperation)
+                ? t('general.retry')
+                : t('general.cta-close')
               }
-            }}>
-            {props.isBusy
-              ? t('multisig.mint-tokens.main-cta-busy')
-              : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.mint-tokens.main-cta')
-                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                  ? t('general.cta-finish')
-                  : t('general.refresh')
-            }
-          </Button>
+            </Button>
+          </div>
+          {!isError(transactionStatus.currentOperation) && (
+            <div className="col-6">
+              <Button
+                className={props.isBusy ? 'inactive' : ''}
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                disabled={!isValidForm()}
+                onClick={() => {
+                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    onAcceptModal();
+                  } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                    onCloseModal();
+                  } else {
+                    refreshPage();
+                  }
+                }}>
+                {props.isBusy
+                  ? t('multisig.mint-tokens.main-cta-busy')
+                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    ? t('multisig.mint-tokens.main-cta')
+                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                      ? t('general.cta-finish')
+                      : t('general.refresh')
+                }
+              </Button>
+            </div>
+          )}
         </div>
-      </div>
-
+      )}
     </Modal>
   );
 };

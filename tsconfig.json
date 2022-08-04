@@ -4,29 +4,32 @@
     "target": "ES6",
     "lib": [
       "dom",
-      "dom.iterable",
       "esnext"
     ],
     "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
     "module": "esnext",
     "moduleResolution": "node",
-    "downlevelIteration": true,
-    "resolveJsonModule": true,
     "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "types": [
+      "node"
+    ],
     "typeRoots": [
       "./types"
-    ],
-    "jsx": "react-jsx",
-    "noFallthroughCasesInSwitch": true,
-    "isolatedModules": true
+    ]
   },
   "include": [
-    "src"
+    "./src/**/*",
+    "./src/setupTests.ts"
   ],
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "Recommended"

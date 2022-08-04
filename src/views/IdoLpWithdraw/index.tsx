@@ -1,8 +1,8 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Button } from 'antd';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
 import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
@@ -32,8 +32,8 @@ export const IdoLpWithdraw = (props: {
   } = useContext(AppStateContext);
   const {
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [isBusy, setIsBusy] = useState(false);
@@ -68,7 +68,7 @@ export const IdoLpWithdraw = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.IdoLpClaim);
     setIsBusy(true);
@@ -141,7 +141,7 @@ export const IdoLpWithdraw = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -159,7 +159,7 @@ export const IdoLpWithdraw = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
             return false;
@@ -170,7 +170,7 @@ export const IdoLpWithdraw = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -182,9 +182,9 @@ export const IdoLpWithdraw = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -197,7 +197,7 @@ export const IdoLpWithdraw = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
+        customLogger.logWarning('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -258,7 +258,7 @@ export const IdoLpWithdraw = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoLpClaim);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoLpClaim);
             setWithdrawAmount("");
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -279,7 +279,7 @@ export const IdoLpWithdraw = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.IdoCollectFunds);
     setIsBusy(true);
@@ -352,7 +352,7 @@ export const IdoLpWithdraw = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -370,7 +370,7 @@ export const IdoLpWithdraw = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
             return false;
@@ -381,7 +381,7 @@ export const IdoLpWithdraw = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -393,9 +393,9 @@ export const IdoLpWithdraw = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Collect Mean funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -469,7 +469,7 @@ export const IdoLpWithdraw = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoCollectFunds);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoCollectFunds);
             setWithdrawAmount("");
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,

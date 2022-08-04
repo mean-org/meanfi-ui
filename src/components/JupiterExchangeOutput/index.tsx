@@ -2,18 +2,18 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress } from "../../utils/utils";
+import { formatAmount, formatThousands } from "../../utils/utils";
 import { TokenDisplay } from "../TokenDisplay";
 import { MarketInfo, RouteInfo } from "@jup-ag/core";
 import BN from "bn.js";
 import { useWallet } from "../../contexts/wallet";
-import { toUsCurrency } from "../../utils/ui";
+import { consoleOut, toUsCurrency } from "../../utils/ui";
 
 export const JupiterExchangeOutput = (props: {
   fromToken: TokenInfo | undefined;
   fromTokenAmount: string;
   toToken: TokenInfo | undefined;
-  toTokenBalance?: string;
+  toTokenBalance?: number;
   toTokenAmount?: string;
   mintList?: any;
   onSelectToken: any;
@@ -23,13 +23,15 @@ export const JupiterExchangeOutput = (props: {
   showAllRoutes: boolean;
   onToggleShowFullRouteList: any;
   className?: string;
+  disabled?: boolean;
   readonly?: boolean;
+  isBusy?: boolean;
 }) => {
 
   const { t } = useTranslation("common");
   const {
-    coinPrices,
     loadingPrices,
+    getTokenPriceBySymbol,
     refreshPrices,
   } = useContext(AppStateContext);
   const { publicKey } = useWallet();
@@ -59,16 +61,9 @@ export const JupiterExchangeOutput = (props: {
     selectedRouteIndex
   ]);
 
-  const getPricePerToken = (token: TokenInfo): number => {
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === "W" ? tokenSymbol.slice(1) : tokenSymbol;
-
-    return coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-  };
-
   return (
     <>
-      <div className={`well ${props.className || ''}`}>
+      <div className={`well ${props.className} ${props.disabled ? 'disabled' : ''}`}>
         {/* Balance row */}
         <div className="flex-fixed-right">
           <div className="left inner-label">
@@ -76,22 +71,20 @@ export const JupiterExchangeOutput = (props: {
             {publicKey ? (
               <>
                 <span className="simplelink" onClick={props.onBalanceClick}>
-                  {`${
-                    props.toToken && props.toTokenBalance
-                      ? getTokenAmountAndSymbolByTokenAddress(
-                          parseFloat(props.toTokenBalance),
-                          props.toToken.address,
-                          true
-                      )
-                      : "0"
-                  }`}
+                  {props.toToken && props.toTokenBalance !== undefined &&
+                    formatThousands(
+                      props.toTokenBalance,
+                      props.toToken.decimals,
+                      props.toToken.decimals
+                    )
+                  }
                 </span>
                 {props.toTokenBalance && (
                   <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>
                     {`(~${
                       props.toToken && props.toTokenBalance
                         ? toUsCurrency(
-                            parseFloat(props.toTokenBalance) * getPricePerToken(props.toToken as TokenInfo)
+                            props.toTokenBalance * getTokenPriceBySymbol(props.toToken.symbol)
                           )
                         : "$0.00"
                     })`}
@@ -107,7 +100,7 @@ export const JupiterExchangeOutput = (props: {
             <>
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                 ~{props.toToken && props.toTokenBalance
-                  ? toUsCurrency(parseFloat(props.toTokenBalance) * getPricePerToken(props.toToken as TokenInfo))
+                  ? toUsCurrency(props.toTokenBalance * getTokenPriceBySymbol(props.toToken.symbol))
                   : "$0.00"
                 }
               </span>
@@ -121,20 +114,20 @@ export const JupiterExchangeOutput = (props: {
         {/* Main row */}
         <div className="flex-fixed-left">
           <div className="left">
-            <span className={`add-on ${!props.readonly ? 'simplelink' : ''}`}>
+            <span className={`add-on ${!props.readonly || !props.isBusy ? 'simplelink' : ''}`}>
               <TokenDisplay onClick={
                 () => {
-                  if (!props.readonly) {
+                  if (!props.readonly || !props.isBusy) {
                     props.onSelectToken();
                   }
                 }}
                 fullTokenInfo={props.toToken}
                 mintAddress={props.toToken ? props.toToken.address : ''}
                 name={props.toToken ? props.toToken.name : ''}
-                className={!props.readonly ? 'simplelink' : ''}
+                className={!props.readonly || !props.isBusy ? 'simplelink' : ''}
                 noTokenLabel={t('swap.token-select-destination')}
                 showName={false}
-                showCaretDown={!props.readonly}
+                showCaretDown={!props.readonly || !props.isBusy}
               />
             </span>
           </div>
@@ -161,7 +154,7 @@ export const JupiterExchangeOutput = (props: {
                 const amountOut = toUiAmount(new BN(c.outAmount), decimals);
                 const showBadge = props.routes.length > 1 && (firstInfo.outAmount || 0) > (lastInfo.outAmount || 0);
                 const marketInfo = c.marketInfos;
-                const labels = marketInfo.map(item => item.marketMeta.amm.label).join(' x ');
+                const labels = marketInfo.map(item => item.amm.label).join(' x ');
                 const maxNumItems = props.showAllRoutes ? 10 : 2;
 
                 if (index < maxNumItems) {
@@ -170,12 +163,14 @@ export const JupiterExchangeOutput = (props: {
                       key={`${index}`}
                       className={
                         index === selectedRouteIndex
-                          ? "swap-client-card selected"
-                          : "swap-client-card"
+                          ? `swap-client-card ${props.isBusy ? 'no-pointer' : 'selected'}`
+                          : `swap-client-card ${props.isBusy ? 'no-pointer' : ''}`
                       }
                       onClick={() => {
-                        setSelectedRouteIndex(index);
-                        props.onSelectedRoute(c);
+                        if (!props.isBusy) {
+                          setSelectedRouteIndex(index);
+                          props.onSelectedRoute(c);
+                        }
                       }}>
                       <div className="card-content">
                         {index === 0 && showBadge && (
@@ -222,9 +217,19 @@ export const JupiterExchangeOutput = (props: {
 
               })}
             </div>
-            <div className="fg-secondary-60 pl-1">
-              {props.routes.length > 2 && (
-                <span className="simplelink underline-on-hover" onClick={props.onToggleShowFullRouteList}>{props.showAllRoutes ? 'Show less' : 'Show more'}</span>
+            <div className="flex-fixed-left align-items-center pl-1">
+              {props.routes.length > 2 ? (
+                <span
+                  className={`left fg-secondary-60 ${props.isBusy ? 'no-pointer' : 'simplelink underline-on-hover'}`}
+                  onClick={() => {
+                    if (!props.isBusy) {
+                      props.onToggleShowFullRouteList();
+                    }
+                  }}>
+                  {props.showAllRoutes ? 'Show less' : 'Show more'}
+                </span>
+              ) : (
+                <div className="left">&nbsp;</div>
               )}
             </div>
           </>

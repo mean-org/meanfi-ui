@@ -5,7 +5,6 @@ import { WalletProvider } from "./contexts/wallet";
 import AppStateProvider from "./contexts/appstate";
 import { AppLayout } from "./components/Layout";
 import {
-  AccountsView,
   CustodyView,
   ExchangeDcasView,
   FaucetView,
@@ -13,25 +12,22 @@ import {
   IdoLiveView,
   IdoView,
   NotFoundView,
-  PayrollView,
   PlaygroundView,
   SwapView,
   TransfersView,
-  TreasuriesView,
-  WrapView,
-  MultisigView,
   StatsView,
-  MultisigVaultsView,
-  MultisigProgramsView
+  StakingRewardsView,
+  AccountsNewView,
+  SafeView,
+  VestingView,
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
-import TransactionStatusProvider from "./contexts/transaction-status";
+import TxConfirmationProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
-import { StakingView } from "./pages/staking";
-import { PolBondsView } from "./pages/pol-bonds";
+import { InvestView } from "./pages/invest";
 
 export function AppRoutes() {
 
@@ -42,42 +38,61 @@ export function AppRoutes() {
         <ConnectionProvider>
           <WalletProvider>
             <AccountsProvider>
-              <TransactionStatusProvider>
+              <TxConfirmationProvider>
                 <AppStateProvider>
                   <AppLayout>
                     <Routes>
-                      <Route path='/' element={<Navigate replace to='/accounts' />} />
-                      <Route path="/accounts" element={<AccountsView />} />
-                      <Route path="/accounts/streams" element={<AccountsView />} />
-                      <Route path="/faucet" element={<FaucetView />} />
-                      <Route path="/transfers" element={<TransfersView />} />
-                      <Route path="/treasuries" element={<TreasuriesView />} />
-                      <Route path="/payroll" element={<PayrollView />} />
+                      <Route path="/" element={<Navigate replace to='/accounts' />} />
+                      {/* Accounts detailed deep-linking */}
+                      <Route path="/accounts" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/assets" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/assets/:asset" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming/:streamingTab" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming/:streamingTab/:streamId" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming/:streamingTab/treasury/:treasuryId" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/streaming/outgoing/treasury/:treasuryId/:streamId" element={<AccountsNewView />} />
+                      {/* Streams routes (under refactor) */}
+                      <Route path="/accounts/streams" element={<AccountsNewView />} />
+                      <Route path="/vesting" element={<VestingView />} />
+                      <Route path="/vesting/:address" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts/:vestingContract" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts/:vestingContract/:activeTab" element={<VestingView />} />
+                      {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
                       )}
-                      <Route path="/wrap" element={<WrapView />} />
-                      {isLocal() && (
-                        <Route path="/playground" element={<PlaygroundView />} />
-                      )}
+                      {/* Deprecated routes (still active) */}
+                      <Route path="/transfers" element={<TransfersView />} />
+                      <Route path="/faucet" element={<FaucetView />} />
+                      {/* IDO */}
                       <Route path="/ido" element={<IdoView />} />
                       <Route path="/ido-live" element={<IdoLiveView />} />
                       <Route path="/ido-blocked" element={<IdoBlockedView />} />
                       <Route path="/ido-lp" element={<IdoLpView />} />
-                      <Route path="/pol-bonds" element={<PolBondsView />} />
-                      <Route path="/staking" element={<StakingView />} />
+                      {/* All others */}
+                      <Route path="/invest" element={<InvestView />} />
+                      <Route path="/invest/:investItem" element={<InvestView />} />
+                      <Route path="/staking-rewards" element={<StakingRewardsView />} />
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
-                      <Route path="/multisig" element={<MultisigView />} />
-                      <Route path="/multisig-vaults" element={<MultisigVaultsView />} />
-                      <Route path="/multisig-programs" element={<MultisigProgramsView />} />
+                      <Route path="/multisig" element={<SafeView />} />
+                      <Route path="/multisig/:address" element={<SafeView />} />
+                      <Route path="/multisig/:address/proposals/:id" element={<SafeView />} />
+                      <Route path="/multisig/:address/programs/:id" element={<SafeView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
+                      {/* Playgraund route for POC and testing purposes */}
+                      {!isProd() && (
+                        <Route path="/playground" element={<PlaygroundView />} />
+                      )}
                       <Route path='*' element={<NotFoundView />} />
                     </Routes>
                   </AppLayout>
                 </AppStateProvider>
-              </TransactionStatusProvider>
+              </TxConfirmationProvider>
             </AccountsProvider>
           </WalletProvider>
         </ConnectionProvider>

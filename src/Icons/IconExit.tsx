@@ -1,4 +1,6 @@
-export const IconExit = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconExit = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M11 18.25a.75.75 0 010 1.5H5A1.75 1.75 0 013.25 18V6c0-.966.783-1.75 1.75-1.75h6a.75.75 0 010 1.5H5a.25.25 0 00-.25.25v12c0 .138.112.25.25.25h6z" fill="currentColor"/>

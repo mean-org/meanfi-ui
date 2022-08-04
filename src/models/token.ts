@@ -13,3 +13,9 @@ export type TokenAccountInfo = {
   state: string;
   isNative: boolean;
 };
+
+export type TokenPrice = {
+  symbol: string;
+  address: string;
+  price: number;
+};

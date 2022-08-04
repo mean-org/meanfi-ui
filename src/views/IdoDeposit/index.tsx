@@ -1,10 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { Button } from 'antd';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
+import { formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getFormattedNumberToLocale, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -33,13 +33,30 @@ export const IdoDeposit = (props: {
   } = useContext(AppStateContext);
   const {
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
   const handleAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+
+    if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setDepositAmount("");
     } else if (isValidNumber(newValue)) {
@@ -86,7 +103,7 @@ export const IdoDeposit = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -159,7 +176,7 @@ export const IdoDeposit = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -177,7 +194,7 @@ export const IdoDeposit = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
             return false;
@@ -188,7 +205,7 @@ export const IdoDeposit = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -200,9 +217,9 @@ export const IdoDeposit = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('IDO Deposit USDC transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -276,7 +293,7 @@ export const IdoDeposit = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoDeposit);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoDeposit);
             setDepositAmount("");
             setIsBusy(false);
             setTransactionStatus({
@@ -355,7 +372,7 @@ export const IdoDeposit = (props: {
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Max: {getFormattedNumberToLocale(formatAmount(Math.floor(props.idoStatus.currentMaxUsdcContribution), 2))}
+              Max: {formatThousands(Math.floor(props.idoStatus.currentMaxUsdcContribution), 2, 2)}
             </div>
           </div>
         )}
@@ -399,7 +416,7 @@ export const IdoDeposit = (props: {
             <span>{t('add-funds.label-right')}:</span>
             <span>
               {props.tokenBalance
-                ? getFormattedNumberToLocale(formatAmount(props.tokenBalance, 2))
+                ? formatThousands(props.tokenBalance, 2, 2)
                 : '0'
               }
             </span>

@@ -1,0 +1,35 @@
+.diagnosis-info-item {
+  font-size: 12px;
+  word-break: break-word;
+  line-height: 1.3;
+}
+.ant-collapse {
+    &.ant-collapse-borderless {
+      border: none;
+      color: inherit;
+      font-size: inherit;
+    }
+    > .ant-collapse-item {
+        .ant-collapse-header {
+            padding: 0 2px;
+            color: inherit !important;
+            font-size: inherit;
+            &:hover {
+              text-decoration: underline;
+            }
+        }
+        .ant-collapse-content {
+            border: none;
+            color: inherit;
+            .ant-collapse-content-box {
+                padding: 10px 2px 0;
+            }
+        }
+    }
+}
+.wallet-provider-icon {
+  padding: 3px;
+  margin-right: 4px;
+  background-color: var(--wallet-provider-background);
+  border-radius: 5px;
+}

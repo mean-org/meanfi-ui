@@ -34,22 +34,6 @@ export const AccountsMergeModal = (props: {
     const [transactionCancelled, setTransactionCancelled] = useState(false);
     const [isBusy, setIsBusy] = useState(false);
 
-    // const debugInfo = () => {
-    //     return (
-    //         <div className="flex-row">
-    //             <div>lastOperation:<span className="ml-1">{transactionStatus ? transactionStatus.lastOperation : ''}</span></div>
-    //             <div className="pl-3">currentOperation:<span className="ml-1">{transactionStatus ? transactionStatus.currentOperation : ''}</span></div>
-    //         </div>
-    //     );
-    // }
-
-    const onAfterClose = () => {
-        setTransactionStatus({
-            lastOperation: TransactionStatus.Iddle,
-            currentOperation: TransactionStatus.Iddle
-        });
-    }
-
     const onFinishedMergeAccountsTx = () => {
         setIsBusy(false);
         props.handleOk();
@@ -75,7 +59,7 @@ export const AccountsMergeModal = (props: {
             });
 
             const mintPubkey = new PublicKey(props.tokenMint);
-    
+
             // Tx input data
             const data = {
                 connection: props.connection.commitment,
@@ -84,13 +68,13 @@ export const AccountsMergeModal = (props: {
                 mergeGroup: props.tokenGroup
             };
             consoleOut('data:', data, 'blue');
-    
+
             // Log input data
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
               inputs: data
             });
-    
+
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
               result: ''
@@ -139,7 +123,7 @@ export const AccountsMergeModal = (props: {
         }
 
         const signTx = async (): Promise<boolean> => {
-          if (wallet) {
+          if (wallet && publicKey) {
             consoleOut('Signing transaction...');
             return await wallet.signTransaction(transaction)
             .then((signed: Transaction) => {
@@ -157,7 +141,7 @@ export const AccountsMergeModal = (props: {
                 });
                 transactionLog.push({
                   action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                  result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+                  result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
                 });
                 customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
                 return false;
@@ -168,7 +152,7 @@ export const AccountsMergeModal = (props: {
               });
               transactionLog.push({
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-                result: {signer: wallet.publicKey.toBase58()}
+                result: {signer: publicKey.toBase58()}
               });
               return true;
             })
@@ -180,7 +164,7 @@ export const AccountsMergeModal = (props: {
               });
               transactionLog.push({
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+                result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
               });
               customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
               return false;
@@ -316,14 +300,15 @@ export const AccountsMergeModal = (props: {
             footer={null}
             visible={props.isVisible}
             onCancel={props.handleClose}
-            afterClose={onAfterClose}
-            width={330}>
+            width={360}>
 
             <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
                 {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
-                <div className="transaction-progress">
-                    <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                    <h4 className="font-bold">Token accounts that will be merged</h4>
+                  <>
+                    <div className="transaction-progress">
+                      <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                      <h4 className="font-bold">Token accounts that will be merged</h4>
+                    </div>
                     {/* List of token accounts that will be merged */}
                     {props.tokenGroup && props.tokenGroup.length > 0 && (
                         <div className="well merged-token-list">
@@ -359,14 +344,14 @@ export const AccountsMergeModal = (props: {
                         })}
                         </div>
                     )}
-                    <div className="operation">
-                        <p><strong>WARNING</strong>: This action may break apps that depend on your existing token accounts.</p>
-                        {props.tokenGroup && props.tokenGroup.length > 4 && (
-                            <p>Up to 4 token accounts can be merged at once. Please review your remaining tokens after the merge and run merge again as needed.</p>
-                        )}
-                        <p>Merging your {props.tokenGroup && props.tokenGroup[0].description} token accounts will send funds to the <strong>Associated Token Account</strong>.</p>
+                    <div className="text-center">
+                      <p><strong>WARNING</strong>: This action may break apps that depend on your existing token accounts.</p>
+                      {props.tokenGroup && props.tokenGroup.length > 4 && (
+                        <p>Up to 4 token accounts can be merged at once. Please review your remaining tokens after the merge and run merge again as needed.</p>
+                      )}
+                      <p>Merging your {props.tokenGroup && props.tokenGroup[0].description} token accounts will send funds to the <strong>Associated Token Account</strong>.</p>
                     </div>
-                </div>
+                  </>
                 ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
                 <div className="transaction-progress">
                     <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />

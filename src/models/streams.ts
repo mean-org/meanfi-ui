@@ -3,7 +3,7 @@ export interface StreamsSummary {
     incomingAmount: number;
     outgoingAmount: number;
     totalAmount: number;
-};
+}
 
 export const initialSummary: StreamsSummary = {
     totalNet: 0,
@@ -17,4 +17,13 @@ export interface TreasuryStreamsBreakdown {
     scheduled: number;
     running: number;
     stopped: number;
+}
+
+export interface StreamWithdrawData {
+    title?: string;
+    token: string;
+    amount: string;
+    inputAmount: number;
+    fee: number;
+    receiveAmount: number;
 }

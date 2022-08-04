@@ -13,10 +13,9 @@ import {
   TransactionInstruction,
   TransactionSignature
 } from "@solana/web3.js";
-import { INPUT_AMOUNT_PATTERN } from "../constants";
-import { TokenInfo } from "@solana/spl-token-registry";
-import { CUSTOM_USDC, MEAN_TOKEN_LIST } from "../constants/token-list";
-import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
+import { CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
+import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
 import { NATIVE_SOL } from './tokens';
@@ -25,6 +24,10 @@ import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
 import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
 import { BigNumber } from "bignumber.js";
 import BN from "bn.js";
+import { isMobile } from "react-device-detect";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { getNetworkIdByEnvironment } from "../contexts/connection";
+import { environment } from "../environments/environment";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -65,7 +68,9 @@ export function useLocalStorageState(key: string, defaultState?: string) {
 
 // shorten the checksummed version of the input address to have 4 characters at start and end
 export function shortenAddress(address: string, chars = 4): string {
-  return `${address.slice(0, chars)}...${address.slice(-chars)}`;
+  if (!address) { return ""; }
+  const numChars = isMobile ? 4 : chars;
+  return `${address.slice(0, numChars)}...${address.slice(-numChars)}`;
 }
 
 export function getTokenIcon(
@@ -81,7 +86,7 @@ export function getTokenIcon(
   return map.get(address)?.logoURI;
 }
 
-export const STABLE_COINS = new Set(["USDC", "wUSDC", "USDT"]);
+export const STABLE_COINS = new Set(['USDT', 'USDC', 'UST', 'TUSD', 'BUSD', 'DAI', 'USDP', 'USDN', 'JST', 'FEI']);
 
 export function chunks<T>(array: T[], size: number): T[][] {
   return Array.apply<number, T[], T[][]>(
@@ -94,17 +99,17 @@ export const getAmountFromLamports = (amount: number): number => {
   return (amount || 0) / LAMPORTS_PER_SOL;
 }
 
-var SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
+const SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
 
 const abbreviateNumber = (number: number, precision: number) => {
   if (number === undefined) {
     return '--';
   }
-  let tier = (Math.log10(number) / 3) | 0;
+  const tier = (Math.log10(number) / 3) | 0;
   let scaled = number;
-  let suffix = SI_SYMBOL[tier];
+  const suffix = SI_SYMBOL[tier];
   if (tier !== 0) {
-    let scale = Math.pow(10, tier * 3);
+    const scale = Math.pow(10, tier * 3);
     scaled = number / scale;
   }
 
@@ -113,8 +118,8 @@ const abbreviateNumber = (number: number, precision: number) => {
 
 export const formatAmount = (
   val: number,
-  precision: number = 6,
-  abbr: boolean = false
+  precision = 6,
+  abbr = false
 ) => {
   if (val) {
     if (abbr) {
@@ -131,48 +136,32 @@ export const formatUSD = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-export const numberFormatter = new Intl.NumberFormat("en-US", {
-  style: "decimal",
-  minimumFractionDigits: 4,
-  maximumFractionDigits: 9,
-});
+export const formatPercent = (val: number, maxDecimals?: number) => {
+  const convertedVlue = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals || 0
+  });
+
+  return convertedVlue.format(val);
+}
 
 export const isSmallNumber = (val: number) => {
   return val < 0.001 && val > 0;
 };
 
-export const formatNumber = {
-  format: (val?: number, useSmall?: boolean) => {
-    if (!val) {
-      return "--";
-    }
-    if (useSmall && isSmallNumber(val)) {
-      return 0.001;
-    }
-
-    return numberFormatter.format(val);
-  },
-};
-
-export const feeFormatter = new Intl.NumberFormat("en-US", {
-  style: "decimal",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 9,
-});
-
-export const formatPct = new Intl.NumberFormat("en-US", {
-  style: "percent",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-export const formatThousands = (val: number, decimals?: number) => {
+export const formatThousands = (val: number, maxDecimals?: number, minDecimals = 0) => {
   let convertedVlue: Intl.NumberFormat;
 
-  if (decimals) {
-    convertedVlue = new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 });
+  if (maxDecimals) {
+    convertedVlue = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: minDecimals,
+      maximumFractionDigits: maxDecimals
+    });
   } else {
-    convertedVlue = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+    convertedVlue = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: minDecimals,
+      maximumFractionDigits: 0
+    });
   }
 
   return convertedVlue.format(val);
@@ -181,7 +170,7 @@ export const formatThousands = (val: number, decimals?: number) => {
 export function convert(
   account?: TokenAccount | number,
   mint?: MintInfo,
-  rate: number = 1.0
+  rate = 1.0
 ): number {
   if (!account) {
     return 0;
@@ -191,7 +180,7 @@ export function convert(
     typeof account === "number" ? account : account.info.amount?.toNumber();
 
   const precision = Math.pow(10, mint?.decimals || 0);
-  let result = (amount / precision) * rate;
+  const result = (amount / precision) * rate;
 
   return result;
 }
@@ -201,8 +190,30 @@ export function isValidNumber(str: string): boolean {
   return INPUT_AMOUNT_PATTERN.test(str);
 }
 
-export const getTokenByMintAddress = (address: string): TokenInfo | undefined => {
-  const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
+export function isValidInteger(str: string): boolean {
+  if (str === null || str === undefined ) { return false; }
+  return INTEGER_INPUT_AMOUNT_PATTERN.test(str);
+}
+
+/**
+ * Gets a token as TokenInfo from a given token list based on the mint address.
+ *
+ * @deprecated Moved to the AppState. Use getTokenByMintAddress from the AppState instead.
+ */
+export const getTokenByMintAddress = (address: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
+  const tokenFromTokenList = tokenList && isProd()
+    ? tokenList.find(t => t.address === address)
+    : MEAN_TOKEN_LIST.find(t => t.address === address);
+  if (tokenFromTokenList) {
+    return tokenFromTokenList;
+  }
+  return undefined;
+}
+
+export const getTokenBySymbol = (symbol: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
+  const tokenFromTokenList = tokenList && isProd()
+    ? tokenList.find(t => t.symbol === symbol)
+    : MEAN_TOKEN_LIST.find(t => t.symbol === symbol && t.chainId === getNetworkIdByEnvironment(environment));
   if (tokenFromTokenList) {
     return tokenFromTokenList;
   }
@@ -225,67 +236,68 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
-export const getFormattedRateAmount = (amount: number): string => {
-  return `${getFormattedNumberToLocale(formatAmount(amount, 2), 2)}`;
-}
-
-export const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
+export const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false, tokenList?: TokenInfo[]) => {
   let token: TokenInfo | undefined = undefined;
   if (address) {
     if (address === NATIVE_SOL.address) {
       token = NATIVE_SOL as TokenInfo;
     } else {
-      token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
-    }
-  }
+      token = tokenList && isProd()
+        ? tokenList.find(t => t.address === address)
+        : MEAN_TOKEN_LIST.find(t => t.address === address);
 
-  const formatToLocale = (value: any, minDigits = 6) => {
-    const converted = parseFloat(value.toString());
-    const formatted = new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: minDigits, maximumFractionDigits: minDigits }).format(converted);
-    return formatted || '';
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+    }
   }
 
   const inputAmount = amount || 0;
   if (token) {
+    const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
     const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
     const formatted2 = formatted.toFixed(token.decimals);
-    const toLocale = formatToLocale(formatted2, token.decimals);
+    const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
     if (onlyValue) { return toLocale; }
     return `${toLocale} ${token.symbol}`;
   } else if (address && !token) {
-    const formatted = formatToLocale(inputAmount);
+    const formatted = formatThousands(inputAmount, 5, 5);
     return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
   }
-  return `${formatToLocale(inputAmount)}`;
+  return `${formatThousands(inputAmount, 5, 5)}`;
 }
 
 export const getTokenAmountAndSymbolByTokenAddress = (
   amount: number,
   address: string,
-  onlyValue = false
+  onlyValue = false,
+  tokenList?: TokenInfo[]
 ): string => {
   let token: TokenInfo | undefined = undefined;
   if (address) {
     if (address === NATIVE_SOL.address) {
       token = NATIVE_SOL as TokenInfo;
-    } else if (address === CUSTOM_USDC.address) {
-      token = CUSTOM_USDC as TokenInfo;
     } else {
-      token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
+      token = tokenList && isProd()
+        ? tokenList.find(t => t.address === address)
+        : MEAN_TOKEN_LIST.find(t => t.address === address);
     }
   }
   const inputAmount = amount || 0;
   if (token) {
+    const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
     const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
     const formatted2 = formatted.toFixed(token.decimals);
-    const toLocale = getFormattedNumberToLocale(formatted2, 2);
+    const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
     if (onlyValue) { return toLocale; }
     return `${toLocale} ${token.symbol}`;
   } else if (address && !token) {
     // TODO: Fair assumption but we should be able to work with either an address or a TokenInfo param
     const unkToken: TokenInfo = {
       address: address,
-      name: 'Unknown',
+      name: CUSTOM_TOKEN_NAME,
       chainId: 101,
       decimals: 6,
       symbol: shortenAddress(address),
@@ -337,7 +349,7 @@ export async function signTransaction(
   transaction: Transaction,
   signers: Array<Account> = []
 ) {
-  transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash
+  transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
   transaction.setSigners(wallet.publicKey, ...signers.map((s) => s.publicKey))
   if (signers.length > 0) {
     transaction.partialSign(...signers)
@@ -409,7 +421,7 @@ async function covertToProgramWalletTransaction(
 
 ) {
 
-  const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
+  const { blockhash } = await connection.getLatestBlockhash(connection.commitment);
 
   transaction.recentBlockhash = blockhash;
   transaction.feePayer = wallet.publicKey;
@@ -464,16 +476,14 @@ export async function findATokenAddress(
 
 ): Promise<PublicKey> {
 
-  return (
-      await PublicKey.findProgramAddress(
-          [
-              walletAddress.toBuffer(),
-              TOKEN_PROGRAM_ID.toBuffer(),
-              tokenMintAddress.toBuffer(),
-          ],
-          ASSOCIATED_TOKEN_PROGRAM_ID
-      )
-  )[0];
+  return (await PublicKey.findProgramAddress(
+      [
+        walletAddress.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        tokenMintAddress.toBuffer(),
+      ],
+      ASSOCIATED_TOKEN_PROGRAM_ID
+  ))[0];
 }
 
 export async function createAssociatedTokenAccount(
@@ -613,4 +623,90 @@ export const makeDecimal = (bn: BN, decimals: number): number => {
 export const makeInteger = (num: number, decimals: number): BN => {
   const mul = Math.pow(10, decimals)
   return new BN(num * mul)
+}
+
+export const addSeconds = (date: Date, seconds: number) => {
+  return new Date(date.getTime() + seconds*1000);
+}
+
+export const addDays = (date: Date, days: number) => {
+  return new Date(date.getTime() + days*24*60*60*1000);
+}
+
+export const openLinkInNewTab = (address: string) => {
+  window.open(address, '_blank','noreferrer');
+}
+
+export const tabNameFormat = (str: string) => {
+  return str.toLowerCase().split(' ').join('_');
+}
+
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    // eslint-disable-next-line no-useless-escape
+    .replace(/[\~\!\@\#\$\%\^\&\*\(\)\-\_\=\+\]\[\}\{\'\"\;\\\:\?\/\>\<\.\,]+/g, '-')
+    .replace(/ +/g, '-');
+}
+
+/**
+ * Flatten a multidimensional object
+ *
+ * For example:
+ *   flattenObject{ a: 1, b: { c: 2 } }
+ * Returns:
+ *   { a: 1, c: 2}
+ */
+ export const flattenObject = (obj: any) => {
+  const flattened: any = {};
+
+  Object.keys(obj).forEach((key) => {
+    const value = obj[key];
+
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      Object.assign(flattened, flattenObject(value));
+    } else {
+      flattened[key] = value;
+    }
+  })
+
+  return flattened
+}
+
+/**
+ * Returns an instruction to create the ATA if the account does not exist, 
+ * otherwise it returns null.
+ * @param connection 
+ * @param owner 
+ * @param mint 
+ * @param payer 
+ * @returns 
+ */
+export async function getCreateAtaInstructionIfNotExists(
+  connection: Connection,
+  owner: PublicKey,
+  mint: PublicKey,
+  payer: PublicKey
+  ) {
+  const ata = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mint,
+    owner,
+    true,
+  );
+
+  const ataAccountInfo = await connection.getAccountInfo(ata);
+
+  if (ataAccountInfo) {
+    return null;
+  }
+  return Token.createAssociatedTokenAccountInstruction(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mint,
+    ata,
+    owner,
+    payer,
+  );
 }

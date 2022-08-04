@@ -2,15 +2,15 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { Button } from 'antd';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, delay, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
-import { appConfig, customLogger } from '../..';
+import { customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Allocation } from '../../models/common-types';
 import { getWhitelistAllocation } from '../../utils/api';
@@ -31,17 +31,15 @@ export const IdoRedeem = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
-  const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const {
     userTokens,
-    selectedToken,
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
   const {
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [userAllocation, setUserAllocation] = useState<Allocation | null>();
@@ -139,7 +137,7 @@ export const IdoRedeem = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -174,7 +172,7 @@ export const IdoRedeem = (props: {
           idoAddress
         )
         .then(value => {
-          consoleOut('createStream2 returned transaction:', value);
+          consoleOut('createReddemTx returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -187,7 +185,7 @@ export const IdoRedeem = (props: {
           return true;
         })
         .catch(error => {
-          console.error('createStream2 error:', error);
+          console.error('createReddemTx error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -236,7 +234,7 @@ export const IdoRedeem = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+              result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
             });
             customLogger.logError('Create IDO Redeem transaction failed', { transcript: transactionLog });
             return false;
@@ -250,9 +248,9 @@ export const IdoRedeem = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create IDO Redeem transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create IDO Redeem transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -327,7 +325,7 @@ export const IdoRedeem = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoClaim);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoClaim);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,

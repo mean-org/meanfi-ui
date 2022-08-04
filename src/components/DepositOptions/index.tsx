@@ -2,21 +2,20 @@ import React from 'react';
 import { Button, Col, Modal, Row, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MEAN_FINANCE_APP_ALLBRIDGE_URL, MEAN_FINANCE_APP_RENBRIDGE_URL } from "../../constants";
+import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
-import { notify } from "../../utils/notifications";
 import { consoleOut, copyText } from "../../utils/ui";
 import { AppConfig, environment } from '../../environments/environment';
-import "./style.less";
+import "./style.scss";
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import useScript from '../../hooks/useScript';
 import { appConfig } from '../..';
+import { openNotification } from '../Notifications';
 
-const QRCode = require('qrcode.react');
+import {QRCodeSVG} from 'qrcode.react';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const TransakSDK: any;
 let transak: any = undefined;
 
@@ -29,7 +28,7 @@ export const DepositOptions = (props: {
   const { theme } = useContext(AppStateContext);
 
   // Load the Transak widget script asynchronously
-  const {library, status} = useScript(`https://global.transak.com/sdk/v1.1/widget.js`);
+  const {status} = useScript(`https://global.transak.com/sdk/v1.1/widget.js`);
 
   const [isSharingAddress, setIsSharingAddress] = useState(false);
 
@@ -81,12 +80,12 @@ export const DepositOptions = (props: {
     props.handleClose();
   }
 
-  const handleBridgeFromRenButtonClick = () => {
-    setTimeout(() => {
-      window.open(MEAN_FINANCE_APP_RENBRIDGE_URL, '_blank','noreferrer');
-    }, 500);
-    props.handleClose();
-  }
+  // const handleBridgeFromRenButtonClick = () => {
+  //   setTimeout(() => {
+  //     window.open(MEAN_FINANCE_APP_RENBRIDGE_URL, '_blank','noreferrer');
+  //   }, 500);
+  //   props.handleClose();
+  // }
 
   useEffect(() => {
     if (status === 'ready' && !transak) {
@@ -98,7 +97,7 @@ export const DepositOptions = (props: {
         hideMenu: true,
         walletAddress: publicKey?.toBase58() || '', // Your customer's wallet address
         themeColor: 'B7001C', // App theme color
-        fiatCurrency: 'EUR',
+        // fiatCurrency: 'EUR',
         email: '', // Your customer's email address
         redirectURL: '',
         hostURL: window.location.origin,
@@ -127,12 +126,12 @@ export const DepositOptions = (props: {
 
   const onCopyAddress = () => {
     if (publicKey && copyText(publicKey)) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
@@ -280,12 +279,12 @@ export const DepositOptions = (props: {
         <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>
           <div className="text-center">
             <h3 className="font-bold mb-3">{t('deposits.send-from-wallet-cta-label')}</h3>
-            <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+            <div className="qr-container bg-white">
               {publicKey && (
-                <QRCode
+                <QRCodeSVG
                   value={publicKey.toBase58()}
                   size={200}
-                  renderAs="svg"/>
+                />
               )}
             </div>
             <div className="transaction-field medium">

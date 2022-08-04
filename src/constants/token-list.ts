@@ -1,12 +1,13 @@
 import { TokenInfo } from '@solana/spl-token-registry';
 
-export const CUSTOM_USDC = {
+const LOGO_BASE_URL = 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet';
+export const CUSTOM_USDC_TEST_IDO_DEVNET = {
     chainId: 103,
     address: 'FsWi13eBPngZ87JTyEcQsPjbQqefoPfLJyhtbNeGyLCX',
     symbol: 'USDC',
     name: 'USD Coin',
     decimals: 6,
-    logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+    logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
     tags: [
         'stablecoin',
     ],
@@ -16,75 +17,69 @@ export const CUSTOM_USDC = {
     },
 }
 
-export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'wSOL', 'MEAN'];
-export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'wSOL'];
+export const SOCN_USD = {
+    chainId: 101,
+    address: '7YFfqZGTxkj3Zeq3Et23kMznCaEYZ1WBZDt6CVrxwfqd',
+    symbol: 'SOCN/USDC',
+    name: 'Orca Aquafarm Token (SOCN/USDC)',
+    decimals: 6,
+    logoURI: `${LOGO_BASE_URL}/7YFfqZGTxkj3Zeq3Et23kMznCaEYZ1WBZDt6CVrxwfqd/logo.svg`,
+    tags: [
+        'lp-token',
+    ],
+    extensions: {
+        twitter: 'https://twitter.com/orca_so',
+        website: 'https://www.orca.so',
+    },
+};
+
+export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'SOL', 'SLND', 'MEAN'];
+export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
+
+export const MEAN_TOKEN = {
+    chainId: 101,
+    address: 'MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD',
+    symbol: 'MEAN',
+    name: 'Mean Finance',
+    decimals: 6,
+    logoURI: `${LOGO_BASE_URL}/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg`,
+    extensions: {
+        coingeckoId: "meanfi",
+        discord: "https://discord.meanfi.com/",
+        medium: "https://meandao.medium.com",
+        twitter: "https://twitter.com/meanfinance",
+        website: "https://www.meanfi.com/"
+    },
+};
+
+export const SMEAN_TOKEN = {
+    chainId: 101,
+    address: 'sMEANebFMnd9uTYpyntGzBmTmzEukRFwCjEcnXT2E8z',
+    symbol: 'sMEAN',
+    name: 'Staked MEAN',
+    decimals: 6,
+    logoURI: `${LOGO_BASE_URL}/sMEANebFMnd9uTYpyntGzBmTmzEukRFwCjEcnXT2E8z/logo.svg`,
+    extensions: {
+        discord: 'https://discord.meanfi.com/',
+        medium: 'https://meandao.medium.com',
+        twitter: 'https://twitter.com/meanfinance',
+        website: 'https://www.meanfi.com/',
+    },
+    tags: [
+        'stake',
+    ],
+};
 
 export const MEAN_TOKEN_LIST: TokenInfo[] = [
-    {
-        chainId: 101,
-        address: 'MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD',
-        symbol: 'MEAN',
-        name: 'MEAN',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
-        extensions: {
-            discord: 'https://discord.meanfi.com/',
-            medium: 'https://meandao.medium.com',
-            twitter: 'https://twitter.com/meanfinance',
-            website: 'https://www.meanfi.com/',
-        },
-    },
-    {
-        chainId: 103,
-        address: '9S52DYSokWP7kGutbxMsWU5VuGx5by7QPP1u6H7fPuni',
-        symbol: 'MEAN',
-        name: 'MEAN',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
-        extensions: {
-            discord: 'https://discord.meanfi.com/',
-            medium: 'https://meandao.medium.com',
-            twitter: 'https://twitter.com/meanfinance',
-            website: 'https://www.meanfi.com/',
-        },
-    },
+    MEAN_TOKEN,
+    SMEAN_TOKEN,
     {
         chainId: 101,
         address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
         symbol: 'USDC',
         name: 'USD Coin',
         decimals: 6,
-        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
-        tags: [
-            'stablecoin',
-        ],
-        extensions: {
-            website: 'https://www.centre.io/',
-            coingeckoId: 'usd-coin',
-        },
-    },
-    {
-        chainId: 102,
-        address: 'CpMah17kQEL2wqyMKt3mZBdTnZbkbfx4nqmQMFDP5vwp',
-        symbol: 'USDC',
-        name: 'USD Coin',
-        decimals: 6,
-        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
-        tags: [
-            'stablecoin',
-        ],
-        extensions: {
-            website: 'https://www.centre.io/',
-            coingeckoId: 'usd-coin',
-        },
-    },
-    {
-        chainId: 103,
-        address: 'AbQBt9V212HpPVk64YWAApFJrRzdAdu66fwF9neYucpU',
-        symbol: 'USDC',
-        name: 'USD Coin',
-        decimals: 6,
-        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+        logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
         tags: [
             'stablecoin',
         ],
@@ -145,27 +140,12 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         },
     },
     {
-        chainId: 103,
-        address: '42f2yFqXh8EDCRCiEBQSweWqpTzKGa9DC8e7UjUfFNrP',
-        symbol: 'USDT',
-        name: 'USDT',
-        decimals: 6,
-        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg',
-        tags: [
-            'stablecoin',
-        ],
-        extensions: {
-            website: 'https://tether.to/',
-            coingeckoId: 'tether',
-        },
-    },
-    {
         chainId: 101,
         address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
+        symbol: 'SOL',
         name: 'Wrapped SOL',
         decimals: 9,
-        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
+        logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
         tags: [],
         extensions: {
             website: 'https://solana.com/',
@@ -174,29 +154,311 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
             coingeckoId: 'solana',
         },
     },
+    // Solend
     {
-        chainId: 102,
-        address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
-        name: 'Wrapped SOL',
-        decimals: 9,
-        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
-        tags: [],
+        chainId: 101,
+        address: 'SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp',
+        symbol: 'SLND',
+        name: 'Solend',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+        ],
         extensions: {
-            website: 'https://www.solana.com/',
-            coingeckoId: 'solana',
+            coingeckoId: 'solend',
+            serumV3Usdc: 'F9y9NM83kBMzBmMvNT18mkcFuNAPhNRhx7pnz9EDWwfv',
+            twitter: 'https://twitter.com/solendprotocol',
+            website: 'https://solend.fi',
         },
     },
     {
-        chainId: 103,
-        address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
-        name: 'Wrapped SOL',
-        decimals: 9,
-        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
-        tags: [],
+        chainId: 101,
+        address: 'D3Cu5urZJhkKyNZQQq2ne6xSfzbXLU4RrywVErMA2vf8',
+        symbol: 'cSLND',
+        name: 'Solend SLND',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/D3Cu5urZJhkKyNZQQq2ne6xSfzbXLU4RrywVErMA2vf8/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
         extensions: {
-            coingeckoId: 'solana',
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '5h6ssFpeDeRbzsEHDbTQNH7nVGgsKrZydxdSTnLm6QdV',
+        symbol: 'cSOL',
+        name: 'Solend SOL',
+        decimals: 9,
+        logoURI: `${LOGO_BASE_URL}/5h6ssFpeDeRbzsEHDbTQNH7nVGgsKrZydxdSTnLm6QdV/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '993dVFL2uXWYeoXuEBFXR4BijeXdTv4s6BzsCjJZuwqk',
+        symbol: 'cUSDC',
+        name: 'Solend USDC',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/993dVFL2uXWYeoXuEBFXR4BijeXdTv4s6BzsCjJZuwqk/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'CPDiKagfozERtJ33p7HHhEfJERjvfk1VAjMXAFLrvrKP',
+        symbol: 'cETH',
+        name: 'Solend ETH',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/CPDiKagfozERtJ33p7HHhEfJERjvfk1VAjMXAFLrvrKP/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'AppJPZka33cu4DyUenFe9Dc1ZmZ3oQju6mBn9k37bNAa',
+        symbol: 'csoETH',
+        name: 'Solend soETH',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/AppJPZka33cu4DyUenFe9Dc1ZmZ3oQju6mBn9k37bNAa/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'Gqu3TFmJXfnfSX84kqbZ5u9JjSBVoesaHjfTsaPjRSnZ',
+        symbol: 'cBTC',
+        name: 'Solend BTC',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/Gqu3TFmJXfnfSX84kqbZ5u9JjSBVoesaHjfTsaPjRSnZ/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '4CxGuD2NMr6zM8f18gr6kRhgd748pnmkAhkY1YJtkup1',
+        symbol: 'cSRM',
+        name: 'Solend SRM',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/4CxGuD2NMr6zM8f18gr6kRhgd748pnmkAhkY1YJtkup1/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'BTsbZDV7aCMRJ3VNy9ygV4Q2UeEo9GpR8D6VvmMZzNr8',
+        symbol: 'cUSDT',
+        name: 'Solend USDT',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/BTsbZDV7aCMRJ3VNy9ygV4Q2UeEo9GpR8D6VvmMZzNr8/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '8bDyV3N7ctLKoaSVqUoEwUzw6msS2F65yyNPgAVUisKm',
+        symbol: 'cFTT',
+        name: 'Solend FTT',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/8bDyV3N7ctLKoaSVqUoEwUzw6msS2F65yyNPgAVUisKm/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '2d95ZC8L5XP6xCnaKx8D5U5eX6rKbboBBAwuBLxaFmmJ',
+        symbol: 'cRAY',
+        name: 'Solend RAY',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/2d95ZC8L5XP6xCnaKx8D5U5eX6rKbboBBAwuBLxaFmmJ/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'Bpm2aBL57uqVhgxutfRVrbtnjDpZLV8PZrRrytV1LgeT',
+        symbol: 'cSBR',
+        name: 'Solend SBR',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/Bpm2aBL57uqVhgxutfRVrbtnjDpZLV8PZrRrytV1LgeT/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'BsWLxf6hRJnyytKR52kKBiz7qU7BB3SH77mrBxNnYU1G',
+        symbol: 'cMER',
+        name: 'Solend MER',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/BsWLxf6hRJnyytKR52kKBiz7qU7BB3SH77mrBxNnYU1G/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '6XrbsKScacEwpEW5DVNko9t5vW3cim9wktAeT9mmiYHS',
+        symbol: 'cUSDT-USDC',
+        name: 'Solend USDT-USDC',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/6XrbsKScacEwpEW5DVNko9t5vW3cim9wktAeT9mmiYHS/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '4icXEpFVMrcqob6fnd3jZ6KjKrc6cqre6do1f8kKAC1u',
+        symbol: 'cmSOL-SOL',
+        name: 'Solend mSOL-SOL',
+        decimals: 9,
+        logoURI: `${LOGO_BASE_URL}/4icXEpFVMrcqob6fnd3jZ6KjKrc6cqre6do1f8kKAC1u/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'QQ6WK86aUCBvNPkGeYBKikk15sUg6aMUEi5PTL6eB4i',
+        symbol: 'cstSOL',
+        name: 'Solend stSOL',
+        decimals: 9,
+        logoURI: `${LOGO_BASE_URL}/QQ6WK86aUCBvNPkGeYBKikk15sUg6aMUEi5PTL6eB4i/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'AFq1sSdevxfqWGcmcz7XpPbfjHevcJY7baZf9RkyrzoR',
+        symbol: 'cscnSOL',
+        name: 'Solend scnSOL',
+        decimals: 9,
+        logoURI: `${LOGO_BASE_URL}/AFq1sSdevxfqWGcmcz7XpPbfjHevcJY7baZf9RkyrzoR/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '3JFC4cB56Er45nWVe29Bhnn5GnwQzSmHVf6eUq9ac91h',
+        symbol: 'cmSOL',
+        name: 'Solend mSOL',
+        decimals: 9,
+        logoURI: `${LOGO_BASE_URL}/3JFC4cB56Er45nWVe29Bhnn5GnwQzSmHVf6eUq9ac91h/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'E9LAZYxBVhJr9Cdfi9Tn4GSiJHDWSZDsew5tfgJja6Cu',
+        symbol: 'cORCA',
+        name: 'Solend ORCA',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/E9LAZYxBVhJr9Cdfi9Tn4GSiJHDWSZDsew5tfgJja6Cu/logo.png`,
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
         },
     },
     {
@@ -205,7 +467,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "RAY",
         name: "Raydium",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
+        logoURI: `${LOGO_BASE_URL}/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png`,
         tags: [],
         extensions: {
             "coingeckoId": "raydium"
@@ -217,7 +479,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "ORCA",
         name: "Orca",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
+        logoURI: `${LOGO_BASE_URL}/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png`,
         tags: [],
         extensions: {
             coingeckoId: "orca",
@@ -229,7 +491,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "SRM",
         name: "Serum",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt/logo.png",
+        logoURI: `${LOGO_BASE_URL}/SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt/logo.png`,
         tags: [],
         extensions: {
             coingeckoId: "serum"
@@ -241,7 +503,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "SBR",
         name: "Saber Protocol Token",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1/logo.svg",
+        logoURI: `${LOGO_BASE_URL}/Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1/logo.svg`,
         tags: [],
         extensions: {
             coingeckoId: "saber"
@@ -253,10 +515,10 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "SLRS",
         name: "Solrise Finance",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/SLRSSpSLUTP7okbCUBYStWCo1vUgyt775faPqz8HUMr/logo.png",
+        logoURI: `${LOGO_BASE_URL}/SLRSSpSLUTP7okbCUBYStWCo1vUgyt775faPqz8HUMr/logo.png`,
         tags: [],
         extensions: {
-          coingeckoId: "solrise-finance"
+            coingeckoId: "solrise-finance"
         }
     },
     {
@@ -277,7 +539,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "SNY",
         name: "Synthetify",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4dmKkXNHdgYsXqBHCuMikNQWwVomZURhYvkkX5c4pQ7y/logo.png",
+        logoURI: `${LOGO_BASE_URL}/4dmKkXNHdgYsXqBHCuMikNQWwVomZURhYvkkX5c4pQ7y/logo.png`,
         tags: [],
         extensions: {
             coingeckoId: "synthetify-token"
@@ -289,7 +551,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "JET",
         name: "Jet Protocol",
         decimals: 9,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz/logo.png",
+        logoURI: `${LOGO_BASE_URL}/JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz/logo.png`,
         tags: [],
         extensions: {
             coingeckoId: "jet"
@@ -301,10 +563,10 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "PORT",
         name: "Port Finance Token",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y/PORT.png",
+        logoURI: `${LOGO_BASE_URL}/PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y/PORT.png`,
         tags: [],
         extensions: {
-          serumV3Usdc: "8x8jf7ikJwgP9UthadtiGFgfFuyyyYPHL3obJAuxFWko"
+            serumV3Usdc: "8x8jf7ikJwgP9UthadtiGFgfFuyyyYPHL3obJAuxFWko"
         }
     },
     {
@@ -313,8 +575,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "SLIM",
         name: "Solanium",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/xxxxa1sKNGwFtw2kFn8XauW9xq8hBZ5kVtcSesTT9fW/logo.png",
-        extensions: { }
+        logoURI: `${LOGO_BASE_URL}/xxxxa1sKNGwFtw2kFn8XauW9xq8hBZ5kVtcSesTT9fW/logo.png`,
+        extensions: {}
     },
     {
         chainId: 101,
@@ -322,9 +584,263 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "mSOL",
         name: "Marinade staked SOL (mSOL)",
         decimals: 9,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png",
+        logoURI: `${LOGO_BASE_URL}/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png`,
         extensions: {
             serumV3Usdc: "6oGsL2puUgySccKzn9XA9afqF217LfxP5ocq4B3LWsjy"
         }
     },
+    {
+        chainId: 101,
+        address: '7xuP2ubqhEzbxJMZvtPqGLKRVyq4KXRKh4UGJmJaJwZr',
+        symbol: 'MEAN-SOL',
+        name: 'Raydium MEAN-SOL LP Token',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 101,
+        address: '7meGAxvVvBsUrFobS4prWVz1dnMZNvRRE2tJoVjFGjFc',
+        symbol: 'MEAN-USDC',
+        name: 'Raydium MEAN-USDC LP Token',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 101,
+        address: 'H9wUyrxpAErmdNVPitpHSXgwoomoh91ggJKPWtQQoCn1',
+        symbol: 'MEAN-RAY',
+        name: 'Raydium MEAN-RAY LP Token',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    },
+    // Testnet tokens
+    {
+        chainId: 102,
+        address: 'CpMah17kQEL2wqyMKt3mZBdTnZbkbfx4nqmQMFDP5vwp',
+        symbol: 'USDC',
+        name: 'USD Coin',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
+        tags: [
+            'stablecoin',
+        ],
+        extensions: {
+            website: 'https://www.centre.io/',
+            coingeckoId: 'usd-coin',
+        },
+    },
+    {
+        chainId: 102,
+        address: 'So11111111111111111111111111111111111111112',
+        symbol: 'SOL',
+        name: 'Wrapped SOL',
+        decimals: 9,
+        logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
+        tags: [],
+        extensions: {
+            website: 'https://www.solana.com/',
+            coingeckoId: 'solana',
+        },
+    },
+    // Devnet tokens
+    {
+        chainId: 103,
+        address: 'AbQBt9V212HpPVk64YWAApFJrRzdAdu66fwF9neYucpU',
+        symbol: 'USDC',
+        name: 'USD Coin',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
+        tags: [
+            'stablecoin',
+        ],
+        extensions: {
+            website: 'https://www.centre.io/',
+            coingeckoId: 'usd-coin',
+        },
+    },
+    {
+        chainId: 103,
+        address: '42f2yFqXh8EDCRCiEBQSweWqpTzKGa9DC8e7UjUfFNrP',
+        symbol: 'USDT',
+        name: 'USDT',
+        decimals: 6,
+        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg',
+        tags: [
+            'stablecoin',
+        ],
+        extensions: {
+            website: 'https://tether.to/',
+            coingeckoId: 'tether',
+        },
+    },
+    {
+        chainId: 103,
+        address: 'MNZeoVuS87pFssHCbxKHfddvJk4MjmM2RHjQskrk7qs',
+        symbol: 'MEAN',
+        name: 'Mean Finance',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg`,
+        extensions: {
+            discord: 'https://discord.meanfi.com/',
+            medium: 'https://meandao.medium.com',
+            twitter: 'https://twitter.com/meanfinance',
+            website: 'https://www.meanfi.com/',
+        },
+    },
+    {
+        chainId: 103,
+        address: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
+        symbol: 'sMEAN',
+        name: 'Staked MEAN',
+        decimals: 6,
+        logoURI: '/assets/smean-token.svg',
+        extensions: {
+            discord: 'https://discord.meanfi.com/',
+            medium: 'https://meandao.medium.com',
+            twitter: 'https://twitter.com/meanfinance',
+            website: 'https://www.meanfi.com/',
+        },
+        tags: [
+            'stake',
+        ],
+    },
+    {
+        address: '2tWC4JAdL4AxEFJySziYJfsAnW2MHKRo98vbAPiRDSk8',
+        chainId: 103,
+        decimals: 6,
+        extensions: {
+            coingeckoId: 'usd-coin',
+            website: 'https://saber.so/',
+        },
+        logoURI: 'https://cdn.jsdelivr.net/gh/saber-hq/spl-token-icons@master/icons/103/2tWC4JAdL4AxEFJySziYJfsAnW2MHKRo98vbAPiRDSk8.png',
+        name: 'USD Coin (Saber Devnet)',
+        symbol: 'USDC',
+        tags: [
+            'saber-mkt-usd',
+            'stablecoin',
+        ],
+    },
+    {
+        address: '4QgnWUPQmfGB5dTDCcc4ZFeZDK7xNVhCUFoNmmYFwAme',
+        chainId: 103,
+        decimals: 6,
+        extensions: {},
+        logoURI: 'https://registry.saber.so/token-icons/candy-usd.png',
+        name: 'Test USD',
+        symbol: 'TEST',
+        tags: [
+            'saber-mkt-usd',
+        ],
+    },
+    {
+        address: 'CASHVDm2wsJXfhj6VWxb7GiMdoLc17Du7paH4bNr5woT',
+        chainId: 103,
+        decimals: 6,
+        extensions: {
+            coingeckoId: 'usd-coin',
+            discord: 'https://discord.com/invite/GmkRRKJkuh',
+            medium: 'https://medium.com/@cashioapp',
+            twitter: 'https://twitter.com/CashioApp',
+            website: 'https://cashio.app',
+        },
+        logoURI: 'https://spl-token-icons.static-assets.ship.capital/icons/101/CASHVDm2wsJXfhj6VWxb7GiMdoLc17Du7paH4bNr5woT.png',
+        name: 'Cashio Dollar',
+        symbol: 'CASH',
+        tags: [
+            'stablecoin',
+            'saber-mkt-usd',
+        ],
+    },
+    {
+        address: 'EJwZgeZrdC8TXTQbQBoL6bfuAnFUUy1PVCMB4DYPzVaS',
+        chainId: 103,
+        decimals: 6,
+        extensions: {
+            coingeckoId: 'tether',
+            website: 'https://saber.so/',
+        },
+        logoURI: 'https://cdn.jsdelivr.net/gh/saber-hq/spl-token-icons@master/icons/103/EJwZgeZrdC8TXTQbQBoL6bfuAnFUUy1PVCMB4DYPzVaS.svg',
+        name: 'USDT (Saber Devnet)',
+        symbol: 'USDT',
+        tags: [
+            'saber-mkt-usd',
+            'stablecoin',
+        ],
+    },
+    {
+        address: 'Ren3RLPCG6hpKay86d2fQccQLuGG331UNxwn2VTw3GJ',
+        chainId: 103,
+        decimals: 8,
+        extensions: {},
+        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/ethereum/assets/0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D/logo.png',
+        name: 'Test RenBTC',
+        symbol: 'renBTC',
+        tags: [
+            'saber-mkt-btc',
+        ],
+    },
+    {
+        address: 'Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1',
+        chainId: 103,
+        decimals: 6,
+        extensions: {},
+        logoURI: 'https://registry.saber.so/token-icons/sbr.svg',
+        name: 'Saber Protocol Token',
+        symbol: 'SBR',
+        tags: [],
+    },
+    {
+        address: 'Wbt2CgkkD3eVckD5XxWJmT8pTnFTyWrwvGM7bUMLvsM',
+        chainId: 103,
+        decimals: 6,
+        extensions: {},
+        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/bitcoin/info/logo.png',
+        name: 'Test WBTC',
+        symbol: 'WBTC',
+        tags: [
+            'saber-mkt-btc',
+        ],
+    },
+    {
+        chainId: 103,
+        address: 'So11111111111111111111111111111111111111112',
+        symbol: 'SOL',
+        name: 'Wrapped SOL',
+        decimals: 9,
+        logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
+        tags: [],
+        extensions: {
+            coingeckoId: 'solana',
+        },
+    },
+    {
+        chainId: 103,
+        address: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
+        symbol: 'USD Coin Dev',
+        name: 'USDC-Dev - USD Coin Dev',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
+        tags: [],
+    },
+    {
+        chainId: 101,
+        address: '8C3t7mmndSSZUukZHrVuU2mJ3bPtpVRo6tKNbLovGQEJ',
+        symbol: 'CRDX-LP',
+        name: 'Credix Marketplace LP Token',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 103,
+        address: '23YKMZKvpj77D2LSF3PELPCPLwHidhfLtStCGYDE7rHQ',
+        symbol: 'CRDX-LP',
+        name: 'Credix Marketplace LP Token',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    }
 ];

@@ -1,18 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { Layout } from "antd";
 import { AppRoutes } from "./routes";
-import "./App.less";
+import "./App.scss";
 import { useLocalStorageState } from './utils/utils';
-import { refreshCachedRpc } from './models/connections-hq';
+import { refreshCachedRpc } from './services/connections-hq';
 import { useTranslation } from 'react-i18next';
+import { AnalyticsBrowser } from '@segment/analytics-next';
+import { appConfig } from '.';
+import { isLocal } from './utils/ui';
+import { SegmentAnalyticsService } from './utils/segment-service';
 
 const { Content } = Layout;
+export const segmentAnalytics = new SegmentAnalyticsService();
 
 function App() {
 
   const { t } = useTranslation('common');
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [loadingStatus, setLoadingStatus] = useState<string>('loading');
+  const [writeKey, setWriteKey] = useState('');
+
+  useEffect(() => {
+    if (!writeKey) {
+      setWriteKey(appConfig.getConfig().segmentAnalyticsKey);
+      return;
+    }
+    const loadAnalytics = async () => {
+      const [response] = await AnalyticsBrowser.load({ writeKey });
+      segmentAnalytics.analytics = response;
+    }
+
+    // Load Segment Analytics only for PROD and DEV
+    if (!isLocal()) {
+      loadAnalytics();
+    }
+
+    // loadAnalytics();
+
+  }, [writeKey]);
 
   // Use the preferred theme or dark as a default
   useEffect(() => {

@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
+import { Modal, Button, Spin, Tooltip, Row, Col } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
@@ -8,12 +8,12 @@ import { TransactionStatus } from '../../models/enums';
 import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
-import { MultisigParticipant } from '../../models/multisig';
+import { MultisigParticipant, MultisigTransactionFees, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { useWallet } from '../../contexts/wallet';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
+import { IconHelpCircle, IconWarning } from '../../Icons';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -23,7 +23,8 @@ export const MultisigCreateModal = (props: {
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
-  transactionFees: TransactionFees;
+  transactionFees: MultisigTransactionFees;
+  multisigAccounts: MultisigInfo[];
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
@@ -35,6 +36,7 @@ export const MultisigCreateModal = (props: {
   const [multisigLabel, setMultisigLabel] = useState('');
   const [multisigThreshold, setMultisigThreshold] = useState(0);
   const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
+  const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
 
   // When modal goes visible, add current wallet address as first participant
   useEffect(() => {
@@ -46,10 +48,15 @@ export const MultisigCreateModal = (props: {
           address: publicKey.toBase58()
       });
       setMultisigOwners(items);
+      if (props.multisigAccounts && props.multisigAccounts.length > 0) {
+        const msAddresses = props.multisigAccounts.map(ms => ms.id.toBase58());
+        setMultisigAddresses(msAddresses);
+      }
     }
   }, [
     publicKey,
     props.isVisible,
+    props.multisigAccounts
   ]);
 
   const onAcceptModal = () => {
@@ -88,13 +95,20 @@ export const MultisigCreateModal = (props: {
     setMultisigLabel(e.target.value);
   }
 
+  const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
+    const items = arr.map(i => i.address);
+    return new Set(items).size === items.length ? true : false;
+  }
+
   const isFormValid = () => {
     return  multisigThreshold &&
+            multisigThreshold >= 1 &&
             multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
             multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
-            isOwnersListValid()
+            isOwnersListValid() &&
+            noDuplicateExists(multisigOwners)
       ? true
       : false;
   }
@@ -104,18 +118,35 @@ export const MultisigCreateModal = (props: {
   }
 
   const onThresholdInputValueChange = (e: any) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
     if (newValue === null || newValue === undefined || newValue === "") {
       setMultisigThreshold(0);
     } else if (isValidNumber(newValue)) {
       setMultisigThreshold(+newValue);
     }
+  }  
+
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <Row>
+        <Col span={14} className="text-right pr-1">{caption}</Col>
+        <Col span={10} className="text-left fg-secondary-70">{value}</Col>
+      </Row>
+    );
   }
 
   return (
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('multisig.create-multisig.modal-title')}</div>}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -152,7 +183,14 @@ export const MultisigCreateModal = (props: {
 
             {/* Multisig threshold */}
             <div className="mb-3">
-              <div className="form-label">{t('multisig.create-multisig.multisig-threshold-input-label')}</div>
+              <div className="form-label icon-label">
+                {t('multisig.create-multisig.multisig-threshold-input-label')}
+                <Tooltip placement="bottom" title={t("multisig.create-multisig.multisig-threshold-question-mark-tooltip")}>
+                  <span>
+                    <IconHelpCircle className="mean-svg-icons" />
+                  </span>
+                </Tooltip>
+              </div>
               <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-right">
                   <div className="left">
@@ -190,9 +228,24 @@ export const MultisigCreateModal = (props: {
                   maxParticipants: MAX_MULTISIG_PARTICIPANTS
                 })
               }
+              multisigAddresses={multisigAddresses}
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
-
+            {(multisigOwners.length >= 1 && multisigOwners.length === +multisigThreshold && multisigOwners[+multisigThreshold - 1].address !== '') && (
+              <span className="warning-message icon-label">
+                <IconWarning className="mean-svg-icons" />
+                {t('multisig.create-multisig.multisig-participants-warning-message')}
+              </span>
+            )}
+            {/* Fee info */}
+            {props.transactionFees && props.transactionFees.multisigFee && (
+              <div className="p-2 mt-2">
+                {infoRow(
+                  t('multisig.create-multisig.fee-info-label') + ' ≈',
+                  `${formatThousands(props.transactionFees.multisigFee + props.transactionFees.rentExempt, 9)} SOL`
+                )}
+              </div>
+            )}
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
@@ -203,7 +256,7 @@ export const MultisigCreateModal = (props: {
           </>
         ) : (
           <>
-            <div className="transaction-progress">
+            <div className="transaction-progress p-0">
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
@@ -213,7 +266,7 @@ export const MultisigCreateModal = (props: {
                       NATIVE_SOL_MINT.toBase58()
                     ),
                     feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                      props.transactionFees.networkFee + props.transactionFees.multisigFee + props.transactionFees.rentExempt,
                       NATIVE_SOL_MINT.toBase58()
                     )})
                   }
@@ -229,71 +282,73 @@ export const MultisigCreateModal = (props: {
 
       </div>
 
-      <div 
-        className={
+      <div className={
           props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
             ? "panel2 show" 
             : "panel2 hide"
-          }>          
+          }>
         {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
-        <div className="transaction-progress">
-          <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-          <h4 className="font-bold mb-1">
-            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-          </h4>
-          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-            <div className="indication">{t('transactions.status.instructions')}</div>
-          )}
-        </div>
+          <div className="transaction-progress">
+            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+            <h4 className="font-bold mb-1">
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+            </h4>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            )}
+          </div>
         )}
       </div>
 
-      <div className="row two-col-ctas mt-3 transaction-progress">
-        <div className="col-6">
-          <Button
-            block
-            type="text"
-            shape="round"
-            size="middle"
-            className={props.isBusy ? 'inactive' : ''}
-            onClick={() => isError(transactionStatus.currentOperation)
-              ? onAcceptModal()
-              : onCloseModal()}>
-            {isError(transactionStatus.currentOperation)
-              ? t('general.retry')
-              : t('general.cta-close')
-            }
-          </Button>
-        </div>
-        <div className="col-6">
-          <Button
-            className={props.isBusy ? 'inactive' : ''}
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            disabled={!isFormValid()}
-            onClick={() => {
-              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                onAcceptModal();
-              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                onCloseModal();
-              } else {
-                refreshPage();
+      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+        <div className="row two-col-ctas mt-3 transaction-progress p-0">
+          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
+            <Button
+              block
+              type="text"
+              shape="round"
+              size="middle"
+              className={props.isBusy ? 'inactive' : ''}
+              onClick={() => isError(transactionStatus.currentOperation)
+                ? onAcceptModal()
+                : onCloseModal()}>
+              {isError(transactionStatus.currentOperation)
+                ? t('general.retry')
+                : t('general.cta-close')
               }
-            }}>
-            {props.isBusy
-              ? t('multisig.create-multisig.main-cta-busy')
-              : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.create-multisig.main-cta')
-                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                  ? t('general.cta-finish')
-                  : t('general.refresh')
-            }
-          </Button>
+            </Button>
+          </div>
+          {!isError(transactionStatus.currentOperation) && (
+            <div className="col-6">
+              <Button
+                className={props.isBusy ? 'inactive' : ''}
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                disabled={!isFormValid()}
+                onClick={() => {
+                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    onAcceptModal();
+                  } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                    onCloseModal();
+                  } else {
+                    refreshPage();
+                  }
+                }}>
+                {props.isBusy
+                  ? t('multisig.create-multisig.main-cta-busy')
+                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    ? t('multisig.create-multisig.main-cta')
+                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                      ? t('general.cta-finish')
+                      : t('general.refresh')
+                }
+              </Button>
+            </div>
+          )}
         </div>
-      </div>
-
+      )}
     </Modal>
   );
 };

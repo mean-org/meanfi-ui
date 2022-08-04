@@ -1,0 +1,36 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "globals": {
+        "NodeJS": "readonly",
+        "React": "readonly",
+        "JSX": "readonly"
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "react-app",
+        "react-app/jest"
+    ],
+    "plugins": [
+        "react",
+        "react-hooks",
+        "@typescript-eslint"
+    ],
+    "overrides": [
+        {
+            "files": [
+                "**/*.ts?(x)"
+            ],
+            "rules": {
+                "max-len": "off",
+                "no-unused-vars": "off",
+                "@typescript-eslint/no-unused-vars": "warn",
+                "@typescript-eslint/no-empty-function": "off",
+                "@typescript-eslint/no-empty-interface": "off",
+                "@typescript-eslint/no-explicit-any": "off",
+                "no-undef": "off"
+            }
+        }
+    ]
+}

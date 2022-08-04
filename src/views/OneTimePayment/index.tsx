@@ -1,24 +1,19 @@
 import React from 'react';
-import { Button, Modal, DatePicker, Spin, Checkbox, Select } from "antd";
+import { Button, Modal, DatePicker, Checkbox, Select, Drawer } from "antd";
 import {
-  CheckOutlined,
   LoadingOutlined,
   QrcodeOutlined,
-  WarningOutlined,
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
-import { DATEPICKER_FORMAT } from "../../constants";
+import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
+import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount } from "../../utils/utils";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { OperationType, TransactionStatus } from "../../models/enums";
+import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import {
   addMinutes,
   consoleOut,
   disabledDate,
-  getAmountWithTokenSymbol,
-  getTransactionModalTitle,
-  getTransactionOperationDescription,
   getTransactionStatusForLogs,
   isToday,
   isValidAddress
@@ -26,36 +21,41 @@ import {
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
+import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { notify } from '../../utils/notifications';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { useNavigate } from 'react-router-dom';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
+import { segmentAnalytics } from '../../App';
+import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
+import dateFormat from 'dateformat';
+import { NATIVE_SOL } from '../../utils/tokens';
+import { environment } from '../../environments/environment';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
+import { AccountTokenParsedInfo } from '../../models/token';
+import { RecipientAddressInfo } from '../../models/common-types';
 
 const { Option } = Select;
-const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const OneTimePayment = () => {
+export const OneTimePayment = (props: {
+  inModal: boolean;
+  transferCompleted?: any;
+  token?: TokenInfo;
+  tokenChanged: any;
+}) => {
+  const { inModal, transferCompleted, token, tokenChanged } = props;
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
-    contract,
     tokenList,
-    selectedToken,
-    tokenBalance,
-    effectiveRate,
-    coinPrices,
+    userTokens,
+    splTokenList,
     loadingPrices,
     isWhitelisted,
     recipientAddress,
@@ -66,145 +66,114 @@ export const OneTimePayment = () => {
     isVerifiedRecipient,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    refreshPrices,
-    setSelectedToken,
-    setEffectiveRate,
-    setRecipientNote,
-    setFromCoinAmount,
-    setSelectedStream,
+    setIsVerifiedRecipient,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    setTransactionStatus,
     resetContractValues,
     setRecipientAddress,
     setPaymentStartDate,
-    refreshTokenBalance,
-    setTransactionStatus,
-    setIsVerifiedRecipient,
-    setSelectedTokenBalance,
-    setPreviousWalletConnectState
+    setFromCoinAmount,
+    setSelectedStream,
+    setEffectiveRate,
+    setRecipientNote,
+    refreshPrices,
   } = useContext(AppStateContext);
-  const {
-    clearTransactionStatusContext,
-    startFetchTxSignatureInfo,
-  } = useContext(TransactionStatusContext);
-  const navigate = useNavigate();
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
-  const [isBusy, setIsBusy] = useState(false);
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
+  const [isBusy, setIsBusy] = useState(false);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [tokenFilter, setTokenFilter] = useState("");
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [fixedScheduleValue, setFixedScheduleValue] = useState(0);
+  const [canSubscribe, setCanSubscribe] = useState(true);
+  const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+  const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
 
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshTokenBalance
-  ]);
-
-  // Automatically update all token balances
-  useEffect(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      const balancesMap: any = {};
-      connection.getTokenAccountsByOwner(
-        publicKey, 
-        { programId: TOKEN_PROGRAM_ID }, 
-        connection.commitment
-      )
-      .then(response => {
-        for (let acc of response.value) {
-          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-          const address = decoded.mint.toBase58();
-          const itemIndex = tokenList.findIndex(t => t.address === address);
-          if (itemIndex !== -1) {
-            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-          } else {
-            balancesMap[address] = 0;
-          }
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (let t of tokenList) {
-          balancesMap[t.address] = 0;
-        }
-      })
-      .finally(() => setUserBalances(balancesMap));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    connection,
-    tokenList,
-    accounts,
-    publicKey
-  ]);
 
   const [otpFees, setOtpFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
 
-  useEffect(() => {
-    const getTransactionFees = async (): Promise<TransactionFees> => {
-      return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
-    }
-    if (!otpFees.mspFlatFee) {
-      getTransactionFees().then(values => {
-        setOtpFees(values);
-        consoleOut("otpFees:", values);
-      });
-    }
-  }, [connection, otpFees]);
+  const isScheduledPayment = useCallback((): boolean => {
+    const now = new Date();
+    const parsedDate = Date.parse(paymentStartDate as string);
+    const fromParsedDate = new Date(parsedDate);
+    return fromParsedDate.getDate() > now.getDate() ? true : false;
+  }, [paymentStartDate]);
 
-  const getFeeAmount = () => {
+  const getFeeAmount = useCallback(() => {
     return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
-  }
+  }, [isScheduledPayment, otpFees.blockchainFee, otpFees.mspFlatFee]);
 
-  const resetTransactionStatus = () => {
+  const getMinSolBlanceRequired = useCallback(() => {
+    return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED
+      ? getFeeAmount()
+      : MIN_SOL_BALANCE_REQUIRED;
+
+  }, [getFeeAmount]);
+
+  const getMaxAmount = useCallback(() => {
+    const amount = nativeBalance - getMinSolBlanceRequired();
+    return amount > 0 ? amount : 0;
+  }, [getMinSolBlanceRequired, nativeBalance]);
+
+  const resetTransactionStatus = useCallback(() => {
+
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-  }
+
+  }, [
+    setTransactionStatus
+  ]);
+
+  const getTokenPrice = useCallback(() => {
+    if (!fromCoinAmount || !selectedToken) {
+      return 0;
+    }
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+
+    return parseFloat(fromCoinAmount) * price;
+  }, [fromCoinAmount, selectedToken, getTokenPriceByAddress, getTokenPriceBySymbol]);
+
+  const autoFocusInput = useCallback(() => {
+    const input = document.getElementById("token-search-otp");
+    if (input) {
+      setTimeout(() => {
+        input.focus();
+      }, 100);
+    }
+  }, []);
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
-  const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
+
+  const showTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(true);
+    autoFocusInput();
+  }, [autoFocusInput]);
+
   const onCloseTokenSelector = useCallback(() => {
+    hideDrawer();
     setTokenSelectorModalVisibility(false);
+    // Reset token on errors (decimals: -1 or -2)
+    if (selectedToken && selectedToken.decimals < 0) {
+      tokenChanged(undefined);
+      setSelectedToken(undefined);
+    }
     if (tokenFilter && !isValidAddress(tokenFilter)) {
       setTokenFilter('');
     }
-  }, [tokenFilter]);
+  }, [selectedToken, tokenChanged, tokenFilter]);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -215,94 +184,50 @@ export const OneTimePayment = () => {
     closeQrScannerModal();
   };
 
-  // Transaction execution modal
-  const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
-  const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+  const recordTxConfirmation = useCallback((signature: string, success = true) => {
+    const event = success ? AppUsageEvent.TransferOTPCompleted : AppUsageEvent.TransferOTPFailed;
+    segmentAnalytics.recordEvent(event, { signature: signature });
+  }, []);
 
-  // Event handling
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
-  const isScheduledPayment = (): boolean => {
-    const now = new Date();
-    const parsedDate = Date.parse(paymentStartDate as string);
-    const fromParsedDate = new Date(parsedDate);
-    return fromParsedDate.getDate() > now.getDate() ? true : false;
-  }
-
-  const onAfterTransactionModalClosed = () => {
-    if (isBusy) {
-      setTransactionCancelled(true);
+    const path = window.location.pathname;
+    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
+      return;
     }
-    if (isSuccess()) {
-      setFixedScheduleValue(0);
-      resetContractValues();
-      setIsVerifiedRecipient(false);
-    }
+
+    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+    setIsBusy(false);
     resetTransactionStatus();
-  }
-
-  const handleGoToStreamsClick = () => {
     resetContractValues();
     setIsVerifiedRecipient(false);
     setSelectedStream(undefined);
-    closeTransactionModal();
-    if (isScheduledPayment()) {
-      notify({
-        message: t('notifications.create-money-stream-completed'),
-        description: t('notifications.create-money-stream-completed-wait-for-confirm'),
-        type: "info"
-      });
-      navigate("/accounts/streams");
+    if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
+      recordTxConfirmation(item.signature, true);
     }
-  };
+  }, [
+    setIsVerifiedRecipient,
+    resetTransactionStatus,
+    recordTxConfirmation,
+    resetContractValues,
+    setSelectedStream,
+  ]);
 
-  const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setFromCoinAmount("");
-    } else if (newValue === '.') {
-      setFromCoinAmount(".");
-    } else if (isValidNumber(newValue)) {
-      setFromCoinAmount(newValue);
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    if (item && item.operationType === OperationType.Transfer) {
+      recordTxConfirmation(item.signature, false);
     }
-  };
-
-  const handleDateChange = (date: string) => {
-    setPaymentStartDate(date);
-  }
-
-  const triggerWindowResize = () => {
-    window.dispatchEvent(new Event('resize'));
-  }
-
-  const handleRecipientNoteChange = (e: any) => {
-    setRecipientNote(e.target.value);
-  }
-
-  const handleRecipientAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    // Set the input value
-    const trimmedValue = inputValue.trim();
-    setRecipientAddress(trimmedValue);
-  }
-
-  const handleRecipientAddressFocusIn = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 10);
-  }
-
-  const handleRecipientAddressFocusOut = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 10);
-  }
+    setIsBusy(false);
+    resetTransactionStatus();
+  }, [recordTxConfirmation, resetTransactionStatus]);
 
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback((searchString: string) => {
 
-    if (!tokenList) {
+    if (!selectedList) {
       return;
     }
 
@@ -316,9 +241,9 @@ export const OneTimePayment = () => {
         );
       };
 
-      let showFromList = !searchString 
-        ? tokenList
-        : tokenList.filter((t: any) => filter(t));
+      const showFromList = !searchString 
+        ? selectedList
+        : selectedList.filter((t: any) => filter(t));
 
       setFilteredTokenList(showFromList);
 
@@ -327,36 +252,273 @@ export const OneTimePayment = () => {
     return () => { 
       clearTimeout(timeout);
     }
-    
-  }, [
-    tokenList,
-  ]);
 
-  const onInputCleared = useCallback(() => {
-    setTokenFilter('');
-    updateTokenListByFilter('');
-  },[
-    updateTokenListByFilter
-  ]);
+  }, [selectedList]);
 
-  const onTokenSearchInputChange = useCallback((e: any) => {
 
-    const newValue = e.target.value;
-    setTokenFilter(newValue);
-    updateTokenListByFilter(newValue);
+  /////////////////////
+  // Data management //
+  /////////////////////
 
-  },[
-    updateTokenListByFilter
-  ]);
-
-  // Effect auto-select token on wallet connect and clear balance on disconnect
+  // Process inputs
   useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      // User is connecting
-      if (!previousWalletConnectState && connected) {
-        setSelectedTokenBalance(0);
+    if (token && inModal) {
+      setSelectedToken(token);
+      return;
+    } else {
+      let from: TokenInfo | undefined = undefined;
+      if (token) {
+        from = token
+          ? token.symbol === 'SOL'
+            ? getTokenBySymbol('wSOL')
+            : getTokenBySymbol(token.symbol)
+          : getTokenBySymbol('MEAN');
+
+        if (from) {
+          setSelectedToken(from);
+        }
+      } else {
+        from = getTokenBySymbol('MEAN');
+        if (from) {
+          setSelectedToken(from);
+        }
       }
-      setPreviousWalletConnectState(connected);
+    }
+  }, [token, selectedToken, inModal]);
+
+  useEffect(() => {
+    const getTransactionFees = async (): Promise<TransactionFees> => {
+      return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
+    }
+    if (!otpFees.mspFlatFee) {
+      getTransactionFees().then(values => {
+        setOtpFees(values);
+        consoleOut("otpFees:", values);
+      });
+    }
+  }, [connection, otpFees]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+  ]);
+
+  // Automatically update all token balances and rebuild token list
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !userTokens || !tokenList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const balancesMap: any = {};
+
+      fetchAccountTokens(connection, publicKey)
+      .then(accTks => {
+        if (accTks) {
+
+          const meanTokensCopy = new Array<TokenInfo>();
+          const intersectedList = new Array<TokenInfo>();
+          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+
+          // Build meanTokensCopy including the MeanFi pinned tokens
+          userTokensCopy.forEach(item => {
+            meanTokensCopy.push(item);
+          });
+
+          // Now add all other items but excluding those in userTokens
+          splTokenList.forEach(item => {
+            if (!userTokens.includes(item)) {
+              meanTokensCopy.push(item);
+            }
+          });
+
+          // Create a list containing tokens for the user owned token accounts
+          accTks.forEach(item => {
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromMeanTokensCopy);
+            }
+          });
+
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;
+          intersectedList.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          const custom: TokenInfo[] = [];
+          // Build a list with all owned token accounts not already in intersectedList as custom tokens
+          accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
+            if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
+              const customToken: TokenInfo = {
+                address: item.parsedInfo.mint,
+                chainId: 0,
+                decimals: item.parsedInfo.tokenAmount.decimals,
+                name: 'Custom account',
+                symbol: shortenAddress(item.parsedInfo.mint),
+                tags: undefined,
+                logoURI: undefined,
+              };
+              custom.push(customToken);
+            }
+          });
+
+          // Sort by token balance
+          custom.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          // Finally add all owned token accounts as custom tokens
+          const finalList = intersectedList.concat(custom);
+
+          consoleOut('finalList items:', finalList.length, 'blue');
+          setSelectedList(finalList);
+
+        } else {
+          for (const t of tokenList) {
+            balancesMap[t.address] = 0;
+          }
+          // set the list to the userTokens list
+          setSelectedList(tokenList);
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (const t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+        setSelectedList(tokenList);
+      })
+      .finally(() => setUserBalances(balancesMap));
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    publicKey,
+    tokenList,
+    userTokens,
+    connection,
+    splTokenList,
+    nativeBalance,
+  ]);
+
+  // Keep token balance updated
+  useEffect(() => {
+
+    if (!connection || !publicKey || !userBalances || !selectedToken) {
+      setSelectedTokenBalance(0);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setSelectedTokenBalance(userBalances[selectedToken.address]);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [connection, publicKey, selectedToken, userBalances]);
+
+  // Fetch and store information about the destination address
+  useEffect(() => {
+
+    if (!connection) { return; }
+
+    const getInfo = async (address: string) => {
+      try {
+        const accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+        consoleOut('accountInfo:', accountInfo, 'blue');
+        return accountInfo;
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    }
+
+    if (recipientAddress && isValidAddress(recipientAddress)) {
+      let type = '';
+      let mint = '';
+      let owner = '';
+      getInfo(recipientAddress)
+      .then(info => {
+        if (info) {
+          if ((info as any).data["program"] &&
+              (info as any).data["program"] === "spl-token" &&
+              (info as any).data["parsed"] &&
+              (info as any).data["parsed"]["type"]) {
+            type = (info as any).data["parsed"]["type"];
+          }
+          if ((info as any).data["program"] &&
+              (info as any).data["program"] === "spl-token" &&
+              (info as any).data["parsed"] &&
+              (info as any).data["parsed"]["type"] &&
+              (info as any).data["parsed"]["type"] === "account") {
+            mint = (info as any).data["parsed"]["info"]["mint"];
+            owner = (info as any).data["parsed"]["info"]["owner"];
+          }
+        }
+        setRecipientAddressInfo({
+          type,
+          mint,
+          owner
+        });
+      })
+    }
+  }, [connection, recipientAddress]);
+
+  // Hook on wallet connect/disconnect
+  useEffect(() => {
+
+    if (previousWalletConnectState !== connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        setSelectedTokenBalance(0);
+        setUserBalances(undefined);
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+        setCanSubscribe(true);
+      }
     } else if (!connected) {
       setSelectedTokenBalance(0);
     }
@@ -364,13 +526,14 @@ export const OneTimePayment = () => {
     return () => {
       clearTimeout();
     };
+
   }, [
     connected,
+    publicKey,
     previousWalletConnectState,
-    tokenList,
-    setSelectedToken,
     setSelectedTokenBalance,
-    setPreviousWalletConnectState,
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   // Reset results when the filter is cleared
@@ -411,9 +574,136 @@ export const OneTimePayment = () => {
     }
   }, []);
 
-  //////////////////
-  //  Validation  //
-  //////////////////
+  // Setup event listeners
+  useEffect(() => {
+    if (publicKey && canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    }
+  }, [
+    publicKey,
+    canSubscribe,
+    onTxConfirmed,
+    onTxTimedout,
+  ]);
+
+  // Unsubscribe from events
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /////////////////////////////
+  //  Events and validation  //
+  /////////////////////////////
+
+  const showDrawer = () => {
+    setIsTokenSelectorVisible(true);
+    autoFocusInput();
+  };
+
+  const hideDrawer = () => {
+    setIsTokenSelectorVisible(false);
+  };
+
+  const handleFromCoinAmountChange = (e: any) => {
+
+    let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+
+    if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
+
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setFromCoinAmount("");
+    } else if (newValue === '.') {
+      setFromCoinAmount(".");
+    } else if (isValidNumber(newValue)) {
+      setFromCoinAmount(newValue);
+    }
+  };
+
+  const handleDateChange = (date: string) => {
+    setPaymentStartDate(date);
+  }
+
+  const triggerWindowResize = () => {
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  const handleRecipientNoteChange = (e: any) => {
+    setRecipientNote(e.target.value);
+  }
+
+  const handleRecipientAddressChange = (e: any) => {
+    const inputValue = e.target.value as string;
+    // Set the input value
+    const trimmedValue = inputValue.trim();
+    setRecipientAddress(trimmedValue);
+  }
+
+  const handleRecipientAddressFocusIn = () => {
+    setTimeout(() => {
+      triggerWindowResize();
+    }, 10);
+  }
+
+  const handleRecipientAddressFocusOut = () => {
+    setTimeout(() => {
+      triggerWindowResize();
+    }, 10);
+  }
+
+
+  const onInputCleared = useCallback(() => {
+    setTokenFilter('');
+    updateTokenListByFilter('');
+  },[
+    updateTokenListByFilter
+  ]);
+
+  const onTokenSearchInputChange = useCallback((e: any) => {
+
+    const newValue = e.target.value;
+    setTokenFilter(newValue);
+    updateTokenListByFilter(newValue);
+
+  },[
+    updateTokenListByFilter
+  ]);
+
+  const getRecipientAddressValidation = () => {
+    if (recipientAddressInfo.type === "mint") {
+      return 'Recipient cannot be a mint address'
+    } else if (recipientAddressInfo.type === "account" &&
+               recipientAddressInfo.mint &&
+               recipientAddressInfo.mint === selectedToken?.address &&
+               recipientAddressInfo.owner === publicKey?.toBase58()) {
+      return 'Recipient cannot be the selected token mint';
+    }
+    return '';
+  }
 
   const isMemoValid = (): boolean => {
     return recipientNote && recipientNote.length <= 32
@@ -422,7 +712,7 @@ export const OneTimePayment = () => {
   }
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
+    return recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58()
            ? true : false;
   }
 
@@ -430,9 +720,10 @@ export const OneTimePayment = () => {
     return  connected &&
             selectedToken &&
             tokenBalance &&
-            fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= tokenBalance
+            nativeBalance >= getMinSolBlanceRequired() &&
+            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
+            ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+             (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) <= tokenBalance))
       ? true
       : false;
   }
@@ -446,128 +737,163 @@ export const OneTimePayment = () => {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.select-recipient')
-      : !selectedToken || !tokenBalance
-      ? t('transactions.validation.no-balance')
-      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
-      ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > tokenBalance
-      ? t('transactions.validation.amount-high')
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : !recipientNote
-      ? 'Memo cannot be empty'
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : t('transactions.validation.valid-approve');
+        ? t('transactions.validation.select-recipient')
+        : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
+          ? 'Invalid recipient address'
+          : !selectedToken || !tokenBalance
+            ? t('transactions.validation.no-balance')
+            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+              ? t('transactions.validation.no-amount')
+              : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
+                (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) > tokenBalance))
+                ? t('transactions.validation.amount-high')
+                : !paymentStartDate
+                  ? t('transactions.validation.no-valid-date')
+                  : !recipientNote
+                    ? t('transactions.validation.memo-empty')
+                    : !isVerifiedRecipient
+                      ? t('transactions.validation.verified-recipient-unchecked')
+                      : nativeBalance < getMinSolBlanceRequired()
+                        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
+                        : t('transactions.validation.valid-approve');
   }
 
   // Main action
 
-  const onTransactionStart = async () => {
+  const onTransactionStart = useCallback(async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createTx = async (): Promise<boolean> => {
-      if (wallet && publicKey && selectedToken) {
-        consoleOut("Start transaction for contract type:", contract?.name);
-        consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
+    const otpTx = async (data: any) => {
 
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
+      if (!endpoint || !streamV2ProgramAddress) { return null; }
+      
+      // Init a streaming operation
+      const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
-        consoleOut('Beneficiary address:', recipientAddress);
-        const beneficiary = new PublicKey(recipientAddress as string);
-        consoleOut('associatedToken:', selectedToken.address);
-        const associatedToken = new PublicKey(selectedToken.address as string);
-        const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
-        const now = new Date();
-        const parsedDate = Date.parse(paymentStartDate as string);
-        let startUtc = new Date(parsedDate);
-        startUtc.setHours(now.getHours());
-        startUtc.setMinutes(now.getMinutes());
-        startUtc.setSeconds(now.getSeconds());
-        startUtc.setMilliseconds(now.getMilliseconds());
-
-        // If current user is in the whitelist and we have an amount of minutes to add
-        // to the current date selection, calculate it!
-        if (isWhitelisted && fixedScheduleValue > 0) {
-          startUtc = addMinutes(startUtc, fixedScheduleValue);
-        }
-
-        consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
-        consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
-        consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
-        consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
-
-        // Create a transaction
-        const data = {
-          wallet: wallet.publicKey.toBase58(),
-          beneficiary: beneficiary.toBase58(),                                        // beneficiary
-          associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
-          amount: amount,                                                             // fundingAmount
-          startUtc: startUtc,                                                         // startUtc
-          recipientNote: recipientNote
-            ? recipientNote.trim()
-            : undefined                                                               // streamName
-        };
-        consoleOut('data:', data, 'blue');
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', getFeeAmount(), 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < getFeeAmount()) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        // Init a streaming operation
-        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
-
-        return await moneyStream.oneTimePayment(
-          publicKey,
-          beneficiary,                                                // beneficiary
-          associatedToken,                                            // beneficiaryMint
-          amount,                                                     // fundingAmount
-          startUtc,                                                   // startUtc
-          recipientNote
-            ? recipientNote.trim()
-            : undefined                                               // streamName
+      if (!isScheduledPayment()) {
+        return await msp.transfer(
+          new PublicKey(data.wallet),                                      // sender
+          new PublicKey(data.beneficiary),                                 // beneficiary
+          new PublicKey(data.associatedToken),                             // beneficiaryMint
+          data.amount                                                      // amount
         )
+      }
+
+      return await msp.scheduledTransfer(
+        new PublicKey(data.wallet),                                      // treasurer
+        new PublicKey(data.beneficiary),                                 // beneficiary
+        new PublicKey(data.associatedToken),                             // beneficiaryMint
+        data.amount,                                                     // amount
+        data.startUtc,                                                   // startUtc
+        data.recipientNote,
+        false // TODO: (feePayedByTreasurer) This should come from the UI
+      );
+    }
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (!wallet || !publicKey || !selectedToken) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      consoleOut('Beneficiary address:', recipientAddress);
+      const beneficiary = new PublicKey(recipientAddress as string);
+      consoleOut('associatedToken:', selectedToken.address);
+      const associatedToken = new PublicKey(selectedToken.address as string);
+      const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
+      const now = new Date();
+      const parsedDate = Date.parse(paymentStartDate as string);
+      let startUtc = new Date(parsedDate);
+      startUtc.setHours(now.getHours());
+      startUtc.setMinutes(now.getMinutes());
+      startUtc.setSeconds(now.getSeconds());
+      startUtc.setMilliseconds(now.getMilliseconds());
+
+      // If current user is in the whitelist and we have an amount of minutes to add
+      // to the current date selection, calculate it!
+      if (isWhitelisted && fixedScheduleValue > 0) {
+        startUtc = addMinutes(startUtc, fixedScheduleValue);
+      }
+
+      consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
+      consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
+      consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
+      consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
+
+      // Create a transaction
+      const data = {
+        wallet: publicKey.toBase58(),
+        beneficiary: beneficiary.toBase58(),                                        // beneficiary
+        associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
+        amount: amount,                                                             // fundingAmount
+        startUtc: startUtc,                                                         // startUtc
+        recipientNote: recipientNote
+          ? recipientNote.trim()
+          : undefined                                                               // streamName
+      };
+
+      consoleOut('data:', data, 'blue');
+      const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+
+      // Report event to Segment analytics
+      const segmentData: SegmentStreamOTPTransferData = {
+        asset: selectedToken?.symbol,
+        assetPrice: price,
+        amount: parseFloat(fromCoinAmount as string),
+        beneficiary: data.beneficiary,
+        startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT),
+        valueInUsd: price * parseFloat(fromCoinAmount as string)
+      };
+      consoleOut('segment data:', segmentData, 'brown');
+      segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFormButton, segmentData);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      consoleOut('otpFee:', getFeeAmount(), 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      const result = await otpTx(data)
         .then(value => {
+          if (!value) {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            });
+            customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
+            return false;
+          }
           consoleOut('oneTimePayment returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -591,20 +917,15 @@ export const OneTimePayment = () => {
             result: `${error}`
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
           return false;
         });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-        return false;
-      }
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -622,9 +943,10 @@ export const OneTimePayment = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -633,7 +955,11 @@ export const OneTimePayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -645,9 +971,10 @@ export const OneTimePayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -661,6 +988,7 @@ export const OneTimePayment = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -693,6 +1021,7 @@ export const OneTimePayment = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -706,81 +1035,99 @@ export const OneTimePayment = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
         return false;
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
-      return await connection
-        .confirmTransaction(signature, "finalized")
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-              result: ''
-            });
-            return true;
-          } else {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-              result: signature
-            });
-            customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-            throw(result?.value?.err || new Error("Could not confirm transaction"));
-          }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
-    if (wallet) {
-      showTransactionModal();
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
+    if (wallet && selectedToken) {
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created && !transactionCancelled) {
+        const signed = await signTx();
+        consoleOut('signed:', signed);
+        if (signed && !transactionCancelled) {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
             if (isScheduledPayment()) {
-              consoleOut('Send Tx to confirmation queue:', signature);
-              startFetchTxSignatureInfo(signature, "finalized", OperationType.Transfer);
-              setIsBusy(false);
-              handleGoToStreamsClick();
+              enqueueTransactionConfirmation({
+                signature: signature,
+                operationType: OperationType.Transfer,
+                finality: "confirmed",
+                txInfoFetchStatus: "fetching",
+                loadingTitle: "Confirming transaction",
+                loadingMessage: `Schedule transfer for ${formatThousands(
+                  parseFloat(fromCoinAmount),
+                  selectedToken.decimals
+                )} ${selectedToken.symbol}`,
+                completedTitle: "Transaction confirmed",
+                completedMessage: `Transfer successfully Scheduled!`,
+                extras: 'scheduled'
+              });
             } else {
-              const confirmed = await confirmTx();
-              consoleOut('confirmed:', confirmed);
-              if (confirmed) {
-                setIsBusy(false);
-              } else { setIsBusy(false); }
+              enqueueTransactionConfirmation({
+                signature: signature,
+                operationType: OperationType.Transfer,
+                finality: "confirmed",
+                txInfoFetchStatus: "fetching",
+                loadingTitle: "Confirming transaction",
+                loadingMessage: `Sending ${formatThousands(
+                  parseFloat(fromCoinAmount),
+                  selectedToken.decimals
+                )} ${selectedToken.symbol}`,
+                completedTitle: "Transaction confirmed",
+                completedMessage: `Successfully sent ${formatThousands(
+                  parseFloat(fromCoinAmount),
+                  selectedToken.decimals
+                )} ${selectedToken.symbol}`,
+              });
+            }
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            if (inModal) {
+              setIsBusy(false);
+              resetTransactionStatus();
+              resetContractValues();
+              setIsVerifiedRecipient(false);
+              transferCompleted();
             }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
-  };
+  }, [
+    wallet,
+    inModal,
+    endpoint,
+    publicKey,
+    connection,
+    selectedToken,
+    recipientNote,
+    isWhitelisted,
+    nativeBalance,
+    fromCoinAmount,
+    paymentStartDate,
+    recipientAddress,
+    fixedScheduleValue,
+    transactionCancelled,
+    streamV2ProgramAddress,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    resetTransactionStatus,
+    setIsVerifiedRecipient,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    setTransactionStatus,
+    resetContractValues,
+    isScheduledPayment,
+    transferCompleted,
+    getFeeAmount,
+  ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
@@ -790,65 +1137,121 @@ export const OneTimePayment = () => {
     setFixedScheduleValue(value);
   }
 
-  const onGotoExchange = () => {
-    onCloseTokenSelector();
-    navigate('/exchange?from=SOL&to=wSOL');
-  }
-
-  const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
-  }
-
-  const isError = (): boolean => {
-    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-            ? true
-            : false;
-  }
-
-  const getPricePerToken = (token: TokenInfo): number => {
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
-      : 0;
-  }
-
   const renderTokenList = (
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
-        filteredTokenList.map((token, index) => {
+        filteredTokenList.map((t, index) => {
           const onClick = function () {
-            setSelectedToken(token);
-            consoleOut("token selected:", token.symbol, 'blue');
-            setEffectiveRate(getPricePerToken(token));
+            tokenChanged(t);
+            setSelectedToken(t);
+
+            consoleOut("token selected:", t.symbol, 'blue');
+            const price = getTokenPriceByAddress(t.address) || getTokenPriceBySymbol(t.symbol);
+            setEffectiveRate(price);
             onCloseTokenSelector();
           };
 
-          return (
-            <TokenListItem
-              key={token.address}
-              name={token.name || 'Unknown'}
-              mintAddress={token.address}
-              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
-              onClick={onClick}
-              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
-            />
-          );
+          if (index < MAX_TOKEN_LIST_ITEMS) {
+            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
+            return (
+              <TokenListItem
+                key={t.address}
+                name={t.name || CUSTOM_TOKEN_NAME}
+                mintAddress={t.address}
+                token={t}
+                className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "dimmed"}
+                onClick={onClick}
+                balance={balance}
+              />
+            );
+          } else {
+            return null;
+          }
         })
       )}
     </>
+  );
+
+  const renderTokenSelectorInner = (
+    <div className="token-selector-wrapper">
+      <div className="token-search-wrapper">
+        <TextInput
+          id="token-search-otp"
+          value={tokenFilter}
+          allowClear={true}
+          extraClass="mb-2"
+          onInputClear={onInputCleared}
+          placeholder={t('token-selector.search-input-placeholder')}
+          error={
+            tokenFilter && selectedToken && selectedToken.decimals === -1
+              ? 'Account not found'
+              : tokenFilter && selectedToken && selectedToken.decimals === -2
+                ? 'Account is not a token mint'
+                : ''
+          }
+          onInputChange={onTokenSearchInputChange} />
+      </div>
+      <div className="token-list">
+        {filteredTokenList.length > 0 && renderTokenList}
+        {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+          <TokenListItem
+            key={tokenFilter}
+            name={CUSTOM_TOKEN_NAME}
+            mintAddress={tokenFilter}
+            className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+            onClick={async () => {
+              const address = tokenFilter;
+              let decimals = -1;
+              let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+              try {
+                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                consoleOut('accountInfo:', accountInfo, 'blue');
+              } catch (error) {
+                console.error(error);
+              }
+              if (accountInfo) {
+                if ((accountInfo as any).data["program"] &&
+                    (accountInfo as any).data["program"] === "spl-token" &&
+                    (accountInfo as any).data["parsed"] &&
+                    (accountInfo as any).data["parsed"]["type"] &&
+                    (accountInfo as any).data["parsed"]["type"] === "mint") {
+                  decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+                } else {
+                  decimals = -2;
+                }
+              }
+              const unknownToken: TokenInfo = {
+                address,
+                name: CUSTOM_TOKEN_NAME,
+                chainId: getNetworkIdByEnvironment(environment),
+                decimals,
+                symbol: `[${shortenAddress(address)}]`,
+              };
+              tokenChanged(unknownToken);
+              setSelectedToken(unknownToken);
+              if (userBalances && userBalances[address]) {
+                setSelectedTokenBalance(userBalances[address]);
+              }
+              consoleOut("token selected:", unknownToken, 'blue');
+              // Do not close on errors (-1 or -2)
+              if (decimals >= 0) {
+                onCloseTokenSelector();
+              }
+            }}
+            balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+          />
+        )}
+      </div>
+    </div>
   );
 
   return (
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">tokenFilter:</span><span className="ml-1 font-bold fg-dark-active">{tokenFilter || '-'}</span>
+          <span className="ml-1">symbol:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.symbol : '-'}</span>
+          <span className="ml-1">name:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.name : '-'}</span>
+          <span className="ml-1">address:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.address : '-'}</span>
         </div>
       )} */}
 
@@ -879,9 +1282,13 @@ export const OneTimePayment = () => {
               </span>
             </div>
             <div className="right">
-              <div className="add-on simplelink" onClick={showQrScannerModal}>
-                <QrcodeOutlined />
-              </div>
+              {inModal ? (
+                <span>&nbsp;</span>
+              ) : (
+                <div className="add-on simplelink" onClick={showQrScannerModal}>
+                  <QrcodeOutlined />
+                </div>
+              )}
             </div>
           </div>
           {
@@ -892,6 +1299,10 @@ export const OneTimePayment = () => {
             ) : isAddressOwnAccount() ? (
               <span className="form-field-error">
                 {t('transactions.recipient.recipient-is-own-account')}
+              </span>
+            ) : recipientAddress && getRecipientAddressValidation() ? (
+              <span className="form-field-error">
+                {getRecipientAddressValidation()}
               </span>
             ) : (null)
           }
@@ -904,18 +1315,25 @@ export const OneTimePayment = () => {
             <div className="left">
               <span className="add-on simplelink">
                 {selectedToken && (
-                  <TokenDisplay onClick={() => showTokenSelector()}
-                    mintAddress={selectedToken.address}
-                    name={selectedToken.name}
-                    showCaretDown={true}
-                  />
+                  <>
+                    <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
+                      mintAddress={selectedToken.address}
+                      showCaretDown={true}
+                      showName={selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? true : false}
+                      fullTokenInfo={selectedToken}
+                    />
+                  </>
                 )}
-                {selectedToken && tokenBalance ? (
+                {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
                   <div className="token-max simplelink" onClick={() =>
-                      setFromCoinAmount(
-                        tokenBalance.toFixed(selectedToken.decimals)
-                      )
-                    }>
+                    {
+                      if (selectedToken.address === NATIVE_SOL.address) {
+                        const amount = nativeBalance - getMinSolBlanceRequired();
+                        setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                      } else {
+                        setFromCoinAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                      }
+                    }}>
                     MAX
                   </div>
                 ) : null}
@@ -943,19 +1361,22 @@ export const OneTimePayment = () => {
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>
                 {`${tokenBalance && selectedToken
-                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
+                    ? getAmountWithSymbol(tokenBalance, selectedToken.address, true)
                     : "0"
                 }`}
               </span>
             </div>
             <div className="right inner-label">
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                ~${fromCoinAmount && effectiveRate
-                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                ~${fromCoinAmount
+                  ? formatAmount(getTokenPrice(), 2)
                   : "0.00"}
               </span>
             </div>
           </div>
+          {selectedToken && selectedToken.address === NATIVE_SOL.address && (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+          )}
         </div>
 
         {/* Optional note */}
@@ -999,7 +1420,7 @@ export const OneTimePayment = () => {
                   disabledDate={disabledDate}
                   placeholder={t('transactions.send-date.placeholder')}
                   onChange={(value, date) => handleDateChange(date)}
-                  value={moment(
+                  defaultValue={moment(
                     paymentStartDate,
                     DATEPICKER_FORMAT
                   )}
@@ -1029,29 +1450,52 @@ export const OneTimePayment = () => {
 
         {/* Confirm recipient address is correct Checkbox */}
         <div className="mb-2">
-          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
         </div>
 
         {/* Action button */}
         <Button
-          className="main-cta"
+          className={`main-cta ${isBusy ? 'inactive' : ''}`}
           block
           type="primary"
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!isValidAddress(recipientAddress) ||
+          disabled={
+            !connected ||
             !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
             isAddressOwnAccount() ||
-            !paymentStartDate ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient}>
-          {getTransactionStartButtonLabel()}
+            !isVerifiedRecipient
+          }>
+          {isBusy && (
+            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+          )}
+          {isBusy
+            ? isScheduledPayment()
+              ? t('streams.create-new-stream-cta-busy')
+              : t('transactions.status.cta-start-transfer-busy')
+            : getTransactionStartButtonLabel()
+          }
         </Button>
       </div>
 
+      {inModal && (
+        <Drawer
+          title={t('token-selector.modal-title')}
+          placement="bottom"
+          closable={true}
+          onClose={onCloseTokenSelector}
+          visible={isTokenSelectorVisible}
+          getContainer={false}
+          style={{ position: 'absolute' }}>
+          {renderTokenSelectorInner}
+        </Drawer>
+      )}
+
       {/* Token selection modal */}
-      {isTokenSelectorModalVisible && (
+      {!inModal && isTokenSelectorModalVisible && (
         <Modal
           className="mean-modal unpadded-content"
           visible={isTokenSelectorModalVisible}
@@ -1059,47 +1503,7 @@ export const OneTimePayment = () => {
           onCancel={onCloseTokenSelector}
           width={450}
           footer={null}>
-          <div className="token-selector-wrapper">
-            <div className="token-search-wrapper">
-              <TextInput
-                id="token-search-otp"
-                value={tokenFilter}
-                allowClear={true}
-                extraClass="mb-2"
-                onInputClear={onInputCleared}
-                placeholder={t('token-selector.search-input-placeholder')}
-                onInputChange={onTokenSearchInputChange} />
-            </div>
-            <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
-              <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-              <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
-            </div>
-            <div className="token-list vertical-scroll">
-              {filteredTokenList.length > 0 && renderTokenList}
-              {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
-                <TokenListItem
-                  key={tokenFilter}
-                  name="Unknown"
-                  mintAddress={tokenFilter}
-                  className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-                  onClick={() => {
-                    const uknwnToken: TokenInfo = {
-                      address: tokenFilter,
-                      name: 'Unknown',
-                      chainId: 101,
-                      decimals: 6,
-                      symbol: '',
-                    };
-                    setSelectedToken(uknwnToken);
-                    consoleOut("token selected:", uknwnToken, 'blue');
-                    setEffectiveRate(0);
-                    onCloseTokenSelector();
-                  }}
-                  balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
-                />
-              )}
-            </div>
-          </div>
+          {renderTokenSelectorInner}
         </Modal>
       )}
 
@@ -1110,71 +1514,6 @@ export const OneTimePayment = () => {
           handleOk={onAcceptQrScannerModal}
           handleClose={closeQrScannerModal}/>
       )}
-
-      {/* Transaction execution modal */}
-      <Modal
-        className="mean-modal"
-        maskClosable={false}
-        afterClose={onAfterTransactionModalClosed}
-        visible={isTransactionModalVisible}
-        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-        onCancel={closeTransactionModal}
-        width={330}
-        footer={null}>
-        <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <p className="operation">{t('transactions.status.tx-send-operation')} {getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)}...</p>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
-              )}
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <p className="operation">{getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)} {t('transactions.status.tx-send-operation-success')}.</p>
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={isScheduledPayment() ? handleGoToStreamsClick : closeTransactionModal}>
-                {isScheduledPayment() ? t('transactions.status.cta-view-stream') : t('general.cta-close')}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())}`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())}`})
-                  }
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              )}
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={closeTransactionModal}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-            </>
-          )}
-        </div>
-      </Modal>
     </>
   );
 };

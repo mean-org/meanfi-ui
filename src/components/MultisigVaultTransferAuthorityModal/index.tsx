@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Modal, Button, Spin, AutoComplete } from 'antd';
+import { Modal, Button, Spin, AutoComplete, Checkbox } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
@@ -8,10 +8,13 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, makeDecimal, shortenAddress } from '../../utils/utils';
-import { MultisigV2, MultisigVault } from '../../models/multisig';
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Identicon } from '../Identicon';
-import { FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
+
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { UserTokenAccount } from '../../models/transactions';
+import { InputMean } from '../InputMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -23,36 +26,72 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-  selectedMultisig: MultisigV2 | undefined;
-  multisigAccounts: MultisigV2[];
-  selectedVault: MultisigVault | undefined;
-  vaults: MultisigVault[]
+  selectedMultisig: MultisigInfo | undefined;
+  multisigAccounts: MultisigInfo[];
+  selectedVault: UserTokenAccount | undefined;
+  assets: UserTokenAccount[];
 }) => {
   const { t } = useTranslation('common');
   const {
     transactionStatus,
+    getTokenByMintAddress,
+    setTransactionStatus,
   } = useContext(AppStateContext);
 
+  const [proposalTitle, setProposalTitle] = useState("");
   const [selectedAuthority, setSelectedAuthority] = useState('');
+  const [destinationAddressDisclaimerAccepted, setDestinationAddressDisclaimerAccepted] = useState(false);
 
   const onAcceptModal = () => {
-    props.handleOk(selectedAuthority);
+    props.handleOk({
+      title: proposalTitle,
+      selectedAuthority: selectedAuthority
+    });
   }
 
   const onCloseModal = () => {
     props.handleClose();
+    onAfterClose();
   }
 
   const onAfterClose = () => {
     props.handleAfterClose();
+
+    setTimeout(() => {
+      setProposalTitle("");
+      setSelectedAuthority("");
+      setDestinationAddressDisclaimerAccepted(false);
+    });
+
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setProposalTitle(e.target.value);
   }
 
   const isValidForm = (): boolean => {
-    return selectedAuthority &&
-            isValidAddress(selectedAuthority) &&
-            (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.address.toBase58()))
+    return proposalTitle &&
+           selectedAuthority &&
+           isValidAddress(selectedAuthority) &&
+           (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
       ? true
       : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !proposalTitle
+      ? "Add a proposal title"
+      : !selectedAuthority
+        ? 'Enter an authority address'
+        : selectedAuthority && !isValidAddress(selectedAuthority)
+          ? 'Invalid address'
+          : !destinationAddressDisclaimerAccepted
+            ? "Accept disclaimer"
+            : "Sign proposal"
   }
 
   const refreshPage = () => {
@@ -65,8 +104,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     setSelectedAuthority(e);
   }
 
-  const renderVault = (item: MultisigVault) => {
-    const token = getTokenByMintAddress(item.mint.toBase58());
+  const renderVault = (item: UserTokenAccount) => {
+    const token = getTokenByMintAddress(item.address as string);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
@@ -79,7 +118,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             {token && token.logoURI ? (
               <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
-              <Identicon address={item.mint.toBase58()} style={{
+              <Identicon address={item.address as string} style={{
                 width: "28px",
                 display: "inline-flex",
                 height: "26px",
@@ -90,13 +129,13 @@ export const MultisigVaultTransferAuthorityModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
-          <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="title text-truncate">{token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.address as string, 6)}]`}</div>
+          <div className="subtitle text-truncate">{shortenAddress(item.publicAddress as string, 8)}</div>
         </div>
         <div className="rate-cell">
-          <div className="rate-amount text-uppercase">
+          <div className="rate-amount">
             {getTokenAmountAndSymbolByTokenAddress(
-              makeDecimal(item.amount, token?.decimals || 6),
+              item.balance || 0,
               token ? token.address as string : '',
               true
             )}
@@ -106,9 +145,9 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     );
   }
 
-  const renderMultisigSelectItem = (item: MultisigV2) => ({
-    key: item.address.toBase58(),
-    value: item.address.toBase58(),
+  const renderMultisigSelectItem = (item: MultisigInfo) => ({
+    key: item.authority.toBase58(),
+    value: item.authority.toBase58(),
     label: (
       <div className={`transaction-list-row`}>
         <div className="icon-cell">
@@ -116,23 +155,21 @@ export const MultisigVaultTransferAuthorityModal = (props: {
         </div>
         <div className="description-cell">
           {item.label ? (
-            <div className="title text-truncate">
-              {item.label}
-            </div>
+            <div className="title text-truncate">{item.label}</div>
           ) : (
             <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
           )}
           {
-            <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+            <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
           }
         </div>
-        <div className="description-cell text-right">
-          <div className="subtitle">
-          {
-            t('multisig.multisig-accounts.pending-transactions', {
-              txs: item.pendingTxsAmount
-            })
-          }
+        <div className="rate-cell">
+          <div className="rate-amount">
+            {
+              t('multisig.multisig-accounts.pending-transactions', {
+                txs: item.pendingTxsAmount
+              })
+            }
           </div>
         </div>
       </div>
@@ -140,16 +177,21 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   });
 
   const renderMultisigSelectOptions = () => {
-    const options = props.multisigAccounts.map((multisig: MultisigV2, index: number) => {
+    const options = props.multisigAccounts.map((multisig: MultisigInfo, index: number) => {
       return renderMultisigSelectItem(multisig);
     });
     return options;
+  }
+
+  const onDestinationAddressDisclaimerAcceptanceChange = (e: any) => {
+    setDestinationAddressDisclaimerAccepted(e.target.checked);
   }
 
   return (
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('multisig.transfer-authority.modal-title')}</div>}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -161,10 +203,22 @@ export const MultisigVaultTransferAuthorityModal = (props: {
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
+            {/* Proposal title */}
+            <div className="mb-3">
+              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+              <InputMean
+                id="proposal-title-field"
+                name="Title"
+                className="w-100 general-text-input"
+                onChange={onTitleInputValueChange}
+                placeholder="Add a proposal title (required)"
+                value={proposalTitle}
+              />
+            </div>
 
             {props.selectedVault && (
               <div className="mb-3">
-                <div className="form-label">{t('multisig.transfer-authority.selected-vault-label')}</div>
+                <div className="form-label">{t('multisig.transfer-authority.selected-asset-label')}</div>
                 <div className="well">
                   {renderVault(props.selectedVault)}
                 </div>
@@ -187,17 +241,17 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                       }}
                       filterOption={(inputValue, option) => {
                         const originalItem = props.multisigAccounts.find(i => {
-                          return i.address.toBase58() === option!.key ? true : false;
+                          return option && i.authority.toBase58() === option.key ? true : false;
                         });
-                        return option!.value.indexOf(inputValue) !== -1 || originalItem?.address.toBase58().indexOf(inputValue) !== -1
+                        return (option && option.value.indexOf(inputValue) !== -1) || originalItem?.authority.toBase58().indexOf(inputValue) !== -1
                       }}
                       onSelect={onMultisigSelected}
                     />
                   </div>
                 </div>
-                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.address.toBase58() ? (
+                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.authority.toBase58() ? (
                   <span className="form-field-error">
-                    {t('multisig.transfer-authority.multisig-already-owns-the-vault')}
+                    {t('multisig.transfer-authority.multisig-already-owns-the-asset')}
                   </span>
                 ) : selectedAuthority && !isValidAddress(selectedAuthority) ? (
                   <span className="form-field-error">
@@ -207,6 +261,43 @@ export const MultisigVaultTransferAuthorityModal = (props: {
               </div>
             </div>
 
+            <div className="mb-3 ml-1">
+              <Checkbox
+                checked={destinationAddressDisclaimerAccepted}
+                onChange={onDestinationAddressDisclaimerAcceptanceChange}>
+                {t('multisig.transfer-authority.asset-auth-destination-address-disclaimer')}
+              </Checkbox>
+            </div>
+
+            {!isError(transactionStatus.currentOperation) && (
+              <div className="col-12 p-0 mt-3">
+                <Button
+                  className={`center-text-in-btn ${props.isBusy ? 'inactive' : ''}`}
+                  block
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  disabled={!isValidForm() || !destinationAddressDisclaimerAccepted}
+                  onClick={() => {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                      onAcceptModal();
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                      onCloseModal();
+                    } else {
+                      refreshPage();
+                    }
+                  }}>
+                  {props.isBusy
+                    ? t('multisig.transfer-authority.main-cta-busy')
+                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                      ? getTransactionStartButtonLabel()
+                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                        ? t('general.cta-finish')
+                        : t('general.refresh')
+                  }
+                </Button>
+              </div>
+            )}
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
@@ -217,7 +308,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
           </>
         ) : (
           <>
-            <div className="transaction-progress">
+            <div className="transaction-progress p-0">
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
@@ -236,6 +327,26 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                 <h4 className="font-bold mb-3">
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
+              )}
+              {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+                <div className="row two-col-ctas mt-3 transaction-progress p-2">
+                  <div className="col-12">
+                    <Button
+                      block
+                      type="text"
+                      shape="round"
+                      size="middle"
+                      className={`center-text-in-btn thin-stroke ${props.isBusy ? 'inactive' : ''}`}
+                      onClick={() => isError(transactionStatus.currentOperation)
+                        ? onAcceptModal()
+                        : onCloseModal()}>
+                      {(isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
+                        ? t('general.retry')
+                        : t('general.cta-close')
+                      }
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           </>
@@ -261,53 +372,6 @@ export const MultisigVaultTransferAuthorityModal = (props: {
         </div>
         )}
       </div>
-
-      <div className="row two-col-ctas mt-3 transaction-progress">
-        <div className="col-6">
-          <Button
-            block
-            type="text"
-            shape="round"
-            size="middle"
-            className={props.isBusy ? 'inactive' : ''}
-            onClick={() => isError(transactionStatus.currentOperation)
-              ? onAcceptModal()
-              : onCloseModal()}>
-            {isError(transactionStatus.currentOperation)
-              ? t('general.retry')
-              : t('general.cta-close')
-            }
-          </Button>
-        </div>
-        <div className="col-6">
-          <Button
-            className={props.isBusy ? 'inactive' : ''}
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            disabled={!isValidForm()}
-            onClick={() => {
-              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                onAcceptModal();
-              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                onCloseModal();
-              } else {
-                refreshPage();
-              }
-            }}>
-            {props.isBusy
-              ? t('multisig.transfer-authority.main-cta-busy')
-              : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.transfer-authority.main-cta')
-                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                  ? t('general.cta-finish')
-                  : t('general.refresh')
-            }
-          </Button>
-        </div>
-      </div>
-
     </Modal>
   );
 };

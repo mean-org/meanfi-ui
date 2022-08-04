@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { TokenBalance } from "@solana/web3.js";
-import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { formatThousands, getAmountFromLamports, shortenAddress } from "../../utils/utils";
 import { UserTokenAccount } from "../../models/transactions";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { Tooltip } from "antd";
-import Moment from "react-moment";
 import { MappedTransaction } from "../../utils/history";
-import { isLocal } from "../../utils/ui";
+import { getRelativeDate } from "../../utils/ui";
 
 export const TransactionItemView = (props: {
   accountAddress: string;
@@ -124,41 +122,57 @@ export const TransactionItemView = (props: {
   const getDisplayAmount = (): string => {
     const displayAmount = postTokenBalance
         ? isNativeAccountSelected
-          ? getTokenAmountAndSymbolByTokenAddress(
-              getAmountFromLamports(balanceChange),
-              NATIVE_SOL.address,
-              !isLocal()
+          ? formatThousands(
+              getAmountFromLamports(balanceChange), NATIVE_SOL.decimals, NATIVE_SOL.decimals
             )
-          : getTokenAmountAndSymbolByTokenAddress(
+          : formatThousands(
               balanceChange,
-              postTokenBalance.mint,
-              !isLocal()
+              postTokenBalance.uiTokenAmount.decimals,
+              postTokenBalance.uiTokenAmount.decimals
             )
-        : getTokenAmountAndSymbolByTokenAddress(
-            getAmountFromLamports(balanceChange),
-            NATIVE_SOL_MINT.toBase58(),
-            !isLocal()
+        : isNativeAccountSelected
+          ? formatThousands(
+              getAmountFromLamports(balanceChange),
+              NATIVE_SOL.decimals,
+              NATIVE_SOL.decimals
+            )
+          : formatThousands(
+            balanceChange,
+            props.selectedAsset?.decimals || 0,
+            props.selectedAsset?.decimals || 0
           );
+
+
     return displayAmount;
   }
 
   const getDisplayPostBalance = (): string => {
     return postTokenBalance
       ? isNativeAccountSelected
-        ? getTokenAmountAndSymbolByTokenAddress(
+        ? formatThousands(
             getAmountFromLamports(postBalance),
-            NATIVE_SOL_MINT.toBase58(),
-            !isLocal()
+            NATIVE_SOL.decimals,
+            NATIVE_SOL.decimals
           )
-        : getTokenAmountAndSymbolByTokenAddress(
+        : formatThousands(
             postTokenBalance ? postTokenBalance.uiTokenAmount.uiAmount || postBalance : postBalance,
-            postTokenBalance ? postTokenBalance.mint || NATIVE_SOL.address : NATIVE_SOL.address,
-            !isLocal()
+            postTokenBalance
+              ? postTokenBalance.uiTokenAmount.decimals || NATIVE_SOL.decimals
+              : NATIVE_SOL.decimals,
+            postTokenBalance
+              ? postTokenBalance.uiTokenAmount.decimals || NATIVE_SOL.decimals
+              : NATIVE_SOL.decimals
           )
-      : getTokenAmountAndSymbolByTokenAddress(
-          getAmountFromLamports(postBalance),
-          NATIVE_SOL.address,
-          !isLocal()
+      : isNativeAccountSelected
+        ? formatThousands(
+            getAmountFromLamports(postBalance),
+            NATIVE_SOL.decimals,
+            NATIVE_SOL.decimals
+          )
+        : formatThousands(
+          balanceChange,
+          props.selectedAsset?.decimals || 0,
+          props.selectedAsset?.decimals || 0
         );
   }
 
@@ -167,7 +181,8 @@ export const TransactionItemView = (props: {
     const blockTime = props.transaction.parsedTransaction.blockTime;
 
     return (
-      <a key={signature} className="item-list-row" target="_blank" rel="noopener noreferrer"
+      <a key={signature} target="_blank" rel="noopener noreferrer"
+          className={`item-list-row ${balanceChange === 0 ? 'dimmed' : ''}`}
           href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${signature}${getSolanaExplorerClusterParam()}`}>
         <div className="std-table-cell first-cell">
           {getTxIcon()}
@@ -178,15 +193,29 @@ export const TransactionItemView = (props: {
           </Tooltip>
         </div>
         <div className="std-table-cell responsive-cell pr-2 text-right">
-          <span>{getDisplayAmount()}</span>
+          {balanceChange === 0 ? (
+            <Tooltip placement="bottom" title="No balance changes">
+              <span>{getDisplayAmount()}</span>
+            </Tooltip>
+          ) : (
+            <span>{getDisplayAmount()}</span>
+          )}
         </div>
         <div className="std-table-cell responsive-cell pr-2 text-right">
-          <span>{getDisplayPostBalance()}</span>
+          {balanceChange === 0 ? (
+            <Tooltip placement="bottom" title="No balance changes">
+              <span>{getDisplayPostBalance()}</span>
+            </Tooltip>
+          ) : (
+            <span>{getDisplayPostBalance()}</span>
+          )}
         </div>
         <div className="std-table-cell responsive-cell pl-2">
           {
             blockTime ? (
-              <Moment date={blockTime * 1000} fromNow />
+              <>
+                {getRelativeDate(blockTime * 1000)}
+              </>
             ) : (
               <span>'unavailable'</span>
             )
@@ -197,24 +226,9 @@ export const TransactionItemView = (props: {
 
   };
 
-  return isTxRenderable ? getTransactionItem() : null;
+  // balanceChange
+
+  return (isNativeAccountSelected && isTxRenderable) || !isNativeAccountSelected
+    ? getTransactionItem()
+    : null;
 };
-
-/*
-var isNativeAccountSelected = selected == SOL;
-var balanceChange = 0;
-
-if(isNativeAccountSelected)
-{
-     balanceChange = postBalance - preBalance;
-}
-
-balanceChange =  postTokenBalance - preTokenBalance;
-
-if (balanceChange > 0) {
-      // this is a incoming tx
-}
-else {
-    // this is outgoing tx
-}
-*/

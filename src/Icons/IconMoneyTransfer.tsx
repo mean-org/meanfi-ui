@@ -1,4 +1,6 @@
-export const IconMoneyTransfer = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconMoneyTransfer = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M48 40.5c.7-.5 1.7-.8 2.8-.8 2.4 0 4.2.5 5.4 1.6l1.8 1.5 4.5-7.3-1.8-1c-2-1.1-3.9-1.9-5.9-2.3v-5.6h-8.3v5.8c-2 .7-3.8 1.7-5.1 3.2-1.7 1.9-2.6 4.1-2.6 6.7 0 4.4 3.5 8.1 10.4 11.1 1.7.7 4.7 2.2 4.7 4 0 .8-.3 1.4-1 1.9-.8.6-1.9.9-3.4.9-2.5 0-4.6-.7-6.4-2.1l-1.8-1.5-4 7 1.3 1.1c2 1.6 4.5 2.6 7.3 3.1v5.4h8.3v-5.7c2.1-.7 4-1.9 5.4-3.5 1.8-2 2.7-4.3 2.7-6.8 0-2.7-.8-5-2.5-6.8-1.5-1.7-3.9-3.2-7.4-4.8-5.1-2.3-5.2-3.7-5.2-3.8.1-.5.3-.9.8-1.3z" fill="currentColor"/>

@@ -1,0 +1,540 @@
+.table-cell-flex-content {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  .icon-cell {
+    position: relative;
+    flex: 0 0 34px;
+    display: flex;
+    .token-icon {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 5px;
+      padding: 2px;
+      margin: 0;
+      vertical-align: unset;
+      .streams-count {
+        line-height: 1;
+        display: flex;
+        width: auto;
+        height: 1.2rem;
+        color: var(--color-white);
+        background: var(--color-primary);
+        padding: 4px;
+        min-width: 30px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+      }
+    }
+  }
+  .description-cell {
+    flex: 1 1 calc(100% - 34px);
+    padding-left: 4px;
+    .title {
+      display: block;
+      align-items: center;
+      font-size: 14px;
+      line-height: 1.2;
+      color: var(--color-secondary-alpha-85);
+    }
+    .subtitle {
+      display: block;
+      color: var(--color-secondary-alpha-40);
+      font-size: 12px;
+      line-height: 1;
+    }
+  }
+}
+
+
+/*
+ * Animated CSS button
+ * Copyright Alexander Bodin 2019-09-07
+ *
+ * Useage: .class {@import button($button-size, $hue, $sat);}
+ */
+.animated-button-blue {
+  background: linear-gradient(-30deg, #0b1b3d, #08142b 50%);
+  padding: 6px 14px;
+  display: inline-block;
+  -webkit-transform: translate(0%, 0%);
+  transform: translate(0%, 0%);
+  overflow: hidden;
+  border: none;
+  user-select: none;
+  touch-action: manipulation;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  border-radius: var(--custom-control-border-radius);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-align: center;
+  text-decoration: none;
+  -webkit-box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.animated-button-blue::before {
+  content: "";
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background-color: #8592ad;
+  opacity: 0;
+  -webkit-transition: 0.2s opacity ease-in-out;
+  transition: 0.2s opacity ease-in-out;
+}
+
+.animated-button-blue:hover::before {
+  opacity: 0.2;
+}
+
+.animated-button-blue span {
+  position: absolute;
+}
+
+.animated-button-blue span:nth-child(1) {
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 2px;
+  background: -webkit-gradient(
+    linear,
+    right top,
+    left top,
+    from(rgba(8, 20, 43, 0)),
+    to(#2662d9)
+  );
+  background: linear-gradient(to left, rgba(8, 20, 43, 0), #2662d9);
+  -webkit-animation: 2s animateTop linear infinite;
+  animation: 2s animateTop linear infinite;
+}
+
+.animated-button-blue span:nth-child(2) {
+  top: 0px;
+  right: 0px;
+  height: 100%;
+  width: 2px;
+  background: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    from(rgba(8, 20, 43, 0)),
+    to(#2662d9)
+  );
+  background: linear-gradient(to top, rgba(8, 20, 43, 0), #2662d9);
+  -webkit-animation: 2s animateRight linear -1s infinite;
+  animation: 2s animateRight linear -1s infinite;
+}
+
+.animated-button-blue span:nth-child(3) {
+  bottom: 0px;
+  left: 0px;
+  width: 100%;
+  height: 2px;
+  background: -webkit-gradient(
+    linear,
+    left top,
+    right top,
+    from(rgba(8, 20, 43, 0)),
+    to(#2662d9)
+  );
+  background: linear-gradient(to right, rgba(8, 20, 43, 0), #2662d9);
+  -webkit-animation: 2s animateBottom linear infinite;
+  animation: 2s animateBottom linear infinite;
+}
+
+.animated-button-blue span:nth-child(4) {
+  top: 0px;
+  left: 0px;
+  height: 100%;
+  width: 2px;
+  background: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    from(rgba(8, 20, 43, 0)),
+    to(#2662d9)
+  );
+  background: linear-gradient(to bottom, rgba(8, 20, 43, 0), #2662d9);
+  -webkit-animation: 2s animateLeft linear -1s infinite;
+  animation: 2s animateLeft linear -1s infinite;
+}
+
+.animated-button-red {
+  background: linear-gradient(-30deg, var(--color-primary-darken), #700000 50%);
+  padding: 6px 14px;
+  display: inline-block;
+  -webkit-transform: translate(0%, 0%);
+  transform: translate(0%, 0%);
+  overflow: hidden;
+  border: none;
+  user-select: none;
+  touch-action: manipulation;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  border-radius: var(--custom-control-border-radius);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-align: center;
+  text-decoration: none;
+  -webkit-box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.animated-button-red::before {
+  content: "";
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background-color: #ad8585;
+  opacity: 0;
+  -webkit-transition: 0.2s opacity ease-in-out;
+  transition: 0.2s opacity ease-in-out;
+}
+
+.animated-button-red:hover::before {
+  opacity: 0.2;
+}
+
+.animated-button-red span {
+  position: absolute;
+}
+
+.animated-button-red span:nth-child(1) {
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 2px;
+  background: -webkit-gradient(
+    linear,
+    right top,
+    left top,
+    from(rgba(43, 8, 8, 0)),
+    to(#d92626)
+  );
+  background: linear-gradient(to left, rgba(43, 8, 8, 0), #d92626);
+  -webkit-animation: 2s animateTop linear infinite;
+  animation: 2s animateTop linear infinite;
+}
+
+.animated-button-red span:nth-child(2) {
+  top: 0px;
+  right: 0px;
+  height: 100%;
+  width: 2px;
+  background: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    from(rgba(43, 8, 8, 0)),
+    to(#d92626)
+  );
+  background: linear-gradient(to top, rgba(43, 8, 8, 0), #d92626);
+  -webkit-animation: 2s animateRight linear -1s infinite;
+  animation: 2s animateRight linear -1s infinite;
+}
+
+.animated-button-red span:nth-child(3) {
+  bottom: 0px;
+  left: 0px;
+  width: 100%;
+  height: 2px;
+  background: -webkit-gradient(
+    linear,
+    left top,
+    right top,
+    from(rgba(43, 8, 8, 0)),
+    to(#d92626)
+  );
+  background: linear-gradient(to right, rgba(43, 8, 8, 0), #d92626);
+  -webkit-animation: 2s animateBottom linear infinite;
+  animation: 2s animateBottom linear infinite;
+}
+
+.animated-button-red span:nth-child(4) {
+  top: 0px;
+  left: 0px;
+  height: 100%;
+  width: 2px;
+  background: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    from(rgba(43, 8, 8, 0)),
+    to(#d92626)
+  );
+  background: linear-gradient(to bottom, rgba(43, 8, 8, 0), #d92626);
+  -webkit-animation: 2s animateLeft linear -1s infinite;
+  animation: 2s animateLeft linear -1s infinite;
+}
+
+.animated-button-green {
+  background: linear-gradient(-30deg, #0b3d24, #082b1a 50%);
+  padding: 6px 14px;
+  display: inline-block;
+  -webkit-transform: translate(0%, 0%);
+  transform: translate(0%, 0%);
+  overflow: hidden;
+  border: none;
+  user-select: none;
+  touch-action: manipulation;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  border-radius: var(--custom-control-border-radius);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-align: center;
+  text-decoration: none;
+  -webkit-box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.animated-button-green::before {
+  content: "";
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background-color: #85ad99;
+  opacity: 0;
+  -webkit-transition: 0.2s opacity ease-in-out;
+  transition: 0.2s opacity ease-in-out;
+}
+
+.animated-button-green:hover::before {
+  opacity: 0.2;
+}
+
+.animated-button-green span {
+  position: absolute;
+}
+
+.animated-button-green span:nth-child(1) {
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 2px;
+  background: -webkit-gradient(
+    linear,
+    right top,
+    left top,
+    from(rgba(8, 43, 26, 0)),
+    to(#26d980)
+  );
+  background: linear-gradient(to left, rgba(8, 43, 26, 0), #26d980);
+  -webkit-animation: 2s animateTop linear infinite;
+  animation: 2s animateTop linear infinite;
+}
+
+.animated-button-green span:nth-child(2) {
+  top: 0px;
+  right: 0px;
+  height: 100%;
+  width: 2px;
+  background: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    from(rgba(8, 43, 26, 0)),
+    to(#26d980)
+  );
+  background: linear-gradient(to top, rgba(8, 43, 26, 0), #26d980);
+  -webkit-animation: 2s animateRight linear -1s infinite;
+  animation: 2s animateRight linear -1s infinite;
+}
+
+.animated-button-green span:nth-child(3) {
+  bottom: 0px;
+  left: 0px;
+  width: 100%;
+  height: 2px;
+  background: -webkit-gradient(
+    linear,
+    left top,
+    right top,
+    from(rgba(8, 43, 26, 0)),
+    to(#26d980)
+  );
+  background: linear-gradient(to right, rgba(8, 43, 26, 0), #26d980);
+  -webkit-animation: 2s animateBottom linear infinite;
+  animation: 2s animateBottom linear infinite;
+}
+
+.animated-button-green span:nth-child(4) {
+  top: 0px;
+  left: 0px;
+  height: 100%;
+  width: 2px;
+  background: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    from(rgba(8, 43, 26, 0)),
+    to(#26d980)
+  );
+  background: linear-gradient(to bottom, rgba(8, 43, 26, 0), #26d980);
+  -webkit-animation: 2s animateLeft linear -1s infinite;
+  animation: 2s animateLeft linear -1s infinite;
+}
+
+.animated-button-gold {
+  background: linear-gradient(-30deg, #3d240b, #2b1a08 50%);
+  padding: 6px 14px;
+  display: inline-block;
+  -webkit-transform: translate(0%, 0%);
+  transform: translate(0%, 0%);
+  overflow: hidden;
+  border: none;
+  user-select: none;
+  touch-action: manipulation;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  border-radius: var(--custom-control-border-radius);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-align: center;
+  text-decoration: none;
+  -webkit-box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.animated-button-gold::before {
+  content: "";
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background-color: #ad9985;
+  opacity: 0;
+  -webkit-transition: 0.2s opacity ease-in-out;
+  transition: 0.2s opacity ease-in-out;
+}
+
+.animated-button-gold:hover::before {
+  opacity: 0.2;
+}
+
+.animated-button-gold span {
+  position: absolute;
+}
+
+.animated-button-gold span:nth-child(1) {
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 2px;
+  background: -webkit-gradient(
+    linear,
+    right top,
+    left top,
+    from(rgba(43, 26, 8, 0)),
+    to(#d98026)
+  );
+  background: linear-gradient(to left, rgba(43, 26, 8, 0), #d98026);
+  -webkit-animation: 2s animateTop linear infinite;
+  animation: 2s animateTop linear infinite;
+}
+
+.animated-button-gold span:nth-child(2) {
+  top: 0px;
+  right: 0px;
+  height: 100%;
+  width: 2px;
+  background: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    from(rgba(43, 26, 8, 0)),
+    to(#d98026)
+  );
+  background: linear-gradient(to top, rgba(43, 26, 8, 0), #d98026);
+  -webkit-animation: 2s animateRight linear -1s infinite;
+  animation: 2s animateRight linear -1s infinite;
+}
+
+
+.animated-button-gold span:nth-child(3) {
+  bottom: 0px;
+  left: 0px;
+  width: 100%;
+  height: 2px;
+  background: -webkit-gradient(
+    linear,
+    left top,
+    right top,
+    from(rgba(43, 26, 8, 0)),
+    to(#d98026)
+  );
+  background: linear-gradient(to right, rgba(43, 26, 8, 0), #d98026);
+  -webkit-animation: 2s animateBottom linear infinite;
+  animation: 2s animateBottom linear infinite;
+}
+
+
+.animated-button-gold span:nth-child(4) {
+  top: 0px;
+  left: 0px;
+  height: 100%;
+  width: 2px;
+  background: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    from(rgba(43, 26, 8, 0)),
+    to(#d98026)
+  );
+  background: linear-gradient(to bottom, rgba(43, 26, 8, 0), #d98026);
+  -webkit-animation: 2s animateLeft linear -1s infinite;
+  animation: 2s animateLeft linear -1s infinite;
+}
+
+@keyframes animateLeft {
+    0% {
+      -webkit-transform: translateY(-100%);
+      transform: translateY(-100%);
+    }
+    100% {
+      -webkit-transform: translateY(100%);
+      transform: translateY(100%);
+    }
+}
+@keyframes animateRight {
+    0% {
+      -webkit-transform: translateY(100%);
+      transform: translateY(100%);
+    }
+    100% {
+      -webkit-transform: translateY(-100%);
+      transform: translateY(-100%);
+    }
+}
+@keyframes animateTop {
+    0% {
+      -webkit-transform: translateX(100%);
+      transform: translateX(100%);
+    }
+    100% {
+      -webkit-transform: translateX(-100%);
+      transform: translateX(-100%);
+    }
+}
+@keyframes animateBottom {
+    0% {
+      -webkit-transform: translateX(-100%);
+      transform: translateX(-100%);
+    }
+    100% {
+      -webkit-transform: translateX(100%);
+      transform: translateX(100%);
+    }
+}

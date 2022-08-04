@@ -2,25 +2,26 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, toTokenAmount } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
 import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
+import { PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { getWhitelistAllocation, sendRecordClaimTxRequest, sendSignClaimTxRequest } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
-import { isError, updateCreateStream2Tx } from '../../utils/transactions';
+import { isError } from '../../utils/transactions';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { useConnectionConfig } from '../../contexts/connection';
 import { useNavigate } from 'react-router-dom';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { notify } from '../../utils/notifications';
+import { openNotification } from '../../components/Notifications';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -44,9 +45,8 @@ export const AirdropRedeem = (props: {
     setTransactionStatus,
   } = useContext(AppStateContext);
   const {
-    startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [userAllocation, setUserAllocation] = useState<Allocation | null>(null);
@@ -141,7 +141,7 @@ export const AirdropRedeem = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -213,8 +213,8 @@ export const AirdropRedeem = (props: {
           }) to pay for network fees (${
             getTokenAmountAndSymbolByTokenAddress(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`;
-          notify({
-            message: 'Not enough SOL balance',
+          openNotification({
+            title: 'Not enough SOL balance',
             description: noBalanceMessage,
             type: 'error'
           });
@@ -226,7 +226,7 @@ export const AirdropRedeem = (props: {
           return false;
         }
 
-        const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+        const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         consoleOut('Starting withdraw using MSP V2...', '', 'blue');
         // Create a transaction
@@ -235,10 +235,8 @@ export const AirdropRedeem = (props: {
           treasurer,                                                        // treasurer
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary
-          associatedToken,                                                  // associatedToken
           streamName,                                                       // streamName
           allocation,                                                       // allocationAssigned
-          allocation,                                                       // allocationReserved
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(PaymentRateType.PerMonth),               // rateIntervalInSeconds
           now,                                                              // startUtc
@@ -246,7 +244,7 @@ export const AirdropRedeem = (props: {
           cliffVestPercent
         )
         .then(value => {
-          consoleOut('createStream2 returned transaction:', value);
+          consoleOut('createStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -259,7 +257,7 @@ export const AirdropRedeem = (props: {
           return true;
         })
         .catch(error => {
-          console.error('createStream2 error:', error);
+          console.error('createStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -289,7 +287,7 @@ export const AirdropRedeem = (props: {
             consoleOut('signTransaction returned a signed transaction:', signed);
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-              result: {signer: wallet.publicKey.toBase58()}
+              result: {signer: publicKey.toBase58()}
             });
 
             // Send Tx to add treasurer signature
@@ -322,7 +320,7 @@ export const AirdropRedeem = (props: {
               });
               transactionLog.push({
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+                result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
               });
               customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
               return false;
@@ -336,9 +334,9 @@ export const AirdropRedeem = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Create Airdrop Claim transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -403,7 +401,7 @@ export const AirdropRedeem = (props: {
 
     const confirmTx = async (): Promise<boolean> => {
       return await props.connection
-        .confirmTransaction(signature, "finalized")
+        .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -458,7 +456,7 @@ export const AirdropRedeem = (props: {
               if (confirmed) {
                 await sendRecordClaimTxRequest(publicKey.toBase58(), signature);
                 setIsBusy(false);
-                navigate('/accounts');
+                navigate(ACCOUNTS_ROUTE_BASE_PATH);
               } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }

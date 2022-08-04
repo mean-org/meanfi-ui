@@ -1,17 +1,19 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
-import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
 import { consoleOut, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
 import { AppStateContext } from '../../contexts/appstate';
-import { useLocalStorageState } from '../../utils/utils';
-import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
+import { getTokenBySymbol, useLocalStorageState } from '../../utils/utils';
+import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 
 type SwapOption = "one-time" | "recurring";
 
@@ -21,41 +23,15 @@ export const SwapView = () => {
   const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
   const {
+    splTokenList,
     recurringBuys,
     setRecurringBuys,
+    getTokenByMintAddress
   } = useContext(AppStateContext);
   const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<SwapOption>("one-time");
-
-  // Parse query params
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    let from: TokenInfo | null = null;
-    let to: TokenInfo | null = null;
-    // Get from address from symbol passed via query string param
-    if (params.has('from')) {
-      const symbol = params.get('from');
-      from = symbol ? getTokenBySymbol(symbol) : null;
-      if (from) {
-        setQueryFromMint(from.address);
-      }
-    }
-    // Get to as well
-    if (params.has('to')) {
-      const symbol = params.get('to');
-      to = symbol ? getTokenBySymbol(symbol) : null;
-      if (to) {
-        setQueryToMint(to.address);
-      }
-    }
-    if (location.search.length) {
-      consoleOut('params:', params.toString());
-      consoleOut('queryFromMint:', from ? from.address : '-', 'blue');
-      consoleOut('queryToMint:', to ? to.address : '-', 'blue');
-    }
-  }, [location]);
 
   // Connection management
   const [cachedRpcJson] = useLocalStorageState("cachedRpc");
@@ -63,26 +39,12 @@ export const SwapView = () => {
   const cachedRpc = (cachedRpcJson as RpcConfig);
   const endpoint = mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider;
 
-  useEffect(() => {
-    (async () => {
-      if (cachedRpc && cachedRpc.networkId !== 101) {
-        const mainnetRpc = await getLiveRpc(101);
-        if (!mainnetRpc) {
-          navigate('/service-unavailable');
-        }
-        setMainnetRpc(mainnetRpc);
-      } else {
-        setMainnetRpc(null);
-      }
-    })();
-    return () => { }
-  }, [
-    cachedRpc,
-    navigate,
-  ]);
-
   const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
     [cachedRpc.httpProvider, mainnetRpc]);
+
+  /////////////////
+  //  CALLBACKS  //
+  /////////////////
 
   // Gets the recurring buys on demmand
   const reloadRecurringBuys = useCallback(() => {
@@ -114,6 +76,29 @@ export const SwapView = () => {
     setRecurringBuys
   ]);
 
+  ///////////////
+  //  Effects  //
+  ///////////////
+
+  // Get RPC endpoint
+  useEffect(() => {
+    (async () => {
+      if (cachedRpc && cachedRpc.networkId !== 101) {
+        const mainnetRpc = await getLiveRpc(101);
+        if (!mainnetRpc) {
+          navigate('/service-unavailable');
+        }
+        setMainnetRpc(mainnetRpc);
+      } else {
+        setMainnetRpc(null);
+      }
+    })();
+    return () => { }
+  }, [
+    cachedRpc,
+    navigate,
+  ]);
+
   // Load recurring buys once
   useEffect(() => {
     if (!loadingRecurringBuys) {
@@ -126,9 +111,57 @@ export const SwapView = () => {
     reloadRecurringBuys
   ]);
 
+  // Parse query params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    let from: TokenInfo | undefined = undefined;
+    let to: TokenInfo | undefined = undefined;
+    // Get from address from symbol passed via query string param
+    if (params.has('from')) {
+      const symbol = params.get('from');
+      from = symbol
+        ? symbol === 'SOL'
+          ? getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS)
+          : getTokenBySymbol(symbol, splTokenList)
+        : undefined;
+    } else {
+        from = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'USDC');
+    }
+
+    if (from) {
+      setQueryFromMint(from.address);
+    }
+
+    // Get to as well
+    if (params.has('to')) {
+      const symbol = params.get('to');
+      to = symbol ? getTokenBySymbol(symbol) : undefined;
+    } else {
+      to = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'MEAN');
+    }
+
+    if (to) {
+      setQueryToMint(to.address);
+    }
+
+    if (location.search.length) {
+      consoleOut('params:', params.toString());
+      consoleOut('queryFromMint:', from ? from.address : '-', 'blue');
+      consoleOut('queryToMint:', to ? to.address : '-', 'blue');
+    }
+  }, [getTokenByMintAddress, location, splTokenList]);
+
+  //////////////////////
+  //  Event handling  //
+  //////////////////////
+
   const onTabChange = (option: SwapOption) => {
     setCurrentTab(option);
   }
+
+  /////////////////
+  //  Rendering  //
+  /////////////////
 
   return (
     <>
@@ -155,11 +188,6 @@ export const SwapView = () => {
             {/* One time exchange */}
             {
               currentTab === "one-time" && (
-                // <OneTimeExchange
-                //   connection={connection}
-                //   queryFromMint={queryFromMint}
-                //   queryToMint={queryToMint}
-                // />
                 <JupiterExchange
                   connection={connection}
                   queryFromMint={queryFromMint}

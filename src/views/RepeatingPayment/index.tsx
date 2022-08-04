@@ -1,196 +1,130 @@
 import React from 'react';
-import { Button, Modal, Menu, Dropdown, DatePicker, Spin, Checkbox } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Checkbox, Drawer } from "antd";
 import {
-  CheckOutlined,
+  InfoCircleOutlined,
   LoadingOutlined,
   QrcodeOutlined,
-  WarningOutlined,
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
+import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconEdit } from "../../Icons";
 import {
-  formatAmount,
+  cutNumber,
+  fetchAccountTokens,
+  formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
+  getTokenBySymbol,
   getTxIxResume,
   isValidNumber,
   shortenAddress,
   toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
+import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
-  getAmountWithTokenSymbol,
-  getFairPercentForInterval,
   getIntervalFromSeconds,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
-  getTransactionModalTitle,
-  getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  isLocal,
   isToday,
   isValidAddress,
-  PaymentRateTypeOption
+  PaymentRateTypeOption,
+  toUsCurrency
 } from "../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { useNavigate } from 'react-router-dom';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { notify } from '../../utils/notifications';
+import { useLocation } from 'react-router-dom';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
-import { MSP_ACTIONS } from '@mean-dao/money-streaming/lib/types';
-import { MSP, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFees as calculateActionFeesV2 } from "@mean-dao/msp";
+import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from "@mean-dao/msp";
+import { AppUsageEvent, SegmentStreamRPTransferData } from '../../utils/segment-service';
+import { segmentAnalytics } from '../../App';
+import dateFormat from 'dateformat';
+import { TokenInfo } from '@solana/spl-token-registry';
+import useWindowSize from '../../hooks/useWindowResize';
+import { InfoIcon } from '../../components/InfoIcon';
+import { NATIVE_SOL } from '../../utils/tokens';
+import { environment } from '../../environments/environment';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
+import { AccountTokenParsedInfo } from '../../models/token';
+import { RecipientAddressInfo } from '../../models/common-types';
 
-const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-
-export const RepeatingPayment = () => {
+export const RepeatingPayment = (props: {
+  inModal: boolean;
+  transferCompleted?: any;
+  token?: TokenInfo;
+  tokenChanged: any;
+}) => {
+  const { inModal, transferCompleted, token, tokenChanged } = props;
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
-    contract,
     tokenList,
-    selectedToken,
-    tokenBalance,
-    effectiveRate,
-    coinPrices,
-    isWhitelisted,
+    userTokens,
+    splTokenList,
     loadingPrices,
-    recipientAddress,
     recipientNote,
-    paymentStartDate,
     fromCoinAmount,
+    recipientAddress,
+    paymentStartDate,
     paymentRateAmount,
-    paymentRateFrequency,
     transactionStatus,
     isVerifiedRecipient,
-    streamProgramAddress,
+    paymentRateFrequency,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    refreshPrices,
-    setSelectedToken,
-    setEffectiveRate,
-    setRecipientNote,
-    setFromCoinAmount,
+    setPaymentRateFrequency,
+    setIsVerifiedRecipient,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    setPaymentRateAmount,
+    setTransactionStatus,
     resetContractValues,
     setRecipientAddress,
     setPaymentStartDate,
-    refreshTokenBalance,
-    setPaymentRateAmount,
-    setTransactionStatus,
-    setIsVerifiedRecipient,
-    setPaymentRateFrequency,
-    setSelectedTokenBalance,
-    setPreviousWalletConnectState
+    setFromCoinAmount,
+    setRecipientNote,
+    setEffectiveRate,
+    refreshPrices,
   } = useContext(AppStateContext);
-  const {
-    clearTransactionStatusContext,
-    startFetchTxSignatureInfo,
-  } = useContext(TransactionStatusContext);
-  const navigate = useNavigate();
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
+  // const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation('common');
-  const [isBusy, setIsBusy] = useState(false);
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const { width } = useWindowSize();
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [tokenFilter, setTokenFilter] = useState("");
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
-  const [mspClientVersion, setMspClientVersion] = useState(2);
+  const [canSubscribe, setCanSubscribe] = useState(true);
+  const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+  const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
 
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshTokenBalance
-  ]);
-
-  // Automatically update all token balances
-  useEffect(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      const balancesMap: any = {};
-      connection.getTokenAccountsByOwner(
-        publicKey, 
-        { programId: TOKEN_PROGRAM_ID }, 
-        connection.commitment
-      )
-      .then(response => {
-        for (let acc of response.value) {
-          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-          const address = decoded.mint.toBase58();
-          const itemIndex = tokenList.findIndex(t => t.address === address);
-          if (itemIndex !== -1) {
-            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-          } else {
-            balancesMap[address] = 0;
-          }
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (let t of tokenList) {
-          balancesMap[t.address] = 0;
-        }
-      })
-      .finally(() => setUserBalances(balancesMap));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    connection,
-    tokenList,
-    accounts,
-    publicKey
-  ]);
 
   const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -200,45 +134,71 @@ export const RepeatingPayment = () => {
     return await calculateActionFees(connection, action);
   }, [connection]);
 
-  const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
-    return await calculateActionFeesV2(connection, action);
-  }, [connection]);
+  const getFeeAmount = useCallback(() => {
+    return repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee;
+  }, [repeatingPaymentFees.blockchainFee, repeatingPaymentFees.mspFlatFee]);
 
-  useEffect(() => {
-    if (mspClientVersion === 1) {
-      getTransactionFees(MSP_ACTIONS.createStreamWithFunds).then(value => {
-        setRepeatingPaymentFees(value);
-        consoleOut("repeatingPaymentFees:", value, 'orange');
-      });
-    } else {
-      getTransactionFeesV2(MSP_ACTIONS_V2.closeStream).then(value => {
-        setRepeatingPaymentFees(value);
-        consoleOut("repeatingPaymentFees:", value, 'orange');
-      });
-    }
-  }, [
-    mspClientVersion,
-    repeatingPaymentFees.mspFlatFee,
-    getTransactionFeesV2,
-    getTransactionFees,
-  ]);
+  const getMinSolBlanceRequired = useCallback(() => {
+    return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED
+      ? getFeeAmount()
+      : MIN_SOL_BALANCE_REQUIRED;
 
-  const resetTransactionStatus = () => {
+  }, [getFeeAmount]);
+
+  const getMaxAmount = useCallback(() => {
+    const amount = nativeBalance - getMinSolBlanceRequired();
+    return amount > 0 ? amount : 0;
+  }, [getMinSolBlanceRequired, nativeBalance]);
+
+  const resetTransactionStatus = useCallback(() => {
+
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-  }
+
+  }, [
+    setTransactionStatus
+  ]);
+
+  const autoFocusInput = useCallback(() => {
+    const input = document.getElementById("token-search-rp");
+    if (input) {
+      setTimeout(() => {
+        input.focus();
+      }, 100);
+    }
+  }, []);
+
+  const showDrawer = () => {
+    setIsTokenSelectorVisible(true);
+    autoFocusInput();
+  };
+
+  const hideDrawer = () => {
+    setIsTokenSelectorVisible(false);
+  };
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
-  const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
+
+  const showTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(true);
+    autoFocusInput();
+  }, [autoFocusInput]);
+
   const onCloseTokenSelector = useCallback(() => {
+    hideDrawer();
     setTokenSelectorModalVisibility(false);
+    // Reset token on errors (decimals: -1 or -2)
+    if (selectedToken && selectedToken.decimals < 0) {
+      tokenChanged(undefined);
+      setSelectedToken(undefined);
+    }
     if (tokenFilter && !isValidAddress(tokenFilter)) {
       setTokenFilter('');
     }
-  }, [tokenFilter]);
+  }, [selectedToken, tokenChanged, tokenFilter]);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -249,38 +209,74 @@ export const RepeatingPayment = () => {
     closeQrScannerModal();
   };
 
-  // Transaction execution modal
-  const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
-  const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
-
   // Event handling
 
-  const onAfterTransactionModalClosed = () => {
-    if (isBusy) {
-      setTransactionCancelled(true);
-    }
-    if (isSuccess()) {
-      resetContractValues();
-    }
-    resetTransactionStatus();
-  }
-
-  const handleGoToStreamsClick = () => {
+  const handleGoToStreamsClick = useCallback(() => {
     resetContractValues();
     setCurrentStep(0);
-    closeTransactionModal();
-    notify({
-      message: t('notifications.create-money-stream-completed'),
-      description: t('notifications.create-money-stream-completed-wait-for-confirm'),
-      type: "info"
-    });
-    navigate("/accounts/streams");
-  };
+    // navigate(STREAMS_ROUTE_BASE_PATH);
+  }, [resetContractValues]);
+
+  const recordTxConfirmation = useCallback((signature: string, success = true) => {
+    const event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
+    segmentAnalytics.recordEvent(event, { signature: signature });
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+
+    const path = window.location.pathname;
+    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
+      return;
+    }
+
+    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+    setIsBusy(false);
+    resetTransactionStatus();
+    // If we have the item, record success and remove it from the list
+    if (item && item.operationType === OperationType.Transfer) {
+      recordTxConfirmation(item.signature, true);
+      if (!inModal) {
+        handleGoToStreamsClick();
+      }
+    }
+  }, [
+    inModal,
+    recordTxConfirmation,
+    handleGoToStreamsClick,
+    resetTransactionStatus,
+  ]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
+    console.log("onTxTimedout event executed:", item);
+    // If we have the item, record failure and remove it from the list
+    if (item) {
+      recordTxConfirmation(item.signature, false);
+    }
+    setIsBusy(false);
+    resetTransactionStatus();
+  }, [recordTxConfirmation, resetTransactionStatus]);
 
   const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+
+    if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
     } else if (newValue === '.') {
@@ -322,7 +318,24 @@ export const RepeatingPayment = () => {
   }
 
   const handlePaymentRateAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+
+    if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setPaymentRateAmount("");
     } else if (newValue === '.') {
@@ -339,7 +352,7 @@ export const RepeatingPayment = () => {
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback((searchString: string) => {
 
-    if (!tokenList) {
+    if (!selectedList) {
       return;
     }
 
@@ -353,9 +366,9 @@ export const RepeatingPayment = () => {
         );
       };
 
-      let showFromList = !searchString 
-        ? tokenList
-        : tokenList.filter((t: any) => filter(t));
+      const showFromList = !searchString 
+        ? selectedList
+        : selectedList.filter((t: any) => filter(t));
 
       setFilteredTokenList(showFromList);
 
@@ -364,10 +377,8 @@ export const RepeatingPayment = () => {
     return () => { 
       clearTimeout(timeout);
     }
-    
-  }, [
-    tokenList
-  ]);
+
+  }, [selectedList]);
 
   const onInputCleared = useCallback(() => {
     setTokenFilter('');
@@ -386,14 +397,291 @@ export const RepeatingPayment = () => {
     updateTokenListByFilter
   ]);
 
-  // Effect auto-select token on wallet connect and clear balance on disconnect
+  const getTokenPrice = useCallback(() => {
+    if (!fromCoinAmount || !selectedToken) {
+      return 0;
+    }
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+
+    return parseFloat(fromCoinAmount) * price;
+  }, [fromCoinAmount, selectedToken, getTokenPriceByAddress, getTokenPriceBySymbol]);
+
+  const getPaymentRateAmount = useCallback(() => {
+
+    let outStr = selectedToken
+      ? getTokenAmountAndSymbolByTokenAddress(
+          parseFloat(paymentRateAmount),
+          selectedToken.address,
+          false
+        )
+      : '-'
+    outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
+
+    return outStr;
+  }, [paymentRateAmount, paymentRateFrequency, selectedToken, t]);
+
+
+  /////////////////////
+  // Data management //
+  /////////////////////
+
   useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      // User is connecting
-      if (!previousWalletConnectState && connected) {
-        setSelectedTokenBalance(0);
+    getTransactionFees(MSP_ACTIONS.createStreamWithFunds).then(value => {
+      setRepeatingPaymentFees(value);
+      consoleOut("repeatingPaymentFees:", value, 'orange');
+    });
+  }, [
+    repeatingPaymentFees.mspFlatFee,
+    getTransactionFees,
+  ]);
+
+  // Process inputs
+  useEffect(() => {
+    if (token && inModal) {
+      setSelectedToken(token);
+      return;
+    } else {
+      let from: TokenInfo | undefined = undefined;
+      if (token) {
+        from = token
+          ? token.symbol === 'SOL'
+            ? getTokenBySymbol('wSOL')
+            : getTokenBySymbol(token.symbol)
+          : getTokenBySymbol('MEAN');
+
+        if (from) {
+          setSelectedToken(from);
+        }
+      } else {
+        from = getTokenBySymbol('MEAN');
+        if (from) {
+          setSelectedToken(from);
+        }
       }
-      setPreviousWalletConnectState(connected);
+    }
+  }, [token, selectedToken, inModal]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+  ]);
+
+  // Automatically update all token balances and rebuild token list
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !userTokens || !tokenList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const balancesMap: any = {};
+
+      fetchAccountTokens(connection, publicKey)
+      .then(accTks => {
+        if (accTks) {
+
+          const meanTokensCopy = new Array<TokenInfo>();
+          const intersectedList = new Array<TokenInfo>();
+          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+
+          // Build meanTokensCopy including the MeanFi pinned tokens
+          userTokensCopy.forEach(item => {
+            meanTokensCopy.push(item);
+          });
+
+          // Now add all other items but excluding those in userTokens
+          splTokenList.forEach(item => {
+            if (!userTokens.includes(item)) {
+              meanTokensCopy.push(item);
+            }
+          });
+
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;          
+          // Create a list containing tokens for the user owned token accounts
+          accTks.forEach(item => {
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromMeanTokensCopy);
+            }
+          });
+
+          intersectedList.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          const custom: TokenInfo[] = [];
+          // Build a list with all owned token accounts not already in intersectedList as custom tokens
+          accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
+            if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
+              const customToken: TokenInfo = {
+                address: item.parsedInfo.mint,
+                chainId: 0,
+                decimals: item.parsedInfo.tokenAmount.decimals,
+                name: 'Custom account',
+                symbol: shortenAddress(item.parsedInfo.mint),
+                tags: undefined,
+                logoURI: undefined,
+              };
+              custom.push(customToken);
+            }
+          });
+
+          // Sort by token balance
+          custom.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          // Finally add all owned token accounts as custom tokens
+          const finalList = intersectedList.concat(custom);
+
+          consoleOut('finalList items:', finalList.length, 'blue');
+          setSelectedList(finalList);
+
+        } else {
+          for (const t of tokenList) {
+            balancesMap[t.address] = 0;
+          }
+          // set the list to the userTokens list
+          setSelectedList(tokenList);
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (const t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+        setSelectedList(tokenList);
+      })
+      .finally(() => setUserBalances(balancesMap));
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    publicKey,
+    tokenList,
+    userTokens,
+    connection,
+    splTokenList,
+    nativeBalance,
+  ]);
+
+  // Keep token balance updated
+  useEffect(() => {
+
+    if (!connection || !publicKey || !userBalances || !selectedToken) {
+      setSelectedTokenBalance(0);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setSelectedTokenBalance(userBalances[selectedToken.address]);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [connection, publicKey, selectedToken, userBalances]);
+
+  // Fetch and store information about the destination address
+  useEffect(() => {
+
+    if (!connection) { return; }
+
+    const getInfo = async (address: string) => {
+      try {
+        const accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+        consoleOut('accountInfo:', accountInfo, 'blue');
+        return accountInfo;
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    }
+
+    if (recipientAddress && isValidAddress(recipientAddress)) {
+      let type = '';
+      let mint = '';
+      let owner = '';
+      getInfo(recipientAddress)
+      .then(info => {
+        if (info) {
+          if ((info as any).data["program"] &&
+              (info as any).data["program"] === "spl-token" &&
+              (info as any).data["parsed"] &&
+              (info as any).data["parsed"]["type"]) {
+            type = (info as any).data["parsed"]["type"];
+          }
+          if ((info as any).data["program"] &&
+              (info as any).data["program"] === "spl-token" &&
+              (info as any).data["parsed"] &&
+              (info as any).data["parsed"]["type"] &&
+              (info as any).data["parsed"]["type"] === "account") {
+            mint = (info as any).data["parsed"]["info"]["mint"];
+            owner = (info as any).data["parsed"]["info"]["owner"];
+          }
+        }
+        setRecipientAddressInfo({
+          type,
+          mint,
+          owner
+        });
+      })
+    }
+  }, [connection, recipientAddress]);
+
+  // Hook on wallet connect/disconnect
+  useEffect(() => {
+
+    if (previousWalletConnectState !== connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+        setSelectedTokenBalance(0);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        setUserBalances(undefined);
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+        setCanSubscribe(true);
+      }
     } else if (!connected) {
       setSelectedTokenBalance(0);
     }
@@ -401,13 +689,14 @@ export const RepeatingPayment = () => {
     return () => {
       clearTimeout();
     };
+
   }, [
     connected,
+    publicKey,
     previousWalletConnectState,
-    tokenList,
-    setSelectedToken,
     setSelectedTokenBalance,
-    setPreviousWalletConnectState,
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   // Reset results when the filter is cleared
@@ -448,9 +737,59 @@ export const RepeatingPayment = () => {
     }
   }, []);
 
-  //////////////////
-  //  Validation  //
-  //////////////////
+  // Detect when entering small screen mode
+  useEffect(() => {
+    if (isSmallScreen && width < 576) {
+      setIsSmallScreen(true);
+    } else {
+      setIsSmallScreen(false);
+    }
+  }, [isSmallScreen, width]);
+
+  // Setup event listeners
+  useEffect(() => {
+    if (publicKey && canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    }
+  }, [
+    publicKey,
+    canSubscribe,
+    onTxConfirmed,
+    onTxTimedout,
+  ]);
+
+  // Unsubscribe from events
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /////////////////////////////
+  //  Events and validation  //
+  /////////////////////////////
+
+  const getRecipientAddressValidation = () => {
+    if (recipientAddressInfo.type === "mint") {
+      return 'Recipient cannot be a mint address'
+    } else if (recipientAddressInfo.type === "account" &&
+               recipientAddressInfo.mint &&
+               recipientAddressInfo.mint === selectedToken?.address &&
+               recipientAddressInfo.owner === publicKey?.toBase58()) {
+      return 'Recipient cannot be the selected token mint';
+    }
+    return '';
+  }
 
   const isMemoValid = (): boolean => {
     return recipientNote && recipientNote.length <= 32
@@ -459,7 +798,7 @@ export const RepeatingPayment = () => {
   }
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
+    return recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58()
            ? true : false;
   }
 
@@ -467,10 +806,12 @@ export const RepeatingPayment = () => {
     return connected &&
            selectedToken &&
            tokenBalance &&
+           nativeBalance >= getMinSolBlanceRequired() &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-           parseFloat(fromCoinAmount) <= tokenBalance
-            ? true
-            : false;
+           ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+            (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) <= tokenBalance))
+    ? true
+    : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -496,37 +837,44 @@ export const RepeatingPayment = () => {
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
         ? t('transactions.validation.select-recipient')
-        : !selectedToken || !tokenBalance
-          ? t('transactions.validation.no-balance')
-          : !paymentStartDate
-            ? t('transactions.validation.no-valid-date')
-            : !recipientNote
-              ? 'Memo cannot be empty'
-              : !arePaymentSettingsValid()
-                ? getPaymentSettingsButtonLabel()
-                : t('transactions.validation.valid-continue');
-}
+        : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
+          ? 'Invalid recipient address'
+          : !selectedToken || !tokenBalance
+            ? t('transactions.validation.no-balance')
+            : !paymentStartDate
+              ? t('transactions.validation.no-valid-date')
+              : !recipientNote
+                ? t('transactions.validation.memo-empty')
+                : !arePaymentSettingsValid()
+                  ? getPaymentSettingsButtonLabel()
+                  : t('transactions.validation.valid-continue');
+  }
 
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.select-recipient')
-      : !selectedToken || !tokenBalance
-      ? t('transactions.validation.no-balance')
-      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
-      ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > tokenBalance
-      ? t('transactions.validation.amount-high')
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : !recipientNote
-      ? 'Memo cannot be empty'
-      : !arePaymentSettingsValid()
-      ? getPaymentSettingsButtonLabel()
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : t('transactions.validation.valid-approve');
+        ? t('transactions.validation.select-recipient')
+        : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
+          ? 'Invalid recipient address'
+          : !selectedToken || !tokenBalance
+            ? t('transactions.validation.no-balance')
+            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+              ? t('transactions.validation.no-amount')
+              : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
+                (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) > tokenBalance))
+                ? t('transactions.validation.amount-high')
+                : !paymentStartDate
+                  ? t('transactions.validation.no-valid-date')
+                  : !recipientNote
+                    ? t('transactions.validation.memo-empty')
+                    : !arePaymentSettingsValid()
+                      ? getPaymentSettingsButtonLabel()
+                      : !isVerifiedRecipient
+                        ? t('transactions.validation.verified-recipient-unchecked')
+                        : nativeBalance < getMinSolBlanceRequired()
+                          ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
+                          : t('transactions.validation.valid-approve');
   }
 
   const getPaymentSettingsButtonLabel = (): string => {
@@ -538,12 +886,12 @@ export const RepeatingPayment = () => {
       : '';
   }
 
-  const getPaymentRateLabel = (
+  const getPaymentRateLabel = useCallback((
     rate: PaymentRateType,
     amount: string | undefined
   ): string => {
     let label: string;
-    label = `${selectedToken ? getAmountWithTokenSymbol(amount, selectedToken) : '--'}`;
+    label = `${selectedToken ? getAmountWithSymbol(parseFloat(amount || '0'), selectedToken.address) : '--'}`;
     switch (rate) {
       case PaymentRateType.PerMinute:
         label += ` ${t('transactions.rate-and-frequency.payment-rates.per-minute')}`;
@@ -567,17 +915,7 @@ export const RepeatingPayment = () => {
         break;
     }
     return label;
-  };
-
-  const getRecommendedFundingAmount = () => {
-    const rateAmount = parseFloat(paymentRateAmount as string);
-    const percent = getFairPercentForInterval(paymentRateFrequency);
-    const recommendedMinAmount = percent * rateAmount || 0;
-    const formatted = formatAmount(recommendedMinAmount, selectedToken?.decimals, true);
-
-    // String to obtain: 0.21 SOL (10%).
-    return `${parseFloat(formatted).toString()} ${selectedToken?.symbol}.`;
-  }
+  }, [selectedToken, t]);
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
@@ -597,15 +935,6 @@ export const RepeatingPayment = () => {
     return options;
   }
 
-  const getPricePerToken = (token: TokenInfo): number => {
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
-      : 0;
-  }
-
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
   }
@@ -616,20 +945,18 @@ export const RepeatingPayment = () => {
 
   // Main action
 
-  const onTransactionStart = async () => {
+  const onTransactionStart = useCallback(async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createV1Tx = async (): Promise<boolean> => {
+    const createTx = async (): Promise<boolean> => {
       if (wallet && publicKey && selectedToken) {
-        consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
         setTransactionStatus({
@@ -640,132 +967,7 @@ export const RepeatingPayment = () => {
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
         consoleOut('beneficiaryMint:', selectedToken.address);
-        const beneficiaryMint = new PublicKey(selectedToken.address as string);
-        const amount = parseFloat(fromCoinAmount as string);
-        const rateAmount = parseFloat(paymentRateAmount as string);
-        const now = new Date();
-        const parsedDate = Date.parse(paymentStartDate as string);
-        const fromParsedDate = new Date(parsedDate);
-        fromParsedDate.setHours(now.getHours());
-        fromParsedDate.setMinutes(now.getMinutes());
-        fromParsedDate.setSeconds(now.getSeconds());
-        fromParsedDate.setMilliseconds(now.getMilliseconds());
-        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
-
-        // Create a transaction
-        const data = {
-          wallet: wallet.publicKey.toBase58(),                        // wallet
-          treasury: 'undefined',                                      // treasury
-          beneficiary: beneficiary.toBase58(),                        // beneficiary
-          beneficiaryMint: beneficiaryMint.toBase58(),                // beneficiaryMint
-          rateAmount: rateAmount,                                     // rateAmount
-          rateIntervalInSeconds:
-            getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
-          startUtc: fromParsedDate,                                   // startUtc
-          streamName: recipientNote
-            ? recipientNote.trim()
-            : undefined,                                              // streamName
-          allocation: amount                                          // allocation
-        };
-        consoleOut('data:', data);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        // Init a streaming operation
-        const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
-
-        return await moneyStream.createStream(
-          publicKey,                                                  // wallet
-          undefined,                                                  // treasury
-          beneficiary,                                                // beneficiary
-          beneficiaryMint,                                            // beneficiaryMint
-          recipientNote,                                              // streamName
-          amount,                                                     // allocationAssigned
-          0,                                                          // allocationReserved
-          rateAmount,                                                 // rateAmount
-          getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
-          fromParsedDate,                                             // startUtc
-        )
-        .then(value => {
-          consoleOut('createStream returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('createStream error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    const createV2Tx = async (): Promise<boolean> => {
-      if (wallet && publicKey && selectedToken) {
-        consoleOut("Start transaction for contract type:", contract?.name);
-        consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
-
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
-
-        consoleOut('Beneficiary address:', recipientAddress);
-        const beneficiary = new PublicKey(recipientAddress as string);
-        consoleOut('beneficiaryMint:', selectedToken.address);
-        const beneficiaryMint = new PublicKey(selectedToken.address as string);
+        const associatedToken = new PublicKey(selectedToken.address as string);
         const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
         const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
         const now = new Date();
@@ -783,10 +985,10 @@ export const RepeatingPayment = () => {
 
         // Create a transaction
         const data = {
-          wallet: wallet.publicKey.toBase58(),                        // wallet
+          wallet: publicKey.toBase58(),                        // wallet
           treasury: 'undefined',                                      // treasury
           beneficiary: beneficiary.toBase58(),                        // beneficiary
-          beneficiaryMint: beneficiaryMint.toBase58(),                // beneficiaryMint
+          associatedToken: associatedToken.toBase58(),                // mint
           rateAmount: rateAmount,                                     // rateAmount
           rateIntervalInSeconds:
             getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
@@ -794,9 +996,26 @@ export const RepeatingPayment = () => {
           streamName: recipientNote
             ? recipientNote.trim()
             : undefined,                                              // streamName
-          allocation: amount                                          // allocation
+          allocation: amount,                                         // allocation
+          feePayedByTreasurer: false // TODO: Should come from the UI
         };
         consoleOut('data:', data);
+
+        // Report event to Segment analytics
+        const price = getTokenPrice();
+        const segmentData: SegmentStreamRPTransferData = {
+          asset: selectedToken?.symbol,
+          assetPrice: price,
+          allocation: parseFloat(fromCoinAmount as string),
+          beneficiary: data.beneficiary,
+          startUtc: dateFormat(data.startUtc, SIMPLE_DATE_TIME_FORMAT),
+          rateAmount: parseFloat(paymentRateAmount as string),
+          interval: getPaymentRateOptionLabel(paymentRateFrequency),
+          feePayedByTreasurer: data.feePayedByTreasurer,
+          valueInUsd: price * parseFloat(fromCoinAmount as string)
+        };
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -809,45 +1028,27 @@ export const RepeatingPayment = () => {
           result: ''
         });
 
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee, 'blue');
+        consoleOut('repeatingPaymentFees:', getFeeAmount(), 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
-          return false;
-        }
 
         // Init a streaming operation
-        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+        const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
-        return await moneyStream.streamingPayment(
-          publicKey,                                                  // payer
+        return await msp.streamPayment(
           publicKey,                                                  // treasurer
-          undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
-          beneficiaryMint,                                            // beneficiaryMint
+          associatedToken,                                            // mint
           recipientNote,                                              // streamName
           amount,                                                     // allocationAssigned
-          0,                                                          // allocationReserved
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
           startUtc,                                                   // startUtc
+          0,                                                          // cliffVestAmount
+          0,                                                          // cliffVestPercent
+          false // TODO: (feePayedByTreasurer)
         )
         .then(value => {
-          consoleOut('createStream returned transaction:', value);
+          consoleOut('streamPayment returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -860,7 +1061,7 @@ export const RepeatingPayment = () => {
           return true;
         })
         .catch(error => {
-          console.error('createStream error:', error);
+          console.error('streamPayment error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -870,6 +1071,7 @@ export const RepeatingPayment = () => {
             result: `${error}`
           });
           customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -878,12 +1080,13 @@ export const RepeatingPayment = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
         return false;
       }
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -901,9 +1104,10 @@ export const RepeatingPayment = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -912,7 +1116,11 @@ export const RepeatingPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -924,9 +1132,10 @@ export const RepeatingPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -940,6 +1149,7 @@ export const RepeatingPayment = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -972,6 +1182,7 @@ export const RepeatingPayment = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -985,18 +1196,13 @@ export const RepeatingPayment = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
         return false;
       }
     }
 
     if (wallet) {
-      showTransactionModal();
-      let created: boolean;
-      if (mspClientVersion === 1) {
-        created = await createV1Tx();
-      } else {
-        created = await createV2Tx();
-      }
+      const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
         const sign = await signTx();
@@ -1006,49 +1212,73 @@ export const RepeatingPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamCreate);
-            setIsBusy(false);
-            handleGoToStreamsClick();
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamCreate,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `${location.pathname.includes("streaming") ? "Outgoing stream" : "Stream"} to send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} has been created.`
+            });
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            if (inModal) {
+              setIsBusy(false);
+              resetTransactionStatus();
+              resetContractValues();
+              setIsVerifiedRecipient(false);
+              transferCompleted();
+            }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-  };
-
-  const toggleMspClient = () => {
-    if (mspClientVersion === 2) {
-      setMspClientVersion(1);
-    } else {
-      setMspClientVersion(2);
-    }
-  }
+  }, [
+    wallet,
+    inModal,
+    endpoint,
+    publicKey,
+    connection,
+    nativeBalance,
+    recipientNote,
+    selectedToken,
+    fromCoinAmount,
+    recipientAddress,
+    paymentStartDate,
+    paymentRateAmount,
+    transferCompleted,
+    location.pathname,
+    paymentRateFrequency,
+    transactionCancelled,
+    streamV2ProgramAddress,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    resetTransactionStatus,
+    setIsVerifiedRecipient,
+    setTransactionStatus,
+    resetContractValues,
+    getPaymentRateLabel,
+    getTokenPrice,
+    getFeeAmount,
+  ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
   }
 
-  const onGotoExchange = () => {
-    onCloseTokenSelector();
-    navigate('/exchange?from=SOL&to=wSOL');
-  }
-
-  const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
-  }
-
-  const isError = (): boolean => {
-    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-            ? true
-            : false;
-  }
-
   ///////////////////
   //   Rendering   //
   ///////////////////
+
+  // const renderTextWithBreaks = (text: string) => {
+  //   return (
+  //       <div dangerouslySetInnerHTML={{ __html: text }}></div>
+  //   );
+  // }
 
   const paymentRateOptionsMenu = (
     <Menu>
@@ -1067,44 +1297,137 @@ export const RepeatingPayment = () => {
   const renderTokenList = (
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
-        filteredTokenList.map((token, index) => {
+        filteredTokenList.map((t, index) => {
           const onClick = function () {
-            setSelectedToken(token);
-            consoleOut("token selected:", token.symbol, 'blue');
-            setEffectiveRate(getPricePerToken(token));
+            tokenChanged(t);
+            setSelectedToken(t);
+
+            consoleOut("token selected:", t.symbol, 'blue');
+            const price = getTokenPriceByAddress(t.address) || getTokenPriceBySymbol(t.symbol);
+            setEffectiveRate(price);
             onCloseTokenSelector();
           };
 
-          return (
-            <TokenListItem
-              key={token.address}
-              name={token.name || 'Unknown'}
-              mintAddress={token.address}
-              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
-              onClick={onClick}
-              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
-            />
-          );
+          if (index < MAX_TOKEN_LIST_ITEMS) {
+            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
+            return (
+              <TokenListItem
+                key={t.address}
+                name={t.name || CUSTOM_TOKEN_NAME}
+                mintAddress={t.address}
+                token={t}
+                className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
+                onClick={onClick}
+                balance={balance}
+              />
+            );
+          } else {
+            return null;
+          }
         })
       )}
     </>
   );
 
+  const renderTokenSelectorInner = (
+    <div className="token-selector-wrapper">
+      <div className="token-search-wrapper">
+        <TextInput
+          id="token-search-rp"
+          value={tokenFilter}
+          allowClear={true}
+          extraClass="mb-2"
+          onInputClear={onInputCleared}
+          placeholder={t('token-selector.search-input-placeholder')}
+          error={
+            tokenFilter && selectedToken && selectedToken.decimals === -1
+              ? 'Account not found'
+              : tokenFilter && selectedToken && selectedToken.decimals === -2
+                ? 'Account is not a token mint'
+                : ''
+          }
+          onInputChange={onTokenSearchInputChange} />
+      </div>
+      <div className="token-list">
+        {filteredTokenList.length > 0 && renderTokenList}
+        {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+          <TokenListItem
+            key={tokenFilter}
+            name={CUSTOM_TOKEN_NAME}
+            mintAddress={tokenFilter}
+            className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+            onClick={async () => {
+              const address = tokenFilter;
+              let decimals = -1;
+              let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+              try {
+                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                consoleOut('accountInfo:', accountInfo, 'blue');
+              } catch (error) {
+                console.error(error);
+              }
+              if (accountInfo) {
+                if ((accountInfo as any).data["program"] &&
+                    (accountInfo as any).data["program"] === "spl-token" &&
+                    (accountInfo as any).data["parsed"] &&
+                    (accountInfo as any).data["parsed"]["type"] &&
+                    (accountInfo as any).data["parsed"]["type"] === "mint") {
+                  decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+                } else {
+                  decimals = -2;
+                }
+              }
+              const unknownToken: TokenInfo = {
+                address,
+                name: CUSTOM_TOKEN_NAME,
+                chainId: getNetworkIdByEnvironment(environment),
+                decimals,
+                symbol: `[${shortenAddress(address)}]`,
+              };
+              tokenChanged(unknownToken);
+              setSelectedToken(unknownToken);
+              if (userBalances && userBalances[address]) {
+                setSelectedTokenBalance(userBalances[address]);
+              }
+              consoleOut("token selected:", unknownToken, 'blue');
+              // Do not close on errors (-1 or -2)
+              if (decimals >= 0) {
+                onCloseTokenSelector();
+              }
+            }}
+            balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+          />
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <>
-      {(isLocal() || isWhitelisted) && (
-        <div className="debug-bar">
-          <span className="secondary-link" onClick={() => toggleMspClient()}>[Toggle MSP client]</span>
-          <span className="ml-1">MSP client version:</span><span className="ml-1 font-bold fg-dark-active">{mspClientVersion || '-'}</span>
-          {/* <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
-          <span className="ml-1">recentlyCreatedVault:</span><span className="ml-1 font-bold fg-dark-active">{recentlyCreatedVault ? shortenAddress(recentlyCreatedVault, 8) : '-'}</span>
-          <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span> */}
-        </div>
-      )}
-
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
+
+        {/* Memo */}
+        <div className="form-label">{t('transactions.memo2.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left">
+              <input
+                id="payment-memo-field"
+                className="w-100 general-text-input"
+                autoComplete="on"
+                autoCorrect="off"
+                type="text"
+                maxLength={32}
+                onChange={handleRecipientNoteChange}
+                placeholder={t('transactions.memo2.placeholder')}
+                spellCheck="false"
+                value={recipientNote}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Recipient */}
         <div className="form-label">{t('transactions.recipient.label')}</div>
@@ -1131,9 +1454,13 @@ export const RepeatingPayment = () => {
               </span>
             </div>
             <div className="right">
-              <div className="add-on simplelink" onClick={showQrScannerModal}>
-                <QrcodeOutlined />
-              </div>
+              {inModal ? (
+                <span>&nbsp;</span>
+              ) : (
+                <div className="add-on simplelink" onClick={showQrScannerModal}>
+                  <QrcodeOutlined />
+                </div>
+              )}
             </div>
           </div>
           {
@@ -1145,72 +1472,72 @@ export const RepeatingPayment = () => {
               <span className="form-field-error">
                 {t('transactions.recipient.recipient-is-own-account')}
               </span>
+            ) : recipientAddress && getRecipientAddressValidation() ? (
+              <span className="form-field-error">
+                {getRecipientAddressValidation()}
+              </span>
             ) : (null)
           }
         </div>
 
-        {/* Receive rate */}
+        {/* Payment rate */}
         <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
-        <div className="well">
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on simplelink">
-                {selectedToken && (
-                  <TokenDisplay onClick={() => showTokenSelector()}
-                    mintAddress={selectedToken.address}
-                    name={selectedToken.name}
-                    showName={false}
-                    showCaretDown={true}
-                  />
-                )}
-              </span>
-            </div>
-            <div className="right">
-              <input
-                className="general-text-input text-right"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={handlePaymentRateAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                value={paymentRateAmount}
-              />
-            </div>
-          </div>
-          <div className="flex-fixed-right">
-            <div className="left inner-label">
-              <span>{t('transactions.send-amount.label-right')}:</span>
-              <span>
-                {`${tokenBalance && selectedToken
-                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
-                    : "0"
-                }`}
-              </span>
-            </div>
-            <div className="right inner-label">&nbsp;</div>
-          </div>
-        </div>
 
-        {/* Receive frequency */}
-        <div className="form-label">{t('transactions.rate-and-frequency.rate-label')}</div>
-        <div className="well">
-          <Dropdown
-            overlay={paymentRateOptionsMenu}
-            trigger={["click"]}>
-            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-              <div className="left">
-                <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+        <div className="two-column-form-layout col60x40 mb-3">
+          <div className="left">
+            <div className="well mb-1">
+              <div className="flex-fixed-left">
+                <div className="left">
+                  <span className="add-on simplelink">
+                    {selectedToken && (
+                      <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
+                        mintAddress={selectedToken.address}
+                        name={selectedToken.name}
+                        showCaretDown={true}
+                        fullTokenInfo={selectedToken}
+                      />
+                    )}
+                  </span>
+                </div>
+                <div className="right">
+                  <input
+                    className="general-text-input text-right"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    type="text"
+                    onChange={handlePaymentRateAmountChange}
+                    pattern="^[0-9]*[.,]?[0-9]*$"
+                    placeholder="0.0"
+                    minLength={1}
+                    maxLength={79}
+                    spellCheck="false"
+                    value={paymentRateAmount}
+                  />
+                </div>
               </div>
-              <div className="right">
-                <IconCaretDown className="mean-svg-icons" />
+            </div>
+          </div>
+          <div className="right">
+            <div className="well mb-0">
+              <div className="flex-fixed-left">
+                <div className="left">
+                  <Dropdown
+                    overlay={paymentRateOptionsMenu}
+                    trigger={["click"]}>
+                    <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                      <div className="left">
+                        <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+                      </div>
+                      <div className="right">
+                        <IconCaretDown className="mean-svg-icons" />
+                      </div>
+                    </span>
+                  </Dropdown>
+                </div>
               </div>
-            </span>
-          </Dropdown>
+            </div>
+          </div>
         </div>
 
         {/* Send date */}
@@ -1233,34 +1560,13 @@ export const RepeatingPayment = () => {
                   disabledDate={disabledDate}
                   placeholder={t('transactions.send-date.placeholder')}
                   onChange={(value, date) => handleDateChange(date)}
-                  value={moment(
+                  defaultValue={moment(
                     paymentStartDate,
                     DATEPICKER_FORMAT
                   )}
                   format={DATEPICKER_FORMAT}
                 />
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Memo */}
-        <div className="form-label">{t('transactions.memo2.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left">
-              <input
-                id="payment-memo-field"
-                className="w-100 general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                maxLength={32}
-                onChange={handleRecipientNoteChange}
-                placeholder={t('transactions.memo2.placeholder')}
-                spellCheck="false"
-                value={recipientNote}
-              />
             </div>
           </div>
         </div>
@@ -1320,13 +1626,7 @@ export const RepeatingPayment = () => {
                   <div className="vertical-bar"></div>
                 </div>
                 <div className="right flex-column">
-                  <div className="rate">
-                    {selectedToken
-                      ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
-                      : '-'
-                    }
-                    {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
-                  </div>
+                  <div className="rate">{getPaymentRateAmount()}</div>
                   <div className="inner-label mt-0">{paymentStartDate}</div>
                 </div>
               </div>
@@ -1335,32 +1635,49 @@ export const RepeatingPayment = () => {
         )}
 
         <div className="mb-3 text-center">
-          <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
-          <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
+          <div>
+            {
+              t(
+                'transactions.transaction-info.add-funds-repeating-payment-advice', {
+                  tokenSymbol: selectedToken?.symbol,
+                  rateInterval: getPaymentRateAmount()
+              })
+            }
+          </div>
         </div>
 
-        {/* Add funds */}
-        <div className="form-label">{t('transactions.send-amount.label-amount')}</div>
+        {/* Amount to stream */}
+        <div className="form-label">
+          <span className="align-middle">{t('transactions.send-amount.label-amount')}</span>
+          <span className="align-middle">
+            <InfoIcon content={<span>This is the total amount of funds that will be streamed to the recipient at the payment rate selected. You can add more funds at any time by topping up the stream.</span>}
+                      placement="top">
+              <InfoCircleOutlined />
+            </InfoIcon>
+          </span>
+        </div>
         <div className="well">
           <div className="flex-fixed-left">
             <div className="left">
-              <span className="add-on simplelink">
+              <span className="add-on">
               {selectedToken && (
-                <TokenDisplay onClick={() => showTokenSelector()}
+                <TokenDisplay onClick={() => {}}
                     mintAddress={selectedToken.address}
-                    name={selectedToken.name}
+                    showCaretDown={false}
                     showName={false}
-                    showCaretDown={true}
+                    fullTokenInfo={selectedToken}
                   />
                 )}
-                {selectedToken && tokenBalance ? (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() =>
-                      setFromCoinAmount(
-                        tokenBalance.toFixed(selectedToken.decimals)
-                      )
-                    }>
+                {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
+                  <div className="token-max simplelink" onClick={() =>
+                    {
+                      if (selectedToken.address === NATIVE_SOL.address) {
+                        const amount = nativeBalance - getMinSolBlanceRequired();
+                        setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                      } else {
+                        setFromCoinAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                      }
+                    }}>
                     MAX
                   </div>
                 ) : null}
@@ -1395,37 +1712,74 @@ export const RepeatingPayment = () => {
             </div>
             <div className="right inner-label">
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                ~${fromCoinAmount && effectiveRate
-                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                  : "0.00"}
+                ~{fromCoinAmount
+                  ? toUsCurrency(getTokenPrice())
+                  : "$0.00"}
               </span>
             </div>
           </div>
+          {selectedToken && selectedToken.address === NATIVE_SOL.address && (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+          )}
         </div>
 
         {/* Confirm recipient address is correct Checkbox */}
         <div className="mb-2">
-          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
         </div>
 
         {/* Action button */}
         <Button
-          className="main-cta"
+          className={`main-cta ${isBusy ? 'inactive' : ''}`}
           block
           type="primary"
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!connected ||
+          disabled={
+            !connected ||
             !isMemoValid() ||
             !isValidAddress(recipientAddress) ||
             isAddressOwnAccount() ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient}>
-          {getTransactionStartButtonLabel()}
+            !isVerifiedRecipient
+          }>
+          {isBusy && (
+            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+          )}
+          {isBusy
+            ? t('streams.create-new-stream-cta-busy')
+            : getTransactionStartButtonLabel()
+          }
         </Button>
       </div>
+
+      {inModal && (
+        <Drawer
+          title={t('token-selector.modal-title')}
+          placement="bottom"
+          closable={true}
+          onClose={onCloseTokenSelector}
+          visible={isTokenSelectorVisible}
+          getContainer={false}
+          style={{ position: 'absolute' }}>
+          {renderTokenSelectorInner}
+        </Drawer>
+      )}
+
+      {/* Token selection modal */}
+      {!inModal && isTokenSelectorModalVisible && (
+        <Modal
+          className="mean-modal unpadded-content"
+          visible={isTokenSelectorModalVisible}
+          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+          onCancel={onCloseTokenSelector}
+          width={450}
+          footer={null}>
+          {renderTokenSelectorInner}
+        </Modal>
+      )}
 
       {/* QR scan modal */}
       {isQrScannerModalVisible && (
@@ -1434,130 +1788,6 @@ export const RepeatingPayment = () => {
           handleOk={onAcceptQrScannerModal}
           handleClose={closeQrScannerModal}/>
       )}
-
-      {/* Token selection modal */}
-      {isTokenSelectorModalVisible && (
-        <Modal
-          className="mean-modal unpadded-content"
-          visible={isTokenSelectorModalVisible}
-          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
-          onCancel={onCloseTokenSelector}
-          width={450}
-          footer={null}>
-          <div className="token-selector-wrapper">
-            <div className="token-search-wrapper">
-              <TextInput
-                id="token-search-rp"
-                value={tokenFilter}
-                allowClear={true}
-                extraClass="mb-2"
-                onInputClear={onInputCleared}
-                placeholder={t('token-selector.search-input-placeholder')}
-                onInputChange={onTokenSearchInputChange} />
-            </div>
-            <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
-              <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-              <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
-            </div>
-            <div className="token-list vertical-scroll">
-              {filteredTokenList.length > 0 && renderTokenList}
-              {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
-                <TokenListItem
-                  key={tokenFilter}
-                  name="Unknown"
-                  mintAddress={tokenFilter}
-                  className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-                  onClick={() => {
-                    const uknwnToken: TokenInfo = {
-                      address: tokenFilter,
-                      name: 'Unknown',
-                      chainId: 101,
-                      decimals: 6,
-                      symbol: '',
-                    };
-                    setSelectedToken(uknwnToken);
-                    consoleOut("token selected:", uknwnToken, 'blue');
-                    setEffectiveRate(0);
-                    onCloseTokenSelector();
-                  }}
-                  balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
-                />
-              )}
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* Transaction execution modal */}
-      <Modal
-        className="mean-modal"
-        maskClosable={false}
-        afterClose={onAfterTransactionModalClosed}
-        visible={isTransactionModalVisible}
-        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-        onCancel={closeTransactionModal}
-        width={330}
-        footer={null}>
-        <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <h5 className="operation">{getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}</h5>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
-              )}
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <p className="operation">{t('transactions.status.stream-started-pre')} {getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} {t('transactions.status.stream-started-post')}.</p>
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={handleGoToStreamsClick}>
-                {t('transactions.status.cta-view-stream')}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                      nativeBalance,
-                      NATIVE_SOL_MINT.toBase58()
-                    ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58()
-                    )})
-                  }
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              )}
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={closeTransactionModal}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-            </>
-          )}
-        </div>
-      </Modal>
     </>
   );
 };

@@ -8,7 +8,7 @@ export class TokenAmount {
   public decimals: number
   public _decimals: BigNumber
 
-  constructor(wei: number | string | BigNumber, decimals: number = 0, isWei = true) {
+  constructor(wei: number | string | BigNumber, decimals = 0, isWei = true) {
     this.decimals = decimals
     this._decimals = new BigNumber(10).exponentiatedBy(decimals)
 

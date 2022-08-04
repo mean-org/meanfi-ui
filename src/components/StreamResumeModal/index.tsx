@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
-import { ExclamationCircleOutlined } from "@ant-design/icons";
+import { ExclamationCircleOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { percentage } from '../../utils/ui';
-import { TokenInfo } from '@solana/spl-token-registry';
-import { getTokenAmountAndSymbolByTokenAddress, toUiAmount } from '../../utils/utils';
+import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
 import BN from 'bn.js';
+import { InputMean } from '../InputMean';
+import { useSearchParams } from 'react-router-dom';
+import { AppStateContext } from '../../contexts/appstate';
 
 export const StreamResumeModal = (props: {
   handleClose: any;
@@ -17,13 +19,31 @@ export const StreamResumeModal = (props: {
   tokenBalance: number;
   content: JSX.Element;
   isVisible: boolean;
-  selectedToken: TokenInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
 }) => {
+  const {
+    theme,
+    getTokenByMintAddress,
+  } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
+  const [searchParams] = useSearchParams();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
+  const [proposalTitle, setProposalTitle] = useState('');
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = getQueryAccountType();
 
   const amITreasurer = useCallback((): boolean => {
     if (props.streamDetail && publicKey) {
@@ -64,13 +84,14 @@ export const StreamResumeModal = (props: {
     if (fees && props.streamDetail) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
+      const token = getTokenByMintAddress(props.streamDetail.associatedToken as string);
       const isTreasurer = amITreasurer();
       const isBeneficiary = amIBeneficiary();
       if (isBeneficiary) {
         if (v1.version < 2) {
           fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
         } else {
-          const wa = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+          const wa = toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
           fee = percentage(fees.mspPercentFee, wa) || 0;
         }
       } else if (isTreasurer) {
@@ -80,7 +101,7 @@ export const StreamResumeModal = (props: {
     return fee;
   }, [
     props.streamDetail,
-    props.selectedToken?.decimals,
+    getTokenByMintAddress,
     amIBeneficiary,
     amITreasurer,
   ]);
@@ -89,34 +110,40 @@ export const StreamResumeModal = (props: {
     if (props.streamDetail && publicKey) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
+
+      const token = getTokenByMintAddress(props.streamDetail.associatedToken as string);
+
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+        return toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
       }
     }
     return 0;
   }, [
     publicKey,
     props.streamDetail,
-    props.selectedToken?.decimals
+    getTokenByMintAddress
   ]);
 
   const getUnvested = useCallback((): number => {
     if (props.streamDetail && publicKey) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
+
+      const token = getTokenByMintAddress(props.streamDetail.associatedToken as string);
+
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount(new BN(v2.fundsLeftInStream), props.selectedToken?.decimals || 6);
+        return toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6);
       }
     }
     return 0;
   }, [
     publicKey,
     props.streamDetail,
-    props.selectedToken?.decimals
+    getTokenByMintAddress
   ]);
 
   // Setup fees
@@ -130,6 +157,33 @@ export const StreamResumeModal = (props: {
     getFeeAmount
   ]);
 
+  const isValidForm = (): boolean => {
+    return proposalTitle
+      ? true
+      : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return !proposalTitle
+      ? 'Add a proposal title'
+      : "Sign proposal"
+  }
+
+  const onAcceptModal = () => {
+    props.handleOk(proposalTitle);
+    setTimeout(() => {
+      setProposalTitle('');
+    }, 50);
+  }
+
+  const onCloseModal = () => {
+    props.handleClose();
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    setProposalTitle(e.target.value);
+  }
+
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
@@ -142,49 +196,75 @@ export const StreamResumeModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('streams.pause-stream-modal-title')}</div>}
+      title={<div className="modal-title">{param === "multisig" ? "Propose resume stream" : t('streams.resume-stream-modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
-      onOk={props.handleOk}
-      onCancel={props.handleClose}
+      onCancel={onCloseModal}
       width={400}>
-      <div className="transaction-progress">
-        <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-        <h4>{props.content}</h4>
+
+      <div className="transaction-progress p-0">
+        {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" /> */}
+        <div className="text-center">
+          {theme === 'light' ? (
+            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+          ) : (
+            <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+          )}
+        </div>
+        <div className="mb-2 fg-warning">
+          <span>{props.content}</span>
+        </div>
+        {/* <h4>{props.content}</h4> */}
 
         {/* Info */}
         {props.streamDetail && props.streamDetail.associatedToken && (
           <div className="p-2 mb-2">
             {infoRow(
               t('close-stream.return-vested-amount') + ':',
-              getTokenAmountAndSymbolByTokenAddress(getWithdrawableAmount(), props.streamDetail.associatedToken as string)
+              getAmountWithSymbol(getWithdrawableAmount(), props.streamDetail.associatedToken as string)
             )}
             {amITreasurer() && infoRow(
               t('close-stream.return-unvested-amount') + ':',
-              getTokenAmountAndSymbolByTokenAddress(getUnvested(), props.streamDetail.associatedToken as string)
+              getAmountWithSymbol(getUnvested(), props.streamDetail.associatedToken as string)
             )}
           </div>
         )}
 
+        {/* Proposal title */}
+        {param === "multisig" && (
+          <div className="mb-3">
+            <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+            <InputMean
+              id="proposal-title-field"
+              name="Title"
+              className="w-100 general-text-input"
+              onChange={onTitleInputValueChange}
+              placeholder="Add a proposal title (required)"
+              value={proposalTitle}
+            />
+          </div>
+        )}
+
         <div className="mt-3">
-          <Button
+          {/* <Button
               className="mr-3"
               type="text"
               shape="round"
               size="large"
-              onClick={props.handleClose}>
+              onClick={onCloseModal}>
               {t('close-stream.secondary-cta')}
-          </Button>
+          </Button> */}
           <Button
+              block
               type="primary"
               shape="round"
               size="large"
-              onClick={props.handleOk}>
-              {t('streams.resume-stream-cta')}
+              disabled={param === "multisig" && !isValidForm()}
+              onClick={() => onAcceptModal()}>
+              {param === "multisig" ? getTransactionStartButtonLabel() : t('streams.resume-stream-cta')}
           </Button>
         </div>
       </div>
-
     </Modal>
   );
 };

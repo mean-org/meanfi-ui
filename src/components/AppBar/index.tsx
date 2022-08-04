@@ -1,80 +1,110 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Tooltip } from 'antd';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
 import { AccountDetails } from "../AccountDetails";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
-import { CurrentBalance } from "../CurrentBalance";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
 import { SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
-import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
-import { useOnlineStatus } from '../../contexts/online-status';
-import { isLocal } from '../../utils/ui';
+import { isLocal, isProd } from '../../utils/ui';
+import { NotificationBell } from '../CurrentBalance';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
+import { RoutingInfo } from '../../models/common-types';
+import { INVEST_ROUTE_BASE_PATH } from '../../pages/invest';
 
 const { SubMenu } = Menu;
+const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
+  {
+    key: 'accounts',
+    path: ACCOUNTS_ROUTE_BASE_PATH,
+    parent: 'root'
+  },
+  {
+    key: 'exchange',
+    path: '/exchange',
+    parent: 'root'
+  },
+  {
+    key: 'invest',
+    path: INVEST_ROUTE_BASE_PATH,
+    parent: 'root'
+  },
+  {
+    key: 'vesting',
+    path: '/vesting',
+    parent: 'root'
+  },
+  {
+    key: 'multisig',
+    path: '/multisig',
+    parent: 'root'
+  },
+  {
+    key: 'custody',
+    path: '/custody',
+    parent: 'services'
+  },
+  {
+    key: 'faucet',
+    path: '/faucet',
+    parent: 'services'
+  },
+  {
+    key: 'stats',
+    path: '/stats',
+    parent: 'root'
+  },
+];
 
 export const AppBar = (props: {
   menuType: string;
   topNavVisible: boolean;
+  onOpenDrawer: any;
 }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
-  const {isOnline, responseTime} = useOnlineStatus();
   const { t } = useTranslation("common");
   const {
     isWhitelisted,
-    detailsPanelOpen,
-    addAccountPanelOpen,
     isDepositOptionsModalVisible,
-    refreshStreamList,
-    setDtailsPanelOpen,
-    setShouldLoadTokens,
-    setAddAccountPanelOpen,
-    showDepositOptionsModal,
     hideDepositOptionsModal,
-    setCanShowAccountDetails,
   } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const isProd = (): boolean => {
-    return environment === 'production' ? true : false;
-  }
-
-  const closeAllPanels = () => {
-    if (detailsPanelOpen) {
-      setDtailsPanelOpen(false);
-    } else if (addAccountPanelOpen) {
-      setCanShowAccountDetails(true);
-      setAddAccountPanelOpen(false);
-    }
-  }
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const dismissMenu = () => {
     const mobileMenuTrigger = document.getElementById("overlay-input");
     if (mobileMenuTrigger) {
       mobileMenuTrigger?.click();
-      closeAllPanels();
     }
   }
 
-  const goToAccounts = (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setShouldLoadTokens(true);
-    refreshStreamList(true);
-    setTimeout(() => {
-      navigate('/accounts');
-    }, 200);
-  }
+  useEffect(() => {
+    const selection: string[] = [];
+
+    const getRouteInfoItem = () => {
+      return MENU_ITEMS_ROUTE_INFO.find(i => location.pathname.startsWith(i.path));
+    }
+
+    const route = getRouteInfoItem();
+
+    if (route) {
+      if (route.parent !== 'root') {
+        selection.push(route.parent);
+      }
+      selection.push(route.key);
+    }
+
+    setSelectedItems(selection);
+  }, [location.pathname]);
 
   useEffect(() => {
     const mobileMenuTriggerClickListener = () => {
@@ -112,39 +142,24 @@ export const AppBar = (props: {
   }, [isMenuOpen]);
 
   const mainNav = (
-    <Menu selectedKeys={[location.pathname]} mode="horizontal">
-      <Menu.Item key="/accounts">
-        <Link to='/accounts' onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
+    <Menu selectedKeys={selectedItems} mode="horizontal">
+      <Menu.Item key="accounts">
+        <Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>
       </Menu.Item>
-      <Menu.Item key="/exchange">
+      <Menu.Item key="exchange">
         <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
-      <Menu.Item key="/transfers">
-        <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
+      <Menu.Item key="invest">
+        <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
       </Menu.Item>
-      <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
-        <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
+      <Menu.Item key="vesting">
+        <Link to="/vesting">{t('ui-menus.main-menu.services.vesting')}</Link>
       </Menu.Item>
-      {(isWhitelisted || isLocal()) && (
-        <SubMenu key="invest" title={t('ui-menus.main-menu.invest.submenu-title')}>
-          <Menu.Item key="/staking">
-            <Link to="/staking">{t('ui-menus.main-menu.invest.staking')}</Link>
-          </Menu.Item>
-          <Menu.Item key="/pol-bonds">
-            <Link to="/pol-bonds">{t('ui-menus.main-menu.invest.pol-bonds')}</Link>
-          </Menu.Item>
-        </SubMenu>
-      )}
+      <Menu.Item key="multisig">
+        <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+      </Menu.Item>
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
-        <Menu.Item key="/treasuries">
-          <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
-        </Menu.Item>
-        {(isWhitelisted || isLocal()) && (
-          <Menu.Item key="/multisig">
-            <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
-          </Menu.Item>
-        )}
-        <Menu.Item key="/custody">
+        <Menu.Item key="custody">
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
         </Menu.Item>
         <Menu.Item key="wallet-guide">
@@ -153,44 +168,17 @@ export const AppBar = (props: {
           </a>
         </Menu.Item>
         {!isProd() && (
-          <Menu.Item key="/faucet">
+          <Menu.Item key="faucet">
             <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
           </Menu.Item>
         )}
-        {!isProd() && (
-          <Menu.Item key="/wrap">
-            <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
-          </Menu.Item>
-        )}
       </SubMenu>
-      <Menu.Item key="/ido">
-        <Link to="/ido">IDO</Link>
-      </Menu.Item>
       {(isLocal() || isWhitelisted) && (
-        <Menu.Item key="/stats">
+        <Menu.Item key="stats">
           <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
         </Menu.Item>
       )}
     </Menu>
-  );
-
-  const renderOnlineStatus = (
-    <div className="flex">
-      <Tooltip
-        placement="bottom"
-        destroyTooltipOnHide={true}
-        title={!isOnline
-          ? t('notifications.network-connection-down')
-          : responseTime < 1000
-            ? `${t('notifications.network-connection-good')} (${responseTime}ms)`
-            : `${t('notifications.network-connection-poor')} (${responseTime}ms)`}>
-        <span className={`online-status mr-1 ${!isOnline
-          ? 'error'
-          : responseTime < 1000
-            ? 'success'
-            : 'warning'}`}></span>
-      </Tooltip>
-    </div>
   );
 
   if (props.menuType === 'desktop' ) {
@@ -204,10 +192,9 @@ export const AppBar = (props: {
               <span className="network-name">{connectionConfig.cluster}</span>
             </div>
           )}
-          {renderOnlineStatus}
+          <NotificationBell onOpenDrawer={props.onOpenDrawer}/>
           {connected ? (
             <div className="connection-and-account-bar">
-              <CurrentBalance />
               <AccountDetails />
             </div>
           ) : (
@@ -232,65 +219,44 @@ export const AppBar = (props: {
           <input type="checkbox" id="overlay-input" />
           <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
           <div id="overlay">
-            <ul onClick={dismissMenu}>
-              <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
-                <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
-              </li>
-              <li key="/exchange" className={location.pathname === '/exchange' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
-                <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
-              </li>
-              <li key="/transfers" className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
-                <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
-              </li>
-              <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
-                <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
-              </li>
-              {(isWhitelisted || isLocal()) && (
-                <li key="staking" className={location.pathname === '/staking' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
-                  <Link to="/staking">{t('ui-menus.main-menu.invest.staking')}</Link>
+            <div className="h-100 w-100 flex-column flex-center vertical-scroll">
+              <ul onClick={dismissMenu}>
+                <li key="accounts" className={selectedItems.includes("accounts") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
+                  <Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>
                 </li>
-              )}
-              {(isWhitelisted || isLocal()) && (
-                <li key="pol-bonds" className={location.pathname === '/pol-bonds' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
-                  <Link to="/pol-bonds">{t('ui-menus.main-menu.invest.pol-bonds')}</Link>
+                <li key="exchange" className={selectedItems.includes("exchange") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
+                  <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
                 </li>
-              )}
-              <li key="/treasuries" className={location.pathname === '/treasuries' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
-                <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
-              </li>
-              {(isWhitelisted || isLocal()) && (
-                <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
+                <li key="invest" className={selectedItems.includes("invest") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
+                  <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
+                </li>
+                <li key="vesting" className={selectedItems.includes("vesting") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                  <Link to="/vesting">{t('ui-menus.main-menu.services.vesting')}</Link>
+                </li>
+                <li key="multisig" className={selectedItems.includes("multisig") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
                   <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
                 </li>
-              )}
-              <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
-                <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
-              </li>
-              {!isProd() && (
-                <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
-                  <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
+                <li key="custody" className={selectedItems.includes("custody") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
+                  <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
                 </li>
-              )}
-              {!isProd() && (
-                <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
-                  <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
+                {!isProd() && (
+                  <li key="faucet" className={selectedItems.includes("faucet") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
+                    <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
+                  </li>
+                )}
+                <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': 7} as CustomCSSProps}>
+                  <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+                    <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
+                    &nbsp;<IconExternalLink className="mean-svg-icons link" />
+                  </a>
                 </li>
-              )}
-              <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': isProd() ? 8 : 10} as CustomCSSProps}>
-                <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-                  <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
-                  &nbsp;<IconExternalLink className="mean-svg-icons link" />
-                </a>
-              </li>
-              <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
-                <Link to="/ido">IDO</Link>
-              </li>
-              {(isLocal() || isWhitelisted) && (
-                <li key="/stats" className="mobile-menu-item" style={{'--animation-order': 12} as CustomCSSProps}>
-                  <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
-                </li>
-              )}
-            </ul>
+                {(isLocal() || isWhitelisted) && (
+                  <li key="stats" className={selectedItems.includes("stats") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
+                    <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
+                  </li>
+                )}
+              </ul>
+            </div>
           </div>
           <DepositOptions
             isVisible={isDepositOptionsModalVisible && props.menuType !== 'desktop'}
