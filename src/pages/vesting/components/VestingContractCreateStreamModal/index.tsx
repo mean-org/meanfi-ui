@@ -495,7 +495,7 @@ export const VestingContractCreateStreamModal = (props: {
                 recipientAddress &&
                 isValidAddress(recipientAddress) &&
                 !isAddressOwnAccount() &&
-                nativeBalance > 0 &&
+                nativeBalance > getMinBalanceRequired() &&
                 tokenAmount && tokenAmount.toNumber() > 0 &&
                 ((isFeePaidByTreasurer && tokenAmount.lte(mAa)) ||
                  (!isFeePaidByTreasurer && tokenAmount.lte(ub)))

@@ -28,7 +28,7 @@ import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
 import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
-import { MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
 import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
@@ -337,6 +337,37 @@ export const VestingView = () => {
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return await calculateActionFees(connection, action);
   }, [connection]);
+
+  const getTokenOrCustomToken = useCallback(async (address: string) => {
+
+    const token = getTokenByMintAddress(address);
+
+    const unkToken = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: 6,
+      symbol: shortenAddress(address),
+    };
+
+    if (token) {
+      return token;
+    } else {
+      try {
+        const tokeninfo = await readAccountInfo(connection, address);
+        if ((tokeninfo as any).data["parsed"]) {
+          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+          unkToken.decimals = decimals || 0;
+          return unkToken as TokenInfo;
+        } else {
+          return unkToken;
+        }
+      } catch (error) {
+        console.error('Could not get token info, assuming decimals = 6');
+        return unkToken;
+      }
+    }
+  }, [connection, getTokenByMintAddress]);
 
   const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
     let event: any;
@@ -783,6 +814,7 @@ export const VestingView = () => {
       });
   }, []);
 
+  // TODO: Troubles, check this
   const getMultisigIdFromContext = useCallback(() => {
 
     if (!multisigAccounts || !selectedMultisig || !accountAddress) { return ''; }
@@ -3597,9 +3629,19 @@ export const VestingView = () => {
     vestingContractAddress,
   ]);
 
+  // Set token to the vesting contract associated token as soon as the VC is available
+  useEffect(() => {
+    if (!publicKey || !selectedVestingContract) { return; }
+    getTokenOrCustomToken(selectedVestingContract.associatedToken as string)
+    .then(token => {
+      consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
+      setWorkingToken(token);
+    });
+  }, [getTokenOrCustomToken, publicKey, selectedVestingContract]);
+
   // Get the vesting flow rate
   useEffect(() => {
-    if (!publicKey || !msp) { return; }
+    if (!publicKey || !msp || !workingToken || !selectedVestingContract) { return; }
 
     if (vestingContractAddress && selectedVestingContract &&
         vestingContractAddress === selectedVestingContract.id && workingToken) {

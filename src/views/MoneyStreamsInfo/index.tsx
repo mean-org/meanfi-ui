@@ -266,7 +266,7 @@ export const MoneyStreamsInfoView = (props: {
         }
       })
       .catch(err => {
-        console.error('Could not get token info, assuminf decimals = 6');
+        console.error('Could not get token info, assuming decimals = 6');
         return unkToken;
       });
     }
