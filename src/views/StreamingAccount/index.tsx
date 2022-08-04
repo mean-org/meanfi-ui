@@ -24,7 +24,7 @@ import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contex
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd, isValidAddress } from "../../utils/ui";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd, isValidAddress } from "../../utils/ui";
 import { fetchAccountTokens, findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from "../../utils/utils";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
@@ -2445,9 +2445,18 @@ export const StreamingAccountView = (props: {
       }
 
       if (item.version < 2) {
-        value += formatThousands(item.rateAmount, decimals, 2);
+        value += formatThousands(
+          item.rateAmount,
+          friendlyDisplayDecimalPlaces(item.rateAmount, decimals),
+          2
+        );
       } else {
-        value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
+        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
+        value += formatThousands(
+          rateAmount,
+          friendlyDisplayDecimalPlaces(rateAmount, decimals),
+          2
+        );
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
@@ -2469,9 +2478,18 @@ export const StreamingAccountView = (props: {
       }
 
       if (item.version < 2) {
-        value += formatThousands(item.allocationAssigned, decimals, 2);
+        value += formatThousands(
+          item.allocationAssigned,
+          friendlyDisplayDecimalPlaces(item.allocationAssigned, decimals),
+          2
+        );
       } else {
-        value += formatThousands(makeDecimal(new BN(item.allocationAssigned), decimals), decimals, 2);
+        const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
+        value += formatThousands(
+          allocationAssigned,
+          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+          2
+        );
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;

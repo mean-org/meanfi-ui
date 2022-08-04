@@ -22,7 +22,8 @@ import {
   getIntervalFromSeconds,
   getTransactionOperationDescription,
   isValidAddress,
-  toUsCurrency
+  toUsCurrency,
+  friendlyDisplayDecimalPlaces
 } from '../../utils/ui';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryTopupParams } from '../../models/common-types';
@@ -236,9 +237,18 @@ export const TreasuryAddFundsModal = (props: {
       }
 
       if (item.version < 2) {
-        value += formatThousands(item.rateAmount, decimals, 2);
+        value += formatThousands(
+          item.rateAmount,
+          friendlyDisplayDecimalPlaces(item.rateAmount, decimals),
+          2
+        );
       } else {
-        value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
+        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
+        value += formatThousands(
+          rateAmount,
+          friendlyDisplayDecimalPlaces(rateAmount, decimals),
+          2
+        );
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
@@ -260,9 +270,18 @@ export const TreasuryAddFundsModal = (props: {
       }
 
       if (item.version < 2) {
-        value += formatThousands(item.allocationAssigned, decimals, 2);
+        value += formatThousands(
+          item.allocationAssigned,
+          friendlyDisplayDecimalPlaces(item.allocationAssigned, decimals),
+          2
+        );
       } else {
-        value += formatThousands(makeDecimal(new BN(item.allocationAssigned), decimals), decimals, 2);
+        const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
+        value += formatThousands(
+          allocationAssigned,
+          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+          2
+        );
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;

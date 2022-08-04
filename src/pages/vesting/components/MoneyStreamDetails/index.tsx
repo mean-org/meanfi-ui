@@ -4,7 +4,7 @@ import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity } from '@mean-dao/msp';
 import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress, toUiAmount } from '../../../../utils/utils';
-import { getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../utils/ui';
+import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
@@ -119,7 +119,12 @@ export const MoneyStreamDetails = (props: {
         }) as TokenInfo;
       }
 
-      value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
+      const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
+      value += formatThousands(
+        rateAmount,
+        friendlyDisplayDecimalPlaces(rateAmount, decimals),
+        2
+      );
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
@@ -139,7 +144,12 @@ export const MoneyStreamDetails = (props: {
         }) as TokenInfo;
       }
 
-      value += formatThousands(makeDecimal(new BN(item.allocationAssigned), decimals), decimals, 2);
+      const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
+      value += formatThousands(
+        allocationAssigned,
+        friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+        2
+      );
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }

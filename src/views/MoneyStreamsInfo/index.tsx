@@ -27,7 +27,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cutNumber, fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
@@ -1664,9 +1664,18 @@ export const MoneyStreamsInfoView = (props: {
       }
 
       if (item.version < 2) {
-        value += formatThousands(item.rateAmount, decimals, 2);
+        value += formatThousands(
+          item.rateAmount,
+          friendlyDisplayDecimalPlaces(item.rateAmount, decimals),
+          2
+        );
       } else {
-        value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
+        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
+        value += formatThousands(
+          rateAmount,
+          friendlyDisplayDecimalPlaces(rateAmount, decimals),
+          2
+        );
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
@@ -1688,9 +1697,18 @@ export const MoneyStreamsInfoView = (props: {
       }
 
       if (item.version < 2) {
-        value += formatThousands(item.allocationAssigned, decimals, 2);
+        value += formatThousands(
+          item.allocationAssigned,
+          friendlyDisplayDecimalPlaces(item.allocationAssigned, decimals),
+          2
+        );
       } else {
-        value += formatThousands(makeDecimal(new BN(item.allocationAssigned), decimals), decimals, 2);
+        const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
+        value += formatThousands(
+          allocationAssigned,
+          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+          2
+        );
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
