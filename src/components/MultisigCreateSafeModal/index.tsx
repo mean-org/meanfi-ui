@@ -259,28 +259,31 @@ export const MultisigCreateSafeModal = (props: {
 
                   {/* Minimum required signatures for proposal approval */}
                   <div className="form-label">Minimum required signatures for proposal approval</div>
-                  <div className="required-signatures-icons">
-                    {multisigOwners.map((icon, index) => {
-                      const onSelectIcon = () => {
-                        setMultisigThreshold(index + 1);
-                      }
+                  <div className="required-signatures-box">
+                    <div className="info-label">A proposal will pass with:</div>
+                    <div className="required-signatures-icons">
+                      {multisigOwners.map((icon, index) => {
+                        const onSelectIcon = () => {
+                          setMultisigThreshold(index + 1);
+                        }
 
-                      return (
-                        <div className="icon-container simplelink" key={index} onClick={onSelectIcon}>
-                          {(multisigThreshold >= (index + 1)) ? (
-                            <IconKey className="mean-svg-icons key-icon"/>
-                          ) : (
-                            <IconLock className="mean-svg-icons lock-icon"/>
-                          )}
-                          <span className="signatures-number">{index + 1}</span>
-                        </div>
-                      )
-                    })}
+                        return (
+                          <div className={`icon-container simplelink ${(multisigThreshold >= (index + 1)) ? "bg-green" : "bg-gray-light"}`} key={index} onClick={onSelectIcon}>
+                            {(multisigThreshold >= (index + 1)) ? (
+                              <IconKey className="mean-svg-icons key-icon"/>
+                            ) : (
+                              <IconLock className="mean-svg-icons lock-icon"/>
+                            )}
+                            <span className="signatures-number">{index + 1}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
 
                   {/* Allow owners to Reject a Proposal */}
                   <div className="d-flex align-items-center mt-3">
-                    <div className="icon-label info-label">
+                    <div className="form-label icon-label">
                       Allow owners to Reject a Proposal
                       <Tooltip placement="bottom" title="Owners can reject a proposal before it has enough signatures and move to Passed status or failed. Otherwise only the proposal originator is able to Reject it.">
                         <span className="icon-info-circle simplelink">
