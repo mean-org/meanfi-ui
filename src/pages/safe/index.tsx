@@ -47,7 +47,6 @@ import { IconEllipsisVertical, IconLoading, IconSafe, IconUserGroup, IconUsers }
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
 
 // MULTISIG
@@ -4216,19 +4215,8 @@ export const SafeView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {isUnderDevelopment() && (
         <div className="debug-bar">
-          {/* <span className="ml-1">proposal-&gt;status:</span><span className="ml-1 font-bold fg-dark-active">{selectedProposal ? MultisigTransactionStatus[selectedProposal.status] : '-'}</span>
-          <span className="ml-1">proposal-&gt;didSigned:</span><span className="ml-1 font-bold fg-dark-active">{
-            selectedProposal
-              ? selectedProposal.didSigned === null
-                ? 'null'
-                : selectedProposal.didSigned === true
-                  ? 'true'
-                  : 'false'
-              : '-'}
-          </span> */}
-
           <span className="mr-1 align-middle">loadingProposals</span>
           <span className={`status position-relative align-middle ${loadingProposals ? 'error' : 'success'}`}></span>
           <span className="mx-1 align-middle">loadingPrograms</span>

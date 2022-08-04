@@ -814,7 +814,6 @@ export const VestingView = () => {
       });
   }, []);
 
-  // TODO: Troubles, check this
   const getMultisigIdFromContext = useCallback(() => {
 
     if (!multisigAccounts || !selectedMultisig || !accountAddress) { return ''; }
@@ -822,7 +821,7 @@ export const VestingView = () => {
     if (getQueryAccountType() === "multisig") {
       const multisig = multisigAccounts.find(t => t.authority.toBase58() === accountAddress);
       if (multisig) {
-        return multisig.id.toBase58();
+        return multisig.authority.toBase58();
       }
     }
 
@@ -1075,7 +1074,7 @@ export const VestingView = () => {
 
       if (!multisigClient || !multisigAccounts) { return null; }
 
-      const multisig = multisigAccounts.filter(m => m.id.toBase58() === data.multisig)[0];
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === data.multisig)[0];
 
       if (!multisig) { return null; }
 
@@ -1157,7 +1156,7 @@ export const VestingView = () => {
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      const multisigId = getMultisigIdFromContext();
+      const multisigAuthority = getMultisigIdFromContext();
       const associatedToken = createOptions.token;
       const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
 
@@ -1173,7 +1172,7 @@ export const VestingView = () => {
         cliffVestPercent: createOptions.cliffVestPercent,                       // cliffVestPercent
         vestingCategory: createOptions.vestingCategory,                         // vestingCategory
         startUtc: createOptions.startDate,                                      // startUtc
-        multisig: multisigId,                                                   // multisig
+        multisig: multisigAuthority,                                            // multisig
         feePayedByTreasurer: createOptions.feePayedByTreasurer                  // feePayedByTreasurer
       };
       consoleOut('payload:', payload);
@@ -1190,7 +1189,7 @@ export const VestingView = () => {
         duration: createOptions.duration,
         durationUnit: getDurationUnitFromSeconds(createOptions.durationUnit),
         feePayedByTreasurer: createOptions.feePayedByTreasurer,
-        multisig: multisigId,
+        multisig: multisigAuthority,
         startUtc: getReadableDate(createOptions.startDate.toUTCString()),
         type: TreasuryType[createOptions.vestingContractType]
       };
@@ -1214,7 +1213,7 @@ export const VestingView = () => {
       const bf = transactionFees.blockchainFee;       // Blockchain fee
       const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
       const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
-      const minRequired = multisigId ? mp : bf + ff;
+      const minRequired = multisigAuthority ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -2951,6 +2950,7 @@ export const VestingView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
+    const txFees = await getTransactionFees(MSP_ACTIONS.pauseStream);
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -3062,13 +3062,8 @@ export const VestingView = () => {
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
 
-      const bf = transactionFees.blockchainFee;       // Blockchain fee
-      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
-
+      const minRequired = 0.000005;
       setMinRequiredBalance(minRequired);
-
       consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
