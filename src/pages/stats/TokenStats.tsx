@@ -232,7 +232,7 @@ export const ThirdCardsLayout = () => {
 
   return (
     <Row gutter={[8, 8]} className="slider-row">
-      <div className="row flex-nowrap slide">
+      <div className="row flex-nowrap slide horizontal-scroll">
         {data.pairs.map((pair, index) => (
           <Col xs={12} sm={8} md={6} lg={4} key={index}>
             <Card className="ant-card card slide-card">
