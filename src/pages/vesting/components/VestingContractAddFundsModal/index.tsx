@@ -378,7 +378,11 @@ export const VestingContractAddFundsModal = (props: {
         : undefined,
       streamId: highLightableStreamId && allocationOption === AllocationType.Specific
                 ? highLightableStreamId : '',
-      fundFromSafe: fundFromSafeOption
+      contributor: fundFromSafeOption && selectedMultisig
+        ? selectedMultisig.authority.toBase58()
+        : '',
+      fundFromSafe: fundFromSafeOption,
+      proposalTitle: proposalTitle || ''
     };
     handleOk(params);
   }
