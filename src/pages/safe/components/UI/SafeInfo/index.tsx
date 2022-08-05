@@ -1,23 +1,24 @@
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { Alert, Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
+import { Alert, Button, Col, Dropdown, Menu, Row, Tabs, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
 import { RightInfoDetails } from "../../../../../components/RightInfoDetails";
 import { SolBalanceModal } from "../../../../../components/SolBalanceModal";
-import { TabsMean } from "../../../../../components/TabsMean";
 import { MIN_SOL_BALANCE_REQUIRED } from "../../../../../constants";
 import { useNativeAccount } from "../../../../../contexts/accounts";
 import { AppStateContext } from "../../../../../contexts/appstate";
 import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
-import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
+import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
 import { shortenAddress } from "../../../../../utils/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
 import { VESTING_ROUTE_BASE_PATH } from "../../../../vesting";
+
+const { TabPane } = Tabs;
 
 export const SafeInfo = (props: {
   isTxInProgress?: any;
@@ -25,6 +26,8 @@ export const SafeInfo = (props: {
   onNavigateAway: any;
   onNewProposalMultisigClick?: any;
   onRefreshTabsInfo?: any;
+  programsTabContent?: any;
+  proposalsTabContent?: any;
   safeNameImg?: string;
   safeNameImgAlt?: string;
   selectedMultisig?: MultisigInfo;
@@ -38,6 +41,8 @@ export const SafeInfo = (props: {
     onNavigateAway,
     onNewProposalMultisigClick,
     onRefreshTabsInfo,
+    programsTabContent,
+    proposalsTabContent,
     safeNameImg,
     safeNameImgAlt,
     selectedMultisig,
@@ -53,13 +58,15 @@ export const SafeInfo = (props: {
     accountAddress,
     totalSafeBalance,
     multisigSolBalance,
+    getTokenByMintAddress,
     refreshTokenBalance,
     setTotalSafeBalance,
-    getTokenByMintAddress,
+    setActiveTab,
   } = useContext(AppStateContext);
   const navigate = useNavigate();
   const { address } = useParams();
   const { account } = useNativeAccount();
+  const [,setSearchParams] = useSearchParams();
   const [selectedLabelName, setSelectedLabelName] = useState("");
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -254,6 +261,12 @@ export const SafeInfo = (props: {
     }
   }
 
+  const onTabChanged = (tab: string) => {
+    consoleOut('Setting tab to:', tab, 'blue');
+    setActiveTab(tab);
+    setSearchParams({v: tab as string});
+  }
+
   // Dropdown (three dots button)
   const menu = (
     <Menu>
@@ -270,6 +283,45 @@ export const SafeInfo = (props: {
       </Menu.Item>
     </Menu>
   );
+
+  const renderTabset = () => {
+    if (tabs && tabs.length > 0) {
+      return (
+        <Tabs activeKey={selectedTab} onChange={onTabChanged} className="neutral">
+          {tabs && tabs.map(item => {
+            return (
+              <TabPane tab={item.name} key={item.id} tabKey={item.id}>
+                {item.render}
+              </TabPane>
+            );
+          })}
+        </Tabs>
+      );
+    } else {
+      return (
+        <Tabs activeKey={selectedTab} onChange={onTabChanged} className="neutral">
+          {proposalsTabContent ? (
+            <TabPane tab={proposalsTabContent.name} key={proposalsTabContent.id} tabKey={proposalsTabContent.id}>
+              {proposalsTabContent.render}
+            </TabPane>
+          ) : (
+            <TabPane tab="Proposals" key="proposals" tabKey="proposals">
+              Loading...
+            </TabPane>
+          )}
+          {programsTabContent ? (
+            <TabPane tab={programsTabContent.name} key={programsTabContent.id} tabKey={programsTabContent.id}>
+              {programsTabContent.render}
+            </TabPane>
+          ) : (
+            <TabPane tab="Programs" key="programs" tabKey="programs">
+              Loading...
+            </TabPane>
+          )}
+        </Tabs>
+      );
+    }
+  }
 
   return (
     <>
@@ -344,11 +396,7 @@ export const SafeInfo = (props: {
         ) : null
       )}
 
-      <TabsMean
-        tabs={tabs}
-        selectedTab={selectedTab}
-        defaultTab="proposals"
-      />
+      {renderTabset()}
 
       {isSolBalanceModalOpen && (
         <SolBalanceModal

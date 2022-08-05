@@ -19,6 +19,7 @@ import {
   kFormatter,
   intToString,
   isValidAddress,
+  friendlyDisplayDecimalPlaces,
 } from "../../utils/ui";
 import {
   fetchAccountTokens,
@@ -585,7 +586,7 @@ export const PlaygroundView = () => {
         <div className="item-list-row" key={index}>
           <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
             {selectedToken
-              ? getAmountWithSymbol(
+              ? getTokenAmountAndSymbolByTokenAddress(
                 value,
                 selectedToken.address
               )
@@ -593,15 +594,16 @@ export const PlaygroundView = () => {
           </div>
           <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
             {selectedToken
-              ? getTokenAmountAndSymbolByTokenAddress(
-                value,
-                selectedToken.address
-              )
+              ? `${formatThousands(value, selectedToken.decimals)} ${selectedToken.symbol
+              }`
               : ""}
           </div>
           <div className="std-table-cell responsive-cell text-monospace text-right">
             {selectedToken
-              ? `${formatThousands(value, selectedToken.decimals)} ${selectedToken.symbol
+              ? `${formatThousands(
+                  value,
+                  friendlyDisplayDecimalPlaces(value, selectedToken.decimals)
+                )} ${selectedToken.symbol
               }`
               : ""}
           </div>
@@ -661,24 +663,23 @@ export const PlaygroundView = () => {
       <div className="item-list-header">
         <div className="header-row">
           <div className="std-table-cell responsive-cell text-right pr-2">
-            Format1
+            Format 1
           </div>
           <div className="std-table-cell responsive-cell text-right pr-2">
-            Format2
+            Format 2
           </div>
           <div className="std-table-cell responsive-cell text-right">
-            Format3
+            Format 3
           </div>
         </div>
       </div>
       <div className="item-list-body">{renderTable()}</div>
       <div className="mb-2">
-        Format1: <code>value.toFixed(decimals)</code>
+        Format 1:&nbsp;<code>getTokenAmountAndSymbolByTokenAddress(value, mintAddress)</code>
         <br />
-        Format2:{" "}
-        <code>getTokenAmountAndSymbolByTokenAddress(value, mintAddress)</code>
+        Format 2:&nbsp;<code>formatThousands(value, decimals)</code>
         <br />
-        Format4: <code>formatThousands(value, decimals)</code>
+        Format 3:&nbsp;<code>formatThousands(value, friendlyDisplayDecimalPlaces(value, decimals), minDecimals)</code>
       </div>
 
       <Divider />
