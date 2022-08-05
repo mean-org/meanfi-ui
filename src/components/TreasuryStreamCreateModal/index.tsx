@@ -19,6 +19,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import {
   consoleOut,
   disabledDate,
+  friendlyDisplayDecimalPlaces,
   getIntervalFromSeconds,
   getLockPeriodOptionLabel,
   getPaymentRateOptionLabel,
@@ -927,9 +928,18 @@ export const TreasuryStreamCreateModal = (props: {
       }
 
       if (item.version < 2) {
-        value += formatThousands(item.rateAmount, decimals, 2);
+        value += formatThousands(
+          item.rateAmount,
+          friendlyDisplayDecimalPlaces(item.rateAmount, decimals),
+          2
+        );
       } else {
-        value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
+        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
+        value += formatThousands(
+          rateAmount,
+          friendlyDisplayDecimalPlaces(rateAmount, decimals),
+          2
+        );
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;

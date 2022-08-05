@@ -1,7 +1,7 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { getTransactionOperationDescription } from '../../../../utils/ui';
+import { consoleOut, getTransactionOperationDescription } from '../../../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../../../utils/transactions';
@@ -13,6 +13,9 @@ import { Treasury } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { useSearchParams } from 'react-router-dom';
+import { InputMean } from '../../../../components/InputMean';
+import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -22,6 +25,7 @@ export const VestingContractCloseModal = (props: {
   isBusy: boolean;
   isVisible: boolean;
   nativeBalance: number;
+  selectedMultisig: MultisigInfo | undefined;
   transactionFees: TransactionFees;
   treasuryBalance: number;
   vestingContract: Treasury | undefined;
@@ -32,6 +36,7 @@ export const VestingContractCloseModal = (props: {
     isBusy,
     isVisible,
     nativeBalance,
+    selectedMultisig,
     transactionFees,
     treasuryBalance,
     vestingContract
@@ -42,8 +47,21 @@ export const VestingContractCloseModal = (props: {
     transactionStatus,
     getTokenByMintAddress
   } = useContext(AppStateContext);
+  const [searchParams] = useSearchParams();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+  const [proposalTitle, setProposalTitle] = useState("");
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
 
   const getAvailableStreamingBalance = useCallback((item: Treasury) => {
     if (item && selectedToken) {
@@ -62,6 +80,8 @@ export const VestingContractCloseModal = (props: {
 
     return false;
   }
+
+  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   // Preset fee amount
   useEffect(() => {
@@ -88,6 +108,29 @@ export const VestingContractCloseModal = (props: {
     return () => { }
   }, [getTokenByMintAddress, vestingContract])
 
+  const onAcceptModal = () => {
+    handleOk(proposalTitle || '');
+  }
+
+  const onTitleInputValueChange = (e: any) => {
+    const value = e.target.value;
+    setProposalTitle(value);
+  }
+
+  const isValidForm = (): boolean => {
+    return !selectedMultisig || (param === "multisig" && selectedMultisig && proposalTitle)
+      ? true
+      : false;
+  }
+
+  const getTransactionStartButtonLabel = () => {
+    return param === "multisig" && selectedMultisig
+      ? !proposalTitle
+        ? 'Add a proposal title'
+        : 'Sign proposal'
+      : t('vesting.close-account.close-cta')
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal unpadded-content"
@@ -95,7 +138,6 @@ export const VestingContractCloseModal = (props: {
       maskClosable={false}
       footer={null}
       visible={isVisible}
-      onOk={handleOk}
       onCancel={handleClose}
       width={360}>
 
@@ -142,6 +184,21 @@ export const VestingContractCloseModal = (props: {
                   </>
                 )}
               </div>
+
+              {/* Proposal title */}
+              {canClose() && param === "multisig" && selectedMultisig && (
+                <div className="mb-3 mt-3">
+                  <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+                  <InputMean
+                    id="proposal-title-field"
+                    name="Title"
+                    className="w-100 general-text-input"
+                    onChange={onTitleInputValueChange}
+                    placeholder="Title for the multisig proposal"
+                    value={proposalTitle}
+                  />
+                </div>
+              )}
             </>
           ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
             <>
@@ -192,12 +249,14 @@ export const VestingContractCloseModal = (props: {
         </div>
 
         {canClose() && (
-          <div className="cta-container mb-2">
+          <div className="mb-2">
             <Button
+              block
               type="primary"
               shape="round"
-              disabled={isBusy}
-              onClick={handleOk}>
+              size="large"
+              disabled={isBusy || !isValidForm()}
+              onClick={onAcceptModal}>
               {isBusy && (
                 <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
               )}
@@ -205,7 +264,7 @@ export const VestingContractCloseModal = (props: {
                 ? t('vesting.close-account.close-cta-busy')
                 : isError(transactionStatus.currentOperation)
                   ? t('general.retry')
-                  : t('vesting.close-account.close-cta')
+                  : getTransactionStartButtonLabel()
               }
             </Button>
           </div>

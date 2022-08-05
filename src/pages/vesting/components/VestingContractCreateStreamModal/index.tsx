@@ -495,7 +495,7 @@ export const VestingContractCreateStreamModal = (props: {
                 recipientAddress &&
                 isValidAddress(recipientAddress) &&
                 !isAddressOwnAccount() &&
-                nativeBalance > 0 &&
+                nativeBalance > getMinBalanceRequired() &&
                 tokenAmount && tokenAmount.toNumber() > 0 &&
                 ((isFeePaidByTreasurer && tokenAmount.lte(mAa)) ||
                  (!isFeePaidByTreasurer && tokenAmount.lte(ub)))
@@ -600,7 +600,7 @@ export const VestingContractCreateStreamModal = (props: {
                                 name="Title"
                                 className="w-100 general-text-input"
                                 onChange={onTitleInputValueChange}
-                                placeholder="Add a proposal title (required)"
+                                placeholder="Title for the multisig proposal"
                                 value={proposalTitle}
                             />
                         </div>

@@ -256,7 +256,7 @@ export const VestingContractDetails = (props: {
                                             {
                                                 formatThousands(
                                                     vestingContractFlowRate.streamableAmount,
-                                                    friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount) || selectedToken.decimals
+                                                    friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount, selectedToken.decimals)
                                                 )
                                             } {selectedToken.symbol} to be vested
                                         </div>

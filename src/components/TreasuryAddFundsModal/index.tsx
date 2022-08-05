@@ -15,21 +15,19 @@ import {
   makeInteger,
   shortenAddress
 } from '../../utils/utils';
-import { IconDownload, IconHelpCircle, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
+import { IconHelpCircle } from '../../Icons';
 import {
   consoleOut,
-  getShortDate,
-  getIntervalFromSeconds,
   getTransactionOperationDescription,
   isValidAddress,
-  toUsCurrency
+  toUsCurrency,
 } from '../../utils/ui';
-import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryTopupParams } from '../../models/common-types';
 import { TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { AllocationType, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
+import { AllocationType, Stream, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { openNotification } from '../Notifications';
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
@@ -85,7 +83,6 @@ export const TreasuryAddFundsModal = (props: {
     highLightableStreamId,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
-    setTransactionStatus,
     setEffectiveRate,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -93,8 +90,6 @@ export const TreasuryAddFundsModal = (props: {
   const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
-  const [customTokenInput, setCustomTokenInput] = useState("");
-  // const [selectedStreamForAllocation, setSelectedStreamForAllocation] = useState('');
   const [, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [availableBalance, setAvailableBalance] = useState<any>();
   const [tokenAmount, setTokenAmount] = useState<any>(0);
@@ -104,7 +99,6 @@ export const TreasuryAddFundsModal = (props: {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [workingAssociatedToken, setWorkingAssociatedToken] = useState('');
   const [workingTreasuryDetails, setWorkingTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
-  const [workingTreasuryType, setWorkingTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] = useState('');
   const [fundFromSafeOption, setFundFromSafeOption] = useState(false);
   const [proposalTitle, setProposalTitle] = useState("");
@@ -209,241 +203,6 @@ export const TreasuryAddFundsModal = (props: {
     getSelectedStream
   ]);
 
-  const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
-    if (item && publicKey) {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-      if (v1.version < 2) {
-        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
-      } else {
-        return v2.beneficiary === publicKey.toBase58() ? true : false;
-      }
-    }
-    return false;
-  }, [publicKey]);
-
-  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
-    let value = '';
-
-    if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-
-      if (item.version < 2) {
-        value += formatThousands(item.rateAmount, decimals, 2);
-      } else {
-        value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
-      }
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-    }
-    return value;
-  }, [getTokenByMintAddress]);
-
-  const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
-    let value = '';
-
-    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-
-      if (item.version < 2) {
-        value += formatThousands(item.allocationAssigned, decimals, 2);
-      } else {
-        value += formatThousands(makeDecimal(new BN(item.allocationAssigned), decimals), decimals, 2);
-      }
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-    }
-    return value;
-  }, [getTokenByMintAddress]);
-
-  const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
-    const isInbound = isInboundStream(item);
-    const v1 = item as StreamInfo;
-    const v2 = item as Stream;
-
-    if (v1.version < 2) {
-      if (isInbound) {
-        switch (v1.state) {
-          case STREAM_STATE.Schedule:
-            return (<IconTimer className="mean-svg-icons incoming" />);
-          case STREAM_STATE.Paused:
-            return (<IconIncomingPaused className="mean-svg-icons incoming" />);
-          default:
-            return (<IconDownload className="mean-svg-icons incoming" />);
-        }
-      } else {
-        switch (v1.state) {
-          case STREAM_STATE.Schedule:
-            return (<IconTimer className="mean-svg-icons outgoing" />);
-          case STREAM_STATE.Paused:
-            return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
-          default:
-            return (<IconUpload className="mean-svg-icons outgoing" />);
-        }
-      }
-    } else {
-      if (isInbound) {
-        switch (v2.status) {
-          case STREAM_STATUS.Schedule:
-            return (<IconTimer className="mean-svg-icons incoming" />);
-          case STREAM_STATUS.Paused:
-            return (<IconIncomingPaused className="mean-svg-icons incoming" />);
-          default:
-            return (<IconDownload className="mean-svg-icons incoming" />);
-        }
-      } else {
-        switch (v2.status) {
-          case STREAM_STATUS.Schedule:
-            return (<IconTimer className="mean-svg-icons outgoing" />);
-          case STREAM_STATUS.Paused:
-            return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
-          default:
-            return (<IconUpload className="mean-svg-icons outgoing" />);
-        }
-      }
-    }
-  }, [isInboundStream]);
-
-  const getStreamDescription = useCallback((item: Stream | StreamInfo): string => {
-    let title = '';
-    const isInbound = isInboundStream(item);
-
-    const v1 = item as StreamInfo;
-    const v2 = item as Stream;
-
-    if (v1.version < 2) {
-      if (isInbound) {
-        if (v1.state === STREAM_STATE.Schedule) {
-          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else {
-          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        }
-      } else {
-        if (v1.state === STREAM_STATE.Schedule) {
-          title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${v1.beneficiaryAddress}`)})`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${v1.beneficiaryAddress}`)})`;
-        } else {
-          title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${v1.beneficiaryAddress}`)})`;
-        }
-      }
-    } else {
-      if (isInbound) {
-        if (v2.status === STREAM_STATUS.Schedule) {
-          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        } else if (v2.status === STREAM_STATUS.Paused) {
-          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        } else {
-          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        }
-      } else {
-        if (v2.status === STREAM_STATUS.Schedule) {
-          title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${v2.beneficiary}`)})`;
-        } else if (v2.status === STREAM_STATUS.Paused) {
-          title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${v2.beneficiary}`)})`;
-        } else {
-          title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${v2.beneficiary}`)})`;
-        }
-      }
-    }
-    return title;
-  }, [
-    t,
-    isInboundStream
-  ]);
-
-  const getStreamSubTitle = useCallback((item: Stream | StreamInfo) => {
-    let title = '';
-
-    if (item) {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-      const isInbound = isInboundStream(item);
-      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
-      if (item.rateAmount > 0) {
-        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, false, t);
-      }
-
-      if (v1.version < 2) {
-        if (isInbound) {
-          if (v1.state === STREAM_STATE.Schedule) {
-            title = t('streams.stream-list.subtitle-scheduled-inbound', {
-              rate: rateAmount
-            });
-            title += ` ${getShortDate(v1.startUtc as string)}`;
-          } else {
-            title = t('streams.stream-list.subtitle-running-inbound', {
-              rate: rateAmount
-            });
-            title += ` ${getShortDate(v1.startUtc as string)}`;
-          }
-        } else {
-          if (v1.state === STREAM_STATE.Schedule) {
-            title = t('streams.stream-list.subtitle-scheduled-outbound', {
-              rate: rateAmount
-            });
-            title += ` ${getShortDate(v1.startUtc as string)}`;
-          } else {
-            title = t('streams.stream-list.subtitle-running-outbound', {
-              rate: rateAmount
-            });
-            title += ` ${getShortDate(v1.startUtc as string)}`;
-          }
-        }
-      } else {
-        if (isInbound) {
-          if (v2.status === STREAM_STATUS.Schedule) {
-            title = t('streams.stream-list.subtitle-scheduled-inbound', {
-              rate: rateAmount
-            });
-            title += ` ${getShortDate(v2.startUtc as string)}`;
-          } else {
-            title = t('streams.stream-list.subtitle-running-inbound', {
-              rate: rateAmount
-            });
-            title += ` ${getShortDate(v2.startUtc as string)}`;
-          }
-        } else {
-          if (v2.status === STREAM_STATUS.Schedule) {
-            title = t('streams.stream-list.subtitle-scheduled-outbound', {
-              rate: rateAmount
-            });
-            title += ` ${getShortDate(v2.startUtc as string)}`;
-          } else {
-            title = t('streams.stream-list.subtitle-running-outbound', {
-              rate: rateAmount
-            });
-            title += ` ${getShortDate(v2.startUtc as string)}`;
-          }
-        }
-      }
-    }
-
-    return title;
-
-  }, [
-    t,
-    isInboundStream,
-    getRateAmountDisplay,
-    getDepositAmountDisplay,
-  ]);
-
   const setCustomToken = useCallback((address: string) => {
 
     if (address && isValidAddress(address)) {
@@ -487,15 +246,6 @@ export const TreasuryAddFundsModal = (props: {
     }
   }, [fundFromSafeOption, nativeBalance, selectedToken, tokenBalance, userBalances]);
 
-  const getStreamingAccountName = useCallback((item: Treasury | TreasuryInfo | undefined) => {
-    if (item) {
-      const v1 = item as TreasuryInfo;
-      const v2 = item as Treasury;
-      return v1.version < 2 ? v1.label : v2.name;
-    }
-    return '';
-  }, []);
-
   /////////////////////
   // Data management //
   /////////////////////
@@ -508,12 +258,10 @@ export const TreasuryAddFundsModal = (props: {
       if (treasuryDetails) {
         const v1 = treasuryDetails as TreasuryInfo;
         const v2 = treasuryDetails as Treasury;
-        const treasuryType = treasuryDetails.version < 2 ? v1.type as TreasuryType : v2.treasuryType as TreasuryType;
         consoleOut('treasuryDetails aquired:', treasuryDetails, 'blue');
         setWorkingTreasuryDetails(treasuryDetails);
         setSelectedStreamingAccountId(treasuryDetails.id as string);
         setWorkingAssociatedToken(treasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
-        setWorkingTreasuryType(treasuryType);
       }
     }
   }, [isVisible, treasuryDetails, treasuryList]);
@@ -525,12 +273,10 @@ export const TreasuryAddFundsModal = (props: {
       const selected = treasuryList[0];
       const v1 = selected as TreasuryInfo;
       const v2 = selected as Treasury;
-      const treasuryType = selected.version < 2 ? v1.type as TreasuryType : v2.treasuryType as TreasuryType;
       consoleOut('treasuryDetails preset:', selected, 'blue');
       setWorkingTreasuryDetails(selected);
       setSelectedStreamingAccountId(selected.id as string);
       setWorkingAssociatedToken(selected.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
-      setWorkingTreasuryType(treasuryType);
     }
   }, [isVisible, treasuryDetails, treasuryList, workingTreasuryDetails]);
 
@@ -803,30 +549,6 @@ export const TreasuryAddFundsModal = (props: {
   const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
     event.currentTarget.className = "error";
-  };
-
-  const renderStream = () => {
-
-    const item = getSelectedStream(highLightableStreamId);
-    if (!item) { return null; }
-
-    return (
-      <div className={`transaction-list-row no-pointer`}>
-        <div className="icon-cell">{getStreamIcon(item)}</div>
-        <div className="description-cell">
-          <div className="title text-truncate">{getStreamDescription(item)}</div>
-          <div className="subtitle text-truncate">{getStreamSubTitle(item)}</div>
-        </div>
-        <div className="rate-cell">
-          <div className="rate-amount">
-            {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
-          </div>
-          {item && item.rateAmount > 0 && (
-            <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}</div>
-          )}
-        </div>
-      </div>
-    )
   };
 
   const getStreamingAccountIcon = (item: Treasury | TreasuryInfo | undefined) => {
@@ -1163,15 +885,6 @@ export const TreasuryAddFundsModal = (props: {
                     </div>
                   </div>
                 </div>
-
-                {allocationOption === AllocationType.Specific && (
-                  <div className="mb-3">
-                    <div className="form-label">{t('treasuries.add-funds.money-stream-to-topup-label')}</div>
-                    <div className="well">
-                      {renderStream()}
-                    </div>
-                  </div>
-                )}
 
               </>
             ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (

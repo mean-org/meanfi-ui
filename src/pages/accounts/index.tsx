@@ -60,7 +60,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -5163,12 +5163,12 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">transactions:</span><span className="ml-1 font-bold fg-dark-active">{transactions ? `[${transactions.length}]` : '-'}</span>
           <span className="ml-1">transactionStatus:</span><span className="ml-1 font-bold fg-dark-active">{transactionStatus && transactionStatus.currentOperation ? TransactionStatus[transactionStatus.currentOperation] : '-'}</span>
         </div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button
