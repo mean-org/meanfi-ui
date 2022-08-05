@@ -4,17 +4,19 @@
       align-items: start;
     }
   }
-  @media (min-width: 576px) {
-    .container-owner-item {
-      align-items: center;
-    }
-  }
+  // @media (min-width: 576px) {
+  //   .container-owner-item {
+  //     align-items: center;
+  //   }
+  // }
   .container-owner-item {
     display: flex;
     margin-bottom: 1em;
 
     .trash-icon {
-      margin-left: 1em;
+      width: 1.5em;
+      margin-left: 0.5em;
+      margin-top: 0.8em;
     }
   }
   .add-owners-row {
@@ -24,8 +26,5 @@
     .icon-label svg {
       height: 14px !important;
     }
-  }
-  svg.mean-svg-icons.simplelink {
-    width: 1.5em;
   }
 }

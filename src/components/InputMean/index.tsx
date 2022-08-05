@@ -42,9 +42,9 @@ export const InputMean = (props: {
             <div className="right">
               <div className="add-on h-100">
                 {isValid ? (
-                  <IconCheckCircle className="mean-svg-icons simplelink"/>
+                  <IconCheckCircle className="mean-svg-icons simplelink form-check-icon"/>
                 ) : (
-                  <IconWarningCover className="mean-svg-icons simplelink"/>
+                  <IconWarningCover className="mean-svg-icons simplelink form-warning-icon"/>
                 )}
               </div>
             </div>
