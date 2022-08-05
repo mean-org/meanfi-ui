@@ -1,16 +1,16 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import './style.scss';
-import { Button, Modal, Spin } from "antd";
+import { Button } from "antd";
 import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined } from "@ant-design/icons";
 import { StakingClient, UnstakeQuote } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, getTransactionStatusForLogs } from "../../utils/ui";
 import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
@@ -21,7 +21,6 @@ import { segmentAnalytics } from "../../App";
 import { openNotification } from "../../components/Notifications";
 import { INVEST_ROUTE_BASE_PATH } from "../../pages/invest";
 
-const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let inputDebounceTimeout: any;
 
 export const UnstakeTabView = (props: {
@@ -496,7 +495,7 @@ export const UnstakeTabView = (props: {
       setIsBusy(false);
       openNotification({
         title: 'Create vesting contract status',
-        description: 'The transaction to create the vesting contract was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully created.',
+        description: 'The transaction to unstake MEAN was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully created.',
         duration: null,
         type: "info",
         handleClose: () => reloadStakePools()
