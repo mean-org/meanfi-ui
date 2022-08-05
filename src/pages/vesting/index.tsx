@@ -1506,8 +1506,9 @@ export const VestingView = () => {
     setIsVestingContractCloseModalOpen(true);
   }, [getTransactionFees, resetTransactionStatus]);
 
-  const onAcceptCloseVestingContractModal = () => {
-    onExecuteCloseTreasuryTransaction();
+  const onAcceptCloseVestingContractModal = (title: string) => {
+    consoleOut('proposalTitle:', title, 'orange');
+    onExecuteCloseTreasuryTransaction(title);
   };
 
   const onCloseTreasuryTransactionFinished = () => {
@@ -1516,7 +1517,7 @@ export const VestingView = () => {
     resetTransactionStatus();
   };
 
-  const onExecuteCloseTreasuryTransaction = async () => {
+  const onExecuteCloseTreasuryTransaction = async (proposalTitle: string) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -1561,7 +1562,7 @@ export const VestingView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Close Vesting Contract",
+        data.proposalTitle || "Close Vesting Contract",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryClose,
@@ -1591,6 +1592,7 @@ export const VestingView = () => {
 
       const treasury = new PublicKey(selectedVestingContract.id as string);
       const data = {
+        proposalTitle,                                        // proposalTitle
         treasurer: publicKey.toBase58(),                      // treasurer
         treasury: treasury.toBase58()                         // treasury
       }
@@ -1798,15 +1800,21 @@ export const VestingView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const loadingMessage = multisigAuthority
+              ? `Create proposal to close the vesting contract: ${selectedVestingContract.name}`
+              : `Closing vesting contract: ${selectedVestingContract.name}`;
+            const completedMessage = multisigAuthority
+              ? `Proposal to close the vesting contract ${selectedVestingContract.name} was submitted for Multisig approval.`
+              : `Vesting contract ${selectedVestingContract.name} successfully closed`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryClose,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Closing vesting contract: ${selectedVestingContract.name}`,
+              loadingMessage,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Vesting contract ${selectedVestingContract.name} successfully closed`,
+              completedMessage,
               extras: {
                 vestingContractId: selectedVestingContract.id as string,
                 multisigId: multisigAuthority
@@ -4579,10 +4587,11 @@ export const VestingView = () => {
         {isVestingContractCloseModalOpen && selectedVestingContract && (
           <VestingContractCloseModal
             handleClose={hideVestingContractCloseModal}
-            handleOk={onAcceptCloseVestingContractModal}
+            handleOk={(title: string) => onAcceptCloseVestingContractModal(title)}
             isBusy={isBusy}
             isVisible={isVestingContractCloseModalOpen}
             nativeBalance={nativeBalance}
+            selectedMultisig={selectedMultisig}
             transactionFees={transactionFees}
             treasuryBalance={treasuryEffectiveBalance}
             vestingContract={selectedVestingContract}

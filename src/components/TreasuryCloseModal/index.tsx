@@ -51,7 +51,7 @@ export const TreasuryCloseModal = (props: {
   //   }
   //   return false;
   // }
-  
+
   const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
     event.currentTarget.className = "error";
