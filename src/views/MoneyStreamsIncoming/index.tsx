@@ -49,6 +49,7 @@ export const MoneyStreamsIncomingView = (props: {
   multisigAccounts: MultisigInfo[] | undefined;
 }) => {
   const {
+    splTokenList,
     deletedStreams,
     transactionStatus,
     refreshTokenBalance,
@@ -1272,7 +1273,9 @@ export const MoneyStreamsIncomingView = (props: {
                 isNewStream()
                   ? toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6)
                   : v1.escrowVestedAmount,
-                streamSelected.associatedToken as string
+                streamSelected.associatedToken as string,
+                false,
+                splTokenList
               )
             : '--'
           }

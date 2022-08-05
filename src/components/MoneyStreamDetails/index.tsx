@@ -457,7 +457,9 @@ export const MoneyStreamDetails = (props: {
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
               toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount, 
-              stream.associatedToken as string
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}  ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
           : '--'
         }
@@ -476,8 +478,10 @@ export const MoneyStreamDetails = (props: {
       <>
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
-            toUiAmount(new BN(v2.remainingAllocationAmount), token?.decimals || 6) : (v1.allocationAssigned || v1.allocationLeft), 
-              stream.associatedToken as string
+              toUiAmount(new BN(v2.remainingAllocationAmount), token?.decimals || 6) : (v1.allocationAssigned || v1.allocationLeft), 
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}`
           : '--'
         }
@@ -496,8 +500,10 @@ export const MoneyStreamDetails = (props: {
       <>
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
-            toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
-              stream.associatedToken as string
+              toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}`
           : '--'
         }
@@ -516,8 +522,10 @@ export const MoneyStreamDetails = (props: {
       <>
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
-            toUiAmount(new BN(v2.fundsSentToBeneficiary), token?.decimals || 6) : (v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount), 
-              stream.associatedToken as string
+              toUiAmount(new BN(v2.fundsSentToBeneficiary), token?.decimals || 6) : (v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount), 
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}`
           : '--'
         }
@@ -684,7 +692,7 @@ export const MoneyStreamDetails = (props: {
           </div>
           ) : null
         }
-        
+
         {!isXsDevice && (
           <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
             <div onClick={hideDetailsHandler} className="back-button icon-button-container">

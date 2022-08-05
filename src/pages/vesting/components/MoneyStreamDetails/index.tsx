@@ -325,7 +325,9 @@ export const MoneyStreamDetails = (props: {
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(
               toUiAmount(new BN(stream.rateAmount), token?.decimals || 6), 
-              stream.associatedToken as string
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )} ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
           : '--'
         }
@@ -343,7 +345,9 @@ export const MoneyStreamDetails = (props: {
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(
               toUiAmount(new BN(stream.remainingAllocationAmount), token?.decimals || 6),
-              stream.associatedToken as string
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}`
           : '--'
         }
@@ -361,7 +365,9 @@ export const MoneyStreamDetails = (props: {
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(
               toUiAmount(new BN(stream.fundsLeftInStream), token?.decimals || 6),
-              stream.associatedToken as string
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}`
           : '--'
         }
@@ -379,7 +385,9 @@ export const MoneyStreamDetails = (props: {
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(
               toUiAmount(new BN(stream.fundsSentToBeneficiary), token?.decimals || 6),
-              stream.associatedToken as string
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}`
           : '--'
         }
@@ -621,11 +629,15 @@ export const MoneyStreamDetails = (props: {
               isInboundStream
                 ? getTokenAmountAndSymbolByTokenAddress(
                     toUiAmount(new BN(item.withdrawableAmount), selectedToken?.decimals || 6),
-                    item.associatedToken as string
+                    item.associatedToken as string,
+                    false,
+                    splTokenList
                   )
                 : getTokenAmountAndSymbolByTokenAddress(
                     toUiAmount(new BN(item.fundsLeftInStream), selectedToken?.decimals || 6),
                     item.associatedToken as string,
+                    false,
+                    splTokenList
                   )
             }
           </span>
