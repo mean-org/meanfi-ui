@@ -47,7 +47,6 @@ import { IconEllipsisVertical, IconLoading, IconSafe, IconUserGroup, IconUsers }
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
 
 // MULTISIG
@@ -62,7 +61,18 @@ import { ProgramDetailsView } from './components/ProgramDetails';
 import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MultisigTransactionSummary, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk/';
+import {
+  DEFAULT_EXPIRATION_TIME_SECONDS,
+  getFees,
+  MeanMultisig,
+  MEAN_MULTISIG_PROGRAM,
+  MultisigInfo,
+  MultisigParticipant,
+  MultisigTransaction,
+  MultisigTransactionFees,
+  MultisigTransactionSummary,
+  MULTISIG_ACTIONS
+} from '@mean-dao/mean-multisig-sdk/';
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { UserTokenAccount } from '../../models/transactions';
@@ -73,9 +83,11 @@ import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
-import { CreateNewProposalParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
+import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
+import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
+import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -134,6 +146,8 @@ export const SafeView = () => {
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   // Active Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(false);
+  const [loadingProposals, setLoadingProposals] = useState(false);
+  const [isProposalDetails, setIsProposalDetails] = useState(false);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
   // Tx control
@@ -154,7 +168,6 @@ export const SafeView = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [operationPayload, setOperationPayload] = useState<any>(undefined);
-  const [isProposalDetails, setIsProposalDetails] = useState(false);
   const [loadingProposalDetails, setLoadingProposalDetails] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -320,25 +333,23 @@ export const SafeView = () => {
   }, [getAllUserV2Accounts, msp, publicKey]);
 
   const setProposalsLoading = useCallback((loading: boolean) => {
-    const multisigAuth = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
-    if (multisigAuth) {
-      if (loading) {
-        proposalLoadStatusRegister.set(multisigAuth, loading);
+    if (!selectedMultisig) {
+      consoleOut('unable to do setProposalsLoading!', 'selectedMultisig not available yet', 'red');
+      return;
+    }
+    const multisigAuth = selectedMultisig.authority.toBase58();
+    consoleOut(`setProposalsLoading for ${multisigAuth} with:`, loading, 'orange');
+    if (loading) {
+      proposalLoadStatusRegister.set(multisigAuth, loading);
+      setLoadingProposals(true);
+    } else {
+      if (proposalLoadStatusRegister.has(multisigAuth)) {
+        proposalLoadStatusRegister.delete(multisigAuth);
       } else {
-        if (proposalLoadStatusRegister.has(multisigAuth)) {
-          proposalLoadStatusRegister.delete(multisigAuth);
-        }
+        proposalLoadStatusRegister.set(multisigAuth, loading);
       }
     }
-  }, []);
-
-  const getProposalsLoadingStatus = useCallback(() => {
-    const multisigAuth = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
-    if (multisigAuth && proposalLoadStatusRegister.has(multisigAuth)) {
-      return proposalLoadStatusRegister.get(multisigAuth) || true;
-    }
-    return false;
-  }, []);
+  }, [selectedMultisig]);
 
   // Search for pending proposal in confirmation history
   const hasMultisigPendingProposal = useCallback(() => {
@@ -363,6 +374,11 @@ export const SafeView = () => {
     return false;
   }, [confirmationHistory]);
 
+  const onOpenMultisigModalClick = useCallback(() => {
+    resetTransactionStatus();
+    setIsMultisigCreateSafeModalVisible(true);
+  },[resetTransactionStatus]);
+
   const onCreateMultisigClick = useCallback(() => {
 
     if (!multisigClient) { return; }
@@ -378,7 +394,7 @@ export const SafeView = () => {
 
   },[multisigClient, resetTransactionStatus]);
 
-  const onAcceptCreateMultisig = (data: any) => {
+  const onAcceptCreateMultisig = (data: CreateNewSafeParams) => {
     consoleOut('multisig:', data, 'blue');
     onExecuteCreateMultisigTx(data);
   };
@@ -391,57 +407,39 @@ export const SafeView = () => {
   const onMultisigCreated = useCallback(() => {
 
     setIsCreateMultisigModalVisible(false);
+    setIsMultisigCreateSafeModalVisible(false);
     resetTransactionStatus();
     setIsBusy(false);
-    // openNotification({
-    //   description: t('multisig.create-multisig.success-message'),
-    //   type: "success"
-    // });
     setTransactionFees(ZERO_FEES);
 
   },[resetTransactionStatus])
 
-  const onMultisigModified = useCallback(async () => {
+  const onMultisigModified = useCallback(() => {
     setIsBusy(false);
     setIsEditMultisigModalVisible(false);
     resetTransactionStatus();
 
+    // openNotification({
+    //   description: t('multisig.update-multisig.success-message'),
+    //   duration: 10,
+    //   type: "success"
+    // });
+    // await delay(150);
+    // openNotification({
+    //   description: "The proposal's status can be reviewed in the Multisig Safe's proposal list.",
+    //   duration: 15,
+    //   type: "success"
+    // });
     openNotification({
-      description: t('multisig.update-multisig.success-message'),
+      description: "The proposal can be reviewed in the Multisig's proposal list for other owners to approve.",
       duration: 10,
       type: "success"
     });
-    await delay(150);
-    openNotification({
-      description: "The proposal's status can be reviewed in the Multisig Safe's proposal list.",
-      duration: 15,
-      type: "success"
-    });
   },[
-    t,
     resetTransactionStatus
   ]);
 
-  // const stackedMessagesAndNavigate = async () => {
-  //   openNotification({
-  //     type: "info",
-  //     description: t(
-  //       "treasuries.create-treasury.multisig-treasury-created-info"
-  //     ),
-  //     duration: 10,
-  //   });
-  //   await delay(1500);
-  //   openNotification({
-  //     type: "info",
-  //     description: t(
-  //       "treasuries.create-treasury.multisig-treasury-created-instructions"
-  //     ),
-  //     duration: null,
-  //   });
-  //   navigate("/custody");
-  // };
-
-  const onExecuteCreateMultisigTx = useCallback(async (data: any) => {
+  const onExecuteCreateMultisigTx = useCallback(async (data: CreateNewSafeParams) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -453,22 +451,23 @@ export const SafeView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createMultisig = async (data: any) => {
+    const createMultisig = async (createParams: any) => {
 
       if (!multisigClient || !publicKey) { return; }
 
-      const owners = data.owners.map((p: MultisigParticipant) => {
+      const owners = createParams.owners.map((p: MultisigParticipant) => {
         return {
           address: new PublicKey(p.address),
           name: p.name
         }
       });
 
+      // TODO: add parameter to accept isAllowedRejectProposal (Irshad)
       const tx = await multisigClient.createFundedMultisig(
         publicKey,
         MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-        data.label, 
-        data.threshold, 
+        createParams.label, 
+        createParams.threshold, 
         owners
       );
 
@@ -491,7 +490,8 @@ export const SafeView = () => {
           wallet: publicKey.toBase58(),                               // wallet
           label: data.label,                                          // multisig label
           threshold: data.threshold,
-          owners: data.owners
+          owners: data.owners,
+          isAllowRejectProposal: data.isAllowToRejectProposal
         };
 
         consoleOut('data:', payload);
@@ -539,7 +539,7 @@ export const SafeView = () => {
           return false;
         }
 
-        return await createMultisig(data)
+        return await createMultisig(payload)
           .then(value => {
             if (!value) { return false; }
             consoleOut('createMultisig returned transaction:', value);
@@ -1062,6 +1062,7 @@ export const SafeView = () => {
   }
 
   // Modal visibility flags
+  const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
   const [isErrorReportingModalVisible, setIsErrorReportingModalVisible] = useState(false);
@@ -1882,7 +1883,6 @@ export const SafeView = () => {
   }, [resetTransactionStatus]);
 
   const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
-
 
   const saveOperationPayloadOnStart = (payload: any) => {
     setOperationPayload(payload);
@@ -3334,8 +3334,10 @@ export const SafeView = () => {
 
   const refreshSafeDetails = useCallback((reset = false) => {
     reloadMultisigs();
-    reloadSelectedProposal();
-  }, []);
+    if (isProposalDetails) {
+      reloadSelectedProposal();
+    }
+  }, [isProposalDetails]);
 
   // SERUM ACCOUNTS
   useEffect(() => {
@@ -3381,42 +3383,6 @@ export const SafeView = () => {
     multisigSerumClient, 
     publicKey
   ]);
-
-  // useEffect(() => {
-
-  //   if (
-  //     !connection || 
-  //     !publicKey || 
-  //     !multisigClient || 
-  //     !selectedMultisig || 
-  //     !selectedProposal ||
-  //     !loadingMultisigAccounts
-  //   ) {
-  //     return;
-  //   }
-
-  //   const timeout = setTimeout(() => {
-  //     multisigClient.getMultisigTransaction(
-  //       selectedMultisig.id,
-  //       selectedProposal.id,
-  //       publicKey
-  //     )
-  //     .then((tx: any) => setProposalSelected(tx))
-  //     .catch((err: any) => console.error(err));
-  //   });
-
-  //   return () => {
-  //     clearTimeout(timeout);
-  //   }
-
-  // }, [
-  //   connection, 
-  //   multisigClient, 
-  //   selectedProposal, 
-  //   publicKey, 
-  //   selectedMultisig,
-  //   loadingMultisigAccounts
-  // ]);
 
   const getMultisigVaults = useCallback(async (
     connection: Connection,
@@ -3586,6 +3552,7 @@ export const SafeView = () => {
               ? allAccounts.find(m => m.authority.equals(auth))
               : undefined;
             if (item) {
+              proposalLoadStatusRegister.clear();
               setNeedRefreshTxs(true);
               setSelectedMultisig(item);
             }
@@ -3865,33 +3832,44 @@ export const SafeView = () => {
       !publicKey || 
       !multisigClient || 
       !needRefreshTxs ||
-      !selectedMultisigRef.current
+      !selectedMultisig
     ) { 
       return;
     }
 
+    consoleOut('Triggered load proposals...', '', 'blue');
+
     setNeedRefreshTxs(false);
     setProposalsLoading(true);
-    setMultisigTxs([]);
+    setMultisigTxs(undefined);
 
-    consoleOut('Triggered load proposals...', '', 'blue');
-    getMultisigProposals(selectedMultisigRef.current)
+    getMultisigProposals(selectedMultisig)
       .then((response: MultisigProposalsWithAuthority) => {
         consoleOut('response:', response, 'orange');
         const currentlyActiveMultisig = getActiveMultisigAuthorityByReference();
         if (response.multisigAuth === currentlyActiveMultisig) {
           consoleOut('proposals assigned to:', currentlyActiveMultisig, 'green');
           setMultisigTxs(response.transactions);
+          setLoadingProposals(false);
+        } else {
+          setMultisigTxs([]);
         }
       })
-      .catch((err: any) => console.error("Error fetching all transactions", err))
+      .catch((err: any) => {
+        setMultisigTxs([]);
+        console.error("Error fetching all transactions", err);
+      })
       .finally(() => setProposalsLoading(false));
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     multisigClient,
     needRefreshTxs,
+    selectedMultisig,
+    getActiveMultisigAuthorityByReference,
+    getMultisigProposals,
+    setProposalsLoading,
+    setMultisigTxs,
   ]);
 
   // Actually selects a multisig base on url
@@ -4240,21 +4218,15 @@ export const SafeView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {isUnderDevelopment() && (
         <div className="debug-bar">
-          <span className="ml-1">proposal-&gt;status:</span><span className="ml-1 font-bold fg-dark-active">{selectedProposal ? MultisigTransactionStatus[selectedProposal.status] : '-'}</span>
-          <span className="ml-1">proposal-&gt;didSigned:</span><span className="ml-1 font-bold fg-dark-active">{
-            selectedProposal
-              ? selectedProposal.didSigned === null
-                ? 'null'
-                : selectedProposal.didSigned === true
-                  ? 'true'
-                  : 'false'
-              : '-'}
-          </span>
-          <span className="ml-1">loadingProposalDetails:</span><span className="ml-1 font-bold fg-dark-active">{loadingProposalDetails ? 'true' : 'false'}</span>
+          <span className="mr-1 align-middle">loadingProposals</span>
+          <span className={`status position-relative align-middle ${loadingProposals ? 'error' : 'success'}`}></span>
+          <span className="mx-1 align-middle">loadingPrograms</span>
+          <span className={`status position-relative align-middle ${loadingPrograms ? 'error' : 'success'}`}></span>
+          <span className="ml-1">proposals:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
         </div>
-      )} */}
+      )}
 
       {detailsPanelOpen && (
         <Button
@@ -4320,6 +4292,7 @@ export const SafeView = () => {
                       disabled={!connected}
                       className="flex-center mr-1"
                       onClick={onCreateMultisigClick}>
+                      {/* onClick={onOpenMultisigModalClick}> */}
                         <IconSafe className="mean-svg-icons" />
                         {connected
                           ? t('multisig.create-new-multisig-account-cta')
@@ -4399,7 +4372,7 @@ export const SafeView = () => {
                               isProgramDetails={isProgramDetails}
                               isProposalDetails={isProposalDetails}
                               loadingPrograms={loadingPrograms}
-                              loadingProposals={getProposalsLoadingStatus()}
+                              loadingProposals={loadingProposals}
                               multisigClient={multisigClient}
                               onDataToProgramView={goToProgramDetailsHandler}
                               onDataToSafeView={goToProposalDetailsHandler}
@@ -4430,7 +4403,7 @@ export const SafeView = () => {
                             multisigClient={multisigClient}
                             hasMultisigPendingProposal={hasMultisigPendingProposal()}
                             isBusy={isBusy}
-                            loadingData={loadingMultisigAccounts || getProposalsLoadingStatus() || loadingProposalDetails}
+                            loadingData={loadingMultisigAccounts || loadingProposals || loadingProposalDetails}
                           />
                         ) : isProgramDetails ? (
                           <ProgramDetailsView
@@ -4474,10 +4447,21 @@ export const SafeView = () => {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           multisigAccounts={multisigAccounts}
-          handleOk={onAcceptCreateMultisig}
+          // handleOk={onAcceptCreateMultisig}
+          handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
           handleClose={() => setIsCreateMultisigModalVisible(false)}
           isBusy={isBusy}
         />
+
+        // <MultisigCreateSafeModal
+        //   isVisible={isMultisigCreateSafeModalVisible}
+        //   nativeBalance={nativeBalance}
+        //   transactionFees={transactionFees}
+        //   multisigAccounts={multisigAccounts}
+        //   handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
+        //   handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
+        //   isBusy={isBusy}
+        // />
       )}
 
       {(isEditMultisigModalVisible && selectedMultisig) && (

@@ -20,7 +20,7 @@ import { StakeTabView } from "../../views/StakeTabView";
 import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { MEAN_TOKEN_LIST, SOCN_USD } from "../../constants/token-list";
+import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { InvestItemPaths } from "../../models/enums";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
@@ -56,7 +56,6 @@ export const InvestView = () => {
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [meanPrice, setMeanPrice] = useState<number>(0);
-  const [socnUsdTokenPrice, setSocnUsdTokenPrice] = useState<number>(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [currentTab, setCurrentTab] = useState<StakeOption>(undefined);
   const [stakingRewards, setStakingRewards] = useState<number>(0);
@@ -77,20 +76,14 @@ export const InvestView = () => {
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
   const [shouldRefreshStakePoolInfo, setShouldRefreshStakePoolInfo] = useState(true);
   const [refreshingStakePoolInfo, setRefreshingStakePoolInfo] = useState(false);
-  // const [bondsAmount, setBondsAmount] = useState<string>('');
-
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
   const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
-  const [canSubscribe, setCanSubscribe] = useState(true);
-
   // Tokens and balances
   const [meanAddresses, setMeanAddresses] = useState<Env>();
   const [stakingPair, setStakingPair] = useState<StakingPair | undefined>(undefined);
   const [sMeanBalance, setSmeanBalance] = useState<number>(0);
   const [meanBalance, setMeanBalance] = useState<number>(0);
   const [lastTimestamp, setLastTimestamp] = useState(Date.now());
-  const [socnUsdBalance, setSocnUsdBalance] = useState<number>(0);
-
   const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
@@ -117,10 +110,6 @@ export const InvestView = () => {
     publicKey
   ]);
 
-  const socnUsdToken = useMemo(() => {
-    return SOCN_USD as TokenInfo;
-  }, []);
-
   // Keep MEAN price updated
   useEffect(() => {
 
@@ -131,17 +120,6 @@ export const InvestView = () => {
     }
 
   }, [coinPrices, getTokenPriceBySymbol, stakingPair]);
-
-  // Keep SOCN/USDC price updated
-  useEffect(() => {
-
-    if (coinPrices) {
-      const price = getTokenPriceBySymbol(socnUsdToken.symbol);
-      consoleOut('SOCN/USDC Price:', price, 'crimson');
-      setSocnUsdTokenPrice(price);
-    }
-
-  }, [coinPrices, getTokenPriceBySymbol, socnUsdToken, stakingPair]);
 
   /////////////////
   //  Callbacks  //
@@ -158,35 +136,9 @@ export const InvestView = () => {
     }
   }, [connection]);
 
-  const refresSocnUsdcBalance = useCallback(async () => {
-
-    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      return;
-    }
-
-    let balance = 0;
-
-    try {
-      const socnUsdTokenPk = new PublicKey(socnUsdToken.address);
-      const tokenAddress = await findATokenAddress(publicKey, socnUsdTokenPk);
-      balance = await getTokenAccountBalanceByAddress(tokenAddress);
-      consoleOut('SOCN/USDC balance:', balance, 'blue');
-      setSocnUsdBalance(balance);
-    } catch (error) {
-      setSocnUsdBalance(balance);
-    }
-
-  }, [
-    accounts,
-    publicKey,
-    connection,
-    socnUsdToken.address,
-    getTokenAccountBalanceByAddress
-  ]);
-
   const refreshMeanBalance = useCallback(async () => {
 
-    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
       return;
     }
 
@@ -207,17 +159,16 @@ export const InvestView = () => {
       setMeanBalance(balance);
     }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     accounts,
     publicKey,
-    connection,
     stakingPair,
-    getTokenAccountBalanceByAddress
   ]);
 
   const refreshStakedMeanBalance = useCallback(async () => {
 
-    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
       return;
     }
 
@@ -234,12 +185,11 @@ export const InvestView = () => {
     consoleOut('sMEAN balance:', balance, 'blue');
     setSmeanBalance(balance);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     accounts,
     publicKey,
-    connection,
     stakingPair,
-    getTokenAccountBalanceByAddress
   ]);
 
   const investItems = useMemo(() => [
@@ -340,7 +290,7 @@ export const InvestView = () => {
       name: "Lido",
       token: "stSOL",
       href: "https://solana.lido.fi/",
-      img: "https://www.orca.so/static/media/stSOL.9fd59818.png",
+      img: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj/logo.png",
       totalStaked: lidoTotalStakedValue > 0 ? `${formatThousands(lidoTotalStakedValue)} SOL` : "--",
       apy: lidoAprValue > 0 ? `${cutNumber(lidoAprValue, 2)}%` : "--"
     }
@@ -626,6 +576,7 @@ export const InvestView = () => {
     if (!publicKey || !stakeClient) { return; }
 
     if (!pageInitialized) {
+      setPageInitialized(true);
       const meanAddress = stakeClient.getMintAddresses();
 
       setMeanAddresses(meanAddress);
@@ -702,21 +653,6 @@ export const InvestView = () => {
     publicKey,
     stakingPair,
     refreshStakedMeanBalance,
-  ]);
-
-  // Keep SOCN/USDC balance updated
-  useEffect(() => {
-    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      setMeanBalance(0);
-      return;
-    }
-
-    refresSocnUsdcBalance();
-
-  }, [
-    accounts,
-    publicKey,
-    refresSocnUsdcBalance,
   ]);
 
   // Refresh pools info
@@ -1211,6 +1147,7 @@ export const InvestView = () => {
                                   selectedToken={stakingPair?.unstakedToken}
                                   meanBalance={meanBalance}
                                   smeanBalance={sMeanBalance}
+                                  onTxFinished={refreshMeanBalance}
                                 />
                               )}
 

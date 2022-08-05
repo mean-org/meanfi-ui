@@ -8,7 +8,7 @@ import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-stream
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
-import { getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
+import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
@@ -133,9 +133,18 @@ export const MoneyStreamDetails = (props: {
       }
 
       if (item.version < 2) {
-        value += formatThousands(item.rateAmount, decimals, 2);
+        value += formatThousands(
+          item.rateAmount,
+          friendlyDisplayDecimalPlaces(item.rateAmount, decimals),
+          2
+        );
       } else {
-        value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
+        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
+        value += formatThousands(
+          rateAmount,
+          friendlyDisplayDecimalPlaces(rateAmount, decimals),
+          2
+        );
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
@@ -157,9 +166,18 @@ export const MoneyStreamDetails = (props: {
       }
 
       if (item.version < 2) {
-        value += formatThousands(item.allocationAssigned, decimals, 2);
+        value += formatThousands(
+          item.allocationAssigned,
+          friendlyDisplayDecimalPlaces(item.allocationAssigned, decimals),
+          2
+        );
       } else {
-        value += formatThousands(makeDecimal(new BN(item.allocationAssigned), decimals), decimals, 2);
+        const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
+        value += formatThousands(
+          allocationAssigned,
+          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+          2
+        );
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
@@ -439,7 +457,9 @@ export const MoneyStreamDetails = (props: {
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
               toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount, 
-              stream.associatedToken as string
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}  ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
           : '--'
         }
@@ -458,8 +478,10 @@ export const MoneyStreamDetails = (props: {
       <>
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
-            toUiAmount(new BN(v2.remainingAllocationAmount), token?.decimals || 6) : (v1.allocationAssigned || v1.allocationLeft), 
-              stream.associatedToken as string
+              toUiAmount(new BN(v2.remainingAllocationAmount), token?.decimals || 6) : (v1.allocationAssigned || v1.allocationLeft), 
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}`
           : '--'
         }
@@ -478,8 +500,10 @@ export const MoneyStreamDetails = (props: {
       <>
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
-            toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
-              stream.associatedToken as string
+              toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}`
           : '--'
         }
@@ -498,8 +522,10 @@ export const MoneyStreamDetails = (props: {
       <>
         {stream
           ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
-            toUiAmount(new BN(v2.fundsSentToBeneficiary), token?.decimals || 6) : (v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount), 
-              stream.associatedToken as string
+              toUiAmount(new BN(v2.fundsSentToBeneficiary), token?.decimals || 6) : (v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount), 
+              stream.associatedToken as string,
+              false,
+              splTokenList
             )}`
           : '--'
         }
@@ -666,7 +692,7 @@ export const MoneyStreamDetails = (props: {
           </div>
           ) : null
         }
-        
+
         {!isXsDevice && (
           <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
             <div onClick={hideDetailsHandler} className="back-button icon-button-container">

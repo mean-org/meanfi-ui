@@ -1,13 +1,12 @@
 import './style.scss';
 import { formatThousands, shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { consoleOut } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
-import { IconArrowForward } from '../../../../Icons';
 import { useWallet } from '../../../../contexts/wallet';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { openNotification } from '../../../../components/Notifications';
@@ -17,8 +16,9 @@ import { useNativeAccount } from '../../../../contexts/accounts';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
-import BN from 'bn.js';
 import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
+import BN from 'bn.js';
+import { IconArrowForward } from '../../../../Icons';
 import { ResumeItem } from '../../../../components/ResumeItem';
 
 export const SafeMeanInfo = (props: {
@@ -79,13 +79,9 @@ export const SafeMeanInfo = (props: {
   const { address } = useParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
-  const { connected } = useWallet();
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [multisigAccounts, setMultisigAccounts] = useState<(MultisigInfo)[]>([]);
-  const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAddress, setMultisigAddress] = useState('');
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
@@ -151,7 +147,14 @@ export const SafeMeanInfo = (props: {
     selectedMultisig, 
     multisigSolBalance
   ]);
-  
+
+  const isTxInProgress = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+  ]);
+
   // Get Multisig Vaults
   useEffect(() => {
 
@@ -224,28 +227,6 @@ export const SafeMeanInfo = (props: {
     }
   }, [location]);
 
-  // Load/Unload multisig on wallet connect/disconnect
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        setLoadingMultisigAccounts(true);
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'green');
-        setMultisigAccounts([]);
-        sethHighlightedMultisigTx(undefined);
-        setMultisigTransactionSummary(undefined);
-        setLoadingMultisigAccounts(false);
-        navigate('/multisig');
-      }
-    }
-  }, [
-    connected,
-    publicKey,
-    previousWalletConnectState,
-    navigate,
-  ]);
-
   // Handle what to do when pending Tx confirmation reaches finality or on error
   useEffect(() => {
     if (!publicKey || fetchTxInfoStatus === "fetching") { return; }
@@ -255,8 +236,6 @@ export const SafeMeanInfo = (props: {
         clearTxConfirmationContext();
         sethHighlightedMultisigTx(undefined);
         setMultisigTransactionSummary(undefined);
-        // refreshVaults();
-        setLoadingMultisigTxs(true);
       } else if (fetchTxInfoStatus === "error") {
         clearTxConfirmationContext();
         openNotification({
@@ -292,10 +271,7 @@ export const SafeMeanInfo = (props: {
     lastSentTxOperationType
   ]);
 
-  //////////////////
-  //    MODALS    //
-  //////////////////
-
+  // Get multisig SOL balance
   useEffect(() => {
 
     if (!connection || !address || !selectedMultisig) { return; }
@@ -320,12 +296,21 @@ export const SafeMeanInfo = (props: {
     selectedMultisig,
   ]);
 
-  const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
-  }, [
-    isBusy,
-    fetchTxInfoStatus,
-  ]);
+  useEffect(() => {
+    if (multisigTxs && multisigTxs.length > 0) {
+      setAmountOfProposals(`(${multisigTxs.length})`)
+    } else {
+      setAmountOfProposals("")
+    }
+  }, [multisigTxs]);
+
+  useEffect(() => {
+    if (programs && programs.length > 0) {
+      setAmountOfPrograms(`(${programs.length})`)
+    } else {
+      setAmountOfPrograms("")
+    }
+  }, [programs]);
 
   useEffect(() => {
     const loading = selectedMultisig ? true : false;
@@ -341,141 +326,117 @@ export const SafeMeanInfo = (props: {
   ]);
 
   // Proposals list
-  const renderListOfProposals = (
-    <>
-      {!loadingProposals ? (
-        (multisigTxs !== undefined && multisigTxs.length > 0) ? (
-          multisigTxs.map((proposal, index) => {
-            const onSelectProposal = () => {
-              // Sends proposal value to the parent component "SafeView"
-              onDataToSafeView(proposal);
-            };
-
-            const title = proposal.details.title ? proposal.details.title : "Unknown proposal";
-
-            // Number of participants who have already approved the Tx
-            const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
-            const rejectedSigners = proposal.signers.filter((s: any) => s === false).length;
-            const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate : "";
-            const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
-
-            return (
-              <div 
-                key={index}
-                onClick={onSelectProposal}
-                className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                >
-                  <ResumeItem
-                    id={proposal.id.toBase58()}
-                    // logo={proposal.logo}
-                    title={title}
-                    expires={expirationDate}
-                    executedOn={executedOnDate}
-                    approved={approvedSigners}
-                    rejected={rejectedSigners}
-                    userSigned={proposal.didSigned}
-                    status={proposal.status}
-                    hasRightIcon={true}
-                    rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                    isLink={true}
-                    classNameRightContent="resume-stream-row"
-                    classNameIcon="icon-proposal-row"
-                    xs={24}
-                    md={24}
-                  />
-              </div>
-            )
-          })
-        ) : (
-          <span className="pl-1">This multisig has no proposals</span>
-        )
-      ) : (
-        <span className="pl-1">Loading proposals ...</span>
-      )}
-    </>
-  );
-
-  const renderListOfPrograms = (
-    <>
-      {!loadingPrograms ? (
-        (programs !== undefined && programs.length > 0) ? (
-          programs.map((program, index) => {
-            const onSelectProgram = () => {
-              // Sends program value to the parent component "SafeView"
-              onDataToProgramView(program);
-            }
-
-            const programTitle = program.pubkey ? shortenAddress(program.pubkey.toBase58(), 4) : "Unknown program";
-            const programSubtitle = shortenAddress(program.pubkey.toBase58(), 8);
-  
-            return (
-              <div 
-                key={`${index + 1}`}
-                onClick={onSelectProgram}
-                className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-              >
-                  <ResumeItem
-                    id={program.pubkey.toBase58()}
-                    title={programTitle}
-                    subtitle={programSubtitle}
-                    amount={formatThousands(program.size)}
-                    resume="bytes"
-                    hasRightIcon={true}
-                    rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                    isLink={true}
-                  />
-              </div>
-            )
-          })
-        ) : (
-          <span className="pl-1">This multisig has no programs</span>
-        )
-      ) : (
-        <span className="pl-1">Loading programs ...</span>
-      )}
-    </>
-  );
-
-
-  useEffect(() => {
-    if (selectedMultisig) {
-      !loadingProposals ? (
-        multisigTxs && multisigTxs.length > 0 && (
-          setAmountOfProposals(`(${multisigTxs.length})`)
-        )
-      ) : (
-        setAmountOfProposals("")
-      )
+  const renderListOfProposals = useCallback(() => {
+    if (loadingProposals) {
+      return (<span className="pl-1">Loading proposals ...</span>);
     }
-  }, [loadingProposals, multisigTxs, selectedMultisig]);
 
-  useEffect(() => {
-    if (selectedMultisig) {
-      !loadingPrograms ? (
-        programs && programs.length > 0 ? (
-          setAmountOfPrograms(`(${programs.length})`)
-        ) : (
-          setAmountOfPrograms("")
-        )
-      ) : (
-        setAmountOfPrograms("")
-      )
+    return (
+      <>
+        {
+          multisigTxs && multisigTxs.length > 0 ? (
+            multisigTxs.map((proposal, index) => {
+              const onSelectProposal = () => {
+                // Sends proposal value to the parent component "SafeView"
+                onDataToSafeView(proposal);
+              };
+              const title = proposal.details.title ? proposal.details.title : "Unknown proposal";
+              // Number of participants who have already approved the Tx
+              const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
+              const rejectedSigners = proposal.signers.filter((s: any) => s === false).length;
+              const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate : "";
+              const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
+              return (
+                <div 
+                  key={index}
+                  onClick={onSelectProposal}
+                  className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                    <ResumeItem
+                      id={proposal.id.toBase58()}
+                      title={title}
+                      expires={expirationDate}
+                      executedOn={executedOnDate}
+                      approved={approvedSigners}
+                      rejected={rejectedSigners}
+                      userSigned={proposal.didSigned}
+                      status={proposal.status}
+                      hasRightIcon={true}
+                      rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                      isLink={true}
+                      classNameRightContent="resume-stream-row"
+                      classNameIcon="icon-proposal-row"
+                      xs={24}
+                      md={24}
+                    />
+                </div>
+              )
+            })
+          ) : (
+            <span className="pl-1">This multisig has no proposals</span>
+          )
+        }
+      </>
+    );
+  }, [loadingProposals, multisigTxs, onDataToSafeView]);
+
+  const renderListOfPrograms = useCallback(() => {
+    if (loadingPrograms) {
+      return (<span className="pl-1">Loading programs ...</span>);
     }
-  }, [loadingPrograms, programs, selectedMultisig]);
+
+    return (
+      <>
+        {
+          programs && programs.length > 0 ? (
+            programs.map((program, index) => {
+              const onSelectProgram = () => {
+                // Sends program value to the parent component "SafeView"
+                onDataToProgramView(program);
+              }
+              const programTitle = program.pubkey ? shortenAddress(program.pubkey.toBase58(), 4) : "Unknown program";
+              const programSubtitle = shortenAddress(program.pubkey.toBase58(), 8);
+              return (
+                <div 
+                  key={`${index + 1}`}
+                  onClick={onSelectProgram}
+                  className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                    <ResumeItem
+                      id={program.pubkey.toBase58()}
+                      title={programTitle}
+                      subtitle={programSubtitle}
+                      amount={formatThousands(program.size)}
+                      resume="bytes"
+                      hasRightIcon={true}
+                      rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                      isLink={true}
+                    />
+                </div>
+              )
+            })
+          ) : (
+            <span className="pl-1">This multisig has no programs</span>
+          )
+        }
+      </>
+    );
+  }, [loadingPrograms, onDataToProgramView, programs]);
 
   // Tabs
-  const tabs = [
-    {
-      id: "proposals",
-      name: `Proposals ${amountOfProposals}`,
-      render: renderListOfProposals
-    },
-    {
-      id: "programs",
-      name: `Programs ${amountOfPrograms}`,
-      render: renderListOfPrograms
-    }
-  ];
+  const proposalsTabContent = useCallback(() => {
+    return {
+        id: "proposals",
+        name: `Proposals ${amountOfProposals}`,
+        render: renderListOfProposals()
+      };
+  }, [amountOfProposals, renderListOfProposals]);
+
+  const programsTabContent = useCallback(() => {
+    return {
+        id: "programs",
+        name: `Programs ${amountOfPrograms}`,
+        render: renderListOfPrograms()
+      };
+  }, [amountOfPrograms, renderListOfPrograms]);
 
   return (
     <>
@@ -487,7 +448,8 @@ export const SafeMeanInfo = (props: {
         onRefreshTabsInfo={onRefreshRequested}
         selectedMultisig={selectedMultisig}
         selectedTab={selectedTab}
-        tabs={tabs}
+        programsTabContent={programsTabContent()}
+        proposalsTabContent={proposalsTabContent()}
         vestingAccountsCount={vestingAccountsCount}
       />
     </>

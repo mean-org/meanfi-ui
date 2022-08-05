@@ -161,6 +161,13 @@ export interface CreateNewProposalParams {
   instruction: UiInstruction;
 }
 
+export interface CreateNewSafeParams {
+  label: string;
+  threshold: number;
+  owners: MultisigParticipant[];
+  isAllowToRejectProposal?: boolean;
+}
+
 export const getFees = async (
   program: Program<Idl>,
   action: MULTISIG_ACTIONS

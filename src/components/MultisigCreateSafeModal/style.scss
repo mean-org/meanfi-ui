@@ -1,0 +1,85 @@
+.multisig-create-safe-modal {
+  .ant-modal-header,
+  .ant-modal-body {
+    .ant-divider.ant-divider-horizontal.ant-divider-plain {
+      margin: 0 !important;
+    }
+  }
+  .ant-modal-body {
+    padding: 0.25em !important;
+    .stepper-wrapper {
+      padding: 1.5em 1.75em 0 !important;
+      .flexible-left {
+        display: block !important;
+        float: right;
+        margin-bottom: 0.5em;
+        margin-top: -0.6em;
+        .stepper-label {
+          font-size: 12px !important;
+        }
+      }
+    }
+    .contract-wrapper {
+      padding: 1.5em;
+    }
+    .contract-wrapper.panel1.show,
+    .contract-wrapper.panel2.show,
+    .contract-wrapper.panel3.show {
+      .left-title {
+        margin-top: -2.4em;
+      }
+    }
+  }
+  .two-column-form-layout {
+    display: flex;
+    margin: 1em auto;
+    
+    @media (min-width: 576px) {
+      .right {
+        display: flex;
+        align-items: center;
+      }
+    }
+    .right {
+      padding-top: 1em;
+    }
+  }
+
+  .required-signatures-box {
+    border: 2px solid var(--color-secondary-alpha-05);
+    border-radius: 0.25em;
+    padding: 0.3em 0.6em 0.7em;
+    width: fit-content;
+  }
+
+  .required-signatures-icons {
+    display: flex;
+    flex-wrap: wrap;
+    .icon-container {
+      border: 1px solid #11141c;
+      border-radius: 0.25em;
+      width: 3.5em;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      color: #11141c;
+      font-size: 16px;
+      padding: 0.25em 0.25em 0.25em 0;
+      font-weight: 600;
+      .lock-icon {
+        color: var(--color-gray-dark);
+        width: 1.2em;
+        height: 1.2em;
+      }
+      .key-icon {
+        color: var(--color-white);
+        width: 1.2em;
+        height: 1.1em;
+        transform: scaleX(-1) rotate(-270deg);
+      }
+    }
+  }
+  .icon-info-circle svg {
+    height: 14px !important;
+  }
+}

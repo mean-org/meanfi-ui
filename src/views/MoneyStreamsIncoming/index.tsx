@@ -49,6 +49,7 @@ export const MoneyStreamsIncomingView = (props: {
   multisigAccounts: MultisigInfo[] | undefined;
 }) => {
   const {
+    splTokenList,
     deletedStreams,
     transactionStatus,
     refreshTokenBalance,
@@ -286,7 +287,6 @@ export const MoneyStreamsIncomingView = (props: {
     const transferOwnership = async (dataStream: any) => {
       if (!msp || !publicKey || !streamSelected) { return null; }
 
-      // TODO: validate that the stream is indeed an incoming stream for the wallet
       if (param !== "multisig") {
         consoleOut('Creating msp.transferStream() Tx...', '', 'blue');
         return await msp.transferStream(
@@ -582,10 +582,10 @@ export const MoneyStreamsIncomingView = (props: {
     }
   }, [
     msp,
+    param,
     wallet,
     publicKey,
     connection,
-    selectedToken,
     nativeBalance,
     streamSelected,
     multisigClient,
@@ -596,7 +596,6 @@ export const MoneyStreamsIncomingView = (props: {
     transactionStatus.currentOperation,
     showTransferStreamTransactionModal,
     enqueueTransactionConfirmation,
-    isIncomingMultisigStream,
     resetTransactionStatus,
     setTransactionStatus,
   ]);
@@ -1274,7 +1273,9 @@ export const MoneyStreamsIncomingView = (props: {
                 isNewStream()
                   ? toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6)
                   : v1.escrowVestedAmount,
-                streamSelected.associatedToken as string
+                streamSelected.associatedToken as string,
+                false,
+                splTokenList
               )
             : '--'
           }
