@@ -186,8 +186,8 @@ ul.tabs {
     scroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
     &::-webkit-scrollbar {
-      width: 4px;
-      height: 0;
+      width: 0;
+      height: 4px;
     }
     &::-webkit-scrollbar-track-piece {
       -webkit-border-radius: 0;
@@ -216,10 +216,10 @@ ul.tabs {
     }
   }
   .slider-row {
-    padding-left: 10px;
+    //padding-left: 10px;
     .slide {
       flex-wrap: nowrap !important;
-      width: 100%;
+      //width: 100%;
       display: flex;
       justify-content: center;
       .slide-card {

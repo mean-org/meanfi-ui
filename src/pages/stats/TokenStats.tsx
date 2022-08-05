@@ -254,7 +254,7 @@ export const ThirdCardsLayout = () => {
                     <span className="info-name mb-2">{pair.name}</span>
                     <div className="info-liquidity mb-3">
                       <span>{t('stats.pairs.total-liquidity')}:</span>
-                      <span>${getFormattedRateAmount(pair.total_liquidity)}</span>
+                      <span>${formatThousands(pair.total_liquidity)}</span>
                   </div>
                 </div>
                 <div className="slide-content_buttons">
