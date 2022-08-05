@@ -170,24 +170,20 @@ export const MoneyStreamDetails = (props: {
           title = t('streams.stream-list.subtitle-scheduled-inbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string, false)}`;
         } else {
           title = t('streams.stream-list.subtitle-running-inbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string, false)}`;
         }
       } else {
         if (item.status === STREAM_STATUS.Schedule) {
           title = t('streams.stream-list.subtitle-scheduled-outbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string, false)}`;
         } else {
           title = t('streams.stream-list.subtitle-running-outbound', {
             rate: rateAmount
           });
-          title += ` ${getShortDate(item.startUtc as string, false)}`;
         }
       }
     }

@@ -305,24 +305,20 @@ export const VestingContractStreamList = (props: {
                     title = t('streams.stream-list.subtitle-scheduled-inbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 } else {
                     title = t('streams.stream-list.subtitle-running-inbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 }
             } else {
                 if (item.status === STREAM_STATUS.Schedule) {
                     title = t('streams.stream-list.subtitle-scheduled-outbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 } else {
                     title = t('streams.stream-list.subtitle-running-outbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 }
             }
         }
