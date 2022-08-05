@@ -68,6 +68,7 @@ const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingAccountDetailTab = "overview" | "streams" | "activity" | undefined;
 let isWorkflowLocked = false;
+const notificationKey = 'updatable';
 
 export const VestingView = () => {
   const {
@@ -410,6 +411,71 @@ export const VestingView = () => {
     }
   }, []);
 
+  const notifyMultisigVestingContractActionFollowup = useCallback(async (message1: string, message2: string, item: TxConfirmationInfo) => {
+
+    const turnOffLockWorkflow = () => {
+      isWorkflowLocked = false;
+    }
+
+    if (!item || !item.extras || !item.extras.multisigId) {
+      turnOffLockWorkflow();
+      return;
+    }
+
+    const openFinalNotification = () => {
+      const btn = (
+        <Button
+          type="primary"
+          size="small"
+          shape="round"
+          className="extra-small"
+          onClick={() => {
+            notification.close(notificationKey);
+            const url = `/multisig/${item.extras.multisigId}?v=proposals`;
+            setHighLightableMultisigId(item.extras.multisigId);
+            navigate(url);
+          }}>
+          See proposals
+        </Button>
+      );
+      notification.open({
+        type: "info",
+        message: <span></span>,
+        description: (<div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>),
+        btn,
+        key: notificationKey,
+        duration: 20,
+        placement: "topRight",
+        top: 110,
+        onClose: turnOffLockWorkflow,
+      });
+    };
+
+    await delay(4000);
+    notification.open({
+      type: "info",
+      message: <span></span>,
+      description: (<span>{message1}</span>),
+      key: notificationKey,
+      duration: 8,
+      placement: "topRight",
+      top: 110,
+      onClose: () => {
+        notification.open({
+          type: "info",
+          message: <span></span>,
+          description: (<span>{message2}</span>),
+          key: notificationKey,
+          duration: 8,
+          placement: "topRight",
+          top: 110,
+          onClose: openFinalNotification
+        });
+      }
+    });
+
+  }, [navigate, setHighLightableMultisigId]);
+
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
@@ -435,53 +501,6 @@ export const VestingView = () => {
         console.log('element not found:', '#hard-refresh-contracts-cta', 'red');
       }
     };
-
-    const turnOffLockWorkflow = () => {
-      isWorkflowLocked = false;
-    }
-
-    const notifyMultisigVestingContractActionFollowup = async (message1: string, message2: string, item: TxConfirmationInfo) => {
-      if (!item || !item.extras || !item.extras.multisigId) {
-        turnOffLockWorkflow();
-        return;
-      }
-      openNotification({
-        type: "info",
-        description: (<span>{message1}</span>),
-        duration: 8,
-      });
-      await delay(8000);
-      openNotification({
-        type: "info",
-        description: (<span>{message2}</span>),
-        duration: 8,
-      });
-      await delay(8000);
-      openNotification({
-        type: "info",
-        key: 'goto-proposals-notify',
-        description: (
-          <>
-            <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
-            <Button
-              type="primary"
-              size="small"
-              shape="round"
-              className="extra-small"
-              onClick={() => {
-                notification.close('goto-proposals-notify');
-                const url = `/multisig/${item.extras.multisigId}?v=proposals`;
-                setHighLightableMultisigId(item.extras.multisigId);
-                navigate(url);
-              }}>
-              See proposals
-            </Button>
-          </>
-        ),
-        duration: 30,
-        handleClose: turnOffLockWorkflow
-      });
-    }
 
     switch (item.operationType) {
       case OperationType.TreasuryAddFunds:
@@ -586,8 +605,7 @@ export const VestingView = () => {
         break;
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, setHighLightableMultisigId]);
+  }, [notifyMultisigVestingContractActionFollowup, recordTxConfirmation]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -1949,7 +1967,7 @@ export const VestingView = () => {
       const data = {
         proposalTitle: params.proposalTitle,                      // proposalTitle
         payer: publicKey.toBase58(),                              // payer
-        contributor: contributor,                                 // contributor
+        contributor,                                              // contributor
         treasury: treasury.toBase58(),                            // treasury
         associatedToken: associatedToken.toBase58(),              // associatedToken
         stream: params.streamId ? params.streamId : '',           // stream
@@ -1960,7 +1978,7 @@ export const VestingView = () => {
       // Report event to Segment analytics
       const segmentData: SegmentStreamAddFundsData = {
         stream: data.stream,
-        contributor: data.contributor,
+        contributor,
         treasury: data.treasury,
         asset: `${token.symbol} [${token.address}]`,
         assetPrice: price,

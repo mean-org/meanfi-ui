@@ -1,4 +1,5 @@
 import notification, { IconType } from "antd/lib/notification";
+import { ReactNode } from "react";
 
 export const openNotification = (props: {
     type?: IconType,
@@ -7,9 +8,11 @@ export const openNotification = (props: {
     description: JSX.Element | string;
     duration?: number | null | undefined;
     key?: string;
+    btn?: ReactNode;
 }) => {
-    const { type, title, description, duration, handleClose, key } = props;
+    const { type, title, description, duration, handleClose, key, btn } = props;
     notification.open({
+        btn,
         key,
         type: type || "info",
         top: 110,
@@ -19,6 +22,6 @@ export const openNotification = (props: {
         ),
         duration: duration,
         placement: "topRight",
-        onClose: handleClose ? handleClose : undefined,
+        onClose: handleClose,
     });
 };
