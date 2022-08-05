@@ -87,6 +87,7 @@ import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuth
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
 import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
+import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -4290,7 +4291,8 @@ export const SafeView = () => {
                       shape="round"
                       disabled={!connected}
                       className="flex-center mr-1"
-                      onClick={onOpenMultisigModalClick}>
+                      onClick={onCreateMultisigClick}>
+                      {/* onClick={onOpenMultisigModalClick}> */}
                         <IconSafe className="mean-svg-icons" />
                         {connected
                           ? t('multisig.create-new-multisig-account-cta')
@@ -4439,26 +4441,27 @@ export const SafeView = () => {
 
       </div>
 
-      {isMultisigCreateSafeModalVisible && (
-        // <MultisigCreateModal
-        //   isVisible={isCreateMultisigModalVisible}
-        //   nativeBalance={nativeBalance}
-        //   transactionFees={transactionFees}
-        //   multisigAccounts={multisigAccounts}
-        //   handleOk={onAcceptCreateMultisig}
-        //   handleClose={() => setIsCreateMultisigModalVisible(false)}
-        //   isBusy={isBusy}
-        // />
-
-        <MultisigCreateSafeModal
-          isVisible={isMultisigCreateSafeModalVisible}
+      {isCreateMultisigModalVisible && (
+        <MultisigCreateModal
+          isVisible={isCreateMultisigModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           multisigAccounts={multisigAccounts}
+          // handleOk={onAcceptCreateMultisig}
           handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
-          handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
+          handleClose={() => setIsCreateMultisigModalVisible(false)}
           isBusy={isBusy}
         />
+
+        // <MultisigCreateSafeModal
+        //   isVisible={isMultisigCreateSafeModalVisible}
+        //   nativeBalance={nativeBalance}
+        //   transactionFees={transactionFees}
+        //   multisigAccounts={multisigAccounts}
+        //   handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
+        //   handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
+        //   isBusy={isBusy}
+        // />
       )}
 
       {(isEditMultisigModalVisible && selectedMultisig) && (
