@@ -413,12 +413,8 @@ export const VestingView = () => {
 
   const notifyMultisigVestingContractActionFollowup = useCallback(async (message1: string, message2: string, item: TxConfirmationInfo) => {
 
-    const turnOffLockWorkflow = () => {
-      isWorkflowLocked = false;
-    }
-
     if (!item || !item.extras || !item.extras.multisigId) {
-      turnOffLockWorkflow();
+      isWorkflowLocked = false;
       return;
     }
 
@@ -431,6 +427,7 @@ export const VestingView = () => {
           className="extra-small"
           onClick={() => {
             notification.close(notificationKey);
+            isWorkflowLocked = false;
             const url = `/multisig/${item.extras.multisigId}?v=proposals`;
             setHighLightableMultisigId(item.extras.multisigId);
             navigate(url);
@@ -447,7 +444,7 @@ export const VestingView = () => {
         duration: 20,
         placement: "topRight",
         top: 110,
-        onClose: turnOffLockWorkflow,
+        onClose: () => isWorkflowLocked = false,
       });
     };
 
@@ -1524,6 +1521,7 @@ export const VestingView = () => {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuthority = '';
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -1548,6 +1546,7 @@ export const VestingView = () => {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
+      multisigAuthority = multisig.authority.toBase58();
 
       const closeTreasury = await msp.closeTreasury(
         publicKey,                                  // payer
@@ -1802,7 +1801,7 @@ export const VestingView = () => {
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryClose,
-              finality: "finalized",
+              finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
               loadingMessage: `Closing vesting contract: ${selectedVestingContract.name}`,
@@ -1810,7 +1809,7 @@ export const VestingView = () => {
               completedMessage: `Vesting contract ${selectedVestingContract.name} successfully closed`,
               extras: {
                 vestingContractId: selectedVestingContract.id as string,
-                multisigId: getMultisigIdFromContext()
+                multisigId: multisigAuthority
               }
             });
             setIsBusy(false);
@@ -1860,6 +1859,7 @@ export const VestingView = () => {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuthority = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -1896,6 +1896,7 @@ export const VestingView = () => {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
+      multisigAuthority = multisig.authority.toBase58();
       let operationType = OperationType.StreamAddFunds;
       let addFundsTx: Transaction;
 
@@ -2199,7 +2200,7 @@ export const VestingView = () => {
               )} ${params.associatedToken?.symbol}`,
               extras: {
                 vestingContractId: selectedVestingContract.id as string,
-                multisigId: getMultisigIdFromContext(),
+                multisigId: multisigAuthority,
                 streamId: params.streamId
               }
             });
@@ -2589,7 +2590,7 @@ export const VestingView = () => {
               completedMessage: params.txConfirmedDescription,
               extras: {
                 vestingContractId: selectedVestingContract.id as string,
-                multisigId: getMultisigIdFromContext(), // params.multisig
+                multisigId: params.multisig,
                 streamId: generatedStremId
               }
             });
@@ -2629,6 +2630,7 @@ export const VestingView = () => {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
+    let multisigAuthority = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -2655,6 +2657,7 @@ export const VestingView = () => {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
+      multisigAuthority = multisig.authority.toBase58();
 
       const msTreasuryWithdraw = await msp.treasuryWithdraw(
         new PublicKey(data.payer),              // payer
@@ -2958,7 +2961,7 @@ export const VestingView = () => {
               completedMessage,
               extras: {
                 vestingContractId: selectedVestingContract.id as string,
-                multisigId: getMultisigIdFromContext(), // params.multisig
+                multisigId: multisigAuthority, // params.multisig
               }
             });
             setIsBusy(false);
@@ -2982,7 +2985,6 @@ export const VestingView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    const txFees = await getTransactionFees(MSP_ACTIONS.pauseStream);
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -3295,17 +3297,13 @@ export const VestingView = () => {
     publicKey,
     connection,
     nativeBalance,
-    multisigTxFees,
-    selectedVestingContract,
     transactionCancelled,
-    transactionFees.mspFlatFee,
-    transactionFees.blockchainFee,
+    selectedVestingContract,
     transactionStatus.currentOperation,
     onRefreshTreasuryBalanceTransactionFinished,
     enqueueTransactionConfirmation,
     resetTransactionStatus,
     setTransactionStatus,
-    isMultisigTreasury,
   ]);
 
   // Edit vesting contract settings
@@ -4318,14 +4316,14 @@ export const VestingView = () => {
     // Render normal UI
     return (
       <>
-        {/* {isLocal() && (
+        {isUnderDevelopment() && (
           <div className="debug-bar">
-            <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
-            <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
+            <span className="ml-1">isWorkflowLocked:</span><span className="ml-1 font-bold fg-dark-active">{isWorkflowLocked ? 'true' : 'false'}</span>
+            {/* <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
             <span className="ml-1">needReloadMultisigs:</span><span className="ml-1 font-bold fg-dark-active">{needReloadMultisigs ? 'true' : 'false'}</span>
-            <span className="ml-1">loadingMultisigAccounts:</span><span className="ml-1 font-bold fg-dark-active">{loadingMultisigAccounts ? 'true' : 'false'}</span>
+            <span className="ml-1">loadingMultisigAccounts:</span><span className="ml-1 font-bold fg-dark-active">{loadingMultisigAccounts ? 'true' : 'false'}</span> */}
           </div>
-        )} */}
+        )}
 
         {detailsPanelOpen && (
           <Button
