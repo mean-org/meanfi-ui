@@ -377,7 +377,7 @@ export const MultisigCreateSafeModal = (props: {
             {/* <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}> */}
             <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
               <Row>
-                <Col span={12} className="d-flex justify-content-center">
+                {/* <Col span={12} className="d-flex justify-content-center">
                   <Button
                     block
                     shape="round"
@@ -391,8 +391,8 @@ export const MultisigCreateSafeModal = (props: {
                   >
                     Back
                   </Button>
-                </Col>
-                <Col span={12} className="d-flex justify-content-center">
+                </Col> */}
+                <Col span={24} className="d-flex justify-content-center">
                   <Button
                     block
                     type="primary"
