@@ -10,7 +10,7 @@ import { copyText } from '../../utils/ui';
 import { PriceGraph } from './PriceGraph';
 import { IconInfoCircle } from '../../Icons';
 import CardStats from './components/CardStats';
-import { formatThousands } from "../../utils/utils";
+import { formatThousands, openLinkInNewTab } from "../../utils/utils";
 import { MEAN_TOKEN } from "../../constants/token-list";
 import { AppStateContext } from "../../contexts/appstate";
 import { openNotification } from "../../components/Notifications";
@@ -257,11 +257,9 @@ export const ThirdCardsLayout = () => {
                       <span>${formatThousands(pair.total_liquidity)}</span>
                   </div> */}
                 </div>
-                <div className="slide-content_buttons">
-                  <Button type="primary" shape="round" size="small" className="thin-stroke">
-                    <a href={pair.buy} target="_blank" rel="noreferrer">
-                      {pair.type === "DEX" ? t('stats.total-liquidity-btn'): t('stats.buy-btn')}
-                    </a>
+                <div className="slide-content_buttons">                  
+                  <Button type="primary" shape="round" size="small" className="thin-stroke" onClick={() => openLinkInNewTab(pair.buy)}>
+                     {pair.type === "DEX" ? t('stats.total-liquidity-btn'): t('stats.buy-btn')}
                   </Button>
                 </div>
               </div>
