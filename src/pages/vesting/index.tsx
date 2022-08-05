@@ -2191,21 +2191,33 @@ export const VestingView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const loadingMessage = multisigAuthority
+              ? `Create proposal to ${params.streamId ? 'fund stream with' : 'fund vesting contract with'} ${formatThousands(
+                  parseFloat(params.amount),
+                  params.associatedToken?.decimals
+                )} ${params.associatedToken?.symbol}`
+              : `${params.streamId ? 'Fund stream with' : 'Fund vesting contract with'} ${formatThousands(
+                  parseFloat(params.amount),
+                  params.associatedToken?.decimals
+                )} ${params.associatedToken?.symbol}`;
+            const completedMessage = multisigAuthority
+              ? `Proposal to ${params.streamId ? 'fund stream with' : 'fund vesting contract with'} ${formatThousands(
+                  parseFloat(params.amount),
+                  params.associatedToken?.decimals
+                )} ${params.associatedToken?.symbol} was submitted for Multisig approval.`
+              : `${params.streamId ? 'Stream funded with' : 'Vesting contract funded with'} ${formatThousands(
+                  parseFloat(params.amount),
+                  params.associatedToken?.decimals
+                )} ${params.associatedToken?.symbol}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryAddFunds,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `${params.streamId ? 'Fund stream with' : 'Fund vesting contract with'} ${formatThousands(
-                parseFloat(params.amount),
-                params.associatedToken?.decimals
-              )} ${params.associatedToken?.symbol}`,
+              loadingMessage,
               completedTitle: "Transaction confirmed",
-              completedMessage: `${params.streamId ? 'Stream funded with' : 'Vesting contract funded with'} ${formatThousands(
-                parseFloat(params.amount),
-                params.associatedToken?.decimals
-              )} ${params.associatedToken?.symbol}`,
+              completedMessage,
               extras: {
                 vestingContractId: selectedVestingContract.id as string,
                 multisigId: multisigAuthority,
