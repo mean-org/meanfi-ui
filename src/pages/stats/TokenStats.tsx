@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CopyOutlined } from '@ant-design/icons';
+import { CopyOutlined, LinkOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
 
 import "./style.scss";
@@ -51,11 +51,11 @@ export const FirstCardsLayout = () => {
     {
       label: t('stats.summary.token-audits'),
       value: <span>
-        <a href="https://docs.meanfi.com/products/safety-and-security#audits" target={"_blank"} rel="noopener noreferrer" title="CetriK" className="audit-links">
-          <img src="https://www.certik.com/certik-logotype-h-w.svg" alt="" />
+        <a href="https://docs.meanfi.com/products/safety-and-security#audits" target={"_blank"} title="CetriK" className="audit-links">
+          <img src="https://www.certik.com/certik-logotype-h-w.svg" alt="CetriK" />
         </a>
-        <a href="https://docs.meanfi.com/products/safety-and-security#audits" target={"_blank"} rel="noopener noreferrer" title="Sec3" className="audit-links">
-          <img src="https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg" alt="" />
+        <a href="https://docs.meanfi.com/products/safety-and-security#audits" target={"_blank"} title="Sec3" className="audit-links">          
+          <img src="https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg" alt="Sec3" />
         </a>
         </span>
     },
@@ -252,14 +252,14 @@ export const ThirdCardsLayout = () => {
                   <div className="slide-content_info">
                     <span className="info-pair">{pair.base}/{pair.target}</span>
                     <span className="info-name mb-2">{pair.name}</span>
-                    <div className="info-liquidity mb-3">
+                    {/* <div className="info-liquidity mb-3">
                       <span>{t('stats.pairs.total-liquidity')}:</span>
                       <span>${formatThousands(pair.total_liquidity)}</span>
-                  </div>
+                  </div> */}
                 </div>
                 <div className="slide-content_buttons">
                   {pair.type === "DEX" && (
-                    <Button type="ghost"   shape="round" size="small" className="thin-stroke mb-1">
+                    <Button type="ghost" shape="round" size="small" className="thin-stroke mb-1">
                       <a href={pair.buy} target="_blank" rel="noreferrer">
                         {t('stats.total-liquidity-btn')}
                       </a>

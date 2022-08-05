@@ -143,13 +143,15 @@ ul.tabs {
           button {
             float: right;
           }
-          span .audit-links {
-            padding: 6px 0px;
+          span .audit-links {    
+            padding: 6px 0;
+            margin-right: 4px;
+            background-color:#1c1f30;
             img {
               max-height: 35px;
               padding: 6px;
-              background-color:#1c1f30;
               margin-right: 5px;
+              filter: grayscale(1);
             }
           }
         }
@@ -221,7 +223,6 @@ ul.tabs {
       flex-wrap: nowrap !important;
       //width: 100%;
       display: flex;
-      justify-content: center;
       .slide-card {
         padding-left: 2px;
         padding-right: 2px;
@@ -268,7 +269,7 @@ ul.tabs {
           .slide-content_buttons {
             display: grid;
             align-items: flex-end;
-            height: 5em;
+            height: 7em;
           }
         }
       }
