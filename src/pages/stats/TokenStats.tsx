@@ -258,16 +258,9 @@ export const ThirdCardsLayout = () => {
                   </div> */}
                 </div>
                 <div className="slide-content_buttons">
-                  {pair.type === "DEX" && (
-                    <Button type="ghost" shape="round" size="small" className="thin-stroke mb-1">
-                      <a href={pair.buy} target="_blank" rel="noreferrer">
-                        {t('stats.total-liquidity-btn')}
-                      </a>
-                    </Button>
-                  )}
                   <Button type="primary" shape="round" size="small" className="thin-stroke">
                     <a href={pair.buy} target="_blank" rel="noreferrer">
-                      {t('stats.buy-btn')}
+                      {pair.type === "DEX" ? t('stats.total-liquidity-btn'): t('stats.buy-btn')}
                     </a>
                   </Button>
                 </div>
