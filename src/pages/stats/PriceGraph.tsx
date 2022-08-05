@@ -60,7 +60,7 @@ export const PriceGraph = () => {
     const [priceOnTooltip, setPriceOnTooltip] = useState("");
 
     useEffect(() => {
-      if (active) {
+      if (active && payload && payload.length > 0) {
         setDateOnTooltip(moment(new Date(label)).format(dateFormat));
         setPriceOnTooltip(payload[0].payload.priceData);
       }
