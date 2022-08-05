@@ -11,7 +11,7 @@ import {
     Constants as MSPV2Constants,
     StreamTemplate
 } from '@mean-dao/msp';
-import { consoleOut, copyText, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getShortDate, getTimeToNow, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, toTimestamp } from '../../../../utils/ui';
+import { consoleOut, copyText, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getShortDate, getTimeToNow, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, toTimestamp } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
@@ -178,7 +178,12 @@ export const VestingContractStreamList = (props: {
                 }) as TokenInfo;
             }
 
-            value += formatThousands(makeDecimal(new BN(item.rateAmount), decimals), decimals, 2);
+            const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
+            value += formatThousands(
+              rateAmount,
+              friendlyDisplayDecimalPlaces(rateAmount, decimals),
+              2
+            );
             value += ' ';
             value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
         }
@@ -198,7 +203,12 @@ export const VestingContractStreamList = (props: {
                 }) as TokenInfo;
             }
 
-            value += formatThousands(makeDecimal(new BN(item.allocationAssigned), decimals), decimals, 2);
+            const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
+            value += formatThousands(
+              allocationAssigned,
+              friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+              2
+            );
             value += ' ';
             value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
         }
@@ -295,24 +305,20 @@ export const VestingContractStreamList = (props: {
                     title = t('streams.stream-list.subtitle-scheduled-inbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 } else {
                     title = t('streams.stream-list.subtitle-running-inbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 }
             } else {
                 if (item.status === STREAM_STATUS.Schedule) {
                     title = t('streams.stream-list.subtitle-scheduled-outbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 } else {
                     title = t('streams.stream-list.subtitle-running-outbound', {
                         rate: rateAmount
                     });
-                    title += ` ${getShortDate(item.startUtc as string, true)}`;
                 }
             }
         }

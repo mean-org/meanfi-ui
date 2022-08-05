@@ -28,7 +28,7 @@ import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
 import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
-import { MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
 import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
@@ -68,6 +68,7 @@ const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingAccountDetailTab = "overview" | "streams" | "activity" | undefined;
 let isWorkflowLocked = false;
+const notificationKey = 'updatable';
 
 export const VestingView = () => {
   const {
@@ -338,6 +339,37 @@ export const VestingView = () => {
     return await calculateActionFees(connection, action);
   }, [connection]);
 
+  const getTokenOrCustomToken = useCallback(async (address: string) => {
+
+    const token = getTokenByMintAddress(address);
+
+    const unkToken = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: 6,
+      symbol: shortenAddress(address),
+    };
+
+    if (token) {
+      return token;
+    } else {
+      try {
+        const tokeninfo = await readAccountInfo(connection, address);
+        if ((tokeninfo as any).data["parsed"]) {
+          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+          unkToken.decimals = decimals || 0;
+          return unkToken as TokenInfo;
+        } else {
+          return unkToken;
+        }
+      } catch (error) {
+        console.error('Could not get token info, assuming decimals = 6');
+        return unkToken;
+      }
+    }
+  }, [connection, getTokenByMintAddress]);
+
   const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
     let event: any;
     switch (operation) {
@@ -379,6 +411,71 @@ export const VestingView = () => {
     }
   }, []);
 
+  const notifyMultisigVestingContractActionFollowup = useCallback(async (message1: string, message2: string, item: TxConfirmationInfo) => {
+
+    const turnOffLockWorkflow = () => {
+      isWorkflowLocked = false;
+    }
+
+    if (!item || !item.extras || !item.extras.multisigId) {
+      turnOffLockWorkflow();
+      return;
+    }
+
+    const openFinalNotification = () => {
+      const btn = (
+        <Button
+          type="primary"
+          size="small"
+          shape="round"
+          className="extra-small"
+          onClick={() => {
+            notification.close(notificationKey);
+            const url = `/multisig/${item.extras.multisigId}?v=proposals`;
+            setHighLightableMultisigId(item.extras.multisigId);
+            navigate(url);
+          }}>
+          See proposals
+        </Button>
+      );
+      notification.open({
+        type: "info",
+        message: <span></span>,
+        description: (<div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>),
+        btn,
+        key: notificationKey,
+        duration: 20,
+        placement: "topRight",
+        top: 110,
+        onClose: turnOffLockWorkflow,
+      });
+    };
+
+    await delay(4000);
+    notification.open({
+      type: "info",
+      message: <span></span>,
+      description: (<span>{message1}</span>),
+      key: notificationKey,
+      duration: 8,
+      placement: "topRight",
+      top: 110,
+      onClose: () => {
+        notification.open({
+          type: "info",
+          message: <span></span>,
+          description: (<span>{message2}</span>),
+          key: notificationKey,
+          duration: 8,
+          placement: "topRight",
+          top: 110,
+          onClose: openFinalNotification
+        });
+      }
+    });
+
+  }, [navigate, setHighLightableMultisigId]);
+
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
@@ -405,53 +502,6 @@ export const VestingView = () => {
       }
     };
 
-    const turnOffLockWorkflow = () => {
-      isWorkflowLocked = false;
-    }
-
-    const notifyMultisigVestingContractActionFollowup = async (message1: string, message2: string, item: TxConfirmationInfo) => {
-      if (!item || !item.extras || !item.extras.multisigId) {
-        turnOffLockWorkflow();
-        return;
-      }
-      openNotification({
-        type: "info",
-        description: (<span>{message1}</span>),
-        duration: 8,
-      });
-      await delay(8000);
-      openNotification({
-        type: "info",
-        description: (<span>{message2}</span>),
-        duration: 8,
-      });
-      await delay(8000);
-      openNotification({
-        type: "info",
-        key: 'goto-proposals-notify',
-        description: (
-          <>
-            <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
-            <Button
-              type="primary"
-              size="small"
-              shape="round"
-              className="extra-small"
-              onClick={() => {
-                notification.close('goto-proposals-notify');
-                const url = `/multisig/${item.extras.multisigId}?v=proposals`;
-                setHighLightableMultisigId(item.extras.multisigId);
-                navigate(url);
-              }}>
-              See proposals
-            </Button>
-          </>
-        ),
-        duration: 30,
-        handleClose: turnOffLockWorkflow
-      });
-    }
-
     switch (item.operationType) {
       case OperationType.TreasuryAddFunds:
         consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
@@ -469,7 +519,6 @@ export const VestingView = () => {
         }, 20);
         break;
       case OperationType.TreasuryRefreshBalance:
-      case OperationType.StreamClose:
       case OperationType.StreamAddFunds:
       case OperationType.StreamPause:
       case OperationType.StreamResume:
@@ -507,6 +556,21 @@ export const VestingView = () => {
           hardReloadContracts();
         }, 20);
         break;
+      case OperationType.StreamClose:
+        consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+        recordTxConfirmation(item.signature, item.operationType, true);
+        if (!isWorkflowLocked) {
+          isWorkflowLocked = true;
+          notifyMultisigVestingContractActionFollowup(
+            'To close the vesting stream, the other Multisig owners need to approve the proposal.',
+            'After the proposal has been approved and executed, the vesting stream will be closed.',
+            item
+          );
+        }
+        setTimeout(() => {
+          softReloadContracts();
+        }, 20);
+        break;
       case OperationType.TreasuryStreamCreate:
         consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, true);
@@ -541,8 +605,7 @@ export const VestingView = () => {
         break;
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, setHighLightableMultisigId]);
+  }, [notifyMultisigVestingContractActionFollowup, recordTxConfirmation]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -790,7 +853,7 @@ export const VestingView = () => {
     if (getQueryAccountType() === "multisig") {
       const multisig = multisigAccounts.find(t => t.authority.toBase58() === accountAddress);
       if (multisig) {
-        return multisig.id.toBase58();
+        return multisig.authority.toBase58();
       }
     }
 
@@ -1043,7 +1106,7 @@ export const VestingView = () => {
 
       if (!multisigClient || !multisigAccounts) { return null; }
 
-      const multisig = multisigAccounts.filter(m => m.id.toBase58() === data.multisig)[0];
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === data.multisig)[0];
 
       if (!multisig) { return null; }
 
@@ -1125,7 +1188,7 @@ export const VestingView = () => {
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      const multisigId = getMultisigIdFromContext();
+      const multisigAuthority = getMultisigIdFromContext();
       const associatedToken = createOptions.token;
       const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
 
@@ -1141,7 +1204,7 @@ export const VestingView = () => {
         cliffVestPercent: createOptions.cliffVestPercent,                       // cliffVestPercent
         vestingCategory: createOptions.vestingCategory,                         // vestingCategory
         startUtc: createOptions.startDate,                                      // startUtc
-        multisig: multisigId,                                                   // multisig
+        multisig: multisigAuthority,                                            // multisig
         feePayedByTreasurer: createOptions.feePayedByTreasurer                  // feePayedByTreasurer
       };
       consoleOut('payload:', payload);
@@ -1158,7 +1221,7 @@ export const VestingView = () => {
         duration: createOptions.duration,
         durationUnit: getDurationUnitFromSeconds(createOptions.durationUnit),
         feePayedByTreasurer: createOptions.feePayedByTreasurer,
-        multisig: multisigId,
+        multisig: multisigAuthority,
         startUtc: getReadableDate(createOptions.startDate.toUTCString()),
         type: TreasuryType[createOptions.vestingContractType]
       };
@@ -1182,7 +1245,7 @@ export const VestingView = () => {
       const bf = transactionFees.blockchainFee;       // Blockchain fee
       const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
       const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
-      const minRequired = multisigId ? mp : bf + ff;
+      const minRequired = multisigAuthority ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -1904,7 +1967,7 @@ export const VestingView = () => {
       const data = {
         proposalTitle: params.proposalTitle,                      // proposalTitle
         payer: publicKey.toBase58(),                              // payer
-        contributor: contributor,                                 // contributor
+        contributor,                                              // contributor
         treasury: treasury.toBase58(),                            // treasury
         associatedToken: associatedToken.toBase58(),              // associatedToken
         stream: params.streamId ? params.streamId : '',           // stream
@@ -1915,7 +1978,7 @@ export const VestingView = () => {
       // Report event to Segment analytics
       const segmentData: SegmentStreamAddFundsData = {
         stream: data.stream,
-        contributor: data.contributor,
+        contributor,
         treasury: data.treasury,
         asset: `${token.symbol} [${token.address}]`,
         assetPrice: price,
@@ -2919,6 +2982,7 @@ export const VestingView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
+    const txFees = await getTransactionFees(MSP_ACTIONS.pauseStream);
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -3030,13 +3094,8 @@ export const VestingView = () => {
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
 
-      const bf = transactionFees.blockchainFee;       // Blockchain fee
-      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
-
+      const minRequired = 0.000005;
       setMinRequiredBalance(minRequired);
-
       consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
@@ -3597,9 +3656,19 @@ export const VestingView = () => {
     vestingContractAddress,
   ]);
 
+  // Set token to the vesting contract associated token as soon as the VC is available
+  useEffect(() => {
+    if (!publicKey || !selectedVestingContract) { return; }
+    getTokenOrCustomToken(selectedVestingContract.associatedToken as string)
+    .then(token => {
+      consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
+      setWorkingToken(token);
+    });
+  }, [getTokenOrCustomToken, publicKey, selectedVestingContract]);
+
   // Get the vesting flow rate
   useEffect(() => {
-    if (!publicKey || !msp) { return; }
+    if (!publicKey || !msp || !workingToken || !selectedVestingContract) { return; }
 
     if (vestingContractAddress && selectedVestingContract &&
         vestingContractAddress === selectedVestingContract.id && workingToken) {
