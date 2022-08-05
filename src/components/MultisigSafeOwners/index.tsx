@@ -74,8 +74,28 @@ export const MultisigSafeOwners = (props: {
     return multisigAddresses.includes(address);
   }
 
+  const [ownersInputsObject, setOwnersInputsObject] = useState(participants);
+
+  useEffect(() => {
+    const ownersArray = participants.map(participant => ({ ...participant, isTouched: false }));
+
+    setOwnersInputsObject(ownersArray);
+  }, [participants]);
+
+  const blurHandler = (e: any) => {
+    const newOwnersInputArray = ownersInputsObject.map((obj: any) => {
+      if (obj.name === e.target.name) {
+        return {...obj, isTouched: true};
+      }
+    
+      return obj;
+    });
+
+    setOwnersInputsObject(newOwnersInputArray);
+  }
+
   return (
-    <div className={`multisig-safe-owners ${participants.length > 2 ? 'mb-1' : 'mb-3'}`}>
+    <div className={`multisig-safe-owners ${ownersInputsObject.length > 2 ? 'mb-1' : 'mb-3'}`}>
       <div className={`flex-fixed-right add-owners-row ${disabled ? 'click-disabled' : ''}`}>
         <div className="left">
           {label ? (
@@ -90,7 +110,7 @@ export const MultisigSafeOwners = (props: {
           ) : (<div className="form-label">&nbsp;</div>)}
         </div>
         <div className="right">
-          <span className={`flat-button change-button ${participants.length === 10 ? 'disabled' : ''}`} onClick={() => addParticipant()}>
+          <span className={`flat-button change-button ${ownersInputsObject.length === 10 ? 'disabled' : ''}`} onClick={() => addParticipant()}>
             <PlusOutlined />
             <span className="ml-1">Add owner</span>
           </span>
@@ -107,10 +127,12 @@ export const MultisigSafeOwners = (props: {
           <div className="form-label">Owner's name and address</div>
         </div>
       )}
-      {participants && participants.length > 0 ? (
-        // <div id="multisig-participants-max-height" className={`mb-3 ${participants.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
-        <div className={`${participants.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
-          {participants.map((participant: MultisigParticipant, index: number) => {
+      {ownersInputsObject && ownersInputsObject.length > 0 ? (
+        <div className={`multisig-participants-max-height ${ownersInputsObject.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
+          {ownersInputsObject.map((participant: any, index: number) => {
+            const isAddressValid = isValidAddress(participant.address); 
+            const isInputTouched = participant.isTouched; 
+            
             return (
               <div className="container-owner-item" key={index}>
                 <div className={`two-column-layout w-100 mb-0 ${disabled ? 'disabled' : ''}`}>
@@ -130,7 +152,7 @@ export const MultisigSafeOwners = (props: {
                   <div className="right">
                     <InputMean
                       id={`participant-address-${index + 1}`}
-                      className="pt-2 pb-2"
+                      name={participant.name}
                       type="text"
                       value={participant.address}
                       maxLength={100}
@@ -140,14 +162,18 @@ export const MultisigSafeOwners = (props: {
                       }}
                       placeholder="Enter address of the owner"
                       validationIcons={true}
-                      isValid={isValidAddress(participant.address)}
+                      isValid={isAddressValid}
+                      isTouched={isInputTouched}
+                      onBlur={blurHandler}
                     />
-                    {isValidAddress(participant.address) ? (
-                      isInputMultisigAddress(participant.address) && (
-                        <small className="fg-warning form-field-error ml-1">{t('multisig.create-multisig.multisig-address-used-as-participant')}</small>
+                    {isInputTouched && (
+                      isAddressValid ? (
+                        isInputMultisigAddress(participant.address) && (
+                          <small className="fg-warning form-field-error ml-1">{t('multisig.create-multisig.multisig-address-used-as-participant')}</small>
+                        )
+                      ) : (
+                        <small className="fg-warning form-field-error ml-1">Please enter a valid Solana address</small>
                       )
-                    ) : (
-                      <small className="fg-warning form-field-error ml-1">Please enter a valid Solana address</small>
                     )}
                   </div>
                 </div>
@@ -157,9 +183,9 @@ export const MultisigSafeOwners = (props: {
               </div>
             );
           })}
-          {checkIfDuplicateExists(participants) ? (
+          {checkIfDuplicateExists(ownersInputsObject) ? (
             <span className="fg-warning form-field-error pl-2">{t('multisig.create-multisig.multisig-duplicate-participants')}</span>
-          ) : participants.length === 10 ? (
+          ) : ownersInputsObject.length === 10 ? (
             <span className="fg-warning form-field-hint pl-1">{t('multisig.create-multisig.multisig-threshold-input-max-warn')}</span>
           ) : null}
         </div>

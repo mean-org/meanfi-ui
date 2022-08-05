@@ -15,8 +15,10 @@ export const InputMean = (props: {
   min?: number;
   validationIcons?: boolean;
   isValid?: boolean;
+  isTouched?: boolean;
+  onBlur?: any;
 }) => {
-  const { id, name, className, autoComplete, autoCorrect, type, maxLength, placeholder, onChange, value, pattern, min, validationIcons, isValid } = props;
+  const { id, name, className, autoComplete, autoCorrect, type, maxLength, placeholder, onChange, value, pattern, min, validationIcons, isTouched, isValid, onBlur } = props;
 
   return (
     <>
@@ -36,15 +38,22 @@ export const InputMean = (props: {
               value={value}
               pattern={pattern}
               min={min}
+              onBlur={onBlur}
             />
           </div>
           {validationIcons && (
             <div className="right">
               <div className="add-on h-100">
-                {isValid ? (
-                  <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green"/>
+                {isTouched ? (
+                  isValid ? (
+                    <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green"/>
+                  ) : (
+                    <IconWarningCover className="mean-svg-icons simplelink form-warning-icon fg-warning"/>
+                  )
                 ) : (
-                  <IconWarningCover className="mean-svg-icons simplelink form-warning-icon fg-warning"/>
+                  isValid && (
+                    <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green"/>
+                  )
                 )}
               </div>
             </div>
