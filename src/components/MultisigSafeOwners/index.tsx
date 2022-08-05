@@ -144,10 +144,10 @@ export const MultisigSafeOwners = (props: {
                     />
                     {isValidAddress(participant.address) ? (
                       isInputMultisigAddress(participant.address) && (
-                        <small className="form-field-error ml-1">{t('multisig.create-multisig.multisig-address-used-as-participant')}</small>
+                        <small className="fg-warning form-field-error ml-1">{t('multisig.create-multisig.multisig-address-used-as-participant')}</small>
                       )
                     ) : (
-                      <small className="form-field-error ml-1">Please enter a valid Solana address</small>
+                      <small className="fg-warning form-field-error ml-1">Please enter a valid Solana address</small>
                     )}
                   </div>
                 </div>
@@ -158,9 +158,9 @@ export const MultisigSafeOwners = (props: {
             );
           })}
           {checkIfDuplicateExists(participants) ? (
-            <span className="form-field-error pl-2">{t('multisig.create-multisig.multisig-duplicate-participants')}</span>
+            <span className="fg-warning form-field-error pl-2">{t('multisig.create-multisig.multisig-duplicate-participants')}</span>
           ) : participants.length === 10 ? (
-            <span className="form-field-hint pl-1">{t('multisig.create-multisig.multisig-threshold-input-max-warn')}</span>
+            <span className="fg-warning form-field-hint pl-1">{t('multisig.create-multisig.multisig-threshold-input-max-warn')}</span>
           ) : null}
         </div>
       ) : (
