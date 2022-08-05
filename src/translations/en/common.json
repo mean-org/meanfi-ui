@@ -769,7 +769,7 @@
 			"token-smean-supply": "The total amount of MEAN tokens currently being staked"
 		},
 		"pairs": {
-			"total-liquidity": "Total Liquidity"
+			"total-liquidity": "Total liquidity"
 		},
 		"price": {
 			"price-title": "Price"
@@ -787,7 +787,7 @@
 			"token-audits": "Audits"
 		},
 		"title": "Stats",
-		"total-liquidity-btn": "Add Liquidity"
+		"total-liquidity-btn": "Add liquidity"
 	},
 	"streams": {
 		"add-funds": {
