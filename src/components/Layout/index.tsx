@@ -27,6 +27,7 @@ import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { getDefaultRpc } from "../../services/connections-hq";
+import { isUnauthenticatedRoute } from "../../utils/utils";
 
 const { Header, Content, Footer } = Layout;
 
@@ -439,7 +440,7 @@ export const AppLayout = React.memo((props: any) => {
     t
   ]);
 
-  if (wallet && connected) {
+  if ((wallet && connected) || isUnauthenticatedRoute(location.pathname)) {
     return (
       <>
         <div className="App">

@@ -13,7 +13,7 @@ import { SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 import { CustomCSSProps } from '../../utils/css-custom-props';
-import { isLocal, isProd } from '../../utils/ui';
+import { isProd } from '../../utils/ui';
 import { NotificationBell } from '../CurrentBalance';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 import { RoutingInfo } from '../../models/common-types';
@@ -73,7 +73,6 @@ export const AppBar = (props: {
   const { connected } = useWallet();
   const { t } = useTranslation("common");
   const {
-    isWhitelisted,
     isDepositOptionsModalVisible,
     hideDepositOptionsModal,
   } = useContext(AppStateContext);
@@ -173,11 +172,9 @@ export const AppBar = (props: {
           </Menu.Item>
         )}
       </SubMenu>
-      {(isLocal() || isWhitelisted) && (
-        <Menu.Item key="stats">
-          <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
-        </Menu.Item>
-      )}
+      <Menu.Item key="stats">
+        <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
+      </Menu.Item>
     </Menu>
   );
 
@@ -250,11 +247,9 @@ export const AppBar = (props: {
                     &nbsp;<IconExternalLink className="mean-svg-icons link" />
                   </a>
                 </li>
-                {(isLocal() || isWhitelisted) && (
-                  <li key="stats" className={selectedItems.includes("stats") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
-                    <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
-                  </li>
-                )}
+                <li key="stats" className={selectedItems.includes("stats") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
+                  <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
+                </li>
               </ul>
             </div>
           </div>

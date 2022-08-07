@@ -35,6 +35,15 @@ export const SOCN_USD = {
 
 export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'SOL', 'SLND', 'MEAN'];
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
+export const BANNED_TOKENS = [
+    'CRT',
+    'FROG',
+    'DGX',
+    'DOGA',
+    'CHIH',
+    'INO',
+    'GSTONKS'
+];
 
 export const MEAN_TOKEN = {
     chainId: 101,
