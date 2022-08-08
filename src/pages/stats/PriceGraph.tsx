@@ -118,7 +118,7 @@ export const PriceGraph = () => {
         </div>
       </div>
 
-      <ResponsiveContainer width="105%" height={215}>
+      <ResponsiveContainer width="100%" height={215}>
         <AreaChart data={priceChangeData}>
           <defs>
             <linearGradient id="color" x1="0" y1="0" x2="0" y2="1">

@@ -1,18 +1,18 @@
 import { useContext } from "react";
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CopyOutlined } from '@ant-design/icons';
+import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
 import "./style.scss";
 import { data } from "./data";
 import { copyText } from '../../utils/ui';
 import { PriceGraph } from './PriceGraph';
-import { IconInfoCircle } from '../../Icons';
 import CardStats from './components/CardStats';
 import { formatThousands, openLinkInNewTab } from "../../utils/utils";
 import { MEAN_TOKEN } from "../../constants/token-list";
 import { AppStateContext } from "../../contexts/appstate";
 import { openNotification } from "../../components/Notifications";
+import { InfoIcon } from "../../components/InfoIcon";
 
 export const TokenStats = ({meanStats, smeanSupply, totalVolume24h}: any) => {
   return (
@@ -213,14 +213,14 @@ export const SecondCardsLayout = ({
       {cards.map((card, index) => (
         <Col xs={24} sm={12} md={8} lg={6} key={index}>
           <Card className="ant-card card info-cards">
-            <div className="ant-card-body card-body">
-              <div className="card-content">
-                <span className="info-label">{t(card.label)}</span>
-                <Tooltip placement="top" title={t(card.description)}>
-                  <span>
-                    <IconInfoCircle className="mean-svg-icons" />
-                  </span>
-                </Tooltip>
+            <div className="card-body">
+              <div className="card-content justify-content-start">
+                <span className="fg-secondary-50 align-middle">{t(card.label)}</span>
+                <span className="fg-secondary-50 font-size-70 align-middle">
+                  <InfoIcon content={<span>{t(card.description)}</span>} placement="top">
+                    <InfoCircleOutlined />
+                  </InfoIcon>
+                </span>
               </div>
               <span className="card-info">{card.value}</span>
             </div>
