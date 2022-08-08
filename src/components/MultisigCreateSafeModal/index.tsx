@@ -527,7 +527,7 @@ export const MultisigCreateSafeModal = (props: {
                     shape="round"
                     type="ghost"
                     size="middle"
-                    className="thin-stroke col-6"
+                    className="thin-stroke"
                     onClick={() => onStepperChange(0)}
                     disabled={
                       !publicKey
@@ -542,7 +542,7 @@ export const MultisigCreateSafeModal = (props: {
                     type="primary"
                     shape="round"
                     size="middle"
-                    className="col-6"
+                    className="thin-stroke col-6"
                     // onClick={onContinueStepTwoButtonClick}
                     onClick={onContinueStepOneButtonClick}
                     disabled={!publicKey || !isFormValid()}
@@ -559,10 +559,10 @@ export const MultisigCreateSafeModal = (props: {
                 <Col span={12} className="d-flex justify-content-center">
                   <Button
                     block
-                    shape="round"
                     type="ghost"
+                    shape="round"
                     size="middle"
-                    className="thin-stroke col-6"
+                    className="thin-stroke mr-1"
                     // onClick={() => onStepperChange(1)}
                     onClick={() => onStepperChange(0)}
                     disabled={
@@ -578,7 +578,7 @@ export const MultisigCreateSafeModal = (props: {
                     type="primary"
                     shape="round"
                     size="middle"
-                    className="col-6"
+                    className="thin-stroke ml-1"
                     onClick={() => onAcceptModal()}
                     disabled={
                       !publicKey ||
