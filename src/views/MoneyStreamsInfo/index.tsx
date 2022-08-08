@@ -148,6 +148,7 @@ export const MoneyStreamsInfoView = (props: {
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [incomingAmount, setIncomingAmount] = useState<number>();
   const [outgoingAmount, setOutgoingAmount] = useState<number>();
+  const [streamingAccountsAmount, setStreamingAccountsAmount] = useState<number>();
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -1924,6 +1925,19 @@ export const MoneyStreamsInfoView = (props: {
     streamingAccountCombinedList
   ]);
 
+  // Streaming accounts amount
+  useEffect(() => {
+    if (!streamingAccountCombinedList) { return; }
+
+    // const sumStreamingStreams = streamingAccountCombinedList.reduce((accumulator, streaming: any) => {
+    //   return accumulator + streaming.streams?.length;
+    // }, 0);
+
+    setStreamingAccountsAmount(streamingAccountCombinedList.length);
+  }, [
+    streamingAccountCombinedList
+  ]);
+
   // Live data calculation
   useEffect(() => {
     if (!publicKey || !treasuryList || !address) { return; }
@@ -2760,12 +2774,166 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
+  // Streaming accounts list
+  const renderListOfStreamingAccounts= (
+    <>
+      {(!loadingStreams && !loadingCombinedStreamingList) ? (
+        (streamingAccountCombinedList !== undefined && streamingAccountCombinedList.length > 0) ? (
+          <>
+            <>
+              {(streamingAccountCombinedList && streamingAccountCombinedList.map((streaming, outerIndex) => {
+                  const v1 = streaming.treasury as unknown as TreasuryInfo;
+                  const v2 = streaming.treasury as Treasury;
+                  const isNewTreasury = streaming && streaming.treasury.version >= 2 ? true : false;
+      
+                  const onSelectedStreamingAccount = () => {
+                    // Sends outgoing stream value to the parent component "Accounts"
+                    onSendFromStreamingAccountDetails(streaming.treasury);
+                  }
+      
+                  const type = isNewTreasury
+                    ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+                    : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+
+                  const category = isNewTreasury
+                    && v2.category === 1 ? "Vesting" : "";
+              
+                  const subCategory = isNewTreasury
+                    && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
+              
+                  let badges;
+              
+                  type && (
+                    category ? (
+                      subCategory ? (
+                        badges = [category, subCategory, type]
+                      ) : (
+                        badges = [category, type]
+                      )
+                    ) : (
+                      badges = [type]
+                    )
+                  );
+      
+                  const title = isNewTreasury ? v2.name : (v1.label ? v1.label : shortenAddress(v1.id as string, 8));
+      
+                  const subtitle = <CopyExtLinkGroup
+                    content={streaming.treasury.id as string}
+                    number={8}
+                    externalLink={true}
+                  />;
+      
+                  const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
+      
+                  const resume = amount > 1 ? "streams" : "stream";
+      
+                  return (
+                    <div key={`streaming-account-${outerIndex}`}>
+                      <ResumeItem
+                        title={title}
+                        extraTitle={badges}
+                        classNameTitle="text-uppercase"
+                        subtitle={subtitle}
+                        amount={amount}
+                        resume={resume}
+                        className="account-category-title simplelink"
+                        hasRightIcon={true}
+                        rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                        isLink={true}
+                        onClick={onSelectedStreamingAccount}
+                        classNameRightContent="resume-streaming-row"
+                        classNameIcon="icon-streaming-row"
+                        xs={24}
+                        sm={18}
+                        md={24}
+                        lg={18}
+                      />
+      
+                      {/* {(streaming.streams && streaming.streams.length > 0) && (
+                        streaming.streams.map((stream, innerIndex) => {
+                          const onSelectStream = () => {
+                            // Sends outgoing stream value to the parent component "Accounts"
+                            onSendFromStreamingAccountOutgoingStreamInfo(stream, streaming.treasury);
+                          };
+
+                          const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                            event.currentTarget.src = FALLBACK_COIN_IMAGE;
+                            event.currentTarget.className = "error";
+                          };
+              
+                          const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+              
+                          let img;
+              
+                          if (stream.associatedToken) {
+                            if (token) {
+                              img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
+                            } else {
+                              img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                            }
+                          } else {
+                            img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                          }
+      
+                          const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+                          const subtitle = getStreamSubtitle(stream);
+                          const status = getStreamStatus(stream);
+                          const resume = getStreamResume(stream);
+      
+                          return (
+                            <div 
+                              key={`streaming-account-stream-${innerIndex}`}
+                              onClick={onSelectStream}
+                              className={`d-flex w-100 align-items-center simplelink hover-list ${(innerIndex + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                              >
+                                <ResumeItem
+                                  id={innerIndex}
+                                  img={img}
+                                  title={title}
+                                  status={status}
+                                  subtitle={subtitle}
+                                  resume={resume}
+                                  hasRightIcon={true}
+                                  rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                                  isLink={true}
+                                  isStream={true}
+                                  classNameRightContent="resume-stream-row"
+                                  classNameIcon="icon-stream-row"
+                                  xs={24}
+                                  md={24}
+                                />
+                            </div>
+                          )
+                        })
+                      )} */}
+                    </div>
+                  )
+                })
+              )}
+            </>
+          </>
+        ) : (
+          <span className="pl-1">You don't have any streaming accounts</span>
+        )
+      ) : (
+        <span className="pl-1">Loading streaming accounts ...</span>
+      )}
+    </>
+  );
+
   // Tabs
   const tabs = [
     {
       id: "summary",
       name: "Summary",
       render: renderSummary
+    },
+    {
+      id: "accounts",
+      name: `Accounts ${(!loadingCombinedStreamingList && !loadingStreams) 
+        ? `(${streamingAccountsAmount && streamingAccountsAmount >= 0 && streamingAccountsAmount})` 
+        : ""}`,
+      render: renderListOfStreamingAccounts
     },
     {
       id: "incoming",
