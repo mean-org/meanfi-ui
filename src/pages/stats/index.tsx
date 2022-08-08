@@ -33,7 +33,7 @@ export const StatsView = () => {
         setMeanfiStats(meanStats);
       }
       //TODO: pull this info
-      const [_, marketVolumeData] = await getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, 1, 'daily');
+      const [, marketVolumeData] = await getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, 1, 'daily');
       if (marketVolumeData && marketVolumeData.length > 0) {
         setTotalVolume24h(Number(marketVolumeData[marketVolumeData.length - 1].priceData));
       }
@@ -55,11 +55,9 @@ export const StatsView = () => {
         setSMeanTotalSupply(sMeanInfo.value.uiAmount);
       }
     })();
-  }, [
-    connection
-  ]);
+  }, [cluster, connection]);
 
-  if (!meanfiStats || sMeanTotalSupply == 0) { return <p>{t('general.loading')}...</p>; }
+  if (!meanfiStats || sMeanTotalSupply === 0) { return <p>{t('general.loading')}...</p>; }
 
   return (
     <>

@@ -1,9 +1,8 @@
 import { useContext } from "react";
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CopyOutlined, LinkOutlined } from '@ant-design/icons';
+import { CopyOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
-
 import "./style.scss";
 import { data } from "./data";
 import { copyText } from '../../utils/ui';
@@ -51,10 +50,12 @@ export const FirstCardsLayout = () => {
     {
       label: t('stats.summary.token-audits'),
       value: <span>
-        <a href="https://docs.meanfi.com/products/safety-and-security#audits" target={"_blank"} title="CetriK" className="audit-links">
+        <a href="https://docs.meanfi.com/products/safety-and-security#audits"
+            target="_blank" title="CetriK" rel="noreferrer" className="audit-links">
           <img src="https://www.certik.com/certik-logotype-h-w.svg" alt="CetriK" />
         </a>
-        <a href="https://docs.meanfi.com/products/safety-and-security#audits" target={"_blank"} title="Sec3" className="audit-links">          
+        <a href="https://docs.meanfi.com/products/safety-and-security#audits"
+            target="_blank" title="Sec3" rel="noreferrer" className="audit-links">          
           <img src="https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg" alt="Sec3" />
         </a>
         </span>
@@ -76,11 +77,15 @@ export const FirstCardsLayout = () => {
   const renderHeadSummary = (
     <div className="ant-card-head-title">
       <span>{t("stats.summary.summary-title")}</span>
-      <button type="button" className="ant-btn ant-btn-primary ant-btn-round ant-btn-sm thin-stroke">
         <Link to={"/exchange"}>
-          <span>{t('stats.buy-btn')}</span>
+          <Button
+            type="primary"
+            shape="round"
+            size="small"
+            className="extra-small">
+            <span>{t('stats.buy-btn')}</span>
+          </Button>
         </Link>
-      </button>
     </div>
   );
 
@@ -257,9 +262,13 @@ export const ThirdCardsLayout = () => {
                       <span>${formatThousands(pair.total_liquidity)}</span>
                   </div> */}
                 </div>
-                <div className="slide-content_buttons">                  
-                  <Button type="primary" shape="round" size="small" className="thin-stroke" onClick={() => openLinkInNewTab(pair.buy)}>
-                     {pair.type === "DEX" ? t('stats.total-liquidity-btn'): t('stats.buy-btn')}
+                <div className="slide-content_buttons">
+                  <Button
+                    type="default"
+                    shape="round"
+                    size="small"
+                    onClick={() => openLinkInNewTab(pair.buy)}>
+                    {pair.type === "DEX" ? t('stats.total-liquidity-btn'): t('stats.buy-btn')}
                   </Button>
                 </div>
               </div>
