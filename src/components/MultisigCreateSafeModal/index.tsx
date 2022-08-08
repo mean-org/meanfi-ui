@@ -1,4 +1,4 @@
-import { Button, Col, Divider, Modal, Row, Spin, Switch, Tooltip } from "antd";
+import { Button, Col, DatePicker, Divider, Modal, Row, Spin, Switch, TimePicker, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
@@ -8,17 +8,22 @@ import { StepSelector } from "../StepSelector";
 import "./style.scss";
 import { IconInfoCircle, IconKey, IconLock } from "../../Icons";
 import { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
+import { DATEPICKER_FORMAT, MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { addDays, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { getTransactionOperationDescription, isValidAddress } from "../../utils/ui";
 import { isError } from "../../utils/transactions";
 import { CreateNewSafeParams } from "../../models/multisig";
+import moment from 'moment';
+import { isMobile } from "react-device-detect";
+import useWindowSize from "../../hooks/useWindowResize";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+
+const timeFormat="hh:mm A"
 
 export const MultisigCreateSafeModal = (props: {
   handleClose: any;
@@ -31,10 +36,14 @@ export const MultisigCreateSafeModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
+  const { width } = useWindowSize();
   const {
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
+
+  const date = addDays(new Date(), 1).toLocaleDateString("en-US");
+  const time = moment().format(timeFormat);
 
   const { handleClose, handleOk, isVisible, isBusy, nativeBalance, transactionFees, multisigAccounts } = props;
 
@@ -45,6 +54,18 @@ export const MultisigCreateSafeModal = (props: {
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
   const [isAllowToRejectProposal, setAllowToRejectProposal] = useState<boolean>(true);
   const [feeAmount] = useState<number>(transactionFees.multisigFee + transactionFees.rentExempt);
+  const [coolOffDate, setCoolOffDate] = useState<string | undefined>(date);
+  const [coolOffTime, setCoolOffTime] = useState<string | undefined>(time);
+  const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
 
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
@@ -73,6 +94,34 @@ export const MultisigCreateSafeModal = (props: {
   const onSafeNameInputValueChange = (e: any) => {
     setSafeName(e.target.value);
   }
+
+  const onTimePickerChange = (time: moment.Moment | null, timeString: string) => {
+    if (time) {
+      const shortTime = time.format(timeFormat);
+      setCoolOffTime(shortTime);
+    }
+  };
+
+  const handleDateChange = (date: string) => {
+    setCoolOffDate(date);
+  }
+
+  const todayAndPriorDatesDisabled = (current: any) => {
+    // Can not select neither today nor days before today
+    return current && current < moment().add(1, 'day').startOf('day');
+  }
+
+  const onResetDate = () => {
+    setCoolOffDate(date);
+  }
+
+  const renderDatePickerExtraPanel = () => {
+    return (
+      <span className="flat-button tiny stroked primary" onClick={onResetDate}>
+        <span className="mx-1">Reset</span>
+      </span>
+    );
+}
 
   const onAcceptModal = () => {
     const options: CreateNewSafeParams = {
@@ -312,10 +361,10 @@ export const MultisigCreateSafeModal = (props: {
                       onChange={onChangeRejectProposalSwitch} />
                   </div> */}
 
-                  {/* Enable 24-hour cool-off period */}
+                  {/* Enable cool-off period */}
                   <div className="d-flex align-items-center mt-3">
                     <div className="form-label icon-label">
-                      Enable 24-hour cool-off period
+                      Enable cool-off period
                       <Tooltip placement="bottom" title="Cool-off period is a time where no actions take place on a proposal that is Passed already, and before it gets executed.">
                         <span className="icon-info-circle simplelink">
                           <IconInfoCircle className="mean-svg-icons" />
@@ -326,6 +375,65 @@ export const MultisigCreateSafeModal = (props: {
                       size="small"
                       defaultChecked
                       onChange={onChangeCoolOffPeriodSwitch} />
+                  </div>
+
+                  {!isXsDevice ? (
+                    <div className="two-column-form-layout mb-0 mt-1">
+                      <div className="form-label">Date</div>
+                      <div className="form-label ml-3">Time</div>
+                    </div>
+                  ) : (
+                    <div className="mb-0 mt-1">
+                      <div className="form-label">Date and time</div>
+                    </div>
+                  )}
+                  <div className="two-column-layout">
+                    <div className="left">
+                      <div className="well">
+                        <div className="flex-fixed-right">
+                          <div className="left static-data-field">{coolOffDate}</div>
+                          <div className="right">
+                            <div className="add-on simplelink">
+                              <>
+                                {
+                                  <DatePicker
+                                    size="middle"
+                                    bordered={false}
+                                    className="addon-date-picker"
+                                    aria-required={true}
+                                    allowClear={false}
+                                    disabledDate={todayAndPriorDatesDisabled}
+                                    placeholder="Pick a date"
+                                    onChange={(value: any, date: string) => handleDateChange(date)}
+                                    value={moment(
+                                      coolOffDate,
+                                      DATEPICKER_FORMAT
+                                    ) as any}
+                                    format={DATEPICKER_FORMAT}
+                                    showNow={false}
+                                    showToday={false}
+                                    renderExtraFooter={renderDatePickerExtraPanel}
+                                  />
+                                }
+                              </>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="right">
+                      <div className="well time-picker">
+                        <TimePicker
+                          defaultValue={moment()}
+                          bordered={false}
+                          allowClear={false}
+                          size="middle"
+                          use12Hours
+                          format={timeFormat}
+                          onChange={onTimePickerChange} 
+                        />
+                      </div>
+                    </div>
                   </div>
                 </>
               </div>
