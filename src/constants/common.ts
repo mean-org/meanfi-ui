@@ -59,21 +59,17 @@ export const MEANFI_DOCS_URL = 'https://docs.meanfi.com/';
 export const MEANFI_SUPPORT_URL = 'https://help.meanfi.com/';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 export const FALLBACK_COIN_IMAGE = '/assets/coin-error.svg';
-export const BANNED_TOKENS = [
-    'CRT',
-    'FROG',
-    'DGX',
-    'DOGA',
-    'CHIH',
-    'INO',
-    'GSTONKS'
+
+export const UNAUTHENTICATED_ROUTES = [
+    '/stats',
+    '/custody'
 ];
 
 export const meanFiHeaders = new Headers();
 meanFiHeaders.append('X-Api-Version', '1.0');
 meanFiHeaders.append('content-type', 'application/json;charset=UTF-8');
 export const requestOptions: RequestInit = {
-  headers: meanFiHeaders
+    headers: meanFiHeaders
 }
 
 export const LANGUAGES: Language[] = [

@@ -746,17 +746,18 @@
 			"circulating-supply-title": "Circulating Supply",
 			"holders-title": "Holders",
 			"market-cap-title": "Market Cap",
-			"token-circulating-suppply": "The amount of coins that are circulating in the market and are in public hands. It is analogous to the flowing shares in the stock market",
-			"token-fully_dilluted_market_cap": "The total market value of a cryptocurrency's circulating supply. It is analogous to the free-float capitalization in the stock market. Market Cap = Current Price x Circulating Supply",
-			"token-holders": "Enthusiasts denoting a long-term approach to cryptocurrency investing",
-			"token-total-money-streams": "Total number of continuous payments over time that have been created by the Money Streaming Program",
-			"token-total-supply": "The amount of coins that have been already created, minus any coins that have been burned. It is analogous to the outstanding shares in the stock market",
-			"token-total-value-locked": "The number of assets that are currently being staked in a specific protocol",
-			"token-total-volume": "A measure of how much of a cryptocurrency was traded in the last 24 hours",
-			"total-money-streams-title": "Total Money Streams",
+			"token-circulating-suppply": "The amount of MEAN tokens that are circulating in the market and are in public hands",
+			"token-fully_dilluted_market_cap": "The total market value of a MEAN's circulating supply. Market Cap = Current Price x Circulating Supply",
+			"token-holders": "Total number of wallets holding the MEAN token",
+			"token-total-money-streams": "Total number of payment streams using MEAN's Money Streaming Program",
+			"token-total-supply": "The total number of MEAN tokens that have been created less any tokens that have been burnt",
+			"token-total-value-locked": "The total value of assets that are currently being held in MEAN's protocols ",
+			"token-total-volume": "Volume of MEAN token's trading in the last 24 hours",
+			"total-money-streams-title": "Total Payment Streams",
 			"total-supply-title": "Total Supply",
 			"total-value-locked-title": "Total Value Locked",
-			"volume-title": "Volume (24H)"
+			"volume-title": "Volume (24H)",
+			"token-smean-supply": "The total amount of MEAN tokens currently being staked"
 		},
 		"pairs": {
 			"total-liquidity": "Total Liquidity"
@@ -772,7 +773,9 @@
 			"token-authority": "Authority",
 			"token-authority-copy": "Copy token authority",
 			"token-decimals": "Decimals",
-			"token-name": "Name"
+			"token-name": "Name",
+			"token-symbol": "Symbol",
+			"token-audits": "Audits"
 		},
 		"title": "Stats",
 		"total-liquidity-btn": "Add Liquidity"

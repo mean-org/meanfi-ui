@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { findATokenAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
   DAO_CORE_TEAM_WHITELIST,
-  BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
   TEN_MINUTES_REFRESH_TIMEOUT,
   STREAMING_PAYMENT_CONTRACTS,
@@ -29,7 +28,7 @@ import { getPrices } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
-import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
+import { BANNED_TOKENS, MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
 import { MappedTransaction } from "../utils/history";
 import { consoleOut, isProd, msToTime } from "../utils/ui";

@@ -20,5 +20,5 @@ jobs:
         with:
           args: >
             -Dsonar.verbose=false
-            -Dsonar.projectKey=meanfi-ui
+            -Dsonar.projectKey=${{ github.event.repository.name }}
             -Dsonar.sources=src/
