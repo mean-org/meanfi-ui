@@ -44,6 +44,7 @@ export const MultisigCreateSafeModal = (props: {
   const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
   const [isAllowToRejectProposal, setAllowToRejectProposal] = useState<boolean>(true);
+  const [feeAmount] = useState<number>(transactionFees.multisigFee + transactionFees.rentExempt);
 
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
@@ -392,7 +393,7 @@ export const MultisigCreateSafeModal = (props: {
                         ))}
                       </div>
                       <div>
-                        The creation will cost approximately 0.02583248 SOL. The exact amount will be determined by your wallet.
+                        {`The creation will cost approximately ${feeAmount} SOL. The exact amount will be determined by your wallet.`}
                       </div>
                     </div>
                   </div>
