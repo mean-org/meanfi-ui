@@ -7962,6 +7962,10 @@ input#stream-id-input {
     position: absolute;
 }
 
+.not-allowed-cursor {
+  cursor: not-allowed !important;
+}
+
 ////////////////////////////
 // Cross-fading panels    //
 // Effects classes        //

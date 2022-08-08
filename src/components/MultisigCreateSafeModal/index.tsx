@@ -260,6 +260,7 @@ export const MultisigCreateSafeModal = (props: {
                     label={"Valid owners"}
                     multisigAddresses={multisigAddresses}
                     onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
+                    isOwnersListValid={isOwnersListValid()}
                   />
 
                   {/* Minimum required signatures for proposal approval */}

@@ -16,11 +16,12 @@ export const MultisigSafeOwners = (props: {
   label: string;
   disabled?: boolean;
   multisigAddresses: string[];
+  isOwnersListValid: boolean;
 }) => {
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
 
-  const { participants, onParticipantsChanged, label, disabled, multisigAddresses } = props;
+  const { participants, onParticipantsChanged, label, disabled, multisigAddresses, isOwnersListValid } = props;
   
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
 
@@ -109,8 +110,8 @@ export const MultisigSafeOwners = (props: {
             </div>
           ) : (<div className="form-label">&nbsp;</div>)}
         </div>
-        <div className="right">
-          <span className={`flat-button change-button ${ownersInputsObject.length === 10 ? 'disabled' : ''}`} onClick={() => addParticipant()}>
+        <div className={`right ${ownersInputsObject.length === 10 || !isOwnersListValid ? 'not-allowed-cursor' : ''}`}>
+          <span className={`flat-button change-button ${ownersInputsObject.length === 10 || !isOwnersListValid ? 'disabled' : ''}`} onClick={() => addParticipant()}>
             <PlusOutlined />
             <span className="ml-1">Add owner</span>
           </span>
