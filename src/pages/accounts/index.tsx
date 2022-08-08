@@ -2878,7 +2878,6 @@ export const AccountsNewView = () => {
     resume['totalAmount'] += treasuryList.length;
 
     // Update state
-    consoleOut('streamingAccountsSummary:', resume, 'teal');
     setStreamingAccountsSummary(resume);
 
   }, [
@@ -5423,6 +5422,7 @@ export const AccountsNewView = () => {
                             autocloseTreasuries={autocloseTreasuries}
                             loadingCombinedStreamingList={loadingCombinedStreamingList}
                             loadingStreams={loadingStreams}
+                            loadingTreasuries={loadingTreasuries}
                             multisigAccounts={multisigAccounts}
                             onSendFromIncomingStreamInfo={goToStreamIncomingDetailsHandler}
                             onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}

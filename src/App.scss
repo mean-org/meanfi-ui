@@ -7844,6 +7844,10 @@ code {
   border-top: 1px solid var(--color-secondary-alpha-40);
   background-color: var(--color-component-background);
   z-index: 10;
+  &.inner-bottom {
+    bottom: 0px;
+    border-radius: 0 0 var(--custom-border-radius) var(--custom-border-radius);
+  }
 }
 
 .icon-label {
