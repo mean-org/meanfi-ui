@@ -122,7 +122,7 @@ export const MultisigCreateSafeModal = (props: {
       : false;
   }
 
-  const onChangeRejectProposalSwitch = (value: boolean) => {
+  const onChangeRejectProposalRejectProposalSwitch = (value: boolean) => {
     setAllowToRejectProposal(value);
   };
 
@@ -294,7 +294,7 @@ export const MultisigCreateSafeModal = (props: {
                   </div>
 
                   {/* Allow owners to Reject a Proposal */}
-                  {/* <div className="d-flex align-items-center mt-3">
+                  {/* {/* <div className="d-flex align-items-center mt-3">
                     <div className="form-label icon-label">
                       Allow owners to Reject a Proposal
                       <Tooltip placement="bottom" title="Owners can reject a proposal before it has enough signatures and move to Passed status or failed. Otherwise only the proposal originator is able to Reject it.">

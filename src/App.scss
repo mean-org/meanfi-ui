@@ -7875,6 +7875,42 @@ code {
   height: 1.25em !important;
 }
 
+.required-signatures-box {
+  border: 2px solid var(--color-secondary-alpha-05);
+  border-radius: 0.25em;
+  padding: 0.3em 0.6em 0.7em;
+  width: fit-content;
+}
+
+.required-signatures-icons {
+  display: flex;
+  flex-wrap: wrap;
+  .icon-container {
+    border: 1px solid #11141c;
+    border-radius: 0.25em;
+    width: 3.5em;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    color: #11141c;
+    font-size: 16px;
+    padding: 0.25em 0.25em 0.25em 0;
+    font-weight: 600;
+    .lock-icon {
+      color: var(--color-gray-dark);
+      width: 1.1em;
+      height: 1.2em;
+    }
+    .key-icon {
+      color: var(--color-white);
+      width: 1em;
+      height: 1.1em;
+      transform: scaleX(-1) rotate(-270deg);
+      margin-left: 0.25em;
+    }
+  }
+}
+
 .ant-tabs-tabpane {
   width: 99% !important;
 }
