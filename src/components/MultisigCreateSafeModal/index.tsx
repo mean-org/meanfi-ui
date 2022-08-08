@@ -57,6 +57,7 @@ export const MultisigCreateSafeModal = (props: {
   const [coolOffDate, setCoolOffDate] = useState<string | undefined>(date);
   const [coolOffTime, setCoolOffTime] = useState<string | undefined>(time);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+  const [isCoolOffPeriodEnable, setIsCoolOffPeriodEnable] = useState<boolean>(true);
 
   // Detect XS screen
   useEffect(() => {
@@ -177,7 +178,7 @@ export const MultisigCreateSafeModal = (props: {
   };
 
   const onChangeCoolOffPeriodSwitch = (value: boolean) => {
-    console.log(value);
+    setIsCoolOffPeriodEnable(value);
   };
 
   // When modal goes visible, add current wallet address as first participant
@@ -377,64 +378,68 @@ export const MultisigCreateSafeModal = (props: {
                       onChange={onChangeCoolOffPeriodSwitch} />
                   </div>
 
-                  {!isXsDevice ? (
-                    <div className="two-column-form-layout mb-0 mt-1">
-                      <div className="form-label">Date</div>
-                      <div className="form-label ml-3">Time</div>
-                    </div>
-                  ) : (
-                    <div className="mb-0 mt-1">
-                      <div className="form-label">Date and time</div>
-                    </div>
-                  )}
-                  <div className="two-column-layout">
-                    <div className="left">
-                      <div className="well">
-                        <div className="flex-fixed-right">
-                          <div className="left static-data-field">{coolOffDate}</div>
-                          <div className="right">
-                            <div className="add-on simplelink">
-                              <>
-                                {
-                                  <DatePicker
-                                    size="middle"
-                                    bordered={false}
-                                    className="addon-date-picker"
-                                    aria-required={true}
-                                    allowClear={false}
-                                    disabledDate={todayAndPriorDatesDisabled}
-                                    placeholder="Pick a date"
-                                    onChange={(value: any, date: string) => handleDateChange(date)}
-                                    value={moment(
-                                      coolOffDate,
-                                      DATEPICKER_FORMAT
-                                    ) as any}
-                                    format={DATEPICKER_FORMAT}
-                                    showNow={false}
-                                    showToday={false}
-                                    renderExtraFooter={renderDatePickerExtraPanel}
-                                  />
-                                }
-                              </>
+                  {isCoolOffPeriodEnable && (
+                    <>
+                      {!isXsDevice ? (
+                        <div className="two-column-form-layout mb-0 mt-1">
+                          <div className="form-label">Date</div>
+                          <div className="form-label ml-3">Time</div>
+                        </div>
+                      ) : (
+                        <div className="mb-0 mt-1">
+                          <div className="form-label">Date and time</div>
+                        </div>
+                      )}
+                      <div className="two-column-layout">
+                        <div className="left">
+                          <div className="well">
+                            <div className="flex-fixed-right">
+                              <div className="left static-data-field">{coolOffDate}</div>
+                              <div className="right">
+                                <div className="add-on simplelink">
+                                  <>
+                                    {
+                                      <DatePicker
+                                        size="middle"
+                                        bordered={false}
+                                        className="addon-date-picker"
+                                        aria-required={true}
+                                        allowClear={false}
+                                        disabledDate={todayAndPriorDatesDisabled}
+                                        placeholder="Pick a date"
+                                        onChange={(value: any, date: string) => handleDateChange(date)}
+                                        value={moment(
+                                          coolOffDate,
+                                          DATEPICKER_FORMAT
+                                        ) as any}
+                                        format={DATEPICKER_FORMAT}
+                                        showNow={false}
+                                        showToday={false}
+                                        renderExtraFooter={renderDatePickerExtraPanel}
+                                      />
+                                    }
+                                  </>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
+                        <div className="right">
+                          <div className="well time-picker">
+                            <TimePicker
+                              defaultValue={moment()}
+                              bordered={false}
+                              allowClear={false}
+                              size="middle"
+                              use12Hours
+                              format={timeFormat}
+                              onChange={onTimePickerChange} 
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="right">
-                      <div className="well time-picker">
-                        <TimePicker
-                          defaultValue={moment()}
-                          bordered={false}
-                          allowClear={false}
-                          size="middle"
-                          use12Hours
-                          format={timeFormat}
-                          onChange={onTimePickerChange} 
-                        />
-                      </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </>
               </div>
 
