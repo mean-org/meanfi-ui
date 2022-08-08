@@ -188,6 +188,9 @@ export const SafeView = () => {
   const [queryParamV, setQueryParamV] = useState<string | null>(null);
   const [lastError, setLastError] = useState<TransactionStatusInfo | undefined>(undefined);
 
+  const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
+  const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
+
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
@@ -500,7 +503,10 @@ export const SafeView = () => {
           label: data.label,                                          // multisig label
           threshold: data.threshold,
           owners: data.owners,
-          isAllowRejectProposal: data.isAllowToRejectProposal
+          isAllowRejectProposal: data.isAllowToRejectProposal,
+          isCoolOffPeriodEnable: data.isCoolOffPeriodEnable,
+          coolOffDate: data.coolOffDate,
+          coolOffTime: data.coolOffTime
         };
 
         consoleOut('data:', payload);
@@ -1071,8 +1077,6 @@ export const SafeView = () => {
   }
 
   // Modal visibility flags
-  const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
-  const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
   const [isErrorReportingModalVisible, setIsErrorReportingModalVisible] = useState(false);
   const showErrorReportingModal = useCallback(() => setIsErrorReportingModalVisible(true), []);

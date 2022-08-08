@@ -166,6 +166,9 @@ export interface CreateNewSafeParams {
   threshold: number;
   owners: MultisigParticipant[];
   isAllowToRejectProposal?: boolean;
+  isCoolOffPeriodEnable?: boolean;
+  coolOffDate?: string;
+  coolOffTime?: string;
 }
 
 export const getFees = async (
