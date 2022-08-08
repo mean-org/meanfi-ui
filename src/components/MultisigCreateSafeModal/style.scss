@@ -68,14 +68,15 @@
       font-weight: 600;
       .lock-icon {
         color: var(--color-gray-dark);
-        width: 1.2em;
+        width: 1.1em;
         height: 1.2em;
       }
       .key-icon {
         color: var(--color-white);
-        width: 1.2em;
+        width: 1em;
         height: 1.1em;
         transform: scaleX(-1) rotate(-270deg);
+        margin-left: 0.25em;
       }
     }
   }

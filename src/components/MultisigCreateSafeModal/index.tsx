@@ -122,8 +122,12 @@ export const MultisigCreateSafeModal = (props: {
       : false;
   }
 
-  const onChangeSwitch = (value: boolean) => {
+  const onChangeRejectProposalSwitch = (value: boolean) => {
     setAllowToRejectProposal(value);
+  };
+
+  const onChangeCoolOffPeriodSwitch = (value: boolean) => {
+    console.log(value);
   };
 
   // When modal goes visible, add current wallet address as first participant
@@ -258,7 +262,15 @@ export const MultisigCreateSafeModal = (props: {
                   />
 
                   {/* Minimum required signatures for proposal approval */}
-                  <div className="form-label">Minimum required signatures for proposal approval</div>
+                  {/* <div className="form-label">Minimum required signatures for proposal approval</div> */}
+                  <div className="form-label icon-label">
+                    Minimum required signatures for proposal approval
+                    <Tooltip placement="bottom" title="">
+                      <span className="icon-info-circle simplelink">
+                        <IconInfoCircle className="mean-svg-icons" />
+                      </span>
+                    </Tooltip>
+                  </div>
                   <div className="required-signatures-box">
                     <div className="info-label">A proposal will pass with:</div>
                     <div className="required-signatures-icons">
@@ -282,7 +294,7 @@ export const MultisigCreateSafeModal = (props: {
                   </div>
 
                   {/* Allow owners to Reject a Proposal */}
-                  <div className="d-flex align-items-center mt-3">
+                  {/* <div className="d-flex align-items-center mt-3">
                     <div className="form-label icon-label">
                       Allow owners to Reject a Proposal
                       <Tooltip placement="bottom" title="Owners can reject a proposal before it has enough signatures and move to Passed status or failed. Otherwise only the proposal originator is able to Reject it.">
@@ -294,7 +306,23 @@ export const MultisigCreateSafeModal = (props: {
                     <Switch 
                       size="small"
                       defaultChecked
-                      onChange={onChangeSwitch} />
+                      onChange={onChangeRejectProposalSwitch} />
+                  </div> */}
+
+                  {/* Enable 24-hour cool-off period */}
+                  <div className="d-flex align-items-center mt-3">
+                    <div className="form-label icon-label">
+                      Enable 24-hour cool-off period
+                      <Tooltip placement="bottom" title="Cool-off period is a time where no actions take place on a proposal that is Passed already, and before it gets executed.">
+                        <span className="icon-info-circle simplelink">
+                          <IconInfoCircle className="mean-svg-icons" />
+                        </span>
+                      </Tooltip>
+                    </div>
+                    <Switch 
+                      size="small"
+                      defaultChecked
+                      onChange={onChangeCoolOffPeriodSwitch} />
                   </div>
                 </>
               </div>

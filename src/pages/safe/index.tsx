@@ -375,9 +375,17 @@ export const SafeView = () => {
   }, [confirmationHistory]);
 
   const onOpenMultisigModalClick = useCallback(() => {
+    if (!multisigClient) { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createMultisig)
+      .then(value => {
+        setTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
+
     resetTransactionStatus();
     setIsMultisigCreateSafeModalVisible(true);
-  },[resetTransactionStatus]);
+  },[multisigClient, resetTransactionStatus]);
 
   const onCreateMultisigClick = useCallback(() => {
 
@@ -4291,8 +4299,8 @@ export const SafeView = () => {
                       shape="round"
                       disabled={!connected}
                       className="flex-center mr-1"
-                      onClick={onCreateMultisigClick}>
-                      {/* onClick={onOpenMultisigModalClick}> */}
+                      // onClick={onCreateMultisigClick}>
+                      onClick={onOpenMultisigModalClick}>
                         <IconSafe className="mean-svg-icons" />
                         {connected
                           ? t('multisig.create-new-multisig-account-cta')
@@ -4441,27 +4449,27 @@ export const SafeView = () => {
 
       </div>
 
-      {isCreateMultisigModalVisible && (
-        <MultisigCreateModal
-          isVisible={isCreateMultisigModalVisible}
-          nativeBalance={nativeBalance}
-          transactionFees={transactionFees}
-          multisigAccounts={multisigAccounts}
-          // handleOk={onAcceptCreateMultisig}
-          handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
-          handleClose={() => setIsCreateMultisigModalVisible(false)}
-          isBusy={isBusy}
-        />
-
-        // <MultisigCreateSafeModal
-        //   isVisible={isMultisigCreateSafeModalVisible}
+      {isMultisigCreateSafeModalVisible && (
+        // <MultisigCreateModal
+        //   isVisible={isCreateMultisigModalVisible}
         //   nativeBalance={nativeBalance}
         //   transactionFees={transactionFees}
         //   multisigAccounts={multisigAccounts}
+        //   // handleOk={onAcceptCreateMultisig}
         //   handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
-        //   handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
+        //   handleClose={() => setIsCreateMultisigModalVisible(false)}
         //   isBusy={isBusy}
         // />
+
+        <MultisigCreateSafeModal
+          isVisible={isMultisigCreateSafeModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          multisigAccounts={multisigAccounts}
+          handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
+          handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
+          isBusy={isBusy}
+        />
       )}
 
       {(isEditMultisigModalVisible && selectedMultisig) && (
