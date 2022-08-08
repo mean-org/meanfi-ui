@@ -273,6 +273,7 @@ export const MultisigCreateSafeModal = (props: {
                       </span>
                     </Tooltip>
                   </div>
+
                   <div className="required-signatures-box">
                     <div className="info-label">A proposal will pass with:</div>
                     <div className="required-signatures-icons">
