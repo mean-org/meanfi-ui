@@ -847,7 +847,8 @@
 			"total-money-streams-title": "총 머니스트림",
 			"total-supply-title": "총 공급",
 			"total-value-locked-title": "잠긴 총 금액",
-			"volume-title": "24시간 거래량"
+			"volume-title": "24시간 거래량",
+			"token-smean-supply": "The total amount of MEAN tokens currently being staked"
 		},
 		"pairs": {
 			"total-liquidity": "총 유동성"
@@ -863,7 +864,9 @@
 			"token-authority": "권한",
 			"token-authority-copy": "토큰 권한 복사",
 			"token-decimals": "소수",
-			"token-name": "이름"
+			"token-name": "이름",
+			"token-symbol": "Symbol",
+			"token-audits": "Audits"
 		},
 		"title": "스탯",
 		"total-liquidity-btn": "유동성 추가"

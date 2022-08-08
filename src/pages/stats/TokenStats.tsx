@@ -1,36 +1,28 @@
+import { useContext } from "react";
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
 import "./style.scss";
 import { data } from "./data";
-import { IconInfoCircle } from '../../Icons';
-import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
-import { CopyOutlined } from '@ant-design/icons';
 import { copyText } from '../../utils/ui';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import { PriceGraph } from './PriceGraph';
 import CardStats from './components/CardStats';
+import { formatThousands, openLinkInNewTab } from "../../utils/utils";
+import { MEAN_TOKEN } from "../../constants/token-list";
 import { AppStateContext } from "../../contexts/appstate";
-import { useContext } from "react";
-import { formatThousands } from "../../utils/utils";
 import { openNotification } from "../../components/Notifications";
+import { InfoIcon } from "../../components/InfoIcon";
 
-export const TokenStats = ({
-  meanDecimals, 
-  meanMintAuth,
-  meanTotalSupply,
-  meanHolders,
-  meanToken
-}: any) => {
+export const TokenStats = ({meanStats, smeanSupply, totalVolume24h}: any) => {
   return (
     <>
-      <FirstCardsLayout 
-        meanDecimals={meanDecimals} 
-        meanMintAuth={meanMintAuth} 
-        meanToken={meanToken}
-      />
+      <FirstCardsLayout />
       <Divider />
-      <SecondCardsLayout 
-        meanTotalSupply={meanTotalSupply} 
-        meanHolders={meanHolders}
+      <SecondCardsLayout
+        meanStats={meanStats}
+        sMeanTotalSupply={smeanSupply}
+        totalVolume24h={totalVolume24h}
       />
       <Divider />
       <ThirdCardsLayout />
@@ -39,73 +31,61 @@ export const TokenStats = ({
 };
 
 /*********************** FIRST TYPE OF CARDS *************************/
-export const FirstCardsLayout = ({
-  meanDecimals,
-  meanMintAuth,
-  meanToken
-}: any) => {
+export const FirstCardsLayout = () => {
   const { t } = useTranslation('common');
-
   const summaries = [
     {
       label: t('stats.summary.token-name'),
-      value: data.token_name
+      value: `${MEAN_TOKEN.name} (${MEAN_TOKEN.symbol})`
     },
     {
       label: t('stats.summary.token-address'),
-      value: data.token_address,
+      value: MEAN_TOKEN.address,
       tooltip: "stats.summary.token-address-copy"
     },
     {
-      label: t('stats.summary.token-authority'),
-      value: meanMintAuth,
-      tooltip: "stats.summary.token-authority-copy"
+      label: t('stats.summary.token-decimals'),
+      value: MEAN_TOKEN.decimals
     },
     {
-      label: t('stats.summary.token-decimals'),
-      value: meanDecimals
-    }
+      label: t('stats.summary.token-audits'),
+      value: <span>
+        <a href="https://docs.meanfi.com/products/safety-and-security#audits"
+            target="_blank" title="CetriK" rel="noreferrer" className="audit-links">
+          <img src="https://www.certik.com/certik-logotype-h-w.svg" alt="CetriK" />
+        </a>
+        <a href="https://docs.meanfi.com/products/safety-and-security#audits"
+            target="_blank" title="Sec3" rel="noreferrer" className="audit-links">          
+          <img src="https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg" alt="Sec3" />
+        </a>
+        </span>
+    },
   ];
 
   const { getTokenPriceBySymbol } = useContext(AppStateContext);
 
   // Returns an information or error notification each time the copy icon is clicked
-  const onCopyText = (event: any) => { 
-    if (event.currentTarget.name === "Address") {
-      if (data.token_address && copyText(data.token_address)) {
-        openNotification({
-          description: t('notifications.account-address-copied-message'),
-          type: "info"
-        });
-      } else {
-        openNotification({
-          description: t('notifications.account-address-not-copied-message'),
-          type: "error"
-        });
-      }
-    } else if (event.currentTarget.name === "Authority") {
-      if (data.authority && copyText(data.authority)) {
-        openNotification({
-          description: t('notifications.account-address-copied-message'),
-          type: "info"
-        });
-      } else {
-        openNotification({
-          description: t('notifications.account-address-not-copied-message'),
-          type: "error"
-        });
-      }
+  const onCopyText = (event: any) => {
+    if (event.currentTarget.name && copyText(event.currentTarget.name)) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
     }
   };
 
   const renderHeadSummary = (
     <div className="ant-card-head-title">
       <span>{t("stats.summary.summary-title")}</span>
-      <button type="button" className="ant-btn ant-btn-primary ant-btn-round ant-btn-sm thin-stroke">
         <Link to={"/exchange"}>
-          <span>{t('stats.buy-btn')}</span>
+          <Button
+            type="primary"
+            shape="round"
+            size="small"
+            className="extra-small">
+            <span>{t('stats.buy-btn')}</span>
+          </Button>
         </Link>
-      </button>
     </div>
   );
 
@@ -124,8 +104,8 @@ export const FirstCardsLayout = ({
                     shape="circle"
                     size="middle"
                     icon={<CopyOutlined className="mean-svg-icons" />}
-                    onClick={onCopyText}
-                    name={summary.label}
+                    onClick={onCopyText}                    
+                    name={summary.value}
                   />
                 </Tooltip>
               </span>
@@ -140,11 +120,7 @@ export const FirstCardsLayout = ({
     <div className="ant-card-head-title">
       <span>{t("stats.price.price-title")}</span>
       {
-        meanToken ? (
-          <span>$ {getTokenPriceBySymbol(meanToken.symbol)}</span>
-          ) : (
-          <span>0</span>
-        )
+        <span>$ {getTokenPriceBySymbol(MEAN_TOKEN.symbol)}</span>
       }
     </div>
   );
@@ -184,46 +160,51 @@ export const FirstCardsLayout = ({
 
 /*********************** SECOND TYPE OF CARDS *************************/
 export const SecondCardsLayout = ({ 
-  meanTotalSupply, 
-  meanHolders 
+  meanStats,
+  sMeanTotalSupply,
+  totalVolume24h
 }: any) => {
   const { t } = useTranslation('common');
-
   const cards = [
     {
-      label: t('stats.market.market-cap-title'),
-      value: `$ ${formatThousands(data.fully_dilluted_market_cap)}`,
+      label: 'stats.market.market-cap-title',
+      value: `$ ${formatThousands(meanStats.marketCapFD)}`,
       description: "stats.market.token-fully_dilluted_market_cap"
     },
     {
-      label: t('stats.market.holders-title'),
-      value: formatThousands(meanHolders),
+      label: 'stats.market.holders-title',
+      value: formatThousands(meanStats.holders),
       description: "stats.market.token-holders"
     },
     {
-      label: t('stats.market.volume-title'),
-      value: `$ ${formatThousands(data.total_volume)}`,
+      label: 'stats.market.volume-title',
+      value: `$ ${formatThousands(totalVolume24h)}`,
       description: "stats.market.token-total-volume"
     },
     {
-      label: t('stats.market.total-supply-title'),
-      value: formatThousands(meanTotalSupply),
+      label: 'stats.market.total-supply-title',
+      value: formatThousands(meanStats.totalSupply),
       description: "stats.market.token-total-supply"
     },
     {
-      label: t('stats.market.circulating-supply-title'),
-      value: formatThousands(data.circulating_supply),
+      label: 'stats.market.circulating-supply-title',
+      value: formatThousands(meanStats.circulatingSupply),
       description: "stats.market.token-circulating-suppply"
     },
     {
-      label: t('stats.market.total-money-streams-title'),
-      value: formatThousands(data.total_money_streams),
+      label: 'stats.market.total-money-streams-title',
+      value: formatThousands(meanStats.tvl.totalStreams),
       description: "stats.market.token-total-money-streams"
     },
     {
-      label: t('stats.market.total-value-locked-title'),
-      value: `$ ${formatThousands(data.total_value_locked)}`,
+      label: 'stats.market.total-value-locked-title',
+      value: `$ ${formatThousands(meanStats.tvl.total)}`,
       description: "stats.market.token-total-value-locked"
+    },
+    {
+      label: 'invest.panel-right.stats.total-mean-rewards',
+      value: `${formatThousands(sMeanTotalSupply)}`,
+      description: "stats.market.token-smean-supply"
     },
   ];
 
@@ -232,14 +213,14 @@ export const SecondCardsLayout = ({
       {cards.map((card, index) => (
         <Col xs={24} sm={12} md={8} lg={6} key={index}>
           <Card className="ant-card card info-cards">
-            <div className="ant-card-body card-body">
-              <div className="card-content">
-                <span className="info-label">{card.label}</span>
-                <Tooltip placement="top" title={t(card.description)}>
-                  <span>
-                    <IconInfoCircle className="mean-svg-icons" />
-                  </span>
-                </Tooltip>
+            <div className="card-body">
+              <div className="card-content justify-content-start">
+                <span className="fg-secondary-50 align-middle">{t(card.label)}</span>
+                <span className="fg-secondary-50 font-size-70 align-middle">
+                  <InfoIcon content={<span>{t(card.description)}</span>} placement="top">
+                    <InfoCircleOutlined />
+                  </InfoIcon>
+                </span>
               </div>
               <span className="card-info">{card.value}</span>
             </div>
@@ -256,7 +237,7 @@ export const ThirdCardsLayout = () => {
 
   return (
     <Row gutter={[8, 8]} className="slider-row">
-      <div className="row flex-nowrap slide">
+      <div className="row flex-nowrap slide horizontal-scroll">
         {data.pairs.map((pair, index) => (
           <Col xs={12} sm={8} md={6} lg={4} key={index}>
             <Card className="ant-card card slide-card">
@@ -276,23 +257,18 @@ export const ThirdCardsLayout = () => {
                   <div className="slide-content_info">
                     <span className="info-pair">{pair.base}/{pair.target}</span>
                     <span className="info-name mb-2">{pair.name}</span>
-                    <div className="info-liquidity mb-3">
+                    {/* <div className="info-liquidity mb-3">
                       <span>{t('stats.pairs.total-liquidity')}:</span>
                       <span>${formatThousands(pair.total_liquidity)}</span>
-                  </div>
+                  </div> */}
                 </div>
                 <div className="slide-content_buttons">
-                  {pair.type === "DEX" && (
-                    <Button type="ghost"   shape="round" size="small" className="thin-stroke mb-1">
-                      <a href={pair.buy} target="_blank" rel="noreferrer">
-                        {t('stats.total-liquidity-btn')}
-                      </a>
-                    </Button>
-                  )}
-                  <Button type="primary" shape="round" size="small" className="thin-stroke">
-                    <a href={pair.buy} target="_blank" rel="noreferrer">
-                      {t('stats.buy-btn')}
-                    </a>
+                  <Button
+                    type="default"
+                    shape="round"
+                    size="small"
+                    onClick={() => openLinkInNewTab(pair.buy)}>
+                    {pair.type === "DEX" ? t('stats.total-liquidity-btn'): t('stats.buy-btn')}
                   </Button>
                 </div>
               </div>

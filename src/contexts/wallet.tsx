@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { useLocalStorageState } from "./../utils/utils";
+import { isUnauthenticatedRoute, useLocalStorageState } from "./../utils/utils";
 import { useTranslation } from "react-i18next";
 import { isDesktop, isSafari } from "react-device-detect";
 import { DownOutlined, UpOutlined } from "@ant-design/icons";
@@ -38,7 +38,7 @@ import {
   SolongWalletName
 } from "@solana/wallet-adapter-wallets";
 import { WalletAdapterNetwork, WalletNotReadyError } from "@solana/wallet-adapter-base";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getDefaultRpc } from "../services/connections-hq";
 import { environment } from "../environments/environment";
 
@@ -234,6 +234,7 @@ const WalletContext = React.createContext<{
 
 export function WalletProvider({ children = null as any }) {
   const { t } = useTranslation("common");
+  const location = useLocation();
   const navigate = useNavigate();
   const [autoConnect, setAutoConnect] = useState(true);
   const [providerName, setProviderName] = useLocalStorageState("providerName");
@@ -318,7 +319,9 @@ export function WalletProvider({ children = null as any }) {
 
       wallet.on("disconnect", () => {
         setConnected(false);
-        navigate('/');
+        if (!isUnauthenticatedRoute(location.pathname)) {
+          navigate('/');
+        }
       });
 
       wallet.on("error", () => {

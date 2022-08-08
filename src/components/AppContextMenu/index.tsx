@@ -66,10 +66,6 @@ export const AppContextMenu = () => {
   const showFriendReferralModal = useCallback(() => setIsFriendReferralModalVisibility(true), []);
   const hideFriendReferralModal = useCallback(() => setIsFriendReferralModalVisibility(false), []);
 
-  // const onDisconnectWallet = () => {
-  //   disconnect();
-  // }
-
   const onSwitchTheme = () => {
     if (theme === 'light') {
       setTheme('dark');
