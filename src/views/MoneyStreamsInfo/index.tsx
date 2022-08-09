@@ -33,7 +33,7 @@ import { cutNumber, fetchAccountTokens, formatThousands, getTokenAmountAndSymbol
 import { useTranslation } from "react-i18next";
 import { useNativeAccount } from "../../contexts/accounts";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
-import { INITIAL_TREASURIES_SUMMARY, TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
+import { TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
 import { customLogger } from "../..";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
@@ -41,7 +41,7 @@ import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamOpenModal } from "../../components/StreamOpenModal";
 import { CreateStreamModal } from "../../components/CreateStreamModal";
-import { initialSummary, StreamsSummary } from "../../models/streams";
+import { StreamsSummary } from "../../models/streams";
 import { Identicon } from "../../components/Identicon";
 import { openNotification } from "../../components/Notifications";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -98,7 +98,6 @@ export const MoneyStreamsInfoView = (props: {
     splTokenList,
     streamListv1,
     streamListv2,
-    selectedToken,
     treasuryOption,
     transactionStatus,
     streamProgramAddress,
@@ -280,12 +279,14 @@ export const MoneyStreamsInfoView = (props: {
 
   // Reset summaries and canDisplay flags when all dependencies start to load
   useEffect(() => {
-    if (loadingStreams && loadingTreasuries) {
+    if (loadingStreams) {
       setIncomingStreamsSummary(undefined);
       setOutgoingStreamsSummary(undefined);
-      setStreamingAccountsSummary(undefined);
       setCanDisplayIncomingBalance(false);
       setCanDisplayOutgoingBalance(false);
+    }
+    if (loadingTreasuries) {
+      setStreamingAccountsSummary(undefined);
       setCanDisplayTotalAccountBalance(false);
     }
   }, [loadingStreams, loadingTreasuries]);
@@ -419,8 +420,6 @@ export const MoneyStreamsInfoView = (props: {
     // consoleOut('totalNet in streaming accounts:', resume['totalNet'], 'blue');
     // consoleOut('=========== Block ends ===========', '', 'orange');
 
-    // Update state
-    setStreamingAccountsSummary(resume);
     return resume;
 
   }, [
@@ -1963,15 +1962,23 @@ export const MoneyStreamsInfoView = (props: {
     if (!streamingAccountsSummary) {
       refreshTreasuriesSummary()
       .then(value => {
-        consoleOut('streamingAccountsSummary:', value, 'black');
+        consoleOut('streamingAccountsSummary:', value, 'yellow');
+        if (value) {
+          setStreamingAccountsSummary(value);
+        }
         setCanDisplayTotalAccountBalance(true);
       });
     }
 
     const timeout = setTimeout(() => {
-      if (streamingAccountsSummary) {
-        refreshTreasuriesSummary();
-      }
+      refreshTreasuriesSummary()
+      .then(value => {
+        consoleOut('streamingAccountsSummary:', value, 'black');
+        if (value) {
+          setStreamingAccountsSummary(value);
+        }
+        setCanDisplayTotalAccountBalance(true);
+      });
     }, 1000);
 
     return () => {
