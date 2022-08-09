@@ -359,12 +359,12 @@ export const AccountsCloseAssetModal = (props: {
   // Validation
   const isEnterYesWordValid = (): boolean => {
     return enterYesWord &&
-          enterYesWord.toLocaleLowerCase() === "yes"
+           enterYesWord.toLocaleLowerCase() === "yes"
       ? true
       : false;
   }
 
-  const isOperationValid = (): boolean => {
+  const isOperationValidIfWrapSol = (): boolean => {
     return publicKey &&
            nativeBalance &&
            nativeBalance > feeAmount &&
@@ -375,7 +375,17 @@ export const AccountsCloseAssetModal = (props: {
       : false;
   };
 
-  const getCtaLabel = () => {
+  const isOperationValid = (): boolean => {
+    return publicKey &&
+           nativeBalance &&
+           nativeBalance > feeAmount &&
+           asset &&
+           isDisclaimerAccepted
+      ? true
+      : false;
+  };
+
+  const getCtaLabelIfWrapSol = () => {
     return !publicKey
       ? t('transactions.validation.not-connected')
       : nativeBalance === 0
@@ -391,8 +401,21 @@ export const AccountsCloseAssetModal = (props: {
                 : 'Close account';
   }
 
-  // Rendering
+  const getCtaLabel = () => {
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : nativeBalance === 0
+        ? t('transactions.validation.amount-sol-low')
+        : nativeBalance < feeAmount
+          ? t('transactions.validation.amount-sol-low')
+          : !asset
+            ? 'No token selected'
+            : !isDisclaimerAccepted
+              ? 'Accept disclaimer'
+              : 'Close account';
+  }
 
+  // Rendering
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -430,17 +453,21 @@ export const AccountsCloseAssetModal = (props: {
           />
         </div>
 
-        <div className="mb-2 text-center">
-          <p>Enter <strong>YES</strong> to confirm you wish to close the account and burn the remaining tokens. This can not be undone so be sure you wish to proceed.</p>
-        </div>
+        {(asset.balance && asset.balance > 0 && asset.name !== "Wrapped SOL") ? (
+          <>
+            <div className="mb-2 text-center">
+              <p>Enter <strong>YES</strong> to confirm you wish to close the account and burn the remaining tokens. This can not be undone so be sure you wish to proceed.</p>
+            </div>
 
-        <InputMean
-          id="confirm-close-account-input"
-          maxLength={3}
-          placeholder="Type YES to confirm"
-          onChange={onYesInputValueChange}
-          value={enterYesWord}
-        />
+            <InputMean
+              id="confirm-close-account-input"
+              maxLength={3}
+              placeholder="Type YES to confirm"
+              onChange={onYesInputValueChange}
+              value={enterYesWord}
+            />
+          </>
+        ) : null}
 
         <div className="mb-3">
           <Checkbox checked={isDisclaimerAccepted} onChange={onIsVerifiedRecipientChange}>I agree to remove this asset from my wallet</Checkbox>
@@ -452,14 +479,14 @@ export const AccountsCloseAssetModal = (props: {
           type="primary"
           shape="round"
           size="large"
-          disabled={!isOperationValid() || isBusy}
+          disabled={((asset.balance && asset.balance > 0 && asset.name !== "Wrapped SOL") ? !isOperationValidIfWrapSol() : !isOperationValid()) || isBusy}
           onClick={onStartTransaction}>
           {isBusy && (
               <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
             ? 'Closing account'
-            : getCtaLabel()
+            : ((asset.balance && asset.balance > 0 && asset.name !== "Wrapped SOL") ? getCtaLabelIfWrapSol() : getCtaLabel())
           }
         </Button>
 
