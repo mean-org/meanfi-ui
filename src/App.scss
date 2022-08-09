@@ -4246,6 +4246,12 @@ main section {
   filter: grayscale(1);
 }
 // Account
+.connect-wallet-modal {
+  padding: 0 1rem 0;
+  max-height: 80vh;
+  margin-bottom: 1rem;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
 .wallet-providers {
   transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
   &:not(.expanded) {
@@ -7844,6 +7850,10 @@ code {
   border-top: 1px solid var(--color-secondary-alpha-40);
   background-color: var(--color-component-background);
   z-index: 10;
+  &.inner-bottom {
+    bottom: 0px;
+    border-radius: 0 0 var(--custom-border-radius) var(--custom-border-radius);
+  }
 }
 
 .icon-label {

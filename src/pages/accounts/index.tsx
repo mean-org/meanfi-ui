@@ -212,21 +212,15 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
-  const [autocloseTreasuries, setAutocloseTreasuries] = useState<(Treasury | TreasuryInfo)[]>([]);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
-
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
-
   // Streaming account
   const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
   const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
-  const [loadingCombinedStreamingList, setLoadingCombinedStreamingList] = useState(true);
-  const [streamingAccountCombinedList, setStreamingAccountCombinedList] = useState<CombinedStreamingAccounts[] | undefined>();
   // Balances and USD values
   const [totalAccountBalance, setTotalAccountBalance] = useState(0);
   const [incomingStreamsSummary, setIncomingStreamsSummary] = useState<StreamsSummary>(initialSummary);
@@ -239,7 +233,6 @@ export const AccountsNewView = () => {
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
   const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
-
   const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
 
@@ -2795,10 +2788,6 @@ export const AccountsNewView = () => {
             treasuryAccumulator.push(...treasuriesv1);
           }
 
-          const autoclosables = treasuryAccumulator.filter(t => t.autoClose);
-
-          setAutocloseTreasuries(autoclosables);
-
           const streamingAccounts = treasuryAccumulator.filter(t => !t.autoClose);
 
           setTreasuryList(streamingAccounts);
@@ -2878,7 +2867,6 @@ export const AccountsNewView = () => {
     resume['totalAmount'] += treasuryList.length;
 
     // Update state
-    consoleOut('streamingAccountsSummary:', resume, 'teal');
     setStreamingAccountsSummary(resume);
 
   }, [
@@ -3063,10 +3051,8 @@ export const AccountsNewView = () => {
     setPathParamStreamingTab('');
     setAccountTokens([]);
     setTreasuryList([]);
-    setAutocloseTreasuries([]);
     setIncomingStreamList([]);
     setOutgoingStreamList([]);
-    setStreamingAccountCombinedList([]);
     setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
     setIncomingAmount(0);
     setOutgoingAmount(0);
@@ -3907,87 +3893,22 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathParamStreamId, publicKey, streamDetail, streamList]);
 
-  // Create a combined list of streaming accounts with its 
-  useEffect(() => {
-    if (!treasuryList || !streamList) { return; }
-
-    const getFinalList = async (list: (Treasury | TreasuryInfo)[]) => {
-      const finalList: CombinedStreamingAccounts[] = [];
-
-      if (list.length === 0) {
-        return finalList;
-      }
-
-      for (const item of list) {
-        const treasuryPk = new PublicKey(item.id as string);
-        const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2
-          ? true
-          : false;
-
-        const itemList = await getStreamingAccountStreams(treasuryPk, isNewTreasury);
-        if (itemList) {
-          const listItem: CombinedStreamingAccounts = {
-            streams: itemList,
-            treasury: item as any
-          };
-          finalList.push(listItem);
-        }
-      }
-
-      return finalList;
-    }
-
-    setLoadingCombinedStreamingList(true);
-
-    const sortedStreamingAccountList = treasuryList.map((streaming) => streaming).sort((a, b) => {
-      const vA1 = a as TreasuryInfo;
-      const vA2 = a as Treasury;
-      const vB1 = b as TreasuryInfo;
-      const vB2 = b as Treasury;
-
-      const isNewTreasury = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
-        ? true
-        : false;
-
-      if (isNewTreasury) {
-        return vB2.totalStreams - vA2.totalStreams;
-      } else {
-        return vB1.streamsAmount - vA1.streamsAmount;
-      }
-    });
-
-    getFinalList(sortedStreamingAccountList)
-      .then(items => {
-        consoleOut('streamingAccountCombinedList:', items, "blue");
-
-        setStreamingAccountCombinedList(items);
-      })
-      .catch((error) => {
-        console.log(error);
-        setStreamingAccountCombinedList([]);
-        consoleOut('streamingAccountCombinedList:', [], "blue");
-      })
-      .finally(() => setLoadingCombinedStreamingList(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streamList, treasuryList]);
-
   // Set the list of incoming and outgoing streams
   useEffect(() => {
-    if (!connection || !publicKey || !streamList || !autocloseTreasuries) {
+    if (!connection || !publicKey || !streamList) {
       setIncomingStreamList(undefined);
       setOutgoingStreamList(undefined);
-
       return;
     }
 
     setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)));
 
-    setOutgoingStreamList(streamList.filter((stream: Stream | StreamInfo) => !isInboundStream(stream) && autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress)));
+    const onlyOuts = streamList.filter(item => !isInboundStream(item) && (item as any).category === 0);
+    setOutgoingStreamList(onlyOuts);
   }, [
     publicKey,
     streamList,
     connection,
-    autocloseTreasuries,
     getQueryAccountType,
     isInboundStream,
   ]);
@@ -4003,17 +3924,10 @@ export const AccountsNewView = () => {
 
   // Outgoing amount
   useEffect(() => {
-    if (!outgoingStreamList || !streamingAccountCombinedList) { return; }
+    if (!outgoingStreamList) { return; }
 
-    const sumStreamingStreams = streamingAccountCombinedList.reduce((accumulator, streaming: any) => {
-      return accumulator + streaming.streams?.length;
-    }, 0);
-
-    setOutgoingAmount(outgoingStreamList.length + sumStreamingStreams);
-  }, [
-    outgoingStreamList,
-    streamingAccountCombinedList
-  ]);
+    setOutgoingAmount(outgoingStreamList.length);
+  }, [outgoingStreamList]);
 
   // Total streams amount
   useEffect(() => {
@@ -4059,9 +3973,7 @@ export const AccountsNewView = () => {
 
   // Update total account balance
   useEffect(() => {
-    if (loadingStreams || loadingCombinedStreamingList) {
-      return;
-    }
+    if (loadingStreams) { return; }
 
     const wdb = parseFloat(incomingStreamsSummary.totalNet.toFixed(2));
     const ub = parseFloat(outgoingStreamsSummary.totalNet.toFixed(2)) + parseFloat(streamingAccountsSummary.totalNet.toFixed(2));
@@ -4073,7 +3985,6 @@ export const AccountsNewView = () => {
     incomingStreamsSummary,
     outgoingStreamsSummary,
     streamingAccountsSummary,
-    loadingCombinedStreamingList,
   ]);
 
   // Live data calculation - NetWorth
@@ -4472,7 +4383,7 @@ export const AccountsNewView = () => {
         <div className="font-bold font-size-110 left">{!isInspectedAccountTheConnectedWallet() ? "Treasury Balance" : "Net Worth"}</div>
         <div className="font-bold font-size-110 right">
           {
-            loadingStreams || loadingCombinedStreamingList || !canShowStreamingAccountBalance? (
+            loadingStreams || !canShowStreamingAccountBalance ? (
               <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
             ) : netWorth
               ? toUsCurrency(netWorth)
@@ -4525,7 +4436,7 @@ export const AccountsNewView = () => {
             )}
           </div>
           <div className="rate-cell">
-            {loadingStreams || loadingCombinedStreamingList || !canShowStreamingAccountBalance ? (
+            {loadingStreams || !canShowStreamingAccountBalance ? (
               <div className="rate-amount">
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               </div>
@@ -5281,7 +5192,7 @@ export const AccountsNewView = () => {
                       <div className="asset-category-title flex-fixed-right">
                         <div className="title">Streaming Assets</div>
                         <div className="amount">{
-                          loadingStreams || loadingCombinedStreamingList || !canShowStreamingAccountBalance ? (
+                          loadingStreams || !canShowStreamingAccountBalance ? (
                             <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                           ) : totalAccountBalance > 0
                             ? toUsCurrency(totalAccountBalance)
@@ -5420,9 +5331,8 @@ export const AccountsNewView = () => {
                         {!pathParamStreamId && !pathParamTreasuryId ? (
                           <MoneyStreamsInfoView
                             accountAddress={accountAddress}
-                            autocloseTreasuries={autocloseTreasuries}
-                            loadingCombinedStreamingList={loadingCombinedStreamingList}
                             loadingStreams={loadingStreams}
+                            loadingTreasuries={loadingTreasuries}
                             multisigAccounts={multisigAccounts}
                             onSendFromIncomingStreamInfo={goToStreamIncomingDetailsHandler}
                             onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
@@ -5431,7 +5341,6 @@ export const AccountsNewView = () => {
                             selectedMultisig={selectedMultisig}
                             selectedTab={pathParamStreamingTab}
                             streamList={streamList}
-                            streamingAccountCombinedList={streamingAccountCombinedList}
                             treasuryList={treasuryList}
                           />
                         ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
