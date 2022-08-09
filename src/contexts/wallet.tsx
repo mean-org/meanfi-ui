@@ -417,7 +417,7 @@ export function WalletProvider({ children = null as any }) {
         closable={connected}
         onCancel={close}
         width={450}>
-        <div className="px-4 pb-4">
+        <div className="connect-wallet-modal vertical-scroll">
           <div className="mb-3 text-center">
             <h2>{t('wallet-selector.connect-to-begin')}</h2>
           </div>
