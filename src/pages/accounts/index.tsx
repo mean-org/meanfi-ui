@@ -5152,7 +5152,7 @@ export const AccountsNewView = () => {
 
   const returnFromStreamingAccountDetailsHandler = () => {
 
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-account`;
 
     if (inspectedAccountType && inspectedAccountType === "multisig") {
       url += `?account-type=multisig`;

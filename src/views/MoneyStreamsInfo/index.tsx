@@ -2929,7 +2929,7 @@ export const MoneyStreamsInfoView = (props: {
       render: renderSummary
     },
     {
-      id: "accounts",
+      id: "streaming-account",
       name: `Accounts ${(!loadingCombinedStreamingList && !loadingStreams) 
         ? `(${streamingAccountsAmount && streamingAccountsAmount >= 0 && streamingAccountsAmount})` 
         : ""}`,
