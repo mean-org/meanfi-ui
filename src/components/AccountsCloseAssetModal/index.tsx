@@ -18,6 +18,7 @@ import { closeTokenAccount } from '../../utils/accounts';
 import { customLogger } from '../..';
 import { UserTokenAccount } from '../../models/transactions';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { InputMean } from '../InputMean';
 
 export const AccountsCloseAssetModal = (props: {
   connection: Connection;
@@ -47,6 +48,7 @@ export const AccountsCloseAssetModal = (props: {
   });
   const [feeAmount] = useState<number>(transactionFees.blockchainFee + transactionFees.mspFlatFee);
   const [isDisclaimerAccepted, setIsDisclaimerAccepted] = useState<boolean>(false);
+  const [enterYesWord, setEnterYesWord] = useState('');
 
   // Callbacks
 
@@ -74,6 +76,10 @@ export const AccountsCloseAssetModal = (props: {
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsDisclaimerAccepted(e.target.checked);
+  }
+
+  const onYesInputValueChange = (e: any) => {
+    setEnterYesWord(e.target.value);
   }
 
   const resetTransactionStatus = useCallback(() => {
@@ -351,12 +357,19 @@ export const AccountsCloseAssetModal = (props: {
   };
 
   // Validation
+  const isEnterYesWordValid = (): boolean => {
+    return enterYesWord &&
+          enterYesWord.toLocaleLowerCase() === "yes"
+      ? true
+      : false;
+  }
 
   const isOperationValid = (): boolean => {
     return publicKey &&
            nativeBalance &&
            nativeBalance > feeAmount &&
            asset &&
+           isEnterYesWordValid() &&
            isDisclaimerAccepted
       ? true
       : false;
@@ -371,9 +384,11 @@ export const AccountsCloseAssetModal = (props: {
           ? t('transactions.validation.amount-sol-low')
           : !asset
             ? 'No token selected'
-            : !isDisclaimerAccepted
-              ? 'Accept disclaimer'
-              : 'Close account';
+            : !isEnterYesWordValid()
+              ? "Confirm account closure"
+              : !isDisclaimerAccepted
+                ? 'Accept disclaimer'
+                : 'Close account';
   }
 
   // Rendering
@@ -414,6 +429,18 @@ export const AccountsCloseAssetModal = (props: {
             balance={asset.balance || 0}
           />
         </div>
+
+        <div className="mb-2 text-center">
+          <p>Enter <strong>YES</strong> to confirm you wish to close the account and burn the remaining tokens. This can not be undone so be sure you wish to proceed.</p>
+        </div>
+
+        <InputMean
+          id="confirm-close-account-input"
+          maxLength={3}
+          placeholder="Type YES to confirm"
+          onChange={onYesInputValueChange}
+          value={enterYesWord}
+        />
 
         <div className="mb-3">
           <Checkbox checked={isDisclaimerAccepted} onChange={onIsVerifiedRecipientChange}>I agree to remove this asset from my wallet</Checkbox>
