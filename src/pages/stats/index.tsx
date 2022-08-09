@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Col, Row } from 'antd';
 
 import "./style.scss";
