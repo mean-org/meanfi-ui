@@ -504,10 +504,12 @@ export const MultisigCreateSafeModal = (props: {
                     <div className="well mt-2 mb-1 proposal-summary-container vertical-scroll">
                       <div className="mb-1">
                         {multisigOwners.map((owner, index) => (
-                          <div key={index}>
-                            <span className="info-label">{owner.name}:</span><br />
-                            <span className="info-data simplelink underline-on-hover" onClick={() => <CopyExtLinkGroup content={owner.address} externalLink={false} />}>{owner.address}</span>
-                          </div>
+                          owner.name && owner.address && (
+                            <div key={index}>
+                              <span className="info-label">{owner.name}:</span><br />
+                              <span className="info-data simplelink underline-on-hover" onClick={() => <CopyExtLinkGroup content={owner.address} externalLink={false} />}>{owner.address}</span>
+                            </div>
+                          )
                         ))}
                       </div>
                       <div>
