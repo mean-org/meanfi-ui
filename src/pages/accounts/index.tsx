@@ -2790,8 +2790,25 @@ export const AccountsNewView = () => {
 
           const streamingAccounts = treasuryAccumulator.filter(t => !t.autoClose);
 
-          setTreasuryList(streamingAccounts);
-          consoleOut('treasuryList:', streamingAccounts, 'blue');
+          const sortedStreamingAccountList = streamingAccounts.map((streaming) => streaming).sort((a, b) => {
+            const vA1 = a as TreasuryInfo;
+            const vA2 = a as Treasury;
+            const vB1 = b as TreasuryInfo;
+            const vB2 = b as Treasury;
+          
+            const isNewTreasury = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
+              ? true
+              : false;
+          
+            if (isNewTreasury) {
+              return vB2.totalStreams - vA2.totalStreams;
+            } else {
+              return vB1.streamsAmount - vA1.streamsAmount;
+            }
+          });
+
+          setTreasuryList(sortedStreamingAccountList);
+          consoleOut('treasuryList:', sortedStreamingAccountList, 'blue');
         })
         .catch(error => {
           console.error(error);
