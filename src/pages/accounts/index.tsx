@@ -8,7 +8,7 @@ import {
   SyncOutlined,
   WarningFilled
 } from '@ant-design/icons';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -78,11 +78,9 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { closeTokenAccount } from '../../utils/accounts';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { BN } from 'bn.js';
-import { AnchorProvider, Program } from '@project-serum/anchor';
-import SerumIDL from '../../models/serum-multisig-idl';
-import { MultisigParticipant, ZERO_FEES } from '../../models/multisig';
+import { ZERO_FEES } from '../../models/multisig';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -112,11 +110,6 @@ interface AssetCta {
   callBack?: any;
 }
 
-type CombinedStreamingAccounts = {
-  treasury: Treasury | Treasury;
-  streams: Array<Stream | StreamInfo> | undefined;
-};
-
 export const AccountsNewView = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -143,6 +136,8 @@ export const AccountsNewView = () => {
     accountAddress,
     loadingStreams,
     lastTxSignature,
+    selectedMultisig,
+    multisigAccounts,
     shouldLoadTokens,
     transactionStatus,
     streamProgramAddress,
@@ -159,9 +154,11 @@ export const AccountsNewView = () => {
     setTransactionStatus,
     refreshTokenBalance,
     setShouldLoadTokens,
+    setSelectedMultisig,
     refreshStreamList,
     setStreamsSummary,
     setAccountAddress,
+    refreshMultisigs,
     setSelectedToken,
     setSelectedAsset,
     setActiveStream,
@@ -206,9 +203,6 @@ export const AccountsNewView = () => {
   const [transactionAssetFees, setTransactionAssetFees] = useState<TransactionFees>(NO_FEES);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -299,28 +293,6 @@ export const AccountsNewView = () => {
     connectionConfig.endpoint,
   ]);
 
-  const multisigSerumClient = useMemo(() => {
-
-    const opts: ConfirmOptions = {
-      preflightCommitment: "confirmed",
-      commitment: "confirmed",
-      skipPreflight: true,
-      maxRetries: 3
-    };
-
-    const provider = new AnchorProvider(connection, wallet as any, opts);
-
-    return new Program(
-      SerumIDL,
-      "msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt",
-      provider
-    );
-
-  }, [
-    connection, 
-    wallet
-  ]);
-
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
     endpoint,
@@ -353,6 +325,17 @@ export const AccountsNewView = () => {
   useEffect(() => {
     accountAddressRef.current = accountAddress;
   }, [accountAddress]);
+
+  const isMultisigContext = useMemo(() => {
+    let accountTypeInQuery: string | null = null;
+    if (address && searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery && accountTypeInQuery === "multisig") {
+        return true;
+      }
+    }
+    return false;
+  }, [address, searchParams]);
 
 
   ////////////////////////////
@@ -1028,11 +1011,9 @@ export const AccountsNewView = () => {
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
+            refreshMultisigs(false);
             notifyMultisigActionFollowup(item);
           }
-          setTimeout(() => {
-            setLoadingMultisigAccounts(true);
-          }, 20);
           break;
         case OperationType.StreamCreate:
           setTimeout(() => {
@@ -1050,10 +1031,10 @@ export const AccountsNewView = () => {
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
+            refreshMultisigs(false);
             notifyMultisigActionFollowup(item);
           }
           setTimeout(() => {
-            setLoadingMultisigAccounts(true);
             softReloadStreams();
           }, 20);
           break;
@@ -1062,11 +1043,11 @@ export const AccountsNewView = () => {
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
+            refreshMultisigs(false);
             notifyMultisigActionFollowup(item);
           }
           setTimeout(() => {
             softReloadAssets();
-            setLoadingMultisigAccounts(true);
             softReloadStreams();
           }, 100);
           break;
@@ -1075,7 +1056,7 @@ export const AccountsNewView = () => {
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
-            setLoadingMultisigAccounts(true);
+            refreshMultisigs(false);
             notifyMultisigActionFollowup(item);
           } else {
             const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressRef.current}/streaming/outgoing`;
@@ -1089,7 +1070,7 @@ export const AccountsNewView = () => {
           consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
           recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
-            setLoadingMultisigAccounts(true);
+            refreshMultisigs(false);
             notifyMultisigActionFollowup(item);
           } else {
             const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressRef.current}/streaming/incoming`;
@@ -1172,132 +1153,6 @@ export const AccountsNewView = () => {
     return !selectedAsset.publicAddress ? true : false;
   }, [selectedAsset]);
 
-  const parseSerumMultisigAccount = (info: any) => {
-
-    return PublicKey
-      .findProgramAddress([info.publicKey.toBuffer()], new PublicKey("msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt"))
-      .then(k => {
-
-        const address = k[0];
-        const owners: MultisigParticipant[] = [];
-        const filteredOwners = info.account.owners.filter((o: any) => !o.equals(PublicKey.default));
-
-        for (let i = 0; i < filteredOwners.length; i ++) {
-          owners.push({
-            address: filteredOwners[i].toBase58(),
-            name: "owner " + (i + 1),
-          } as MultisigParticipant);
-        }
-
-        return {
-          id: info.publicKey,
-          version: 0,
-          label: "",
-          authority: address,
-          nounce: info.account.nonce,
-          ownerSetSeqno: info.account.ownerSetSeqno,
-          threshold: info.account.threshold.toNumber(),
-          pendingTxsAmount: 0,
-          createdOnUtc: new Date(),
-          owners: owners
-
-        } as MultisigInfo;
-      })
-      .catch(err => { 
-        consoleOut('error', err, 'red');
-        return undefined;
-      });
-  };
-
-  // Gets multisig pending Txs count
-  useEffect(() => {
-
-    if (!publicKey ||
-        !multisigClient ||
-        !multisigSerumClient ||
-        !accountAddress ||
-        !loadingMultisigAccounts) {
-      return;
-    }
-
-    if (inspectedAccountType !== "multisig") {
-      setPendingMultisigTxCount(undefined);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      multisigSerumClient
-      .account
-      .multisig
-      .all()
-      .then((accs: any) => {
-        const filteredSerumAccs = accs.filter((a: any) => {
-          if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) {
-            return true;
-          }
-          return false;
-        });
-
-        const parsedSerumAccs: MultisigInfo[] = [];
-
-        for (const acc of filteredSerumAccs) {
-          parseSerumMultisigAccount(acc)
-            .then((parsed: any) => {
-              if (parsed) {
-                parsedSerumAccs.push(parsed);
-              }
-            })
-            .catch((err: any) => console.error(err));
-        }
-
-        multisigClient
-        .getMultisigs(publicKey)
-        .then((allInfo: MultisigInfo[]) => {
-          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-          const allAccounts = [...allInfo, ...parsedSerumAccs];
-          consoleOut('multisigAccounts:', allAccounts, 'crimson');
-          setMultisigAccounts(allAccounts);
-          const item = allInfo.find(m => m.authority.equals(new PublicKey(accountAddress)));
-          if (item) {
-            consoleOut('selectedMultisig:', item, 'crimson');
-            setSelectedMultisig(item);
-            setPendingMultisigTxCount(item.pendingTxsAmount);
-          } else {
-            setSelectedMultisig(undefined);
-            setPendingMultisigTxCount(undefined);
-          }
-        })
-        .catch((err: any) => {
-          console.error(err);
-          setPendingMultisigTxCount(undefined);
-        })
-        .finally(() => setLoadingMultisigAccounts(false));
-      })
-      .catch((err: any) => {
-        console.error(err);
-        setPendingMultisigTxCount(undefined);
-      })
-      .finally(() => setLoadingMultisigAccounts(false));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-      if (pendingMultisigTxCount) {
-        setPendingMultisigTxCount(undefined);
-      }
-    }
-
-  }, [
-    publicKey,
-    accountAddress,
-    multisigClient,
-    multisigSerumClient,
-    inspectedAccountType,
-    pendingMultisigTxCount,
-    loadingMultisigAccounts,
-    setPendingMultisigTxCount,
-  ]);
 
   //////////////////////
   //    Executions    //
@@ -3812,6 +3667,22 @@ export const AccountsNewView = () => {
     startSwitch
   ]);
 
+  // Set a multisig based on address in context
+  useEffect(() => {
+    if (!isMultisigContext || !multisigAccounts || !accountAddress) {
+      return;
+    }
+
+    const item = multisigAccounts.find(m => m.authority.toBase58() === accountAddress);
+    if (item) {
+      setSelectedMultisig(item);
+      setPendingMultisigTxCount(item.pendingTxsAmount);
+      consoleOut('selectedMultisig:', item, 'blue');
+      consoleOut('pendingMultisigTxCount:', item.pendingTxsAmount, 'blue');
+    }
+
+  }, [accountAddress, isMultisigContext, multisigAccounts, setPendingMultisigTxCount, setSelectedMultisig]);
+
   // Hook on the wallet connect/disconnect
   useEffect(() => {
 
@@ -3974,7 +3845,7 @@ export const AccountsNewView = () => {
     streamListv2,
   ]);
 
-  // 
+  // Get treasuries summary
   useEffect(() => {
     if (!publicKey || !treasuryList) { return; }
 

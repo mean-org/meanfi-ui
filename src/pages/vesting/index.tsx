@@ -75,9 +75,12 @@ export const VestingView = () => {
     userTokens,
     splTokenList,
     isWhitelisted,
+    selectedMultisig,
+    multisigAccounts,
     transactionStatus,
     streamV2ProgramAddress,
     pendingMultisigTxCount,
+    loadingMultisigAccounts,
     previousWalletConnectState,
     setHighLightableMultisigId,
     setPendingMultisigTxCount,
@@ -92,6 +95,7 @@ export const VestingView = () => {
     setPaymentStartDate,
     refreshTokenBalance,
     setRecipientAddress,
+    setSelectedMultisig,
     setFromCoinAmount,
     setSelectedToken,
   } = useContext(AppStateContext);
@@ -142,10 +146,6 @@ export const VestingView = () => {
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
-  const [needReloadMultisigs, setNeedReloadMultisigs] = useState(true);
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [vestingContractFlowRate, setVestingContractFlowRate] = useState<VestingFlowRateInfo | undefined>(undefined);
   const [loadingVestingContractFlowRate, setLoadingVestingContractFlowRate] = useState(false);
   const [loadingContractActivity, setLoadingContractActivity] = useState(false);
@@ -247,28 +247,6 @@ export const VestingView = () => {
     connection,
     publicKey,
     connectionConfig.endpoint,
-  ]);
-
-  const multisigSerumClient = useMemo(() => {
-
-    const opts: ConfirmOptions = {
-      preflightCommitment: "confirmed",
-      commitment: "confirmed",
-      skipPreflight: true,
-      maxRetries: 3
-    };
-
-    const provider = new AnchorProvider(connection, wallet as any, opts);
-
-    return new Program(
-      SerumIDL,
-      "msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt",
-      provider
-    );
-
-  }, [
-    connection, 
-    wallet
   ]);
 
   // Create and cache Money Streaming Program V2 instance
@@ -706,7 +684,6 @@ export const VestingView = () => {
 
     // Before fetching the list of vesting contracts, clear the cache of flow rates
     vestingFlowRatesCache.clear();
-    setNeedReloadMultisigs(true);
 
     getAllUserV2Accounts(accountAddress)
       .then(treasuries => {
@@ -806,43 +783,6 @@ export const VestingView = () => {
 
   }, [accountAddress, getQueryAccountType, multisigAccounts, publicKey, selectedVestingContract]);
 
-  const parseSerumMultisigAccount = useCallback((info: any) => {
-
-    return PublicKey
-      .findProgramAddress([info.publicKey.toBuffer()], new PublicKey("msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt"))
-      .then(k => {
-
-        const address = k[0];
-        const owners: MultisigParticipant[] = [];
-        const filteredOwners = info.account.owners.filter((o: any) => !o.equals(PublicKey.default));
-
-        for (let i = 0; i < filteredOwners.length; i ++) {
-          owners.push({
-            address: filteredOwners[i].toBase58(),
-            name: "owner " + (i + 1),
-          } as MultisigParticipant);
-        }
-
-        return {
-          id: info.publicKey,
-          version: 0,
-          label: "",
-          authority: address,
-          nounce: info.account.nonce,
-          ownerSetSeqno: info.account.ownerSetSeqno,
-          threshold: info.account.threshold.toNumber(),
-          pendingTxsAmount: 0,
-          createdOnUtc: new Date(),
-          owners: owners
-
-        } as MultisigInfo;
-      })
-      .catch(err => { 
-        consoleOut('error', err, 'red');
-        return undefined;
-      });
-  }, []);
-
   const getMultisigIdFromContext = useCallback(() => {
 
     if (!multisigAccounts || !selectedMultisig || !accountAddress) { return ''; }
@@ -857,20 +797,6 @@ export const VestingView = () => {
     return '';
 
   }, [accountAddress, getQueryAccountType, multisigAccounts, selectedMultisig])
-
-  // const getAvailableStreamingBalance = useCallback(() => {
-  //   if (!selectedVestingContract) { return 0; }
-
-  //   const token = getTokenByMintAddress(selectedVestingContract.associatedToken as string);
-
-  //   if (token) {
-  //     const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
-  //     const ub = makeDecimal(new BN(unallocated), token.decimals);
-  //     return ub >= 0 ? ub : 0;
-  //   }
-
-  //   return 0;
-  // }, [getTokenByMintAddress, selectedVestingContract]);
 
   const getContractActivity = useCallback((streamId: string, clearHistory = false) => {
     if (!streamId || !msp || loadingContractActivity) {
@@ -933,87 +859,6 @@ export const VestingView = () => {
     setRecipientAddress,
     setIsVerifiedRecipient,
     setLockPeriodFrequency,
-  ]);
-
-  const refreshMultisigs = useCallback(() => {
-
-    if (!publicKey ||
-        !multisigClient ||
-        !multisigSerumClient ||
-        !accountAddress ||
-        loadingMultisigAccounts) {
-      return;
-    }
-
-    setTimeout(() => {
-      setLoadingMultisigAccounts(true);
-    });
-
-    multisigSerumClient
-      .account
-      .multisig
-      .all()
-      .then((accs: any) => {
-        const filteredSerumAccs = accs.filter((a: any) => {
-          if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) {
-            return true;
-          }
-          return false;
-        });
-
-        const parsedSerumAccs: MultisigInfo[] = [];
-
-        for (const acc of filteredSerumAccs) {
-          parseSerumMultisigAccount(acc)
-            .then((parsed: any) => {
-              if (parsed) {
-                parsedSerumAccs.push(parsed);
-              }
-            })
-            .catch((err: any) => console.error(err));
-        }
-
-        multisigClient
-          .getMultisigs(publicKey)
-          .then((allInfo: MultisigInfo[]) => {
-            allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-            const allAccounts = [...allInfo, ...parsedSerumAccs];
-            consoleOut('multisigAccounts:', allAccounts, 'crimson');
-            setMultisigAccounts(allAccounts);
-            const item = allInfo.find(m => m.authority.equals(new PublicKey(accountAddress)));
-            if (item) {
-              consoleOut('selectedMultisig:', item, 'crimson');
-              setSelectedMultisig(item);
-              setPendingMultisigTxCount(item.pendingTxsAmount);
-            } else {
-              setSelectedMultisig(undefined);
-              setPendingMultisigTxCount(undefined);
-            }
-          })
-          .catch((err: any) => {
-            console.error(err);
-            setPendingMultisigTxCount(undefined);
-          })
-          .finally(() => {
-            console.log('multisigClient.getMultisigs finished running');
-            setLoadingMultisigAccounts(false);
-          });
-      })
-      .catch((err: any) => {
-        console.error(err);
-        setPendingMultisigTxCount(undefined);
-        setLoadingMultisigAccounts(false);
-        console.error('multisigSerumClient.account.multisig.all finished running with failure');
-      });
-
-  }, [
-    publicKey,
-    accountAddress,
-    multisigClient,
-    multisigSerumClient,
-    loadingMultisigAccounts,
-    parseSerumMultisigAccount,
-    setPendingMultisigTxCount,
   ]);
 
   const isStartDateGone = useCallback((date: string): boolean => {
@@ -3829,49 +3674,6 @@ export const VestingView = () => {
 
   }, [connection, publicKey, selectedVestingContract, vestingContractAddress]);
 
-  // Get a list of multisig accounts
-  useEffect(() => {
-
-    if (!publicKey ||
-        !multisigClient ||
-        !multisigSerumClient ||
-        !accountAddress ||
-        !needReloadMultisigs) {
-      return;
-    }
-
-    if (inspectedAccountType !== "multisig") {
-      setPendingMultisigTxCount(undefined);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      consoleOut('Loading multisig accounts...', '', 'crimson');
-      setNeedReloadMultisigs(false);
-      refreshMultisigs();
-    });
-
-    return () => {
-      clearTimeout(timeout);
-      if (pendingMultisigTxCount) {
-        setPendingMultisigTxCount(undefined);
-      }
-    }
-
-  }, [
-    publicKey,
-    accountAddress,
-    multisigClient,
-    needReloadMultisigs,
-    multisigSerumClient,
-    inspectedAccountType,
-    pendingMultisigTxCount,
-    loadingMultisigAccounts,
-    parseSerumMultisigAccount,
-    setPendingMultisigTxCount,
-    refreshMultisigs,
-  ]);
-
   // Get the Vesting contract settings template
   useEffect(() => {
     if (publicKey && msp && vestingContractAddress) {
@@ -3884,6 +3686,22 @@ export const VestingView = () => {
       })
     }
   }, [msp, publicKey, vestingContractAddress]);
+
+  // Set a multisig based on address in context
+  useEffect(() => {
+    if (!isMultisigContext || !multisigAccounts || !accountAddress) {
+      return;
+    }
+
+    const item = multisigAccounts.find(m => m.authority.toBase58() === accountAddress);
+    if (item) {
+      setSelectedMultisig(item);
+      setPendingMultisigTxCount(item.pendingTxsAmount);
+      consoleOut('selectedMultisig:', item, 'blue');
+      consoleOut('pendingMultisigTxCount:', item.pendingTxsAmount, 'blue');
+    }
+
+  }, [accountAddress, isMultisigContext, multisigAccounts, setPendingMultisigTxCount, setSelectedMultisig]);
 
   // Get the Vesting contract activity while in "activity" tab
   useEffect(() => {
