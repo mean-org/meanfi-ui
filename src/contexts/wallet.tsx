@@ -43,6 +43,7 @@ import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getDefaultRpc } from "../services/connections-hq";
 import { environment } from "../environments/environment";
+import { openNotification } from "../components/Notifications";
 
 export type MeanFiWallet = PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
                           | SlopeWalletAdapter | Coin98WalletAdapter | SolongWalletAdapter | SolletWalletAdapter
@@ -384,6 +385,11 @@ export function WalletProvider({ children = null as any }) {
         console.error('wallet.connect() error', error);
         if (error.toString().indexOf('WalletNotReadyError') !== -1) {
           console.warn('Enforcing wallet selection...');
+          openNotification({
+            type: "info",
+            title: 'Wallet adapter not configured',
+            description: `Cannot connect to ${wallet.name}. Wallet is not configured or enabled in your browser.`
+          });
           setConnected(false);
           setProviderName(null);
           setWallet(undefined);
