@@ -4,8 +4,8 @@ import { RightInfoDetails } from "../RightInfoDetails";
 import { IconArrowBack, IconExternalLink } from "../../Icons";
 import "./style.scss";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
-import { StreamActivity, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
-import { Stream, STREAM_STATUS } from "@mean-dao/msp";
+import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
+import { Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
@@ -22,6 +22,7 @@ import { Identicon } from "../Identicon";
 import Countdown from "react-countdown";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
+import { getCategoryLabelByValue } from "../../models/enums";
 
 const { TabPane } = Tabs;
 
@@ -29,11 +30,12 @@ export const MoneyStreamDetails = (props: {
   stream?: Stream | StreamInfo | undefined;
   hideDetailsHandler?: any;
   infoData?: any;
+  streamingAccountSelected?: Treasury | TreasuryInfo | undefined;
   isStreamIncoming?: boolean;
   isStreamOutgoing?: boolean;
   buttons?: any;
 }) => {
-  const { stream, hideDetailsHandler, infoData, isStreamIncoming, isStreamOutgoing, buttons } = props;
+  const { stream, hideDetailsHandler, infoData, streamingAccountSelected, isStreamIncoming, isStreamOutgoing, buttons } = props;
   const {
     splTokenList,
     streamActivity,
@@ -533,6 +535,40 @@ export const MoneyStreamDetails = (props: {
     )
   }
 
+  const renderBadges = () => {
+    if (!streamingAccountSelected) { return; }
+
+    const v1 = streamingAccountSelected as unknown as TreasuryInfo;
+    const v2 = streamingAccountSelected as Treasury;
+    const isNewTreasury = streamingAccountSelected && streamingAccountSelected.version >= 2 ? true : false;
+
+    const type = isNewTreasury
+      ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+      : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+
+    const category = isNewTreasury
+      && v2.category === 1 ? "Vesting" : "";
+
+    const subCategory = isNewTreasury
+      && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
+
+    let badges;
+
+    type && (
+      category ? (
+        subCategory ? (
+          badges = [category, subCategory, type]
+        ) : (
+          badges = [category, type]
+        )
+      ) : (
+        badges = [type]
+      )
+    )
+
+    return badges;
+  }
+
   // Random component
   const Completionist = () => <span>--</span>;
 
@@ -706,6 +742,7 @@ export const MoneyStreamDetails = (props: {
           <ResumeItem
             img={img}
             title={title}
+            extraTitle={renderBadges()}
             status={status}
             subtitle={subtitle}
             resume={resume}
