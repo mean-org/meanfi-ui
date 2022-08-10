@@ -461,6 +461,33 @@ export const ProposalDetailsView = (props: {
     )
   )
 
+  const renderCoolOffPeriod = (
+    <div className="safe-details-cool-off-period-container">
+      <div className="info-label d-flex justify-content-center">Cool-off:</div>
+      <div className="d-flex">
+        <div className="center-cool-off-period-data">
+          <div className="number-cool-off-period-background">00</div>
+          <div className="form-label">day</div>
+        </div>
+        <div>:</div>
+        <div className="center-cool-off-period-data">
+          <span className="number-cool-off-period-background">00</span>
+          <span className="form-label">hrs</span>
+        </div>
+        <div>:</div>
+        <div className="center-cool-off-period-data">
+          <div className="number-cool-off-period-background">00</div>
+          <div className="form-label">min</div>
+        </div>
+        <div>:</div>
+        <div className="center-cool-off-period-data">
+          <div className="number-cool-off-period-background">00</div>
+          <div className="form-label">sec</div>
+        </div>
+      </div>
+    </div>
+  );
+
   // Tabs
   const tabs = [
     {
@@ -582,30 +609,7 @@ export const ProposalDetailsView = (props: {
                 </div>
               </Col>
             )}
-            <div className="safe-details-cool-off-period-container">
-              <div className="info-label d-flex justify-content-center">Cool-off:</div>
-              <div className="d-flex">
-                <div className="center-cool-off-period-data">
-                  <div className="number-cool-off-period-background">00</div>
-                  <div className="form-label">day</div>
-                </div>
-                <div>:</div>
-                <div className="center-cool-off-period-data">
-                  <span className="number-cool-off-period-background">00</span>
-                  <span className="form-label">hrs</span>
-                </div>
-                <div>:</div>
-                <div className="center-cool-off-period-data">
-                  <div className="number-cool-off-period-background">00</div>
-                  <div className="form-label">min</div>
-                </div>
-                <div>:</div>
-                <div className="center-cool-off-period-data">
-                  <div className="number-cool-off-period-background">00</div>
-                  <div className="form-label">sec</div>
-                </div>
-              </div>
-            </div>
+            {renderCoolOffPeriod}
           </div>
           <div>
             <div className="safe-details-right-container btn-group mr-1">
