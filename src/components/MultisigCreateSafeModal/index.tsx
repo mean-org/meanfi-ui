@@ -588,6 +588,22 @@ export const MultisigCreateSafeModal = (props: {
                       )}
                     </Row>
 
+                    {/* Cool-off period */}
+                    <Row className="mb-1">
+                      <>
+                        <Col span={8} className="text-right pr-1">
+                          <span className="info-label">Cool-off period:</span>
+                        </Col>
+                        <Col span={16} className="text-left pl-1">
+                        {(isCoolOffPeriodEnable && coolOfPeriodAmount && coolOffPeriodFrequency) ? (
+                          <span>{`${coolOfPeriodAmount} ${getCoolOffPeriodOptionLabel(coolOffPeriodFrequency, t)}`}</span>
+                        ) : (
+                          <span>disabled</span>
+                        )}
+                        </Col>
+                      </>
+                    </Row>
+
                     <Divider plain />
 
                     <div className="well mt-2 mb-1 proposal-summary-container vertical-scroll">
