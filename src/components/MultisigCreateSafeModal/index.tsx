@@ -61,7 +61,7 @@ export const MultisigCreateSafeModal = (props: {
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [isCoolOffPeriodEnable, setIsCoolOffPeriodEnable] = useState<boolean>(true);
   const [createdByName, setCreatedByName] = useState<string>("");
-  const [coolOfPeriodAmount, setCoolOfPeriodAmount] = useState<string>("");
+  const [coolOfPeriodAmount, setCoolOfPeriodAmount] = useState<number>();
 
   // Detect XS screen
   useEffect(() => {
@@ -441,6 +441,7 @@ export const MultisigCreateSafeModal = (props: {
                                   type="number"
                                   onChange={handleCoolOffPeriodAmountChange}
                                   pattern="^[0-9]*[.,]?[0-9]*$"
+                                  min={1}
                                   placeholder={`Number of ${getCoolOffPeriodOptionLabel(coolOffPeriodFrequency, t)}`}
                                   minLength={1}
                                   maxLength={79}
@@ -655,7 +656,12 @@ export const MultisigCreateSafeModal = (props: {
                     className="thin-stroke col-6"
                     // onClick={onContinueStepTwoButtonClick}
                     onClick={onContinueStepOneButtonClick}
-                    disabled={!publicKey || !isFormValid()}
+                    disabled={
+                      !publicKey ||
+                      !isFormValid() ||
+                      (isCoolOffPeriodEnable && !coolOfPeriodAmount) ||
+                      (isCoolOffPeriodEnable && coolOfPeriodAmount === 0)
+                    }
                   >
                     {getStepTwoContinueButtonLabel()}
                   </Button>

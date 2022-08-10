@@ -549,7 +549,7 @@ export const MultisigProposalModal = (props: {
                                         type="number"
                                         className={isBusy ? 'disabled' : ''}
                                         name={element.label}
-                                        min={0}
+                                        min={1}
                                         pattern="^[0-9]*[.,]?[0-9]*$"
                                         onChange={(e: any) => {
                                           console.log(e);
