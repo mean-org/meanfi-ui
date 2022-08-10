@@ -88,6 +88,7 @@ interface AppStateConfig {
   lockPeriodAmount: string;
   activeTab: string;
   selectedTab: string;
+  coolOffPeriodFrequency: PaymentRateType;
   paymentRateFrequency: PaymentRateType;
   lockPeriodFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
@@ -172,6 +173,7 @@ interface AppStateConfig {
   setLockPeriodAmount: (data: string) => void;
   setActiveTab: (data: string) => void;
   setSelectedTab: (data: string) => void;
+  setCoolOffPeriodFrequency: (freq: PaymentRateType) => void;
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
   setLockPeriodFrequency: (freq: PaymentRateType) => void;
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
@@ -244,6 +246,7 @@ const contextDefaultValues: AppStateConfig = {
   lockPeriodAmount: '',
   activeTab: '',
   selectedTab: '',
+  coolOffPeriodFrequency: PaymentRateType.PerDay,
   paymentRateFrequency: PaymentRateType.PerMonth,
   lockPeriodFrequency: PaymentRateType.PerMonth,
   timeSheetRequirement: TimesheetRequirementOption.NotRequired,
@@ -331,6 +334,7 @@ const contextDefaultValues: AppStateConfig = {
   setLockPeriodAmount: () => {},
   setActiveTab: () => {},
   setSelectedTab: () => {},
+  setCoolOffPeriodFrequency: () => {},
   setPaymentRateFrequency: () => {},
   setLockPeriodFrequency: () => {},
   setTimeSheetRequirement: () => {},
@@ -412,6 +416,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>(contextDefaultValues.lockPeriodAmount);
   const [activeTab, updateActiveTab] = useState<string>(contextDefaultValues.activeTab);
   const [selectedTab, updateSelectedTab] = useState<string>(contextDefaultValues.selectedTab);
+  const [coolOffPeriodFrequency, updateCoolOffPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerDay);
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [lockPeriodFrequency, updateLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
@@ -653,6 +658,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateSelectedTab(data);
   }
 
+  const setCoolOffPeriodFrequency = (freq: PaymentRateType) => {
+    updateCoolOffPeriodFrequency(freq);
+  }
+
   const setPaymentRateFrequency = (freq: PaymentRateType) => {
     updatePaymentRateFrequency(freq);
   }
@@ -691,6 +700,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     setPaymentRateAmount('');
     setActiveTab('');
     setSelectedTab('');
+    setCoolOffPeriodFrequency(PaymentRateType.PerDay);
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setIsVerifiedRecipient(false);
@@ -1491,6 +1501,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         lockPeriodAmount,
         activeTab,
         selectedTab,
+        coolOffPeriodFrequency,
         paymentRateFrequency,
         lockPeriodFrequency,
         timeSheetRequirement,
@@ -1570,6 +1581,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLockPeriodAmount,
         setActiveTab,
         setSelectedTab,
+        setCoolOffPeriodFrequency,
         setPaymentRateFrequency,
         setLockPeriodFrequency,
         setTimeSheetRequirement,

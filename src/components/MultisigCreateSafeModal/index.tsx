@@ -1,12 +1,12 @@
-import { Button, Col, DatePicker, Divider, Modal, Row, Spin, Switch, TimePicker, Tooltip } from "antd";
+import { Button, Col, DatePicker, Divider, Dropdown, Menu, Modal, Row, Spin, Switch, TimePicker, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
-import { TransactionStatus } from "../../models/enums";
+import { PaymentRateType, TransactionStatus } from "../../models/enums";
 import { StepSelector } from "../StepSelector";
 import "./style.scss";
-import { IconInfoCircle, IconKey, IconLock } from "../../Icons";
+import { IconCaretDown, IconInfoCircle, IconKey, IconLock } from "../../Icons";
 import { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { DATEPICKER_FORMAT, MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
@@ -14,7 +14,7 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { addDays, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
-import { getTransactionOperationDescription, isValidAddress } from "../../utils/ui";
+import { getCoolOffPeriodOptionLabel, getTransactionOperationDescription, isValidAddress, PaymentRateTypeOption } from "../../utils/ui";
 import { isError } from "../../utils/transactions";
 import { CreateNewSafeParams } from "../../models/multisig";
 import moment from 'moment';
@@ -39,6 +39,8 @@ export const MultisigCreateSafeModal = (props: {
   const { width } = useWindowSize();
   const {
     transactionStatus,
+    coolOffPeriodFrequency,
+    setCoolOffPeriodFrequency,
     setTransactionStatus,
   } = useContext(AppStateContext);
 
@@ -58,6 +60,8 @@ export const MultisigCreateSafeModal = (props: {
   const [coolOffTime, setCoolOffTime] = useState<string | undefined>(time);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [isCoolOffPeriodEnable, setIsCoolOffPeriodEnable] = useState<boolean>(true);
+  const [createdByName, setCreatedByName] = useState<string>("");
+  const [coolOfPeriodAmount, setCoolOfPeriodAmount] = useState<string>("");
 
   // Detect XS screen
   useEffect(() => {
@@ -122,7 +126,7 @@ export const MultisigCreateSafeModal = (props: {
         <span className="mx-1">Reset</span>
       </span>
     );
-}
+  }
 
   const onAcceptModal = () => {
     const options: CreateNewSafeParams = {
@@ -184,6 +188,46 @@ export const MultisigCreateSafeModal = (props: {
     setIsCoolOffPeriodEnable(value);
   };
 
+  const handleCoolOffPeriodAmountChange = (e: any) => {
+    setCoolOfPeriodAmount(e.target.value);
+  }
+
+  const handleCoolOffPeriodOptionChange = (val: PaymentRateType) => {
+    setCoolOffPeriodFrequency(val);
+  }
+
+  const getCoolOffPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
+    let index = 0;
+    const options: PaymentRateTypeOption[] = [];
+    for (const enumMember in value) {
+        const mappedValue = parseInt(enumMember, 10);
+        if (!isNaN(mappedValue)) {
+            const item = new PaymentRateTypeOption(
+                index,
+                mappedValue,
+                getCoolOffPeriodOptionLabel(mappedValue, t)
+            );
+            options.push(item);
+        }
+        index++;
+    }
+    return options;
+  }
+
+  const coolOffPeriodOptionsMenu = (
+    <Menu>
+      {getCoolOffPeriodOptionsFromEnum(PaymentRateType).map((item) => {
+        return (
+          <Menu.Item
+            key={item.key}
+            onClick={() => handleCoolOffPeriodOptionChange(item.value)}>
+            {item.text}
+          </Menu.Item>
+        );
+      })}
+    </Menu>
+  );
+
   // When modal goes visible, add current wallet address as first participant
   useEffect(() => {
     if (publicKey && isVisible) {
@@ -207,8 +251,6 @@ export const MultisigCreateSafeModal = (props: {
     isVisible,
     multisigAccounts
   ]);
-
-  const [createdByName, setCreatedByName] = useState<string>("");
 
   useEffect(() => {
     const owner = multisigOwners.filter((owner) => owner.address === publicKey?.toBase58());
@@ -369,7 +411,7 @@ export const MultisigCreateSafeModal = (props: {
                   <div className="d-flex align-items-center mt-3">
                     <div className="form-label icon-label">
                       Enable cool-off period
-                      <Tooltip placement="bottom" title="Cool-off period is a time where no actions take place on a proposal that is Passed already, and before it gets executed.">
+                      <Tooltip placement="bottom" title="Cool-off period is a time where no actions take place on a proposal that is passed already, and before it gets executed.">
                         <span className="icon-info-circle simplelink">
                           <IconInfoCircle className="mean-svg-icons" />
                         </span>
@@ -383,7 +425,54 @@ export const MultisigCreateSafeModal = (props: {
 
                   {isCoolOffPeriodEnable && (
                     <>
-                      {!isXsDevice ? (
+                      <div className="mb-0 mt-1">
+                        <div className="form-label">Cool-off period</div>
+                      </div>
+                      <div className="two-column-layout">
+                        <div className="left">
+                          <div className="well">
+                            <div className="flex-fixed-left">
+                              <div className="left">
+                                <input
+                                  className="general-text-input"
+                                  inputMode="decimal"
+                                  autoComplete="off"
+                                  autoCorrect="off"
+                                  type="number"
+                                  onChange={handleCoolOffPeriodAmountChange}
+                                  pattern="^[0-9]*[.,]?[0-9]*$"
+                                  placeholder={`Number of ${getCoolOffPeriodOptionLabel(coolOffPeriodFrequency, t)}`}
+                                  minLength={1}
+                                  maxLength={79}
+                                  spellCheck="false"
+                                  value={coolOfPeriodAmount}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="right">
+                          <div className="well mb-0">
+                            <div className="flex-fixed-left">
+                              <div className="left">
+                                <Dropdown
+                                  overlay={coolOffPeriodOptionsMenu}
+                                  trigger={["click"]}>
+                                  <span className="dropdown-trigger no-decoration flex-fixed-right large-dropdown-area ">
+                                    <div className="left">
+                                      <span className="capitalize-first-letter">{getCoolOffPeriodOptionLabel(coolOffPeriodFrequency, t)}{" "}</span>
+                                    </div>
+                                    <div className="right">
+                                      <IconCaretDown className="mean-svg-icons" />
+                                    </div>
+                                  </span>
+                                </Dropdown>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {/* {!isXsDevice ? (
                         <div className="two-column-form-layout mb-0 mt-1">
                           <div className="form-label">Date</div>
                           <div className="form-label ml-3">Time</div>
@@ -440,7 +529,7 @@ export const MultisigCreateSafeModal = (props: {
                             />
                           </div>
                         </div>
-                      </div>
+                      </div> */}
                     </>
                   )}
                 </>

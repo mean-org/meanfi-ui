@@ -47,4 +47,10 @@
   .icon-info-circle svg {
     height: 17px !important;
   }
+  .large-dropdown-area {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 18vw;
+  }
 }

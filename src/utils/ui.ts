@@ -42,6 +42,22 @@ export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'blac
     }
 }
 
+export class CoolOffPeriodTypeOption {
+    key: number;
+    value: PaymentRateType;
+    text: string;
+
+    constructor(
+        public _key: number,
+        public _value: PaymentRateType,
+        public _text: string
+    ) {
+        this.key = _key;
+        this.value = _value;
+        this.text = _text;
+    }
+}
+
 export class PaymentRateTypeOption {
     key: number;
     value: PaymentRateType;
@@ -306,6 +322,27 @@ export const getLockPeriodOptionLabel = (val: PaymentRateType, trans?: any): str
             break;
         case PaymentRateType.PerYear:
             result = trans ? trans('treasuries.create-treasury.lock-period.years') : 'years';
+            break;
+        default:
+            break;
+    }
+    return result;
+}
+
+export const getCoolOffPeriodOptionLabel = (val: PaymentRateType, trans?: any): string => {
+    let result = '';
+    switch (val) {
+        case PaymentRateType.PerMinute:
+            result = trans ? trans('treasuries.create-treasury.lock-period.minutes') : 'minutes';
+            break;
+        case PaymentRateType.PerHour:
+            result = trans ? trans('treasuries.create-treasury.lock-period.hours') : 'hours';
+            break;
+        case PaymentRateType.PerDay:
+            result = trans ? trans('treasuries.create-treasury.lock-period.days') : 'days';
+            break;
+        case PaymentRateType.PerWeek:
+            result = trans ? trans('treasuries.create-treasury.lock-period.weeks') : 'weeks';
             break;
         default:
             break;
