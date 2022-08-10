@@ -62,8 +62,7 @@ export const MoneyStreamsInfoView = (props: {
   multisigAccounts: MultisigInfo[] | undefined;
   onSendFromIncomingStreamInfo?: any;
   onSendFromOutgoingStreamInfo?: any;
-  onSendFromStreamingAccountDetails?: any;
-  onSendFromStreamingAccountOutgoingStreamInfo?: any;
+  onSendFromStreamingAccountInfo?: any;
   selectedMultisig: MultisigInfo | undefined;
   selectedTab: string;
   streamList: Array<Stream | StreamInfo> | undefined;
@@ -76,8 +75,7 @@ export const MoneyStreamsInfoView = (props: {
     multisigAccounts,
     onSendFromIncomingStreamInfo,
     onSendFromOutgoingStreamInfo,
-    onSendFromStreamingAccountDetails,
-    onSendFromStreamingAccountOutgoingStreamInfo,
+    onSendFromStreamingAccountInfo,
     selectedMultisig,
     selectedTab,
     streamList,
@@ -2686,7 +2684,7 @@ export const MoneyStreamsInfoView = (props: {
 
                   const onSelectedStreamingAccount = () => {
                     // Sends outgoing stream value to the parent component "Accounts"
-                    onSendFromStreamingAccountDetails(streamingAccount);
+                    onSendFromStreamingAccountInfo(streamingAccount);
                   }
 
                   const type = isNewTreasury

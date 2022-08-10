@@ -50,7 +50,7 @@ export const StreamingAccountView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
   streamingAccountSelected: Treasury | TreasuryInfo | undefined;
   onSendFromStreamingAccountDetails?: any;
-  onSendFromStreamingAccountOutgoingStreamInfo?: any;
+  onSendFromStreamingAccountStreamInfo?: any;
   treasuryList: (Treasury | TreasuryInfo)[] | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
   selectedMultisig: MultisigInfo | undefined;
@@ -89,7 +89,7 @@ export const StreamingAccountView = (props: {
     multisigAccounts,
     streamingAccountSelected,
     onSendFromStreamingAccountDetails,
-    onSendFromStreamingAccountOutgoingStreamInfo,
+    onSendFromStreamingAccountStreamInfo,
   } = props;
 
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -2743,8 +2743,8 @@ export const StreamingAccountView = (props: {
         (streamingAccountStreams !== undefined && streamingAccountStreams.length > 0) ? (
           streamingAccountStreams.map((stream, index) => {
             const onSelectStream = () => {
-              // Sends outgoing stream value to the parent component "Accounts"
-              onSendFromStreamingAccountOutgoingStreamInfo(stream, streamingAccountSelected);
+              // Sends stream value to the parent component "Accounts"
+              onSendFromStreamingAccountStreamInfo(stream);
             };
 
             const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
