@@ -10,6 +10,20 @@
     min-width: 48px;
     min-height: 48px;
   }
+  .cool-of-period-label {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.50);
+    color: var(--color-secondary-alpha-50);
+    margin-bottom: 4px;
+  }
+  // .icon-label {
+  //   margin-left: 0.25em;
+  //   margin-top: 0.25em;
+  // }
+  // .icon-label svg {
+  //   height: 17px !important;
+  // }
 }
 
 .background-gray {
