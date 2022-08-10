@@ -114,7 +114,7 @@ export const AccountsNewView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { address, asset, streamingTab, streamId, treasuryId } = useParams();
+  const { address, asset, streamingTab, streamingItemId } = useParams();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
@@ -267,7 +267,7 @@ export const AccountsNewView = () => {
         setIsPageLoaded(true);
       });
     }
-  }, [address, asset, location.pathname, navigate, publicKey, streamId, streamingTab, treasuryId]);
+  }, [address, asset, location.pathname, navigate, publicKey, streamingItemId, streamingTab]);
 
   const connection = useMemo(() => new Connection(endpoint, {
     commitment: "confirmed",
@@ -3199,18 +3199,27 @@ export const AccountsNewView = () => {
     if (streamingTab) {
       consoleOut('Route param streamingTab:', streamingTab, 'crimson');
       setPathParamStreamingTab(streamingTab);
-    }
-
-    if (streamId) {
-      consoleOut('Route param streamId:', streamId, 'crimson');
-      setPathParamStreamId(streamId);
-    }
-
-    if (treasuryId) {
-      consoleOut('Route param treasuryId:', treasuryId, 'crimson');
-      setPathParamTreasuryId(treasuryId);
-    } else {
-      setPathParamTreasuryId("");
+      switch (streamingTab) {
+        case "streaming-accounts":
+          if (streamingItemId) {
+            consoleOut('Route param streamingItemId:', streamingItemId, 'crimson');
+            setPathParamTreasuryId(streamingItemId);
+          } else {
+            setPathParamTreasuryId("");
+          }
+          break;
+        case "incoming":
+        case "outgoing":
+          if (streamingItemId) {
+            consoleOut('Route param streamingItemId:', streamingItemId, 'crimson');
+            setPathParamStreamId(streamingItemId);
+          } else {
+            setPathParamStreamId("");
+          }
+          break;
+        default:
+          break;
+      }
     }
 
     // The category is inferred from the route path
@@ -3226,7 +3235,8 @@ export const AccountsNewView = () => {
     } else if (location.pathname.indexOf('/streaming') !== -1) {
       consoleOut('Setting category:', 'streaming', 'crimson');
       setSelectedCategory("streaming");
-      if (!streamId) {
+      if (!streamingItemId) {
+        setPathParamTreasuryId('');
         setPathParamStreamId('');
       }
       if (autoOpenDetailsPanel) {
@@ -3240,33 +3250,31 @@ export const AccountsNewView = () => {
     // Get the account-type if passed-in
     if (searchParams) {
       accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        consoleOut('account-type:', searchParams.get('account-type'), 'crimson');
-      }
     }
 
+    let accType: InspectedAccountType;
     switch (accountTypeInQuery as InspectedAccountType) {
       case "multisig":
-        setInspectedAccountType("multisig");
+        accType = "multisig";
         break;
       case "wallet":
-        setInspectedAccountType("wallet");
+        accType = "wallet";
         break;
       default:
-        setInspectedAccountType("wallet");
+        accType = "wallet";
         break;
     }
+    setInspectedAccountType(accType);
 
   }, [
     asset,
     address,
-    streamId,
     publicKey,
-    treasuryId,
     isPageLoaded,
     streamingTab,
     searchParams,
     accountAddress,
+    streamingItemId,
     detailsPanelOpen,
     location.pathname,
     autoOpenDetailsPanel,
@@ -3293,11 +3301,11 @@ export const AccountsNewView = () => {
     setIsPageLoaded(false);
     setTransactions([]);
 
-    setTimeout(() => {
-      if (!shouldLoadTokens) {
-        setShouldLoadTokens(true);
-      }
-    }, 1000);
+    // setTimeout(() => {
+    //   if (!shouldLoadTokens) {
+    //     setShouldLoadTokens(true);
+    //   }
+    // }, 1000);
   }, [
     publicKey,
     isPageLoaded,
@@ -3752,20 +3760,20 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountAddress, accountTokens, pathParamAsset]);
 
-  // Preset the selected streaming account from the list if provided in path param (treasuryId)
+  // Preset the selected streaming account from the list if provided in path param (streamingItemId)
   useEffect(() => {
     if (!publicKey || !treasuryList || treasuryList.length === 0) {
       setTreasuryDetail(undefined);
     }
 
-    if (pathParamTreasuryId && treasuryId && pathParamTreasuryId === treasuryId) {
+    if (pathParamTreasuryId && streamingItemId && pathParamTreasuryId === streamingItemId) {
       const item = treasuryList.find(s => s.id as string === pathParamTreasuryId);
       consoleOut('treasuryDetail:', item, 'darkgreen');
       if (item) {
         setTreasuryDetail(item);
       }
     }
-  }, [pathParamTreasuryId, publicKey, treasuryId, treasuryList]);
+  }, [pathParamTreasuryId, publicKey, streamingItemId, treasuryList]);
 
   // Preset the selected stream from the list if provided in path param (streamId)
   useEffect(() => {
@@ -4188,26 +4196,20 @@ export const AccountsNewView = () => {
   //////////////
 
   const onBackButtonClicked = () => {
-    if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamId}`) {
+    if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamingItemId}`) {
       let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
       if (inspectedAccountType && inspectedAccountType === "multisig") {
         url += `?account-type=multisig`;
       }
       navigate(url);
-    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/${streamId}`) {
+    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/${streamingItemId}`) {
       let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
       if (inspectedAccountType && inspectedAccountType === "multisig") {
         url += `?account-type=multisig`;
       }
       navigate(url);
-    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-account/${treasuryId}`) {
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-account`;
-      if (inspectedAccountType && inspectedAccountType === "multisig") {
-        url += `?account-type=multisig`;
-      }
-      navigate(url);
-    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-account/${streamId}`) {
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-account`;
+    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts/${streamingItemId}`) {
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts`;
       if (inspectedAccountType && inspectedAccountType === "multisig") {
         url += `?account-type=multisig`;
       }
@@ -4898,7 +4900,7 @@ export const AccountsNewView = () => {
 
   const goToStreamingAccountDetailsHandler = (streamingTreasury: Treasury | TreasuryInfo | undefined) => {
     if (streamingTreasury) {
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-account/${streamingTreasury.id as string}`;
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts/${streamingTreasury.id as string}`;
 
       if (inspectedAccountType && inspectedAccountType === "multisig") {
         url += `?account-type=multisig&v=streams`;
@@ -4945,7 +4947,7 @@ export const AccountsNewView = () => {
 
   const returnFromStreamingAccountDetailsHandler = () => {
 
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-account`;
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts`;
 
     if (inspectedAccountType && inspectedAccountType === "multisig") {
       url += `?account-type=multisig`;
@@ -5239,7 +5241,7 @@ export const AccountsNewView = () => {
                             multisigAccounts={multisigAccounts}
                             onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
                           />
-                        ) : pathParamTreasuryId && pathParamStreamingTab === "streaming-account" && treasuryDetail && treasuryDetail.id === pathParamTreasuryId ? (
+                        ) : pathParamTreasuryId && pathParamStreamingTab === "streaming-accounts" && treasuryDetail && treasuryDetail.id === pathParamTreasuryId ? (
                           <StreamingAccountView
                             streamSelected={streamDetail}
                             treasuryList={treasuryList}

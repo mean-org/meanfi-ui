@@ -82,7 +82,7 @@ export const StreamingAccountView = (props: {
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const { width } = useWindowSize();
-  const { address, treasuryId } = useParams();
+  const { address, streamingItemId } = useParams();
   
   const { 
     selectedMultisig,
@@ -2660,15 +2660,15 @@ export const StreamingAccountView = (props: {
   useEffect(() => {
     if (!publicKey || !streamingAccountSelected) { return; }
 
-    if (streamingAccountSelected && streamingAccountSelected.id === treasuryId) {
+    if (streamingAccountSelected.id === streamingItemId) {
       consoleOut('calling getTreasuryStreams...', '', 'blue');
-      const treasuryPk = new PublicKey(treasuryId as string);
+      const treasuryPk = new PublicKey(streamingItemId as string);
       const isNewTreasury = (streamingAccountSelected as Treasury).version && (streamingAccountSelected as Treasury).version >= 2
         ? true
         : false;
         getStreamingAccountStreams(treasuryPk, isNewTreasury);
     }
-  }, [ms, publicKey, streamingAccountSelected, getStreamingAccountStreams, treasuryId]);
+  }, [ms, publicKey, streamingAccountSelected, getStreamingAccountStreams, streamingItemId]);
 
   // Get the Streeaming Account activity while in "activity" tab
   useEffect(() => {

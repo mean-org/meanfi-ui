@@ -2767,7 +2767,7 @@ export const MoneyStreamsInfoView = (props: {
       render: renderSummary
     },
     {
-      id: "streaming-account",
+      id: "streaming-accounts",
       name: `Accounts ${(!loadingTreasuries && !loadingStreams) 
         ? `(${streamingAccountsAmount && streamingAccountsAmount >= 0 && streamingAccountsAmount})` 
         : ""}`,
@@ -2824,7 +2824,7 @@ export const MoneyStreamsInfoView = (props: {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar inner-bottom">
           <span className="mr-1 align-middle">loadingStreams</span>
           <span className={`status position-relative align-middle ${loadingStreams ? 'error' : 'success'}`}></span>
@@ -2837,7 +2837,7 @@ export const MoneyStreamsInfoView = (props: {
             <span className="font-extrabold align-middle">{canDisplayTotalAccountBalance ? 'true' : 'false'}</span>
           </div>
         </div>
-      )}
+      )} */}
 
       <Spin spinning={loadingMoneyStreamsDetails || loadingTreasuries}>
 
