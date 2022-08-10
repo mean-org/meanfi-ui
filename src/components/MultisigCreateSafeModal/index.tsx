@@ -638,7 +638,7 @@ export const MultisigCreateSafeModal = (props: {
                     shape="round"
                     type="ghost"
                     size="middle"
-                    className="thin-stroke"
+                    className="thin-stroke center-text-in-btn"
                     onClick={() => onStepperChange(0)}
                     disabled={
                       !publicKey
@@ -653,7 +653,7 @@ export const MultisigCreateSafeModal = (props: {
                     type="primary"
                     shape="round"
                     size="middle"
-                    className="thin-stroke col-6"
+                    className="thin-stroke col-6 center-text-in-btn"
                     // onClick={onContinueStepTwoButtonClick}
                     onClick={onContinueStepOneButtonClick}
                     disabled={
@@ -678,7 +678,7 @@ export const MultisigCreateSafeModal = (props: {
                     type="ghost"
                     shape="round"
                     size="middle"
-                    className="thin-stroke mr-1"
+                    className="thin-stroke mr-1 center-text-in-btn"
                     // onClick={() => onStepperChange(1)}
                     onClick={() => onStepperChange(0)}
                     disabled={
@@ -694,7 +694,7 @@ export const MultisigCreateSafeModal = (props: {
                     type="primary"
                     shape="round"
                     size="middle"
-                    className="thin-stroke ml-1"
+                    className="thin-stroke ml-1 center-text-in-btn"
                     onClick={() => onAcceptModal()}
                     disabled={
                       !publicKey ||
