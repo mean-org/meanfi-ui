@@ -27,7 +27,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isLocal, toUsCurrency } from "../../utils/ui";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, getTransactionStatusForLogs, isLocal, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cutNumber, fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
@@ -1778,10 +1778,47 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [t]);
 
+  const getTimeRemaining = useCallback((time: any) => {
+    if (time) {
+      const countDownDate = new Date(time).getTime();
+      const now = new Date().getTime();
+      const timeleft = countDownDate - now;
+  
+      const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
+      const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
+      const hours = Math.floor((timeleft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const days = Math.floor(timeleft / (1000 * 60 * 60 * 24));
+      const weeks = Math.floor(days/7);
+      const months = Math.floor(days/30);
+      const years = Math.floor(days/365);
+  
+      if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes === 0 && seconds === 0) {
+        return `out of funds on ${getShortDate(time)}`;
+      } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes === 0 && seconds <= 60) {
+        return <span className="fg-warning">less than a minute left</span>;
+      } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes <= 60) {
+        return <span className="fg-warning">{`only ${minutes} ${minutes > 1 ? "minutes" : "minute"} left`}</span>;
+      } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours <= 24) {
+        return <span className="fg-warning">{`only ${hours} ${hours > 1 ? "hours" : "hour"} left`}</span>;
+      } else if (years === 0 && months === 0 && weeks === 0 && days > 1 && days <= 7) {
+        return `${days} ${days > 1 ? "days" : "day"} left`;
+      } else if (years === 0 && months === 0 && days > 7 && days <= 30) {
+        return `${weeks} ${weeks > 1 ? "weeks" : "week"} left`;
+      } else if (years === 0 && days > 30 && days <= 365) {
+        return `${months} ${months > 1 ? "months" : "month"} left`;
+      } else if (days > 365) {
+        return `${years} ${years > 1 ? "years" : "year"} left`;
+      } else {
+        return "--"
+      }
+    }
+  }, []);
+
   const getStreamResume = useCallback((item: Stream | StreamInfo) => {
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
+
       if (v1.version < 2) {
         switch (v1.state) {
           case STREAM_STATE.Schedule:
@@ -1801,11 +1838,11 @@ export const MoneyStreamsInfoView = (props: {
             }
             return `out of funds on ${getShortDate(v2.startUtc as string)}`;
           default:
-            return `streaming since ${getShortDate(v2.startUtc as string)}`;
+            return getTimeRemaining(v2.estimatedDepletionDate as string);
         }
       }
     }
-  }, [t]);
+  }, [getTimeRemaining, t]);
 
   const goToIncomingTabHandler = () => {
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
