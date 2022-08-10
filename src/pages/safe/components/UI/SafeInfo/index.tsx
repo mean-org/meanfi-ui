@@ -365,9 +365,12 @@ export const SafeInfo = (props: {
             </Button>
           )}
 
-          <div className="cool-of-period-label">
-            <div className="info-label icon-label">
-              Cool-off period: 24h
+          <div className="cool-off-period-label">
+            <div className="icon-label">
+              <div className="pl-1">
+                <span className="info-label">Cool-off period: </span>
+                <span className="info-value"> 24h</span>
+              </div>
               <Tooltip placement="bottom" title="This is the period of time that applies to every proposal in this safe. To change it edit the safe.">
                 <span className="icon-info-circle simplelink">
                   <IconInfoCircle className="mean-svg-icons" />
