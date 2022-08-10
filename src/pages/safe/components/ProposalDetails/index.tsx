@@ -543,8 +543,8 @@ export const ProposalDetailsView = (props: {
           </Row>
         )}
 
-        <Row gutter={[8, 8]} className="safe-details-proposal">
-          <>
+        <div className="safe-details-proposal">
+          <div className="safe-details-proposal-left">
             {selectedProposal.status === MultisigTransactionStatus.Passed ? (
               anyoneCanExecuteTx() ? (
                 <Col className="safe-details-left-container">
@@ -582,9 +582,33 @@ export const ProposalDetailsView = (props: {
                 </div>
               </Col>
             )}
-          </>
-          <>
-            <Col className="safe-details-right-container btn-group mr-1">
+            <div className="safe-details-cool-off-period-container">
+              <div className="info-label d-flex justify-content-center">Cool-off:</div>
+              <div className="d-flex">
+                <div className="center-cool-off-period-data">
+                  <div className="number-cool-off-period-background">00</div>
+                  <div className="form-label">day</div>
+                </div>
+                <div>:</div>
+                <div className="center-cool-off-period-data">
+                  <span className="number-cool-off-period-background">00</span>
+                  <span className="form-label">hrs</span>
+                </div>
+                <div>:</div>
+                <div className="center-cool-off-period-data">
+                  <div className="number-cool-off-period-background">00</div>
+                  <div className="form-label">min</div>
+                </div>
+                <div>:</div>
+                <div className="center-cool-off-period-data">
+                  <div className="number-cool-off-period-background">00</div>
+                  <div className="form-label">sec</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="safe-details-right-container btn-group mr-1">
             {
               (
                 (
@@ -760,9 +784,9 @@ export const ProposalDetailsView = (props: {
                 </>
               )
             }
-            </Col>
-          </>
-        </Row>
+            </div>
+          </div>
+        </div>
 
         {/* <Row>
           <h3 className="mt-1 proposal-instruction">Instruction</h3>
