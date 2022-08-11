@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Col, Row } from 'antd';
 
 import "./style.scss";
@@ -11,6 +11,7 @@ import { TokenStats } from './TokenStats';
 import { MEAN_TOKEN, MEAN_TOKEN_LIST, SMEAN_TOKEN } from '../../constants/token-list';
 import { getCoingeckoMarketChart, getMeanStats } from '../../utils/api';
 import { MeanFiStatsModel } from '../../models/meanfi-stats';
+import { appConfig } from "../..";
 
 //const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
 
@@ -24,6 +25,11 @@ export const StatsView = () => {
   const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel | undefined>(undefined);
 
   // Getters
+  
+  // MEAN Staking Vault address
+  const meanStakingVault = useMemo(() => {
+    return appConfig.getConfig().meanStakingVault;
+  }, []);
 
   // Data handling / fetching
   useEffect(() => {
@@ -43,19 +49,14 @@ export const StatsView = () => {
   // Get sMEAN token info
   useEffect(() => {
     if (!connection) { return; }
-
-    const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(cluster))
-    const stakedToken = tokenList.find(t => t.symbol === SMEAN_TOKEN.symbol);
-    
     (async () => {
-      // use getTokenSupply
-      const sMeanPubKey = new PublicKey(stakedToken ? stakedToken.address : SMEAN_TOKEN.address);
-      const sMeanInfo = await connection.getTokenSupply(sMeanPubKey, 'confirmed');
-      if (sMeanInfo && sMeanInfo.value) {
-        setSMeanTotalSupply(sMeanInfo.value.uiAmount);
-      }
+        const tokenAccount = new PublicKey(meanStakingVault);
+        const tokenAmount = await connection.getTokenAccountBalance(tokenAccount);
+        if (tokenAmount && tokenAmount.value) {
+          setSMeanTotalSupply(tokenAmount.value.uiAmount || 0);
+        }
     })();
-  }, [cluster, connection]);
+  }, [connection, meanStakingVault]);
 
   if (!meanfiStats || sMeanTotalSupply === 0) { return <p>{t('general.loading')}...</p>; }
 

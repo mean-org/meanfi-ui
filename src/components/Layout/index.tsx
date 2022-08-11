@@ -40,6 +40,7 @@ export const AppLayout = React.memo((props: any) => {
     previousRoute,
     previousWalletConnectState,
     setPreviousWalletConnectState,
+    setNeedReloadMultisigAccounts,
     setShouldLoadTokens,
     refreshTokenBalance,
     setDiagnosisInfo,
@@ -259,6 +260,7 @@ export const AppLayout = React.memo((props: any) => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
+        setNeedReloadMultisigAccounts(true);
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
 
@@ -321,6 +323,7 @@ export const AppLayout = React.memo((props: any) => {
     referralAddress,
     previousWalletConnectState,
     setPreviousWalletConnectState,
+    setNeedReloadMultisigAccounts,
     clearConfirmationHistory,
     refreshTokenBalance,
     setReferralAddress,

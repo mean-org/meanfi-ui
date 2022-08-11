@@ -77,7 +77,6 @@ import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@me
 import { NATIVE_SOL } from '../../utils/tokens';
 import { UserTokenAccount } from '../../models/transactions';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
-import { MultisigTxResultModal } from '../../components/MultisigTxResultModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
@@ -86,7 +85,6 @@ import { ProgramAccounts } from '../../utils/accounts';
 import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
-import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import { MultisigEditSafeModal } from '../../components/MultisigEditSafeModal';
 
@@ -105,10 +103,14 @@ export const SafeView = () => {
     coinPrices,
     multisigTxs,
     isWhitelisted,
+    multisigAccounts,
+    selectedMultisig,
     transactionStatus,
     streamV2ProgramAddress,
+    loadingMultisigAccounts,
     highLightableMultisigId,
     previousWalletConnectState,
+    setNeedReloadMultisigAccounts,
     setHighLightableMultisigId,
     getTokenPriceByAddress,
     getTokenByMintAddress,
@@ -117,6 +119,9 @@ export const SafeView = () => {
     setTransactionStatus,
     setTotalSafeBalance,
     refreshTokenBalance,
+    setMultisigAccounts,
+    setSelectedMultisig,
+    refreshMultisigs,
     setMultisigTxs,
     setPrograms,
   } = useContext(AppStateContext);
@@ -140,11 +145,6 @@ export const SafeView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [transactionFees, setTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
-  // Multisig accounts
-  const [needReloadMultisigAccounts, setNeedReloadMultisigAccounts] = useState(true);
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   // Active Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(false);
   const [loadingProposals, setLoadingProposals] = useState(false);
@@ -426,22 +426,19 @@ export const SafeView = () => {
 
   },[resetTransactionStatus])
 
+  const onCloseCreateMultisigModal = useCallback(() => {
+    setIsBusy(false);
+    setIsEditMultisigModalVisible(false);
+    resetTransactionStatus();
+  },[
+    resetTransactionStatus
+  ]);
+
   const onMultisigModified = useCallback(() => {
     setIsBusy(false);
     setIsEditMultisigModalVisible(false);
     resetTransactionStatus();
 
-    // openNotification({
-    //   description: t('multisig.update-multisig.success-message'),
-    //   duration: 10,
-    //   type: "success"
-    // });
-    // await delay(150);
-    // openNotification({
-    //   description: "The proposal's status can be reviewed in the Multisig Safe's proposal list.",
-    //   duration: 15,
-    //   type: "success"
-    // });
     openNotification({
       description: "The proposal can be reviewed in the Multisig's proposal list for other owners to approve.",
       duration: 10,
@@ -1079,6 +1076,7 @@ export const SafeView = () => {
   // Modal visibility flags
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
   const [isErrorReportingModalVisible, setIsErrorReportingModalVisible] = useState(false);
+  const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
   const showErrorReportingModal = useCallback(() => setIsErrorReportingModalVisible(true), []);
   const closeErrorReportingModal = useCallback(() => {
     setIsErrorReportingModalVisible(false);
@@ -1552,9 +1550,6 @@ export const SafeView = () => {
     connectionConfig
   ]);
 
-  const [isMultisigTxResultModalVisible, setIsMultisigTxResultModalVisible] = useState(false);
-  const showMultisigTxResultModal = useCallback(() => setIsMultisigTxResultModalVisible(true), []);
-
   const onExecuteCreateTransactionProposal = useCallback(async (data: CreateNewProposalParams) => {
 
     let transaction: Transaction;
@@ -1889,13 +1884,6 @@ export const SafeView = () => {
     transactionCancelled, 
     enqueueTransactionConfirmation
   ]);
-
-  const closeMultisigTxResultModal = useCallback(() => {
-    setIsMultisigTxResultModalVisible(false);
-    resetTransactionStatus();
-  }, [resetTransactionStatus]);
-
-  const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
 
   const saveOperationPayloadOnStart = (payload: any) => {
     setOperationPayload(payload);
@@ -3287,8 +3275,6 @@ export const SafeView = () => {
         goToProposals();
         break;  
       case OperationType.CreateMultisig:
-        // setHighLightableMultisigId(undefined);
-        // setSelectedMultisig(undefined);
         hardReloadMultisigs();
         break;  
       default:
@@ -3495,94 +3481,27 @@ export const SafeView = () => {
     getTokenPriceByAddress, 
     getTokenPriceBySymbol
   ])
-  
-  useEffect(() => {
 
-    if (!connection || !publicKey || !multisigClient || !needReloadMultisigAccounts) {
+  const getMultisigList = useCallback((reset = false) => {
+
+    if (!publicKey) {
       return;
     }
 
-    const timeout = setTimeout(() => {
+    refreshMultisigs(reset)
+    .then(item => {
+      if (item) {
+        if (reset) {
+          navigate(`${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`);
+        } else {
+          proposalLoadStatusRegister.clear();
+          setNeedRefreshTxs(true);
+          setSelectedMultisig(item);
+        }
+      }
+    })
 
-      setNeedReloadMultisigAccounts(false);
-      setLoadingMultisigAccounts(true);
-
-      consoleOut('=======================================', '', 'green');
-      multisigClient
-        .getMultisigs(publicKey)
-        .then((allInfo: MultisigInfo[]) => {
-
-          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-          const allAccounts = [...allInfo, ...serumAccounts];   
-          setMultisigAccounts(allAccounts);
-          consoleOut('multisigAccounts:', allAccounts, 'blue');
-        })
-        .catch((err: any) => {
-          console.error(err);
-          consoleOut('multisigPendingTxs:', [], 'blue');
-        })
-        .finally(() => setLoadingMultisigAccounts(false));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    publicKey,
-    connection,
-    multisigClient,
-    selectedMultisig,
-    needReloadMultisigAccounts,
-  ]);
-
-
-  const refreshMultisigs = useCallback((reset = false) => {
-
-    if (!connection || !publicKey || !multisigClient) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      setLoadingMultisigAccounts(true);
-
-      multisigClient
-        .getMultisigs(publicKey)
-        .then((allInfo: MultisigInfo[]) => {
-
-          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-          const allAccounts = [...allInfo, ...serumAccounts];
-          setMultisigAccounts(allAccounts);
-          consoleOut('multisigAccounts:', allAccounts, 'darkorange');
-
-          if (reset) {
-            navigate(`${MULTISIG_ROUTE_BASE_PATH}/${allAccounts[0].authority.toBase58()}?v=proposals`);
-          } else {
-            const auth = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority : undefined;
-            const item = auth
-              ? allAccounts.find(m => m.authority.equals(auth))
-              : undefined;
-            if (item) {
-              proposalLoadStatusRegister.clear();
-              setNeedRefreshTxs(true);
-              setSelectedMultisig(item);
-            }
-          }
-        })
-        .catch((err: any) => {
-          console.error(err);
-          consoleOut('multisigPendingTxs:', [], 'blue');
-        })
-        .finally(() => setLoadingMultisigAccounts(false));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [connection, multisigClient, navigate, publicKey, serumAccounts]);
+  }, [navigate, publicKey, refreshMultisigs, setSelectedMultisig]);
 
   // Load/Unload multisig on wallet connect/disconnect
   useEffect(() => {
@@ -3603,13 +3522,16 @@ export const SafeView = () => {
       }
     }
   }, [
-    connected, 
-    publicKey, 
-    previousWalletConnectState, 
-    setHighLightableMultisigId, 
-    setCanSubscribe, 
-    onTxConfirmed, 
-    onTxTimedout
+    connected,
+    publicKey,
+    previousWalletConnectState,
+    setNeedReloadMultisigAccounts,
+    setHighLightableMultisigId,
+    setMultisigAccounts,
+    setSelectedMultisig,
+    setCanSubscribe,
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   // Detect when entering small screen mode
@@ -3663,14 +3585,16 @@ export const SafeView = () => {
       }
     }
   }, [
-    t,
-    publicKey, 
-    fetchTxInfoStatus, 
-    lastSentTxSignature, 
-    lastSentTxOperationType, 
-    multisigClient, 
+    publicKey,
+    multisigClient,
     selectedMultisig,
-    clearTxConfirmationContext
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    setNeedReloadMultisigAccounts,
+    clearTxConfirmationContext,
+    setSelectedMultisig,
+    t,
   ]);
 
   // Keep account balance updated
@@ -3891,16 +3815,6 @@ export const SafeView = () => {
     if (multisigAccounts) {
       let item: MultisigInfo | undefined = undefined;
 
-      // if (highLightableMultisigId) {
-      //   item = multisigAccounts.find(m => m.id.toBase58() === highLightableMultisigId || m.authority.toBase58() === highLightableMultisigId);
-      //   if (item) {
-      //     consoleOut('selected via highLightableMultisigId:', item, 'purple');
-      //     consoleOut('Making multisig active:', item, 'blue');
-      //     setSelectedMultisig(item);
-      //     setNeedRefreshTxs(true);
-      //     setNeedReloadPrograms(true);
-      //   }
-      // } else
       if (address) {
         // Re-select the one active
         if (multisigAccounts && multisigAccounts.length > 0) {
@@ -3938,7 +3852,7 @@ export const SafeView = () => {
       }
     }
 
-  }, [address, id, location.pathname, multisigAccounts, navigate, queryParamV]);
+  }, [address, id, location.pathname, multisigAccounts, navigate, queryParamV, setSelectedMultisig]);
 
   // Scroll to a given multisig is specified as highLightableMultisigId
   useEffect(() => {
@@ -4279,11 +4193,11 @@ export const SafeView = () => {
                           shape="circle"
                           size="small"
                           icon={<ReloadOutlined />}
-                          onClick={() => refreshMultisigs(false)}
+                          onClick={() => getMultisigList(false)}
                         />
                       </span>
                     </Tooltip>
-                    <span id="multisig-hard-refresh-cta" onClick={() => refreshMultisigs(true)}></span>
+                    <span id="multisig-hard-refresh-cta" onClick={() => getMultisigList(true)}></span>
                   </span>
                 </div>
               </div>
@@ -4502,7 +4416,7 @@ export const SafeView = () => {
           multisigParticipants={selectedMultisig.owners}
           multisigAccounts={multisigAccounts}
           multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}
-          handleClose={() => setIsEditMultisigModalVisible(false)}
+          handleClose={onCloseCreateMultisigModal}
           isBusy={isBusy}
         />
       )}
@@ -4525,30 +4439,6 @@ export const SafeView = () => {
           solanaApps={solanaApps.filter(app => app.active)}
           handleOk={(params: CreateNewProposalParams) => onAcceptCreateProposalModal(params)}
           selectedMultisig={selectedMultisig}
-        />
-      )}
-
-      {isMultisigTxResultModalVisible && (
-        <MultisigTxResultModal
-          handleOk={() => {
-            resetTransactionStatus();
-            closeMultisigTxResultModal();
-            if (operationPayload) {
-              if (operationPayload.operation === OperationType.ExecuteTransaction) {
-                onExecuteFinishTx(operationPayload);
-              } else if (operationPayload.operation === OperationType.ApproveTransaction) {
-                onExecuteApproveTx(operationPayload);
-              } else if (operationPayload.operation === OperationType.RejectTransaction) {
-                onExecuteRejectTx(operationPayload);
-              } else if (operationPayload.operation === OperationType.CreateTransaction) {
-                onExecuteCreateTransactionProposal(operationPayload);
-              }
-            }
-          }}
-          handleClose={closeMultisigTxResultModal}
-          isBusy={isBusy}
-          highlightedMultisigTx={highlightedMultisigTx}
-          isVisible={isMultisigTxResultModalVisible}
         />
       )}
 
