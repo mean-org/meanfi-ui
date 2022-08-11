@@ -2773,73 +2773,88 @@ export const StreamingAccountView = (props: {
     </Menu>
   );
 
-  const renderStreamingAccountStreams = (
-    <>
-      {!loadingStreamingAccountStreams ? (
-        (streamingAccountStreams !== undefined && streamingAccountStreams.length > 0) ? (
-          streamingAccountStreams.map((stream, index) => {
-            const onSelectStream = () => {
-              // Sends stream value to the parent component "Accounts"
-              onSendFromStreamingAccountStreamInfo(stream);
-            };
+  const renderStreamingAccountStreams = () => {
+    const sortedStreamingAccountsStreamsList = streamingAccountStreams && streamingAccountStreams.sort((a, b) => {
+      const vA1 = a as StreamInfo;
+      const vA2 = a as Stream;
+      const vB1 = b as StreamInfo;
+      const vB2 = b as Stream;
 
-            const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-              event.currentTarget.src = FALLBACK_COIN_IMAGE;
-              event.currentTarget.className = "error";
-            };
+      if (a && b) {
+        return((new Date(vA2.estimatedDepletionDate as string || vA1.escrowEstimatedDepletionUtc as string || "0").getTime()) - (new Date(vB2.estimatedDepletionDate as string || vB1.escrowEstimatedDepletionUtc as string || "0").getTime()));
+      } else {
+        return 0;
+      }
+    });
 
-            const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+    return (
+      <>
+        {!loadingStreamingAccountStreams ? (
+          (sortedStreamingAccountsStreamsList !== undefined && sortedStreamingAccountsStreamsList.length > 0) ? (
+            sortedStreamingAccountsStreamsList.map((stream, index) => {
+              const onSelectStream = () => {
+                // Sends stream value to the parent component "Accounts"
+                onSendFromStreamingAccountStreamInfo(stream);
+              };
 
-            let img;
+              const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                event.currentTarget.src = FALLBACK_COIN_IMAGE;
+                event.currentTarget.className = "error";
+              };
 
-            if (stream.associatedToken) {
-              if (token) {
-                img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
+              const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+
+              let img;
+
+              if (stream.associatedToken) {
+                if (token) {
+                  img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
+                } else {
+                  img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                }
               } else {
-                img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
               }
-            } else {
-              img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-            }
-    
-            const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
-            const subtitle = getStreamSubtitle(stream);
-            const status = getStreamStatus(stream);
-            const resume = getStreamResume(stream);
-    
-            return (
-              <div 
-                key={index}
-                onClick={onSelectStream}
-                className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-              >
-                <ResumeItem
-                  id={index}
-                  img={img}
-                  title={title}
-                  subtitle={subtitle}
-                  resume={resume}
-                  status={status}
-                  hasRightIcon={true}
-                  rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                  isLink={true}
-                  isStream={true}
-                  classNameRightContent="resume-stream-row"
-                  classNameIcon="icon-stream-row"
-                  xs={24}
-                  md={24}
-                />
-              </div>
-            )
-          })
+      
+              const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+              const subtitle = getStreamSubtitle(stream);
+              const status = getStreamStatus(stream);
+              const resume = getStreamResume(stream);
+      
+              return (
+                <div
+                  key={index}
+                  onClick={onSelectStream}
+                  className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    id={index}
+                    img={img}
+                    title={title}
+                    subtitle={subtitle}
+                    resume={resume}
+                    status={status}
+                    hasRightIcon={true}
+                    rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                    isLink={true}
+                    isStream={true}
+                    classNameRightContent="resume-stream-row"
+                    classNameIcon="icon-stream-row"
+                    xs={24}
+                    md={24}
+                  />
+                </div>
+              )
+            })
+          ) : (
+            <span className="pl-1">This streaming account has no streams</span>
+          )
         ) : (
-          <span className="pl-1">This streaming account has no streams</span>
-        )
-      ) : (
-        <span className="pl-1">Loading streams ...</span>
-      )}
-    </>
-  );
+          <span className="pl-1">Loading streams ...</span>
+        )}
+      </>
+    );
+  };
 
   const renderStreamingAccountActivity = (
     <>
@@ -2906,7 +2921,7 @@ export const StreamingAccountView = (props: {
     {
       id: "streams",
       name: "Streams",
-      render: renderStreamingAccountStreams
+      render: renderStreamingAccountStreams()
     },
     {
       id: "activity",
