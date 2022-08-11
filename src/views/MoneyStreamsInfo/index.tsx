@@ -1931,7 +1931,20 @@ export const MoneyStreamsInfoView = (props: {
 
     const onlyOuts = streamList.filter(item => !isInboundStream(item) && (item as any).category === 0);
     consoleOut('outgoing streams:', onlyOuts, 'crimson');
-    setOutgoingStreamList(onlyOuts);
+    const sortedOutgoingStreamsList = onlyOuts.sort((a, b) => {
+      const vA1 = a as StreamInfo;
+      const vA2 = a as Stream;
+      const vB1 = b as StreamInfo;
+      const vB2 = b as Stream;
+
+      if (a && b) {
+        return((new Date(vA2.estimatedDepletionDate as string || vA1.escrowEstimatedDepletionUtc as string || "0").getTime()) - (new Date(vB2.estimatedDepletionDate as string || vB1.escrowEstimatedDepletionUtc as string || "0").getTime()));
+      } else {
+        return 0;
+      }
+    });
+
+    setOutgoingStreamList(sortedOutgoingStreamsList);
   }, [
     publicKey,
     streamList,
