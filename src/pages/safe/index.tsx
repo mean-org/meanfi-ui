@@ -85,8 +85,9 @@ import { ProgramAccounts } from '../../utils/accounts';
 import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
-import { MultisigCreateModal } from '../../components/MultisigCreateModal';
+// import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import { MultisigEditSafeModal } from '../../components/MultisigEditSafeModal';
+import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");

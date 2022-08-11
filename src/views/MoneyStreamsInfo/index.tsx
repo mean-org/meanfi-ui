@@ -2671,84 +2671,85 @@ export const MoneyStreamsInfoView = (props: {
   );
 
   // Streaming accounts list
-  const renderListOfStreamingAccounts= (
+  const renderListOfStreamingAccounts = (
     <>
       {(!loadingStreams && !loadingTreasuries) ? (
         (treasuryList !== undefined && treasuryList.length > 0) ? (
           <>
-            <>
-              {(treasuryList && treasuryList.map((streamingAccount, outerIndex) => {
-                  const v1 = streamingAccount as unknown as TreasuryInfo;
-                  const v2 = streamingAccount as Treasury;
-                  const isNewTreasury = streamingAccount && streamingAccount.version >= 2 ? true : false;
+            {(treasuryList && treasuryList.map((streamingAccount, index) => {
+                const v1 = streamingAccount as unknown as TreasuryInfo;
+                const v2 = streamingAccount as Treasury;
+                const isNewTreasury = streamingAccount && streamingAccount.version >= 2 ? true : false;
 
-                  const onSelectedStreamingAccount = () => {
-                    // Sends outgoing stream value to the parent component "Accounts"
-                    onSendFromStreamingAccountInfo(streamingAccount);
-                  }
+                const onSelectedStreamingAccount = () => {
+                  // Sends outgoing stream value to the parent component "Accounts"
+                  onSendFromStreamingAccountInfo(streamingAccount);
+                }
 
-                  const type = isNewTreasury
-                    ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-                    : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+                const type = isNewTreasury
+                  ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+                  : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
 
-                  const category = isNewTreasury
-                    && v2.category === 1 ? "Vesting" : "";
+                const category = isNewTreasury
+                  && v2.category === 1 ? "Vesting" : "";
 
-                  const subCategory = isNewTreasury
-                    && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
-              
-                  let badges;
+                const subCategory = isNewTreasury
+                  && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
+            
+                let badges;
 
-                  type && (
-                    category ? (
-                      subCategory ? (
-                        badges = [category, subCategory, type]
-                      ) : (
-                        badges = [category, type]
-                      )
+                type && (
+                  category ? (
+                    subCategory ? (
+                      badges = [category, subCategory, type]
                     ) : (
-                      badges = [type]
+                      badges = [category, type]
                     )
-                  );
-
-                  const title = isNewTreasury ? v2.name : (v1.label ? v1.label : shortenAddress(v1.id as string, 8));
-
-                  const subtitle = <CopyExtLinkGroup
-                    content={streamingAccount.id as string}
-                    number={8}
-                    externalLink={true}
-                  />;
-
-                  const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
-
-                  const resume = amount > 1 ? "streams" : "stream";
-
-                  return (
-                    <div key={`streaming-account-${outerIndex}`}>
-                      <ResumeItem
-                        title={title}
-                        extraTitle={badges}
-                        classNameTitle="text-uppercase"
-                        subtitle={subtitle}
-                        amount={amount}
-                        resume={resume}
-                        className="account-category-title simplelink"
-                        hasRightIcon={true}
-                        rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                        isLink={true}
-                        onClick={onSelectedStreamingAccount}
-                        classNameRightContent="resume-streaming-row"
-                        classNameIcon="icon-streaming-row"
-                        xs={24}
-                        sm={18}
-                        md={24}
-                        lg={18}
-                      />
-                    </div>
+                  ) : (
+                    badges = [type]
                   )
-                })
-              )}
-            </>
+                );
+
+                const title = isNewTreasury ? v2.name : (v1.label ? v1.label : shortenAddress(v1.id as string, 8));
+
+                const subtitle = <CopyExtLinkGroup
+                  content={streamingAccount.id as string}
+                  number={8}
+                  externalLink={true}
+                />;
+
+                const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
+
+                const resume = amount > 1 ? "streams" : "stream";
+
+                return (
+                  <div
+                    key={`streaming-account-${index}`}
+                    onClick={onSelectedStreamingAccount}
+                    className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                  >
+                    <ResumeItem
+                      title={title}
+                      extraTitle={badges}
+                      classNameTitle="text-uppercase"
+                      subtitle={subtitle}
+                      amount={amount}
+                      resume={resume}
+                      hasRightIcon={true}
+                      rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                      isLink={true}
+                      onClick={onSelectedStreamingAccount}
+                      classNameRightContent="resume-streaming-row"
+                      classNameIcon="icon-streaming-row"
+                      xs={24}
+                      sm={18}
+                      md={24}
+                      lg={18}
+                    />
+                  </div>
+                )
+              })
+            )}
           </>
         ) : (
           <span className="pl-1">You don't have any streaming accounts</span>
