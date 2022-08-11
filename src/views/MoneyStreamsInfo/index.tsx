@@ -1883,7 +1883,8 @@ export const MoneyStreamsInfoView = (props: {
       return;
     }
 
-    setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)).sort((a, b) => {
+    const onlyIncomings = streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream));
+    const sortedIncomingStreamsList = onlyIncomings.sort((a, b) => {
       const vA1 = a as StreamInfo;
       const vA2 = a as Stream;
       const vB1 = b as StreamInfo;
@@ -1894,12 +1895,12 @@ export const MoneyStreamsInfoView = (props: {
         : false;
 
       const associatedTokenA = isNew
-      ? (vA1 as StreamInfo).associatedToken as string
-      : (vA2 as Stream).associatedToken as string;
+      ? vA1.associatedToken as string
+      : vA2.associatedToken as string;
 
       const associatedTokenB = isNew
-      ? (vB1 as StreamInfo).associatedToken as string
-      : (vB2 as Stream).associatedToken as string;
+      ? vB1.associatedToken as string
+      : vB2.associatedToken as string;
 
       const tokenA = getTokenByMintAddress(associatedTokenA as string);
       const tokenB = getTokenByMintAddress(associatedTokenB as string);
@@ -1909,22 +1910,24 @@ export const MoneyStreamsInfoView = (props: {
 
       if (tokenA) {
         tokenPriceA = getTokenPriceByAddress(tokenA.address) || getTokenPriceBySymbol(tokenA.symbol);
+      } else {
+        tokenPriceA = 0;
       }
 
       if (tokenB) {
         tokenPriceB = getTokenPriceByAddress(tokenB.address) || getTokenPriceBySymbol(tokenB.symbol);
+      } else {
+        tokenPriceB = 0;
       }
 
       if (tokenPriceA && tokenPriceB) {
-        if (isNew) {
-          return ((vB2.withdrawableAmount * tokenPriceB) - (vA2.withdrawableAmount * tokenPriceA));
-        } else {
-          return ((vB1.escrowVestedAmount * tokenPriceB) - (vA1.escrowVestedAmount * tokenPriceA));
-        }
+        return(((vB2.withdrawableAmount || vB1.escrowVestedAmount || 0) * tokenPriceB) - ((vA2.withdrawableAmount || vA1.escrowVestedAmount || 0) * tokenPriceA));
+      } else {
+        return 0;
       }
+    });
 
-      return 0;
-    }));
+    setIncomingStreamList(sortedIncomingStreamsList);
 
     const onlyOuts = streamList.filter(item => !isInboundStream(item) && (item as any).category === 0);
     consoleOut('outgoing streams:', onlyOuts, 'crimson');
