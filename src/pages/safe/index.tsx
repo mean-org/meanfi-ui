@@ -414,22 +414,19 @@ export const SafeView = () => {
 
   },[resetTransactionStatus])
 
+  const onCloseCreateMultisigModal = useCallback(() => {
+    setIsBusy(false);
+    setIsEditMultisigModalVisible(false);
+    resetTransactionStatus();
+  },[
+    resetTransactionStatus
+  ]);
+
   const onMultisigModified = useCallback(() => {
     setIsBusy(false);
     setIsEditMultisigModalVisible(false);
     resetTransactionStatus();
 
-    // openNotification({
-    //   description: t('multisig.update-multisig.success-message'),
-    //   duration: 10,
-    //   type: "success"
-    // });
-    // await delay(150);
-    // openNotification({
-    //   description: "The proposal's status can be reviewed in the Multisig Safe's proposal list.",
-    //   duration: 15,
-    //   type: "success"
-    // });
     openNotification({
       description: "The proposal can be reviewed in the Multisig's proposal list for other owners to approve.",
       duration: 10,
@@ -4392,7 +4389,7 @@ export const SafeView = () => {
           multisigParticipants={selectedMultisig.owners}
           multisigAccounts={multisigAccounts}
           multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}
-          handleClose={() => setIsEditMultisigModalVisible(false)}
+          handleClose={onCloseCreateMultisigModal}
           isBusy={isBusy}
         />
       )}
