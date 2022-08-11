@@ -18,6 +18,7 @@ import { closeTokenAccount } from '../../utils/accounts';
 import { customLogger } from '../..';
 import { UserTokenAccount } from '../../models/transactions';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { InputMean } from '../InputMean';
 
 export const AccountsCloseAssetModal = (props: {
   connection: Connection;
@@ -47,6 +48,7 @@ export const AccountsCloseAssetModal = (props: {
   });
   const [feeAmount] = useState<number>(transactionFees.blockchainFee + transactionFees.mspFlatFee);
   const [isDisclaimerAccepted, setIsDisclaimerAccepted] = useState<boolean>(false);
+  const [enterYesWord, setEnterYesWord] = useState('');
 
   // Callbacks
 
@@ -74,6 +76,10 @@ export const AccountsCloseAssetModal = (props: {
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsDisclaimerAccepted(e.target.checked);
+  }
+
+  const onYesInputValueChange = (e: any) => {
+    setEnterYesWord(e.target.value);
   }
 
   const resetTransactionStatus = useCallback(() => {
@@ -351,6 +357,23 @@ export const AccountsCloseAssetModal = (props: {
   };
 
   // Validation
+  const isEnterYesWordValid = (): boolean => {
+    return enterYesWord &&
+           enterYesWord.toLocaleLowerCase() === "yes"
+      ? true
+      : false;
+  }
+
+  const isOperationValidIfWrapSol = (): boolean => {
+    return publicKey &&
+           nativeBalance &&
+           nativeBalance > feeAmount &&
+           asset &&
+           isEnterYesWordValid() &&
+           isDisclaimerAccepted
+      ? true
+      : false;
+  };
 
   const isOperationValid = (): boolean => {
     return publicKey &&
@@ -361,6 +384,22 @@ export const AccountsCloseAssetModal = (props: {
       ? true
       : false;
   };
+
+  const getCtaLabelIfWrapSol = () => {
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : nativeBalance === 0
+        ? t('transactions.validation.amount-sol-low')
+        : nativeBalance < feeAmount
+          ? t('transactions.validation.amount-sol-low')
+          : !asset
+            ? 'No token selected'
+            : !isEnterYesWordValid()
+              ? "Confirm account closure"
+              : !isDisclaimerAccepted
+                ? 'Accept disclaimer'
+                : 'Close account';
+  }
 
   const getCtaLabel = () => {
     return !publicKey
@@ -377,7 +416,6 @@ export const AccountsCloseAssetModal = (props: {
   }
 
   // Rendering
-
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -415,6 +453,22 @@ export const AccountsCloseAssetModal = (props: {
           />
         </div>
 
+        {(asset.balance && asset.balance > 0 && asset.name !== "Wrapped SOL") ? (
+          <>
+            <div className="mb-2 text-center">
+              <p>Enter <strong>YES</strong> to confirm you wish to close the account and burn the remaining tokens. This can not be undone so be sure you wish to proceed.</p>
+            </div>
+
+            <InputMean
+              id="confirm-close-account-input"
+              maxLength={3}
+              placeholder="Type YES to confirm"
+              onChange={onYesInputValueChange}
+              value={enterYesWord}
+            />
+          </>
+        ) : null}
+
         <div className="mb-3">
           <Checkbox checked={isDisclaimerAccepted} onChange={onIsVerifiedRecipientChange}>I agree to remove this asset from my wallet</Checkbox>
         </div>
@@ -425,14 +479,14 @@ export const AccountsCloseAssetModal = (props: {
           type="primary"
           shape="round"
           size="large"
-          disabled={!isOperationValid() || isBusy}
+          disabled={((asset.balance && asset.balance > 0 && asset.name !== "Wrapped SOL") ? !isOperationValidIfWrapSol() : !isOperationValid()) || isBusy}
           onClick={onStartTransaction}>
           {isBusy && (
               <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
             ? 'Closing account'
-            : getCtaLabel()
+            : ((asset.balance && asset.balance > 0 && asset.name !== "Wrapped SOL") ? getCtaLabelIfWrapSol() : getCtaLabel())
           }
         </Button>
 

@@ -82,7 +82,7 @@ export const FirstCardsLayout = () => {
             type="primary"
             shape="round"
             size="small"
-            className="extra-small">
+            className="fixed-width-130">
             <span>{t('stats.buy-btn')}</span>
           </Button>
         </Link>
