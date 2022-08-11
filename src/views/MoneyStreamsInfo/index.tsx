@@ -1791,7 +1791,7 @@ export const MoneyStreamsInfoView = (props: {
       const years = Math.floor(days/365);
   
       if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes === 0 && seconds === 0) {
-        return `out of funds on ${getShortDate(time)}`;
+        return `out of funds`;
       } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes === 0 && seconds <= 60) {
         return <span className="fg-warning">less than a minute left</span>;
       } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes <= 60) {
@@ -1807,7 +1807,7 @@ export const MoneyStreamsInfoView = (props: {
       } else if (days > 365) {
         return `${years} ${years > 1 ? "years" : "year"} left`;
       } else {
-        return "--"
+        return ""
       }
     }
   }, []);
