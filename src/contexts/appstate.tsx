@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { findATokenAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
   DAO_CORE_TEAM_WHITELIST,
-  BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
   TEN_MINUTES_REFRESH_TIMEOUT,
   STREAMING_PAYMENT_CONTRACTS,
@@ -29,7 +28,7 @@ import { getPrices } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
-import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
+import { BANNED_TOKENS, MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
 import { MappedTransaction } from "../utils/history";
 import { consoleOut, isProd, msToTime } from "../utils/ui";
@@ -48,7 +47,7 @@ import { ProgramAccounts } from "../utils/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
-import { MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
+import { MeanMultisig, MultisigInfo, MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
@@ -131,6 +130,10 @@ interface AppStateConfig {
   recurringBuys: DdcaAccount[];
   loadingRecurringBuys: boolean;
   // Multisig
+  multisigAccounts: MultisigInfo[];
+  loadingMultisigAccounts: boolean;
+  needReloadMultisigAccounts: boolean;
+  selectedMultisig: MultisigInfo | undefined;
   multisigSolBalance: number | undefined;
   multisigVaults: MultisigVault[];
   highLightableMultisigId: string | undefined;
@@ -206,6 +209,10 @@ interface AppStateConfig {
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
+  setNeedReloadMultisigAccounts: (reload: boolean) => void;
+  refreshMultisigs: (reset: boolean) => Promise<MultisigInfo | undefined>;
+  setMultisigAccounts: (accounts: MultisigInfo[]) => void;
+  setSelectedMultisig: (multisig: MultisigInfo | undefined) => void;
   setMultisigSolBalance: (balance: number | undefined) => void;
   setMultisigVaults: (list: Array<MultisigVault>) => void;
   setHighLightableMultisigId: (id: string | undefined) => void,
@@ -290,6 +297,10 @@ const contextDefaultValues: AppStateConfig = {
   recurringBuys: [],
   loadingRecurringBuys: false,
   // Multisig
+  multisigAccounts: [],
+  loadingMultisigAccounts: false,
+  needReloadMultisigAccounts: true,
+  selectedMultisig: undefined,
   multisigSolBalance: undefined,
   multisigVaults: [],
   highLightableMultisigId: undefined,
@@ -365,6 +376,10 @@ const contextDefaultValues: AppStateConfig = {
   setRecurringBuys: () => {},
   setLoadingRecurringBuys: () => {},
   // Multisig
+  setNeedReloadMultisigAccounts: () => {},
+  refreshMultisigs: async () => undefined,
+  setMultisigAccounts: () => {},
+  setSelectedMultisig: () => {},
   setMultisigSolBalance: () => {},
   setMultisigVaults: () => {},
   setHighLightableMultisigId: () => {},
@@ -504,6 +519,22 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [
     connectionConfig.endpoint,
     streamV2ProgramAddressFromConfig
+  ]);
+
+  const multisigClient = useMemo(() => {
+
+    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
+
+    return new MeanMultisig(
+      connectionConfig.endpoint,
+      publicKey,
+      "confirmed"
+    );
+
+  }, [
+    connection,
+    publicKey,
+    connectionConfig.endpoint,
   ]);
 
   const setTheme = (name: string) => {
@@ -1447,6 +1478,66 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   }, [connectionConfig.cluster]);
 
+  ///////////////////////
+  // Multisig accounts //
+  ///////////////////////
+
+  const [needReloadMultisigAccounts, setNeedReloadMultisigAccounts] = useState(contextDefaultValues.needReloadMultisigAccounts);
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(contextDefaultValues.loadingMultisigAccounts);
+  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>(contextDefaultValues.multisigAccounts);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(contextDefaultValues.selectedMultisig);
+
+  // Refresh the list of multisigs and return a selection
+  const refreshMultisigs = useCallback(async (reset?: boolean) => {
+
+    if (!publicKey || !multisigClient) {
+      return undefined;
+    }
+
+    setLoadingMultisigAccounts(true);
+
+    try {
+      const allInfo = await multisigClient.getMultisigs(publicKey);
+      allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+      setMultisigAccounts(allInfo);
+      consoleOut('multisigAccounts:', allInfo, 'darkorange');
+      if (allInfo.length > 0) {
+        if (reset) {
+          return allInfo[0];
+        } else {
+          const auth = selectedMultisig ? selectedMultisig.authority : undefined;
+          const item = auth ? allInfo.find(m => m.authority.equals(auth)) : undefined;
+          if (item) {
+            return item;
+          } else {
+            return allInfo[0];
+          }
+        }
+      }
+      return undefined;
+    } catch (error) {
+      console.error('refreshMultisigs ->', error);
+      return undefined;
+    } finally {
+      setLoadingMultisigAccounts(false);
+    }
+
+  }, [multisigClient, publicKey, selectedMultisig]);
+
+  // Automatically get a list of multisigs for the connected wallet
+  useEffect(() => {
+
+    if (!publicKey || !multisigClient || !needReloadMultisigAccounts) {
+      return;
+    }
+
+    setNeedReloadMultisigAccounts(false);
+
+    refreshMultisigs();
+
+  }, [multisigClient, needReloadMultisigAccounts, publicKey, refreshMultisigs]);
+
+
   //////////////////////////////////
   // Added to support /ddcas page //
   //////////////////////////////////
@@ -1529,6 +1620,10 @@ const AppStateProvider: React.FC = ({ children }) => {
         lastStreamsSummary,
         recurringBuys,
         loadingRecurringBuys,
+        multisigAccounts,
+        loadingMultisigAccounts,
+        needReloadMultisigAccounts,
+        selectedMultisig,
         multisigSolBalance,
         multisigVaults,
         highLightableMultisigId,
@@ -1599,6 +1694,10 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLastStreamsSummary,
         setRecurringBuys,
         setLoadingRecurringBuys,
+        setNeedReloadMultisigAccounts,
+        refreshMultisigs,
+        setMultisigAccounts,
+        setSelectedMultisig,
         setMultisigSolBalance,
         setMultisigVaults,
         setHighLightableMultisigId,

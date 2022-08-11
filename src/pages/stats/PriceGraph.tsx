@@ -1,5 +1,7 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { data } from "./data";
+import moment from "moment";
+import { Button } from "antd";
+import { array, bool, str } from "@project-serum/borsh";
+import { useCallback, useEffect, useState } from "react";
 import {
   XAxis,
   YAxis,
@@ -9,23 +11,22 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import "./style.scss";
-import moment from "moment";
-import { array, bool, str } from "@project-serum/borsh";
-import { Button } from "antd";
 
+import "./style.scss";
+import { MEAN_TOKEN } from "../../constants/token-list";
+import { getCoingeckoMarketChart } from "../../utils/api";
+import { PriceGraphModel } from "../../models/price-graph";
+
+const dateFormat = "MMM Do, YYYY";
 const buttons = ["24H", "7D", "30D"];
 
 export const PriceGraph = () => {
   const [activeBtn, setActiveBtn] = useState(buttons[2]);
-  const [priceChangeData, setPriceData] = useState(data.priceChange);
+  const emptyArr: PriceGraphModel[] = [];
+  const [priceChangeData, setPriceData] = useState(emptyArr);
 
-  const lastPriceChange = priceChangeData[priceChangeData.length - 1];
-  const lastDate = moment(lastPriceChange.dateData).format("MMM Do, YYYY");
-  const lastPrice = lastPriceChange.priceData;    
-
-  const [dateShownOnTop, setDateShownOnTop] = useState(lastDate);
-  const [priceShownOnTop, setPriceShownOnTop] = useState(lastPrice);
+  const [dateShownOnTop, setDateShownOnTop] = useState('');
+  const [priceShownOnTop, setPriceShownOnTop] = useState('');
 
   const onClickHandler = (event: any) => {
     if (event.target.innerHTML !== activeBtn) {
@@ -34,13 +35,23 @@ export const PriceGraph = () => {
   };
 
   useEffect(() => {
-    if (activeBtn === "30D") {
-      setPriceData(data.priceChange.slice(-30));
-    } else if (activeBtn === "7D") {
-      setPriceData(data.priceChange.slice(-7));
-    } else if (activeBtn === "24H") {
-      setPriceData(data.priceChange.slice(-1));
-    }
+    (async () => {
+      let days = 30;
+      let interval: 'daily' | 'hourly' = 'daily';
+      if (activeBtn.endsWith('D')) {
+        days = Number(activeBtn.substring(0, activeBtn.length - 1));
+      } else if (activeBtn.endsWith('H')) {
+        interval = 'hourly';
+        days = Number(activeBtn.substring(0, activeBtn.length - 1)) / 24;
+      }
+      const [marketPriceData] = await getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, days, interval);
+      if (marketPriceData && marketPriceData.length > 0) {
+        setPriceData(marketPriceData);
+        const lastItem = marketPriceData[marketPriceData.length - 1];
+        setDateShownOnTop(moment(lastItem.dateData).format(dateFormat));
+        setPriceShownOnTop(lastItem.priceData);
+      }
+    })()
   }, [activeBtn]);
 
   /*********************** CUSTOM TOOLTIP *************************/
@@ -49,8 +60,8 @@ export const PriceGraph = () => {
     const [priceOnTooltip, setPriceOnTooltip] = useState("");
 
     useEffect(() => {
-      if (active) {
-        setDateOnTooltip(moment(new Date(label)).format("MMM Do, YYYY"));
+      if (active && payload && payload.length > 0) {
+        setDateOnTooltip(moment(new Date(label)).format(dateFormat));
         setPriceOnTooltip(payload[0].payload.priceData);
       }
     }, [active, label, payload]);
@@ -58,7 +69,7 @@ export const PriceGraph = () => {
     useEffect(() => {
       window.addEventListener("click", onSelectedInfo);
       return () => {
-          window.removeEventListener("click", onSelectedInfo);
+        window.removeEventListener("click", onSelectedInfo);
       };
     });
 
@@ -66,9 +77,6 @@ export const PriceGraph = () => {
       if (active) {
         setDateShownOnTop(dateOnTooltip);
         setPriceShownOnTop(priceOnTooltip);
-      } else {
-        setDateShownOnTop(lastDate);
-        setPriceShownOnTop(lastPrice);
       }
     }, [active, dateOnTooltip, priceOnTooltip]);
 
@@ -96,21 +104,21 @@ export const PriceGraph = () => {
         </div>
         <div className="price-items_right">
           {buttons.map((btn, index) => (
-            <Button 
-              key={index}   
+            <Button
+              key={index}
               type="ghost"
-              shape="round" 
-              size="small" 
+              shape="round"
+              size="small"
               onClick={onClickHandler}
               className={`thin-stroke ${activeBtn === btn ? "active" : ""}`}
             >
-                {btn}
+              {btn}
             </Button>
           ))}
         </div>
       </div>
 
-      <ResponsiveContainer width="105%" height={215}>
+      <ResponsiveContainer width="100%" height={215}>
         <AreaChart data={priceChangeData}>
           <defs>
             <linearGradient id="color" x1="0" y1="0" x2="0" y2="1">
@@ -128,7 +136,7 @@ export const PriceGraph = () => {
             height={40}
             tickFormatter={(date) => {
               const d = new Date(date);
-              
+
               if (activeBtn === "24H") {
                 return moment(d).format("hha");
               } else {
@@ -148,7 +156,7 @@ export const PriceGraph = () => {
               if (priceData === 0) {
                 return priceData;
               } else {
-                return priceData.toFixed(2);
+                return priceData;
               }
             }}
           />

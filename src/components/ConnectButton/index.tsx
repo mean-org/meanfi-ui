@@ -17,7 +17,7 @@ export const ConnectButton = () => {
 
   if (!connected) {
     return (
-      <Button type="primary" shape="round" size="large" onClick={onConnectButtonClick}>
+      <Button type="primary" shape="round" size="middle" onClick={onConnectButtonClick}>
         {t('account-area.connect-button')}
       </Button>
     );

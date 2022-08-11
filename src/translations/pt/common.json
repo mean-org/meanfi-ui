@@ -761,7 +761,8 @@
 			"total-money-streams-title": "Total de fluxos de dinheiro",
 			"total-supply-title": "Fornecimento Total",
 			"total-value-locked-title": "Valor total bloqueado",
-			"volume-title": "Volume (24H)"
+			"volume-title": "Volume (24H)",
+			"token-smean-supply": "The total amount of MEAN tokens currently being staked"
 		},
 		"pairs": {
 			"total-liquidity": "Liquidez Total"
@@ -777,7 +778,9 @@
 			"token-authority": "Autoridade",
 			"token-authority-copy": "Copiar autoridade de token",
 			"token-decimals": "Decimais",
-			"token-name": "Nome"
+			"token-name": "Nome",
+			"token-symbol": "Symbol",
+			"token-audits": "Audits"
 		},
 		"title": "Estatísticos",
 		"total-liquidity-btn": "Adicionar liquidez"

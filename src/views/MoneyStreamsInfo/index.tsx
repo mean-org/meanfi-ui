@@ -27,13 +27,13 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, getTransactionStatusForLogs, isLocal, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cutNumber, fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
 import { useNativeAccount } from "../../contexts/accounts";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
-import { INITIAL_TREASURIES_SUMMARY, TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
+import { TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
 import { customLogger } from "../..";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import BN from "bn.js";
@@ -41,7 +41,7 @@ import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamOpenModal } from "../../components/StreamOpenModal";
 import { CreateStreamModal } from "../../components/CreateStreamModal";
-import { initialSummary, StreamsSummary } from "../../models/streams";
+import { StreamsSummary } from "../../models/streams";
 import { Identicon } from "../../components/Identicon";
 import { openNotification } from "../../components/Notifications";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -55,48 +55,36 @@ import { readAccountInfo } from "../../utils/accounts";
 
 const { TabPane } = Tabs;
 
-type CombinedStreamingAccounts = {
-  treasury: Treasury | Treasury;
-  streams: Array<Stream | StreamInfo> | undefined;
-};
-
 export const MoneyStreamsInfoView = (props: {
   accountAddress: string;
-  autocloseTreasuries: (Treasury | TreasuryInfo)[];
-  loadingCombinedStreamingList: boolean;
   loadingStreams: boolean;
+  loadingTreasuries: boolean;
   multisigAccounts: MultisigInfo[] | undefined;
   onSendFromIncomingStreamInfo?: any;
   onSendFromOutgoingStreamInfo?: any;
-  onSendFromStreamingAccountDetails?: any;
-  onSendFromStreamingAccountOutgoingStreamInfo?: any;
+  onSendFromStreamingAccountInfo?: any;
   selectedMultisig: MultisigInfo | undefined;
   selectedTab: string;
   streamList: Array<Stream | StreamInfo> | undefined;
-  streamingAccountCombinedList: CombinedStreamingAccounts[] | undefined;
   treasuryList: (Treasury | TreasuryInfo)[];
 }) => {
   const {
     accountAddress,
-    autocloseTreasuries,
-    loadingCombinedStreamingList,
     loadingStreams,
+    loadingTreasuries,
     multisigAccounts,
     onSendFromIncomingStreamInfo,
     onSendFromOutgoingStreamInfo,
-    onSendFromStreamingAccountDetails,
-    onSendFromStreamingAccountOutgoingStreamInfo,
+    onSendFromStreamingAccountInfo,
     selectedMultisig,
     selectedTab,
     streamList,
-    streamingAccountCombinedList,
     treasuryList,
   } = props;
   const {
     splTokenList,
     streamListv1,
     streamListv2,
-    selectedToken,
     treasuryOption,
     transactionStatus,
     streamProgramAddress,
@@ -136,7 +124,10 @@ export const MoneyStreamsInfoView = (props: {
     rentExempt: 0
   } as MultisigTransactionFees);
 
-  const [canDisplayWithdrawalBalance, setCanDisplayWithdrawalBalance] = useState(false);
+  const [canDisplayIncomingBalance, setCanDisplayIncomingBalance] = useState(false);
+  const [canDisplayOutgoingBalance, setCanDisplayOutgoingBalance] = useState(false);
+  const [canDisplayTotalAccountBalance, setCanDisplayTotalAccountBalance] = useState(false);
+
   const [withdrawalBalance, setWithdrawalBalance] = useState(0);
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
   const [totalAccountBalance, setTotalAccountBalance] = useState<number | undefined>(undefined);
@@ -148,15 +139,16 @@ export const MoneyStreamsInfoView = (props: {
   const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   const [incomingAmount, setIncomingAmount] = useState<number>();
   const [outgoingAmount, setOutgoingAmount] = useState<number>();
+  const [streamingAccountsAmount, setStreamingAccountsAmount] = useState<number>();
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
 
   // Treasuries related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
-  const [streamingAccountsSummary, setStreamingAccountsSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
-  const [incomingStreamsSummary, setIncomingStreamsSummary] = useState<StreamsSummary>(initialSummary);
-  const [outgoingStreamsSummary, setOutgoingStreamsSummary] = useState<StreamsSummary>(initialSummary);
+  const [streamingAccountsSummary, setStreamingAccountsSummary] = useState<UserTreasuriesSummary | undefined>(undefined);
+  const [incomingStreamsSummary, setIncomingStreamsSummary] = useState<StreamsSummary | undefined>(undefined);
+  const [outgoingStreamsSummary, setOutgoingStreamsSummary] = useState<StreamsSummary | undefined>(undefined);
   const [loadingMoneyStreamsDetails, setLoadingMoneyStreamsDetails] = useState(true);
   const [hasIncomingStreamsRunning, setHasIncomingStreamsRunning] = useState<number>();
   const [hasOutgoingStreamsRunning, setHasOutgoingStreamsRunning] = useState<number>();
@@ -271,6 +263,20 @@ export const MoneyStreamsInfoView = (props: {
       });
     }
   }, [connection, getTokenByMintAddress]);
+
+  // Reset summaries and canDisplay flags when all dependencies start to load
+  useEffect(() => {
+    if (loadingStreams) {
+      setIncomingStreamsSummary(undefined);
+      setOutgoingStreamsSummary(undefined);
+      setCanDisplayIncomingBalance(false);
+      setCanDisplayOutgoingBalance(false);
+    }
+    if (loadingTreasuries) {
+      setStreamingAccountsSummary(undefined);
+      setCanDisplayTotalAccountBalance(false);
+    }
+  }, [loadingStreams, loadingTreasuries]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -401,9 +407,7 @@ export const MoneyStreamsInfoView = (props: {
     // consoleOut('totalNet in streaming accounts:', resume['totalNet'], 'blue');
     // consoleOut('=========== Block ends ===========', '', 'orange');
 
-    // Update state
-    setStreamingAccountsSummary(resume);
-
+    return resume;
 
   }, [
     treasuryList,
@@ -487,7 +491,7 @@ export const MoneyStreamsInfoView = (props: {
 
     // Update state
     setIncomingStreamsSummary(resume);
-    setCanDisplayWithdrawalBalance(true);
+    return resume;
   }, [
     ms,
     msp,
@@ -574,6 +578,7 @@ export const MoneyStreamsInfoView = (props: {
 
     // Update state
     setOutgoingStreamsSummary(resume);
+    return resume;
   }, [
     ms,
     msp,
@@ -1771,10 +1776,47 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [t]);
 
+  const getTimeRemaining = useCallback((time: any) => {
+    if (time) {
+      const countDownDate = new Date(time).getTime();
+      const now = new Date().getTime();
+      const timeleft = countDownDate - now;
+  
+      const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
+      const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
+      const hours = Math.floor((timeleft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const days = Math.floor(timeleft / (1000 * 60 * 60 * 24));
+      const weeks = Math.floor(days/7);
+      const months = Math.floor(days/30);
+      const years = Math.floor(days/365);
+  
+      if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes === 0 && seconds === 0) {
+        return `out of funds on ${getShortDate(time)}`;
+      } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes === 0 && seconds <= 60) {
+        return <span className="fg-warning">less than a minute left</span>;
+      } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes <= 60) {
+        return <span className="fg-warning">{`only ${minutes} ${minutes > 1 ? "minutes" : "minute"} left`}</span>;
+      } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours <= 24) {
+        return <span className="fg-warning">{`only ${hours} ${hours > 1 ? "hours" : "hour"} left`}</span>;
+      } else if (years === 0 && months === 0 && weeks === 0 && days > 1 && days <= 7) {
+        return `${days} ${days > 1 ? "days" : "day"} left`;
+      } else if (years === 0 && months === 0 && days > 7 && days <= 30) {
+        return `${weeks} ${weeks > 1 ? "weeks" : "week"} left`;
+      } else if (years === 0 && days > 30 && days <= 365) {
+        return `${months} ${months > 1 ? "months" : "month"} left`;
+      } else if (days > 365) {
+        return `${years} ${years > 1 ? "years" : "year"} left`;
+      } else {
+        return "--"
+      }
+    }
+  }, []);
+
   const getStreamResume = useCallback((item: Stream | StreamInfo) => {
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
+
       if (v1.version < 2) {
         switch (v1.state) {
           case STREAM_STATE.Schedule:
@@ -1794,11 +1836,11 @@ export const MoneyStreamsInfoView = (props: {
             }
             return `out of funds on ${getShortDate(v2.startUtc as string)}`;
           default:
-            return `streaming since ${getShortDate(v2.startUtc as string)}`;
+            return getTimeRemaining(v2.estimatedDepletionDate as string);
         }
       }
     }
-  }, [t]);
+  }, [getTimeRemaining, t]);
 
   const goToIncomingTabHandler = () => {
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
@@ -1834,14 +1876,12 @@ export const MoneyStreamsInfoView = (props: {
 
   // Set the list of incoming and outgoing streams
   useEffect(() => {
-    if (!connection || !publicKey || !streamList || !autocloseTreasuries) {
+    if (!publicKey || !streamList) {
       setIncomingStreamList(undefined);
       setOutgoingStreamList(undefined);
 
       return;
     }
-
-    consoleOut('autocloseTreasuries:', autocloseTreasuries, 'crimson');
 
     setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)).sort((a, b) => {
       const vA1 = a as StreamInfo;
@@ -1886,14 +1926,12 @@ export const MoneyStreamsInfoView = (props: {
       return 0;
     }));
 
-    const onlyOuts = streamList.filter(item => !isInboundStream(item));
-    const onlyAutoClose = onlyOuts.filter(stream => autocloseTreasuries.some(ac => ac.id as string === (stream as Stream).treasury || ac.id as string === (stream as StreamInfo).treasuryAddress));
-    setOutgoingStreamList(onlyAutoClose);
+    const onlyOuts = streamList.filter(item => !isInboundStream(item) && (item as any).category === 0);
+    consoleOut('outgoing streams:', onlyOuts, 'crimson');
+    setOutgoingStreamList(onlyOuts);
   }, [
     publicKey,
     streamList,
-    connection,
-    autocloseTreasuries,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     getTokenPriceByAddress,
@@ -1912,24 +1950,43 @@ export const MoneyStreamsInfoView = (props: {
 
   // Outgoing amount
   useEffect(() => {
-    if (!outgoingStreamList || !streamingAccountCombinedList) { return; }
+    // if (!outgoingStreamList || !streamingAccountCombinedList) { return; }
 
-    const sumStreamingStreams = streamingAccountCombinedList.reduce((accumulator, streaming: any) => {
-      return accumulator + streaming.streams?.length;
-    }, 0);
+    if (!outgoingStreamList) { return; }
 
-    setOutgoingAmount(outgoingStreamList.length + sumStreamingStreams);
-  }, [
-    outgoingStreamList,
-    streamingAccountCombinedList
-  ]);
+    setOutgoingAmount(outgoingStreamList.length);
+  }, [outgoingStreamList]);
+
+  // Streaming accounts amount
+  useEffect(() => {
+    if (!treasuryList) { return; }
+
+    setStreamingAccountsAmount(treasuryList.length);
+  }, [treasuryList]);
 
   // Live data calculation
   useEffect(() => {
     if (!publicKey || !treasuryList || !address) { return; }
 
+    if (!streamingAccountsSummary) {
+      refreshTreasuriesSummary()
+      .then(value => {
+        if (value) {
+          setStreamingAccountsSummary(value);
+        }
+        setCanDisplayTotalAccountBalance(true);
+      });
+    }
+
     const timeout = setTimeout(() => {
-      refreshTreasuriesSummary();
+      refreshTreasuriesSummary()
+      .then(value => {
+        consoleOut('streamingAccountsSummary:', value, 'orange');
+        if (value) {
+          setStreamingAccountsSummary(value);
+        }
+        setCanDisplayTotalAccountBalance(true);
+      });
     }, 1000);
 
     return () => {
@@ -1938,36 +1995,59 @@ export const MoneyStreamsInfoView = (props: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, treasuryList, address]);
 
+  // Set refresh timeout for incomingStreamsSummary but get first time data
   useEffect(() => {
     if (!publicKey || !streamList || (!streamListv1 && !streamListv2) || !address) { return; }
 
+    if (!incomingStreamsSummary) {
+      refreshIncomingStreamSummary()
+      .then(value => {
+        setWithdrawalBalance(value ? value.totalNet : 0);
+        setCanDisplayIncomingBalance(true);
+      });
+    }
+
     const timeout = setTimeout(() => {
-      refreshIncomingStreamSummary();
-      refreshOutgoingStreamSummary();
+      if (incomingStreamsSummary) {
+        refreshIncomingStreamSummary();
+      }
     }, 1000);
 
     return () => {
       clearTimeout(timeout);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    address,
-    publicKey,
-    streamList,
-    streamListv1,
-    streamListv2,
-  ]);
+  }, [address, incomingStreamsSummary, publicKey, refreshIncomingStreamSummary, streamList, streamListv1, streamListv2]);
+
+  // Set refresh timeout for outgoingStreamsSummary but get first time data
+  useEffect(() => {
+    if (!publicKey || !streamList || (!streamListv1 && !streamListv2) || !address || !streamingAccountsSummary) { return; }
+
+    if (!outgoingStreamsSummary) {
+      refreshOutgoingStreamSummary()
+      .then(value => {
+        setUnallocatedBalance(value ? value.totalNet + streamingAccountsSummary.totalNet : 0);
+        setCanDisplayOutgoingBalance(true);
+      });
+    }
+
+    const timeout = setTimeout(() => {
+      if (outgoingStreamsSummary) {
+        refreshOutgoingStreamSummary();
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [address, outgoingStreamsSummary, publicKey, refreshOutgoingStreamSummary, streamList, streamListv1, streamListv2, streamingAccountsSummary]);
 
   // Update incoming balance
   useEffect(() => {
-    if (!incomingStreamsSummary || !streamList || loadingStreams || loadingCombinedStreamingList) { return; }
+    if (!streamList || loadingStreams || !incomingStreamsSummary) { return; }
 
     setWithdrawalBalance(parseFloat(incomingStreamsSummary.totalNet.toFixed(2)));
 
-    // console.log("incomingStreamsSummary.totalNet test...", incomingStreamsSummary.totalNet)
-
-    // setCanDisplayWithdrawalBalance(true);
-  }, [incomingStreamsSummary, loadingCombinedStreamingList, loadingStreams, streamList]);
+  }, [incomingStreamsSummary, loadingStreams, streamList]);
 
   // Update outgoing balance
   useEffect(() => {
@@ -2025,20 +2105,24 @@ export const MoneyStreamsInfoView = (props: {
 
   // Calculate the rate per day for outgoing streams
   useEffect(() => {
-    if (outgoingStreamList && streamingAccountCombinedList && !loadingStreams && !loadingCombinedStreamingList) {
-      const fromStreamingAccounts: (Stream | StreamInfo)[] = [];
-      let runningOutgoingStreamsFromStreamingAccounts: (Stream | StreamInfo)[] = [];
-      streamingAccountCombinedList.forEach(item => {
-        if (item.streams && item.streams.length > 0) {
-          fromStreamingAccounts.push(...item.streams);
-          runningOutgoingStreamsFromStreamingAccounts = fromStreamingAccounts.filter((stream: Stream | StreamInfo) => isStreamRunning(stream));
-        }
-      });
+    // if (outgoingStreamList && streamingAccountCombinedList && !loadingStreams) {
+
+    if (outgoingStreamList && !loadingStreams) {
+
+      // const fromStreamingAccounts: (Stream | StreamInfo)[] = [];
+      // let runningOutgoingStreamsFromStreamingAccounts: (Stream | StreamInfo)[] = [];
+      // streamingAccountCombinedList.forEach(item => {
+      //   if (item.streams && item.streams.length > 0) {
+      //     fromStreamingAccounts.push(...item.streams);
+      //     runningOutgoingStreamsFromStreamingAccounts = fromStreamingAccounts.filter((stream: Stream | StreamInfo) => isStreamRunning(stream));
+      //   }
+      // });
+
       const runningOutgoingStreams = outgoingStreamList.filter((stream: Stream | StreamInfo) => isStreamRunning(stream));
 
-      if (runningOutgoingStreamsFromStreamingAccounts.length > 0) {
-        runningOutgoingStreams.push(...runningOutgoingStreamsFromStreamingAccounts);
-      }
+      // if (runningOutgoingStreamsFromStreamingAccounts.length > 0) {
+      //   runningOutgoingStreams.push(...runningOutgoingStreamsFromStreamingAccounts);
+      // }
 
       let totalRateAmountValue = 0;
       let totalRateAmountValuePerSecond = 0;
@@ -2068,13 +2152,9 @@ export const MoneyStreamsInfoView = (props: {
   }, [
     loadingStreams,
     outgoingStreamList,
-    loadingCombinedStreamingList,
-    streamingAccountCombinedList,
-    getDepositAmountDisplay,
     getTokenPriceByAddress,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
-    getRateAmountDisplay,
     isStreamRunning,
     t,
   ]);
@@ -2114,7 +2194,7 @@ export const MoneyStreamsInfoView = (props: {
   // Balance
   const renderBalance = (
     <>
-      {loadingCombinedStreamingList || loadingStreams ? (
+      {loadingStreams || loadingTreasuries || !canDisplayTotalAccountBalance ? (
         <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
       ) : (
         <>
@@ -2246,27 +2326,40 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [address]);
 
+  // Clear state on unmount component
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      setIncomingStreamsSummary(undefined);
+      setOutgoingStreamsSummary(undefined);
+      setStreamingAccountsSummary(undefined);
+      setCanDisplayIncomingBalance(false);
+      setCanDisplayOutgoingBalance(false);
+      setCanDisplayTotalAccountBalance(false);
+    };
+  }, []);
+
   const renderSummary = (
     <>
       <Row gutter={[8, 8]} className="ml-0 mr-0">
         <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
-        {/* Background animation */}
-        {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
-          (!loadingCombinedStreamingList && !loadingStreams) && (
-            <div className="stream-background stream-background-incoming">
-              <img
-                className="inbound"
-                src="/assets/incoming-crypto.svg"
-                alt=""
-              />
-            </div>
-          )
-          ) : null}
+          {/* Background animation */}
+          {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
+            (!loadingTreasuries && !loadingStreams) && (
+              <div className="stream-background stream-background-incoming">
+                <img
+                  className="inbound"
+                  src="/assets/incoming-crypto.svg"
+                  alt=""
+                />
+              </div>
+            )) : null
+          }
           <div className="incoming-stream-amount">
             <div className="incoming-stream-running mb-1">
               <div className="d-flex align-items-center text-center">
                 <h4>
-                  {loadingCombinedStreamingList || loadingStreams ? (
+                  {loadingTreasuries || loadingStreams ? (
                     <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                   ) : (
                     formatThousands(incomingAmount as number)
@@ -2283,7 +2376,7 @@ export const MoneyStreamsInfoView = (props: {
               </div>
             </div>
             <div className="incoming-stream-rates">
-              {loadingCombinedStreamingList || loadingStreams ? (
+              {loadingTreasuries || loadingStreams ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : (
                 <span className="incoming-amount">{rateIncomingPerSecond ? (
@@ -2291,7 +2384,7 @@ export const MoneyStreamsInfoView = (props: {
                   ) : "$0.00/second"}
                 </span>
               )}
-              {loadingCombinedStreamingList || loadingStreams ? (
+              {loadingTreasuries || loadingStreams ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : (
                 <span className="incoming-amount">{rateIncomingPerDay ? (
@@ -2306,7 +2399,7 @@ export const MoneyStreamsInfoView = (props: {
               Available to withdraw:
             </div>
             <div className="info-value">
-              {loadingCombinedStreamingList || loadingStreams || !canDisplayWithdrawalBalance ? (
+              {loadingStreams || !canDisplayIncomingBalance ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : withdrawalBalance
                 ? toUsCurrency(withdrawalBalance)
@@ -2314,7 +2407,7 @@ export const MoneyStreamsInfoView = (props: {
               }
             </div>
           </div>
-          {(!loadingCombinedStreamingList && !loadingStreams) && (
+          {(!loadingTreasuries && !loadingStreams) && (
             <div className="wave-container wave-green" id="wave">
               <Wave fill="url(#gradient1)"
                 paused={isPaused}
@@ -2338,7 +2431,7 @@ export const MoneyStreamsInfoView = (props: {
         <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
           {/* Background animation */}
           {(hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0) ? (
-            (!loadingCombinedStreamingList && !loadingStreams) && (
+            (!loadingTreasuries && !loadingStreams) && (
               <div className="stream-background stream-background-outgoing">
                 <img
                   className="inbound"
@@ -2352,7 +2445,7 @@ export const MoneyStreamsInfoView = (props: {
             <div className="outgoing-stream-running mb-1">
               <div className="d-flex align-items-center text-center">
                 <h4>
-                  {loadingCombinedStreamingList || loadingStreams ? (
+                  {loadingTreasuries || loadingStreams ? (
                     <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                   ) : formatThousands(outgoingAmount as number)}
                   <span className="ml-1">Outgoing streams</span>
@@ -2367,7 +2460,7 @@ export const MoneyStreamsInfoView = (props: {
               </div>
             </div>
             <div className="outgoing-stream-rates">
-              {loadingCombinedStreamingList || loadingStreams ? (
+              {loadingTreasuries || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : (
                   <span className="outgoing-amount">{rateOutgoingPerSecond ? (
@@ -2375,7 +2468,7 @@ export const MoneyStreamsInfoView = (props: {
                     ) : "$0.00/second"}
                   </span>
                 )}
-                {loadingCombinedStreamingList || loadingStreams ? (
+                {loadingTreasuries || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : (
                   <span className="outgoing-amount">{rateOutgoingPerDay ? (
@@ -2390,7 +2483,7 @@ export const MoneyStreamsInfoView = (props: {
               Remaining balance:
             </div>
             <div className="info-value">
-              {loadingCombinedStreamingList || loadingStreams ? (
+              {loadingStreams || loadingTreasuries || !canDisplayOutgoingBalance ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : unallocatedBalance
                 ? toUsCurrency(unallocatedBalance)
@@ -2398,7 +2491,7 @@ export const MoneyStreamsInfoView = (props: {
               }
             </div>
           </div>
-          {(!loadingCombinedStreamingList && !loadingStreams) && (
+          {(!loadingTreasuries && !loadingStreams) && (
             <div className="wave-container wave-red" id="wave">
               <Wave fill="url(#gradient2)"
                 paused={isPaused}
@@ -2420,23 +2513,8 @@ export const MoneyStreamsInfoView = (props: {
           )}
         </Col>
       </Row>
-
-      {/* {((incomingAmount && incomingAmount > 0) || (outgoingAmount && outgoingAmount > 0)) ? (
-        <PieChartComponent
-          incomingAmount={incomingAmount || 0}
-          outgoingAmount={outgoingAmount || 0}
-        />
-      ) : null} */}
     </>
   );
-
-  // const subtitle = accountAddress && (
-  //   <CopyExtLinkGroup
-  //     content={accountAddress}
-  //     number={8}
-  //     externalLink={true}
-  //   />
-  // );
 
   // Incoming streams list
   const renderListOfIncomingStreams = (
@@ -2521,127 +2599,106 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
-  // Dropdown (three dots button) inside outgoing stream list
-  // const menu = (
-  //   <Menu>
-  //     <Menu.Item key="00" onClick={showCreateMoneyStreamModal}>
-  //       <span className="menu-item-text">{param === "multisig" ? "Initiate outgoing stream" : "Add outgoing stream"}</span>
-  //     </Menu.Item>
-  //     <Menu.Item key="01" onClick={showCreateTreasuryModal}>
-  //       <span className="menu-item-text">{param === "multisig" ? "Initiate streaming account" : "Add streaming account"}</span>
-  //     </Menu.Item>
-  //   </Menu>
-  // );
-
-  // const renderOutgoingAmoungOfStreams = (
-  //   <>
-  //     {outgoingAmount === undefined ? (
-  //       <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
-  //     ) : (
-  //       outgoingAmount
-  //     )}
-  //   </>
-  // );
-
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
     <>
-      {/* <ResumeItem
-        title="Outflows"
-        classNameTitle="text-uppercase"
-        subtitle={subtitle}
-        amount={renderOutgoingAmoungOfStreams}
-        resume="outgoing"
-        className="account-category-title no-border-top pt-2 no-icon-right"
-        hasRightIcon={false}
-        rightIconHasDropdown={true}
-        rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
-        dropdownMenu={menu}
-        isLink={false}
-      /> */}
-      {(!loadingStreams && !loadingCombinedStreamingList) ? (
-        ((outgoingStreamList !== undefined && outgoingStreamList.length > 0) ||
-         (streamingAccountCombinedList !== undefined && streamingAccountCombinedList.length > 0)) ? (
+      {!loadingStreams ? (
+        outgoingStreamList !== undefined && outgoingStreamList.length > 0 ? (
+          <>
+            {outgoingStreamList && outgoingStreamList.map((stream, index) => {
+              const onSelectStream = () => {
+                // Sends outgoing stream value to the parent component "Accounts"
+                onSendFromOutgoingStreamInfo(stream);
+              };
+
+              const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                event.currentTarget.src = FALLBACK_COIN_IMAGE;
+                event.currentTarget.className = "error";
+              };
+
+              const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+
+              let img;
+
+              if (stream.associatedToken) {
+                if (token) {
+                  img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
+                } else {
+                  img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                }
+              } else {
+                img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+              }
+
+              const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+              const subtitle = getStreamSubtitle(stream);
+              const status = getStreamStatus(stream);
+              const resume = getStreamResume(stream);
+
+              return (
+                <div 
+                  key={`outgoing-stream-${index}}`}
+                  onClick={onSelectStream}
+                  className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    id={index}
+                    img={img}
+                    title={title}
+                    subtitle={subtitle}
+                    resume={resume}
+                    status={status}
+                    hasRightIcon={true}
+                    rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                    isLink={true}
+                    isStream={true}
+                    classNameRightContent="resume-stream-row"
+                    classNameIcon="icon-stream-row"
+                    xs={24}
+                    md={24}
+                  />
+                </div>
+              )
+            })}
+          </>
+        ) : (
+          <span className="pl-1">You don't have any outgoing streams</span>
+        )
+      ) : (
+        <span className="pl-1">Loading outgoing streams ...</span>
+      )}
+    </>
+  );
+
+  // Streaming accounts list
+  const renderListOfStreamingAccounts= (
+    <>
+      {(!loadingStreams && !loadingTreasuries) ? (
+        (treasuryList !== undefined && treasuryList.length > 0) ? (
           <>
             <>
-              {outgoingStreamList && outgoingStreamList.map((stream, index) => {
-                const onSelectStream = () => {
-                  // Sends outgoing stream value to the parent component "Accounts"
-                  onSendFromOutgoingStreamInfo(stream);
-                };
+              {(treasuryList && treasuryList.map((streamingAccount, outerIndex) => {
+                  const v1 = streamingAccount as unknown as TreasuryInfo;
+                  const v2 = streamingAccount as Treasury;
+                  const isNewTreasury = streamingAccount && streamingAccount.version >= 2 ? true : false;
 
-                const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                  event.currentTarget.src = FALLBACK_COIN_IMAGE;
-                  event.currentTarget.className = "error";
-                };
-    
-                const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
-    
-                let img;
-    
-                if (stream.associatedToken) {
-                  if (token) {
-                    img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
-                  } else {
-                    img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-                  }
-                } else {
-                  img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-                }
-    
-                const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
-                const subtitle = getStreamSubtitle(stream);
-                const status = getStreamStatus(stream);
-                const resume = getStreamResume(stream);
-    
-                return (
-                  <div 
-                    key={`outgoing-stream-${index}}`}
-                    onClick={onSelectStream}
-                    className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                  >
-                    <ResumeItem
-                      id={index}
-                      img={img}
-                      title={title}
-                      subtitle={subtitle}
-                      resume={resume}
-                      status={status}
-                      hasRightIcon={true}
-                      rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                      isLink={true}
-                      isStream={true}
-                      classNameRightContent="resume-stream-row"
-                      classNameIcon="icon-stream-row"
-                      xs={24}
-                      md={24}
-                    />
-                  </div>
-                )
-              })}
-
-              {(streamingAccountCombinedList && streamingAccountCombinedList.map((streaming, outerIndex) => {
-                  const v1 = streaming.treasury as unknown as TreasuryInfo;
-                  const v2 = streaming.treasury as Treasury;
-                  const isNewTreasury = streaming && streaming.treasury.version >= 2 ? true : false;
-      
                   const onSelectedStreamingAccount = () => {
                     // Sends outgoing stream value to the parent component "Accounts"
-                    onSendFromStreamingAccountDetails(streaming.treasury);
+                    onSendFromStreamingAccountInfo(streamingAccount);
                   }
-      
+
                   const type = isNewTreasury
                     ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
                     : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
 
                   const category = isNewTreasury
                     && v2.category === 1 ? "Vesting" : "";
-              
+
                   const subCategory = isNewTreasury
                     && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
               
                   let badges;
-              
+
                   type && (
                     category ? (
                       subCategory ? (
@@ -2653,19 +2710,19 @@ export const MoneyStreamsInfoView = (props: {
                       badges = [type]
                     )
                   );
-      
+
                   const title = isNewTreasury ? v2.name : (v1.label ? v1.label : shortenAddress(v1.id as string, 8));
-      
+
                   const subtitle = <CopyExtLinkGroup
-                    content={streaming.treasury.id as string}
+                    content={streamingAccount.id as string}
                     number={8}
                     externalLink={true}
                   />;
-      
+
                   const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
-      
+
                   const resume = amount > 1 ? "streams" : "stream";
-      
+
                   return (
                     <div key={`streaming-account-${outerIndex}`}>
                       <ResumeItem
@@ -2687,64 +2744,6 @@ export const MoneyStreamsInfoView = (props: {
                         md={24}
                         lg={18}
                       />
-      
-                      {(streaming.streams && streaming.streams.length > 0) && (
-                        streaming.streams.map((stream, innerIndex) => {
-                          const onSelectStream = () => {
-                            // Sends outgoing stream value to the parent component "Accounts"
-                            onSendFromStreamingAccountOutgoingStreamInfo(stream, streaming.treasury);
-                          };
-
-                          const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                            event.currentTarget.src = FALLBACK_COIN_IMAGE;
-                            event.currentTarget.className = "error";
-                          };
-              
-                          const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
-              
-                          let img;
-              
-                          if (stream.associatedToken) {
-                            if (token) {
-                              img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
-                            } else {
-                              img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-                            }
-                          } else {
-                            img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-                          }
-      
-                          const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
-                          const subtitle = getStreamSubtitle(stream);
-                          const status = getStreamStatus(stream);
-                          const resume = getStreamResume(stream);
-      
-                          return (
-                            <div 
-                              key={`streaming-account-stream-${innerIndex}`}
-                              onClick={onSelectStream}
-                              className={`d-flex w-100 align-items-center simplelink hover-list ${(innerIndex + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                              >
-                                <ResumeItem
-                                  id={innerIndex}
-                                  img={img}
-                                  title={title}
-                                  status={status}
-                                  subtitle={subtitle}
-                                  resume={resume}
-                                  hasRightIcon={true}
-                                  rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                                  isLink={true}
-                                  isStream={true}
-                                  classNameRightContent="resume-stream-row"
-                                  classNameIcon="icon-stream-row"
-                                  xs={24}
-                                  md={24}
-                                />
-                            </div>
-                          )
-                        })
-                      )}
                     </div>
                   )
                 })
@@ -2752,10 +2751,10 @@ export const MoneyStreamsInfoView = (props: {
             </>
           </>
         ) : (
-          <span className="pl-1">You don't have any outgoing streams</span>
+          <span className="pl-1">You don't have any streaming accounts</span>
         )
       ) : (
-        <span className="pl-1">Loading outgoing streams ...</span>
+        <span className="pl-1">Loading streaming accounts ...</span>
       )}
     </>
   );
@@ -2768,15 +2767,22 @@ export const MoneyStreamsInfoView = (props: {
       render: renderSummary
     },
     {
+      id: "streaming-accounts",
+      name: `Accounts ${(!loadingTreasuries && !loadingStreams) 
+        ? `(${streamingAccountsAmount && streamingAccountsAmount >= 0 && streamingAccountsAmount})` 
+        : ""}`,
+      render: renderListOfStreamingAccounts
+    },
+    {
       id: "incoming",
-      name: `Incoming ${(!loadingCombinedStreamingList && !loadingStreams) 
+      name: `Incoming ${(!loadingTreasuries && !loadingStreams) 
         ? `(${incomingAmount && incomingAmount >= 0 && incomingAmount})` 
         : ""}`,
       render: renderListOfIncomingStreams
     },
     {
       id: "outgoing",
-      name: `Outgoing ${(!loadingCombinedStreamingList && !loadingStreams)
+      name: `Outgoing ${!loadingStreams
         ? `(${outgoingAmount && outgoingAmount >= 0 && outgoingAmount})` 
         : ""}`,
       render: renderListOfOutgoingStreams
@@ -2818,7 +2824,22 @@ export const MoneyStreamsInfoView = (props: {
 
   return (
     <>
-      <Spin spinning={loadingMoneyStreamsDetails || loadingCombinedStreamingList}>
+      {/* {isLocal() && (
+        <div className="debug-bar inner-bottom">
+          <span className="mr-1 align-middle">loadingStreams</span>
+          <span className={`status position-relative align-middle ${loadingStreams ? 'error' : 'success'}`}></span>
+          <span className="mx-1 align-middle">loadingTreasuries</span>
+          <span className={`status position-relative align-middle ${loadingTreasuries ? 'error' : 'success'}`}></span>
+          <div>
+            <span className="mr-1 align-middle">canDisplayOutgoingBalance</span>
+            <span className="font-extrabold align-middle">{canDisplayOutgoingBalance ? 'true' : 'false'}</span>
+            <span className="mx-1 align-middle">canDisplayTotalAccountBalance</span>
+            <span className="font-extrabold align-middle">{canDisplayTotalAccountBalance ? 'true' : 'false'}</span>
+          </div>
+        </div>
+      )} */}
+
+      <Spin spinning={loadingMoneyStreamsDetails || loadingTreasuries}>
 
         <RightInfoDetails
           infoData={infoData}

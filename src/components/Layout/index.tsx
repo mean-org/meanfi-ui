@@ -27,6 +27,7 @@ import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { getDefaultRpc } from "../../services/connections-hq";
+import { isUnauthenticatedRoute } from "../../utils/utils";
 
 const { Header, Content, Footer } = Layout;
 
@@ -39,6 +40,7 @@ export const AppLayout = React.memo((props: any) => {
     previousRoute,
     previousWalletConnectState,
     setPreviousWalletConnectState,
+    setNeedReloadMultisigAccounts,
     setShouldLoadTokens,
     refreshTokenBalance,
     setDiagnosisInfo,
@@ -258,6 +260,7 @@ export const AppLayout = React.memo((props: any) => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
+        setNeedReloadMultisigAccounts(true);
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
 
@@ -320,6 +323,7 @@ export const AppLayout = React.memo((props: any) => {
     referralAddress,
     previousWalletConnectState,
     setPreviousWalletConnectState,
+    setNeedReloadMultisigAccounts,
     clearConfirmationHistory,
     refreshTokenBalance,
     setReferralAddress,
@@ -439,7 +443,7 @@ export const AppLayout = React.memo((props: any) => {
     t
   ]);
 
-  if (wallet && connected) {
+  if ((wallet && connected) || isUnauthenticatedRoute(location.pathname)) {
     return (
       <>
         <div className="App">
