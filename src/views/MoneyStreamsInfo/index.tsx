@@ -2711,15 +2711,14 @@ export const MoneyStreamsInfoView = (props: {
                 );
 
                 const title = isNewTreasury ? v2.name : (v1.label ? v1.label : shortenAddress(v1.id as string, 8));
-
-                const subtitle = <CopyExtLinkGroup
-                  content={streamingAccount.id as string}
-                  number={8}
-                  externalLink={true}
-                />;
+                const subtitle = shortenAddress(streamingAccount.id as string, 8);
+                // const subtitle = <CopyExtLinkGroup
+                //   content={streamingAccount.id as string}
+                //   number={8}
+                //   externalLink={true}
+                // />;
 
                 const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
-
                 const resume = amount > 1 ? "streams" : "stream";
 
                 return (
