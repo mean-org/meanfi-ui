@@ -479,11 +479,11 @@ export const ProposalDetailsView = (props: {
           <div className="number-cool-off-period-background">00</div>
           <div className="form-label">min</div>
         </div>
-        <div>:</div>
+        {/* <div>:</div>
         <div className="center-cool-off-period-data">
           <div className="number-cool-off-period-background">00</div>
           <div className="form-label">sec</div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

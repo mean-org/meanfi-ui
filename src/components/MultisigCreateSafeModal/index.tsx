@@ -61,7 +61,7 @@ export const MultisigCreateSafeModal = (props: {
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [isCoolOffPeriodEnable, setIsCoolOffPeriodEnable] = useState<boolean>(true);
   const [createdByName, setCreatedByName] = useState<string>("");
-  const [coolOfPeriodAmount, setCoolOfPeriodAmount] = useState<number>();
+  const [coolOfPeriodAmount, setCoolOfPeriodAmount] = useState<number>(1);
 
   // Detect XS screen
   useEffect(() => {
@@ -150,6 +150,9 @@ export const MultisigCreateSafeModal = (props: {
       setSafeName('');
       setMultisigThreshold(0);
       setMultisigOwners([]);
+      setIsCoolOffPeriodEnable(true);
+      setCoolOfPeriodAmount(1);
+      setCoolOffPeriodFrequency(PaymentRateType.PerDay);
     }, 50);
 
     setTransactionStatus({
@@ -359,7 +362,6 @@ export const MultisigCreateSafeModal = (props: {
                   />
 
                   {/* Minimum required signatures for proposal approval */}
-                  {/* <div className="form-label">Minimum required signatures for proposal approval</div> */}
                   <div className="form-label icon-label">
                     Minimum required signatures for proposal approval
                     <Tooltip placement="bottom" title="">
@@ -369,27 +371,39 @@ export const MultisigCreateSafeModal = (props: {
                     </Tooltip>
                   </div>
 
-                  <div className="required-signatures-box">
-                    <div className="info-label">A proposal will pass with:</div>
-                    <div className="required-signatures-icons">
-                      {multisigOwners.map((icon, index) => {
-                        const onSelectIcon = () => {
-                          setMultisigThreshold(index + 1);
-                        }
+                  {multisigThreshold > 0 && (
+                    <div className="required-signatures-box">
+                      <div className="info-label">A proposal will pass with:</div>
+                      <div className="required-signatures-icons">
+                        {multisigOwners.map((icon, index) => {
+                          const onMultisigThresholdNumber = () => {
+                            setMultisigThreshold(index + 1);
+                          }
 
-                        return (
-                          <div className={`icon-container simplelink ${(multisigThreshold >= (index + 1)) ? "bg-green" : "bg-gray-light"}`} key={index} onClick={onSelectIcon}>
-                            {(multisigThreshold >= (index + 1)) ? (
-                              <IconKey className="mean-svg-icons key-icon"/>
-                            ) : (
-                              <IconLock className="mean-svg-icons lock-icon"/>
-                            )}
-                            <span className="signatures-number">{index + 1}</span>
-                          </div>
-                        )
-                      })}
+                          const onChangeMultisigThreholdNumber = () => {
+                            if (multisigThreshold === index + 1) {
+                              setMultisigThreshold(index);
+                            }
+                          }
+
+                          return (
+                            <div className={`icon-container simplelink ${(multisigThreshold >= (index + 1)) ? "bg-green" : "bg-gray-light"}`} key={index} onClick={() => {
+                              onMultisigThresholdNumber();
+                              onChangeMultisigThreholdNumber();
+                            }}>
+                            {/* }}onClick={onMultisigThresholdNumber}> */}
+                              {(multisigThreshold >= (index + 1)) ? (
+                                <IconKey className="mean-svg-icons key-icon"/>
+                              ) : (
+                                <IconLock className="mean-svg-icons lock-icon"/>
+                              )}
+                              <span className="signatures-number">{index + 1}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Allow owners to Reject a Proposal */}
                   {/* {/* <div className="d-flex align-items-center mt-3">
