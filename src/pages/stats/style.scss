@@ -30,6 +30,17 @@
         flex-wrap: wrap;
         padding: 6px 0;
         font-size: 18px;
+        .stats-buy-btn {
+          display: flex;
+          align-items: center;
+          color: white;
+          background: var(--color-primary);
+          border-radius: 0.25em;
+          border: none;
+          padding: 0.15em 1.25em;
+          font-size: 0.8em;
+          margin-bottom: 0.1em;
+        }
       }
     }
     .ant-card-body {

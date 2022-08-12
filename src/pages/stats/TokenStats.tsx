@@ -78,13 +78,10 @@ export const FirstCardsLayout = () => {
     <div className="ant-card-head-title">
       <span>{t("stats.summary.summary-title")}</span>
         <Link to={"/exchange"}>
-          <Button
-            type="primary"
-            shape="round"
-            size="small"
-            className="fixed-width-130">
+          <button
+            className="stats-buy-btn">
             <span>{t('stats.buy-btn')}</span>
-          </Button>
+          </button>
         </Link>
     </div>
   );
