@@ -89,7 +89,7 @@ export const FirstCardsLayout = () => {
     </div>
   );
 
-  const renderBodySummary = (    
+  const renderBodySummary = (
     <>
       {summaries.map((summary, index) => (
         <div className="summary-content" key={index}>
@@ -104,7 +104,7 @@ export const FirstCardsLayout = () => {
                     shape="circle"
                     size="middle"
                     icon={<CopyOutlined className="mean-svg-icons" />}
-                    onClick={onCopyText}                    
+                    onClick={onCopyText}
                     name={summary.value}
                   />
                 </Tooltip>
