@@ -381,13 +381,13 @@ export const MultisigCreateSafeModal = (props: {
                           }
 
                           const onChangeMultisigThreholdNumber = () => {
-                            if (multisigThreshold === index + 1) {
+                            if (multisigThreshold > 1 && multisigThreshold === index + 1) {
                               setMultisigThreshold(index);
                             }
                           }
 
                           return (
-                            <div className={`icon-container simplelink ${(multisigThreshold >= (index + 1)) ? "bg-green" : "bg-gray-light"}`} key={index} onClick={() => {
+                            <div className={`icon-container ${(multisigOwners.length > 1) ? "simplelink" : "not-allowed-cursor"} ${(multisigThreshold >= (index + 1)) ? "bg-green" : "bg-gray-light"}`} key={index} onClick={() => {
                               onMultisigThresholdNumber();
                               onChangeMultisigThreholdNumber();
                             }}>
