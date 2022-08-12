@@ -144,6 +144,7 @@ export const AccountsNewView = () => {
     streamV2ProgramAddress,
     pendingMultisigTxCount,
     previousWalletConnectState,
+    loadingMultisigTxPendingCount,
     setHighLightableMultisigId,
     setPendingMultisigTxCount,
     showDepositOptionsModal,
@@ -4230,7 +4231,7 @@ export const AccountsNewView = () => {
   ///////////////
 
   const renderMultisigPendinTxNotification = () => {
-    if (pendingMultisigTxCount && pendingMultisigTxCount > 0) {
+    if (!loadingMultisigTxPendingCount && pendingMultisigTxCount && pendingMultisigTxCount > 0) {
       return (
         <div key="pending-proposals" className="transaction-list-row no-pointer shift-up-1">
           <div className="flex-row align-items-center fg-warning simplelink underline-on-hover" onClick={() => {

@@ -1,5 +1,4 @@
 {
-  "extends": "@tsconfig/recommended/tsconfig.json",
   "compilerOptions": {
     "target": "ES6",
     "lib": [
@@ -31,6 +30,5 @@
     "./src/**/*",
     "./src/setupTests.ts"
   ],
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Recommended"
+  "$schema": "https://json.schemastore.org/tsconfig"
 }
