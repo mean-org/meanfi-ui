@@ -3274,14 +3274,16 @@ export const SafeView = () => {
         break;
       case OperationType.CancelTransaction:
         goToProposals();
-        break;  
+        break;
       case OperationType.CreateMultisig:
         hardReloadMultisigs();
-        break;  
+        break;
+      case OperationType.EditMultisig:
+        reloadMultisigs();
+        break;
       default:
         break;
     }
-
   }, [recordTxConfirmation]);
 
   // Setup event handler for Tx confirmation error
