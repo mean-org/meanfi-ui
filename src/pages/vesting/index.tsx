@@ -3701,7 +3701,8 @@ export const VestingView = () => {
       consoleOut('pendingMultisigTxCount:', item.pendingTxsAmount, 'blue');
     }
 
-  }, [accountAddress, isMultisigContext, multisigAccounts, setPendingMultisigTxCount, setSelectedMultisig]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountAddress, isMultisigContext, multisigAccounts]);
 
   // Get the Vesting contract activity while in "activity" tab
   useEffect(() => {

@@ -47,7 +47,7 @@ import { ProgramAccounts } from "../utils/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
-import { MeanMultisig, MultisigInfo, MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
+import { MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from "@mean-dao/mean-multisig-sdk";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
@@ -133,6 +133,7 @@ interface AppStateConfig {
   // Multisig
   multisigAccounts: MultisigInfo[];
   loadingMultisigAccounts: boolean;
+  loadingMultisigTxPendingCount: boolean;
   needReloadMultisigAccounts: boolean;
   selectedMultisig: MultisigInfo | undefined;
   multisigSolBalance: number | undefined;
@@ -302,6 +303,7 @@ const contextDefaultValues: AppStateConfig = {
   // Multisig
   multisigAccounts: [],
   loadingMultisigAccounts: false,
+  loadingMultisigTxPendingCount: false,
   needReloadMultisigAccounts: true,
   selectedMultisig: undefined,
   multisigSolBalance: undefined,
@@ -1495,7 +1497,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [needReloadMultisigAccounts, setNeedReloadMultisigAccounts] = useState(contextDefaultValues.needReloadMultisigAccounts);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(contextDefaultValues.loadingMultisigAccounts);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>(contextDefaultValues.multisigAccounts);
+  const [patchedMultisigAccounts, setPatchedMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(contextDefaultValues.selectedMultisig);
+  const [loadingMultisigTxPendingCount, setLoadingMultisigTxPendingCount] = useState(contextDefaultValues.loadingMultisigTxPendingCount);
 
   // Refresh the list of multisigs and return a selection
   const refreshMultisigs = useCallback(async (reset?: boolean) => {
@@ -1542,11 +1546,56 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     setNeedReloadMultisigAccounts(false);
+    setPatchedMultisigAccounts(undefined);
 
     refreshMultisigs();
 
   }, [multisigClient, needReloadMultisigAccounts, publicKey, refreshMultisigs]);
 
+  useEffect(() => {
+    if (!publicKey || !multisigClient || patchedMultisigAccounts || loadingMultisigTxPendingCount || !multisigAccounts || multisigAccounts.length === 0) {
+      return;
+    }
+
+    (async () => {
+      consoleOut('Entering here god knows why...', '', 'crimson');
+      setLoadingMultisigTxPendingCount(true);
+
+      const multisigWithPendingTxs = multisigAccounts.filter(x => x.pendingTxsAmount > 0);
+      if (!multisigWithPendingTxs || multisigWithPendingTxs.length === 0) {
+         return;
+      }
+
+      const multisigAccountsCopy = [...multisigAccounts];
+      const multisigPendingStatus = [MultisigTransactionStatus.Active, MultisigTransactionStatus.Queued, MultisigTransactionStatus.Passed];
+      let anythingChanged = false;
+      for await (const multisig of multisigWithPendingTxs) {
+        try {
+          const multisigTransactions = await multisigClient.getMultisigTransactions(multisig.id, publicKey);
+          const realPendingTxsAmount = multisigTransactions.filter(tx => multisigPendingStatus.includes(tx.status)).length;
+          const itemIndex = multisigAccountsCopy.findIndex(x => x.id.equals(multisig.id));
+          if (itemIndex > -1) {
+            multisigAccountsCopy[itemIndex].pendingTxsAmount = realPendingTxsAmount;
+            anythingChanged = true;
+          }
+        } catch (error) {
+          consoleOut(`Failed pulling tx for multisig ${multisig.id.toBase58()}`, error, 'red');
+        }
+      }
+      if (anythingChanged) {
+        consoleOut('setting patchedMultisigAccounts...', '', 'crimson');
+        setPatchedMultisigAccounts(multisigAccountsCopy);
+      }
+      setLoadingMultisigTxPendingCount(false);
+    })();
+  }, [loadingMultisigTxPendingCount, multisigAccounts, multisigClient, patchedMultisigAccounts, publicKey]);
+
+  useEffect(() => {
+    if (patchedMultisigAccounts !== undefined) {
+      setMultisigAccounts(patchedMultisigAccounts);
+      consoleOut('setting multisigAccounts...', '', 'crimson');
+    }
+  }, [patchedMultisigAccounts]);
 
   //////////////////////////////////
   // Added to support /ddcas page //
@@ -1633,6 +1682,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         loadingRecurringBuys,
         multisigAccounts,
         loadingMultisigAccounts,
+        loadingMultisigTxPendingCount,
         needReloadMultisigAccounts,
         selectedMultisig,
         multisigSolBalance,

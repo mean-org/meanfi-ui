@@ -51,7 +51,6 @@ import './style.scss';
 
 // MULTISIG
 import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
-import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { customLogger } from '../..';
 import { openNotification } from '../../components/Notifications';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
@@ -111,6 +110,7 @@ export const SafeView = () => {
     loadingMultisigAccounts,
     highLightableMultisigId,
     previousWalletConnectState,
+    loadingMultisigTxPendingCount,
     setNeedReloadMultisigAccounts,
     setHighLightableMultisigId,
     getTokenPriceByAddress,
@@ -4036,7 +4036,7 @@ export const SafeView = () => {
                   ) : (
                     <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
                   )}
-                  {item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
+                  {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
                     <span className="status warning bottom-right"></span>
                   ) : null}
                 </div>
