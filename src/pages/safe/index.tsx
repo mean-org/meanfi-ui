@@ -1566,18 +1566,30 @@ export const SafeView = () => {
         // operation = getProposalOperation(data);
         proposalIx = tx.instructions[0];
       } else if (data.appId === CREDIX_PROGRAM.toBase58()) { //
-        if (data.instruction.name === "depositFunds") {
-          operation = OperationType.CredixDepositFunds;
-          proposalIx = await createCredixDepositIx(
-            new PublicKey(data.instruction.uiElements[0].value),
-            parseFloat(data.instruction.uiElements[1].value)
-          );
-        } else if (data.instruction.name === "withdrawFunds") {
-          operation = OperationType.CredixWithdrawFunds;
-          proposalIx = await createCredixWithdrawIx(
-            new PublicKey(data.instruction.uiElements[0].value),
-            parseFloat(data.instruction.uiElements[1].value)
-          );
+        switch (data.instruction.name) {
+          case 'depositFunds':
+            operation = OperationType.CredixDepositFunds;
+            proposalIx = await createCredixDepositIx(
+              new PublicKey(data.instruction.uiElements[0].value),
+              parseFloat(data.instruction.uiElements[1].value)
+            );
+          break;
+        
+          case 'withdrawFunds':
+            operation = OperationType.CredixWithdrawFunds;
+            proposalIx = await createCredixWithdrawIx(
+              new PublicKey(data.instruction.uiElements[0].value),
+              parseFloat(data.instruction.uiElements[1].value)
+            );
+          break;
+          
+          case 'depositTranche':
+              operation = OperationType.CredixDepositFunds;
+              proposalIx = await createCredixDepositIx(
+                new PublicKey(data.instruction.uiElements[0].value),
+                parseFloat(data.instruction.uiElements[2].value)
+              );
+          break;  
         }
       } else { // TODO: Implement GetOperationFromProposal
         // operation = getProposalOperation(data);
