@@ -155,10 +155,7 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
     'FkRtTexEwLtYerHRKUku7ZZJx1VuTqxwGF636nAuer3B', // YAF
     'DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ', // YAF
-    'F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc', // YGF
     'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
-    '9PLqBWNkjegBdz4UD5LYSswWVXfxMf8hUsK2R9b3Lj23', // AMA
-    'YxddwEVL4oQBqW8HAeeV4a2PHBC8qhfk1TMKbt2j7A6',  // AMA
     'HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv', // PNL
     '49XcDH9tWX67uw53TzNrPE5ovGsXd7VxgH735jBg6K64', // PL
     'HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa', // TBM
