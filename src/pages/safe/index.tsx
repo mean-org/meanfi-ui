@@ -1520,8 +1520,7 @@ export const SafeView = () => {
     if (!connection || !connectionConfig) { return null; }
 
     const program = createProgram(connection, "confirmed");
-    console.log("********** depositTrancheIx: input data => investor:", investor.toBase58(),"deal:", deal.toBase58(), "amount:", amount, "trancheIndex:", trancheIndex);
-
+    
     const gatewayToken = await getGatewayToken(
       investor,
       new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
@@ -1605,7 +1604,6 @@ export const SafeView = () => {
 
           case 'depositTranche':
             operation = OperationType.CredixDepositTranche;
-            console.log('******* depositTrancheIx UI input data:', JSON.stringify(data.instruction.uiElements));
             proposalIx = await createCredixDepositTrancheIx(
               new PublicKey(data.instruction.uiElements[0].value),
               new PublicKey(data.instruction.uiElements[1].value),
