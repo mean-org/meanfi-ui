@@ -228,66 +228,69 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
       break;
     // MEan Multisig
     case OperationType.EditMultisig:
-      ix = programIdl.instructions.filter(ix => ix.name === "editMultisig")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "editMultisig");
       break;
     // SPL Token
     case OperationType.TransferTokens:
-      ix = programIdl.instructions.filter(ix => ix.name === "transfer")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "transfer");
       break;
     case OperationType.SetAssetAuthority:
-      ix = programIdl.instructions.filter(ix => ix.name === "setAuthority")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "setAuthority");
       break;
     case OperationType.CloseTokenAccount:
     case OperationType.DeleteAsset:
-      ix = programIdl.instructions.filter(ix => ix.name === "closeAccount")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "closeAccount");
       break;
     // MSP
     case OperationType.TreasuryCreate:
-      ix = programIdl.instructions.filter(ix => ix.name === "createTreasury")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "createTreasury");
       break;
     case OperationType.TreasuryStreamCreate:
-      ix = programIdl.instructions.filter(ix => ix.name === "createStream")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "createStream");
       break;
     case OperationType.TreasuryRefreshBalance:
-      ix = programIdl.instructions.filter(ix => ix.name === "refreshTreasuryData")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "refreshTreasuryData");
       break;
     case OperationType.TreasuryAddFunds:
-      ix = programIdl.instructions.filter(ix => ix.name === "addFunds")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "addFunds");
       break;
     case OperationType.TreasuryClose:
-      ix = programIdl.instructions.filter(ix => ix.name === "closeTreasury")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "closeTreasury");
       break;
     case OperationType.TreasuryWithdraw:
-      ix = programIdl.instructions.filter(ix => ix.name === "treasuryWithdraw")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "treasuryWithdraw");
       break;
     case OperationType.StreamCreate:
-      ix = programIdl.instructions.filter(ix => ix.name === "createStream")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "createStream");
       break;
     case OperationType.StreamAddFunds:
-      ix = programIdl.instructions.filter(ix => ix.name === "allocate")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "allocate");
       break;
     case OperationType.StreamPause:
-      ix = programIdl.instructions.filter(ix => ix.name === "pauseStream")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "pauseStream");
       break;
     case OperationType.StreamResume:
-      ix = programIdl.instructions.filter(ix => ix.name === "resumeStream")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "resumeStream");
       break;
     case OperationType.StreamClose:
-      ix = programIdl.instructions.filter(ix => ix.name === "closeStream")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "closeStream");
       break;
     case OperationType.StreamWithdraw:
-      ix = programIdl.instructions.filter(ix => ix.name === "withdraw")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "withdraw");
       break;
     case OperationType.StreamTransferBeneficiary:
-      ix = programIdl.instructions.filter(ix => ix.name === "transferStream")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "transferStream");
       break;
     // CREDIX
     case OperationType.CredixDepositFunds:
-      ix = programIdl.instructions.filter(ix => ix.name === "depositFunds")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "depositFunds");
       break;
     case OperationType.CredixWithdrawFunds:
-      ix = programIdl.instructions.filter(ix => ix.name === "withdrawFunds")[0];
+      ix = programIdl.instructions.find(ix => ix.name === "withdrawFunds");
       break;
+    case OperationType.CredixDepositTranche:
+        ix = programIdl.instructions.find(ix => ix.name === "depositTranche");
+        break;
     default: ix = undefined;
   }
 

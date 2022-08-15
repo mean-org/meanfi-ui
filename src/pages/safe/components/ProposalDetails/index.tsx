@@ -478,7 +478,6 @@ export const ProposalDetailsView = (props: {
   const anyoneCanExecuteTx = () => {
     if (selectedProposal.operation !== OperationType.StreamWithdraw &&
         selectedProposal.operation !== OperationType.EditMultisig &&
-        // selectedProposal.operation !== OperationType.Transfer &&
         selectedProposal.operation !== OperationType.TransferTokens &&
         selectedProposal.operation !== OperationType.UpgradeProgram &&
         selectedProposal.operation !== OperationType.SetMultisigAuthority &&
@@ -486,6 +485,7 @@ export const ProposalDetailsView = (props: {
         selectedProposal.operation !== OperationType.DeleteAsset &&
         selectedProposal.operation !== OperationType.StreamTransferBeneficiary &&
         selectedProposal.operation !== OperationType.CredixDepositFunds &&
+        selectedProposal.operation !== OperationType.CredixDepositTranche &&
         selectedProposal.operation !== OperationType.CredixWithdrawFunds) {
       return false;
     } else {
