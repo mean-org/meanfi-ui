@@ -32,6 +32,7 @@ import { VestingFlowRateInfo } from '../../../../models/vesting';
 export const VestingContractOverview = (props: {
     associatedTokenDecimals: number | undefined;
     isXsDevice: boolean;
+    selectedToken: TokenInfo | undefined;
     streamTemplate: StreamTemplate | undefined;
     vestingContract: Treasury | undefined;
     vestingContractFlowRate: VestingFlowRateInfo | undefined;
@@ -39,6 +40,7 @@ export const VestingContractOverview = (props: {
     const {
         associatedTokenDecimals,
         isXsDevice,
+        selectedToken,
         streamTemplate,
         vestingContract,
         vestingContractFlowRate,
@@ -58,7 +60,6 @@ export const VestingContractOverview = (props: {
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
     const [completedVestingPercentage, setCompletedVestingPercentage] = useState(0);
     const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
-    const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
     const [isContractRunning, setIsContractRunning] = useState(false);
 
     /////////////////
@@ -209,43 +210,6 @@ export const VestingContractOverview = (props: {
             setCompletedVestingPercentage(0);
         }
     }, [cliffReleasePercentage, getContractFinishDate, isDateInTheFuture, lockPeriodAmount, lockPeriodUnits, paymentStartDate, today, vestingContract]);
-
-    // Set a working token based on the Vesting Contract's Associated Token
-    useEffect(() => {
-
-        const getCustomToken = (address: string, decimals: number) => {
-            if (!address || !isValidAddress(address)) {
-                return undefined;
-            }
-
-            const unknownToken: TokenInfo = {
-                address: address,
-                name: CUSTOM_TOKEN_NAME,
-                chainId: 101,
-                decimals: decimals,
-                symbol: shortenAddress(address),
-            };
-            return unknownToken;
-        }
-
-        if (vestingContract && associatedTokenDecimals !== undefined) {
-            const ata = vestingContract.associatedToken as string;
-            let token = getTokenByMintAddress(ata);
-
-            if (!token) {
-                token = getCustomToken(ata, associatedTokenDecimals);
-            } else if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-                token = Object.assign({}, token, {
-                    symbol: 'SOL'
-                }) as TokenInfo;
-            }
-
-            consoleOut("Using token:", token, 'blue');
-            setSelectedToken(token);
-        }
-
-        return () => { }
-    }, [associatedTokenDecimals, getTokenByMintAddress, vestingContract]);
 
     // Set isContractRunning flag based on completed percentage
     useEffect(() => {

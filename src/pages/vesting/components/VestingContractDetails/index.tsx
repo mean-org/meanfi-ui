@@ -11,13 +11,14 @@ import { getCategoryLabelByValue, VestingFlowRateInfo } from '../../../../models
 import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
 import { IconLoading } from '../../../../Icons';
-import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getShortDate, getTodayPercentualBetweenTwoDates, percentage, toTimestamp } from '../../../../utils/ui';
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getShortDate, getTodayPercentualBetweenTwoDates, percentage, toTimestamp } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { Progress } from 'antd';
 
 export const VestingContractDetails = (props: {
     isXsDevice: boolean;
     loadingVestingContractFlowRate: boolean;
+    selectedToken: TokenInfo | undefined;
     streamTemplate: StreamTemplate | undefined;
     vestingContract: Treasury | undefined;
     vestingContractFlowRate: VestingFlowRateInfo | undefined;
@@ -25,6 +26,7 @@ export const VestingContractDetails = (props: {
     const {
         isXsDevice,
         loadingVestingContractFlowRate,
+        selectedToken,
         streamTemplate,
         vestingContract,
         vestingContractFlowRate,
@@ -36,7 +38,6 @@ export const VestingContractDetails = (props: {
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
     const [today, setToday] = useState(new Date());
-    const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
     const [paymentStartDate, setPaymentStartDate] = useState<string>("");
     const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
     const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
@@ -111,21 +112,6 @@ export const VestingContractDetails = (props: {
         );
 
     }, [isContractFinished, isDateInTheFuture, paymentStartDate, t, vestingContract]);
-
-    // Set a working token based on the Vesting Contract's Associated Token
-    useEffect(() => {
-        if (vestingContract) {
-            let token = getTokenByMintAddress(vestingContract.associatedToken as string);
-            if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-                token = Object.assign({}, token, {
-                    symbol: 'SOL'
-                }) as TokenInfo;
-            }
-            setSelectedToken(token);
-        }
-
-        return () => { }
-    }, [getTokenByMintAddress, vestingContract])
 
     // Create a tick every second
     useEffect(() => {
@@ -211,11 +197,12 @@ export const VestingContractDetails = (props: {
                         ) : vestingContractFlowRate && vestingContract && selectedToken ? (
                             <>
                                 {vestingContractFlowRate.amount > 0 && (
-                                    <span className="mr-1">Sending {getAmountWithSymbol(
-                                        vestingContractFlowRate.amount,
-                                        vestingContract.associatedToken as string,
-                                        false, splTokenList
-                                    )} {getIntervalFromSeconds(vestingContractFlowRate.durationUnit)}</span>
+                                    <span className="mr-1">Sending {
+                                        formatThousands(
+                                            vestingContractFlowRate.amount,
+                                            friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount, selectedToken.decimals)
+                                        )
+                                    } {selectedToken.symbol} {getIntervalFromSeconds(vestingContractFlowRate.durationUnit)}</span>
                                 )}
                             </>
                         ) : null}
@@ -267,7 +254,7 @@ export const VestingContractDetails = (props: {
                                                     percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount),
                                                     friendlyDisplayDecimalPlaces(percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount)) || selectedToken.decimals
                                                 )
-                                            } {selectedToken.symbol} vested
+                                            } {selectedToken.symbol} vested {`(${completedVestingPercentage}%)`}
                                         </div>
                                     )}
                                 </>
