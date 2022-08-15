@@ -494,8 +494,7 @@ export const MultisigProposalModal = (props: {
                                 className={isBusy ? 'disabled' : ''}
                                 onChange={onProposalInstructionValueChange}
                                 placeholder="Select an instruction"
-                                values={selectedAppConfig ? selectedAppConfig.ui.filter(i => !(i.name === "depositTranche" && !isWhitelisted)).map((ix: any) => {
-                                  // TODO: Remove the filter above before map when the feature is tested by CREDIX guys
+                                values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => {
                                   return { key: ix.id, label: ix.label, value: ix.id }
                                 }) : []}
                                 labelInValue={true}
