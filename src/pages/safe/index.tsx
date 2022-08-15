@@ -503,8 +503,8 @@ export const SafeView = () => {
           owners: data.owners,
           isAllowRejectProposal: data.isAllowToRejectProposal,
           isCoolOffPeriodEnable: data.isCoolOffPeriodEnable,
-          coolOffDate: data.coolOffDate,
-          coolOffTime: data.coolOffTime
+          coolOfPeriodAmount: data.coolOfPeriodAmount,
+          coolOffPeriodFrequency: data.coolOffPeriodFrequency
         };
 
         consoleOut('data:', payload);

@@ -135,8 +135,8 @@ export const MultisigCreateSafeModal = (props: {
       owners: multisigOwners,
       isAllowToRejectProposal: isAllowToRejectProposal,
       isCoolOffPeriodEnable: isCoolOffPeriodEnable,
-      coolOffDate: coolOffDate,
-      coolOffTime: coolOffTime
+      coolOfPeriodAmount: coolOfPeriodAmount,
+      coolOffPeriodFrequency: coolOffPeriodFrequency
     }
     handleOk(options);
   }

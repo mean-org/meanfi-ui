@@ -1,7 +1,7 @@
 import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, Message, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { AnchorProvider, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
 import { IDL as SplTokenIdl } from "@project-serum/anchor/dist/cjs/spl/token";
-import { OperationType } from "./enums";
+import { OperationType, PaymentRateType } from "./enums";
 import bs58 from "bs58";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MEAN_MULTISIG_PROGRAM, MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
@@ -167,8 +167,8 @@ export interface CreateNewSafeParams {
   owners: MultisigParticipant[];
   isAllowToRejectProposal?: boolean;
   isCoolOffPeriodEnable?: boolean;
-  coolOffDate?: string;
-  coolOffTime?: string;
+  coolOfPeriodAmount?: number;
+  coolOffPeriodFrequency?: PaymentRateType;
 }
 
 export const getFees = async (
