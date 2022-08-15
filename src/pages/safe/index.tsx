@@ -4230,7 +4230,7 @@ export const SafeView = () => {
                         }
                     </Button>
                   </div>
-                  {isUnderDevelopment() && (
+                  {/* {isUnderDevelopment() && (
                     <Dropdown className="options-dropdown"
                       overlay={menu}
                       placement="bottomRight"
@@ -4245,7 +4245,7 @@ export const SafeView = () => {
                         />
                       </span>
                     </Dropdown>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>

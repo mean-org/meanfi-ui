@@ -317,6 +317,7 @@ export const VestingContractCreateForm = (props: {
         // const timeShiftedStartUtc = new Date(startDatePlusOffset);
         consoleOut('start date in UTC:', startUtc, 'darkorange');
         const options: VestingContractCreateOptions = {
+            vestingContractTitle: proposalTitle,
             vestingContractName: vestingLockName,
             vestingCategory: vestingCategory ? vestingCategory.value : SubCategory.default,
             vestingContractType: treasuryOption ? treasuryOption.type : TreasuryType.Lock,

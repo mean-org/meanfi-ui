@@ -982,6 +982,7 @@ export const VestingView = () => {
       const ixData = Buffer.from(createTreasuryTx[0].instructions[0].data);
       const ixAccounts = createTreasuryTx[0].instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const titleProposal = createOptions.vestingContractTitle;
 
       // Add a pre-instruction to create the treasurer ATA if it doesn't exist
       // const createTreasurerAtaIx = await getCreateAtaInstructionIfNotExists(
@@ -993,7 +994,7 @@ export const VestingView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Create Vesting Contract",
+        titleProposal === "" ? "Create Vesting Contract" : titleProposal,
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryCreate,
