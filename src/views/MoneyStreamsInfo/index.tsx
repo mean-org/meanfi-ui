@@ -1921,16 +1921,18 @@ export const MoneyStreamsInfoView = (props: {
       }
 
       if (tokenPriceA && tokenPriceB) {
-        return(((vB2.withdrawableAmount || vB1.escrowVestedAmount || 0) * tokenPriceB) - ((vA2.withdrawableAmount || vA1.escrowVestedAmount || 0) * tokenPriceA));
+        const withdrawalAmountWithPrice = (((vB2.withdrawableAmount || vB1.escrowVestedAmount || 0) * tokenPriceB) - ((vA2.withdrawableAmount || vA1.escrowVestedAmount || 0) * tokenPriceA));
+
+        return withdrawalAmountWithPrice;
       } else {
         return 0;
       }
     });
 
+    consoleOut('incoming streams:', sortedIncomingStreamsList, 'crimson');
     setIncomingStreamList(sortedIncomingStreamsList);
 
     const onlyOuts = streamList.filter(item => !isInboundStream(item) && (item as any).category === 0);
-    consoleOut('outgoing streams:', onlyOuts, 'crimson');
     const sortedOutgoingStreamsList = onlyOuts.sort((a, b) => {
       const vA1 = a as StreamInfo;
       const vA2 = a as Stream;
@@ -1944,6 +1946,7 @@ export const MoneyStreamsInfoView = (props: {
       }
     });
 
+    consoleOut('outgoing streams:', sortedOutgoingStreamsList, 'crimson');
     setOutgoingStreamList(sortedOutgoingStreamsList);
   }, [
     publicKey,
