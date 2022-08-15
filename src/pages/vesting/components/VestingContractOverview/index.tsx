@@ -2,7 +2,6 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { StreamTemplate, Treasury } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { useTranslation } from 'react-i18next';
-import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TimeData } from '../../../../models/common-types';
 import { PaymentRateType } from '../../../../models/enums';
@@ -19,9 +18,8 @@ import {
     friendlyDisplayDecimalPlaces,
     percentage,
     consoleOut,
-    isValidAddress
 } from '../../../../utils/ui';
-import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { formatThousands, getAmountWithSymbol, makeDecimal } from '../../../../utils/utils';
 import BN from 'bn.js';
 import { Alert, Progress } from 'antd';
 import { TokenIcon } from '../../../../components/TokenIcon';
@@ -58,9 +56,10 @@ export const VestingContractOverview = (props: {
     const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
-    const [completedVestingPercentage, setCompletedVestingPercentage] = useState(0);
     const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
     const [isContractRunning, setIsContractRunning] = useState(false);
+    const [completedVestingPercentage, setCompletedVestingPercentage] = useState(0);
+    const [currentVestingAmount, setCurrentVestingAmount] = useState(0);
 
     /////////////////
     //  Callbacks  //
@@ -110,6 +109,51 @@ export const VestingContractOverview = (props: {
         }
         return false;
     }, [getContractFinishDate]);
+
+    const getCurrentVestedAmount = useCallback((log = false) => {
+        if (!vestingContractFlowRate || !paymentStartDate) {
+            return 0;
+        }
+
+        let ratePerSecond = 0;
+        let streamable = 0;
+        let released = 0;
+        let vested = 0;
+        const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
+        const elapsed = Math.round(getTimeEllapsed(paymentStartDate).total / 1000);
+
+        if (log) {
+            consoleOut('lockPeriodAmount:', lockPeriodAmount, 'purple');
+            consoleOut('lockPeriodUnits:', lockPeriodUnits, 'purple');
+            consoleOut('lockPeriod (s):', `${lockPeriod} (${lockPeriodAmount} ${getLockPeriodOptionLabelByAmount(lockPeriodFrequency, parseFloat(lockPeriodAmount), t)})`, 'purple');
+            consoleOut('elapsed:', elapsed, 'purple');
+            consoleOut('streamableAmount:', vestingContractFlowRate.streamableAmount, 'purple');
+        }
+
+        if (cliffReleasePercentage > 0) {
+            released = percentage(cliffReleasePercentage, vestingContractFlowRate.streamableAmount);
+            streamable = vestingContractFlowRate.streamableAmount - released;
+        } else {
+            streamable = vestingContractFlowRate.streamableAmount;
+        }
+
+        ratePerSecond = streamable / lockPeriod;
+
+        if (cliffReleasePercentage > 0) {
+            vested = released + (elapsed * ratePerSecond);
+        } else {
+            vested = elapsed * ratePerSecond;
+        }
+
+        if (log) {
+            consoleOut('cliffRelease amount:', released, 'purple');
+            consoleOut('To be streamed:', streamable, 'purple');
+            consoleOut('ratePerSecond:', ratePerSecond, 'purple');
+            consoleOut('vested:', vested, 'purple');
+        }
+
+        return vested;
+    }, [cliffReleasePercentage, lockPeriodAmount, lockPeriodFrequency, lockPeriodUnits, paymentStartDate, t, vestingContractFlowRate]);
 
 
     /////////////////////
@@ -192,6 +236,7 @@ export const VestingContractOverview = (props: {
 
     // Set chart completed percentage
     useEffect(() => {
+
         if (vestingContract && paymentStartDate) {
             if (vestingContract.totalStreams === 0) {
                 setCompletedVestingPercentage(0);
@@ -204,12 +249,27 @@ export const VestingContractOverview = (props: {
                 // Find today's percentage between Start date and Finish date
                 const todayPct = getTodayPercentualBetweenTwoDates(paymentStartDate, finishDate);
                 // consoleOut('todayPct:', todayPct, 'indianred');
-                setCompletedVestingPercentage(todayPct <= cliffReleasePercentage ? cliffReleasePercentage : todayPct > 100 ? 100 : todayPct);
+
+                // Cover the initial cliff in the completion percentage
+                // setCompletedVestingPercentage(todayPct <= cliffReleasePercentage ? cliffReleasePercentage : todayPct > 100 ? 100 : todayPct);
+
+                // Make the bar reflect the real percent of completion without covering the initial cliff
+                setCompletedVestingPercentage(todayPct > 100 ? 100 : todayPct);
             }
         } else {
             setCompletedVestingPercentage(0);
         }
-    }, [cliffReleasePercentage, getContractFinishDate, isDateInTheFuture, lockPeriodAmount, lockPeriodUnits, paymentStartDate, today, vestingContract]);
+
+        setCurrentVestingAmount(getCurrentVestedAmount());
+
+    }, [
+        today,
+        vestingContract,
+        paymentStartDate,
+        getCurrentVestedAmount,
+        getContractFinishDate,
+        isDateInTheFuture,
+    ]);
 
     // Set isContractRunning flag based on completed percentage
     useEffect(() => {
@@ -231,7 +291,6 @@ export const VestingContractOverview = (props: {
     const renderVestedAmountChart = useCallback(() => {
         if (!vestingContract || !vestingContractFlowRate || !selectedToken) { return null; }
 
-        const percentageOfStreamableAmount = percentage(completedVestingPercentage, vestingContractFlowRate.streamableAmount);
         return (
             <>
                 {vestingContract.totalStreams > 0 && (
@@ -244,13 +303,13 @@ export const VestingContractOverview = (props: {
                             <span className="font-size-100 font-bold fg-secondary-75 pl-2">
                                 {
                                     formatThousands(
-                                        percentageOfStreamableAmount,
-                                        friendlyDisplayDecimalPlaces(percentageOfStreamableAmount, selectedToken.decimals)
+                                        currentVestingAmount,
+                                        friendlyDisplayDecimalPlaces(currentVestingAmount) || selectedToken.decimals
                                     )
                                 } of {
                                     formatThousands(
                                         vestingContractFlowRate.streamableAmount,
-                                        friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount, selectedToken.decimals)
+                                        friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmount) || selectedToken.decimals
                                     )
                                 } {selectedToken.symbol} vested
                             </span>
@@ -284,7 +343,7 @@ export const VestingContractOverview = (props: {
                 )}
             </>
         );
-    }, [completedVestingPercentage, isContractFinished, selectedToken, theme, vestingContract, vestingContractFlowRate]);
+    }, [completedVestingPercentage, currentVestingAmount, isContractFinished, selectedToken, theme, vestingContract, vestingContractFlowRate]);
 
     const getRelativeFinishDate = () => {
         const finishDate = getContractFinishDate();

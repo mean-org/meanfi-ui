@@ -324,7 +324,7 @@ export const VestingView = () => {
       name: CUSTOM_TOKEN_NAME,
       chainId: 101,
       decimals: 6,
-      symbol: shortenAddress(address),
+      symbol: `[${shortenAddress(address)}]`,
     };
 
     if (token) {
@@ -1307,13 +1307,11 @@ export const VestingView = () => {
     connection,
     workingToken,
     nativeBalance,
+    multisigTxFees,
     multisigClient,
     multisigAccounts,
     isMultisigContext,
     transactionCancelled,
-    multisigTxFees.networkFee,
-    multisigTxFees.rentExempt,
-    multisigTxFees.multisigFee,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
@@ -1324,6 +1322,7 @@ export const VestingView = () => {
     resetTransactionStatus,
     getTokenPriceBySymbol,
     setTransactionStatus,
+    t,
   ]);
 
   const onAcceptCreateVestingContract = useCallback((data: VestingContractCreateOptions) => {
@@ -3548,16 +3547,16 @@ export const VestingView = () => {
       const treasuryPk = new PublicKey(selectedVestingContract.id as string);
       msp.getVestingFlowRate(treasuryPk)
       .then(value => {
-        consoleOut('getVestingFlowRate value:', value, 'darkgreen');
-        const freshFlowRate: VestingFlowRateInfo = {
-          amount: makeDecimal(new BN(value[0]), associatedTokenDecimals || 6),
-          durationUnit: new BN(value[1]).toNumber(),
-          streamableAmount: makeDecimal(new BN(value[2]), associatedTokenDecimals || 6),
-        };
-        consoleOut('flowRate:', freshFlowRate, 'darkgreen');
         if (!vestingFlowRatesCache.get(selectedVestingContract.id as string)) {
+          consoleOut('getVestingFlowRate value:', value, 'darkgreen');
+          const freshFlowRate: VestingFlowRateInfo = {
+            amount: makeDecimal(new BN(value[0]), associatedTokenDecimals || 6),
+            durationUnit: new BN(value[1]).toNumber(),
+            streamableAmount: makeDecimal(new BN(value[2]), associatedTokenDecimals || 6),
+          };
           vestingFlowRatesCache.add(selectedVestingContract.id as string, freshFlowRate);
           setVestingContractFlowRate(freshFlowRate);
+          consoleOut('flowRate:', freshFlowRate, 'darkgreen');
         }
       })
       .catch(error => console.error('', error))
