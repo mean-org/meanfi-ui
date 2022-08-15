@@ -52,6 +52,7 @@ export const MultisigProposalModal = (props: {
   const connectionConfig = useConnectionConfig();
   const {
     theme,
+    isWhitelisted,
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
