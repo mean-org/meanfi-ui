@@ -18,6 +18,7 @@ import {
     friendlyDisplayDecimalPlaces,
     percentage,
     consoleOut,
+    percentual,
 } from '../../../../utils/ui';
 import { formatThousands, getAmountWithSymbol, makeDecimal } from '../../../../utils/utils';
 import BN from 'bn.js';
@@ -28,6 +29,7 @@ import { IconInfoCircle } from '../../../../Icons';
 import { VestingFlowRateInfo } from '../../../../models/vesting';
 
 export const VestingContractOverview = (props: {
+    availableStreamingBalance: number;
     associatedTokenDecimals: number | undefined;
     isXsDevice: boolean;
     selectedToken: TokenInfo | undefined;
@@ -36,6 +38,7 @@ export const VestingContractOverview = (props: {
     vestingContractFlowRate: VestingFlowRateInfo | undefined;
 }) => {
     const {
+        availableStreamingBalance,
         associatedTokenDecimals,
         isXsDevice,
         selectedToken,
@@ -64,19 +67,6 @@ export const VestingContractOverview = (props: {
     /////////////////
     //  Callbacks  //
     /////////////////
-
-    const getAvailableStreamingBalance = useCallback((item: Treasury, token: TokenInfo | undefined) => {
-        // if (!token) {
-        //     consoleOut('No token passed-in to getAvailableStreamingBalance!', '', 'darkred');
-        // }
-        if (item) {
-            const decimals = token ? token.decimals : 6;
-            const unallocated = item.balance - item.allocationAssigned;
-            const ub = makeDecimal(new BN(unallocated), decimals);
-            return ub;
-        }
-        return 0;
-    }, []);
 
     const isDateInTheFuture = useCallback((date: string): boolean => {
         const now = today.toUTCString();
@@ -113,6 +103,10 @@ export const VestingContractOverview = (props: {
     const getCurrentVestedAmount = useCallback((log = false) => {
         if (!vestingContractFlowRate || !paymentStartDate) {
             return 0;
+        }
+
+        if (isContractFinished()) {
+            return vestingContractFlowRate.streamableAmount;
         }
 
         let ratePerSecond = 0;
@@ -153,7 +147,7 @@ export const VestingContractOverview = (props: {
         }
 
         return vested;
-    }, [cliffReleasePercentage, lockPeriodAmount, lockPeriodFrequency, lockPeriodUnits, paymentStartDate, t, vestingContractFlowRate]);
+    }, [cliffReleasePercentage, isContractFinished, lockPeriodAmount, lockPeriodFrequency, lockPeriodUnits, paymentStartDate, t, vestingContractFlowRate]);
 
 
     /////////////////////
@@ -237,37 +231,38 @@ export const VestingContractOverview = (props: {
     // Set chart completed percentage
     useEffect(() => {
 
-        if (vestingContract && paymentStartDate) {
+        if (vestingContract && paymentStartDate && vestingContractFlowRate) {
+
+            if (isDateInTheFuture(paymentStartDate) || isContractFinished()) {
+                setCurrentVestingAmount(0);
+                setCompletedVestingPercentage(0);
+                return;
+            }
+
+            let vestedAmount = 0;
             if (vestingContract.totalStreams === 0) {
                 setCompletedVestingPercentage(0);
             } else if (isDateInTheFuture(paymentStartDate)) {
                 setCompletedVestingPercentage(0);
             } else {
-                // Final date
-                const finishDate = (getContractFinishDate() || today).toUTCString();
-                // consoleOut('finishDate:', finishDate, 'indianred');
-                // Find today's percentage between Start date and Finish date
-                const todayPct = getTodayPercentualBetweenTwoDates(paymentStartDate, finishDate);
-                // consoleOut('todayPct:', todayPct, 'indianred');
-
-                // Cover the initial cliff in the completion percentage
-                // setCompletedVestingPercentage(todayPct <= cliffReleasePercentage ? cliffReleasePercentage : todayPct > 100 ? 100 : todayPct);
-
-                // Make the bar reflect the real percent of completion without covering the initial cliff
-                setCompletedVestingPercentage(todayPct > 100 ? 100 : todayPct);
+                vestedAmount = getCurrentVestedAmount();
+                const pctVested = percentual(vestedAmount, vestingContractFlowRate.streamableAmount);
+                setCompletedVestingPercentage(pctVested > 100 ? 100 : pctVested);
             }
+            setCurrentVestingAmount(vestedAmount);
         } else {
+            setCurrentVestingAmount(0);
             setCompletedVestingPercentage(0);
         }
-
-        setCurrentVestingAmount(getCurrentVestedAmount());
 
     }, [
         today,
         vestingContract,
         paymentStartDate,
+        vestingContractFlowRate,
         getCurrentVestedAmount,
         getContractFinishDate,
+        isContractFinished,
         isDateInTheFuture,
     ]);
 
@@ -387,7 +382,7 @@ export const VestingContractOverview = (props: {
                             <div className="font-size-100 fg-secondary-50">
                                 {selectedToken ?
                                     getAmountWithSymbol(
-                                        getAvailableStreamingBalance(vestingContract, selectedToken),
+                                        availableStreamingBalance,
                                         selectedToken.address,
                                         false,
                                         splTokenList,

@@ -3965,6 +3965,7 @@ export const VestingView = () => {
       <Tabs activeKey={accountDetailTab} onChange={onTabChange} className="neutral stretch-content">
         <TabPane tab="Overview" key={"overview"}>
           <VestingContractOverview
+            availableStreamingBalance={availableStreamingBalance}
             associatedTokenDecimals={associatedTokenDecimals}
             isXsDevice={isXsDevice}
             selectedToken={workingToken}
