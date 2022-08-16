@@ -51,7 +51,6 @@ import './style.scss';
 
 // MULTISIG
 import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
-import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { customLogger } from '../..';
 import { openNotification } from '../../components/Notifications';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
@@ -85,7 +84,9 @@ import { ProgramAccounts } from '../../utils/accounts';
 import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
-import { MultisigCreateModal } from '../../components/MultisigCreateModal';
+// import { MultisigCreateModal } from '../../components/MultisigCreateModal';
+import { MultisigEditSafeModal } from '../../components/MultisigEditSafeModal';
+import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -109,6 +110,7 @@ export const SafeView = () => {
     loadingMultisigAccounts,
     highLightableMultisigId,
     previousWalletConnectState,
+    loadingMultisigTxPendingCount,
     setNeedReloadMultisigAccounts,
     setHighLightableMultisigId,
     getTokenPriceByAddress,
@@ -186,6 +188,9 @@ export const SafeView = () => {
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
   const [queryParamV, setQueryParamV] = useState<string | null>(null);
   const [lastError, setLastError] = useState<TransactionStatusInfo | undefined>(undefined);
+
+  const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
+  const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -374,9 +379,17 @@ export const SafeView = () => {
   }, [confirmationHistory]);
 
   const onOpenMultisigModalClick = useCallback(() => {
+    if (!multisigClient) { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createMultisig)
+      .then(value => {
+        setTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
+
     resetTransactionStatus();
     setIsMultisigCreateSafeModalVisible(true);
-  },[resetTransactionStatus]);
+  },[multisigClient, resetTransactionStatus]);
 
   const onCreateMultisigClick = useCallback(() => {
 
@@ -487,7 +500,10 @@ export const SafeView = () => {
           label: data.label,                                          // multisig label
           threshold: data.threshold,
           owners: data.owners,
-          isAllowRejectProposal: data.isAllowToRejectProposal
+          isAllowRejectProposal: data.isAllowToRejectProposal,
+          isCoolOffPeriodEnable: data.isCoolOffPeriodEnable,
+          coolOfPeriodAmount: data.coolOfPeriodAmount,
+          coolOffPeriodFrequency: data.coolOffPeriodFrequency
         };
 
         consoleOut('data:', payload);
@@ -1058,8 +1074,6 @@ export const SafeView = () => {
   }
 
   // Modal visibility flags
-  const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
-  const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
   const [isErrorReportingModalVisible, setIsErrorReportingModalVisible] = useState(false);
   const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
@@ -3293,14 +3307,16 @@ export const SafeView = () => {
         break;
       case OperationType.CancelTransaction:
         goToProposals();
-        break;  
+        break;
       case OperationType.CreateMultisig:
         hardReloadMultisigs();
-        break;  
+        break;
+      case OperationType.EditMultisig:
+        reloadMultisigs();
+        break;
       default:
         break;
     }
-
   }, [recordTxConfirmation]);
 
   // Setup event handler for Tx confirmation error
@@ -4055,7 +4071,7 @@ export const SafeView = () => {
                   ) : (
                     <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
                   )}
-                  {item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
+                  {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
                     <span className="status warning bottom-right"></span>
                   ) : null}
                 </div>
@@ -4238,8 +4254,8 @@ export const SafeView = () => {
                       shape="round"
                       disabled={!connected}
                       className="flex-center mr-1"
-                      onClick={onCreateMultisigClick}>
-                      {/* onClick={onOpenMultisigModalClick}> */}
+                      // onClick={onCreateMultisigClick}>
+                      onClick={onOpenMultisigModalClick}>
                         <IconSafe className="mean-svg-icons" />
                         {connected
                           ? t('multisig.create-new-multisig-account-cta')
@@ -4247,7 +4263,7 @@ export const SafeView = () => {
                         }
                     </Button>
                   </div>
-                  {isUnderDevelopment() && (
+                  {/* {isUnderDevelopment() && (
                     <Dropdown className="options-dropdown"
                       overlay={menu}
                       placement="bottomRight"
@@ -4262,7 +4278,7 @@ export const SafeView = () => {
                         />
                       </span>
                     </Dropdown>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>
@@ -4388,31 +4404,45 @@ export const SafeView = () => {
 
       </div>
 
-      {isCreateMultisigModalVisible && (
-        <MultisigCreateModal
-          isVisible={isCreateMultisigModalVisible}
-          nativeBalance={nativeBalance}
-          transactionFees={transactionFees}
-          multisigAccounts={multisigAccounts}
-          // handleOk={onAcceptCreateMultisig}
-          handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
-          handleClose={() => setIsCreateMultisigModalVisible(false)}
-          isBusy={isBusy}
-        />
-
-        // <MultisigCreateSafeModal
-        //   isVisible={isMultisigCreateSafeModalVisible}
+      {isMultisigCreateSafeModalVisible && (
+        // <MultisigCreateModal
+        //   isVisible={isCreateMultisigModalVisible}
         //   nativeBalance={nativeBalance}
         //   transactionFees={transactionFees}
         //   multisigAccounts={multisigAccounts}
+        //   // handleOk={onAcceptCreateMultisig}
         //   handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
-        //   handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
+        //   handleClose={() => setIsCreateMultisigModalVisible(false)}
         //   isBusy={isBusy}
         // />
+
+        <MultisigCreateSafeModal
+          isVisible={isMultisigCreateSafeModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          multisigAccounts={multisigAccounts}
+          handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
+          handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
+          isBusy={isBusy}
+        />
       )}
 
       {(isEditMultisigModalVisible && selectedMultisig) && (
-        <MultisigEditModal
+        // <MultisigEditModal
+        //   isVisible={isEditMultisigModalVisible}
+        //   nativeBalance={nativeBalance}
+        //   transactionFees={transactionFees}
+        //   handleOk={onAcceptEditMultisig}
+        //   multisigName={selectedMultisig.label}
+        //   multisigThreshold={selectedMultisig.threshold}
+        //   multisigParticipants={selectedMultisig.owners}
+        //   multisigAccounts={multisigAccounts}
+        //   multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}
+        //   handleClose={() => setIsEditMultisigModalVisible(false)}
+        //   isBusy={isBusy}
+        // />
+
+        <MultisigEditSafeModal
           isVisible={isEditMultisigModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}

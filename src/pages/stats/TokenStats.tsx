@@ -78,18 +78,15 @@ export const FirstCardsLayout = () => {
     <div className="ant-card-head-title">
       <span>{t("stats.summary.summary-title")}</span>
         <Link to={"/exchange"}>
-          <Button
-            type="primary"
-            shape="round"
-            size="small"
-            className="fixed-width-130">
+          <button
+            className="stats-buy-btn">
             <span>{t('stats.buy-btn')}</span>
-          </Button>
+          </button>
         </Link>
     </div>
   );
 
-  const renderBodySummary = (    
+  const renderBodySummary = (
     <>
       {summaries.map((summary, index) => (
         <div className="summary-content" key={index}>
@@ -104,7 +101,7 @@ export const FirstCardsLayout = () => {
                     shape="circle"
                     size="middle"
                     icon={<CopyOutlined className="mean-svg-icons" />}
-                    onClick={onCopyText}                    
+                    onClick={onCopyText}
                     name={summary.value}
                   />
                 </Tooltip>

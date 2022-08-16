@@ -3,16 +3,16 @@ import { InfoIcon } from "../InfoIcon";
 
 export const FormLabelWithIconInfo = (props: {
   label: string;
-  tooltip_text: any;
-  tooltip_placement?: any;
+  tooltipText: any;
+  tooltipPlacement?: any;
 }) => {
-  const { label, tooltip_text, tooltip_placement } = props;
+  const { label, tooltipText, tooltipPlacement } = props;
 
   return (
     <>
       <div className="form-label icon-label align-items-center">
         <span>{label}</span>
-        <InfoIcon content={tooltip_text} placement={tooltip_placement || "top"}>
+        <InfoIcon content={tooltipText} placement={tooltipPlacement || "top"}>
           <IconHelpCircle className="mean-svg-icons" />
         </InfoIcon>
       </div>

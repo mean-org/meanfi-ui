@@ -424,31 +424,55 @@ export const ProposalDetailsView = (props: {
                 break;
             }
 
+            const title = moment(activity.createdOn).format("LLL").toLocaleString();
+            const subtitle = "null";
+            const resume = <div className="d-flex align-items-center activity-container">
+              <div className="d-flex align-items-center">{icon} {`Proposal ${activity.action} by ${activity.owner.name} `}</div>
+              <div onClick={() => copyAddressToClipboard(activity.address)} className="simplelink underline-on-hover activity-address ml-1">
+                ({shortenAddress(activity.address, 4)})
+              </div>
+            </div>
+
             return (
-              <div 
+              // <div 
+              //   key={`${activity.index + 1}`}
+              //   className={`w-100 activities-list mr-1 pr-4 ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              //   >
+              //     <div className="resume-item-container">
+              //       <div className="d-flex">
+              //         <span className="mr-1">
+              //           {moment(activity.createdOn).format("LLL").toLocaleString()}
+              //         </span>
+              //         <div className="d-flex">{icon} {`Proposal ${activity.action} by ${activity.owner.name} `}</div>
+              //         <div onClick={() => copyAddressToClipboard(activity.address)} className="simplelink underline-on-hover activity-address ml-1">
+              //           ({shortenAddress(activity.address, 4)})
+              //         </div>
+              //       </div>
+              //       <span className="icon-button-container icon-stream-row">
+              //         <a
+              //           target="_blank"
+              //           rel="noopener noreferrer"
+              //           href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${activity.address}${getSolanaExplorerClusterParam()}`}>
+              //           <IconExternalLink className="mean-svg-icons external-icon ml-1" />
+              //         </a>
+              //       </span>
+              //     </div>
+              // </div>
+              <div
                 key={`${activity.index + 1}`}
-                className={`d-flex w-100 align-items-center activities-list mr-1 pr-4 ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                >
-                  <div className="resume-item-container">
-                    <span className="mr-2">
-                      {moment(activity.createdOn).format("LLL").toLocaleString()}
-                    </span>
-                    {icon}
-                    <div className="d-flex">
-                      <span>{`Proposal ${activity.action} by ${activity.owner.name} `}</span>
-                      <div onClick={() => copyAddressToClipboard(activity.address)} className="simplelink underline-on-hover activity-address ml-1">
-                        ({shortenAddress(activity.address, 4)})
-                      </div>
-                      <span className="icon-button-container">
-                        <a
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${activity.address}${getSolanaExplorerClusterParam()}`}>
-                          <IconExternalLink className="mean-svg-icons external-icon ml-1" />
-                        </a>
-                      </span>
-                    </div>
-                  </div>
+                className={`w-100 simplelink ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              >
+                <ResumeItem
+                  id={`${activity.index}`}
+                  title={title}
+                  subtitle={subtitle}
+                  resume={resume}
+                  hasRightIcon={true}
+                  rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
+                  isLink={true}
+                  classNameRightContent="resume-activity-row"
+                  classNameIcon="icon-stream-row"
+                />
               </div>
             )
           })}
@@ -460,6 +484,33 @@ export const ProposalDetailsView = (props: {
       <span className="pl-1">Loading activities...</span>
     )
   )
+
+  const renderCoolOffPeriod = (
+    <div className="safe-details-cool-off-period-container">
+      <div className="info-label d-flex justify-content-center">Cool-off:</div>
+      <div className="d-flex">
+        <div className="center-cool-off-period-data">
+          <div className="number-cool-off-period-background">00</div>
+          <div className="form-label">day</div>
+        </div>
+        <div>:</div>
+        <div className="center-cool-off-period-data">
+          <span className="number-cool-off-period-background">00</span>
+          <span className="form-label">hrs</span>
+        </div>
+        <div>:</div>
+        <div className="center-cool-off-period-data">
+          <div className="number-cool-off-period-background">00</div>
+          <div className="form-label">min</div>
+        </div>
+        {/* <div>:</div>
+        <div className="center-cool-off-period-data">
+          <div className="number-cool-off-period-background">00</div>
+          <div className="form-label">sec</div>
+        </div> */}
+      </div>
+    </div>
+  );
 
   // Tabs
   const tabs = [
@@ -543,8 +594,8 @@ export const ProposalDetailsView = (props: {
           </Row>
         )}
 
-        <Row gutter={[8, 8]} className="safe-details-proposal">
-          <>
+        <div className="safe-details-proposal">
+          <div className="safe-details-proposal-left">
             {selectedProposal.status === MultisigTransactionStatus.Passed ? (
               anyoneCanExecuteTx() ? (
                 <Col className="safe-details-left-container">
@@ -582,9 +633,10 @@ export const ProposalDetailsView = (props: {
                 </div>
               </Col>
             )}
-          </>
-          <>
-            <Col className="safe-details-right-container btn-group mr-1">
+            {renderCoolOffPeriod}
+          </div>
+          <div>
+            <div className="safe-details-right-container btn-group mr-1">
             {
               (
                 (
@@ -760,9 +812,9 @@ export const ProposalDetailsView = (props: {
                 </>
               )
             }
-            </Col>
-          </>
-        </Row>
+            </div>
+          </div>
+        </div>
 
         {/* <Row>
           <h3 className="mt-1 proposal-instruction">Instruction</h3>
