@@ -633,7 +633,7 @@ export const ProposalDetailsView = (props: {
                 </div>
               </Col>
             )}
-            {renderCoolOffPeriod}
+            {/* {renderCoolOffPeriod} */}
           </div>
           <div>
             <div className="safe-details-right-container btn-group mr-1">
