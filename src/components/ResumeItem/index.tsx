@@ -203,9 +203,15 @@ export const ResumeItem = (props: {
 
             {version !== 0 && (
               subtitle ? (
-                <div className="info-label">
-                  <span className="subtitle">{subtitle}</span>
-                </div>
+                subtitle === "null" ? (
+                  <div className="info-label">
+                    <span className="subtitle"></span>
+                  </div>
+                ) : (
+                  <div className="info-label">
+                    <span className="subtitle">{subtitle}</span>
+                  </div>
+                )
               ) : (
                 expires ? (
                   <div className="info-label">

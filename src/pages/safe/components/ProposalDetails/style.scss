@@ -1,4 +1,14 @@
 .safe-details-container {
+  @media only screen and (min-width: 768px) and (max-width: 991px), (max-width: 575px) {
+    .activity-container {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      .activity-address {
+        display: flex;
+        margin-left: 1.5em !important;
+      }
+    }
+  }
   @media (max-width: 575px) {
     .safe-details-description {
       margin-top: 1em;
