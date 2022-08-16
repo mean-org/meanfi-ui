@@ -88,6 +88,7 @@ import { ErrorReportModal } from '../../components/ErrorReportModal';
 import { MultisigEditSafeModal } from '../../components/MultisigEditSafeModal';
 import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
+import { MultisigEditModal } from '../../components/MultisigEditModal';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -4430,21 +4431,7 @@ export const SafeView = () => {
       )}
 
       {(isEditMultisigModalVisible && selectedMultisig) && (
-        // <MultisigEditModal
-        //   isVisible={isEditMultisigModalVisible}
-        //   nativeBalance={nativeBalance}
-        //   transactionFees={transactionFees}
-        //   handleOk={onAcceptEditMultisig}
-        //   multisigName={selectedMultisig.label}
-        //   multisigThreshold={selectedMultisig.threshold}
-        //   multisigParticipants={selectedMultisig.owners}
-        //   multisigAccounts={multisigAccounts}
-        //   multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}
-        //   handleClose={() => setIsEditMultisigModalVisible(false)}
-        //   isBusy={isBusy}
-        // />
-
-        <MultisigEditSafeModal
+        <MultisigEditModal
           isVisible={isEditMultisigModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
@@ -4454,9 +4441,23 @@ export const SafeView = () => {
           multisigParticipants={selectedMultisig.owners}
           multisigAccounts={multisigAccounts}
           multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}
-          handleClose={onCloseCreateMultisigModal}
+          handleClose={() => setIsEditMultisigModalVisible(false)}
           isBusy={isBusy}
         />
+
+        // <MultisigEditSafeModal
+        //   isVisible={isEditMultisigModalVisible}
+        //   nativeBalance={nativeBalance}
+        //   transactionFees={transactionFees}
+        //   handleOk={onAcceptEditMultisig}
+        //   multisigName={selectedMultisig.label}
+        //   multisigThreshold={selectedMultisig.threshold}
+        //   multisigParticipants={selectedMultisig.owners}
+        //   multisigAccounts={multisigAccounts}
+        //   multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}
+        //   handleClose={onCloseCreateMultisigModal}
+        //   isBusy={isBusy}
+        // />
       )}
 
       {isErrorReportingModalVisible && (
