@@ -365,7 +365,7 @@ export const SafeInfo = (props: {
             </Button>
           )}
 
-          <div className="cool-off-period-label">
+          {/* <div className="cool-off-period-label">
             <div className="icon-label">
               <div className="pl-1">
                 <span className="info-label">Cool-off period: </span>
@@ -377,7 +377,7 @@ export const SafeInfo = (props: {
                 </span>
               </Tooltip>
             </div>
-          </div>
+          </div> */}
         </Col>
         
         <Col xs={4} sm={6} md={4} lg={6}>
