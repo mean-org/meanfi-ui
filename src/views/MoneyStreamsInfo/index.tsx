@@ -2588,7 +2588,7 @@ export const MoneyStreamsInfoView = (props: {
               <div 
                 key={`incoming-stream-${index}`}
                 onClick={onSelectStream}
-                className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ResumeItem
                   id={index}
@@ -2603,8 +2603,6 @@ export const MoneyStreamsInfoView = (props: {
                   isStream={true}
                   classNameRightContent="resume-stream-row"
                   classNameIcon="icon-stream-row"
-                  xs={24}
-                  md={24}
                 />
               </div>
             )
@@ -2655,10 +2653,10 @@ export const MoneyStreamsInfoView = (props: {
               const resume = getStreamResume(stream);
 
               return (
-                <div 
+                <div
                   key={`outgoing-stream-${index}}`}
                   onClick={onSelectStream}
-                  className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                 >
                   <ResumeItem
                     id={index}
@@ -2673,8 +2671,6 @@ export const MoneyStreamsInfoView = (props: {
                     isStream={true}
                     classNameRightContent="resume-stream-row"
                     classNameIcon="icon-stream-row"
-                    xs={24}
-                    md={24}
                   />
                 </div>
               )
@@ -2744,7 +2740,7 @@ export const MoneyStreamsInfoView = (props: {
                   <div
                     key={`streaming-account-${index}`}
                     onClick={onSelectedStreamingAccount}
-                    className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                    className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                   >
                     <ResumeItem
                       title={title}
@@ -2753,16 +2749,13 @@ export const MoneyStreamsInfoView = (props: {
                       subtitle={subtitle}
                       amount={amount}
                       resume={resume}
+                      className="simplelink"
                       hasRightIcon={true}
                       rightIcon={<IconArrowForward className="mean-svg-icons" />}
                       isLink={true}
                       onClick={onSelectedStreamingAccount}
                       classNameRightContent="resume-streaming-row"
                       classNameIcon="icon-streaming-row"
-                      xs={24}
-                      sm={18}
-                      md={24}
-                      lg={18}
                     />
                   </div>
                 )

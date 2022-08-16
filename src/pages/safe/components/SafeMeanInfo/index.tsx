@@ -350,7 +350,7 @@ export const SafeMeanInfo = (props: {
                 <div 
                   key={index}
                   onClick={onSelectProposal}
-                  className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
                     <ResumeItem
                       id={proposal.id.toBase58()}
                       title={title}
@@ -365,8 +365,6 @@ export const SafeMeanInfo = (props: {
                       isLink={true}
                       classNameRightContent="resume-stream-row"
                       classNameIcon="icon-proposal-row"
-                      xs={24}
-                      md={24}
                     />
                 </div>
               )
@@ -399,7 +397,7 @@ export const SafeMeanInfo = (props: {
                 <div 
                   key={`${index + 1}`}
                   onClick={onSelectProgram}
-                  className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
                     <ResumeItem
                       id={program.pubkey.toBase58()}
                       title={programTitle}

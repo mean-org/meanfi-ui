@@ -374,7 +374,7 @@ export const MoneyStreamDetails = (props: {
                   target="_blank" 
                   rel="noopener noreferrer"
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`} 
-                  className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                  className={`w-100 simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                 >
                   <ResumeItem
                     id={`${title} + ${index}`}
@@ -386,11 +386,8 @@ export const MoneyStreamDetails = (props: {
                     hasRightIcon={true}
                     rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
                     isLink={true}
-                    className="resume-activity-item"
-                    xs={10}
-                    sm={10}
-                    md={10}
-                    lg={10}
+                    classNameRightContent="resume-activity-row resume-activity-margin-left"
+                    classNameIcon="icon-stream-row"
                   />
                 </a>
             )})
@@ -750,8 +747,6 @@ export const MoneyStreamDetails = (props: {
             isLink={false}
             isStream={true}
             classNameRightContent="header-stream-details-row resume-right-content"
-            xs={24}
-            md={24}
           />
         )}
 

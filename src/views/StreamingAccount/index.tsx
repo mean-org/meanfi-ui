@@ -2825,7 +2825,7 @@ export const StreamingAccountView = (props: {
                 <div
                   key={index}
                   onClick={onSelectStream}
-                  className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                 >
                   <ResumeItem
                     id={index}
@@ -2840,8 +2840,6 @@ export const StreamingAccountView = (props: {
                     isStream={true}
                     classNameRightContent="resume-stream-row"
                     classNameIcon="icon-stream-row"
-                    xs={24}
-                    md={24}
                   />
                 </div>
               )
@@ -2879,7 +2877,7 @@ export const StreamingAccountView = (props: {
                 target="_blank" 
                 rel="noopener noreferrer"
                 href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`} 
-                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                className={`w-100 simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ResumeItem
                   id={`${index}`}
@@ -2891,6 +2889,8 @@ export const StreamingAccountView = (props: {
                   hasRightIcon={true}
                   rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
                   isLink={true}
+                  classNameRightContent="resume-activity-row"
+                  classNameIcon="icon-stream-row"
                 />
               </a>
           )})
@@ -3012,8 +3012,6 @@ export const StreamingAccountView = (props: {
             isLink={false}
             isStreamingAccount={true}
             classNameRightContent="header-streaming-details-row resume-right-content"
-            xs={24}
-            md={24}
           />
         )}
 
