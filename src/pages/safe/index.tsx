@@ -72,7 +72,7 @@ import {
   MultisigTransactionSummary,
   MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk/';
-import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
+import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken, getTrancheDepositIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { UserTokenAccount } from '../../models/transactions';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -261,7 +261,6 @@ export const SafeView = () => {
   // Create and cache Money Streaming Program V2 instance
   const msp = useMemo(() => {
     if (publicKey) {
-      console.log('New MSP from safes');
       return new MSP(
         connectionConfig.endpoint,
         streamV2ProgramAddress,
@@ -1530,6 +1529,26 @@ export const SafeView = () => {
     connectionConfig
   ]);
 
+  const createCredixDepositTrancheIx = useCallback(async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number) => {
+
+    if (!connection || !connectionConfig) { return null; }
+
+    const program = createProgram(connection, "confirmed");
+    
+    const gatewayToken = await getGatewayToken(
+      investor,
+      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+    );
+
+    console.log("gatewayToken => ", gatewayToken.toBase58());
+
+    return await getTrancheDepositIx(program, investor, deal, amount, trancheIndex);
+
+  }, [
+    connection, 
+    connectionConfig
+  ]);
+
   const createCredixWithdrawIx = useCallback(async (investor: PublicKey, amount: number) => {
 
     if (!connection || !connectionConfig) { return null; }
@@ -1580,18 +1599,32 @@ export const SafeView = () => {
         // operation = getProposalOperation(data);
         proposalIx = tx.instructions[0];
       } else if (data.appId === CREDIX_PROGRAM.toBase58()) { //
-        if (data.instruction.name === "depositFunds") {
-          operation = OperationType.CredixDepositFunds;
-          proposalIx = await createCredixDepositIx(
-            new PublicKey(data.instruction.uiElements[0].value),
-            parseFloat(data.instruction.uiElements[1].value)
-          );
-        } else if (data.instruction.name === "withdrawFunds") {
-          operation = OperationType.CredixWithdrawFunds;
-          proposalIx = await createCredixWithdrawIx(
-            new PublicKey(data.instruction.uiElements[0].value),
-            parseFloat(data.instruction.uiElements[1].value)
-          );
+        switch (data.instruction.name) {
+          case 'depositFunds':
+            operation = OperationType.CredixDepositFunds;
+            proposalIx = await createCredixDepositIx(
+              new PublicKey(data.instruction.uiElements[0].value),
+              parseFloat(data.instruction.uiElements[1].value)
+            );
+          break;
+
+          case 'withdrawFunds':
+            operation = OperationType.CredixWithdrawFunds;
+            proposalIx = await createCredixWithdrawIx(
+              new PublicKey(data.instruction.uiElements[0].value),
+              parseFloat(data.instruction.uiElements[1].value)
+            );
+          break;
+
+          case 'depositTranche':
+            operation = OperationType.CredixDepositTranche;
+            proposalIx = await createCredixDepositTrancheIx(
+              new PublicKey(data.instruction.uiElements[0].value),
+              new PublicKey(data.instruction.uiElements[1].value),
+              parseFloat(data.instruction.uiElements[2].value),
+              parseInt(data.instruction.uiElements[3].value)
+            );
+          break;  
         }
       } else { // TODO: Implement GetOperationFromProposal
         // operation = getProposalOperation(data);
@@ -1605,7 +1638,7 @@ export const SafeView = () => {
       if (!proposalIx) {
         throw new Error("Invalid proposal instruction.");
       }
-      
+
       const expirationTimeInSeconds = Date.now() / 1_000 + data.expires;
       const expirationDate = data.expires === 0 ? undefined : new Date(expirationTimeInSeconds * 1_000);
       const tx = await multisigClient.createTransaction(
