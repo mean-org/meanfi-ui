@@ -87,6 +87,7 @@ import { ErrorReportModal } from '../../components/ErrorReportModal';
 // import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import { MultisigEditSafeModal } from '../../components/MultisigEditSafeModal';
 import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
+import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -500,10 +501,10 @@ export const SafeView = () => {
           label: data.label,                                          // multisig label
           threshold: data.threshold,
           owners: data.owners,
-          isAllowRejectProposal: data.isAllowToRejectProposal,
-          isCoolOffPeriodEnable: data.isCoolOffPeriodEnable,
-          coolOfPeriodAmount: data.coolOfPeriodAmount,
-          coolOffPeriodFrequency: data.coolOffPeriodFrequency
+          // isAllowRejectProposal: data.isAllowToRejectProposal,
+          // isCoolOffPeriodEnable: data.isCoolOffPeriodEnable,
+          // coolOfPeriodAmount: data.coolOfPeriodAmount,
+          // coolOffPeriodFrequency: data.coolOffPeriodFrequency
         };
 
         consoleOut('data:', payload);
@@ -4254,13 +4255,13 @@ export const SafeView = () => {
                       shape="round"
                       disabled={!connected}
                       className="flex-center mr-1"
-                      // onClick={onCreateMultisigClick}>
-                      onClick={onOpenMultisigModalClick}>
-                        <IconSafe className="mean-svg-icons" />
-                        {connected
-                          ? t('multisig.create-new-multisig-account-cta')
-                          : t('transactions.validation.not-connected')
-                        }
+                      onClick={onCreateMultisigClick}>
+                      {/* onClick={onOpenMultisigModalClick}> */}
+                      <IconSafe className="mean-svg-icons" />
+                      {connected
+                        ? t('multisig.create-new-multisig-account-cta')
+                        : t('transactions.validation.not-connected')
+                      }
                     </Button>
                   </div>
                   {/* {isUnderDevelopment() && (
@@ -4404,27 +4405,28 @@ export const SafeView = () => {
 
       </div>
 
-      {isMultisigCreateSafeModalVisible && (
-        // <MultisigCreateModal
-        //   isVisible={isCreateMultisigModalVisible}
-        //   nativeBalance={nativeBalance}
-        //   transactionFees={transactionFees}
-        //   multisigAccounts={multisigAccounts}
-        //   // handleOk={onAcceptCreateMultisig}
-        //   handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
-        //   handleClose={() => setIsCreateMultisigModalVisible(false)}
-        //   isBusy={isBusy}
-        // />
-
-        <MultisigCreateSafeModal
-          isVisible={isMultisigCreateSafeModalVisible}
+      {/* {isMultisigCreateSafeModalVisible && ( */}
+      {isCreateMultisigModalVisible && (
+        <MultisigCreateModal
+          isVisible={isCreateMultisigModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           multisigAccounts={multisigAccounts}
+          // handleOk={onAcceptCreateMultisig}
           handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
-          handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
+          handleClose={() => setIsCreateMultisigModalVisible(false)}
           isBusy={isBusy}
         />
+
+        // <MultisigCreateSafeModal
+        //   isVisible={isMultisigCreateSafeModalVisible}
+        //   nativeBalance={nativeBalance}
+        //   transactionFees={transactionFees}
+        //   multisigAccounts={multisigAccounts}
+        //   handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
+        //   handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
+        //   isBusy={isBusy}
+        // />
       )}
 
       {(isEditMultisigModalVisible && selectedMultisig) && (
