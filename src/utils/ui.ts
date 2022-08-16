@@ -259,8 +259,8 @@ export function getTimeRemaining(endtime: string): TimeData {
     };
 }
 
-export function getTimeEllapsed(endtime: string): TimeData {
-    const total = Date.now() - Date.parse(endtime);
+export function getTimeEllapsed(initialTime: string): TimeData {
+    const total = Date.now() - Date.parse(initialTime);
     const seconds = Math.floor((total / 1000) % 60);
     const minutes = Math.floor((total / 1000 / 60) % 60);
     const hours = Math.floor((total / (1000 * 60 * 60)) % 24);

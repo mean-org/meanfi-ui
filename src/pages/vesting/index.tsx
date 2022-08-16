@@ -8,7 +8,7 @@ import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } fro
 import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isDev, isLocal, isProd, toTimestamp } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
-import { AccountInfo, ConfirmOptions, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
   calculateActionFees,
   MSP,
@@ -23,8 +23,6 @@ import {
   VestingTreasuryActivity,
 } from '@mean-dao/msp';
 import "./style.scss";
-import { AnchorProvider, Program } from '@project-serum/anchor';
-import SerumIDL from '../../models/serum-multisig-idl';
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
 import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
@@ -42,7 +40,7 @@ import { VestingContractOverview } from './components/VestingContractOverview';
 import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useNativeAccount } from '../../contexts/accounts';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigParticipant, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../utils/ids';
 import { appConfig, customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
@@ -326,7 +324,7 @@ export const VestingView = () => {
       name: CUSTOM_TOKEN_NAME,
       chainId: 101,
       decimals: 6,
-      symbol: shortenAddress(address),
+      symbol: `[${shortenAddress(address)}]`,
     };
 
     if (token) {
@@ -1062,7 +1060,7 @@ export const VestingView = () => {
         subCategory: getCategoryLabelByValue(createOptions.vestingCategory),
         cliffVestPercent: createOptions.cliffVestPercent,
         duration: createOptions.duration,
-        durationUnit: getDurationUnitFromSeconds(createOptions.durationUnit),
+        durationUnit: getDurationUnitFromSeconds(createOptions.durationUnit, t),
         feePayedByTreasurer: createOptions.feePayedByTreasurer,
         multisig: multisigAuthority,
         startUtc: getReadableDate(createOptions.startDate.toUTCString()),
@@ -1310,13 +1308,11 @@ export const VestingView = () => {
     connection,
     workingToken,
     nativeBalance,
+    multisigTxFees,
     multisigClient,
     multisigAccounts,
     isMultisigContext,
     transactionCancelled,
-    multisigTxFees.networkFee,
-    multisigTxFees.rentExempt,
-    multisigTxFees.multisigFee,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
@@ -1327,6 +1323,7 @@ export const VestingView = () => {
     resetTransactionStatus,
     getTokenPriceBySymbol,
     setTransactionStatus,
+    t,
   ]);
 
   const onAcceptCreateVestingContract = useCallback((data: VestingContractCreateOptions) => {
@@ -3520,7 +3517,7 @@ export const VestingView = () => {
     vestingContractAddress,
   ]);
 
-  // Set token to the vesting contract associated token as soon as the VC is available
+  // Set selected token with the vesting contract associated token as soon as the VC is available
   useEffect(() => {
     if (!publicKey || !selectedVestingContract) { return; }
     getTokenOrCustomToken(selectedVestingContract.associatedToken as string)
@@ -3532,10 +3529,10 @@ export const VestingView = () => {
 
   // Get the vesting flow rate
   useEffect(() => {
-    if (!publicKey || !msp || !workingToken || !selectedVestingContract) { return; }
+    if (!publicKey || !msp || !selectedVestingContract || !associatedTokenDecimals) { return; }
 
     if (vestingContractAddress && selectedVestingContract &&
-        vestingContractAddress === selectedVestingContract.id && workingToken) {
+        vestingContractAddress === selectedVestingContract.id) {
       // First check if there is already a value for this key in the cache
       // Just get the value from cache if already exists and push it to the state
       // Otherwise fetch it, add it to the cache and push it to the state
@@ -3551,19 +3548,22 @@ export const VestingView = () => {
       const treasuryPk = new PublicKey(selectedVestingContract.id as string);
       msp.getVestingFlowRate(treasuryPk)
       .then(value => {
-        const freshFlowRate: VestingFlowRateInfo = {
-          amount: makeDecimal(new BN(value[0]), workingToken.decimals || 6),
-          durationUnit: new BN(value[1]).toNumber(),
-          streamableAmount: makeDecimal(new BN(value[2]), workingToken.decimals || 6),
-        };
-        consoleOut('flowRate:', freshFlowRate, 'darkgreen');
-        vestingFlowRatesCache.add(selectedVestingContract.id as string, freshFlowRate);
-        setVestingContractFlowRate(freshFlowRate);
+        if (!vestingFlowRatesCache.get(selectedVestingContract.id as string)) {
+          consoleOut('getVestingFlowRate value:', value, 'darkgreen');
+          const freshFlowRate: VestingFlowRateInfo = {
+            amount: makeDecimal(new BN(value[0]), associatedTokenDecimals || 6),
+            durationUnit: new BN(value[1]).toNumber(),
+            streamableAmount: makeDecimal(new BN(value[2]), associatedTokenDecimals || 6),
+          };
+          vestingFlowRatesCache.add(selectedVestingContract.id as string, freshFlowRate);
+          setVestingContractFlowRate(freshFlowRate);
+          consoleOut('flowRate:', freshFlowRate, 'darkgreen');
+        }
       })
       .catch(error => console.error('', error))
       .finally(() => setLoadingVestingContractFlowRate(false));
     }
-  }, [msp, publicKey, workingToken, selectedVestingContract, vestingContractAddress]);
+  }, [associatedTokenDecimals, msp, publicKey, selectedVestingContract, vestingContractAddress]);
 
   // Keep Vesting contract ATA balance
   useEffect(() => {
@@ -3966,8 +3966,10 @@ export const VestingView = () => {
       <Tabs activeKey={accountDetailTab} onChange={onTabChange} className="neutral stretch-content">
         <TabPane tab="Overview" key={"overview"}>
           <VestingContractOverview
+            availableStreamingBalance={availableStreamingBalance}
             associatedTokenDecimals={associatedTokenDecimals}
             isXsDevice={isXsDevice}
+            selectedToken={workingToken}
             streamTemplate={streamTemplate}
             vestingContract={selectedVestingContract}
             vestingContractFlowRate={vestingContractFlowRate}
@@ -4159,9 +4161,9 @@ export const VestingView = () => {
         {isUnderDevelopment() && (
           <div className="debug-bar">
             <span className="ml-1">isWorkflowLocked:</span><span className="ml-1 font-bold fg-dark-active">{isWorkflowLocked ? 'true' : 'false'}</span>
-            {/* <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
-            <span className="ml-1">needReloadMultisigs:</span><span className="ml-1 font-bold fg-dark-active">{needReloadMultisigs ? 'true' : 'false'}</span>
-            <span className="ml-1">loadingMultisigAccounts:</span><span className="ml-1 font-bold fg-dark-active">{loadingMultisigAccounts ? 'true' : 'false'}</span> */}
+            <span className="ml-1">FR - amount:</span><span className="ml-1 font-bold fg-dark-active">{vestingContractFlowRate ? vestingContractFlowRate.amount : '-'}</span>
+            <span className="ml-1">FR - amount:</span><span className="ml-1 font-bold fg-dark-active">{vestingContractFlowRate ? vestingContractFlowRate.durationUnit : '-'}</span>
+            <span className="ml-1">FR - amount:</span><span className="ml-1 font-bold fg-dark-active">{vestingContractFlowRate ? vestingContractFlowRate.streamableAmount : '-'}</span>
           </div>
         )}
 
@@ -4279,6 +4281,7 @@ export const VestingView = () => {
                         <VestingContractDetails
                           isXsDevice={isXsDevice}
                           loadingVestingContractFlowRate={loadingVestingContractFlowRate}
+                          selectedToken={workingToken}
                           streamTemplate={streamTemplate}
                           vestingContract={selectedVestingContract}
                           vestingContractFlowRate={vestingContractFlowRate}
