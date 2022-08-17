@@ -15,11 +15,12 @@ export const PendingProposalsComponent = (props: {
         pendingMultisigTxCount,
     } = props;
     const {
+        loadingMultisigTxPendingCount,
         setHighLightableMultisigId,
     } = useContext(AppStateContext);
     const navigate = useNavigate();
 
-    if (!pendingMultisigTxCount || pendingMultisigTxCount === 0) {
+    if (loadingMultisigTxPendingCount || !pendingMultisigTxCount || pendingMultisigTxCount === 0) {
         return null;
     }
 

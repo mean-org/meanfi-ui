@@ -16,11 +16,12 @@ export const MultisigSafeOwners = (props: {
   label: string;
   disabled?: boolean;
   multisigAddresses: string[];
+  isOwnersListValid: boolean;
 }) => {
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
 
-  const { participants, onParticipantsChanged, label, disabled, multisigAddresses } = props;
+  const { participants, onParticipantsChanged, label, disabled, multisigAddresses, isOwnersListValid } = props;
   
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
 
@@ -46,9 +47,11 @@ export const MultisigSafeOwners = (props: {
   }, [onParticipantsChanged, participants]);
 
   const onRemoveSingleItem = useCallback((index: number) => {
-    const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
-    items.splice(index, 1);
-    onParticipantsChanged(items);
+    if (index > 0) {
+      const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
+      items.splice(index, 1);
+      onParticipantsChanged(items);
+    }
   }, [onParticipantsChanged, participants]);
 
   const addParticipant = useCallback(() => {
@@ -109,8 +112,8 @@ export const MultisigSafeOwners = (props: {
             </div>
           ) : (<div className="form-label">&nbsp;</div>)}
         </div>
-        <div className="right">
-          <span className={`flat-button change-button ${ownersInputsObject.length === 10 ? 'disabled' : ''}`} onClick={() => addParticipant()}>
+        <div className={`right ${ownersInputsObject.length === 10 || !isOwnersListValid ? 'not-allowed-cursor' : ''}`}>
+          <span className={`flat-button change-button ${ownersInputsObject.length === 10 || !isOwnersListValid ? 'disabled' : ''}`} onClick={() => addParticipant()}>
             <PlusOutlined />
             <span className="ml-1">Add owner</span>
           </span>
@@ -178,7 +181,7 @@ export const MultisigSafeOwners = (props: {
                   </div>
                 </div>
                 <div className="trash-icon" onClick={() => onRemoveSingleItem(index)}>
-                  <IconTrash className="mean-svg-icons simplelink"/>
+                  <IconTrash className={`mean-svg-icons simplelink ${index === 0 ? 'not-allowed-cursor disabled' : ''}`} />
                 </div>
               </div>
             );

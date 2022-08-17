@@ -1,4 +1,4 @@
-@media (max-width: 575px) {
+@media only screen and (min-width: 768px) and (max-width: 991px), (max-width: 575px) {
   .resume-item-container {
     row-gap: 0px !important;
     padding-bottom: 0em;
@@ -13,8 +13,7 @@
     }
   }
   .header-stream-details-row,
-  .resume-stream-row,
-  .resume-streaming-row {
+  .resume-stream-row {
     width: 100%;
     justify-content: space-between;
     .resume-right-text {
@@ -25,6 +24,31 @@
         margin-left: 0.5em;
       }
     }
+  }
+  .resume-streaming-row {
+    width: 100%;
+    justify-content: space-between;
+    .resume-right-text {
+      display: flex;
+      flex-direction: row !important;
+      .resume-right-text-up {
+        margin-right: 0.25em;
+      }
+    }
+  }
+  .resume-activity-row {
+    width: 100%;
+    justify-content: space-between;
+    .resume-right-text {
+      display: flex;
+      align-items: flex-start !important;
+      .info-label {
+        display: flex;
+      }
+    }
+  }
+  .resume-activity-margin-left {
+    margin-left: 2.6em;
   }
   .header-streaming-details-row {
     width: 100%;
@@ -46,6 +70,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   padding-top: 0.5em;
   padding-bottom: 0.5em;
   padding-left: 0.5em !important;

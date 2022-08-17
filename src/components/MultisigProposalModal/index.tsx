@@ -519,7 +519,7 @@ export const MultisigProposalModal = (props: {
                                     <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
                                       <FormLabelWithIconInfo
                                         label={element.label}
-                                        tooltip_text={element.help}
+                                        tooltipText={element.help}
                                       />
                                       <InputMean
                                         id={element.name}
@@ -543,14 +543,14 @@ export const MultisigProposalModal = (props: {
                                     <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
                                       <FormLabelWithIconInfo
                                         label={element.label}
-                                        tooltip_text={element.help}
+                                        tooltipText={element.help}
                                       />
                                       <InputMean
                                         id={element.name}
                                         type="number"
                                         className={isBusy ? 'disabled' : ''}
                                         name={element.label}
-                                        min={0}
+                                        min={1}
                                         pattern="^[0-9]*[.,]?[0-9]*$"
                                         onChange={(e: any) => {
                                           console.log(e);
@@ -572,7 +572,7 @@ export const MultisigProposalModal = (props: {
                                     <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
                                       <FormLabelWithIconInfo
                                         label={element.label}
-                                        tooltip_text={element.help}
+                                        tooltipText={element.help}
                                       />
                                       {element.name === "serializedTx" ? (
                                         <>
@@ -615,7 +615,7 @@ export const MultisigProposalModal = (props: {
                                     <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
                                       <FormLabelWithIconInfo
                                         label={element.label}
-                                        tooltip_text={element.help}
+                                        tooltipText={element.help}
                                       />
                                       <SelectMean
                                         key={element.name}
@@ -637,7 +637,7 @@ export const MultisigProposalModal = (props: {
                                     <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
                                       <FormLabelWithIconInfo
                                         label={element.label}
-                                        tooltip_text={element.help}
+                                        tooltipText={element.help}
                                       />
                                     </Col>
                                     <Col xs={24} sm={18} md={18} lg={18} className="pt-1">
@@ -663,7 +663,7 @@ export const MultisigProposalModal = (props: {
                                       <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
                                         <FormLabelWithIconInfo
                                           label={element.label}
-                                          tooltip_text={element.help}
+                                          tooltipText={element.help}
                                         />
                                         <code>{element.value}</code>
                                       </Col>
@@ -675,7 +675,7 @@ export const MultisigProposalModal = (props: {
                                       <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
                                         <FormLabelWithIconInfo
                                           label={element.label}
-                                          tooltip_text={element.help}
+                                          tooltipText={element.help}
                                         />
                                         <code>{element.value}</code>
                                       </Col>
@@ -687,7 +687,7 @@ export const MultisigProposalModal = (props: {
                                       <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
                                         <FormLabelWithIconInfo
                                           label={element.label}
-                                          tooltip_text={element.help}
+                                          tooltipText={element.help}
                                         />
                                         <code>{proposer}</code>
                                       </Col>
@@ -700,7 +700,7 @@ export const MultisigProposalModal = (props: {
                                     <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
                                       <FormLabelWithIconInfo
                                         label={element.label}
-                                        tooltip_text={element.help}
+                                        tooltipText={element.help}
                                       />
                                       <InputMean
                                         id={element.name}
@@ -725,7 +725,7 @@ export const MultisigProposalModal = (props: {
                                       <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
                                         <FormLabelWithIconInfo
                                           label={element.label}
-                                          tooltip_text={element.help}
+                                          tooltipText={element.help}
                                         />
                                         <code>{selectedMultisig.authority.toBase58()}</code>
                                       </Col>

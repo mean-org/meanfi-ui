@@ -71,7 +71,7 @@ export const SafeSerumInfoView = (props: {
             <div 
               key={tx.id.toBase58()}
               onClick={onSelectProposal}
-              className={`d-flex w-100 align-items-center simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ResumeItem
                   id={tx.id.toBase58()}

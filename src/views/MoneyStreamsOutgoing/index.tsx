@@ -2557,19 +2557,19 @@ export const MoneyStreamsOutgoingView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="mso-00" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
+      {(getTreasuryType() === "open" || (getTreasuryType() === "locked" && streamSelected && (getStreamStatus(streamSelected) === "Stopped" || getStreamStatus(streamSelected) === "Paused"))) && (
+        <Menu.Item key="mso-00" disabled={isBusy || hasStreamPendingTx()} onClick={showCloseStreamModal}>
+          <span className="menu-item-text">Close stream</span>
+        </Menu.Item>
+      )}
+      {/* <Menu.Item key="mso-01" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
         <span className="menu-item-text">Copy stream id</span>
-      </Menu.Item>
-      <Menu.Item key="mso-01">
+      </Menu.Item> */}
+      <Menu.Item key="mso-02">
         <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">{t('account-area.explorer-link')}</span>
         </a>
       </Menu.Item>
-      {(getTreasuryType() === "open" || (getTreasuryType() === "locked" && streamSelected && (getStreamStatus(streamSelected) === "Stopped" || getStreamStatus(streamSelected) === "Paused"))) && (
-        <Menu.Item key="mso-02" disabled={isBusy || hasStreamPendingTx()} onClick={showCloseStreamModal}>
-          <span className="menu-item-text">Close stream</span>
-        </Menu.Item>
-      )}
     </Menu>
   );
 

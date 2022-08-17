@@ -77,6 +77,7 @@ export interface CreateVestingTreasuryParams {
 }
 
 export interface VestingContractCreateOptions {
+    vestingContractTitle: string;
     vestingContractName: string;
     vestingContractType: TreasuryType;
     vestingCategory: SubCategory;

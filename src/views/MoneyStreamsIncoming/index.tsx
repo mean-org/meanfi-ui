@@ -1305,9 +1305,9 @@ export const MoneyStreamsIncomingView = (props: {
       <Menu.Item key="msi-00" onClick={showTransferStreamModal}>
         <span className="menu-item-text">Transfer ownership</span>
       </Menu.Item>
-      <Menu.Item key="msi-01" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
+      {/* <Menu.Item key="msi-01" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
         <span className="menu-item-text">Copy stream id</span>
-      </Menu.Item>
+      </Menu.Item> */}
       <Menu.Item key="msi-02">
         <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">{t('account-area.explorer-link')}</span>

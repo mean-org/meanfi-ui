@@ -130,10 +130,10 @@ export const PriceGraph = () => {
           <XAxis
             dataKey="dateData"
             axisLine={false}
-            tickLine={false}
-            tickMargin={15}
-            angle={-45}
-            height={40}
+            tickLine={true}
+            tickMargin={25}
+            angle={-50}
+            height={50}
             tickFormatter={(date) => {
               const d = new Date(date);
 
@@ -149,7 +149,7 @@ export const PriceGraph = () => {
             axisLine={false}
             tickLine={false}
             domain={["auto", "auto"]}
-            width={25}
+            width={35}
             tickSize={0}
             tickMargin={5}
             tickFormatter={(priceData) => {

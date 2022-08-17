@@ -317,6 +317,7 @@ export const VestingContractCreateForm = (props: {
         // const timeShiftedStartUtc = new Date(startDatePlusOffset);
         consoleOut('start date in UTC:', startUtc, 'darkorange');
         const options: VestingContractCreateOptions = {
+            vestingContractTitle: proposalTitle,
             vestingContractName: vestingLockName,
             vestingCategory: vestingCategory ? vestingCategory.value : SubCategory.default,
             vestingContractType: treasuryOption ? treasuryOption.type : TreasuryType.Lock,
@@ -816,7 +817,7 @@ export const VestingContractCreateForm = (props: {
                                     ? t('vesting.create-account.multisig-vesting-contract-token-label')
                                     : t('vesting.create-account.vesting-contract-token-label')
                             }
-                            tooltip_text={t('vesting.create-account.vesting-contract-token-tooltip')}
+                            tooltipText={t('vesting.create-account.vesting-contract-token-tooltip')}
                         />
                         <div className="well">
                             <div className="flex-fixed-left">
@@ -931,7 +932,7 @@ export const VestingContractCreateForm = (props: {
                         {/* Vesting category */}
                         <FormLabelWithIconInfo
                             label="Vesting category"
-                            tooltip_text="This vesting category helps identify the type of streams in this contract. Some examples are seed round, investor, marketing, token lock."
+                            tooltipText="This vesting category helps identify the type of streams in this contract. Some examples are seed round, investor, marketing, token lock."
                         />
                         <div className="well">
                             <Dropdown
@@ -996,7 +997,7 @@ export const VestingContractCreateForm = (props: {
                         {/* Contract commencement date */}
                         <FormLabelWithIconInfo
                             label="Contract commencement date"
-                            tooltip_text="This the the contract start date and time and establishes when vesting will begin for all recipients. No additional streams can be created once the vesting contract has started."
+                            tooltipText="This the the contract start date and time and establishes when vesting will begin for all recipients. No additional streams can be created once the vesting contract has started."
                         />
                         <div className="two-column-layout">
                             <div className="left">
@@ -1049,7 +1050,7 @@ export const VestingContractCreateForm = (props: {
                         {/* Cliff release */}
                         <FormLabelWithIconInfo
                             label="Cliff release (On commencement date)"
-                            tooltip_text="The percentage of allocated funds released to each recipient once the vesting contract starts."
+                            tooltipText="The percentage of allocated funds released to each recipient once the vesting contract starts."
                         />
                         <div className="well">
                             <div className="flexible-right mb-1">

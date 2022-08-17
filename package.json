@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.20.1",
+  "version": "1.20.2",
   "private": true,
   "browserslist": [
     ">0.2%",
@@ -109,7 +109,6 @@
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
     "@testing-library/user-event": "^13.2.1",
-    "@tsconfig/recommended": "^1.0.1",
     "@types/bn.js": "^5.1.0",
     "@types/bs58": "^4.0.1",
     "@types/dateformat": "^5.0.0",
