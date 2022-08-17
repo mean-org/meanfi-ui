@@ -54,6 +54,7 @@ export const VestingContractStreamList = (props: {
     nativeBalance: number;
     onReloadTokenBalances: any;
     selectedMultisig: MultisigInfo | undefined;
+    selectedToken: TokenInfo | undefined;
     streamTemplate: StreamTemplate | undefined;
     treasuryStreams: Stream[];
     userBalances: any;
@@ -70,6 +71,7 @@ export const VestingContractStreamList = (props: {
         nativeBalance,
         onReloadTokenBalances,
         selectedMultisig,
+        selectedToken,
         streamTemplate,
         treasuryStreams,
         userBalances,
@@ -78,7 +80,6 @@ export const VestingContractStreamList = (props: {
     const {
         splTokenList,
         tokenBalance,
-        selectedToken,
         deletedStreams,
         transactionStatus,
         setHighLightableStreamId,
@@ -1650,7 +1651,6 @@ export const VestingContractStreamList = (props: {
 
             {isAddFundsModalVisible && (
                 <VestingContractAddFundsModal
-                    associatedToken={vestingContract ? vestingContract.associatedToken as string : ''}
                     handleClose={closeAddFundsModal}
                     handleOk={onAcceptAddFunds}
                     isBusy={isBusy}
@@ -1658,6 +1658,7 @@ export const VestingContractStreamList = (props: {
                     nativeBalance={nativeBalance}
                     minRequiredBalance={minRequiredBalance}
                     selectedMultisig={selectedMultisig}
+                    selectedToken={selectedToken}
                     streamTemplate={streamTemplate}
                     transactionFees={transactionFees}
                     treasuryStreams={treasuryStreams}

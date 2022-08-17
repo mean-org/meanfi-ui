@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useContext, useState, useMemo } from 're
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { cutNumber, formatPercent, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
+import { cutNumber, formatPercent, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, toUsCurrency } from '../../../../utils/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
@@ -364,11 +364,13 @@ export const VestingContractCreateStreamModal = (props: {
             const maxAmount = getMaxAmount();
             consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
             consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+            // setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+            setFromCoinAmount(toUiAmount2(new BN(maxAmount), decimals));
             setTokenAmount(new BN(maxAmount));
         } else {
             const maxAmount = getMaxAmount();
-            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+            // setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+            setFromCoinAmount(toUiAmount2(new BN(maxAmount), decimals));
             setTokenAmount(new BN(maxAmount));
         }
 
@@ -682,7 +684,7 @@ export const VestingContractCreateStreamModal = (props: {
                                         <TokenDisplay onClick={() => {}}
                                             mintAddress={selectedToken.address}
                                             name={selectedToken.name}
-                                            showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                                            // showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                             showCaretDown={false}
                                             fullTokenInfo={selectedToken}
                                         />

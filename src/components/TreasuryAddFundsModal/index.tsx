@@ -7,13 +7,13 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import {
-  cutNumber,
   formatThousands,
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   isValidNumber,
-  makeDecimal,
   makeInteger,
-  shortenAddress
+  shortenAddress,
+  toTokenAmount2,
+  toUiAmount2
 } from '../../utils/utils';
 import { IconHelpCircle } from '../../Icons';
 import {
@@ -29,16 +29,17 @@ import { useWallet } from '../../contexts/wallet';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { AllocationType, Stream, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
-import { openNotification } from '../Notifications';
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { useSearchParams } from 'react-router-dom';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Identicon } from '../Identicon';
 import { QRCodeSVG } from 'qrcode.react';
 import { AddressDisplay } from '../AddressDisplay';
-import { getSolanaExplorerClusterParam } from '../../contexts/connection';
+import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { InputMean } from '../InputMean';
+import { AccountInfo, Connection, ParsedAccountData } from '@solana/web3.js';
+import { readAccountInfo } from '../../utils/accounts';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -77,17 +78,17 @@ export const TreasuryAddFundsModal = (props: {
   } = props;
   const {
     theme,
-    tokenList,
+    splTokenList,
     loadingPrices,
     transactionStatus,
     highLightableStreamId,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
-    setEffectiveRate,
     refreshPrices,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
+  const connectionConfig = useConnectionConfig();
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
   const [, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
@@ -107,6 +108,13 @@ export const TreasuryAddFundsModal = (props: {
   /////////////////
   //   Getters   //
   /////////////////
+
+  const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
+    commitment: "confirmed",
+    disableRetryOnRateLimit: true
+  }), [
+    connectionConfig.endpoint
+  ]);
 
   const getQueryAccountType = useCallback(() => {
     let accountTypeInQuery: string | null = null;
@@ -203,31 +211,36 @@ export const TreasuryAddFundsModal = (props: {
     getSelectedStream
   ]);
 
-  const setCustomToken = useCallback((address: string) => {
+  const getTokenOrCustomToken = useCallback(async (address: string) => {
 
-    if (address && isValidAddress(address)) {
-      const unkToken: TokenInfo = {
-        address: address,
-        name: CUSTOM_TOKEN_NAME,
-        chainId: 101,
-        decimals: 6,
-        symbol: shortenAddress(address),
-      };
-      setSelectedToken(unkToken);
-      consoleOut("token selected:", unkToken, 'blue');
-      setEffectiveRate(0);
+    const token = getTokenByMintAddress(address);
+
+    const unkToken = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: 6,
+      symbol: `[${shortenAddress(address)}]`,
+    };
+
+    if (token) {
+      return token;
     } else {
-      openNotification({
-        title: t('notifications.error-title'),
-        description: t('transactions.validation.invalid-solana-address'),
-        type: "error"
-      });
+      try {
+        const tokeninfo = await readAccountInfo(connection, address);
+        if ((tokeninfo as any).data["parsed"]) {
+          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+          unkToken.decimals = decimals || 0;
+          return unkToken as TokenInfo;
+        } else {
+          return unkToken as TokenInfo;
+        }
+      } catch (error) {
+        console.error('Could not get token info, assuming decimals = 6');
+        return unkToken as TokenInfo;
+      }
     }
-  }, [
-    setEffectiveRate,
-    setSelectedToken,
-    t,
-  ]);
+  }, [connection, getTokenByMintAddress]);
 
   const selectFromTokenBalance = useCallback(() => {
     if (!selectedToken) { return nativeBalance; }
@@ -280,26 +293,23 @@ export const TreasuryAddFundsModal = (props: {
     }
   }, [isVisible, treasuryDetails, treasuryList, workingTreasuryDetails]);
 
-  // Set token based of selected treasury details
+  // Set token based on selected treasury details
   useEffect(() => {
     if (hasNoStreamingAccounts || !workingAssociatedToken || !workingTreasuryDetails) {
       return;
     }
 
     let tokenAddress = '';
-    let token: TokenInfo | undefined = undefined;
     const v1 = workingTreasuryDetails as TreasuryInfo;
     const v2 = workingTreasuryDetails as Treasury;
     tokenAddress = workingTreasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-    token = getTokenByMintAddress(tokenAddress);
-
-    if (token) {
+    getTokenOrCustomToken(tokenAddress)
+    .then(token => {
+      consoleOut('Treasury workingAssociatedToken:', token, 'blue');
       setSelectedToken(token);
-    } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
-      setCustomToken(tokenAddress);
-    }
-    setWorkingAssociatedToken(tokenAddress)
-  }, [getTokenByMintAddress, hasNoStreamingAccounts, selectedToken, setCustomToken, treasuryList, workingAssociatedToken, workingTreasuryDetails]);
+      setWorkingAssociatedToken(tokenAddress)
+    });
+  }, [getTokenOrCustomToken, hasNoStreamingAccounts, workingAssociatedToken, workingTreasuryDetails]);
 
   // Keep token balance updated
   useEffect(() => {
@@ -320,13 +330,14 @@ export const TreasuryAddFundsModal = (props: {
         // Take source balance from the treasury
         const unallocated = workingTreasuryDetails.balance - workingTreasuryDetails.allocationAssigned;
         const ub = new BN(unallocated);
-        consoleOut('Treasury unallocated balance:', ub.toNumber(), 'blue');
+        consoleOut('Treasury unallocated balance:', ub.toString(), 'blue');
         setAvailableBalance(ub);
       } else {
         // Take source balance from the user's wallet
-        const balance = makeInteger(selectFromTokenBalance(), decimals);
-        consoleOut(`User's balance:`, balance.toNumber(), 'blue');
-        setAvailableBalance(balance);
+        const userBalance = selectFromTokenBalance();
+        const toBignumber = toTokenAmount2(userBalance, decimals);
+        consoleOut(`User's balance:`, toBignumber.toString(), 'blue');
+        setAvailableBalance(new BN(toBignumber.toString()));
       }
     } else {
       setAvailableBalance(new BN(0));
@@ -343,23 +354,12 @@ export const TreasuryAddFundsModal = (props: {
   // When modal goes visible, use the treasury associated token or use the default from the appState
   useEffect(() => {
     if (isVisible && associatedToken) {
-      const token = tokenList.find(t => t.address === associatedToken);
-      if (token) {
-        if (!selectedToken || selectedToken.address !== token.address) {
-          setSelectedToken(token);
-        }
-      } else if (!token && (!selectedToken || selectedToken.address !== associatedToken)) {
-        setCustomToken(associatedToken);
-      }
+      getTokenOrCustomToken(associatedToken)
+      .then(token => {
+        setSelectedToken(token);
+      });
     }
-  }, [
-    tokenList,
-    selectedToken,
-    isVisible,
-    associatedToken,
-    setCustomToken,
-    setSelectedToken,
-  ]);
+  }, [associatedToken, getTokenOrCustomToken, isVisible]);
 
   // When modal goes visible, update allocation type option
   useEffect(() => {
@@ -406,22 +406,25 @@ export const TreasuryAddFundsModal = (props: {
       const v1 = item as TreasuryInfo;
       const v2 = item as Treasury;
       const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-      const token = getTokenByMintAddress(tokenAddress);
-      if (token) {
+      getTokenOrCustomToken(tokenAddress)
+      .then(token => {
         consoleOut('Treasury workingAssociatedToken:', token, 'blue');
         setSelectedToken(token);
-      } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
-        setCustomToken(tokenAddress);
-      }
-      setWorkingAssociatedToken(tokenAddress)
+        setWorkingAssociatedToken(tokenAddress)
+      });
     }
-  },[getTokenByMintAddress, selectedToken, setCustomToken, treasuryList, workingAssociatedToken]);
+  },[getTokenOrCustomToken, treasuryList]);
 
-  const onAcceptModal = () => {
+  const onAcceptModal = useCallback(() => {
+    if (!selectedToken) {
+      return;
+    }
+
     const params: TreasuryTopupParams = {
       proposalTitle: proposalTitle || '',
       amount: topupAmount,
-      tokenAmount: tokenAmount,
+      tokenAmount: makeInteger(parseFloat(topupAmount), selectedToken.decimals),
+      // tokenAmount: tokenAmount,
       allocationType: allocationOption,
       associatedToken: selectedToken
         ? selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
@@ -434,10 +437,11 @@ export const TreasuryAddFundsModal = (props: {
       contributor: fundFromSafeOption && selectedMultisig
         ? selectedMultisig.authority.toBase58()
         : '',
-      fundFromSafe: fundFromSafeOption
+      fundFromSafe: fundFromSafeOption,
     };
+
     handleOk(params);
-  }
+  }, [allocationOption, fundFromSafeOption, handleOk, highLightableStreamId, proposalTitle, selectedMultisig, selectedStreamingAccountId, selectedToken, topupAmount]);
 
   const handleAmountChange = (e: any) => {
 
@@ -465,7 +469,8 @@ export const TreasuryAddFundsModal = (props: {
       setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
       setTopupAmount(newValue);
-      setTokenAmount(makeInteger(newValue, selectedToken?.decimals || 6));
+      // setTokenAmount(makeInteger(newValue, decimals));
+      setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
     }
   };
 
@@ -485,9 +490,9 @@ export const TreasuryAddFundsModal = (props: {
     return publicKey &&
            (!fundFromSafeOption || (param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
            selectedToken &&
-           ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && availableBalance.toNumber() > 0))) &&
+           ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && (availableBalance as BN).gtn(0)))) &&
            nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
-           tokenAmount && tokenAmount.toNumber() > 0 &&
+           tokenAmount && (tokenAmount as BN).gtn(0) &&
            tokenAmount.lte(getMaxAmount())
             ? true
             : false;
@@ -768,46 +773,6 @@ export const TreasuryAddFundsModal = (props: {
                               fullTokenInfo={selectedToken}
                             />
                           )}
-
-                          {/* {(selectedToken && tokenList) && (
-                            <Select className="token-selector-dropdown click-disabled" value={selectedToken.address}
-                                onChange={onTokenChange} bordered={false} showArrow={false}
-                                dropdownRender={menu => (
-                                <div>
-                                  {menu}
-                                  <Divider style={{ margin: '4px 0' }} />
-                                  <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                                    <Input style={{ flex: 'auto' }} value={customTokenInput} onChange={onCustomTokenChange} />
-                                    <div style={{ flex: '0 0 auto' }} className="flex-row align-items-center">
-                                      <span className="flat-button icon-button ml-1" onClick={() => setCustomToken(customTokenInput)}><IconCheckedBox className="normal"/></span>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}>
-                              {tokenList.map((option) => {
-                                if (option.address === NATIVE_SOL.address) {
-                                  return null;
-                                }
-                                return (
-                                  <Option key={option.address} value={option.address}>
-                                    <div className="option-container">
-                                      <TokenDisplay onClick={() => {}}
-                                        mintAddress={option.address}
-                                        name={option.name}
-                                        showCaretDown={false}
-
-                                      />
-                                      <div className="balance">
-                                        {userBalances && userBalances[option.address] > 0 && (
-                                          <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </Option>
-                                );
-                              })}
-                            </Select>
-                          )} */}
                           {selectedToken && availableBalance ? (
                             <div
                               id="treasury-add-funds-max"
@@ -818,12 +783,14 @@ export const TreasuryAddFundsModal = (props: {
                                   const maxAmount = getMaxAmount(true);
                                   consoleOut('Treasury pays for fees...', '', 'blue');
                                   consoleOut('Settings maxAmount to:', maxAmount, 'blue');
-                                  setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  // setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 } else {
                                   const maxAmount = getMaxAmount();
-                                  consoleOut('Settings maxAmount to:', maxAmount.toNumber(), 'blue');
-                                  setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  consoleOut('Settings maxAmount to:', maxAmount.toString(), 'blue');
+                                  // setTopupAmount(cutNumber(makeDecimal(maxAmount, decimals), decimals));
+                                  setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 }
                               }}>
@@ -859,10 +826,12 @@ export const TreasuryAddFundsModal = (props: {
                         )}
                         <span>
                           {`${availableBalance && selectedToken
-                              ? getTokenAmountAndSymbolByTokenAddress(
-                                  makeDecimal(availableBalance, selectedToken.decimals),
-                                  selectedToken?.address,
-                                  true
+                              ? getAmountWithSymbol(
+                                  availableBalance,
+                                  selectedToken.address,
+                                  true,
+                                  splTokenList,
+                                  selectedToken.decimals
                                 )
                               : "0"
                           }`}

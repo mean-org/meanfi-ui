@@ -6,16 +6,17 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
   cutNumber,
+  getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
   makeDecimal,
   makeInteger,
-  shortenAddress,
+  toTokenAmount2,
+  toUiAmount2,
 } from '../../../../utils/utils';
 import {
   consoleOut,
   getTransactionOperationDescription,
-  isValidAddress,
   toUsCurrency
 } from '../../../../utils/ui';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -25,9 +26,8 @@ import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { isError } from '../../../../utils/transactions';
 import { AllocationType, Stream, StreamTemplate, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
-import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { openNotification } from '../../../../components/Notifications';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { QRCodeSVG } from 'qrcode.react';
@@ -41,7 +41,6 @@ import { InputMean } from '../../../../components/InputMean';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const VestingContractAddFundsModal = (props: {
-  associatedToken: string;
   handleClose: any;
   handleOk: any;
   isBusy: boolean;
@@ -50,6 +49,7 @@ export const VestingContractAddFundsModal = (props: {
   nativeBalance: number;
   onReloadTokenBalances: any;
   selectedMultisig: MultisigInfo | undefined;
+  selectedToken: TokenInfo | undefined;
   streamTemplate: StreamTemplate | undefined;
   transactionFees: TransactionFees;
   treasuryStreams: Stream[];
@@ -58,7 +58,6 @@ export const VestingContractAddFundsModal = (props: {
   withdrawTransactionFees: TransactionFees;
 }) => {
   const {
-    associatedToken,
     handleClose,
     handleOk,
     isBusy,
@@ -67,6 +66,7 @@ export const VestingContractAddFundsModal = (props: {
     nativeBalance,
     onReloadTokenBalances,
     selectedMultisig,
+    selectedToken,
     streamTemplate,
     transactionFees,
     treasuryStreams,
@@ -75,15 +75,13 @@ export const VestingContractAddFundsModal = (props: {
     withdrawTransactionFees,
   } = props;
   const {
-    selectedToken,
+    splTokenList,
     loadingPrices,
     transactionStatus,
     highLightableStreamId,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
-    getTokenByMintAddress,
     setTransactionStatus,
-    setSelectedToken,
     refreshPrices,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -180,57 +178,12 @@ export const VestingContractAddFundsModal = (props: {
     getSelectedStream
   ]);
 
-  const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
-    const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
-    if (ellipsisElements && ellipsisElements.length) {
-      const element = ellipsisElements[0];
-      if (state) {
-        if (!element.classList.contains('overflow-ellipsis-middle')) {
-          element.classList.add('overflow-ellipsis-middle');
-        }
-      } else {
-        if (element.classList.contains('overflow-ellipsis-middle')) {
-          element.classList.remove('overflow-ellipsis-middle');
-        }
-      }
-      setTimeout(() => {
-        triggerWindowResize();
-      }, 10);
-    }
-  }, []);
-
-  const setCustomToken = useCallback((address: string) => {
-
-    if (address && isValidAddress(address)) {
-      const unkToken: TokenInfo = {
-        address: address,
-        name: CUSTOM_TOKEN_NAME,
-        chainId: 101,
-        decimals: 6,
-        symbol: shortenAddress(address),
-      };
-      setSelectedToken(unkToken);
-      consoleOut("token selected:", unkToken, 'blue');
-      toggleOverflowEllipsisMiddle(true);
-    } else {
-      openNotification({
-        title: t('notifications.error-title'),
-        description: t('transactions.validation.invalid-solana-address'),
-        type: "error"
-      });
-    }
-  }, [
-    toggleOverflowEllipsisMiddle,
-    setSelectedToken,
-    t,
-  ]);
-
   const selectFromTokenBalance = useCallback(() => {
     if (!selectedToken) { return nativeBalance; }
     if (fundFromSafeOption) {
       return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
         ? userBalances
-          ? userBalances[NATIVE_SOL.address]
+          ? userBalances[NATIVE_SOL.address] || 0
           : 0
         : tokenBalance
     } else {
@@ -246,45 +199,31 @@ export const VestingContractAddFundsModal = (props: {
 
   // When modal goes visible, Set available balance in BN either from user's wallet or from treasury is a streams is being funded
   useEffect(() => {
-    if (isVisible && vestingContract && selectedToken) {
-      const decimals = selectedToken ? selectedToken.decimals : 6;
+    if (isVisible && vestingContract && selectedToken && userBalances) {
+      const decimals = selectedToken.decimals;
       if (highLightableStreamId) {
         // Take source balance from the treasury
         const unallocated = vestingContract.balance - vestingContract.allocationAssigned;
         const ub = new BN(unallocated);
-        consoleOut('Treasury unallocated balance:', ub.toNumber(), 'blue');
+        consoleOut('Treasury unallocated balance:', ub.toString(), 'blue');
         setAvailableBalance(ub);
       } else {
         // Take source balance from the user's wallet
-        const balance = makeInteger(selectFromTokenBalance(), decimals);
-        setAvailableBalance(balance);
+        const userBalance = selectFromTokenBalance();
+        const toBignumber = toTokenAmount2(userBalance, decimals);
+        consoleOut(`User's balance:`, toBignumber.toString(), 'blue');
+        setAvailableBalance(new BN(toBignumber.toString()));
       }
     } else {
       setAvailableBalance(new BN(0));
     }
   }, [
-    selectedToken,
     isVisible,
+    userBalances,
+    selectedToken,
     vestingContract,
     highLightableStreamId,
     selectFromTokenBalance,
-  ]);
-
-  // When modal goes visible, use the treasury associated token or use the default from the appState
-  useEffect(() => {
-    if (isVisible && associatedToken) {
-      const token = getTokenByMintAddress(associatedToken);
-      if (token) {
-        consoleOut("Contract Associated Token:", token, 'darkgreen');
-        setSelectedToken(token);
-      } else {
-        setCustomToken(associatedToken as string);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    isVisible,
-    associatedToken,
   ]);
 
   // Keep token balance updated
@@ -362,10 +301,6 @@ export const VestingContractAddFundsModal = (props: {
   //   Events   //
   ////////////////
 
-  const triggerWindowResize = () => {
-    window.dispatchEvent(new Event('resize'));
-  }
-
   const onAcceptModal = () => {
     const params: VestingContractTopupParams = {
       amount: topupAmount,
@@ -433,7 +368,8 @@ export const VestingContractAddFundsModal = (props: {
       setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
       setTopupAmount(newValue);
-      setTokenAmount(makeInteger(newValue, selectedToken?.decimals || 6));
+      // setTokenAmount(makeInteger(newValue, decimals));
+      setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
     }
   };
 
@@ -459,10 +395,10 @@ export const VestingContractAddFundsModal = (props: {
     return publicKey &&
           (!fundFromSafeOption || (param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
            selectedToken &&
-           ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && availableBalance.toNumber() > 0))) &&
+           ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && (availableBalance as BN).gtn(0)))) &&
            nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
-           tokenAmount && tokenAmount.toNumber() > 0 &&
-           tokenAmount.lte(getMaxAmount())
+           tokenAmount && (tokenAmount as BN).gtn(0) &&
+           (tokenAmount as BN).lte(getMaxAmount())
             ? true
             : false;
   }
@@ -595,12 +531,14 @@ export const VestingContractAddFundsModal = (props: {
                                   const maxAmount = getMaxAmount(true);
                                   consoleOut('Treasury pays for fees...', '', 'blue');
                                   consoleOut('Settings maxAmount to:', maxAmount, 'blue');
-                                  setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  // setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 } else {
                                   const maxAmount = getMaxAmount();
-                                  consoleOut('Settings maxAmount to:', maxAmount.toNumber(), 'blue');
-                                  setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  consoleOut('Settings maxAmount to:', maxAmount.toString(), 'blue');
+                                  // setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 }
                               }
@@ -637,10 +575,12 @@ export const VestingContractAddFundsModal = (props: {
                       )}
                       <span>
                         {`${availableBalance && selectedToken
-                            ? getTokenAmountAndSymbolByTokenAddress(
-                                makeDecimal(availableBalance, selectedToken.decimals),
-                                selectedToken?.address,
-                                true
+                            ? getAmountWithSymbol(
+                                availableBalance,
+                                selectedToken.address,
+                                true,
+                                splTokenList,
+                                selectedToken.decimals
                               )
                             : "0"
                         }`}

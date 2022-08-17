@@ -1,33 +1,36 @@
 import { useCallback, useState } from "react";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
 import {
-  Account,
   Connection,
-  Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
-  Signer,
-  SystemProgram,
   Transaction,
-  TransactionInstruction,
-  TransactionSignature
 } from "@solana/web3.js";
 import { CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
+import { TOKEN_PROGRAM_ID } from "./ids";
 import { NATIVE_SOL } from './tokens';
-import { ACCOUNT_LAYOUT } from './layouts';
-import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
 import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
-import { BigNumber } from "bignumber.js";
-import BN from "bn.js";
 import { isMobile } from "react-device-detect";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getNetworkIdByEnvironment } from "../contexts/connection";
 import { environment } from "../environments/environment";
+import { BigNumber } from "bignumber.js";
+import BN from "bn.js";
+
+const BIGNUMBER_FORMAT = {
+  prefix: '',
+  decimalSeparator: '.',
+  groupSeparator: ',',
+  groupSize: 3,
+  secondaryGroupSize: 0,
+  fractionGroupSeparator: ' ',
+  fractionGroupSize: 0,
+  suffix: ''
+}
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -240,7 +243,80 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
-export const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false, tokenList?: TokenInfo[]) => {
+export const getAmountWithSymbol = (
+  amount: number | BN,
+  address: string,
+  onlyValue = false,
+  tokenList?: TokenInfo[],
+  tokenDecimals?: number
+) => {
+
+  let token: TokenInfo | undefined = undefined;
+  if (address) {
+    if (address === NATIVE_SOL.address) {
+      token = NATIVE_SOL as TokenInfo;
+    } else {
+      token = tokenList && isProd()
+        ? tokenList.find(t => t.address === address)
+        : MEAN_TOKEN_LIST.find(t => t.address === address);
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+    }
+  }
+
+  if (tokenDecimals && !token) {
+    const unknownToken: TokenInfo = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: tokenDecimals,
+      symbol: `[${shortenAddress(address)}]`,
+    };
+    token = unknownToken;
+  }
+
+  if (typeof amount === "number") {
+    const inputAmount = amount || 0;
+    if (token) {
+      const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
+      const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
+      const formatted2 = formatted.toFixed(token.decimals);
+      const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
+      if (onlyValue) { return toLocale; }
+      return `${toLocale} ${token.symbol}`;
+    } else if (address && !token) {
+      const formatted = formatThousands(inputAmount, 5, 5);
+      return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
+    }
+    return `${formatThousands(inputAmount, 5, 5)}`;
+  } else {
+    BigNumber.config({
+      CRYPTO: true,
+      FORMAT: BIGNUMBER_FORMAT
+    });
+    const decimals = token ? token.decimals : 6;
+    const baseConvert = new BigNumber(10 ** decimals);
+    const bigNumberAmount = new BigNumber((amount as BN).toString());
+    const value = bigNumberAmount.dividedBy(baseConvert);
+    const inputAmount = value.toFormat(decimals);
+    if (token) {
+      return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
+    } else {
+      return onlyValue ? inputAmount : `${inputAmount} [${shortenAddress(address, 4)}]`;
+    }
+  }
+}
+
+export const getAmountWithSymbol2 = (
+  amount: number,
+  address: string,
+  onlyValue = false,
+  tokenList?: TokenInfo[]
+) => {
   let token: TokenInfo | undefined = undefined;
   if (address) {
     if (address === NATIVE_SOL.address) {
@@ -372,6 +448,27 @@ export const toTokenAmount = (amount: number, decimals: number) => {
   return amount * (10 ** decimals);
 }
 
+// TODO: Change method name to the one above and try to replace every usage of the above method with this one.
+export const toTokenAmount2 = (amount: number | string, decimals: number) => {
+  if (!amount || !decimals) { return 0; }
+  const multiplier = new BigNumber(10 ** decimals);
+  const value = new BigNumber(amount);
+  return value.multipliedBy(multiplier);
+}
+
+export const toUiAmount2 = (amount: number | BN, decimals: number) => {
+  if (!amount || !decimals) { return '0'; }
+  if (typeof amount === "number") {
+    const value = amount / (10 ** decimals);
+    return value.toFixed(decimals);
+  } else {
+    const baseConvert = new BigNumber(10 ** decimals);
+    const bigNumberAmount = new BigNumber((amount as BN).toString());
+    const value = bigNumberAmount.dividedBy(baseConvert);
+    return value.toFixed(decimals);
+  }
+}
+
 export function cutNumber(amount: number, decimals: number) {
   const str = `${amount}`;
 
@@ -383,9 +480,9 @@ export const makeDecimal = (bn: BN, decimals: number): number => {
   return bn.toNumber() / Math.pow(10, decimals)
 }
 
-export const makeInteger = (num: number, decimals: number): BN => {
-  const mul = Math.pow(10, decimals)
-  return new BN(num * mul)
+export const makeInteger = (amount: number, decimals: number): BN => {
+  if (!amount || !decimals) { return new BN(0); }
+  return new BN(amount * (10 ** decimals))
 }
 
 export const addSeconds = (date: Date, seconds: number) => {

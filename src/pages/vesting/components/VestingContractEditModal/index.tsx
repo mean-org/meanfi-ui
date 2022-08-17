@@ -427,7 +427,6 @@ export const VestingContractEditModal = (props: {
                     <TokenDisplay onClick={() => { }}
                       mintAddress={selectedToken.address}
                       name={selectedToken.name}
-                      showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                       fullTokenInfo={selectedToken}
                     />
                   )}

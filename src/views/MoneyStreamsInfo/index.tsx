@@ -890,6 +890,9 @@ export const MoneyStreamsInfoView = (props: {
 
       const associatedToken = new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toNumber();
+      consoleOut('raw amount:', params.tokenAmount, 'blue');
+      consoleOut('amount.toNumber():', amount, 'blue');
+      consoleOut('amount.toString():', params.tokenAmount.toString(), 'blue');
       const contributor = params.contributor || publicKey.toBase58();
       const data = {
         proposalTitle: params.proposalTitle,                      // proposalTitle

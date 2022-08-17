@@ -57,8 +57,6 @@ export const StreamingAccountView = (props: {
 }) => {
   const {
     splTokenList,
-    tokenBalance,
-    selectedToken,
     accountAddress,
     transactionStatus,
     streamProgramAddress,
@@ -66,9 +64,7 @@ export const StreamingAccountView = (props: {
     setHighLightableStreamId,
     getTokenByMintAddress,
     setTransactionStatus,
-    refreshTokenBalance,
     resetContractValues,
-    setSelectedToken,
   } = useContext(AppStateContext);
   const {
     confirmationHistory,
@@ -94,6 +90,7 @@ export const StreamingAccountView = (props: {
 
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
 
   // Streaming account
   const [highlightedStream, sethHighlightedStream] = useState<Stream | StreamInfo | undefined>();
@@ -223,7 +220,7 @@ export const StreamingAccountView = (props: {
     });
   }, [setTransactionStatus]);
 
-  const getTokenOrCustomToken = useCallback((address: string) => {
+  const getTokenOrCustomToken = useCallback(async (address: string) => {
 
     const token = getTokenByMintAddress(address);
 
@@ -232,26 +229,25 @@ export const StreamingAccountView = (props: {
       name: CUSTOM_TOKEN_NAME,
       chainId: 101,
       decimals: 6,
-      symbol: shortenAddress(address),
+      symbol: `[${shortenAddress(address)}]`,
     };
 
     if (token) {
       return token;
     } else {
-      readAccountInfo(connection, address)
-      .then(info => {
-        if ((info as any).data["parsed"]) {
-          const decimals = (info as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+      try {
+        const tokeninfo = await readAccountInfo(connection, address);
+        if ((tokeninfo as any).data["parsed"]) {
+          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
           unkToken.decimals = decimals || 0;
           return unkToken as TokenInfo;
         } else {
-          return unkToken;
+          return unkToken as TokenInfo;
         }
-      })
-      .catch(err => {
+      } catch (error) {
         console.error('Could not get token info, assuming decimals = 6');
-        return unkToken;
-      });
+        return unkToken as TokenInfo;
+      }
     }
   }, [connection, getTokenByMintAddress]);
 
@@ -494,8 +490,11 @@ export const StreamingAccountView = (props: {
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
   const showCreateStreamModal = useCallback(() => {
     resetTransactionStatus();
-    refreshUserBalances();
-    refreshTokenBalance();
+    if (selectedMultisig) {
+      refreshUserBalances(selectedMultisig.authority);
+    } else {
+      refreshUserBalances();
+    }
     setIsCreateStreamModalVisibility(true);
     getTransactionFeesV2(MSP_ACTIONS_V2.createStreamWithFunds).then(value => {
       setTransactionFees(value);
@@ -506,8 +505,8 @@ export const StreamingAccountView = (props: {
       consoleOut('withdrawTransactionFees:', value, 'orange');
     });
   }, [
+    selectedMultisig,
     refreshUserBalances,
-    refreshTokenBalance,
     getTransactionFeesV2,
     resetTransactionStatus,
   ]);
@@ -515,9 +514,13 @@ export const StreamingAccountView = (props: {
   const closeCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(false);
     resetContractValues();
-    refreshTokenBalance();
+    if (selectedMultisig) {
+      refreshUserBalances(selectedMultisig.authority);
+    } else {
+      refreshUserBalances();
+    }
     resetTransactionStatus();
-  }, [refreshTokenBalance, resetContractValues, resetTransactionStatus]);
+  }, [refreshUserBalances, resetContractValues, resetTransactionStatus, selectedMultisig]);
 
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
@@ -528,7 +531,6 @@ export const StreamingAccountView = (props: {
     } else {
       refreshUserBalances();
     }
-    refreshTokenBalance();
     if (streamingAccountSelected) {
       const v2 = streamingAccountSelected as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -553,7 +555,6 @@ export const StreamingAccountView = (props: {
     streamingAccountSelected,
     resetTransactionStatus,
     getTransactionFeesV2,
-    refreshTokenBalance,
     refreshUserBalances,
     getTransactionFees,
   ]);
@@ -567,7 +568,11 @@ export const StreamingAccountView = (props: {
 
   const onAddFundsTransactionFinished = () => {
     closeAddFundsModal();
-    refreshTokenBalance();
+    if (selectedMultisig) {
+      refreshUserBalances(selectedMultisig.authority);
+    } else {
+      refreshUserBalances();
+    }
     resetTransactionStatus();
   };
 
@@ -796,6 +801,9 @@ export const StreamingAccountView = (props: {
       const treasury = new PublicKey(streamingAccountSelected.id);
       const associatedToken = new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toNumber();
+      consoleOut('raw amount:', params.tokenAmount, 'blue');
+      consoleOut('amount.toNumber():', amount, 'blue');
+      consoleOut('amount.toString():', params.tokenAmount.toString(), 'blue');
       const contributor = params.contributor || publicKey.toBase58();
       const data = {
         proposalTitle: params.proposalTitle,                      // proposalTitle
@@ -993,7 +1001,7 @@ export const StreamingAccountView = (props: {
     }
 
     if (publicKey && streamingAccountSelected) {
-      const token = getTokenOrCustomToken(params.associatedToken);
+      const token = await getTokenOrCustomToken(params.associatedToken);
       let created: boolean;
       if ((streamingAccountSelected as Treasury).version && (streamingAccountSelected as Treasury).version >= 2) {
         created = await createTxV2();
@@ -1012,18 +1020,18 @@ export const StreamingAccountView = (props: {
             const loadingMessage = multisigAuthority
               ? `Create proposal to fund streaming account with ${formatThousands(
                   parseFloat(params.amount),
-                  token?.decimals
-                )} ${token?.symbol}`
+                  token.decimals
+                )} ${token.symbol}`
               : `Fund streaming account with ${formatThousands(
                   parseFloat(params.amount),
-                  token?.decimals
-                )} ${token?.symbol}`;
+                  token.decimals
+                )} ${token.symbol}`;
             const completed = multisigAuthority
               ? `Streaming account funding has been submitted for approval.`
               : `Streaming account funded with ${formatThousands(
                 parseFloat(params.amount),
-                token?.decimals
-              )} ${token?.symbol}`;
+                token.decimals
+              )} ${token.symbol}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryAddFunds,
@@ -1442,7 +1450,11 @@ export const StreamingAccountView = (props: {
 
   const onCloseTreasuryTransactionFinished = () => {
     hideCloseTreasuryModal();
-    refreshTokenBalance();
+    if (selectedMultisig) {
+      refreshUserBalances(selectedMultisig.authority);
+    } else {
+      refreshUserBalances();
+    }
   };
 
   const onExecuteCloseTreasuryTransaction = async (title: string) => {
@@ -1858,12 +1870,13 @@ export const StreamingAccountView = (props: {
 
   // Refresh account data
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
-    refreshTokenBalance();
+    if (selectedMultisig) {
+      refreshUserBalances(selectedMultisig.authority);
+    } else {
+      refreshUserBalances();
+    }
     resetTransactionStatus();
-  },[
-    refreshTokenBalance, 
-    resetTransactionStatus
-  ]);
+  },[refreshUserBalances, resetTransactionStatus, selectedMultisig]);
   
   const onExecuteRefreshTreasuryBalance = useCallback(async() => {
 
@@ -2203,7 +2216,11 @@ export const StreamingAccountView = (props: {
   const onCloseStreamTransactionFinished = () => {
     resetTransactionStatus();
     hideTransactionExecutionModal();
-    refreshTokenBalance();
+    if (selectedMultisig) {
+      refreshUserBalances(selectedMultisig.authority);
+    } else {
+      refreshUserBalances();
+    }
   };
 
   const onAfterCloseStreamTransactionModalClosed = () => {
@@ -2254,7 +2271,6 @@ export const StreamingAccountView = (props: {
 
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
-      refreshTokenBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
       setPreviousBalance(account?.lamports);
@@ -2263,7 +2279,6 @@ export const StreamingAccountView = (props: {
     account,
     nativeBalance,
     previousBalance,
-    refreshTokenBalance
   ]);
 
   // Keep Streaming Account ATA balance
@@ -2349,6 +2364,7 @@ export const StreamingAccountView = (props: {
   ]);
 
   // Set a working token based on the Vesting Contract's Associated Token
+  /*
   useEffect(() => {
 
     if (!streamingAccountSelected || associatedTokenDecimals === undefined) {
@@ -2392,6 +2408,34 @@ export const StreamingAccountView = (props: {
     return () => { }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [associatedTokenDecimals, streamingAccountSelected]);
+  */
+
+  // Set selected token with the streaming account associated token as soon as streamingAccountSelected is available
+  useEffect(() => {
+    if (!publicKey || !streamingAccountSelected) { return; }
+
+    const v1 = streamingAccountSelected as TreasuryInfo;
+    const v2 = streamingAccountSelected as Treasury;
+    const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+    const ata = isNewTreasury
+      ? v2.associatedToken as string
+      : v1.associatedTokenAddress as string;
+
+    getTokenOrCustomToken(ata)
+    .then(token => {
+      consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        const modifiedToken = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+        setSelectedToken(modifiedToken);
+      } else {
+        setSelectedToken(token);
+      }
+    });
+  }, [getTokenOrCustomToken, publicKey, streamingAccountSelected]);
+
+
 
   const getStreamTitle = (item: Stream | StreamInfo): string => {
     let title = '';
@@ -3184,7 +3228,7 @@ export const StreamingAccountView = (props: {
         <TreasuryCloseModal
           isVisible={isCloseTreasuryModalVisible}
           transactionFees={transactionFees}
-          tokenBalance={tokenBalance}
+          tokenBalance={userBalances && selectedToken ? userBalances[selectedToken.address] || 0 : 0}
           nativeBalance={nativeBalance}
           treasuryDetails={streamingAccountSelected}
           handleOk={onAcceptCloseTreasury}

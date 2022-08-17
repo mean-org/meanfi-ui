@@ -12,7 +12,6 @@ import {
     getTimeEllapsed,
     getTimeRemaining,
     toTimestamp,
-    getTodayPercentualBetweenTwoDates,
     getlllDate,
     relativeTimeFromDates,
     friendlyDisplayDecimalPlaces,
@@ -30,7 +29,6 @@ import { VestingFlowRateInfo } from '../../../../models/vesting';
 
 export const VestingContractOverview = (props: {
     availableStreamingBalance: number;
-    associatedTokenDecimals: number | undefined;
     isXsDevice: boolean;
     selectedToken: TokenInfo | undefined;
     streamTemplate: StreamTemplate | undefined;
@@ -39,7 +37,6 @@ export const VestingContractOverview = (props: {
 }) => {
     const {
         availableStreamingBalance,
-        associatedTokenDecimals,
         isXsDevice,
         selectedToken,
         streamTemplate,
@@ -50,7 +47,6 @@ export const VestingContractOverview = (props: {
     const {
         theme,
         splTokenList,
-        getTokenByMintAddress
     } = useContext(AppStateContext);
     const [today, setToday] = useState(new Date());
     const [startRemainingTime, setStartRemainingTime] = useState('');

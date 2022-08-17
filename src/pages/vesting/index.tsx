@@ -337,11 +337,11 @@ export const VestingView = () => {
           unkToken.decimals = decimals || 0;
           return unkToken as TokenInfo;
         } else {
-          return unkToken;
+          return unkToken as TokenInfo;
         }
       } catch (error) {
         console.error('Could not get token info, assuming decimals = 6');
-        return unkToken;
+        return unkToken as TokenInfo;
       }
     }
   }, [connection, getTokenByMintAddress]);
@@ -1032,6 +1032,8 @@ export const VestingView = () => {
       const multisigAuthority = getMultisigIdFromContext();
       const associatedToken = createOptions.token;
       const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
+
+      consoleOut('workingToken:', workingToken, 'blue');
 
       const payload: CreateVestingTreasuryParams = {
         payer: publicKey,                                                       // payer
@@ -1811,7 +1813,7 @@ export const VestingView = () => {
 
       const treasury = new PublicKey(selectedVestingContract.id);
       const associatedToken = new PublicKey(params.associatedToken.address);
-      const amount = params.tokenAmount.toNumber();
+      const amount = (params.tokenAmount).toString();
       const token = params.associatedToken;
       const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
       const contributor = params.contributor || publicKey.toBase58();
@@ -3748,40 +3750,24 @@ export const VestingView = () => {
   // Keep the available streaming balance for the current vesting contract updated
   useEffect(() => {
     let streamingBalance = 0;
-    let tokenDecimals = 6;
 
     if (!connection || !selectedVestingContract) {
       setAvailableStreamingBalance(streamingBalance);
       return;
     }
 
-    const token = getTokenByMintAddress(selectedVestingContract.associatedToken as string);
-    if (token) {
+    getTokenOrCustomToken(selectedVestingContract.associatedToken as string)
+    .then(token => {
       const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
       const ub = makeDecimal(new BN(unallocated), token.decimals);
+      consoleOut('ub:', ub, 'blue');
       streamingBalance = ub >= 0 ? ub : 0;
-      tokenDecimals = token.decimals;
       consoleOut('Available streaming balance:', streamingBalance, 'blue');
       setAvailableStreamingBalance(streamingBalance);
-    } else {
-      readAccountInfo(connection, selectedVestingContract.associatedToken as string)
-      .then(info => {
-        if ((info as any).data["parsed"]) {
-          const decimals = (info as AccountInfo<ParsedAccountData>).data.parsed.info.decimals;
-          const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
-          const ub = makeDecimal(new BN(unallocated), decimals);
-          streamingBalance = ub >= 0 ? ub : 0;
-          tokenDecimals = decimals;
-        }
-      })
-      .finally(() => {
-        consoleOut('Available streaming balance:', streamingBalance, 'blue');
-        setAvailableStreamingBalance(streamingBalance);
-        setAssociatedTokenDecimals(tokenDecimals);
-      });
-    }
+      setAssociatedTokenDecimals(token.decimals);
+    });
 
-  }, [connection, getTokenByMintAddress, selectedVestingContract]);
+  }, [connection, getTokenOrCustomToken, selectedVestingContract]);
 
   // Hook on wallet connect/disconnect
   useEffect(() => {
@@ -3967,7 +3953,6 @@ export const VestingView = () => {
         <TabPane tab="Overview" key={"overview"}>
           <VestingContractOverview
             availableStreamingBalance={availableStreamingBalance}
-            associatedTokenDecimals={associatedTokenDecimals}
             isXsDevice={isXsDevice}
             selectedToken={workingToken}
             streamTemplate={streamTemplate}
@@ -3983,6 +3968,7 @@ export const VestingView = () => {
             minRequiredBalance={minRequiredBalance}
             msp={msp}
             selectedMultisig={selectedMultisig}
+            selectedToken={workingToken}
             multisigAccounts={multisigAccounts}
             multisigClient={multisigClient}
             nativeBalance={nativeBalance}
@@ -4349,7 +4335,6 @@ export const VestingView = () => {
 
         {isAddFundsModalVisible && (
           <VestingContractAddFundsModal
-            associatedToken={selectedVestingContract ? selectedVestingContract.associatedToken as string : ''}
             handleClose={closeAddFundsModal}
             handleOk={(params: VestingContractTopupParams) => onAcceptAddFunds(params)}
             isBusy={isBusy}
@@ -4357,6 +4342,7 @@ export const VestingView = () => {
             nativeBalance={nativeBalance}
             minRequiredBalance={minRequiredBalance}
             selectedMultisig={selectedMultisig}
+            selectedToken={workingToken}
             streamTemplate={streamTemplate}
             transactionFees={transactionFees}
             treasuryStreams={treasuryStreams}
