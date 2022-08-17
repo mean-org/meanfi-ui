@@ -385,6 +385,7 @@ export const MoneyStreamsOutgoingView = (props: {
       if (!msp) { return false; }
       // Create a transaction
       const autoWSol = addFundsData.associatedToken === NATIVE_SOL_MINT.toBase58() ? true : false;
+      // TODO: Modify method signature for amount parameters to string | number
       return await msp.fundStream(
         payload.payer,                                              // payer
         payload.contributor,                                        // contributor
@@ -427,6 +428,7 @@ export const MoneyStreamsOutgoingView = (props: {
       if (!msp) { return null; }
 
       if (data.stream === '') {
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.addFunds(
           new PublicKey(data.payer),                    // payer
           new PublicKey(data.contributor),              // contributor
@@ -437,6 +439,7 @@ export const MoneyStreamsOutgoingView = (props: {
       }
 
       if (!isMultisigTreasury()) {
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(data.contributor),             // treasurer
@@ -455,6 +458,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       multisigAuth = multisig.authority.toBase58();
 
+      // TODO: Modify method signature for amount parameters to string | number
       const allocateTx = await msp.allocate(
         new PublicKey(data.payer),                   // payer
         new PublicKey(multisig.authority),           // treasurer

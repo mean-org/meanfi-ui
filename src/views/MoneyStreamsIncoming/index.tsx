@@ -785,6 +785,7 @@ export const MoneyStreamsIncomingView = (props: {
       if (!msp || !publicKey) { return null; }
 
       if (!isIncomingMultisigStream()) {
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.withdraw(
           publicKey,                             // payer,
           new PublicKey(data.stream),            // stream,
@@ -801,6 +802,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       multisigAuth = multisig.authority.toBase58();
 
+      // TODO: Modify method signature for amount parameters to string | number
       const withdrawFunds = await msp.withdraw(
         multisig.authority,                          // payer
         new PublicKey(data.stream),                  // stream,

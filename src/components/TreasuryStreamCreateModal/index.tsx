@@ -12,7 +12,7 @@ import {
   makeDecimal,
   makeInteger,
   shortenAddress,
-  toTokenAmount
+  toTokenAmount2
 } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -30,7 +30,6 @@ import {
   PaymentRateTypeOption,
   toUsCurrency,
 } from '../../utils/ui';
-import { NATIVE_SOL } from '../../utils/tokens';
 import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
@@ -1091,6 +1090,7 @@ export const TreasuryStreamCreateModal = (props: {
           } as Beneficiary
         });
 
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.createStreams(
           new PublicKey(data.payer),                                          // initializer
           new PublicKey(data.treasurer),                                      // treasurer
@@ -1143,6 +1143,7 @@ export const TreasuryStreamCreateModal = (props: {
         seedCounter += 1;
       }
 
+      // TODO: Modify method signature for amount parameters to string | number
       const createStreams = await msp.createStreamsFromPda(
         publicKey,                                                            // payer
         multisigSigner,                                                       // treasurer
@@ -1215,12 +1216,14 @@ export const TreasuryStreamCreateModal = (props: {
       const treasurer = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
         ? selectedMultisig.id
         : publicKey;
-      const amount = tokenAmount.div(new BN(beneficiaries.length)).toNumber();
-      const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
+      const amount = tokenAmount.div(new BN(beneficiaries.length)).toString();
+      // const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
+      const rateAmount = toTokenAmount2(paymentRateAmount, selectedToken.decimals, true);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       const startUtc = new Date(parsedDate);
-      const cliffAmount = toTokenAmount(parseFloat(cliffRelease as string), selectedToken.decimals);
+      // const cliffAmount = toTokenAmount(parseFloat(cliffRelease as string), selectedToken.decimals);
+      const cliffAmount = toTokenAmount2(cliffRelease, selectedToken.decimals, true);
       startUtc.setHours(now.getHours());
       startUtc.setMinutes(now.getMinutes());
       startUtc.setSeconds(now.getSeconds());

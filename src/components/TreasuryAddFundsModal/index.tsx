@@ -469,7 +469,6 @@ export const TreasuryAddFundsModal = (props: {
       setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
       setTopupAmount(newValue);
-      // setTokenAmount(makeInteger(newValue, decimals));
       setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
     }
   };

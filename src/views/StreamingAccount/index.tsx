@@ -712,6 +712,7 @@ export const StreamingAccountView = (props: {
 
       if (!isMultisigTreasury() || !params.fundFromSafe) {
         if (data.stream === '') {
+          // TODO: Modify method signature for amount parameters to string | number
           return await msp.addFunds(
             new PublicKey(data.payer),                    // payer
             new PublicKey(data.contributor),              // contributor
@@ -721,6 +722,7 @@ export const StreamingAccountView = (props: {
           );
         }
 
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(data.contributor),             // treasurer
@@ -742,6 +744,7 @@ export const StreamingAccountView = (props: {
       let addFundsTx: Transaction;
 
       if (data.stream) {
+        // TODO: Modify method signature for amount parameters to string | number
         addFundsTx = await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(multisig.authority),           // treasurer
@@ -751,6 +754,7 @@ export const StreamingAccountView = (props: {
         );
       } else {
         operationType = OperationType.TreasuryAddFunds;
+        // TODO: Modify method signature for amount parameters to string | number
         addFundsTx = await msp.addFunds(
           new PublicKey(data.payer),                    // payer
           new PublicKey(data.contributor),              // contributor
@@ -1094,6 +1098,7 @@ export const StreamingAccountView = (props: {
       if (!msp) { return null; }
 
       if (!isMultisigTreasury()) {
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.treasuryWithdraw(
           new PublicKey(data.payer),              // payer
           new PublicKey(data.destination),        // treasurer
@@ -1110,6 +1115,7 @@ export const StreamingAccountView = (props: {
 
       if (!multisig) { return null; }
 
+      // TODO: Modify method signature for amount parameters to string | number
       const msTreasuryWithdraw = await msp.treasuryWithdraw(
         new PublicKey(data.payer),              // payer
         new PublicKey(data.destination),        // treasurer
@@ -1576,7 +1582,7 @@ export const StreamingAccountView = (props: {
           new PublicKey(data.treasurer),              // treasurer
           new PublicKey(data.treasurer),              // treasurer
           new PublicKey(data.treasury),               // treasury
-          true                                        // TODO: Define if the user can determine this
+          true                                        // autoWsol
         );
       }
 
@@ -1591,7 +1597,7 @@ export const StreamingAccountView = (props: {
         publicKey,                                  // payer
         multisig.authority,                         // TODO: This should come from the UI        
         new PublicKey(data.treasury),               // treasury
-        false
+        false                                       // autoWsol
       );
 
       const ixData = Buffer.from(closeTreasury.instructions[0].data);

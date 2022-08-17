@@ -1034,6 +1034,7 @@ export const RepeatingPayment = (props: {
         // Init a streaming operation
         const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.streamPayment(
           publicKey,                                                  // treasurer
           beneficiary,                                                // beneficiary

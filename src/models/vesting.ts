@@ -73,7 +73,7 @@ export interface CreateVestingTreasuryParams {
     cliffVestPercent: number;
     feePayedByTreasurer?: boolean | undefined;
     multisig: string;
-    fundingAmount: number;
+    fundingAmount: number | string;
 }
 
 export interface VestingContractCreateOptions {
@@ -89,7 +89,7 @@ export interface VestingContractCreateOptions {
     cliffVestPercent: number;
     startDate: Date;
     multisig: string;
-    fundingAmount: number;
+    fundingAmount: number | string;
 }
 
 export interface VestingContractEditOptions {

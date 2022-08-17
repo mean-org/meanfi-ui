@@ -778,6 +778,7 @@ export const OneTimePayment = (props: {
       const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
       if (!isScheduledPayment()) {
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.transfer(
           new PublicKey(data.wallet),                                      // sender
           new PublicKey(data.beneficiary),                                 // beneficiary
@@ -786,6 +787,7 @@ export const OneTimePayment = (props: {
         )
       }
 
+      // TODO: Modify method signature for amount parameters to string | number
       return await msp.scheduledTransfer(
         new PublicKey(data.wallet),                                      // treasurer
         new PublicKey(data.beneficiary),                                 // beneficiary

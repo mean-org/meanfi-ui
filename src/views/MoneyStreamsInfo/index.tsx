@@ -800,6 +800,7 @@ export const MoneyStreamsInfoView = (props: {
 
       if (!isMultisigTreasury(data.treasury) || !params.fundFromSafe) {
         if (data.stream === '') {
+          // TODO: Modify method signature for amount parameters to string | number
           return await msp.addFunds(
             new PublicKey(data.payer),                    // payer
             new PublicKey(data.contributor),              // contributor
@@ -809,6 +810,7 @@ export const MoneyStreamsInfoView = (props: {
           );
         }
 
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(data.contributor),             // treasurer
@@ -832,6 +834,7 @@ export const MoneyStreamsInfoView = (props: {
       let addFundsTx: Transaction;
 
       if (data.stream) {
+        // TODO: Modify method signature for amount parameters to string | number
         addFundsTx = await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(multisig.authority),           // treasurer
@@ -841,6 +844,7 @@ export const MoneyStreamsInfoView = (props: {
         );
       } else {
         operationType = OperationType.TreasuryAddFunds;
+        // TODO: Modify method signature for amount parameters to string | number
         addFundsTx = await msp.addFunds(
           new PublicKey(data.payer),                    // payer
           new PublicKey(data.contributor),              // contributor

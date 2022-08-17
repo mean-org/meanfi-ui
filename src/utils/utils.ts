@@ -449,10 +449,16 @@ export const toTokenAmount = (amount: number, decimals: number) => {
 }
 
 // TODO: Change method name to the one above and try to replace every usage of the above method with this one.
-export const toTokenAmount2 = (amount: number | string, decimals: number) => {
-  if (!amount || !decimals) { return 0; }
+export const toTokenAmount2 = (amount: number | string, decimals: number, asString = false) => {
+  if (!amount || !decimals) {
+    return asString ? '0' : new BigNumber(0);
+  }
+
   const multiplier = new BigNumber(10 ** decimals);
   const value = new BigNumber(amount);
+  if (asString) {
+    return value.multipliedBy(multiplier).toString();
+  }
   return value.multipliedBy(multiplier);
 }
 
@@ -475,7 +481,6 @@ export function cutNumber(amount: number, decimals: number) {
   return str.slice(0, str.indexOf('.') + decimals + 1);
 }
 
-// Some could prefer these instead of toUiAmount and toTokenAmount
 export const makeDecimal = (bn: BN, decimals: number): number => {
   return bn.toNumber() / Math.pow(10, decimals)
 }

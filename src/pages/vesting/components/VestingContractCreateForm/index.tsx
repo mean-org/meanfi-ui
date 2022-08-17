@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
+import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmount2 } from '../../../../utils/utils';
 import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
@@ -313,8 +313,6 @@ export const VestingContractCreateForm = (props: {
         startUtc.setHours(to24hTime.hours());
         startUtc.setMinutes(to24hTime.minutes());
         startUtc.setSeconds(to24hTime.seconds());
-        // const startDatePlusOffset = new Date(startUtc.getTime() + startUtc.getTimezoneOffset() * 60000);
-        // const timeShiftedStartUtc = new Date(startDatePlusOffset);
         consoleOut('start date in UTC:', startUtc, 'darkorange');
         const options: VestingContractCreateOptions = {
             vestingContractTitle: proposalTitle,
@@ -329,6 +327,7 @@ export const VestingContractCreateForm = (props: {
             cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
             startDate: startUtc,
             multisig: isMultisigContext ? accountAddress : '',
+            // fundingAmount: toTokenAmount2(vestingLockFundingAmount, (selectedToken as TokenInfo).decimals, true) as string
             fundingAmount: toTokenAmount(parseFloat(vestingLockFundingAmount), (selectedToken as TokenInfo).decimals)
         };
         onStartTransaction(options);

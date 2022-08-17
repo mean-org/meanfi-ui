@@ -907,26 +907,11 @@ export const VestingView = () => {
 
       if (!connection || !msp || !publicKey) { return null; }
 
-      /**
-       * payer: PublicKey
-       * treasurer: PublicKey
-       * label: string
-       * type: TreasuryType
-       * solFeePayedByTreasury: boolean
-       * treasuryAssociatedTokenMint: PublicKey
-       * duration: number
-       * durationUnit: TimeUnit
-       * fundingAmount: number
-       * vestingCategory: SubCategory
-       * startUtc?: Date | undefined
-       * cliffVestPercent?: number | undefined
-       * feePayedByTreasurer?: boolean | undefined
-       */
-
       const solFeePayedByTreasury = data.multisig ? true : false;
 
       if (!data.multisig) {
         consoleOut('received data:', data, 'blue');
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.createVestingTreasury(
           new PublicKey(data.treasurer),                        // payer
           new PublicKey(data.treasurer),                        // treasurer
@@ -936,7 +921,7 @@ export const VestingView = () => {
           new PublicKey(data.associatedTokenAddress),           // treasuryAssociatedTokenMint
           data.duration,                                        // duration
           data.durationUnit,                                    // durationUnit
-          data.fundingAmount,                                   // fundingAmount
+          data.fundingAmount as number,                         // fundingAmount
           data.vestingCategory,                                 // vestingCategory
           data.startUtc,                                        // startUtc
           data.cliffVestPercent,                                // cliffVestPercent
@@ -950,17 +935,8 @@ export const VestingView = () => {
 
       if (!multisig) { return null; }
 
-      // Create Streaming account
-      // const createTreasuryTx = await msp.createTreasury(
-      //   publicKey,                                        // payer
-      //   multisig.authority,                               // treasurer
-      //   new PublicKey(data.associatedTokenAddress),       // associatedToken
-      //   data.label,                                       // label
-      //   data.type,                                        // type
-      //   true,                                             // solFeePayedByTreasury = true
-      // );
-
       const treasuryAssociatedTokenMint = new PublicKey(data.associatedTokenAddress);
+      // TODO: Modify method signature for amount parameters to string | number
       const createTreasuryTx = await msp.createVestingTreasury(
         publicKey,                                            // payer
         multisig.authority,                                   // treasurer
@@ -970,7 +946,7 @@ export const VestingView = () => {
         treasuryAssociatedTokenMint,                          // treasuryAssociatedTokenMint
         data.duration,                                        // duration
         data.durationUnit,                                    // durationUnit
-        data.fundingAmount,                                   // fundingAmount
+        data.fundingAmount as number,                         // fundingAmount
         data.vestingCategory,                                 // vestingCategory
         data.startUtc,                                        // startUtc
         data.cliffVestPercent,                                // cliffVestPercent
@@ -1725,6 +1701,7 @@ export const VestingView = () => {
 
       if (!isMultisigTreasury() || !params.fundFromSafe) {
         if (data.stream === '') {
+          // TODO: Modify method signature for amount parameters to string | number
           return await msp.addFunds(
             new PublicKey(data.payer),                    // payer
             new PublicKey(data.contributor),              // contributor
@@ -1734,6 +1711,7 @@ export const VestingView = () => {
           );
         }
 
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(data.contributor),             // treasurer
@@ -1754,6 +1732,7 @@ export const VestingView = () => {
       let addFundsTx: Transaction;
 
       if (data.stream) {
+        // TODO: Modify method signature for amount parameters to string | number
         addFundsTx = await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(multisig.authority),           // treasurer
@@ -1763,6 +1742,7 @@ export const VestingView = () => {
         );
       } else {
         operationType = OperationType.TreasuryAddFunds;
+        // TODO: Modify method signature for amount parameters to string | number
         addFundsTx = await msp.addFunds(
           new PublicKey(data.payer),                    // payer
           new PublicKey(data.contributor),              // contributor
@@ -2126,6 +2106,7 @@ export const VestingView = () => {
       consoleOut('createVestingStream received data:', data, 'blue');
 
       if (!data.multisig) {
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.createStreamWithTemplate(
           publicKey,                                                                // payer
           publicKey,                                                                // treasurer
@@ -2156,16 +2137,7 @@ export const VestingView = () => {
       consoleOut('selectedVestingContract:', selectedVestingContract, 'blue');
       consoleOut('associatedToken == treasuryAssociatedTokenMint?', selectedVestingContract?.associatedToken === data.treasuryAssociatedTokenMint ? 'true' : 'false', 'blue');
 
-      /**
-       * payer: PublicKey
-       * treasurer: PublicKey
-       * treasury: PublicKey
-       * stream: PublicKey
-       * beneficiary: PublicKey
-       * treasuryAssociatedTokenMint: PublicKey
-       * allocationAssigned: number
-       * streamName?: string | undefined
-       */
+      // TODO: Modify method signature for amount parameters to string | number
       const createStreamTx = await msp.createStreamWithTemplateFromPda(
         publicKey,                                                                // payer
         multisig.authority,                                                       // treasurer
@@ -2507,12 +2479,13 @@ export const VestingView = () => {
       if (!msp) { return null; }
 
       if (!isMultisigTreasury()) {
+        // TODO: Modify method signature for amount parameters to string | number
         return await msp.treasuryWithdraw(
           new PublicKey(data.payer),              // payer
           new PublicKey(data.destination),        // treasurer
           new PublicKey(data.treasury),           // treasury
           data.amount,                            // amount
-          true                                    // TODO: Define if the user can determine this
+          true                                    // autoWsol
         );
       }
 
@@ -2524,12 +2497,13 @@ export const VestingView = () => {
       if (!multisig) { return null; }
       multisigAuthority = multisig.authority.toBase58();
 
+      // TODO: Modify method signature for amount parameters to string | number
       const msTreasuryWithdraw = await msp.treasuryWithdraw(
         new PublicKey(data.payer),              // payer
         new PublicKey(data.destination),        // treasurer
         new PublicKey(data.treasury),           // treasury
         data.amount,                            // amount
-        false
+        false                                   // autoWsol
       );
 
       const ixData = Buffer.from(msTreasuryWithdraw.instructions[0].data);
