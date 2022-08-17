@@ -5,11 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../../../components/Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { formatThousands, makeDecimal } from '../../../../utils/utils';
+import { formatThousands } from '../../../../utils/utils';
 import { PublicKey } from '@solana/web3.js';
 import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../utils/ui';
 import { IconLoading } from '../../../../Icons';
-import BN from 'bn.js';
 
 export const VestingContractList = (props: {
     loadingVestingAccounts: boolean;
@@ -131,11 +130,12 @@ export const VestingContractList = (props: {
                     const lockPeriodAmount = streamTemplate.durationNumberOfUnits;
                     const lockPeriodUnits = streamTemplate.rateIntervalInSeconds;
                     const lockPeriod = lockPeriodAmount * lockPeriodUnits;
-                    const cliffReleasePercentage = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
+                    // const cliffReleasePercentage = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
                     const sdTimestamp = toTimestamp(startDate);
                     const finishDate = new Date((sdTimestamp + lockPeriod) * 1000).toUTCString();
                     const todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
-                    completedVestingPercentage = todayPct > cliffReleasePercentage ? todayPct : cliffReleasePercentage;
+                    // completedVestingPercentage = todayPct > cliffReleasePercentage ? todayPct : cliffReleasePercentage;
+                    completedVestingPercentage = todayPct > 100 ? 100 : todayPct;
                 }
             } else {
                 completedVestingPercentage = 0;

@@ -1,24 +1,29 @@
-import { Button, Col, Divider, Modal, Row, Spin, Switch, Tooltip } from "antd";
+import { Button, Col, DatePicker, Divider, Dropdown, Menu, Modal, Row, Spin, Switch, TimePicker, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
-import { TransactionStatus } from "../../models/enums";
+import { PaymentRateType, TransactionStatus } from "../../models/enums";
 import { StepSelector } from "../StepSelector";
 import "./style.scss";
-import { IconInfoCircle, IconKey, IconLock } from "../../Icons";
+import { IconCaretDown, IconInfoCircle, IconKey, IconLock } from "../../Icons";
 import { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
+import { DATEPICKER_FORMAT, MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { addDays, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
-import { getTransactionOperationDescription, isValidAddress } from "../../utils/ui";
+import { getCoolOffPeriodOptionLabel, getTransactionOperationDescription, isValidAddress, PaymentRateTypeOption } from "../../utils/ui";
 import { isError } from "../../utils/transactions";
 import { CreateNewSafeParams } from "../../models/multisig";
+import moment from 'moment';
+import { isMobile } from "react-device-detect";
+import useWindowSize from "../../hooks/useWindowResize";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+
+const timeFormat="hh:mm A"
 
 export const MultisigCreateSafeModal = (props: {
   handleClose: any;
@@ -31,10 +36,16 @@ export const MultisigCreateSafeModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
+  const { width } = useWindowSize();
   const {
     transactionStatus,
+    coolOffPeriodFrequency,
+    setCoolOffPeriodFrequency,
     setTransactionStatus,
   } = useContext(AppStateContext);
+
+  const date = addDays(new Date(), 1).toLocaleDateString("en-US");
+  const time = moment().format(timeFormat);
 
   const { handleClose, handleOk, isVisible, isBusy, nativeBalance, transactionFees, multisigAccounts } = props;
 
@@ -44,6 +55,22 @@ export const MultisigCreateSafeModal = (props: {
   const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
   const [isAllowToRejectProposal, setAllowToRejectProposal] = useState<boolean>(true);
+  const [feeAmount] = useState<number>(transactionFees.multisigFee + transactionFees.rentExempt);
+  const [coolOffDate, setCoolOffDate] = useState<string | undefined>(date);
+  const [coolOffTime, setCoolOffTime] = useState<string | undefined>(time);
+  const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+  const [isCoolOffPeriodEnable, setIsCoolOffPeriodEnable] = useState<boolean>(true);
+  const [createdByName, setCreatedByName] = useState<string>("");
+  const [coolOfPeriodAmount, setCoolOfPeriodAmount] = useState<number>(1);
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
 
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
@@ -73,12 +100,43 @@ export const MultisigCreateSafeModal = (props: {
     setSafeName(e.target.value);
   }
 
+  const onTimePickerChange = (time: moment.Moment | null, timeString: string) => {
+    if (time) {
+      const shortTime = time.format(timeFormat);
+      setCoolOffTime(shortTime);
+    }
+  };
+
+  const handleDateChange = (date: string) => {
+    setCoolOffDate(date);
+  }
+
+  const todayAndPriorDatesDisabled = (current: any) => {
+    // Can not select neither today nor days before today
+    return current && current < moment().add(1, 'day').startOf('day');
+  }
+
+  const onResetDate = () => {
+    setCoolOffDate(date);
+  }
+
+  const renderDatePickerExtraPanel = () => {
+    return (
+      <span className="flat-button tiny stroked primary" onClick={onResetDate}>
+        <span className="mx-1">Reset</span>
+      </span>
+    );
+  }
+
   const onAcceptModal = () => {
     const options: CreateNewSafeParams = {
       label: safeName,
       threshold: multisigThreshold,
       owners: multisigOwners,
-      isAllowToRejectProposal: isAllowToRejectProposal
+      isAllowToRejectProposal: isAllowToRejectProposal,
+      isCoolOffPeriodEnable: isCoolOffPeriodEnable,
+      coolOfPeriodAmount: coolOfPeriodAmount,
+      coolOffPeriodFrequency: coolOffPeriodFrequency
     }
     handleOk(options);
   }
@@ -92,6 +150,9 @@ export const MultisigCreateSafeModal = (props: {
       setSafeName('');
       setMultisigThreshold(0);
       setMultisigOwners([]);
+      setIsCoolOffPeriodEnable(true);
+      setCoolOfPeriodAmount(1);
+      setCoolOffPeriodFrequency(PaymentRateType.PerDay);
     }, 50);
 
     setTransactionStatus({
@@ -122,9 +183,53 @@ export const MultisigCreateSafeModal = (props: {
       : false;
   }
 
-  const onChangeSwitch = (value: boolean) => {
+  const onChangeRejectProposalRejectProposalSwitch = (value: boolean) => {
     setAllowToRejectProposal(value);
   };
+
+  const onChangeCoolOffPeriodSwitch = (value: boolean) => {
+    setIsCoolOffPeriodEnable(value);
+  };
+
+  const handleCoolOffPeriodAmountChange = (e: any) => {
+    setCoolOfPeriodAmount(e.target.value);
+  }
+
+  const handleCoolOffPeriodOptionChange = (val: PaymentRateType) => {
+    setCoolOffPeriodFrequency(val);
+  }
+
+  const getCoolOffPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
+    let index = 0;
+    const options: PaymentRateTypeOption[] = [];
+    for (const enumMember in value) {
+        const mappedValue = parseInt(enumMember, 10);
+        if (!isNaN(mappedValue)) {
+            const item = new PaymentRateTypeOption(
+                index,
+                mappedValue,
+                getCoolOffPeriodOptionLabel(mappedValue, t)
+            );
+            options.push(item);
+        }
+        index++;
+    }
+    return options;
+  }
+
+  const coolOffPeriodOptionsMenu = (
+    <Menu>
+      {getCoolOffPeriodOptionsFromEnum(PaymentRateType).map((item) => {
+        return (
+          <Menu.Item
+            key={item.key}
+            onClick={() => handleCoolOffPeriodOptionChange(item.value)}>
+            {item.text}
+          </Menu.Item>
+        );
+      })}
+    </Menu>
+  );
 
   // When modal goes visible, add current wallet address as first participant
   useEffect(() => {
@@ -149,8 +254,6 @@ export const MultisigCreateSafeModal = (props: {
     isVisible,
     multisigAccounts
   ]);
-
-  const [createdByName, setCreatedByName] = useState<string>("");
 
   useEffect(() => {
     const owner = multisigOwners.filter((owner) => owner.address === publicKey?.toBase58());
@@ -255,34 +358,55 @@ export const MultisigCreateSafeModal = (props: {
                     label={"Valid owners"}
                     multisigAddresses={multisigAddresses}
                     onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
+                    isOwnersListValid={isOwnersListValid()}
                   />
 
                   {/* Minimum required signatures for proposal approval */}
-                  <div className="form-label">Minimum required signatures for proposal approval</div>
-                  <div className="required-signatures-box">
-                    <div className="info-label">A proposal will pass with:</div>
-                    <div className="required-signatures-icons">
-                      {multisigOwners.map((icon, index) => {
-                        const onSelectIcon = () => {
-                          setMultisigThreshold(index + 1);
-                        }
-
-                        return (
-                          <div className={`icon-container simplelink ${(multisigThreshold >= (index + 1)) ? "bg-green" : "bg-gray-light"}`} key={index} onClick={onSelectIcon}>
-                            {(multisigThreshold >= (index + 1)) ? (
-                              <IconKey className="mean-svg-icons key-icon"/>
-                            ) : (
-                              <IconLock className="mean-svg-icons lock-icon"/>
-                            )}
-                            <span className="signatures-number">{index + 1}</span>
-                          </div>
-                        )
-                      })}
-                    </div>
+                  <div className="form-label icon-label">
+                    Minimum required signatures for proposal approval
+                    <Tooltip placement="bottom" title="">
+                      <span className="icon-info-circle simplelink">
+                        <IconInfoCircle className="mean-svg-icons" />
+                      </span>
+                    </Tooltip>
                   </div>
 
+                  {multisigThreshold > 0 && (
+                    <div className="required-signatures-box">
+                      <div className="info-label">A proposal will pass with:</div>
+                      <div className="required-signatures-icons">
+                        {multisigOwners.map((icon, index) => {
+                          const onMultisigThresholdNumber = () => {
+                            setMultisigThreshold(index + 1);
+                          }
+
+                          const onChangeMultisigThreholdNumber = () => {
+                            if (multisigThreshold > 1 && multisigThreshold === index + 1) {
+                              setMultisigThreshold(index);
+                            }
+                          }
+
+                          return (
+                            <div className={`icon-container ${(multisigOwners.length > 1) ? "simplelink" : "not-allowed-cursor"} ${(multisigThreshold >= (index + 1)) ? "bg-green" : "bg-gray-light"}`} key={index} onClick={() => {
+                              onMultisigThresholdNumber();
+                              onChangeMultisigThreholdNumber();
+                            }}>
+                            {/* }}onClick={onMultisigThresholdNumber}> */}
+                              {(multisigThreshold >= (index + 1)) ? (
+                                <IconKey className="mean-svg-icons key-icon"/>
+                              ) : (
+                                <IconLock className="mean-svg-icons lock-icon"/>
+                              )}
+                              <span className="signatures-number">{index + 1}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Allow owners to Reject a Proposal */}
-                  <div className="d-flex align-items-center mt-3">
+                  {/* {/* <div className="d-flex align-items-center mt-3">
                     <div className="form-label icon-label">
                       Allow owners to Reject a Proposal
                       <Tooltip placement="bottom" title="Owners can reject a proposal before it has enough signatures and move to Passed status or failed. Otherwise only the proposal originator is able to Reject it.">
@@ -294,8 +418,135 @@ export const MultisigCreateSafeModal = (props: {
                     <Switch 
                       size="small"
                       defaultChecked
-                      onChange={onChangeSwitch} />
+                      onChange={onChangeRejectProposalSwitch} />
+                  </div> */}
+
+                  {/* Enable cool-off period */}
+                  <div className="d-flex align-items-center mt-3">
+                    <div className="form-label icon-label">
+                      Enable cool-off period
+                      <Tooltip placement="bottom" title="Cool-off period is a time where no actions take place on a proposal that is passed already, and before it gets executed.">
+                        <span className="icon-info-circle simplelink">
+                          <IconInfoCircle className="mean-svg-icons" />
+                        </span>
+                      </Tooltip>
+                    </div>
+                    <Switch 
+                      size="small"
+                      defaultChecked
+                      onChange={onChangeCoolOffPeriodSwitch} />
                   </div>
+
+                  {isCoolOffPeriodEnable && (
+                    <>
+                      <div className="mb-0 mt-1">
+                        <div className="form-label">Cool-off period</div>
+                      </div>
+                      <div className="two-column-layout">
+                        <div className="left">
+                          <div className="well">
+                            <div className="flex-fixed-left">
+                              <div className="left">
+                                <input
+                                  className="general-text-input"
+                                  inputMode="decimal"
+                                  autoComplete="off"
+                                  autoCorrect="off"
+                                  type="number"
+                                  onChange={handleCoolOffPeriodAmountChange}
+                                  pattern="^[0-9]*[.,]?[0-9]*$"
+                                  min={1}
+                                  placeholder={`Number of ${getCoolOffPeriodOptionLabel(coolOffPeriodFrequency, t)}`}
+                                  minLength={1}
+                                  maxLength={79}
+                                  spellCheck="false"
+                                  value={coolOfPeriodAmount}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="right">
+                          <div className="well mb-0">
+                            <div className="flex-fixed-left">
+                              <div className="left">
+                                <Dropdown
+                                  overlay={coolOffPeriodOptionsMenu}
+                                  trigger={["click"]}>
+                                  <span className="dropdown-trigger no-decoration flex-fixed-right large-dropdown-area ">
+                                    <div className="left">
+                                      <span className="capitalize-first-letter">{getCoolOffPeriodOptionLabel(coolOffPeriodFrequency, t)}{" "}</span>
+                                    </div>
+                                    <div className="right">
+                                      <IconCaretDown className="mean-svg-icons" />
+                                    </div>
+                                  </span>
+                                </Dropdown>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {/* {!isXsDevice ? (
+                        <div className="two-column-form-layout mb-0 mt-1">
+                          <div className="form-label">Date</div>
+                          <div className="form-label ml-3">Time</div>
+                        </div>
+                      ) : (
+                        <div className="mb-0 mt-1">
+                          <div className="form-label">Date and time</div>
+                        </div>
+                      )}
+                      <div className="two-column-layout">
+                        <div className="left">
+                          <div className="well">
+                            <div className="flex-fixed-right">
+                              <div className="left static-data-field">{coolOffDate}</div>
+                              <div className="right">
+                                <div className="add-on simplelink">
+                                  <>
+                                    {
+                                      <DatePicker
+                                        size="middle"
+                                        bordered={false}
+                                        className="addon-date-picker"
+                                        aria-required={true}
+                                        allowClear={false}
+                                        disabledDate={todayAndPriorDatesDisabled}
+                                        placeholder="Pick a date"
+                                        onChange={(value: any, date: string) => handleDateChange(date)}
+                                        value={moment(
+                                          coolOffDate,
+                                          DATEPICKER_FORMAT
+                                        ) as any}
+                                        format={DATEPICKER_FORMAT}
+                                        showNow={false}
+                                        showToday={false}
+                                        renderExtraFooter={renderDatePickerExtraPanel}
+                                      />
+                                    }
+                                  </>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="right">
+                          <div className="well time-picker">
+                            <TimePicker
+                              defaultValue={moment()}
+                              bordered={false}
+                              allowClear={false}
+                              size="middle"
+                              use12Hours
+                              format={timeFormat}
+                              onChange={onTimePickerChange} 
+                            />
+                          </div>
+                        </div>
+                      </div> */}
+                    </>
+                  )}
                 </>
               </div>
 
@@ -352,19 +603,37 @@ export const MultisigCreateSafeModal = (props: {
                       )}
                     </Row>
 
+                    {/* Cool-off period */}
+                    <Row className="mb-1">
+                      <>
+                        <Col span={8} className="text-right pr-1">
+                          <span className="info-label">Cool-off period:</span>
+                        </Col>
+                        <Col span={16} className="text-left pl-1">
+                        {(isCoolOffPeriodEnable && coolOfPeriodAmount && coolOffPeriodFrequency) ? (
+                          <span>{`${coolOfPeriodAmount} ${getCoolOffPeriodOptionLabel(coolOffPeriodFrequency, t)}`}</span>
+                        ) : (
+                          <span>disabled</span>
+                        )}
+                        </Col>
+                      </>
+                    </Row>
+
                     <Divider plain />
 
                     <div className="well mt-2 mb-1 proposal-summary-container vertical-scroll">
                       <div className="mb-1">
                         {multisigOwners.map((owner, index) => (
-                          <div key={index}>
-                            <span className="info-label">{owner.name}:</span><br />
-                            <span className="info-data simplelink underline-on-hover" onClick={() => <CopyExtLinkGroup content={owner.address} externalLink={false} />}>{owner.address}</span>
-                          </div>
+                          owner.name && owner.address && (
+                            <div key={index}>
+                              <span className="info-label">{owner.name}:</span><br />
+                              <span className="info-data simplelink underline-on-hover" onClick={() => <CopyExtLinkGroup content={owner.address} externalLink={false} />}>{owner.address}</span>
+                            </div>
+                          )
                         ))}
                       </div>
                       <div>
-                        The creation will cost approximately 0.02583248 SOL. The exact amount will be determined by your wallet.
+                        {`The creation will cost approximately ${feeAmount} SOL. The exact amount will be determined by your wallet.`}
                       </div>
                     </div>
                   </div>
@@ -383,7 +652,7 @@ export const MultisigCreateSafeModal = (props: {
                     shape="round"
                     type="ghost"
                     size="middle"
-                    className="thin-stroke col-6"
+                    className="thin-stroke center-text-in-btn"
                     onClick={() => onStepperChange(0)}
                     disabled={
                       !publicKey
@@ -398,10 +667,15 @@ export const MultisigCreateSafeModal = (props: {
                     type="primary"
                     shape="round"
                     size="middle"
-                    className="col-6"
+                    className="thin-stroke col-6 center-text-in-btn"
                     // onClick={onContinueStepTwoButtonClick}
                     onClick={onContinueStepOneButtonClick}
-                    disabled={!publicKey || !isFormValid()}
+                    disabled={
+                      !publicKey ||
+                      !isFormValid() ||
+                      (isCoolOffPeriodEnable && !coolOfPeriodAmount) ||
+                      (isCoolOffPeriodEnable && coolOfPeriodAmount === 0)
+                    }
                   >
                     {getStepTwoContinueButtonLabel()}
                   </Button>
@@ -415,10 +689,10 @@ export const MultisigCreateSafeModal = (props: {
                 <Col span={12} className="d-flex justify-content-center">
                   <Button
                     block
-                    shape="round"
                     type="ghost"
+                    shape="round"
                     size="middle"
-                    className="thin-stroke col-6"
+                    className="thin-stroke mr-1 center-text-in-btn"
                     // onClick={() => onStepperChange(1)}
                     onClick={() => onStepperChange(0)}
                     disabled={
@@ -434,7 +708,7 @@ export const MultisigCreateSafeModal = (props: {
                     type="primary"
                     shape="round"
                     size="middle"
-                    className="col-6"
+                    className="thin-stroke ml-1 center-text-in-btn"
                     onClick={() => onAcceptModal()}
                     disabled={
                       !publicKey ||

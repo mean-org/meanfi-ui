@@ -10,7 +10,7 @@ import { SolBalanceModal } from "../../../../../components/SolBalanceModal";
 import { MIN_SOL_BALANCE_REQUIRED } from "../../../../../constants";
 import { useNativeAccount } from "../../../../../contexts/accounts";
 import { AppStateContext } from "../../../../../contexts/appstate";
-import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
+import { IconEllipsisVertical, IconInfoCircle, IconLoading } from "../../../../../Icons";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
 import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
@@ -365,6 +365,19 @@ export const SafeInfo = (props: {
             </Button>
           )}
 
+          {/* <div className="cool-off-period-label">
+            <div className="icon-label">
+              <div className="pl-1">
+                <span className="info-label">Cool-off period: </span>
+                <span className="info-value"> 24h</span>
+              </div>
+              <Tooltip placement="bottom" title="This is the period of time that applies to every proposal in this safe. To change it edit the safe.">
+                <span className="icon-info-circle simplelink">
+                  <IconInfoCircle className="mean-svg-icons" />
+                </span>
+              </Tooltip>
+            </div>
+          </div> */}
         </Col>
         
         <Col xs={4} sm={6} md={4} lg={6}>
