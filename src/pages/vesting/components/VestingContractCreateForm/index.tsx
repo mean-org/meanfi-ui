@@ -827,7 +827,6 @@ export const VestingContractCreateForm = (props: {
                                                 mintAddress={selectedToken.address}
                                                 name={selectedToken.name}
                                                 showCaretDown={true}
-                                                showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                                 fullTokenInfo={selectedToken}
                                             />
                                         )}

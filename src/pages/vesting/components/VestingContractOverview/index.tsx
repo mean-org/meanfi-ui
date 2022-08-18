@@ -18,8 +18,9 @@ import {
     percentage,
     consoleOut,
     percentual,
+    stringNumberFormat,
 } from '../../../../utils/ui';
-import { formatThousands, getAmountWithSymbol, makeDecimal } from '../../../../utils/utils';
+import { formatThousands, getAmountWithSymbol, makeDecimal, toUiAmount2 } from '../../../../utils/utils';
 import BN from 'bn.js';
 import { Alert, Progress } from 'antd';
 import { TokenIcon } from '../../../../components/TokenIcon';
@@ -144,6 +145,12 @@ export const VestingContractOverview = (props: {
 
         return vested;
     }, [cliffReleasePercentage, isContractFinished, lockPeriodAmount, lockPeriodFrequency, lockPeriodUnits, paymentStartDate, t, vestingContractFlowRate]);
+
+    const getAvailableStreamingBalanceTokenAmount = () => {
+        if (availableStreamingBalance) {
+            //
+        }
+    }
 
 
     /////////////////////
@@ -376,14 +383,15 @@ export const VestingContractOverview = (props: {
                                 Unallocated tokens
                             </div>
                             <div className="font-size-100 fg-secondary-50">
-                                {selectedToken ?
-                                    getAmountWithSymbol(
-                                        availableStreamingBalance,
-                                        selectedToken.address,
-                                        false,
-                                        splTokenList,
-                                    ) : '--'
-                                }
+                                {selectedToken ? (
+                                    <>
+                                        {`${stringNumberFormat(
+                                                toUiAmount2(availableStreamingBalance, selectedToken.decimals),
+                                                4,
+                                            )} ${selectedToken.symbol}`
+                                        }
+                                    </>
+                                ) : '--'}
                             </div>
                         </div>
                     </div>

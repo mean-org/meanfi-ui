@@ -870,6 +870,18 @@ export const getRelativeDate = (timestamp: number) => {
     return relativeTimeFromDates(reference);
 }
 
+export function stringNumberFormat(value: string, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',', hideDecimalsIfZero = true) {
+    if (!value) {
+        return '0';
+    }
+    const parts = value.split('.');
+    const fnums = parts[0];
+    let decimals = '';
+    if (parts[1] && (+parts[1] !== 0 || !hideDecimalsIfZero)) {
+        decimals = decimalsSeparator + parts[1];
+    }
+    return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + thowsendsSeparator) + decimals;
+}
 
 function numberFormat(value: any, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',', hideDecimalsIfZero = true) {
     if (!value) {
