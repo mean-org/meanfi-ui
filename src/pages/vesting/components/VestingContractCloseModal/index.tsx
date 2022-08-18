@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { consoleOut, getTransactionOperationDescription } from '../../../../utils/ui';
+import { getTransactionOperationDescription } from '../../../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../../../utils/transactions';
 import { TransactionStatus } from '../../../../models/enums';
-import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, makeDecimal } from '../../../../utils/utils';
+import { getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress } from '../../../../utils/utils';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { Treasury } from '@mean-dao/msp';
@@ -44,6 +44,7 @@ export const VestingContractCloseModal = (props: {
   const { t } = useTranslation('common');
   const {
     theme,
+    splTokenList,
     transactionStatus,
     getTokenByMintAddress
   } = useContext(AppStateContext);
@@ -64,14 +65,19 @@ export const VestingContractCloseModal = (props: {
   }, [searchParams]);
 
   const getAvailableStreamingBalance = useCallback((item: Treasury) => {
-    if (item && selectedToken) {
-        const decimals = selectedToken.decimals;
-        const unallocated = item.balance - item.allocationAssigned;
-        const ub = makeDecimal(new BN(unallocated), decimals);
-        return ub;
+
+    const getUnallocatedBalance = (details: Treasury) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
     }
-    return 0;
-  }, [selectedToken]);
+
+    if (item) {
+        const unallocated = getUnallocatedBalance(item);
+        return unallocated;
+    }
+    return new BN(0);
+  }, []);
 
   const canClose = () => {
     if (vestingContract && vestingContract.totalStreams === 0) {
@@ -175,7 +181,13 @@ export const VestingContractCloseModal = (props: {
                     <div className="text-center">{t('vesting.close-account.funds-left-in-contract')}</div>
                     <div className="mt-2 two-column-layout px-5">
                       <div className="left text-right font-extrabold">
-                        {formatThousands(getAvailableStreamingBalance(vestingContract), selectedToken.decimals, selectedToken.decimals)} {selectedToken.symbol}
+                        {getAmountWithSymbol(
+                          getAvailableStreamingBalance(vestingContract),
+                          selectedToken.address,
+                          false,
+                          splTokenList,
+                          selectedToken.decimals
+                        )}
                       </div>
                       <div className="right text-left font-extrabold">
                         {getAmountWithSymbol(treasuryBalance, WRAPPED_SOL_MINT_ADDRESS)}

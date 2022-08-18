@@ -23,6 +23,7 @@ import {
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
+  getSdkValue,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   makeDecimal,
@@ -2657,7 +2658,7 @@ export const AccountsNewView = () => {
               : false;
           
             if (isNewTreasury) {
-              return vB2.totalStreams - vA2.totalStreams;
+              return +getSdkValue(vB2.totalStreams) - +getSdkValue(vA2.totalStreams);
             } else {
               return vB1.streamsAmount - vA1.streamsAmount;
             }
@@ -2681,13 +2682,21 @@ export const AccountsNewView = () => {
   ]);
 
   const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
+
+    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
+    }
+
     if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
-        const unallocated = tsry.balance - tsry.allocationAssigned;
+        const unallocated = getUnallocatedBalance(tsry);
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         const ub = isNewTreasury
-            ? makeDecimal(new BN(unallocated), decimals)
-            : unallocated;
+          ? makeDecimal(unallocated, decimals)
+          : unallocated.toNumber();
+        consoleOut('unallocatedBalance:', ub.toString(), 'blue');
         return ub;
     }
     return 0;

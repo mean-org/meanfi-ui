@@ -24,7 +24,7 @@ import {
 } from '@mean-dao/msp';
 import "./style.scss";
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
+import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount2 } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
 import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -149,8 +149,8 @@ export const VestingView = () => {
   const [loadingContractActivity, setLoadingContractActivity] = useState(false);
   const [contractActivity, setContractActivity] = useState<VestingTreasuryActivity[]>([]);
   const [hasMoreContractActivity, setHasMoreContractActivity] = useState<boolean>(true);
-  const [availableStreamingBalance, setAvailableStreamingBalance] = useState(0);
-  const [associatedTokenBalance, setAssociatedTokenBalance] = useState(0);
+  const [availableStreamingBalance, setAvailableStreamingBalance] = useState(new BN(0));
+  const [associatedTokenBalance, setAssociatedTokenBalance] = useState(new BN(0));
   const [associatedTokenDecimals, setAssociatedTokenDecimals] = useState(6);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
@@ -284,6 +284,15 @@ export const VestingView = () => {
   /////////////////
   //  Callbacks  //
   /////////////////
+
+  const hasBalanceChanged = () => {
+    if (!selectedVestingContract) {
+      return false;
+    }
+    return associatedTokenBalance.eq(new BN(selectedVestingContract.balance))
+      ? false
+      : true;
+  }
 
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
@@ -3310,7 +3319,7 @@ export const VestingView = () => {
         action: MetaInfoCtaAction.VestingContractCreateStreamOnce,
         isVisible: true,
         caption: 'Create stream',
-        disabled: availableStreamingBalance === 0,
+        disabled: availableStreamingBalance.eqn(0),
         uiComponentType: 'button',
         uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamOnce}`,
         tooltip: '',
@@ -3340,7 +3349,7 @@ export const VestingView = () => {
     //     action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
     //     isVisible: true,
     //     caption: 'Bulk create',
-    //     disabled: availableStreamingBalance === 0,
+    //     disabled: availableStreamingBalance.eqn(0),
     //     uiComponentType: 'button',
     //     uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
     //     tooltip: '',
@@ -3355,7 +3364,7 @@ export const VestingView = () => {
       caption: 'Claim unallocated tokens',
       isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: !canPerformAnyAction() || availableStreamingBalance === 0,
+      disabled: !canPerformAnyAction() || availableStreamingBalance.eqn(0),
       uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractWithdrawFunds}`,
       tooltip: '',
       callBack: showVestingContractTransferFundsModal
@@ -3547,11 +3556,11 @@ export const VestingView = () => {
     const getStreamingAccountAtaBalance = async (address: string, streamingAccountAddress: string) => {
 
       if (!connection || !publicKey || !address || !streamingAccountAddress) {
-        return 0;
+        return new BN(0);
       }
 
-      let balance = 0;
-      consoleOut('got inside getStreamingAccountAtaBalance:', '', 'blue');
+      let balance = new BN(0);
+      let decimals = 0;
 
       try {
         consoleOut('address', address, 'blue');
@@ -3562,9 +3571,11 @@ export const VestingView = () => {
         const ta = await getTokenAccountBalanceByAddress(connection, saAtaTokenAddress);
         consoleOut('getTokenAccountBalanceByAddress ->', ta, 'blue');
         if (ta) {
-          balance = new BN(ta.amount).toNumber();
+          balance = new BN(ta.amount);
+          decimals = ta.decimals;
         }
-        consoleOut('VC ATA balance:', balance, 'blue');
+        consoleOut('VC ATA balance:', toUiAmount2(balance, decimals), 'blue');
+        consoleOut('VC ATA balance (BN):', balance.toString(), 'blue');
         return balance;
       } catch (error) {
         return balance;
@@ -3578,7 +3589,7 @@ export const VestingView = () => {
       .then(value => setAssociatedTokenBalance(value))
       .catch(err => {
         console.error(err);
-        setAssociatedTokenBalance(0);
+        setAssociatedTokenBalance(new BN(0));
       });
 
     }
@@ -3723,20 +3734,24 @@ export const VestingView = () => {
 
   // Keep the available streaming balance for the current vesting contract updated
   useEffect(() => {
-    let streamingBalance = 0;
+    let streamingBalance = new BN(0);
 
     if (!connection || !selectedVestingContract) {
       setAvailableStreamingBalance(streamingBalance);
       return;
     }
 
+    const getUnallocatedBalance = (details: Treasury) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
+    }
+
     getTokenOrCustomToken(selectedVestingContract.associatedToken as string)
     .then(token => {
-      const unallocated = selectedVestingContract.balance - selectedVestingContract.allocationAssigned;
-      const ub = makeDecimal(new BN(unallocated), token.decimals);
-      consoleOut('ub:', ub, 'blue');
-      streamingBalance = ub >= 0 ? ub : 0;
-      consoleOut('Available streaming balance:', streamingBalance, 'blue');
+      streamingBalance = getUnallocatedBalance(selectedVestingContract);
+      consoleOut('Available streaming balance:', toUiAmount2(streamingBalance, token.decimals), 'blue');
+      consoleOut('Available streaming balance (BN):', streamingBalance.toString(), 'blue');
       setAvailableStreamingBalance(streamingBalance);
       setAssociatedTokenDecimals(token.decimals);
     });
@@ -4250,7 +4265,7 @@ export const VestingView = () => {
                         {renderMetaInfoCtaRow()}
 
                         {/* Alert to offer refresh vesting contract */}
-                        {selectedVestingContract && associatedTokenBalance !== selectedVestingContract.balance && (
+                        {selectedVestingContract && hasBalanceChanged() && (
                           <div className="alert-info-message mb-2">
                             <Alert message={(
                                 <>

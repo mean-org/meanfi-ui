@@ -249,12 +249,19 @@ export const StreamAddFundsModal = (props: {
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
+
+    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
+    }
+
     if (props.isVisible && treasuryDetails) {
-      const unallocated = treasuryDetails.balance - treasuryDetails.allocationAssigned;
+      const unallocated = getUnallocatedBalance(treasuryDetails);
       const ub = isNewTreasury()
-        ? new BN(unallocated)
-        : makeInteger(unallocated, selectedToken?.decimals || 6);
-      consoleOut('unallocatedBalance:', ub.toNumber(), 'blue');
+        ? unallocated
+        : makeInteger(unallocated.toNumber(), selectedToken?.decimals || 6);
+      consoleOut('unallocatedBalance:', ub.toString(), 'blue');
       setUnallocatedBalance(ub);
     }
   }, [

@@ -7,6 +7,7 @@ import {
   cutNumber,
   formatThousands,
   getAmountWithSymbol,
+  getSdkValue,
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
   makeDecimal,
@@ -580,12 +581,19 @@ export const TreasuryStreamCreateModal = (props: {
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
+
+    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
+    }
+
     if (workingTreasuryDetails) {
-      const unallocated = workingTreasuryDetails.balance - workingTreasuryDetails.allocationAssigned;
+      const unallocated = getUnallocatedBalance(workingTreasuryDetails);
       const ub = isNewTreasury()
-        ? new BN(unallocated)
-        : makeInteger(unallocated, selectedToken?.decimals || 6);
-      consoleOut('unallocatedBalance:', ub.toNumber(), 'blue');
+        ? unallocated
+        : makeInteger(unallocated.toNumber(), selectedToken?.decimals || 6);
+      consoleOut('unallocatedBalance:', ub.toString(), 'blue');
       setUnallocatedBalance(ub);
     }
   }, [
@@ -1679,7 +1687,7 @@ export const TreasuryStreamCreateModal = (props: {
         ) : (
           <>
           <div className="rate-amount">
-            {formatThousands(isV2Treasury ? v2.totalStreams : v1.streamsAmount)}
+            {formatThousands(isV2Treasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
           </div>
           <div className="interval">streams</div>
           </>

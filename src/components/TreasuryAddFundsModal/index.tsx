@@ -9,6 +9,7 @@ import { TokenDisplay } from '../TokenDisplay';
 import {
   formatThousands,
   getAmountWithSymbol,
+  getSdkValue,
   isValidNumber,
   makeInteger,
   shortenAddress,
@@ -259,6 +260,15 @@ export const TreasuryAddFundsModal = (props: {
     }
   }, [fundFromSafeOption, nativeBalance, selectedToken, tokenBalance, userBalances]);
 
+  const isNewTreasury = useCallback((treasury: Treasury | TreasuryInfo) => {
+    if (treasury) {
+      const v2 = treasury as Treasury;
+      return v2.version >= 2 ? true : false;
+    }
+
+    return false;
+  }, []);
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -324,13 +334,22 @@ export const TreasuryAddFundsModal = (props: {
 
   // Set available balance in BN either from user's wallet or from treasury if a stream is being funded
   useEffect(() => {
+
+    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
+    }
+
     if (isVisible && workingTreasuryDetails && selectedToken) {
       const decimals = selectedToken ? selectedToken.decimals : 6;
       if (highLightableStreamId) {
         // Take source balance from the treasury
-        const unallocated = workingTreasuryDetails.balance - workingTreasuryDetails.allocationAssigned;
-        const ub = new BN(unallocated);
-        consoleOut('Treasury unallocated balance:', ub.toString(), 'blue');
+        const unallocated = getUnallocatedBalance(workingTreasuryDetails);
+        const ub = isNewTreasury(workingTreasuryDetails)
+          ? unallocated
+          : makeInteger(unallocated.toNumber(), selectedToken?.decimals || 6);
+        consoleOut('unallocatedBalance:', ub.toString(), 'blue');
         setAvailableBalance(ub);
       } else {
         // Take source balance from the user's wallet
@@ -623,7 +642,7 @@ export const TreasuryAddFundsModal = (props: {
         ) : (
           <>
           <div className="rate-amount">
-            {formatThousands(isV2Treasury ? v2.totalStreams : v1.streamsAmount)}
+            {formatThousands(isV2Treasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
           </div>
           <div className="interval">streams</div>
           </>

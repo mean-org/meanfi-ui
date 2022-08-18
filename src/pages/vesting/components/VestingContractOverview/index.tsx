@@ -28,7 +28,7 @@ import { IconInfoCircle } from '../../../../Icons';
 import { VestingFlowRateInfo } from '../../../../models/vesting';
 
 export const VestingContractOverview = (props: {
-    availableStreamingBalance: number;
+    availableStreamingBalance: number | BN;
     isXsDevice: boolean;
     selectedToken: TokenInfo | undefined;
     streamTemplate: StreamTemplate | undefined;

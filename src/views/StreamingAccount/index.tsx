@@ -2657,19 +2657,26 @@ export const StreamingAccountView = (props: {
     }
   }, [getTimeRemaining, t]);
 
-  const getTreasuryUnallocatedBalance = useCallback(() => {
-    if (!streamingAccountSelected || !selectedToken) {
-      return 0;
+  const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
+
+    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
     }
 
-    const isNewTreasury = streamingAccountSelected.version && streamingAccountSelected.version >= 2 ? true : false;
-    const decimals = selectedToken ? selectedToken.decimals : 6;
-    const unallocated = streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned;
-    const ub = isNewTreasury
-      ? makeDecimal(new BN(unallocated), decimals)
-      : unallocated;
-    return ub;
-  }, [selectedToken, streamingAccountSelected]);
+    if (tsry) {
+        const decimals = assToken ? assToken.decimals : 9;
+        const unallocated = getUnallocatedBalance(tsry);
+        const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
+        const ub = isNewTreasury
+          ? makeDecimal(unallocated, decimals)
+          : unallocated.toNumber();
+        consoleOut('unallocatedBalance:', ub.toString(), 'blue');
+        return ub;
+    }
+    return 0;
+  }, []);
 
   const getTreasuryClosureMessage = () => {
     return (
@@ -2689,16 +2696,16 @@ export const StreamingAccountView = (props: {
   }, [streamingAccountSelected]);
 
   const getStreamingAccountResume = useCallback(() => {
-    if (selectedToken) {
+    if (streamingAccountSelected && selectedToken) {
       return getAmountWithSymbol(
-        getTreasuryUnallocatedBalance(),
+        getTreasuryUnallocatedBalance(streamingAccountSelected, selectedToken),
         selectedToken.address,
         false,
         splTokenList
       );
     }
     return "--";
-  }, [getTreasuryUnallocatedBalance, selectedToken, splTokenList]);
+  }, [getTreasuryUnallocatedBalance, selectedToken, splTokenList, streamingAccountSelected]);
 
   const getStreamingAccountStreams = useCallback((treasuryPk: PublicKey, isNewTreasury: boolean) => {
     if (!publicKey || !ms) { return; }
@@ -2802,8 +2809,10 @@ export const StreamingAccountView = (props: {
   const menu = (
     <Menu>
       {isXsDevice && (
-        <Menu.Item key="ms-00" onClick={showCreateStreamModal} disabled={hasStreamingAccountPendingTx() ||
-      (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)}>
+        <Menu.Item key="ms-00" onClick={showCreateStreamModal} disabled={
+          hasStreamingAccountPendingTx() ||
+          !streamingAccountSelected || getTreasuryUnallocatedBalance(streamingAccountSelected, selectedToken) <= 0
+          }>
           <span className="menu-item-text">Create stream</span>
         </Menu.Item>
       )}
@@ -3085,8 +3094,9 @@ export const StreamingAccountView = (props: {
               size="small"
               className="thin-stroke btn-min-width"
               disabled={
+                !streamingAccountSelected ||
                 hasStreamingAccountPendingTx() ||
-                getTreasuryUnallocatedBalance() <= 0
+                getTreasuryUnallocatedBalance(streamingAccountSelected, selectedToken) <= 0
               }
               onClick={showTransferFundsModal}>
                 <div className="btn-content">
@@ -3101,7 +3111,7 @@ export const StreamingAccountView = (props: {
                 className="thin-stroke btn-min-width"
                 disabled={
                   hasStreamingAccountPendingTx() ||
-                  (!streamingAccountSelected || streamingAccountSelected.balance - streamingAccountSelected.allocationAssigned <= 0)
+                  (!streamingAccountSelected || getTreasuryUnallocatedBalance(streamingAccountSelected, selectedToken) <= 0)
                 }
                 onClick={showCreateStreamModal}>
                   <div className="btn-content">

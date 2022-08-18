@@ -199,14 +199,20 @@ export const VestingContractAddFundsModal = (props: {
 
   // When modal goes visible, Set available balance in BN either from user's wallet or from treasury is a streams is being funded
   useEffect(() => {
+
+    const getUnallocatedBalance = (details: Treasury) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
+    }
+
     if (isVisible && vestingContract && selectedToken && userBalances) {
       const decimals = selectedToken.decimals;
       if (highLightableStreamId) {
         // Take source balance from the treasury
-        const unallocated = vestingContract.balance - vestingContract.allocationAssigned;
-        const ub = new BN(unallocated);
-        consoleOut('Treasury unallocated balance:', ub.toString(), 'blue');
-        setAvailableBalance(ub);
+        const unallocated = getUnallocatedBalance(vestingContract);
+        consoleOut('unallocatedBalance:', unallocated.toString(), 'blue');
+        setAvailableBalance(unallocated);
       } else {
         // Take source balance from the user's wallet
         const userBalance = selectFromTokenBalance();

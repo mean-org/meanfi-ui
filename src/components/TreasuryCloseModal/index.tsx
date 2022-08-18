@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../utils/transactions';
 import { TransactionStatus } from '../../models/enums';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { Treasury, TreasuryType } from '@mean-dao/msp';
 import { AppStateContext } from '../../contexts/appstate';
@@ -125,7 +125,7 @@ export const TreasuryCloseModal = (props: {
         ) : (
           <>
           <div className="rate-amount">
-            {formatThousands(isV2Treasury ? v2.totalStreams : v1.streamsAmount)}
+            {formatThousands(isV2Treasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
           </div>
           <div className="interval">streams</div>
           </>

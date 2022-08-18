@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCur
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
-import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../utils/utils';
+import { cutNumber, formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../utils/utils';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
@@ -18,7 +18,6 @@ import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { TokenDisplay } from '../TokenDisplay';
 import { BN } from 'bn.js';
-
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
@@ -36,6 +35,17 @@ export const TreasuryTransferFundsModal = (props: {
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
 }) => {
+  const {
+    handleClose,
+    handleOk,
+    isVisible,
+    isBusy,
+    nativeBalance,
+    minRequiredBalance,
+    transactionFees,
+    treasuryDetails,
+    multisigAccounts,
+  } = props;
   const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
@@ -45,7 +55,6 @@ export const TreasuryTransferFundsModal = (props: {
     selectedToken,
     isWhitelisted,
     loadingPrices,
-    effectiveRate,
     transactionStatus,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
@@ -64,7 +73,7 @@ export const TreasuryTransferFundsModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
-    const treasuryInfo: any = treasury ?? props.treasuryDetails;
+    const treasuryInfo: any = treasury ?? treasuryDetails;
 
     if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
       return false;
@@ -72,27 +81,27 @@ export const TreasuryTransferFundsModal = (props: {
 
     const treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
-    if (!treasurer.equals(publicKey) && props.multisigAccounts && props.multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
+    if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
       return true;
     }
 
     return false;
   }, [
     publicKey,
-    props.multisigAccounts, 
-    props.treasuryDetails,
+    multisigAccounts, 
+    treasuryDetails,
   ]);
 
   const shouldFundFromTreasury = useCallback(() => {
-    if (!props.treasuryDetails || (props.treasuryDetails && props.treasuryDetails.autoClose)) {
+    if (!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose)) {
       return false;
     }
 
     return true;
-  }, [props.treasuryDetails]);
+  }, [treasuryDetails]);
 
   const onAcceptWithdrawTreasuryFunds = () => {
-    props.handleOk({
+    handleOk({
       title: proposalTitle,
       amount: topupAmount,
       tokenAmount: tokenAmount,
@@ -135,20 +144,20 @@ export const TreasuryTransferFundsModal = (props: {
   }
 
   useEffect(() => {
-    if (props.isVisible) {
-      if (props.multisigAccounts && props.multisigAccounts.length > 0) {
-        const msAddresses = props.multisigAccounts.map(ms => ms.id.toBase58());
+    if (isVisible) {
+      if (multisigAccounts && multisigAccounts.length > 0) {
+        const msAddresses = multisigAccounts.map(ms => ms.id.toBase58());
         setMultisigAddresses(msAddresses);
       }
     }
   }, [
-    props.isVisible,
-    props.multisigAccounts
+    isVisible,
+    multisigAccounts
   ]);
 
   const onCloseModal = () => {
     consoleOut('onCloseModal called!', '', 'crimson');
-    props.handleClose();
+    handleClose();
     onAfterClose();
   }
 
@@ -206,7 +215,7 @@ export const TreasuryTransferFundsModal = (props: {
   };
 
   const refreshPage = () => {
-    props.handleClose();
+    handleClose();
     window.location.reload();
   }
 
@@ -265,9 +274,9 @@ export const TreasuryTransferFundsModal = (props: {
   }
 
   const getMaxAmount = useCallback((preSetting = false) => {
-    if (((localStreamDetail && localStreamDetail.version >= 2 && (localStreamDetail as Stream).feePayedByTreasurer) || preSetting) && props.transactionFees) {
+    if (((localStreamDetail && localStreamDetail.version >= 2 && (localStreamDetail as Stream).feePayedByTreasurer) || preSetting) && transactionFees) {
       const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
-      const feeNumerator = props.transactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
+      const feeNumerator = transactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
       const feeDenaminator = 1000000;
       const badStreamMaxAllocation = unallocatedBalance
         .mul(new BN(feeDenaminator))
@@ -314,7 +323,7 @@ export const TreasuryTransferFundsModal = (props: {
     isWhitelisted,
     localStreamDetail,
     unallocatedBalance,
-    props.transactionFees,
+    transactionFees,
   ]);
 
   const getTokenPrice = useCallback(() => {
@@ -326,27 +335,34 @@ export const TreasuryTransferFundsModal = (props: {
 }, [topupAmount, selectedToken, getTokenPriceBySymbol]);
 
   const isNewTreasury = useCallback(() => {
-    if (props.treasuryDetails) {
-      const v2 = props.treasuryDetails as Treasury;
+    if (treasuryDetails) {
+      const v2 = treasuryDetails as Treasury;
       return v2.version >= 2 ? true : false;
     }
 
     return false;
-  }, [props.treasuryDetails]);
+  }, [treasuryDetails]);
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
-    if (props.isVisible && props.treasuryDetails) {
-      const unallocated = props.treasuryDetails.balance - props.treasuryDetails.allocationAssigned;
+
+    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
+    }
+
+    if (isVisible && treasuryDetails) {
+      const unallocated = getUnallocatedBalance(treasuryDetails);
       const ub = isNewTreasury()
-        ? new BN(unallocated)
-        : makeInteger(unallocated, selectedToken?.decimals || 6);
-      consoleOut('unallocatedBalance:', ub.toNumber(), 'blue');
+        ? unallocated
+        : makeInteger(unallocated.toNumber(), selectedToken?.decimals || 6);
+      consoleOut('unallocatedBalance:', ub.toString(), 'blue');
       setUnallocatedBalance(ub);
     }
   }, [
-    props.isVisible,
-    props.treasuryDetails,
+    isVisible,
+    treasuryDetails,
     selectedToken?.decimals,
     isNewTreasury,
   ]);
@@ -408,7 +424,7 @@ export const TreasuryTransferFundsModal = (props: {
           ) : (
             <>
             <div className="rate-amount">
-              {formatThousands(isNewTreasury ? v2.totalStreams : v1.streamsAmount)}
+              {formatThousands(isNewTreasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
             </div>
             <div className="interval">streams</div>
             </>
@@ -437,7 +453,7 @@ export const TreasuryTransferFundsModal = (props: {
       title={<div className="modal-title">{param === "multisig" ? "Propose withdrawal" : t('treasuries.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      visible={isVisible}
       onOk={onAcceptWithdrawTreasuryFunds}
       onCancel={onCloseModal}
       afterClose={() => {
@@ -445,9 +461,9 @@ export const TreasuryTransferFundsModal = (props: {
         setTokenAmount(new BN(0));
         setIsVerifiedRecipient(false);
       }}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+      <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Proposal title */}
@@ -466,11 +482,11 @@ export const TreasuryTransferFundsModal = (props: {
             )}
 
             {/* Transfer from */}
-            {props.treasuryDetails && (
+            {treasuryDetails && (
               <div className="mb-3">
                 <div className="form-label">{t('treasuries.withdraw-funds.selected-treasury-label')}</div>
                   <div className="well">
-                    {renderTreasury(props.treasuryDetails)}
+                    {renderTreasury(treasuryDetails)}
                   </div>
               </div>
             )}
@@ -512,7 +528,7 @@ export const TreasuryTransferFundsModal = (props: {
                         showCaretDown={false}
                       />
                     )}
-                    {props.treasuryDetails && props.treasuryDetails.autoClose ? (
+                    {treasuryDetails && treasuryDetails.autoClose ? (
                       <>
                         {selectedToken && tokenBalance ? (
                           <div
@@ -571,12 +587,12 @@ export const TreasuryTransferFundsModal = (props: {
               </div>
               <div className="flex-fixed-right">
                 <div className="left inner-label">
-                  {!props.treasuryDetails || (props.treasuryDetails && props.treasuryDetails.autoClose) ? (
+                  {!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose) ? (
                     <span>{t('add-funds.label-right')}:</span>
                   ) : (
                     <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                   )}
-                  {props.treasuryDetails && props.treasuryDetails.autoClose ? (
+                  {treasuryDetails && treasuryDetails.autoClose ? (
                     <span>
                       {`${tokenBalance && selectedToken
                         ? getTokenAmountAndSymbolByTokenAddress(
@@ -636,7 +652,7 @@ export const TreasuryTransferFundsModal = (props: {
             </div>
 
             {/* explanatory paragraph */}
-            {isMultisigTreasury(props.treasuryDetails) && (
+            {isMultisigTreasury(treasuryDetails) && (
               <p>{t("multisig.multisig-assets.explanatory-paragraph")}</p>
             )}
 
@@ -650,7 +666,7 @@ export const TreasuryTransferFundsModal = (props: {
             {!isError(transactionStatus.currentOperation) && (
               <div className="col-12 p-0 mt-3">
                 <Button
-                  className={`center-text-in-btn ${props.isBusy ? 'inactive' : ''}`}
+                  className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
                   block
                   type="primary"
                   shape="round"
@@ -665,7 +681,7 @@ export const TreasuryTransferFundsModal = (props: {
                       refreshPage();
                     }
                   }}>
-                  {props.isBusy
+                  {isBusy
                     ? ('multisig.transfer-tokens.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
                       ? (param === "multisig" ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel())
@@ -692,11 +708,11 @@ export const TreasuryTransferFundsModal = (props: {
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                      props.nativeBalance,
+                      nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
                     feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      props.minRequiredBalance,
+                      minRequiredBalance,
                       NATIVE_SOL_MINT.toBase58()
                     )})
                   }
@@ -706,7 +722,7 @@ export const TreasuryTransferFundsModal = (props: {
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
-              {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+              {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
                 <div className="row two-col-ctas mt-3 transaction-progress p-2">
                   <div className="col-12">
                     <Button
@@ -714,7 +730,7 @@ export const TreasuryTransferFundsModal = (props: {
                       type="text"
                       shape="round"
                       size="middle"
-                      className={props.isBusy ? 'inactive' : ''}
+                      className={isBusy ? 'inactive' : ''}
                       onClick={() => isError(transactionStatus.currentOperation)
                         ? onAcceptWithdrawTreasuryFunds()
                         : onCloseModal()}>
@@ -733,11 +749,11 @@ export const TreasuryTransferFundsModal = (props: {
 
       <div 
         className={
-          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
             ? "panel2 show" 
             : "panel2 hide"
-          }>
-        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        }>
+        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
         <div className="transaction-progress">
           <Spin indicator={bigLoadingIcon} className="icon mt-0" />
           <h4 className="font-bold mb-1">

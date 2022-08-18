@@ -2,8 +2,8 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { StreamTemplate, Treasury } from '@mean-dao/msp';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
-import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
+import { formatThousands, makeDecimal, shortenAddress } from '../../../../utils/utils';
 import { Identicon } from '../../../../components/Identicon';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
@@ -11,7 +11,18 @@ import { getCategoryLabelByValue, VestingFlowRateInfo } from '../../../../models
 import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
 import { IconLoading } from '../../../../Icons';
-import { consoleOut, friendlyDisplayDecimalPlaces, getDurationUnitFromSeconds, getIntervalFromSeconds, getLockPeriodOptionLabelByAmount, getPaymentIntervalFromSeconds, getShortDate, getTimeEllapsed, getTodayPercentualBetweenTwoDates, percentage, percentual, toTimestamp } from '../../../../utils/ui';
+import {
+    consoleOut,
+    friendlyDisplayDecimalPlaces,
+    getIntervalFromSeconds,
+    getLockPeriodOptionLabelByAmount,
+    getPaymentIntervalFromSeconds,
+    getShortDate,
+    getTimeEllapsed,
+    percentage,
+    percentual,
+    toTimestamp,
+} from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { Progress } from 'antd';
 
@@ -33,8 +44,6 @@ export const VestingContractDetails = (props: {
     } = props;
     const {
         theme,
-        splTokenList,
-        getTokenByMintAddress,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
     const [today, setToday] = useState(new Date());
@@ -45,16 +54,6 @@ export const VestingContractDetails = (props: {
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
     const [completedVestingPercentage, setCompletedVestingPercentage] = useState(0);
     const [currentVestingAmount, setCurrentVestingAmount] = useState(0);
-
-    const getAvailableStreamingBalance = useCallback((item: Treasury, token: TokenInfo | undefined) => {
-        if (item) {
-            const decimals = token ? token.decimals : 6;
-            const unallocated = item.balance - item.allocationAssigned;
-            const ub = makeDecimal(new BN(unallocated), decimals);
-            return ub;
-        }
-        return 0;
-    }, []);
 
     const isDateInTheFuture = useCallback((date: string): boolean => {
         const now = today.toUTCString();

@@ -235,11 +235,17 @@ export const VestingContractCreateStreamModal = (props: {
 
     // Set treasury unalocated balance in BN
     useEffect(() => {
+
+        const getUnallocatedBalance = (details: Treasury) => {
+            const balance = new BN(details.balance);
+            const allocationAssigned = new BN(details.allocationAssigned);
+            return balance.sub(allocationAssigned);
+        }
+
         if (isVisible && vestingContract) {
-            const unallocated = vestingContract.balance - vestingContract.allocationAssigned;
-            const ub = new BN(unallocated);
-            consoleOut('unallocatedBalance:', ub.toNumber(), 'blue');
-            setUnallocatedBalance(ub);
+            const unallocated = getUnallocatedBalance(vestingContract);
+            consoleOut('unallocatedBalance:', unallocated.toString(), 'blue');
+            setUnallocatedBalance(unallocated);
         }
     }, [
         isVisible,

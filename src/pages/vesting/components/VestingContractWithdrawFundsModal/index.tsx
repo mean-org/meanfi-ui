@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCur
 import { isError } from '../../../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming';
-import { cutNumber, formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
+import { cutNumber, formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
 import { useWallet } from '../../../../contexts/wallet';
 import { FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
@@ -288,14 +288,19 @@ export const VestingContractWithdrawFundsModal = (props: {
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
-    if (isVisible && vestingContract) {
-      const unallocated = vestingContract.balance - vestingContract.allocationAssigned;
-      const ub = isNewTreasury()
-        ? new BN(unallocated)
-        : makeInteger(unallocated, selectedToken?.decimals || 6);
-      consoleOut('unallocatedBalance:', ub.toNumber(), 'blue');
-      setUnallocatedBalance(ub);
+
+    const getUnallocatedBalance = (details: Treasury) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
     }
+
+    if (isVisible && vestingContract) {
+      const unallocated = getUnallocatedBalance(vestingContract);
+      consoleOut('unallocatedBalance:', unallocated.toString(), 'blue');
+      setUnallocatedBalance(unallocated);
+    }
+
   }, [
     isVisible,
     vestingContract,
@@ -340,7 +345,7 @@ export const VestingContractWithdrawFundsModal = (props: {
         </div>
         <div className="rate-cell text-center">
           <div className="rate-amount">
-            {formatThousands(vestingContract.totalStreams)}
+            {formatThousands(+getSdkValue(vestingContract.totalStreams))}
           </div>
           <div className="interval">{vestingContract.totalStreams === 1 ? 'stream' : 'streams'}</div>
         </div>

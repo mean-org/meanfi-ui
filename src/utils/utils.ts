@@ -438,6 +438,15 @@ export async function findATokenAddress(
   ))[0];
 }
 
+export const getSdkValue = (amount: number | string, asString = false) => {
+  if (!amount) {
+    return asString ? '0' : new BN(0);
+  }
+
+  const value = new BN(amount);
+  return asString ? value.toString() : value;
+}
+
 export const toUiAmount = (amount: BN, decimals: number) => {
   if (!decimals) { return 0; }
   return amount.toNumber() / (10 ** decimals);
