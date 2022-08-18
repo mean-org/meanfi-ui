@@ -300,12 +300,12 @@ export interface SegmentStreamCreateData {
     assetPrice: number;
     treasury: string;
     beneficiary: string;
-    allocation: number;
+    allocation: number | string;
     rateAmount: number;
     interval: string;
     category: number;
     feePayedByTreasurer: boolean;
-    valueInUsd: number;
+    valueInUsd: number | string;
 }
 
 export interface SegmentStreamStatusChangeActionData {

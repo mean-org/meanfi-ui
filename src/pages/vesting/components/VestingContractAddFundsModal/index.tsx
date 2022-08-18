@@ -9,8 +9,6 @@ import {
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
-  makeDecimal,
-  makeInteger,
   toTokenAmount2,
   toUiAmount2,
 } from '../../../../utils/utils';

@@ -2208,7 +2208,7 @@ export const VestingView = () => {
         ? selectedMultisig.authority
         : publicKey;
       const price = associatedToken ? getTokenPriceByAddress(associatedToken.address) || getTokenPriceBySymbol(associatedToken.symbol) : 0;
-      const amount = makeDecimal(new BN(params.tokenAmount), associatedToken.decimals);
+      const amount = toUiAmount2(params.tokenAmount, associatedToken.decimals);
 
       // Create a transaction
       const data = {
@@ -2218,7 +2218,7 @@ export const VestingView = () => {
         treasury: treasury.toBase58(),                                  // treasury
         beneficiary: params.beneficiaryAddress,                         // beneficiary
         treasuryAssociatedTokenMint: associatedToken.address,           // treasuryAssociatedTokenMint
-        allocationAssigned: params.tokenAmount,                         // allocationAssigned
+        allocationAssigned: params.tokenAmount.toString(),              // allocationAssigned
         streamName: params.streamName,                                  // streamName
         multisig: params.multisig                                       // expose multisig if present
       };
@@ -2235,7 +2235,7 @@ export const VestingView = () => {
         interval: params.interval,
         category: selectedVestingContract.category,
         feePayedByTreasurer: params.feePayedByTreasurer,
-        valueInUsd: amount * price,
+        valueInUsd: params.tokenAmount.muln(price).toString(),
       };
       consoleOut('segment data:', segmentData, 'brown');
       segmentAnalytics.recordEvent(AppUsageEvent.StreamCreateFormButton, segmentData);
@@ -4388,6 +4388,7 @@ export const VestingView = () => {
             minRequiredBalance={minRequiredBalance}
             nativeBalance={nativeBalance}
             selectedMultisig={selectedMultisig}
+            selectedToken={workingToken}
             streamTemplate={streamTemplate}
             transactionFees={transactionFees}
             vestingContract={selectedVestingContract}

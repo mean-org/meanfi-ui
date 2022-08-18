@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useContext, useState, useMemo } from 're
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { cutNumber, formatPercent, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
+import { cutNumber, formatPercent, formatThousands, isValidNumber, makeDecimal, makeInteger, toUiAmount2 } from '../../../../utils/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, toUsCurrency } from '../../../../utils/ui';
+import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, stringNumberFormat, toUsCurrency } from '../../../../utils/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
 import { useTranslation } from 'react-i18next';
 import BN from 'bn.js';
@@ -15,7 +15,6 @@ import { isError } from '../../../../utils/transactions';
 import { IconEdit, IconWarning } from '../../../../Icons';
 import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
 import { PaymentRateType } from '../../../../models/enums';
-import { CUSTOM_TOKEN_NAME } from '../../../../constants';
 import { InfoIcon } from '../../../../components/InfoIcon';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { InputMean } from '../../../../components/InputMean';
@@ -30,6 +29,7 @@ export const VestingContractCreateStreamModal = (props: {
     minRequiredBalance: number;
     nativeBalance: number;
     selectedMultisig: MultisigInfo | undefined;
+    selectedToken: TokenInfo | undefined;
     streamTemplate: StreamTemplate | undefined;
     transactionFees: TransactionFees;
     vestingContract: Treasury | undefined;
@@ -45,6 +45,7 @@ export const VestingContractCreateStreamModal = (props: {
         minRequiredBalance,
         nativeBalance,
         selectedMultisig,
+        selectedToken,
         streamTemplate,
         transactionFees,
         vestingContract,
@@ -52,8 +53,6 @@ export const VestingContractCreateStreamModal = (props: {
     } = props;
     const {
         theme,
-        tokenList,
-        selectedToken,
         loadingPrices,
         isWhitelisted,
         fromCoinAmount,
@@ -63,11 +62,8 @@ export const VestingContractCreateStreamModal = (props: {
         setIsVerifiedRecipient,
         getTokenPriceByAddress,
         getTokenPriceBySymbol,
-        getTokenByMintAddress,
         setRecipientAddress,
         setFromCoinAmount,
-        setSelectedToken,
-        setEffectiveRate,
         refreshPrices,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
@@ -98,46 +94,6 @@ export const VestingContractCreateStreamModal = (props: {
     //  Callbacks  //
     /////////////////
 
-    const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
-        const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
-        if (ellipsisElements && ellipsisElements.length) {
-
-            ellipsisElements.forEach(element => {
-                if (state) {
-                    if (!element.classList.contains('overflow-ellipsis-middle')) {
-                        element.classList.add('overflow-ellipsis-middle');
-                    }
-                } else {
-                    if (element.classList.contains('overflow-ellipsis-middle')) {
-                        element.classList.remove('overflow-ellipsis-middle');
-                    }
-                }
-            });
-
-            setTimeout(() => {
-                triggerWindowResize();
-            }, 10);
-        }
-    }, []);
-
-    const setCustomToken = useCallback((address: string) => {
-        const unkToken: TokenInfo = {
-            address: address,
-            name: CUSTOM_TOKEN_NAME,
-            chainId: 101,
-            decimals: 6,
-            symbol: shortenAddress(address),
-        };
-        setSelectedToken(unkToken);
-        consoleOut("token selected:", unkToken, 'blue');
-        setEffectiveRate(0);
-        toggleOverflowEllipsisMiddle(true);
-    }, [
-        setEffectiveRate,
-        setSelectedToken,
-        toggleOverflowEllipsisMiddle
-    ]);
-
     const getMaxAmount = useCallback((preSetting = false) => {
         if ((isFeePaidByTreasurer || preSetting) && withdrawTransactionFees) {
             const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
@@ -161,16 +117,16 @@ export const VestingContractCreateStreamModal = (props: {
             if (isWhitelisted) {
                 const debugTable: any[] = [];
                 debugTable.push({
-                    unallocatedBalance: unallocatedBalance.toNumber(),
+                    unallocatedBalance: unallocatedBalance.toString(),
                     feeNumerator: feeNumerator,
                     feePercentage01: feeNumerator / feeDenaminator,
-                    badStreamMaxAllocation: badStreamMaxAllocation.toNumber(),
-                    feeAmount: feeAmount.toNumber(),
-                    badTotal: badTotal.toNumber(),
-                    badRemaining: badRemaining.toNumber(),
-                    goodStreamMaxAllocation: goodStreamMaxAllocation.toNumber(),
-                    goodTotal: goodTotal.toNumber(),
-                    goodRemaining: goodRemaining.toNumber(),
+                    badStreamMaxAllocation: badStreamMaxAllocation.toString(),
+                    feeAmount: feeAmount.toString(),
+                    badTotal: badTotal.toString(),
+                    badRemaining: badRemaining.toString(),
+                    goodStreamMaxAllocation: goodStreamMaxAllocation.toString(),
+                    goodTotal: goodTotal.toString(),
+                    goodRemaining: goodRemaining.toString(),
                 });
                 consoleOut('debug table', debugTable, 'blue');
             }
@@ -265,33 +221,6 @@ export const VestingContractCreateStreamModal = (props: {
         getMaxAmount
     ]);
 
-    // When modal goes visible, set the associated token
-    useEffect(() => {
-        if (isVisible && vestingContract) {
-            const assTokenAddr = vestingContract.associatedToken as string;
-            const token = getTokenByMintAddress(assTokenAddr);
-            if (token) {
-                const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-                if (!selectedToken || selectedToken.address !== token.address) {
-                    setSelectedToken(token);
-                    setEffectiveRate(price);
-                }
-            } else if (!selectedToken || selectedToken.address !== assTokenAddr) {
-                setCustomToken(assTokenAddr);
-            }
-        }
-    }, [
-        isVisible,
-        selectedToken,
-        vestingContract,
-        getTokenPriceByAddress,
-        getTokenPriceBySymbol,
-        getTokenByMintAddress,
-        setSelectedToken,
-        setEffectiveRate,
-        setCustomToken,
-    ]);
-
     // When modal goes visible, set template data
     useEffect(() => {
         if (isVisible && vestingContract && streamTemplate) {
@@ -363,22 +292,15 @@ export const VestingContractCreateStreamModal = (props: {
 
         consoleOut('clicked the MAX motherfkr!', '', 'blue');
         const decimals = selectedToken ? selectedToken.decimals : 6;
+        const maxAmount = getMaxAmount();
+
         consoleOut('decimals:', decimals, 'blue');
         consoleOut('isFeePaidByTreasurer?', isFeePaidByTreasurer, 'blue');
+        consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+        consoleOut('maxAmount:', maxAmount.toString(), 'blue');
 
-        if (isFeePaidByTreasurer) {
-            const maxAmount = getMaxAmount();
-            consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-            consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-            // setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-            setFromCoinAmount(toUiAmount2(new BN(maxAmount), decimals));
-            setTokenAmount(new BN(maxAmount));
-        } else {
-            const maxAmount = getMaxAmount();
-            // setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-            setFromCoinAmount(toUiAmount2(new BN(maxAmount), decimals));
-            setTokenAmount(new BN(maxAmount));
-        }
+        setFromCoinAmount(toUiAmount2(new BN(maxAmount), decimals));
+        setTokenAmount(new BN(maxAmount));
 
     }, [getMaxAmount, selectedToken, setFromCoinAmount, isFeePaidByTreasurer, tokenAmount]);
 
@@ -406,7 +328,7 @@ export const VestingContractCreateStreamModal = (props: {
             multisig,
             rateAmount: parseFloat(paymentRateAmount),
             streamName: vestingStreamName,
-            tokenAmount: tokenAmount.toNumber(),
+            tokenAmount: tokenAmount,
             txConfirmDescription: getStreamTxConfirmDescription(multisig),
             txConfirmedDescription: getStreamTxConfirmedDescription(multisig),
             proposalTitle: proposalTitle || ''
@@ -504,7 +426,7 @@ export const VestingContractCreateStreamModal = (props: {
                 isValidAddress(recipientAddress) &&
                 !isAddressOwnAccount() &&
                 nativeBalance > getMinBalanceRequired() &&
-                tokenAmount && tokenAmount.toNumber() > 0 &&
+                tokenAmount && tokenAmount.gtn(0) &&
                 ((isFeePaidByTreasurer && tokenAmount.lte(mAa)) ||
                  (!isFeePaidByTreasurer && tokenAmount.lte(ub)))
         ? true
@@ -690,7 +612,6 @@ export const VestingContractCreateStreamModal = (props: {
                                         <TokenDisplay onClick={() => {}}
                                             mintAddress={selectedToken.address}
                                             name={selectedToken.name}
-                                            // showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                             showCaretDown={false}
                                             fullTokenInfo={selectedToken}
                                         />
@@ -725,14 +646,13 @@ export const VestingContractCreateStreamModal = (props: {
                             <div className="left inner-label">
                                 <span>{t('transactions.send-amount.label-right')}:</span>
                                 <span>
-                                    {unallocatedBalance && selectedToken
-                                        ? getAmountWithSymbol(
-                                            makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
-                                            selectedToken.address,
-                                            true,
-                                            tokenList
-                                        )
-                                        : "0"
+                                    {
+                                        unallocatedBalance && selectedToken
+                                            ? stringNumberFormat(
+                                                toUiAmount2(unallocatedBalance, selectedToken.decimals),
+                                                4,
+                                            )
+                                            : "0"
                                     }
                                 </span>
                             </div>

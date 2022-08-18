@@ -1,6 +1,7 @@
 import { AllocationType, SubCategory, TimeUnit, TreasuryType } from "@mean-dao/msp";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { PublicKey } from "@solana/web3.js";
+import BN from "bn.js";
 
 export type VestingFlowRateInfo = {
     amount: number;
@@ -119,7 +120,7 @@ export interface VestingContractStreamCreateOptions {
     multisig: string;
     rateAmount: number;
     streamName: string;
-    tokenAmount: number;
+    tokenAmount: BN;
     txConfirmDescription: string;
     txConfirmedDescription: string;
     proposalTitle?: string;

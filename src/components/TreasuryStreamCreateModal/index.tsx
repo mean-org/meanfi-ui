@@ -13,7 +13,8 @@ import {
   makeDecimal,
   makeInteger,
   shortenAddress,
-  toTokenAmount2
+  toTokenAmount2,
+  toUiAmount2
 } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -29,6 +30,7 @@ import {
   isToday,
   isValidAddress,
   PaymentRateTypeOption,
+  stringNumberFormat,
   toUsCurrency,
 } from '../../utils/ui';
 import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
@@ -2336,14 +2338,14 @@ export const TreasuryStreamCreateModal = (props: {
                       <div className="left inner-label">
                         <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                         <span>
-                          {`${unallocatedBalance && selectedToken
-                              ? getAmountWithSymbol(
-                                  makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
-                                  selectedToken.address,
-                                  true
-                                )
+                          {
+                            unallocatedBalance && selectedToken
+                              ? stringNumberFormat(
+                                toUiAmount2(unallocatedBalance, selectedToken.decimals),
+                                4,
+                              )
                               : "0"
-                          }`}
+                          }
                         </span>
                       </div>
                       <div className="right inner-label">
