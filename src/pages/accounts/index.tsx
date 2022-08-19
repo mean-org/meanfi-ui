@@ -2696,7 +2696,6 @@ export const AccountsNewView = () => {
         const ub = isNewTreasury
           ? makeDecimal(unallocated, decimals)
           : unallocated.toNumber();
-        consoleOut('unallocatedBalance:', ub.toString(), 'blue');
         return ub;
     }
     return 0;

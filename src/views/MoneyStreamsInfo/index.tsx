@@ -344,7 +344,7 @@ export const MoneyStreamsInfoView = (props: {
     connection,
   ]);
 
-  const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
+  const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined, logUnallocatedBalances = false) => {
 
     const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
       const balance = new BN(details.balance);
@@ -359,13 +359,15 @@ export const MoneyStreamsInfoView = (props: {
         const ub = isNewTreasury
           ? makeDecimal(unallocated, decimals)
           : unallocated.toNumber();
-        consoleOut('unallocatedBalance:', ub.toString(), 'blue');
+        if (logUnallocatedBalances) {
+          consoleOut(`unallocatedBalance for ${shortenAddress(tsry.id as string, 12)}:`, ub.toString(), 'blue');
+        }
         return ub;
     }
     return 0;
   }, []);
 
-  const refreshTreasuriesSummary = useCallback(async () => {
+  const refreshTreasuriesSummary = useCallback(async (logUnallocatedBalances = false) => {
 
     if (!treasuryList) { return; }
 
@@ -404,7 +406,7 @@ export const MoneyStreamsInfoView = (props: {
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-          const amount = getTreasuryUnallocatedBalance(treasury, token);
+          const amount = getTreasuryUnallocatedBalance(treasury, token, logUnallocatedBalances);
           amountChange = amount * tokenPrice;
         }
 
@@ -2004,7 +2006,7 @@ export const MoneyStreamsInfoView = (props: {
     if (!publicKey || !treasuryList || !address) { return; }
 
     if (!streamingAccountsSummary) {
-      refreshTreasuriesSummary()
+      refreshTreasuriesSummary(true)
       .then(value => {
         if (value) {
           setStreamingAccountsSummary(value);
