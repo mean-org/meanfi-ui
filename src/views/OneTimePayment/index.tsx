@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
-import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount } from "../../utils/utils";
+import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount2 } from "../../utils/utils";
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
@@ -39,6 +39,7 @@ import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { RecipientAddressInfo } from '../../models/common-types';
+import { OtpTxParams } from '../../models/transfers';
 
 const { Option } = Select;
 
@@ -770,7 +771,7 @@ export const OneTimePayment = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const otpTx = async (data: any) => {
+    const otpTx = async (data: OtpTxParams) => {
 
       if (!endpoint || !streamV2ProgramAddress) { return null; }
       
@@ -792,7 +793,7 @@ export const OneTimePayment = (props: {
         new PublicKey(data.wallet),                                      // treasurer
         new PublicKey(data.beneficiary),                                 // beneficiary
         new PublicKey(data.associatedToken),                             // beneficiaryMint
-        data.amount,                                                     // amount
+        +data.amount,                                                     // amount
         data.startUtc,                                                   // startUtc
         data.recipientNote,
         false // TODO: (feePayedByTreasurer) This should come from the UI
@@ -821,7 +822,7 @@ export const OneTimePayment = (props: {
       const beneficiary = new PublicKey(recipientAddress as string);
       consoleOut('associatedToken:', selectedToken.address);
       const associatedToken = new PublicKey(selectedToken.address as string);
-      const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
+      const amount = toTokenAmount2(fromCoinAmount, selectedToken.decimals, true);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       let startUtc = new Date(parsedDate);
@@ -842,15 +843,15 @@ export const OneTimePayment = (props: {
       consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
 
       // Create a transaction
-      const data = {
+      const data: OtpTxParams = {
         wallet: publicKey.toBase58(),
         beneficiary: beneficiary.toBase58(),                                        // beneficiary
         associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
-        amount: amount,                                                             // fundingAmount
+        amount: amount as string,                                                   // fundingAmount
         startUtc: startUtc,                                                         // startUtc
         recipientNote: recipientNote
           ? recipientNote.trim()
-          : undefined                                                               // streamName
+          : ''                                                                      // streamName
       };
 
       consoleOut('data:', data, 'blue');
