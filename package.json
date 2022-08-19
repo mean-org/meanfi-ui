@@ -37,7 +37,8 @@
     "build:prod": "REACT_APP_ENV=production npm run build",
     "build:prod:win": "set \"REACT_APP_ENV=production\" && npm run build",
     "postbuild": "node ci/copy-config.js",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "build:s3": "react-app-rewired build"
   },
   "dependencies": {
     "@ant-design/icons": "^4.7",
@@ -83,7 +84,7 @@
     "i18next-browser-languagedetector": "^6.1",
     "jazzicon": "^1.5",
     "loggly-jslogger": "2.2.4",
-    "moment": "2.29.2",
+    "moment": "2.29.4",
     "moment-timezone": "0.5.34",
     "mz": "2.7.0",
     "qrcode.react": "3.0.1",

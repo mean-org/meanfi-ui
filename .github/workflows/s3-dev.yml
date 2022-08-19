@@ -1,0 +1,87 @@
+name: Release-DEV-STAGE
+on:
+  workflow_dispatch:
+    inputs:
+        release:
+          type: choice
+          description: Choose the release environment
+          default: 'development'
+          options: 
+            - development
+            #- staging
+  # push:
+  #   branches:
+  #     - 'feature/*'
+
+env:
+  NODE_VERSION: 17
+  BUILD_NUMBER: $GITHUB_RUN_NUMBER
+  REACT_APP_ENV: development #${{ github.event.inputs.release }}
+  BUCKET_NAME: "meanfi-dev"
+  ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{env.NODE_VERSION}}
+          cache: 'yarn' 
+
+        # Install Yarn
+      - name: Install Packages
+        run: |
+          echo "${{ github.event.inputs.release }}"
+          yarn install --frozen-lockfile
+
+      - name: Generate build for Dev
+        run: npm run build:s3
+
+      - name: Copy Robot.txt
+        run: cp ci/${{ env.ROBOTS_TXT_FILE_NAME }} build/robots.txt
+      # Share artifact inside workflow
+      - name: Share artifact inside workflow
+        uses: actions/upload-artifact@v3
+        with:
+          name: mean-ui-build-${{env.REACT_APP_ENV}}
+          path: build
+  deploy:
+    runs-on: ubuntu-latest
+    # When application is successfully tested and build has been generated
+    # Then we can start with deployment
+    needs: build
+    steps:
+      # Download previously shared build
+      - name: Get artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: mean-ui-build-${{env.REACT_APP_ENV}}
+      # Set the credentials from repository settings/secrets
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      # Copy the files from build folder to the S3 bucket
+      - name: Deploy to S3        
+        env:
+          AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
+        run: |
+          aws s3 sync . ${{env.AWS_S3_PATH}}/ --acl public-read --cache-control 'public, max-age=604800' --exclude 'index.html'
+          aws s3 cp index.html ${{env.AWS_S3_PATH}}/index.html --acl public-read --cache-control max-age=0
+        working-directory: .
+
+      - name: Update OriginPath
+        uses: mean-dao/cloudfront-manager@v4
+        env:
+          FOLDER_PATH: "/v${{ github.run_number }}"
+        with:
+          ORIGIN_PATH: "/v${{ github.run_number }}"
+          AWS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DISTRIBUTION_ID: ${{ secrets.CLOUD_FRONT_DISTRIBUTION_ID }}
+          AWS_REGION: ${{ secrets.AWS_DEFAULT_REGION }}

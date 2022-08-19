@@ -88,5 +88,4 @@ dist
 build
 
 #lock files
-*.lock
 ./package-lock.json
