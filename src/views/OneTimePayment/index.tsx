@@ -793,7 +793,7 @@ export const OneTimePayment = (props: {
         new PublicKey(data.wallet),                                      // treasurer
         new PublicKey(data.beneficiary),                                 // beneficiary
         new PublicKey(data.associatedToken),                             // beneficiaryMint
-        +data.amount,                                                     // amount
+        data.amount,                                                     // amount
         data.startUtc,                                                   // startUtc
         data.recipientNote,
         false // TODO: (feePayedByTreasurer) This should come from the UI
