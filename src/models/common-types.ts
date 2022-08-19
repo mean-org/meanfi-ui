@@ -21,9 +21,9 @@ export interface TreasuryTopupParams {
     allocationType: AllocationType;
     streamId: string;
     associatedToken: string;
+    proposalTitle: string;
     treasuryId?: string;
     contributor?: string;
-    proposalTitle?: string;
     fundFromSafe?: boolean;
 }
 

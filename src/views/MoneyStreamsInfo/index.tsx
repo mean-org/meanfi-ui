@@ -52,6 +52,7 @@ import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { readAccountInfo } from "../../utils/accounts";
+import { AddFundsParams } from "../../models/vesting";
 
 const { TabPane } = Tabs;
 
@@ -802,7 +803,7 @@ export const MoneyStreamsInfoView = (props: {
       }
     }
 
-    const addFunds = async (data: any) => {
+    const addFunds = async (data: AddFundsParams) => {
 
       if (!msp) { return null; }
 
@@ -814,7 +815,7 @@ export const MoneyStreamsInfoView = (props: {
             new PublicKey(data.contributor),              // contributor
             new PublicKey(data.treasury),                 // treasury
             new PublicKey(data.associatedToken),          // associatedToken
-            data.amount,                                  // amount
+            +data.amount,                                  // amount
           );
         }
 
@@ -858,7 +859,7 @@ export const MoneyStreamsInfoView = (props: {
           new PublicKey(data.contributor),              // contributor
           new PublicKey(data.treasury),                 // treasury
           new PublicKey(data.associatedToken),          // associatedToken
-          data.amount,                                  // amount
+          +data.amount,                                  // amount
         );
       }
 
@@ -906,7 +907,7 @@ export const MoneyStreamsInfoView = (props: {
       consoleOut('amount.toNumber():', amount, 'blue');
       consoleOut('amount.toString():', params.tokenAmount.toString(), 'blue');
       const contributor = params.contributor || publicKey.toBase58();
-      const data = {
+      const data: AddFundsParams = {
         proposalTitle: params.proposalTitle,                      // proposalTitle
         payer: publicKey.toBase58(),                              // payer
         contributor: contributor,                                 // contributor

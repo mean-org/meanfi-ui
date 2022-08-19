@@ -37,7 +37,7 @@ import { VestingContractCreateForm } from './components/VestingContractCreateFor
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { CreateVestingStreamParams, CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
+import { CreateVestingStreamParams, CreateVestingTreasuryParams, getCategoryLabelByValue, AddFundsParams, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
@@ -1704,7 +1704,7 @@ export const VestingView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const addFunds = async (data: any) => {
+    const addFunds = async (data: AddFundsParams) => {
 
       if (!msp) { return null; }
 
@@ -1716,7 +1716,7 @@ export const VestingView = () => {
             new PublicKey(data.contributor),              // contributor
             new PublicKey(data.treasury),                 // treasury
             new PublicKey(data.associatedToken),          // associatedToken
-            data.amount,                                  // amount
+            +data.amount,                                  // amount
           );
         }
 
@@ -1757,7 +1757,7 @@ export const VestingView = () => {
           new PublicKey(data.contributor),              // contributor
           new PublicKey(data.treasury),                 // treasury
           new PublicKey(data.associatedToken),          // associatedToken
-          data.amount,                                  // amount
+          +data.amount,                                  // amount
         );
       }
 
@@ -1802,12 +1802,12 @@ export const VestingView = () => {
 
       const treasury = new PublicKey(selectedVestingContract.id);
       const associatedToken = new PublicKey(params.associatedToken.address);
-      const amount = (params.tokenAmount).toString();
+      const amount = params.tokenAmount.toString();
       const token = params.associatedToken;
       const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
       const contributor = params.contributor || publicKey.toBase58();
 
-      const data = {
+      const data: AddFundsParams = {
         proposalTitle: params.proposalTitle,                      // proposalTitle
         payer: publicKey.toBase58(),                              // payer
         contributor,                                              // contributor
