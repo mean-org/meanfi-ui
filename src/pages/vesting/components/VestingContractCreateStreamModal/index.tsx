@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useContext, useState, useMemo } from 're
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { cutNumber, formatPercent, formatThousands, isValidNumber, makeDecimal, makeInteger, toUiAmount2 } from '../../../../utils/utils';
+import { cutNumber, formatPercent, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, toTokenAmount2, toUiAmount2 } from '../../../../utils/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, stringNumberFormat, toUsCurrency } from '../../../../utils/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
@@ -53,6 +53,7 @@ export const VestingContractCreateStreamModal = (props: {
     } = props;
     const {
         theme,
+        splTokenList,
         loadingPrices,
         isWhitelisted,
         fromCoinAmount,
@@ -382,7 +383,7 @@ export const VestingContractCreateStreamModal = (props: {
             setFromCoinAmount(".");
         } else if (isValidNumber(newValue)) {
             setFromCoinAmount(newValue);
-            setTokenAmount(makeInteger(newValue, decimals));
+            setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
         }
     };
 
@@ -708,36 +709,77 @@ export const VestingContractCreateStreamModal = (props: {
 
                     <Row className="mb-2 px-1">
                         <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}</strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), selectedToken?.decimals || 6)} ${selectedToken?.symbol}` : "--"}
+                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}</strong>
+                            <span className="ml-1">
+                                {
+                                    fromCoinAmount && selectedToken
+                                        ? `${getAmountWithSymbol(
+                                                parseFloat(fromCoinAmount),
+                                                selectedToken.address,
+                                                false,
+                                                splTokenList,
+                                                selectedToken.decimals
+                                            )}`
+                                        : "--"
+                                }
+                            </span>
                         </Col>
                         <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}</strong> {
-                                paymentStartDate
-                                ? isStartDateFuture(paymentStartDate)
-                                    ? getReadableDate(paymentStartDate, true)
-                                    : t('vesting.create-stream.start-immediately')
-                                : '--'
-                            }
+                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}</strong>
+                            <span className="ml-1">
+                                {
+                                    paymentStartDate
+                                    ? isStartDateFuture(paymentStartDate)
+                                        ? getReadableDate(paymentStartDate, true)
+                                        : t('vesting.create-stream.start-immediately')
+                                    : '--'
+                                }
+                            </span>
                         </Col>
                         <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}</strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol} (on commencement)`) : "--"}
+                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}</strong>
+                            <span className="ml-1">
+                                {
+                                    cliffRelease && selectedToken
+                                        ? `${getAmountWithSymbol(
+                                                parseFloat(cliffRelease),
+                                                selectedToken.address,
+                                                false,
+                                                splTokenList,
+                                                selectedToken.decimals
+                                            )} (on commencement)`
+                                        : "--"
+                                }
+                            </span>
                         </Col>
                         <Col span={24}>
-                            <strong>Amount to be streamed: </strong>
-                        <span>
-                        {
-                            (cliffRelease && lockPeriodAmount && selectedToken)
-                            ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.symbol} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`)
-                            : "--"
-                        }
-                        </span>
+                            <strong>Amount to be streamed:</strong>
+                            <span className="ml-1">
+                                {
+                                    cliffRelease && lockPeriodAmount && selectedToken
+                                        ? `${getAmountWithSymbol(
+                                                parseFloat(fromCoinAmount) - parseFloat(cliffRelease),
+                                                selectedToken.address,
+                                                false,
+                                                splTokenList,
+                                                selectedToken.decimals
+                                            )} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`
+                                        : "--"
+                                }
+                            </span>
                         </Col>
                         <Col span={24}>
-                        <strong>Release rate: </strong>
-                        <span>
+                        <strong>Release rate:</strong>
+                        <span className="ml-1">
                             {
-                            (cliffRelease && lockPeriodAmount && selectedToken)
-                                ? (`${paymentRateAmount} ${selectedToken.symbol} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`)
+                            cliffRelease && lockPeriodAmount && selectedToken
+                                ? `${getAmountWithSymbol(
+                                        parseFloat(paymentRateAmount),
+                                        selectedToken.address,
+                                        false,
+                                        splTokenList,
+                                        selectedToken.decimals
+                                    )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`
                                 : "--"
                             }
                         </span>

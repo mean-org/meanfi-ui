@@ -202,21 +202,6 @@ export function isValidInteger(str: string): boolean {
   return INTEGER_INPUT_AMOUNT_PATTERN.test(str);
 }
 
-/**
- * Gets a token as TokenInfo from a given token list based on the mint address.
- *
- * @deprecated Moved to the AppState. Use getTokenByMintAddress from the AppState instead.
- */
-export const getTokenByMintAddress = (address: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
-  const tokenFromTokenList = tokenList && isProd()
-    ? tokenList.find(t => t.address === address)
-    : MEAN_TOKEN_LIST.find(t => t.address === address);
-  if (tokenFromTokenList) {
-    return tokenFromTokenList;
-  }
-  return undefined;
-}
-
 export const getTokenBySymbol = (symbol: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
   const tokenFromTokenList = tokenList && isProd()
     ? tokenList.find(t => t.symbol === symbol)

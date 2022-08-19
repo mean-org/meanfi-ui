@@ -37,7 +37,7 @@ import { VestingContractCreateForm } from './components/VestingContractCreateFor
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
-import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
+import { CreateVestingStreamParams, CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
@@ -2108,7 +2108,7 @@ export const VestingView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createVestingStream = async (data: any): Promise<[Transaction, PublicKey] | null> => {
+    const createVestingStream = async (data: CreateVestingStreamParams): Promise<[Transaction, PublicKey] | null> => {
 
       if (!connection || !msp || !publicKey) { return null; }
 
@@ -2153,7 +2153,7 @@ export const VestingView = () => {
         new PublicKey(data.treasury),                                             // treasury
         stream,                                                                   // stream
         new PublicKey(data.beneficiary),                                          // beneficiary
-        data.allocationAssigned,                                                  // allocationAssigned
+        +data.allocationAssigned,                                                  // allocationAssigned
         data.streamName,                                                          // streamName
       );
 
@@ -2211,7 +2211,7 @@ export const VestingView = () => {
       const amount = toUiAmount2(params.tokenAmount, associatedToken.decimals);
 
       // Create a transaction
-      const data = {
+      const data: CreateVestingStreamParams = {
         proposalTitle: params.proposalTitle,                            // proposal title
         payer: publicKey.toBase58(),                                    // payer
         treasurer: treasurer.toBase58(),                                // treasurer
