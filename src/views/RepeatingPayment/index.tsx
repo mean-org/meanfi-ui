@@ -18,10 +18,10 @@ import {
   getTxIxResume,
   isValidNumber,
   shortenAddress,
-  toTokenAmount,
+  toTokenAmount2,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
@@ -40,7 +40,7 @@ import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
+import {  useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
@@ -107,7 +107,6 @@ export const RepeatingPayment = (props: {
   const location = useLocation();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const { width } = useWindowSize();
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -968,8 +967,8 @@ export const RepeatingPayment = (props: {
         const beneficiary = new PublicKey(recipientAddress as string);
         consoleOut('beneficiaryMint:', selectedToken.address);
         const associatedToken = new PublicKey(selectedToken.address as string);
-        const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
-        const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
+        const amount = toTokenAmount2(fromCoinAmount, selectedToken.decimals).toString();
+        const rateAmount = toTokenAmount2(paymentRateAmount, selectedToken.decimals).toString();
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         const startUtc = new Date(parsedDate);
@@ -989,13 +988,13 @@ export const RepeatingPayment = (props: {
           treasury: 'undefined',                                      // treasury
           beneficiary: beneficiary.toBase58(),                        // beneficiary
           associatedToken: associatedToken.toBase58(),                // mint
-          rateAmount: rateAmount,                                     // rateAmount
           rateIntervalInSeconds:
             getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
           startUtc: startUtc,                                         // startUtc
           streamName: recipientNote
             ? recipientNote.trim()
-            : undefined,                                              // streamName
+            : '',                                                     // streamName
+          rateAmount: rateAmount,                                     // rateAmount
           allocation: amount,                                         // allocation
           feePayedByTreasurer: false // TODO: Should come from the UI
         };
@@ -1034,7 +1033,6 @@ export const RepeatingPayment = (props: {
         // Init a streaming operation
         const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.streamPayment(
           publicKey,                                                  // treasurer
           beneficiary,                                                // beneficiary
