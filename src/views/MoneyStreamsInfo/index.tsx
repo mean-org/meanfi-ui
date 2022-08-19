@@ -817,7 +817,7 @@ export const MoneyStreamsInfoView = (props: {
             new PublicKey(data.contributor),              // contributor
             new PublicKey(data.treasury),                 // treasury
             new PublicKey(data.associatedToken),          // associatedToken
-            +data.amount,                                  // amount
+            data.amount,                                  // amount
           );
         }
 
@@ -861,7 +861,7 @@ export const MoneyStreamsInfoView = (props: {
           new PublicKey(data.contributor),              // contributor
           new PublicKey(data.treasury),                 // treasury
           new PublicKey(data.associatedToken),          // associatedToken
-          +data.amount,                                  // amount
+          data.amount,                                  // amount
         );
       }
 
@@ -904,7 +904,7 @@ export const MoneyStreamsInfoView = (props: {
       });
 
       const associatedToken = new PublicKey(params.associatedToken);
-      const amount = params.tokenAmount.toNumber();
+      const amount = params.tokenAmount;
       consoleOut('raw amount:', params.tokenAmount, 'blue');
       consoleOut('amount.toNumber():', amount, 'blue');
       consoleOut('amount.toString():', params.tokenAmount.toString(), 'blue');

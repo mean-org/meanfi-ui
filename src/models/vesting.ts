@@ -157,7 +157,7 @@ export interface VestingContractTopupParams {
 }
 
 export interface AddFundsParams {
-    proposalTitle: string;
+    proposalTitle?: string;
     payer: string;
     contributor: string;
     treasury: string;

@@ -17,7 +17,7 @@ export interface SelectOption {
 
 export interface TreasuryTopupParams {
     amount: string;
-    tokenAmount: any;
+    tokenAmount: string;
     allocationType: AllocationType;
     streamId: string;
     associatedToken: string;

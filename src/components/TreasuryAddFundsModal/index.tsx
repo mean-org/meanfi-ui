@@ -348,7 +348,7 @@ export const TreasuryAddFundsModal = (props: {
         const unallocated = getUnallocatedBalance(workingTreasuryDetails);
         const ub = isNewTreasury(workingTreasuryDetails)
           ? unallocated
-          : makeInteger(unallocated.toNumber(), selectedToken?.decimals || 6);
+          : toUiAmount2(unallocated, selectedToken.decimals);
         consoleOut('unallocatedBalance:', ub.toString(), 'blue');
         setAvailableBalance(ub);
       } else {
@@ -362,12 +362,13 @@ export const TreasuryAddFundsModal = (props: {
       setAvailableBalance(new BN(0));
     }
   }, [
+    isVisible,
     tokenBalance,
     selectedToken,
-    isVisible,
     workingTreasuryDetails,
     highLightableStreamId,
     selectFromTokenBalance,
+    isNewTreasury,
   ]);
 
   // When modal goes visible, use the treasury associated token or use the default from the appState
@@ -442,8 +443,7 @@ export const TreasuryAddFundsModal = (props: {
     const params: TreasuryTopupParams = {
       proposalTitle: proposalTitle || '',
       amount: topupAmount,
-      tokenAmount: makeInteger(parseFloat(topupAmount), selectedToken.decimals),
-      // tokenAmount: tokenAmount,
+      tokenAmount: tokenAmount.toString(),
       allocationType: allocationOption,
       associatedToken: selectedToken
         ? selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
@@ -460,7 +460,18 @@ export const TreasuryAddFundsModal = (props: {
     };
 
     handleOk(params);
-  }, [allocationOption, fundFromSafeOption, handleOk, highLightableStreamId, proposalTitle, selectedMultisig, selectedStreamingAccountId, selectedToken, topupAmount]);
+  }, [
+    allocationOption,
+    fundFromSafeOption,
+    handleOk,
+    highLightableStreamId,
+    proposalTitle,
+    selectedMultisig,
+    selectedStreamingAccountId,
+    selectedToken,
+    topupAmount,
+    tokenAmount
+  ]);
 
   const handleAmountChange = (e: any) => {
 
