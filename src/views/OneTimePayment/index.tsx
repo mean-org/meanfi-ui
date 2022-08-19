@@ -774,7 +774,7 @@ export const OneTimePayment = (props: {
     const otpTx = async (data: OtpTxParams) => {
 
       if (!endpoint || !streamV2ProgramAddress) { return null; }
-      
+
       // Init a streaming operation
       const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
