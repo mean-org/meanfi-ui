@@ -40,7 +40,7 @@ export interface StreamTopupTxCreateParams {
     contributor: string;
     treasury: string;
     stream: string;
-    amount: any;
+    amount: string;
     associatedToken: string;
 }
 

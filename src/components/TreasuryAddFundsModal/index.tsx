@@ -11,7 +11,6 @@ import {
   getAmountWithSymbol,
   getSdkValue,
   isValidNumber,
-  makeInteger,
   shortenAddress,
   toTokenAmount2,
   toUiAmount2
@@ -812,13 +811,11 @@ export const TreasuryAddFundsModal = (props: {
                                   const maxAmount = getMaxAmount(true);
                                   consoleOut('Treasury pays for fees...', '', 'blue');
                                   consoleOut('Settings maxAmount to:', maxAmount, 'blue');
-                                  // setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
                                   setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 } else {
                                   const maxAmount = getMaxAmount();
                                   consoleOut('Settings maxAmount to:', maxAmount.toString(), 'blue');
-                                  // setTopupAmount(cutNumber(makeDecimal(maxAmount, decimals), decimals));
                                   setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 }

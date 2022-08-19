@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger } from '../../utils/utils';
+import { cutNumber, formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, toTokenAmount2, toUiAmount2 } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
@@ -30,6 +30,7 @@ export const StreamAddFundsModal = (props: {
   withdrawTransactionFees: TransactionFees;
 }) => {
   const {
+    splTokenList,
     tokenBalance,
     loadingPrices,
     selectedToken,
@@ -147,16 +148,16 @@ export const StreamAddFundsModal = (props: {
       if (isWhitelisted) {
         const debugTable: any[] = [];
         debugTable.push({
-          unallocatedBalance: unallocatedBalance.toNumber(),
+          unallocatedBalance: unallocatedBalance.toString(),
           feeNumerator: feeNumerator,
           feePercentage01: feeNumerator/feeDenaminator,
-          badStreamMaxAllocation: badStreamMaxAllocation.toNumber(),
-          feeAmount: feeAmount.toNumber(),
-          badTotal: badTotal.toNumber(),
-          badRemaining: badRemaining.toNumber(),
-          goodStreamMaxAllocation: goodStreamMaxAllocation.toNumber(),
-          goodTotal: goodTotal.toNumber(),
-          goodRemaining: goodRemaining.toNumber(),
+          badStreamMaxAllocation: badStreamMaxAllocation.toString(),
+          feeAmount: feeAmount.toString(),
+          badTotal: badTotal.toString(),
+          badRemaining: badRemaining.toString(),
+          goodStreamMaxAllocation: goodStreamMaxAllocation.toString(),
+          goodTotal: goodTotal.toString(),
+          goodRemaining: goodRemaining.toString(),
         });
         consoleOut('debug table', debugTable, 'blue');
       }
@@ -260,9 +261,9 @@ export const StreamAddFundsModal = (props: {
       const unallocated = getUnallocatedBalance(treasuryDetails);
       const ub = isNewTreasury()
         ? unallocated
-        : makeInteger(unallocated.toNumber(), selectedToken?.decimals || 6);
+        : toUiAmount2(unallocated, selectedToken?.decimals || 6);
       consoleOut('unallocatedBalance:', ub.toString(), 'blue');
-      setUnallocatedBalance(ub);
+      setUnallocatedBalance(new BN(ub));
     }
   }, [
     props.isVisible,
@@ -324,7 +325,7 @@ export const StreamAddFundsModal = (props: {
       setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
       setTopupAmount(newValue);
-      setTokenAmount(makeInteger(newValue, selectedToken?.decimals || 6));
+      setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
     }
   };
 
@@ -334,9 +335,9 @@ export const StreamAddFundsModal = (props: {
     const userBalance = makeInteger(selectFromTokenBalance(), selectedToken?.decimals || 6);
     return  publicKey &&
             selectedToken &&
-            ((shouldFundFromTreasury() && unallocatedBalance.toNumber() > 0) ||
-            (!shouldFundFromTreasury() && userBalance.toNumber() > 0)) &&
-            tokenAmount && tokenAmount.toNumber() > 0 &&
+            ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
+            (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
+            tokenAmount && (tokenAmount as BN).gtn(0) &&
             ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
             (shouldFundFromTreasury() && ((isfeePayedByTreasurerOn() && tokenAmount.lte(maxAllocatableAmount)) ||
                                           (!isfeePayedByTreasurerOn() && tokenAmount.lte(unallocatedBalance)))))
@@ -363,6 +364,7 @@ export const StreamAddFundsModal = (props: {
     <Modal
       className="mean-modal"
       title={<div className="modal-title">{t('streams.add-funds.modal-title')}</div>}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptTopup}
@@ -437,13 +439,13 @@ export const StreamAddFundsModal = (props: {
                             const decimals = selectedToken ? selectedToken.decimals : 6;
                             if (isfeePayedByTreasurerOn()) {
                               const maxAmount = getMaxAmount(true);
-                              consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-                              consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                              setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                              consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+                              consoleOut('maxAmount:', maxAmount.toString(), 'blue');
+                              setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                               setTokenAmount(new BN(maxAmount));
                             } else {
                               const maxAmount = getMaxAmount();
-                              setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                              setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                               setTokenAmount(new BN(maxAmount));
                             }
                           }}>
@@ -492,23 +494,15 @@ export const StreamAddFundsModal = (props: {
                   </span>
                 ) : (
                   <>
-                    {selectedToken && unallocatedBalance ? (
+                    {selectedToken ? (
                       <span>
                         {
-                          getTokenAmountAndSymbolByTokenAddress(
-                            makeDecimal(unallocatedBalance, selectedToken.decimals),
+                          getAmountWithSymbol(
+                            unallocatedBalance,
                             selectedToken.address,
-                            true
-                          )
-                        }
-                      </span>
-                    ) : selectedToken && selectFromTokenBalance() ? (
-                      <span>
-                        {
-                          getTokenAmountAndSymbolByTokenAddress(
-                            selectFromTokenBalance(),
-                            selectedToken.address,
-                            true
+                            true,
+                            splTokenList,
+                            selectedToken.decimals
                           )
                         }
                       </span>

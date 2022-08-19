@@ -500,7 +500,7 @@ export const MoneyStreamsOutgoingView = (props: {
         contributor: payload.payer.toBase58(),
         treasury: payload.treasury.toBase58(),
         stream: payload.stream.toBase58(),
-        amount: payload.amount,
+        amount: payload.amount.toString(),
         associatedToken: addFundsData.associatedToken
       };
       return await allocateToStream(data)
