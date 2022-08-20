@@ -1929,10 +1929,10 @@
     decimal.js "^10.3.1"
     jsbi "^4.1.0"
 
-"@mean-dao/mean-multisig-apps@1.3.3":
-  version "1.3.3"
-  resolved "https://registry.npmjs.org/@mean-dao/mean-multisig-apps/-/mean-multisig-apps-1.3.3.tgz#347ed2d0cf6397297afbf0d591aa095d88962aae"
-  integrity sha512-zLyZFkfhW/QWOaVWlwy5P183++GCCoO+BKXNWBEFWIse5krOupSGyV/KQXMFBaJTac2wAUx+2etRla5fosYSjg==
+"@mean-dao/mean-multisig-apps@1.3.4":
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-apps/-/mean-multisig-apps-1.3.4.tgz#7f3499d5e949359bcbfb2d177d7d004d9bdd35a5"
+  integrity sha512-AMki8VwSqzvU+ZDU94N3FYmzqlcUaGFbJ8op1MBxB+a+vYyS5aNwP/8lyktuXMP/YCPXfBGvMeTRLVo6xZginA==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@project-serum/anchor-cli" "^0.24.2"
