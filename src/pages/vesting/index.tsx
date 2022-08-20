@@ -729,7 +729,7 @@ export const VestingView = () => {
 
     consoleOut('Executing getTreasuryStreams...', '', 'blue');
 
-    msp.listStreams({treasury: treasuryPk })
+    msp.listStreams({ treasury: treasuryPk, friendly: false })
       .then(streams => {
         consoleOut('treasuryStreams:', streams, 'blue');
         setTreasuryStreams(streams.map(vc => {
@@ -3661,7 +3661,7 @@ export const VestingView = () => {
     if (publicKey && msp && vestingContractAddress) {
       const pk = new PublicKey(vestingContractAddress);
       consoleOut('VC address:', pk.toString(), 'blue');
-      msp.getStreamTemplate(pk)
+      msp.getStreamTemplate(pk, false)
       .then(value => {
         consoleOut('StreamTemplate:', value, 'blue');
         setStreamTemplate(value);

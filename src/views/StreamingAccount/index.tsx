@@ -2497,9 +2497,10 @@ export const StreamingAccountView = (props: {
       }
 
       if (item.version < 2) {
+        const rateAmount = new BN(item.rateAmount).toNumber();
         value += formatThousands(
-          item.rateAmount,
-          friendlyDisplayDecimalPlaces(item.rateAmount, decimals),
+          rateAmount,
+          friendlyDisplayDecimalPlaces(rateAmount, decimals),
           2
         );
       } else {
@@ -2530,9 +2531,10 @@ export const StreamingAccountView = (props: {
       }
 
       if (item.version < 2) {
+        const allocationAssigned = new BN(item.allocationAssigned).toNumber()
         value += formatThousands(
-          item.allocationAssigned,
-          friendlyDisplayDecimalPlaces(item.allocationAssigned, decimals),
+          allocationAssigned,
+          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
           2
         );
       } else {
@@ -2555,7 +2557,7 @@ export const StreamingAccountView = (props: {
     if (item) {
       let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
       if (item.rateAmount > 0) {
-        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
+        rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), true, t);
       }
 
       subtitle = rateAmount;
@@ -2722,7 +2724,7 @@ export const StreamingAccountView = (props: {
 
     if (isNewTreasury) {
       if (msp) {
-        msp.listStreams({treasury: treasuryPk})
+        msp.listStreams({treasury: treasuryPk, friendly: false})
           .then((streams: any) => {
             consoleOut('treasuryStreams:', streams, 'blue');
             setStreamingAccountStreams(streams);
@@ -2737,7 +2739,7 @@ export const StreamingAccountView = (props: {
       }
     } else {
       if (ms) {
-        ms.listStreams({treasury: treasuryPk })
+        ms.listStreams({treasury: treasuryPk, friendly: false })
           .then((streams: any) => {
             consoleOut('treasuryStreams:', streams, 'blue');
             setStreamingAccountStreams(streams);

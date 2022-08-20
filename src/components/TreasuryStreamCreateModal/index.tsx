@@ -937,9 +937,10 @@ export const TreasuryStreamCreateModal = (props: {
       }
 
       if (item.version < 2) {
+        const rateAmount = new BN(item.rateAmount).toNumber();
         value += formatThousands(
-          item.rateAmount,
-          friendlyDisplayDecimalPlaces(item.rateAmount, decimals),
+          rateAmount,
+          friendlyDisplayDecimalPlaces(rateAmount, decimals),
           2
         );
       } else {

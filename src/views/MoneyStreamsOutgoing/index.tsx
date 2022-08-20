@@ -2444,7 +2444,7 @@ export const MoneyStreamsOutgoingView = (props: {
       const isV2 = streamSelected.version >= 2;
       if (isV2) {
         if (v2.status === STREAM_STATUS.Running) {
-          msp.refreshStream(streamSelected as Stream).then(detail => {
+          msp.refreshStream(streamSelected as Stream, undefined, false).then(detail => {
             setStreamDetail(detail as Stream);
             if (!hasStreamPendingTx()) {
               setLoadingStreamDetails(false);
@@ -2455,7 +2455,7 @@ export const MoneyStreamsOutgoingView = (props: {
         }
       } else {
         if (v1.state === STREAM_STATE.Running) {
-          ms.refreshStream(streamSelected as StreamInfo).then(detail => {
+          ms.refreshStream(streamSelected as StreamInfo, undefined, false).then(detail => {
             setStreamDetail(detail as StreamInfo);
             if (!hasStreamPendingTx()) {
               setLoadingStreamDetails(false);

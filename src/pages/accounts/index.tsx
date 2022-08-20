@@ -2775,8 +2775,8 @@ export const AccountsNewView = () => {
       ? new PublicKey(accountAddress)
       : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer, undefined, undefined, connection.commitment, undefined, false);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer, undefined, undefined, undefined, false);
 
     for (const stream of updatedStreamsv1) {
 
@@ -2785,7 +2785,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream, undefined, false) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -2808,7 +2808,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await msp.refreshStream(stream) as Stream;
+      const freshStream = await msp.refreshStream(stream, undefined, false) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -2816,7 +2816,7 @@ export const AccountsNewView = () => {
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         const decimals = token.decimals || 6;
-        const amount = freshStream.withdrawableAmount;
+        const amount = new BN(freshStream.withdrawableAmount).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (isIncoming) {
@@ -2834,6 +2834,7 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
+    connection,
     streamListv1,
     streamListv2,
     accountAddress,
@@ -2859,9 +2860,9 @@ export const AccountsNewView = () => {
       ? new PublicKey(accountAddress)
       : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer, undefined, undefined, connection.commitment, undefined, false);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer, undefined, undefined, undefined, false);
+  
     for (const stream of updatedStreamsv1) {
 
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
@@ -2869,7 +2870,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream, undefined, false) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -2892,7 +2893,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await msp.refreshStream(stream) as Stream;
+      const freshStream = await msp.refreshStream(stream, undefined, false) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -2900,7 +2901,7 @@ export const AccountsNewView = () => {
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         const decimals = token.decimals || 6;
-        const amount = freshStream.fundsLeftInStream;
+        const amount = new BN(freshStream.fundsLeftInStream).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (!isIncoming) {
@@ -2917,6 +2918,7 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
+    connection,
     streamListv1,
     streamListv2,
     accountAddress,
