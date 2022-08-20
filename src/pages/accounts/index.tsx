@@ -3014,179 +3014,6 @@ export const AccountsNewView = () => {
     }
   }, [width]);
 
-  // Build CTAs
-  useEffect(() => {
-    if (!selectedAsset) { return; }
-
-    const numMaxCtas = isXsDevice ? 2 : 5;
-    const actions: AssetCta[] = [];
-    let ctaItems = 0;
-
-    // Send
-    actions.push({
-      action: MetaInfoCtaAction.Send,
-      isVisible: true,
-      caption: 'Send',
-      disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentType: 'button',
-      uiComponentId: `button-${MetaInfoCtaAction.Send}`,
-      tooltip: isInspectedAccountTheConnectedWallet() ? '' : 'You can only send assets from your connected account',
-      callBack: onSendAsset
-    });
-    ctaItems++;
-
-    // UnwrapSol
-    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && wSolBalance > 0) {
-      actions.push({
-        action: MetaInfoCtaAction.UnwrapSol,
-        caption: 'Unwrap',
-        isVisible: true,
-        uiComponentType: 'button',
-        disabled: false,
-        uiComponentId: `button-${MetaInfoCtaAction.UnwrapSol}`,
-        tooltip: '',
-        callBack: showUnwrapSolModal
-      });
-      ctaItems++;
-    }
-
-    // Buy
-    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
-      actions.push({
-        action: MetaInfoCtaAction.Buy,
-        caption: 'Buy',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy}`,
-        tooltip: '',
-        callBack: showDepositOptionsModal
-      });
-      ctaItems++;
-    }
-
-    // Deposit
-    actions.push({
-      action: MetaInfoCtaAction.Deposit,
-      caption: 'Deposit',
-      isVisible: true,
-      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Deposit}`,
-      tooltip: '',
-      callBack: showReceiveSplOrSolModal
-    });
-    ctaItems++;
-
-    // Exchange
-    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
-      actions.push({
-        action: MetaInfoCtaAction.Exchange,
-        caption: 'Exchange',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange}`,
-        tooltip: '',
-        callBack: onExchangeAsset
-      });
-      ctaItems++;
-    }
-
-    // Invest
-    if (investButtonEnabled() && !isSelectedAssetWsol() && !isCustomAsset) {
-      actions.push({
-        action: MetaInfoCtaAction.Invest,
-        caption: 'Invest',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest}`,
-        tooltip: '',
-        callBack: handleGoToInvestClick
-      });
-      ctaItems++;
-    }
-
-    // Wrap
-    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() && isWhitelisted) {
-      actions.push({
-        action: MetaInfoCtaAction.WrapSol,
-        caption: 'Wrap',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.WrapSol}`,
-        tooltip: '',
-        callBack: showWrapSolModal
-      });
-      ctaItems++;
-    }
-
-    // Refresh asset
-    actions.push({
-      action: MetaInfoCtaAction.Refresh,
-      caption: 'Refresh asset',
-      isVisible: true,
-      uiComponentType: 'menuitem',
-      disabled: false,
-      uiComponentId: `menuitem-${MetaInfoCtaAction.Refresh}`,
-      tooltip: '',
-      callBack: reloadSwitch
-    });
-
-    // Merge token accounts
-    if (isInspectedAccountTheConnectedWallet() && canActivateMergeTokenAccounts()) {
-      actions.push({
-        action: MetaInfoCtaAction.MergeAccounts,
-        caption: t('assets.merge-accounts-cta'),
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: false,
-        uiComponentId: `menuitem-${MetaInfoCtaAction.MergeAccounts}`,
-        tooltip: '',
-        callBack: activateTokenMerge
-      });
-    }
-
-    // Close asset
-    if (inspectedAccountType && inspectedAccountType === "multisig") {
-      actions.push({
-        action: MetaInfoCtaAction.Close,
-        caption: 'Close account',
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: isAnyTxPendingConfirmation() || !canDeleteVault() || !isDeleteAssetValid(),
-        uiComponentId: `menuitem-${MetaInfoCtaAction.Close}`,
-        tooltip: '',
-        callBack: showDeleteVaultModal
-      });
-    } else if (isInspectedAccountTheConnectedWallet()) {
-      actions.push({
-        action: MetaInfoCtaAction.CloseAccount,
-        caption: 'Close account',
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: isAnyTxPendingConfirmation(),
-        uiComponentId: `menuitem-${MetaInfoCtaAction.CloseAccount}`,
-        tooltip: '',
-        callBack: showCloseAssetModal
-      });
-    }
-
-    setAssetCtas(actions);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    isXsDevice,
-    wSolBalance,
-    selectedAsset,
-    isInspectedAccountTheConnectedWallet,
-    isSelectedAssetNativeAccount,
-    isSelectedAssetWsol,
-    investButtonEnabled,
-  ]);  
-
   // Enable deep-linking when isPageLoaded - Parse and save query params as needed
   useEffect(() => {
     if (!isPageLoaded || !publicKey) { return; }
@@ -3768,6 +3595,193 @@ export const AccountsNewView = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountAddress, accountTokens, pathParamAsset]);
+
+  // Build CTAs
+  useEffect(() => {
+    if (!selectedAsset) { return; }
+
+    const numMaxCtas = isXsDevice ? 2 : 5;
+    const actions: AssetCta[] = [];
+    let ctaItems = 0;
+
+    // Send
+    actions.push({
+      action: MetaInfoCtaAction.Send,
+      isVisible: true,
+      caption: 'Send',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentType: 'button',
+      uiComponentId: `button-${MetaInfoCtaAction.Send}`,
+      tooltip: isInspectedAccountTheConnectedWallet() ? '' : 'You can only send assets from your connected account',
+      callBack: onSendAsset
+    });
+    ctaItems++;
+
+    // UnwrapSol
+    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && wSolBalance > 0) {
+      actions.push({
+        action: MetaInfoCtaAction.UnwrapSol,
+        caption: 'Unwrap',
+        isVisible: true,
+        uiComponentType: 'button',
+        disabled: false,
+        uiComponentId: `button-${MetaInfoCtaAction.UnwrapSol}`,
+        tooltip: '',
+        callBack: showUnwrapSolModal
+      });
+      ctaItems++;
+    }
+
+    // Buy
+    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
+      actions.push({
+        action: MetaInfoCtaAction.Buy,
+        caption: 'Buy',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy}`,
+        tooltip: '',
+        callBack: showDepositOptionsModal
+      });
+      ctaItems++;
+    }
+
+    // Deposit
+    actions.push({
+      action: MetaInfoCtaAction.Deposit,
+      caption: 'Deposit',
+      isVisible: true,
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+      disabled: false,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Deposit}`,
+      tooltip: '',
+      callBack: showReceiveSplOrSolModal
+    });
+    ctaItems++;
+
+    // Exchange
+    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
+      actions.push({
+        action: MetaInfoCtaAction.Exchange,
+        caption: 'Exchange',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange}`,
+        tooltip: '',
+        callBack: onExchangeAsset
+      });
+      ctaItems++;
+    }
+
+    // Invest
+    if (investButtonEnabled() && !isSelectedAssetWsol() && !isCustomAsset) {
+      actions.push({
+        action: MetaInfoCtaAction.Invest,
+        caption: 'Invest',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest}`,
+        tooltip: '',
+        callBack: handleGoToInvestClick
+      });
+      ctaItems++;
+    }
+
+    // Wrap
+    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() && isWhitelisted) {
+      actions.push({
+        action: MetaInfoCtaAction.WrapSol,
+        caption: 'Wrap',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.WrapSol}`,
+        tooltip: '',
+        callBack: showWrapSolModal
+      });
+      ctaItems++;
+    }
+
+    // Copy asset mint address
+    if (selectedAsset.address !== NATIVE_SOL.address) {
+      actions.push({
+        action: MetaInfoCtaAction.CopyAssetMintAddress,
+        caption: 'Copy mint address',
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: false,
+        uiComponentId: `menuitem-${MetaInfoCtaAction.CopyAssetMintAddress}`,
+        tooltip: '',
+        callBack: () => copyAddressToClipboard(selectedAsset.address)
+      });
+    }
+
+    // Refresh asset
+    actions.push({
+      action: MetaInfoCtaAction.Refresh,
+      caption: 'Refresh asset',
+      isVisible: true,
+      uiComponentType: 'menuitem',
+      disabled: false,
+      uiComponentId: `menuitem-${MetaInfoCtaAction.Refresh}`,
+      tooltip: '',
+      callBack: reloadSwitch
+    });
+
+    // Merge token accounts
+    if (isInspectedAccountTheConnectedWallet() && canActivateMergeTokenAccounts()) {
+      actions.push({
+        action: MetaInfoCtaAction.MergeAccounts,
+        caption: t('assets.merge-accounts-cta'),
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: false,
+        uiComponentId: `menuitem-${MetaInfoCtaAction.MergeAccounts}`,
+        tooltip: '',
+        callBack: activateTokenMerge
+      });
+    }
+
+    // Close asset
+    if (inspectedAccountType && inspectedAccountType === "multisig") {
+      actions.push({
+        action: MetaInfoCtaAction.Close,
+        caption: 'Close account',
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: isAnyTxPendingConfirmation() || !canDeleteVault() || !isDeleteAssetValid(),
+        uiComponentId: `menuitem-${MetaInfoCtaAction.Close}`,
+        tooltip: '',
+        callBack: showDeleteVaultModal
+      });
+    } else if (isInspectedAccountTheConnectedWallet()) {
+      actions.push({
+        action: MetaInfoCtaAction.CloseAccount,
+        caption: 'Close account',
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: isAnyTxPendingConfirmation(),
+        uiComponentId: `menuitem-${MetaInfoCtaAction.CloseAccount}`,
+        tooltip: '',
+        callBack: showCloseAssetModal
+      });
+    }
+
+    setAssetCtas(actions);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isXsDevice,
+    wSolBalance,
+    selectedAsset,
+    isInspectedAccountTheConnectedWallet,
+    isSelectedAssetNativeAccount,
+    isSelectedAssetWsol,
+    investButtonEnabled,
+  ]);  
 
   // Preset the selected streaming account from the list if provided in path param (streamingItemId)
   useEffect(() => {

@@ -920,7 +920,6 @@ export const VestingView = () => {
 
       if (!data.multisig) {
         consoleOut('received data:', data, 'blue');
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.createVestingTreasury(
           new PublicKey(data.treasurer),                        // payer
           new PublicKey(data.treasurer),                        // treasurer
@@ -945,7 +944,6 @@ export const VestingView = () => {
       if (!multisig) { return null; }
 
       const treasuryAssociatedTokenMint = new PublicKey(data.associatedTokenAddress);
-      // TODO: Modify method signature for amount parameters to string | number
       const createTreasuryTx = await msp.createVestingTreasury(
         publicKey,                                            // payer
         multisig.authority,                                   // treasurer
@@ -1710,17 +1708,15 @@ export const VestingView = () => {
 
       if (!isMultisigTreasury() || !params.fundFromSafe) {
         if (data.stream === '') {
-          // TODO: Modify method signature for amount parameters to string | number
           return await msp.addFunds(
             new PublicKey(data.payer),                    // payer
             new PublicKey(data.contributor),              // contributor
             new PublicKey(data.treasury),                 // treasury
             new PublicKey(data.associatedToken),          // associatedToken
-            +data.amount,                                  // amount
+            data.amount,                                  // amount
           );
         }
 
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(data.contributor),             // treasurer
@@ -1741,7 +1737,6 @@ export const VestingView = () => {
       let addFundsTx: Transaction;
 
       if (data.stream) {
-        // TODO: Modify method signature for amount parameters to string | number
         addFundsTx = await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(multisig.authority),           // treasurer
@@ -1751,13 +1746,12 @@ export const VestingView = () => {
         );
       } else {
         operationType = OperationType.TreasuryAddFunds;
-        // TODO: Modify method signature for amount parameters to string | number
         addFundsTx = await msp.addFunds(
           new PublicKey(data.payer),                    // payer
           new PublicKey(data.contributor),              // contributor
           new PublicKey(data.treasury),                 // treasury
           new PublicKey(data.associatedToken),          // associatedToken
-          +data.amount,                                  // amount
+          data.amount,                                  // amount
         );
       }
 
