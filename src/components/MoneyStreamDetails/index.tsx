@@ -150,7 +150,8 @@ export const MoneyStreamDetails = (props: {
         );
       }
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      value += token ? token.symbol : item.associatedToken ? `[${shortenAddress(item.associatedToken)}]` : "";
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -184,7 +185,8 @@ export const MoneyStreamDetails = (props: {
         );
       }
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      value += token ? token.symbol : item.associatedToken ? `[${shortenAddress(item.associatedToken)}]` : "";
     }
     return value;
   }, [getTokenByMintAddress]);
