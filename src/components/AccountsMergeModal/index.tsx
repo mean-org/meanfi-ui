@@ -328,7 +328,7 @@ export const AccountsMergeModal = (props: {
                             />
                           )}
                         </span>
-                        <div className="public-address">{shortenAddress(item.pubkey.toBase58(), 10)}</div>
+                        <div className="public-address">{shortenAddress(item.pubkey, 10)}</div>
                       </div>
                       <div className="right">
                         {

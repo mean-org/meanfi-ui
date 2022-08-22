@@ -603,7 +603,7 @@ export const ProposalDetailsView = (props: {
                   <div className="proposal-resume-left-text">
                     <div className="info-label">Pending execution by</div>
                     {publicKey && (
-                      <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(publicKey.toBase58(), 4)}</span>
+                      <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(publicKey, 4)}</span>
                     )}
                   </div>
                 </Col>
@@ -612,7 +612,7 @@ export const ProposalDetailsView = (props: {
                   <IconUserClock className="user-image mean-svg-icons bg-yellow" />
                   <div className="proposal-resume-left-text">
                     <div className="info-label">Pending execution by</div>
-                    <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                    <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
                   </div>
                 </Col>
               )
@@ -621,7 +621,7 @@ export const ProposalDetailsView = (props: {
                 <IconLightning className="user-image mean-svg-icons bg-green" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Proposed by</div>
-                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
                 </div>
               </Col>
             ) : (
@@ -629,7 +629,7 @@ export const ProposalDetailsView = (props: {
                 <IconUser className="user-image mean-svg-icons" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Proposed by</div>
-                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
                 </div>
               </Col>
             )}

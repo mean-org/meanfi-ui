@@ -126,7 +126,7 @@ export const MoneyStreamDetails = (props: {
         2
       );
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -151,7 +151,7 @@ export const MoneyStreamDetails = (props: {
         2
       );
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);

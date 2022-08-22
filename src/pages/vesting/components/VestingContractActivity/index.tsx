@@ -87,7 +87,7 @@ export const VestingContractActivity = (props: {
             case VestingTreasuryActivityAction.TreasuryAddFunds:
             case VestingTreasuryActivityAction.TreasuryWithdraw:
             case VestingTreasuryActivityAction.TreasuryRefresh:
-                message += shortenAddress(vestingContract.id as string);
+                message += shortenAddress(vestingContract.id);
                 break;
             case VestingTreasuryActivityAction.StreamCreate:
             case VestingTreasuryActivityAction.StreamAllocateFunds:

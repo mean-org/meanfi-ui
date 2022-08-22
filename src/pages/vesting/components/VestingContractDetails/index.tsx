@@ -262,7 +262,7 @@ export const VestingContractDetails = (props: {
                             ) : null}
                         </div>
                     ) : (
-                        <div className="title text-truncate">{shortenAddress(item.id as string, 8)}</div>
+                        <div className="title text-truncate">{shortenAddress(item.id, 8)}</div>
                     )}
                     <div className="subtitle">
                         {loadingVestingContractFlowRate ? (

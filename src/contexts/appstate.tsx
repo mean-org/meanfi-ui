@@ -807,7 +807,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             if (dock) {
               openNotification({
                 title: t('notifications.error-title'),
-                description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+                description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
                 type: "error"
               });
             }
@@ -815,7 +815,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         } else {
           openNotification({
             title: t('notifications.error-title'),
-            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
             type: "error"
           });
         }
@@ -823,7 +823,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         console.error('customStream', error);
         openNotification({
           title: t('notifications.error-title'),
-          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
           type: "error"
         });
       }

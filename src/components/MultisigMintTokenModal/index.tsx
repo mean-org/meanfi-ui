@@ -120,7 +120,7 @@ export const MultisigMintTokenModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="title text-truncate">{shortenAddress(item.address, 8)}</div>
           <div className="subtitle text-truncate">decimals: {item.decimals}</div>
         </div>
         <div className="rate-cell">

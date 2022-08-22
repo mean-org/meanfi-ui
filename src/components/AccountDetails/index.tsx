@@ -134,7 +134,7 @@ export const AccountDetails = () => {
       <Menu.Divider />
       <Menu.Item key="2" onClick={onCopyAddress}>
         <IconUser className="mean-svg-icons" />
-        <span className="menu-item-text ml-1">{shortenAddress(wallet.publicKey.toBase58())}</span>
+        <span className="menu-item-text ml-1">{shortenAddress(wallet.publicKey)}</span>
       </Menu.Item>
       <Menu.Item key="3" onClick={switchWallet}>
         <IconExchange className="mean-svg-icons" />

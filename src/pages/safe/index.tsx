@@ -4084,10 +4084,10 @@ export const SafeView = () => {
                         <span>{item.label}</span>
                       </div>
                     ) : (
-                      <div className="title text-truncate">{`${shortenAddress(item.id.toBase58(), 4)} ${item.version === 0 && "(Serum)"}`}</div>
+                      <div className="title text-truncate">{`${shortenAddress(item.id, 4)} ${item.version === 0 && "(Serum)"}`}</div>
                     )}
                     {
-                      <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
+                      <div className="subtitle text-truncate">{shortenAddress(item.id, 8)}</div>
                     }
                   </div>
                 </div>

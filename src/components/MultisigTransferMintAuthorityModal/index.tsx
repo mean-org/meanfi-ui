@@ -75,7 +75,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="title text-truncate">{shortenAddress(item.address, 8)}</div>
           <div className="subtitle text-truncate">decimals: {item.decimals}</div>
         </div>
         <div className="rate-cell">
@@ -98,10 +98,10 @@ export const MultisigTransferMintAuthorityModal = (props: {
           {item.label ? (
             <div className="title text-truncate">{item.label}</div>
           ) : (
-            <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
+            <div className="title text-truncate">{shortenAddress(item.id, 8)}</div>
           )}
           {
-            <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
+            <div className="subtitle text-truncate">{shortenAddress(item.id, 8)}</div>
           }
         </div>
         <div className="rate-cell">
