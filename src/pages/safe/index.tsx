@@ -1510,7 +1510,7 @@ export const SafeView = () => {
     publicKey
   ]);
 
-  const createCredixDepositIx = useCallback(async (investor: PublicKey, amount: number) => {
+  const createCredixDepositIx = useCallback(async (investor: PublicKey, amount: number, marketplace: string) => {
 
     if (!connection || !connectionConfig) { return null; }
 
@@ -1524,14 +1524,14 @@ export const SafeView = () => {
 
     console.log("gatewayToken => ", gatewayToken.toBase58());
 
-    return await getDepositIx(program, investor, amount);
+    return await getDepositIx(program, investor, amount, marketplace);
 
   }, [
     connection, 
     connectionConfig
   ]);
 
-  const createCredixDepositTrancheIx = useCallback(async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number) => {
+  const createCredixDepositTrancheIx = useCallback(async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
 
     if (!connection || !connectionConfig) { return null; }
 
@@ -1544,14 +1544,14 @@ export const SafeView = () => {
 
     console.log("gatewayToken => ", gatewayToken.toBase58());
 
-    return await getTrancheDepositIx(program, investor, deal, amount, trancheIndex);
+    return await getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
 
   }, [
     connection, 
     connectionConfig
   ]);
 
-  const createCredixWithdrawIx = useCallback(async (investor: PublicKey, amount: number) => {
+  const createCredixWithdrawIx = useCallback(async (investor: PublicKey, amount: number, marketplace: string) => {
 
     if (!connection || !connectionConfig) { return null; }
 
@@ -1565,7 +1565,7 @@ export const SafeView = () => {
 
     console.log("gatewayToken => ", gatewayToken.toBase58());
 
-    return await getWithdrawIx(program, investor, amount);
+    return await getWithdrawIx(program, investor, amount, marketplace);
 
   }, [
     connection, 
@@ -1600,31 +1600,38 @@ export const SafeView = () => {
         // TODO: Implement GetOperationFromProposal
         // operation = getProposalOperation(data);
         proposalIx = tx.instructions[0];
-      } else if (data.appId === CREDIX_PROGRAM.toBase58()) { //
+      } else if (data.appId === CREDIX_PROGRAM.toBase58()) { //        
+        const investorPK = new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'investor').value);
+        const marketPlaceVal = String(data.instruction.uiElements.find((x: any) => x.name === 'marketName').value);
+        const amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+        consoleOut('**** common inputs: ',{investorPK:investorPK.toString(), marketPlaceVal, amountVal});
         switch (data.instruction.name) {
           case 'depositFunds':
             operation = OperationType.CredixDepositFunds;
             proposalIx = await createCredixDepositIx(
-              new PublicKey(data.instruction.uiElements[0].value),
-              parseFloat(data.instruction.uiElements[1].value)
+              investorPK,
+              amountVal,
+              marketPlaceVal
             );
           break;
 
           case 'withdrawFunds':
             operation = OperationType.CredixWithdrawFunds;
             proposalIx = await createCredixWithdrawIx(
-              new PublicKey(data.instruction.uiElements[0].value),
-              parseFloat(data.instruction.uiElements[1].value)
+              investorPK,
+              amountVal,
+              marketPlaceVal
             );
           break;
 
           case 'depositTranche':
             operation = OperationType.CredixDepositTranche;
             proposalIx = await createCredixDepositTrancheIx(
-              new PublicKey(data.instruction.uiElements[0].value),
-              new PublicKey(data.instruction.uiElements[1].value),
-              parseFloat(data.instruction.uiElements[2].value),
-              parseInt(data.instruction.uiElements[3].value)
+              investorPK,
+              new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
+              amountVal,
+              parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
+              marketPlaceVal
             );
           break;  
         }
@@ -4084,10 +4091,10 @@ export const SafeView = () => {
                         <span>{item.label}</span>
                       </div>
                     ) : (
-                      <div className="title text-truncate">{`${shortenAddress(item.id.toBase58(), 4)} ${item.version === 0 && "(Serum)"}`}</div>
+                      <div className="title text-truncate">{`${shortenAddress(item.id, 4)} ${item.version === 0 && "(Serum)"}`}</div>
                     )}
                     {
-                      <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
+                      <div className="subtitle text-truncate">{shortenAddress(item.id, 8)}</div>
                     }
                   </div>
                 </div>

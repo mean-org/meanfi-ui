@@ -186,7 +186,7 @@ export const VestingContractStreamList = (props: {
               2
             );
             value += ' ';
-            value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+            value += token ? token.symbol : `[${shortenAddress(item.associatedToken)}]`;
         }
         return value;
     }, [getTokenByMintAddress]);
@@ -211,7 +211,7 @@ export const VestingContractStreamList = (props: {
               2
             );
             value += ' ';
-            value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+            value += token ? token.symbol : `[${shortenAddress(item.associatedToken)}]`;
         }
         return value;
     }, [getTokenByMintAddress]);
@@ -768,7 +768,7 @@ export const VestingContractStreamList = (props: {
                                 highlightedStream.associatedToken as string,
                                 false, splTokenList
                             )
-                        }] has been sent to [${shortenAddress(highlightedStream.beneficiary as string)}]. Unvested amount of [${
+                        }] has been sent to [${shortenAddress(highlightedStream.beneficiary)}]. Unvested amount of [${
                             getTokenAmountAndSymbolByTokenAddress(
                                 closeStreamOptions.unvestedReturns,
                                 highlightedStream.associatedToken as string,

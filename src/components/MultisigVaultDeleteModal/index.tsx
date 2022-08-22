@@ -84,6 +84,10 @@ export const MultisigVaultDeleteModal = (props: {
   }
 
   const renderVault = (item: UserTokenAccount) => {
+    if (!item || !item.publicAddress) {
+      return null;
+    }
+
     const token = getTokenByMintAddress(item.address as string);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -108,8 +112,8 @@ export const MultisigVaultDeleteModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.address as string, 6)}]`}</div>
-          <div className="subtitle text-truncate">{shortenAddress(item.publicAddress as string, 8)}</div>
+          <div className="title text-truncate">{token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.address, 6)}]`}</div>
+          <div className="subtitle text-truncate">{shortenAddress(item.publicAddress, 8)}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">

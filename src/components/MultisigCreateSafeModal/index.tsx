@@ -580,9 +580,9 @@ export const MultisigCreateSafeModal = (props: {
                           </Col>
                           <Col span={16} className="text-left pl-1">
                             {createdByName ? (
-                              <span>{`${createdByName} (${shortenAddress(publicKey.toBase58(), 4)})`}</span>
+                              <span>{`${createdByName} (${shortenAddress(publicKey, 4)})`}</span>
                             ) : (
-                              <span>{shortenAddress(publicKey.toBase58(), 4)}</span>
+                              <span>{shortenAddress(publicKey, 4)}</span>
                             )}
                           </Col>
                         </>

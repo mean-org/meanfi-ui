@@ -337,7 +337,7 @@ export const VestingContractWithdrawFundsModal = (props: {
               </span>
             </div>
           ) : (
-            <div className="title text-truncate">{shortenAddress(vestingContract.id as string, 8)}</div>
+            <div className="title text-truncate">{shortenAddress(vestingContract.id, 8)}</div>
           )}
           {isMultisigTreasury && (
             <div className="subtitle text-truncate">{t('treasuries.treasury-list.multisig-treasury-label')}</div>

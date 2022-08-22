@@ -391,8 +391,8 @@ export const SafeMeanInfo = (props: {
                 // Sends program value to the parent component "SafeView"
                 onDataToProgramView(program);
               }
-              const programTitle = program.pubkey ? shortenAddress(program.pubkey.toBase58(), 4) : "Unknown program";
-              const programSubtitle = shortenAddress(program.pubkey.toBase58(), 8);
+              const programTitle = program.pubkey ? shortenAddress(program.pubkey, 4) : "Unknown program";
+              const programSubtitle = shortenAddress(program.pubkey, 8);
               return (
                 <div 
                   key={`${index + 1}`}

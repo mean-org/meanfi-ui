@@ -710,7 +710,7 @@ export const VestingContractCreateForm = (props: {
                     </div>
                     <div className="description-cell">
                         <div className="title text-truncate">{selectedMultisig.label}</div>
-                        <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id.toBase58(), 8)}</div>
+                        <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id, 8)}</div>
                     </div>
                     <div className="rate-cell">
                         <div className="rate-amount">

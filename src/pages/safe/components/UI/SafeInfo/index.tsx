@@ -111,7 +111,7 @@ export const SafeInfo = (props: {
       if (selectedMultisig.label) {
         setSelectedLabelName(selectedMultisig.label)
       } else {
-        setSelectedLabelName(shortenAddress(selectedMultisig.id.toBase58(), 4))
+        setSelectedLabelName(shortenAddress(selectedMultisig.id, 4))
       }
     }
   }, [selectedMultisig]);

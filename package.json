@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.20.2",
+  "version": "1.20.3",
   "private": true,
   "browserslist": [
     ">0.2%",
@@ -37,7 +37,8 @@
     "build:prod": "REACT_APP_ENV=production npm run build",
     "build:prod:win": "set \"REACT_APP_ENV=production\" && npm run build",
     "postbuild": "node ci/copy-config.js",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "build:s3": "react-app-rewired build"
   },
   "dependencies": {
     "@ant-design/icons": "^4.7",
@@ -46,10 +47,10 @@
     "@ledgerhq/hw-transport-webhid": "^6.27",
     "@mean-dao/ddca": "1.2.35",
     "@mean-dao/hybrid-liquidity-ag": "1.2.2",
-    "@mean-dao/mean-multisig-apps": "1.3.3",
+    "@mean-dao/mean-multisig-apps": "1.3.4",
     "@mean-dao/mean-multisig-sdk": "1.16.0",
     "@mean-dao/money-streaming": "1.7.15",
-    "@mean-dao/msp": "2.9.0-alpha.13",
+    "@mean-dao/msp": "2.9.0-alpha.15",
     "@mean-dao/staking": "0.1.24",
     "@project-serum/anchor": "^0.24.2",
     "@project-serum/borsh": "^0.2.3",
@@ -83,7 +84,7 @@
     "i18next-browser-languagedetector": "^6.1",
     "jazzicon": "^1.5",
     "loggly-jslogger": "2.2.4",
-    "moment": "2.29.2",
+    "moment": "2.29.4",
     "moment-timezone": "0.5.34",
     "mz": "2.7.0",
     "qrcode.react": "3.0.1",
