@@ -1239,38 +1239,37 @@ const AppStateProvider: React.FC = ({ children }) => {
                   item = streamAccumulator[0];
                 }
               }
-              if (!item) {
-                item = Object.assign({}, streamAccumulator[0]);
-              }
-              consoleOut('selectedStream:', item, 'blue');
 
               setStreamActivity([]);
               setHasMoreStreamActivity(true);
 
-              const mspInstance: any = item && item.version < 2 ? ms : msp;
-              streamDetailPerformanceCounter.start();
-              mspInstance.getStream(new PublicKey(item?.id as string))
-              .then((detail: Stream | StreamInfo) => {
-                streamDetailPerformanceCounter.stop();
-                refreshStreamsPerformanceCounter.stop();
-                // if (!isProd()) {
-                //   consoleOut('listStreams performance counter:', '', 'crimson');
-                //   const results = [{
-                //     v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //     v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //     streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //     total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //   }];
-                //   console.table(results);
-                // }
-                if (detail) {
-                  updateStreamDetail(detail);
-                  setActiveStream(detail);
-                } else if (item) {
-                  updateStreamDetail(item);
-                  setActiveStream(item);
-                }
-              })
+              if (item) {
+                consoleOut('selectedStream:', item, 'blue');
+                const mspInstance = item && item.version < 2 ? ms : msp;
+                streamDetailPerformanceCounter.start();
+                mspInstance.getStream(new PublicKey(item?.id as string))
+                .then((detail: Stream | StreamInfo) => {
+                  streamDetailPerformanceCounter.stop();
+                  refreshStreamsPerformanceCounter.stop();
+                  // if (!isProd()) {
+                  //   consoleOut('listStreams performance counter:', '', 'crimson');
+                  //   const results = [{
+                  //     v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                  //     v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                  //     streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                  //     total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                  //   }];
+                  //   console.table(results);
+                  // }
+                  if (detail) {
+                    updateStreamDetail(detail);
+                    setActiveStream(detail);
+                  } else if (item) {
+                    updateStreamDetail(item);
+                    setActiveStream(item);
+                  }
+                })
+              }
             } else {
               updateSelectedStream(undefined);
               updateStreamDetail(undefined);

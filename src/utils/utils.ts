@@ -70,10 +70,18 @@ export function useLocalStorageState(key: string, defaultState?: string) {
 }
 
 // shorten the checksummed version of the input address to have 4 characters at start and end
-export function shortenAddress(address: string, chars = 4): string {
+export function shortenAddress(address: string | PublicKey, chars = 4): string {
   if (!address) { return ""; }
+  let output = '';
+  if (typeof address === "string") {
+    output = address;
+  } else if (address instanceof PublicKey) {
+    output = (address as PublicKey).toBase58();
+  } else {
+    output = `${address}`;
+  }
   const numChars = isMobile ? 4 : chars;
-  return `${address.slice(0, numChars)}...${address.slice(-numChars)}`;
+  return `${output.slice(0, numChars)}...${output.slice(-numChars)}`;
 }
 
 export function getTokenIcon(
