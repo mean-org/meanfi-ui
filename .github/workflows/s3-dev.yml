@@ -16,7 +16,7 @@ on:
 env:
   NODE_VERSION: 17
   BUILD_NUMBER: $GITHUB_RUN_NUMBER
-  REACT_APP_ENV: development #${{ github.event.inputs.release }}
+  REACT_APP_ENV: ${{ github.event.inputs.release }}
   BUCKET_NAME: "meanfi-dev"
   ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
 
@@ -32,15 +32,15 @@ jobs:
 
         # Install Yarn
       - name: Install Packages
-        run: |
-          echo "${{ github.event.inputs.release }}"
-          yarn install --frozen-lockfile
+        run: yarn install
 
-      - name: Generate build for Dev
+        # Build react app
+      - name: Generate build for ${{env.REACT_APP_ENV}}
         run: npm run build:s3
 
       - name: Copy Robot.txt
         run: cp ci/${{ env.ROBOTS_TXT_FILE_NAME }} build/robots.txt
+
       # Share artifact inside workflow
       - name: Share artifact inside workflow
         uses: actions/upload-artifact@v3
