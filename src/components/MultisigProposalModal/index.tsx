@@ -534,7 +534,7 @@ export const MultisigProposalModal = (props: {
                                           });
                                         }}
                                         placeholder={element.help}
-                                        value={inputState[element.name]}
+                                        value={inputState[element.name] || element.value}
                                       />
                                     </Col>
                                   </>
