@@ -7,8 +7,8 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
-import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
+import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress, toUiAmount, toUiAmount2 } from "../../utils/utils";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
@@ -138,7 +138,14 @@ export const MoneyStreamDetails = (props: {
     let value = '';
 
     if (item) {
-      const decimals = selectedToken?.decimals || 6;
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      const decimals = token?.decimals || 6;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
 
       if (item.version < 2) {
         const rateAmount = new BN(item.rateAmount).toNumber();
@@ -156,10 +163,10 @@ export const MoneyStreamDetails = (props: {
         );
       }
       value += ' ';
-      value += selectedToken ? selectedToken.symbol : item.associatedToken ? `[${shortenAddress(item.associatedToken)}]` : "";
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
-  }, [selectedToken]);
+  }, [getTokenByMintAddress]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
@@ -485,22 +492,14 @@ export const MoneyStreamDetails = (props: {
   const renderPaymentRate = () => {
     if (!stream || !selectedToken) { return '--'; }
 
-    const v1 = stream as StreamInfo;
-    const v2 = stream as Stream;
+    const rateAmountBN = new BN(stream.rateAmount);
 
-    return (
-      <>
-        {`${getTokenAmountAndSymbolByTokenAddress(
-              isNewStream()
-                ? toUiAmount(new BN(v2.rateAmount), selectedToken.decimals)
-                : v1.rateAmount,
-              selectedToken.address,
-              false,
-              splTokenList
-            )} ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
-        }
-      </>
-    )
+    let rateAmount = rateAmountBN.gtn(0) ? getRateAmountDisplay(stream) : getDepositAmountDisplay(stream);
+    if (rateAmountBN.gtn(0)) {
+      rateAmount += ' ' + getIntervalFromSeconds(new BN(stream.rateIntervalInSeconds).toNumber(), false, t);
+    }
+
+    return rateAmount;
   }
 
   const renderReservedAllocation = () => {
@@ -543,7 +542,7 @@ export const MoneyStreamDetails = (props: {
         {
           isNewStream()
             ? getAmountWithSymbol(
-                new BN(v2.fundsLeftInStream),
+                toUiAmount2(new BN(v2.fundsLeftInStream), selectedToken.decimals),
                 selectedToken.address,
                 false,
                 splTokenList,
@@ -663,7 +662,7 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: "Payment rate:",
-      value: renderPaymentRate() ? renderPaymentRate() : "--"
+      value: renderPaymentRate()
     },
     {
       label: "Reserved allocation:",
@@ -671,7 +670,7 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: isStreamIncoming && "Funds left in account:",
-      value: isStreamIncoming && (stream ? renderFundsLeftInAccount() : "--")
+      value: isStreamIncoming && renderFundsLeftInAccount()
     },
     {
       label: isStreamOutgoing && "Funds sent to recipient:",

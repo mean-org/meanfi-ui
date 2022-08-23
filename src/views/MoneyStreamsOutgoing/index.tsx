@@ -7,7 +7,7 @@ import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/m
 import { useTranslation } from "react-i18next";
 import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from "../../utils/utils";
+import { formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress } from "../../utils/utils";
 import BN from "bn.js";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { segmentAnalytics } from "../../App";
@@ -2524,23 +2524,24 @@ export const MoneyStreamsOutgoingView = (props: {
   }, [t]);
 
   const renderFundsLeftInAccount = () => {
-    if (!streamSelected) {return null;}
+    if (!streamSelected || !workingToken) {return "--";}
 
     const v1 = streamSelected as StreamInfo;
     const v2 = streamSelected as Stream;
-    const token = getTokenByMintAddress(streamSelected.associatedToken as string);
 
     return (
       <>
         <span className="info-data large mr-1">
-          {streamSelected
-            ? getTokenAmountAndSymbolByTokenAddress(
-                isNewStream()
-                  ? toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6)
-                  : v1.escrowUnvestedAmount,
-                streamSelected.associatedToken as string
-              )
-            : '--'
+          {
+            getAmountWithSymbol(
+              isNewStream()
+                ? new BN(v2.fundsLeftInStream)
+                : v1.escrowUnvestedAmount,
+              workingToken.address,
+              false,
+              splTokenList,
+              workingToken.decimals
+            )
           }
         </span>
         <span className="info-icon">
