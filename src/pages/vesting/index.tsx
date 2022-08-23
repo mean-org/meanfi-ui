@@ -706,9 +706,9 @@ export const VestingView = () => {
             const contractId = treasuries[0].id.toString();
             navigateToVestingContract(contractId);
           } else if (vestingContractAddress) {
-            const item = treasuries.find(i => i.id === vestingContractAddress);
+            const item = treasuries.find(i => (i.id as string) === vestingContractAddress);
             if (item) {
-              navigateToVestingContract(item.id.toString());
+              navigateToVestingContract(item.id as string);
             }
           }
         }
@@ -855,11 +855,7 @@ export const VestingView = () => {
     setRecipientAddress('');
     setLockPeriodAmount('');
     setFromCoinAmount('');
-    setWorkingToken(selectedList[0]);
-    setSelectedToken(selectedList[0]);
   }, [
-    selectedList,
-    setSelectedToken,
     setFromCoinAmount,
     setLockPeriodAmount,
     setPaymentStartDate,
@@ -3816,7 +3812,9 @@ export const VestingView = () => {
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       setCanSubscribe(true);
-    };
+      setWorkingToken(undefined);
+      setSelectedToken(undefined);
+  };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -1,13 +1,10 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { MSP, Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
-import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut } from '../../../../utils/ui';
-import { shortenAddress } from '../../../../utils/utils';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
 import { PublicKey } from '@solana/web3.js';
-import { CUSTOM_TOKEN_NAME } from '../../../../constants';
 
 export const VestingContractStreamDetailModal = (props: {
   accountAddress: string;
@@ -15,6 +12,7 @@ export const VestingContractStreamDetailModal = (props: {
   highlightedStream: Stream | undefined;
   isVisible: boolean;
   msp: MSP | undefined;
+  selectedToken: TokenInfo | undefined;
 }) => {
   const {
     accountAddress,
@@ -22,13 +20,9 @@ export const VestingContractStreamDetailModal = (props: {
     highlightedStream,
     isVisible,
     msp,
+    selectedToken,
   } = props;
-  const {
-    getTokenByMintAddress,
-    setEffectiveRate,
-  } = useContext(AppStateContext);
 
-  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [streamDetail, setStreamDetail] = useState<Stream | undefined>();
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(false);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
@@ -37,22 +31,6 @@ export const VestingContractStreamDetailModal = (props: {
   const isInboundStream = useCallback((): boolean => {
     return streamDetail && accountAddress && (streamDetail.beneficiary as PublicKey).toBase58() === accountAddress ? true : false;
   }, [accountAddress, streamDetail]);
-
-  const setCustomToken = useCallback((address: string) => {
-
-    const unkToken: TokenInfo = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: shortenAddress(address),
-    };
-
-    setSelectedToken(unkToken);
-    consoleOut("Selected stream token:", unkToken, 'darkgreen');
-    setEffectiveRate(0);
-
-  }, [setEffectiveRate]);
 
   const getStreamActivity = useCallback((streamId: string, clearHistory = false) => {
     if (!streamId || !msp || loadingStreamActivity) {
@@ -106,21 +84,6 @@ export const VestingContractStreamDetailModal = (props: {
       setHasMoreStreamActivity(true);
     }
   }, [highlightedStream, isVisible, streamDetail]);
-
-  // Set token from the stream
-  useEffect(() => {
-    if (isVisible && highlightedStream && !selectedToken) {
-
-      const token = getTokenByMintAddress(highlightedStream.associatedToken as string);
-      if (token) {
-        consoleOut("Selected stream token:", token.symbol, 'darkgreen');
-        setSelectedToken(token);
-      } else {
-        setCustomToken(highlightedStream.associatedToken as string);
-      }
-
-    }
-  }, [getTokenByMintAddress, isVisible, selectedToken, setCustomToken, highlightedStream]);
 
   // Live data calculation - Refresh Stream detail
   useEffect(() => {

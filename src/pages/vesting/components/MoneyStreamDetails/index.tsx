@@ -3,7 +3,7 @@ import BN from 'bn.js';
 import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity } from '@mean-dao/msp';
-import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress, toUiAmount, toUiAmount2 } from '../../../../utils/utils';
+import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
 import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
@@ -298,11 +298,6 @@ export const MoneyStreamDetails = (props: {
     return actionText;
   }
 
-  const getActivityAmount = (item: StreamActivity) => {
-    const token = getTokenByMintAddress(item.mint as string);
-    return toUiAmount(new BN(item.amount), token?.decimals || 6);
-  }
-
   const renderReceivingFrom = () => {
     if (!stream) { return null; }
 
@@ -316,22 +311,16 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderPaymentRate = () => {
-    if (!stream || !selectedToken) { return null; }
+    if (!stream || !selectedToken) { return '--'; }
 
-    return (
-      <>
-        {stream
-          ? `${getAmountWithSymbol(
-              toUiAmount2(new BN(stream.rateAmount), selectedToken.decimals),
-              stream.associatedToken as string,
-              false,
-              splTokenList,
-              selectedToken.decimals
-            )} ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
-          : '--'
-        }
-      </>
-    )
+    const rateAmountBN = new BN(stream.rateAmount);
+
+    let rateAmount = rateAmountBN.gtn(0) ? getRateAmountDisplay(stream) : getDepositAmountDisplay(stream);
+    if (rateAmountBN.gtn(0)) {
+      rateAmount += ' ' + getIntervalFromSeconds(new BN(stream.rateIntervalInSeconds).toNumber(), false, t);
+    }
+
+    return rateAmount;
   }
 
   const renderReservedAllocation = () => {
@@ -341,8 +330,8 @@ export const MoneyStreamDetails = (props: {
       <>
         {stream
           ? `${getAmountWithSymbol(
-              toUiAmount2(new BN(stream.remainingAllocationAmount), selectedToken.decimals),
-              stream.associatedToken as string,
+              new BN(stream.remainingAllocationAmount),
+              selectedToken.address,
               false,
               splTokenList,
               selectedToken.decimals
@@ -360,8 +349,8 @@ export const MoneyStreamDetails = (props: {
       <>
         {stream
           ? `${getAmountWithSymbol(
-              toUiAmount2(new BN(stream.fundsLeftInStream), selectedToken.decimals),
-              stream.associatedToken as string,
+              new BN(stream.fundsLeftInStream),
+              selectedToken.address,
               false,
               splTokenList,
               selectedToken.decimals
@@ -379,8 +368,8 @@ export const MoneyStreamDetails = (props: {
       <>
         {stream
           ? `${getAmountWithSymbol(
-              toUiAmount2(new BN(stream.fundsSentToBeneficiary), selectedToken.decimals),
-              stream.associatedToken as string,
+              new BN(stream.fundsSentToBeneficiary),
+              selectedToken.address,
               false,
               splTokenList,
               selectedToken.decimals
@@ -423,8 +412,9 @@ export const MoneyStreamDetails = (props: {
     if (!stream || !selectedToken) { return null; }
 
     return getAmountWithSymbol(
-      toUiAmount2(new BN(stream.cliffVestAmount), selectedToken.decimals),
-      stream.associatedToken as string,
+      // toUiAmount2(new BN(stream.cliffVestAmount), selectedToken.decimals),
+      new BN(stream.cliffVestAmount),
+      selectedToken.address,
       false,
       splTokenList,
       selectedToken.decimals
@@ -449,13 +439,16 @@ export const MoneyStreamDetails = (props: {
                     <div className="subtitle text-truncate">{shortenAddress(item.initializer)}</div>
                   </div>
                   <div className="rate-cell">
-                    <div className="rate-amount">{
-                      getAmountWithSymbol(
-                        getActivityAmount(item),
-                        item.mint,
-                        false,
-                        splTokenList
-                      )}
+                    <div className="rate-amount">
+                      {
+                        selectedToken ? getAmountWithSymbol(
+                          new BN(item.amount),
+                          item.mint,
+                          false,
+                          splTokenList,
+                          selectedToken.decimals
+                        ) : '--'
+                      }
                     </div>
                     <div className="interval">{getShortDate(item.utcDate as string, true)}</div>
                   </div>
@@ -510,11 +503,11 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: "Payment rate:",
-      value: renderPaymentRate() ? renderPaymentRate() : "--"
+      value: renderPaymentRate()
     },
     {
       label: "Reserved allocation:",
-      value: renderReservedAllocation() ? renderReservedAllocation() : ""
+      value: renderReservedAllocation()
     },
     {
       label: isInboundStream && "Funds left in account:",
