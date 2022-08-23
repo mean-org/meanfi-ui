@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmount2 } from '../../../../utils/utils';
+import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmount2, toUiAmount2 } from '../../../../utils/utils';
 import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
@@ -31,6 +31,7 @@ import { PendingProposalsComponent } from '../PendingProposalsComponent';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Identicon } from '../../../../components/Identicon';
 import { InputMean } from '../../../../components/InputMean';
+import { BN } from 'bn.js';
 
 const timeFormat="hh:mm A"
 
@@ -88,6 +89,7 @@ export const VestingContractCreateForm = (props: {
     const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
     const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
     const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+    const [tokenBalanceBn, setSelectedTokenBalanceBn] = useState(new BN(0));
     const [vestingLockName, setVestingLockName] = useState<string>('');
     const [vestingCategory, setVestingCategory] = useState<VestingContractCategory | undefined>(undefined);
     const [vestingLockFundingAmount, setVestingLockFundingAmount] = useState<string>('');
@@ -231,11 +233,15 @@ export const VestingContractCreateForm = (props: {
 
         if (!connection || !publicKey || !userBalances || !selectedToken) {
             setSelectedTokenBalance(0);
+            setSelectedTokenBalanceBn(new BN(0));
             return;
         }
 
         const timeout = setTimeout(() => {
-            setSelectedTokenBalance(userBalances[selectedToken.address]);
+            const balance = userBalances[selectedToken.address] as number;
+            setSelectedTokenBalance(balance);
+            const balanceBn = toTokenAmount2(balance, selectedToken.decimals);
+            setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
         });
 
         return () => {
@@ -294,6 +300,16 @@ export const VestingContractCreateForm = (props: {
     ////////////////////////////////////
     // Events, actions and Validation //
     ////////////////////////////////////
+
+    const canShowMaxCta = () => {
+        if (tokenBalance && selectedToken) {
+            if (selectedToken.address === NATIVE_SOL.address) {
+                return tokenBalance > getMinSolBlanceRequired() ? true : false;
+            }
+            return tokenBalance > 0 ? true : false;
+        }
+        return false;
+    }
 
     const showDrawer = () => {
         setIsTokenSelectorVisible(true);
@@ -448,13 +464,13 @@ export const VestingContractCreateForm = (props: {
     }
 
     const isStepOneValid = (): boolean => {
-        let maxAmount = 0;
+        let maxAmount = new BN(0);
         if (selectedToken) {
             if (selectedToken.address === NATIVE_SOL.address) {
                 const amount = getMaxAmount();
-                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                maxAmount = new BN(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
             } else {
-                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+                maxAmount = tokenBalanceBn;
             }
         }
         return  publicKey &&
@@ -462,7 +478,7 @@ export const VestingContractCreateForm = (props: {
                 vestingLockName &&
                 selectedToken &&
                 nativeBalance > 0 && nativeBalance >= getMinSolBlanceRequired() &&
-                (!vestingLockFundingAmount || parseFloat(vestingLockFundingAmount) <= maxAmount)
+                (!vestingLockFundingAmount || maxAmount.gtn(parseFloat(vestingLockFundingAmount)))
             ? true
             : false;
     };
@@ -488,13 +504,13 @@ export const VestingContractCreateForm = (props: {
     };
 
     const getStepOneButtonLabel = () => {
-        let maxAmount = 0;
+        let maxAmount = new BN(0);
         if (selectedToken) {
             if (selectedToken.address === NATIVE_SOL.address) {
                 const amount = getMaxAmount();
-                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                maxAmount = new BN(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
             } else {
-                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+                maxAmount = tokenBalanceBn;
             }
         }
         return  !publicKey
@@ -505,20 +521,20 @@ export const VestingContractCreateForm = (props: {
                     ? 'Add contract name'
                     : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
                         ? t('transactions.validation.amount-sol-low')
-                        : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
+                        : (vestingLockFundingAmount && maxAmount.ltn(parseFloat(vestingLockFundingAmount)))
                             ? t('transactions.validation.amount-high')
                             : t('transactions.validation.valid-continue');
 
     }
 
     const getStepTwoButtonLabel = () => {
-        let maxAmount = 0;
+        let maxAmount = new BN(0);
         if (selectedToken) {
             if (selectedToken.address === NATIVE_SOL.address) {
                 const amount = getMaxAmount();
-                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                maxAmount = new BN(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
             } else {
-                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+                maxAmount = tokenBalanceBn;
             }
         }
         return  !publicKey
@@ -529,7 +545,7 @@ export const VestingContractCreateForm = (props: {
                     ? 'Add contract name'
                     : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
                         ? t('transactions.validation.amount-sol-low')
-                        : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
+                        : (vestingLockFundingAmount && maxAmount.ltn(parseFloat(vestingLockFundingAmount)))
                             ? t('transactions.validation.amount-high')
                             : !lockPeriodAmount
                                 ? 'Set vesting period'
@@ -830,13 +846,14 @@ export const VestingContractCreateForm = (props: {
                                                 fullTokenInfo={selectedToken}
                                             />
                                         )}
-                                        {!isMultisigContext && selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
+                                        {!isMultisigContext && selectedToken && tokenBalance && canShowMaxCta() ? (
                                             <div className="token-max simplelink" onClick={() => {
                                                 if (selectedToken.address === NATIVE_SOL.address) {
                                                     const amount = getMaxAmount();
                                                     setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
                                                 } else {
-                                                    setVestingLockFundingAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                                                    // setVestingLockFundingAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                                                    setVestingLockFundingAmount(toUiAmount2(tokenBalanceBn, selectedToken.decimals));
                                                 }
                                             }}>
                                                 MAX

@@ -3498,13 +3498,19 @@ export const VestingView = () => {
 
   // Set selected token with the vesting contract associated token as soon as the VC is available
   useEffect(() => {
-    if (!publicKey || !selectedVestingContract) { return; }
-    getTokenOrCustomToken(selectedVestingContract.associatedToken as string)
-    .then(token => {
-      consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
-      setWorkingToken(token);
-    });
-  }, [getTokenOrCustomToken, publicKey, selectedVestingContract]);
+    if (!publicKey) { return; }
+    if (selectedVestingContract?.associatedToken) {
+      getTokenOrCustomToken(selectedVestingContract.associatedToken as string)
+      .then(token => {
+        consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
+        setWorkingToken(token);
+      });
+    }
+  }, [
+    getTokenOrCustomToken,
+    publicKey,
+    selectedVestingContract?.associatedToken
+  ]);
 
   // Get the vesting flow rate
   useEffect(() => {
@@ -3730,7 +3736,7 @@ export const VestingView = () => {
   useEffect(() => {
     let streamingBalance = new BN(0);
 
-    if (!connection || !selectedVestingContract) {
+    if (!selectedVestingContract) {
       setAvailableStreamingBalance(streamingBalance);
       return;
     }
@@ -3741,16 +3747,15 @@ export const VestingView = () => {
       return balance.sub(allocationAssigned);
     }
 
-    getTokenOrCustomToken(selectedVestingContract.associatedToken as string)
-    .then(token => {
+    if (selectedVestingContract.associatedToken && workingToken && workingToken.address === selectedVestingContract.associatedToken) {
       streamingBalance = getUnallocatedBalance(selectedVestingContract);
-      consoleOut('Available streaming balance:', toUiAmount2(streamingBalance, token.decimals), 'blue');
+      consoleOut('Available streaming balance:', toUiAmount2(streamingBalance, workingToken.decimals), 'blue');
       consoleOut('Available streaming balance (BN):', streamingBalance.toString(), 'blue');
       setAvailableStreamingBalance(streamingBalance);
-      setAssociatedTokenDecimals(token.decimals);
-    });
+      setAssociatedTokenDecimals(workingToken.decimals);
+    }
 
-  }, [connection, getTokenOrCustomToken, selectedVestingContract]);
+  }, [getTokenOrCustomToken, workingToken, selectedVestingContract]);
 
   // Hook on wallet connect/disconnect
   useEffect(() => {
