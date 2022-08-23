@@ -6,3 +6,11 @@ export interface OtpTxParams {
     startUtc: Date;
     recipientNote: string;
 }
+
+export interface TreasuryWithdraw {
+    title: string;
+    payer: string;
+    destination: string;
+    treasury: string;
+    amount: string;
+}

@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCur
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
-import { cutNumber, formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../utils/utils';
+import { formatThousands, getAmountWithSymbol, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeInteger, shortenAddress, toTokenAmount2, toUiAmount2 } from '../../utils/utils';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
@@ -21,6 +21,7 @@ import { BN } from 'bn.js';
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -34,6 +35,7 @@ export const TreasuryTransferFundsModal = (props: {
   transactionFees: TransactionFees;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
+  selectedToken: TokenInfo | undefined;
 }) => {
   const {
     handleClose,
@@ -45,14 +47,15 @@ export const TreasuryTransferFundsModal = (props: {
     transactionFees,
     treasuryDetails,
     multisigAccounts,
+    selectedToken
   } = props;
   const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const {
     theme,
+    splTokenList,
     tokenBalance,
-    selectedToken,
     isWhitelisted,
     loadingPrices,
     transactionStatus,
@@ -116,9 +119,9 @@ export const TreasuryTransferFundsModal = (props: {
         ? 'Invalid address'
         : !tokenAmount || +tokenAmount === 0
           ? 'Enter amount'
-          : unallocatedBalance && unallocatedBalance.toNumber() === 0
+          : unallocatedBalance && unallocatedBalance.isZero()
             ? 'No balance'
-            : (tokenAmount && unallocatedBalance && +tokenAmount > (unallocatedBalance.toNumber() || 0))
+            : (tokenAmount && unallocatedBalance && tokenAmount > (unallocatedBalance || new BN(0)))
               ? 'Amount exceeded'
               : !isVerifiedRecipient
                 ? t('transactions.validation.verified-recipient-unchecked')
@@ -134,9 +137,9 @@ export const TreasuryTransferFundsModal = (props: {
           ? 'Invalid address'
           : !tokenAmount || +tokenAmount === 0
             ? 'Enter amount'
-            : unallocatedBalance && unallocatedBalance.toNumber() === 0
+            : unallocatedBalance && unallocatedBalance.isZero()
               ? 'No balance'
-              : (tokenAmount && unallocatedBalance && +tokenAmount > (unallocatedBalance.toNumber() || 0))
+              : (tokenAmount && unallocatedBalance && tokenAmount > (unallocatedBalance || new BN(0)))
                 ? 'Amount exceeded'
                 : !isVerifiedRecipient
                   ? t('transactions.validation.verified-recipient-unchecked')
@@ -210,7 +213,7 @@ export const TreasuryTransferFundsModal = (props: {
       setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
       setTopupAmount(newValue);
-      setTokenAmount(makeInteger(newValue, selectedToken?.decimals || 6));
+      setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
     }
   };
 
@@ -239,9 +242,9 @@ export const TreasuryTransferFundsModal = (props: {
             isValidAddress(to) &&
             selectedToken && 
             isVerifiedRecipient &&
-            ((shouldFundFromTreasury() && unallocatedBalance.toNumber() > 0) ||
-            (!shouldFundFromTreasury() && userBalance.toNumber() > 0)) &&
-            tokenAmount && tokenAmount.toNumber() > 0 &&
+            ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
+            (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
+            tokenAmount && tokenAmount.gtn(0) &&
             ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
             (shouldFundFromTreasury() && ((isfeePayedByTreasurerOn() && tokenAmount.lte(maxAllocatableAmount)) ||
             (!isfeePayedByTreasurerOn() && tokenAmount.lte(unallocatedBalance)))))
@@ -259,9 +262,9 @@ export const TreasuryTransferFundsModal = (props: {
             !isInputMultisigAddress(to) &&
             selectedToken && 
             isVerifiedRecipient &&
-            ((shouldFundFromTreasury() && unallocatedBalance.toNumber() > 0) ||
-            (!shouldFundFromTreasury() && userBalance.toNumber() > 0)) &&
-            tokenAmount && tokenAmount.toNumber() > 0 &&
+            ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
+            (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
+            tokenAmount && tokenAmount.gtn(0) &&
             ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
             (shouldFundFromTreasury() && ((isfeePayedByTreasurerOn() && tokenAmount.lte(maxAllocatableAmount)) ||
             (!isfeePayedByTreasurerOn() && tokenAmount.lte(unallocatedBalance)))))
@@ -296,16 +299,16 @@ export const TreasuryTransferFundsModal = (props: {
       if (isWhitelisted) {
         const debugTable: any[] = [];
         debugTable.push({
-          unallocatedBalance: unallocatedBalance.toNumber(),
+          unallocatedBalance: unallocatedBalance.toString(),
           feeNumerator: feeNumerator,
           feePercentage01: feeNumerator/feeDenaminator,
-          badStreamMaxAllocation: badStreamMaxAllocation.toNumber(),
-          feeAmount: feeAmount.toNumber(),
-          badTotal: badTotal.toNumber(),
-          badRemaining: badRemaining.toNumber(),
-          goodStreamMaxAllocation: goodStreamMaxAllocation.toNumber(),
-          goodTotal: goodTotal.toNumber(),
-          goodRemaining: goodRemaining.toNumber(),
+          badStreamMaxAllocation: badStreamMaxAllocation.toString(),
+          feeAmount: feeAmount.toString(),
+          badTotal: badTotal.toString(),
+          badRemaining: badRemaining.toString(),
+          goodStreamMaxAllocation: goodStreamMaxAllocation.toString(),
+          goodTotal: goodTotal.toString(),
+          goodRemaining: goodRemaining.toString(),
         });
         consoleOut('debug table', debugTable, 'blue');
       }
@@ -356,14 +359,14 @@ export const TreasuryTransferFundsModal = (props: {
       const unallocated = getUnallocatedBalance(treasuryDetails);
       const ub = isNewTreasury()
         ? unallocated
-        : makeInteger(unallocated.toNumber(), selectedToken?.decimals || 6);
+        : toUiAmount2(unallocated, selectedToken?.decimals || 6);
       consoleOut('unallocatedBalance:', ub.toString(), 'blue');
-      setUnallocatedBalance(ub);
+      setUnallocatedBalance(new BN(ub));
     }
   }, [
     isVisible,
     treasuryDetails,
-    selectedToken?.decimals,
+    selectedToken,
     isNewTreasury,
   ]);
 
@@ -550,13 +553,13 @@ export const TreasuryTransferFundsModal = (props: {
                               const decimals = selectedToken ? selectedToken.decimals : 6;
                               if (isfeePayedByTreasurerOn()) {
                                 const maxAmount = getMaxAmount(true);
-                                consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-                                consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                                setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+                                consoleOut('maxAmount:', maxAmount.toString(), 'blue');
+                                setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                                 setTokenAmount(new BN(maxAmount));
                               } else {
                                 const maxAmount = getMaxAmount();
-                                setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                                 setTokenAmount(new BN(maxAmount));
                               }
                             }}>
@@ -608,10 +611,12 @@ export const TreasuryTransferFundsModal = (props: {
                       {selectedToken && unallocatedBalance ? (
                         <span>
                           {
-                            getTokenAmountAndSymbolByTokenAddress(
-                              makeDecimal(unallocatedBalance, selectedToken.decimals),
+                            getAmountWithSymbol(
+                              unallocatedBalance,
                               selectedToken.address,
-                              true
+                              true,
+                              splTokenList,
+                              selectedToken.decimals
                             )
                           }
                         </span>
@@ -644,11 +649,11 @@ export const TreasuryTransferFundsModal = (props: {
                   )}
                 </div>
               </div>
-              {(parseFloat(topupAmount) > makeDecimal(unallocatedBalance, 6)) && (
+              {/* {(parseFloat(topupAmount) > makeDecimal(unallocatedBalance, selectedToken?.decimals || 6)) && (
                 <span className="form-field-error">
                   {t('transactions.validation.invalid-amount')}
                 </span>
-              )}
+              )} */}
             </div>
 
             {/* explanatory paragraph */}

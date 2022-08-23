@@ -1197,7 +1197,7 @@ export const StreamingAccountView = (props: {
         payer: publicKey.toBase58(),
         destination: destinationPk.toBase58(),
         treasury: treasuryPk.toBase58(),
-        amount: amount.toNumber()
+        amount: amount.toString()
       };
 
       consoleOut('payload:', payload);
@@ -2329,7 +2329,6 @@ export const StreamingAccountView = (props: {
       const tokenAddr = isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string;
 
       getStreamingAccountAtaBalance(tokenAddr, streamingAccountSelected.id as string)
-      // .then(value => console.log("value test...", value))
       .then(value => {
         if (value) {
           setAssociatedTokenBalance(new BN(value.amount));
@@ -3257,6 +3256,7 @@ export const StreamingAccountView = (props: {
             setIsTransferFundsModalVisible(false);
           }}
           isBusy={isBusy}
+          selectedToken={selectedToken}
         />
       )}
 

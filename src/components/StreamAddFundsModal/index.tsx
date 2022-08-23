@@ -484,12 +484,12 @@ export const StreamAddFundsModal = (props: {
                 {treasuryDetails && treasuryDetails.autoClose ? (
                   <span>
                     {`${selectedToken && selectFromTokenBalance()
-                        ? getTokenAmountAndSymbolByTokenAddress(
-                          selectFromTokenBalance(),
-                            selectedToken?.address,
-                            true
-                          )
-                        : "0"
+                      ? getTokenAmountAndSymbolByTokenAddress(
+                        selectFromTokenBalance(),
+                          selectedToken?.address,
+                          true
+                        )
+                      : "0"
                     }`}
                   </span>
                 ) : (
