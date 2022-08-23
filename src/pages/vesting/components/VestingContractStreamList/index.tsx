@@ -156,7 +156,7 @@ export const VestingContractStreamList = (props: {
     }, [connection]);
 
     const isInboundStream = useCallback((item: Stream): boolean => {
-        return item && accountAddress && item.beneficiary === accountAddress ? true : false;
+        return item && accountAddress && (item.beneficiary as PublicKey).toBase58() === accountAddress ? true : false;
     }, [accountAddress]);
 
     const isDeletedStream = useCallback((id: string) => {

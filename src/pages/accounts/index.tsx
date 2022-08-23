@@ -359,11 +359,21 @@ export const AccountsNewView = () => {
     if (item && publicKey && accountAddress) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
+      let beneficiary = '';
       if (v1.version < 2) {
-        return v1.beneficiaryAddress === accountAddress ? true : false;
+        beneficiary = v1.beneficiaryAddress
+          ? typeof v1.beneficiaryAddress === "string"
+            ? (v1.beneficiaryAddress as string)
+            : (v1.beneficiaryAddress as PublicKey).toBase58()
+          : '';
       } else {
-        return v2.beneficiary === accountAddress ? true : false;
+        beneficiary = v2.beneficiary
+          ? typeof v2.beneficiary === "string"
+            ? (v2.beneficiary as string)
+            : (v2.beneficiary as PublicKey).toBase58()
+          : '';
       }
+      return beneficiary === accountAddress ? true : false
     }
     return false;
   }, [accountAddress, publicKey]);
@@ -5253,13 +5263,14 @@ export const AccountsNewView = () => {
                           />
                         ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                           <MoneyStreamsIncomingView
-                            streamSelected={streamDetail}
                             accountAddress={accountAddress}
+                            streamSelected={streamDetail}
                             multisigAccounts={multisigAccounts}
                             onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                           />
                         ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
                           <MoneyStreamsOutgoingView
+                            accountAddress={accountAddress}
                             streamSelected={streamDetail}
                             streamList={streamList}
                             streamingAccountSelected={treasuryDetail}

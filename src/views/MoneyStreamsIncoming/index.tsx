@@ -43,10 +43,10 @@ import { openNotification } from "../../components/Notifications";
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MoneyStreamsIncomingView = (props: {
-  streamSelected: Stream | StreamInfo | undefined;
-  onSendFromIncomingStreamDetails?: any;
   accountAddress: string;
   multisigAccounts: MultisigInfo[] | undefined;
+  onSendFromIncomingStreamDetails?: any;
+  streamSelected: Stream | StreamInfo | undefined;
 }) => {
   const {
     splTokenList,
@@ -65,10 +65,10 @@ export const MoneyStreamsIncomingView = (props: {
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
   const { 
-    streamSelected,
-    onSendFromIncomingStreamDetails,
     accountAddress,
     multisigAccounts,
+    onSendFromIncomingStreamDetails,
+    streamSelected,
   } = props;
 
   const connectionConfig = useConnectionConfig();
@@ -1395,6 +1395,7 @@ export const MoneyStreamsIncomingView = (props: {
     <>
       <Spin spinning={loadingStreamDetails}>
         <MoneyStreamDetails
+          accountAddress={accountAddress}
           stream={streamSelected}
           hideDetailsHandler={hideDetailsHandler}
           infoData={infoData}

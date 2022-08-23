@@ -38,6 +38,7 @@ import { title } from "process";
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MoneyStreamsOutgoingView = (props: {
+  accountAddress: string;
   streamSelected: Stream | StreamInfo | undefined;
   streamList?: Array<Stream | StreamInfo> | undefined;
   streamingAccountSelected: Treasury | TreasuryInfo | undefined;
@@ -69,7 +70,14 @@ export const MoneyStreamsOutgoingView = (props: {
   const { wallet, publicKey } = useWallet();
   const connection = useConnection();
 
-  const { streamSelected, streamList, streamingAccountSelected, onSendFromOutgoingStreamDetails, multisigAccounts } = props;
+  const {
+    accountAddress,
+    streamSelected,
+    streamList,
+    streamingAccountSelected,
+    onSendFromOutgoingStreamDetails,
+    multisigAccounts,
+  } = props;
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const { endpoint } = useConnectionConfig();
@@ -2650,6 +2658,7 @@ export const MoneyStreamsOutgoingView = (props: {
     <>
       <Spin spinning={loadingStreamDetails}>
         <MoneyStreamDetails
+          accountAddress={accountAddress}
           stream={streamSelected}
           hideDetailsHandler={hideDetailsHandler}
           infoData={infoData}

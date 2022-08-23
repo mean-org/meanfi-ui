@@ -35,7 +35,7 @@ export const VestingContractStreamDetailModal = (props: {
   const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(true);
 
   const isInboundStream = useCallback((): boolean => {
-    return streamDetail && accountAddress && streamDetail.beneficiary === accountAddress ? true : false;
+    return streamDetail && accountAddress && (streamDetail.beneficiary as PublicKey).toBase58() === accountAddress ? true : false;
   }, [accountAddress, streamDetail]);
 
   const setCustomToken = useCallback((address: string) => {
