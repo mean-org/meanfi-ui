@@ -48,13 +48,11 @@ import { MultisigVault } from "../models/multisig";
 import moment from "moment";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
 import { MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from "@mean-dao/mean-multisig-sdk";
+import { BN } from "bn.js";
 
-const pricesOldPerformanceCounter = new PerformanceCounter();
-const pricesNewPerformanceCounter = new PerformanceCounter();
-const refreshStreamsPerformanceCounter = new PerformanceCounter();
+const pricesPerformanceCounter = new PerformanceCounter();
 const listStreamsV1PerformanceCounter = new PerformanceCounter();
 const listStreamsV2PerformanceCounter = new PerformanceCounter();
-const streamDetailPerformanceCounter = new PerformanceCounter();
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -1011,10 +1009,10 @@ const AppStateProvider: React.FC = ({ children }) => {
   const getCoinPrices = useCallback(async () => {
 
     try {
-      pricesNewPerformanceCounter.start();
+      pricesPerformanceCounter.start();
       const newPrices = await getPrices();
-      pricesNewPerformanceCounter.stop();
-      consoleOut(`Fetched price list in ${pricesNewPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
+      pricesPerformanceCounter.stop();
+      consoleOut(`Fetched price list in ${pricesPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
       if (newPrices && newPrices.length > 0) {
         const pricesMap: any = {};
         newPrices.forEach(tp => pricesMap[tp.symbol] = tp.price);
@@ -1051,7 +1049,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setCoinPrices({ "NO-TOKEN-VALUE": 1 });
       }
     } catch (error) {
-      pricesOldPerformanceCounter.stop();
       setCoinPrices({ "NO-TOKEN-VALUE": 1 });
       updateEffectiveRate(0);
       consoleOut('New prices API error:', error, 'red');
@@ -1187,12 +1184,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       let rawStreamsv2: Stream[] = [];
 
       // Reset all counters
-      refreshStreamsPerformanceCounter.reset();
       listStreamsV1PerformanceCounter.reset();
       listStreamsV2PerformanceCounter.reset();
-      streamDetailPerformanceCounter.reset();
-
-      refreshStreamsPerformanceCounter.start();
       listStreamsV2PerformanceCounter.start();
 
       msp.listStreams({treasurer: userPk, beneficiary: userPk, friendly: false})
@@ -1200,81 +1193,30 @@ const AppStateProvider: React.FC = ({ children }) => {
           listStreamsV2PerformanceCounter.stop();
           streamAccumulator.push(...streamsv2);
           rawStreamsv2 = streamsv2;
-          rawStreamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1);
+          rawStreamsv2.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1);
           listStreamsV1PerformanceCounter.start();
           ms.listStreams({treasurer: userPk, beneficiary: userPk, friendly: false})
           .then(async streamsv1 => {
             listStreamsV1PerformanceCounter.stop();
             streamAccumulator.push(...streamsv1);
             rawStreamsv1 = streamsv1;
-            rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
-            streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
-            // Sort debugging block
-            // if (!isProd()) {
-            //   const debugTable: any[] = [];
-            //   streamAccumulator.forEach(item => debugTable.push({
-            //     createdBlockTime: item.createdBlockTime,
-            //     name: item.version < 2 ? item.streamName : item.name.trim(),
-            //   }));
-            //   console.table(debugTable);
-            // }
+            rawStreamsv1.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1)
+            streamAccumulator.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1)
+            // Start debugging block
+            if (!isProd()) {
+              const debugTable: any[] = [];
+              streamAccumulator.forEach(item => debugTable.push({
+                createdBlockTime: new BN(item.createdBlockTime).toNumber(),
+                name: item.version < 2 ? item.streamName : item.name.trim(),
+              }));
+              console.table(debugTable);
+            }
             // End of debugging block
             setStreamList(streamAccumulator);
             setStreamListv2(rawStreamsv2);
             setStreamListv1(rawStreamsv1);
-            consoleOut('Streams:', streamAccumulator, 'blue');
+            consoleOut('Streams from AppSate:', streamAccumulator, 'blue');
             setDeletedStreams([]);
-            if (streamAccumulator.length) {
-              let item: Stream | StreamInfo | undefined;
-              if (reset) {
-                item = streamAccumulator[0];
-              } else {
-                if (highLightableStreamId) {
-                  const highLightableItem = streamAccumulator.find(i => i.id === highLightableStreamId);
-                  item = highLightableItem || streamAccumulator[0];
-                } else if (selectedStream) {
-                  const itemFromServer = streamAccumulator.find(i => i.id === selectedStream.id);
-                  item = itemFromServer || streamAccumulator[0];
-                } else {
-                  item = streamAccumulator[0];
-                }
-              }
-
-              setStreamActivity([]);
-              setHasMoreStreamActivity(true);
-
-              if (item) {
-                consoleOut('selectedStream:', item, 'blue');
-                const mspInstance = item && item.version < 2 ? ms : msp;
-                streamDetailPerformanceCounter.start();
-                mspInstance.getStream(new PublicKey(item?.id as string))
-                .then((detail: Stream | StreamInfo) => {
-                  streamDetailPerformanceCounter.stop();
-                  refreshStreamsPerformanceCounter.stop();
-                  // if (!isProd()) {
-                  //   consoleOut('listStreams performance counter:', '', 'crimson');
-                  //   const results = [{
-                  //     v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                  //     v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                  //     streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                  //     total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                  //   }];
-                  //   console.table(results);
-                  // }
-                  if (detail) {
-                    updateStreamDetail(detail);
-                    setActiveStream(detail);
-                  } else if (item) {
-                    updateStreamDetail(item);
-                    setActiveStream(item);
-                  }
-                })
-              }
-            } else {
-              updateSelectedStream(undefined);
-              updateStreamDetail(undefined);
-              setActiveStream(undefined);
-            }
           })
           .catch(err => {
             console.error(err);
@@ -1294,9 +1236,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     publicKey,
     accountAddress,
     loadingStreams,
-    selectedStream,
     customStreamDocked,
-    highLightableStreamId,
   ]);
 
 
