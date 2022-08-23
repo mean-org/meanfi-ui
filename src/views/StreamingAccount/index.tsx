@@ -24,8 +24,8 @@ import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contex
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd, isValidAddress } from "../../utils/ui";
-import { fetchAccountTokens, findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, makeInteger, shortenAddress } from "../../utils/utils";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
+import { fetchAccountTokens, findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, makeInteger, shortenAddress, toUiAmount2 } from "../../utils/utils";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
@@ -419,7 +419,7 @@ export const StreamingAccountView = (props: {
   }
 
   const getStreamingAccountActivityAssociatedToken = (item: VestingTreasuryActivity) => {
-    const amount = item.amount ? makeDecimal(new BN(item.amount), selectedToken?.decimals || 6) : 0;
+    const amount = item.amount ? toUiAmount2(new BN(item.amount), selectedToken?.decimals || 6) : 0;
     let message = '';
     switch (item.action) {
         case VestingTreasuryActivityAction.TreasuryAddFunds:
@@ -2928,8 +2928,11 @@ export const StreamingAccountView = (props: {
       {!loadingStreamingAccountActivity ? (
         streamingAccountActivity !== undefined && streamingAccountActivity.length > 0 ? (
           streamingAccountActivity.map((item, index) => {
+            const openInNewTab = (url: string) => {
+              // 👇️ setting target to _blank with window.open
+              window.open(url, '_blank', 'noopener,noreferrer');
+            };
 
-            // const img = getActivityIcon(item);
             const title = getStreamingAccountActivityAction(item);
             const subtitle = <CopyExtLinkGroup
               content={item.signature}
@@ -2941,16 +2944,13 @@ export const StreamingAccountView = (props: {
             const resume = getShortDate(item.utcDate as string, true);
 
             return (
-              <a
+              <div
                 key={index}
-                target="_blank" 
-                rel="noopener noreferrer"
-                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`} 
-                className={`w-100 simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                onClick={() => openInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`)}
+                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ResumeItem
                   id={`${index}`}
-                  // img={img}
                   title={title}
                   subtitle={subtitle}
                   amount={amount}
@@ -2961,7 +2961,7 @@ export const StreamingAccountView = (props: {
                   classNameRightContent="resume-activity-row"
                   classNameIcon="icon-stream-row"
                 />
-              </a>
+              </div>
           )})
         ) : (
           <span className="pl-1">This streaming account has no activity</span>
