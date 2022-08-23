@@ -3802,8 +3802,8 @@ export const AccountsNewView = () => {
 
   // Preset the selected stream from the list if provided in path param (streamId)
   useEffect(() => {
-    if (publicKey && streamList && streamList.length > 0 && pathParamStreamId && (!streamDetail || streamDetail.id !== pathParamStreamId)) {
-      const item = streamList.find(s => s.id as string === pathParamStreamId);
+    if (publicKey && streamList && streamList.length > 0 && pathParamStreamId && (!streamDetail || !streamDetail.id || (streamDetail.id as PublicKey).toBase58() !== pathParamStreamId)) {
+      const item = streamList.find(s => s.id && (s.id as PublicKey).toString() === pathParamStreamId);
       consoleOut('streamList:', streamList, 'darkgreen');
       consoleOut('item:', item, 'darkgreen');
       if (item) {
