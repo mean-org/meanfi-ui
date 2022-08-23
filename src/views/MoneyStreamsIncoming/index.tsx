@@ -1175,17 +1175,26 @@ export const MoneyStreamsIncomingView = (props: {
   }, [deletedStreams]);
 
   const canWithdraw = (stream: StreamInfo | Stream | undefined ) => {
-    if (!stream) {
-      return false;
-    }
+    if (!stream) { return null; }
 
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
-    const isV2 = stream.version >= 2 ? true : false;
 
-    return accountAddress && (isV2 ? v2.beneficiary : v1.beneficiaryAddress) === accountAddress
-      ? true
-      : false;
+    let beneficiary = '';
+    if (v1.version < 2) {
+      beneficiary = v1.beneficiaryAddress
+        ? typeof v1.beneficiaryAddress === "string"
+          ? (v1.beneficiaryAddress as string)
+          : (v1.beneficiaryAddress as PublicKey).toBase58()
+        : '';
+    } else {
+      beneficiary = v2.beneficiary
+        ? typeof v2.beneficiary === "string"
+          ? (v2.beneficiary as string)
+          : (v2.beneficiary as PublicKey).toBase58()
+        : '';
+    }
+    return beneficiary === accountAddress ? true : false
   }
 
   useEffect(() => {

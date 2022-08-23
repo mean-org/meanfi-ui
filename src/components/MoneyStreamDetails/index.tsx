@@ -710,14 +710,15 @@ export const MoneyStreamDetails = (props: {
     );
   }
 
-  const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    event.currentTarget.src = FALLBACK_COIN_IMAGE;
-    event.currentTarget.className = "error";
-  };
+  const renderImg = () => {
+    if (!stream) { return null; }
 
-  let img;
-
-  if (stream) {
+    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+      event.currentTarget.src = FALLBACK_COIN_IMAGE;
+      event.currentTarget.className = "error";
+    };
+  
+    let img;
     const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
 
     if (stream.associatedToken) {
@@ -729,6 +730,8 @@ export const MoneyStreamDetails = (props: {
     } else {
       img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
     }
+
+    return img;
   }
 
   const title = stream ? getStreamTitle(stream) : `Unknown ${isStreamIncoming ? "incoming" : "outgoing"} stream`;
@@ -762,7 +765,7 @@ export const MoneyStreamDetails = (props: {
 
         {stream && (
           <ResumeItem
-            img={img}
+            img={renderImg()}
             title={title}
             extraTitle={renderBadges()}
             status={status}

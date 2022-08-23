@@ -33,7 +33,6 @@ export const StreamWithdrawModal = (props: {
   const { wallet, publicKey } = useWallet();
   const [searchParams] = useSearchParams();
   const {
-    transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
     setTransactionStatus,
