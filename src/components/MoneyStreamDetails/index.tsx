@@ -36,6 +36,7 @@ export const MoneyStreamDetails = (props: {
   isStreamIncoming?: boolean;
   isStreamOutgoing?: boolean;
   buttons?: any;
+  selectedToken?: TokenInfo | undefined;
 }) => {
   const {
     accountAddress,
@@ -46,6 +47,7 @@ export const MoneyStreamDetails = (props: {
     isStreamIncoming,
     isStreamOutgoing,
     buttons,
+    selectedToken,
   } = props;
   const {
     splTokenList,
@@ -136,14 +138,7 @@ export const MoneyStreamDetails = (props: {
     let value = '';
 
     if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
+      const decimals = selectedToken?.decimals || 6;
 
       if (item.version < 2) {
         const rateAmount = new BN(item.rateAmount).toNumber();
@@ -161,24 +156,16 @@ export const MoneyStreamDetails = (props: {
         );
       }
       value += ' ';
-      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-      value += token ? token.symbol : item.associatedToken ? `[${shortenAddress(item.associatedToken)}]` : "";
+      value += selectedToken ? selectedToken.symbol : item.associatedToken ? `[${shortenAddress(item.associatedToken)}]` : "";
     }
     return value;
-  }, [getTokenByMintAddress]);
+  }, [selectedToken]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
+      const decimals = selectedToken?.decimals || 6;
 
       if (item.version < 2) {
         const allocationAssigned = new BN(item.allocationAssigned).toNumber();
@@ -196,11 +183,10 @@ export const MoneyStreamDetails = (props: {
         );
       }
       value += ' ';
-      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-      value += token ? token.symbol : item.associatedToken ? `[${shortenAddress(item.associatedToken)}]` : "";
+      value += selectedToken ? selectedToken.symbol : item.associatedToken ? `[${shortenAddress(item.associatedToken)}]` : "";
     }
     return value;
-  }, [getTokenByMintAddress]);
+  }, [selectedToken]);
 
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';
@@ -254,7 +240,7 @@ export const MoneyStreamDetails = (props: {
       if (v1.version < 2) {
         switch (v1.state) {
           case STREAM_STATE.Schedule:
-            return t('streams.status.scheduled', {date: getShortDate(v1.startUtc as string)});
+            return t('streams.status.scheduled', {date: getShortDate((v1.startUtc as Date).toString())});
           case STREAM_STATE.Paused:
             return t('streams.status.stopped');
           default:
@@ -263,14 +249,14 @@ export const MoneyStreamDetails = (props: {
       } else {
         switch (v2.status) {
           case STREAM_STATUS.Schedule:
-            return `starts on ${getShortDate(v2.startUtc as string)}`;
+            return `starts on ${getShortDate((v2.startUtc as Date).toString())}`;
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
-              return `paused on ${getShortDate(v2.startUtc as string)}`;
+              return `paused on ${getShortDate((v2.startUtc as Date).toString())}`;
             }
-            return `out of funds on ${getShortDate(v2.startUtc as string)}`;
+            return `out of funds on ${getShortDate((v2.startUtc as Date).toString())}`;
           default:
-            return `streaming since ${getShortDate(v2.startUtc as string)}`;
+            return `streaming since ${getShortDate((v2.startUtc as Date).toString())}`;
         }
       }
     }
@@ -348,6 +334,33 @@ export const MoneyStreamDetails = (props: {
       return toUiAmount(new BN(item.amount), token?.decimals || 6);
     }
   }
+
+  const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
+
+    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+      event.currentTarget.src = FALLBACK_COIN_IMAGE;
+      event.currentTarget.className = "error";
+    };
+
+    if (selectedToken && selectedToken.logoURI) {
+      return (
+        <img
+          alt={`${selectedToken.name}`}
+          width={30}
+          height={30}
+          src={selectedToken.logoURI}
+          onError={imageOnErrorHandler}
+          className="token-img"/>
+      );
+    } else {
+      return (
+        <Identicon
+          address={(item.associatedToken as PublicKey).toBase58()}
+          style={{ width: "30", display: "inline-flex" }}
+          className="token-img" />
+      );
+    }
+  }, [selectedToken]);
 
   // Get stream activity
   useEffect(() => {
@@ -470,88 +483,108 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderPaymentRate = () => {
-    if (!stream) { return null; }
+    if (!stream || !selectedToken) { return '--'; }
 
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
-    const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
-              toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount, 
-              stream.associatedToken as string,
+        {`${getTokenAmountAndSymbolByTokenAddress(
+              isNewStream()
+                ? toUiAmount(new BN(v2.rateAmount), selectedToken.decimals)
+                : v1.rateAmount,
+              selectedToken.address,
               false,
               splTokenList
-            )}  ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
-          : '--'
+            )} ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
         }
       </>
     )
   }
 
   const renderReservedAllocation = () => {
-    if (!stream) { return null; }
+    if (!stream || !selectedToken) { return '--'; }
 
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
-    const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
-              toUiAmount(new BN(v2.remainingAllocationAmount), token?.decimals || 6) : (v1.allocationAssigned || v1.allocationLeft), 
-              stream.associatedToken as string,
-              false,
-              splTokenList
-            )}`
-          : '--'
+        {
+          isNewStream()
+            ? getAmountWithSymbol(
+                new BN(v2.remainingAllocationAmount),
+                selectedToken.address,
+                false,
+                splTokenList,
+                selectedToken.decimals
+              )
+            : getAmountWithSymbol(
+                v1.allocationAssigned || v1.allocationLeft,
+                selectedToken.address,
+                false,
+                splTokenList,
+                selectedToken.decimals
+              )
         }
       </>
     )
   }
 
   const renderFundsLeftInAccount = () => {
-    if (!stream) { return null; }
+    if (!stream || !selectedToken) { return '--'; }
 
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
-    const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
-              toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6) : v1.escrowUnvestedAmount, 
-              stream.associatedToken as string,
-              false,
-              splTokenList
-            )}`
-          : '--'
+        {
+          isNewStream()
+            ? getAmountWithSymbol(
+                new BN(v2.fundsLeftInStream),
+                selectedToken.address,
+                false,
+                splTokenList,
+                selectedToken.decimals
+              )
+            : getAmountWithSymbol(
+                v1.escrowUnvestedAmount, 
+                selectedToken.address,
+                false,
+                splTokenList,
+                selectedToken.decimals
+              )
         }
       </>
     )
   }
 
   const renderFundsSendToRecipient = () => {
-    if (!stream) { return null; }
+    if (!stream || !selectedToken) { return '--'; }
 
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
-    const token = getTokenByMintAddress(stream.associatedToken as string);
 
     return (
       <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(isNewStream() ?
-              toUiAmount(new BN(v2.fundsSentToBeneficiary), token?.decimals || 6) : (v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount), 
-              stream.associatedToken as string,
-              false,
-              splTokenList
-            )}`
-          : '--'
+        {
+          isNewStream()
+            ? getAmountWithSymbol(
+                new BN(v2.fundsSentToBeneficiary),
+                selectedToken.address,
+                false,
+                splTokenList,
+                selectedToken.decimals
+              )
+            : getAmountWithSymbol(
+                v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount, 
+                selectedToken.address,
+                false,
+                splTokenList,
+                selectedToken.decimals
+              )
         }
       </>
     )
@@ -634,7 +667,7 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: "Reserved allocation:",
-      value: renderReservedAllocation() ? renderReservedAllocation() : "--"
+      value: renderReservedAllocation()
     },
     {
       label: isStreamIncoming && "Funds left in account:",
@@ -646,11 +679,19 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && "Funds will run out in:",
-      value: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && <Countdown className="align-middle" date={isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string} renderer={renderer} />
+      value: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && <Countdown className="align-middle" date={
+        isNewStream()
+          ? (v2.estimatedDepletionDate as Date).toString()
+          : (v1.escrowEstimatedDepletionUtc as Date).toString()
+        }
+        renderer={renderer} />
     },
     {
       label: stream && getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
-      value: stream && getStreamStatus(stream) === "Stopped" && getRelativeDate(isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string)
+      value: stream && getStreamStatus(stream) === "Stopped" && getRelativeDate(isNewStream()
+        ? (v2.estimatedDepletionDate as Date).toString()
+        : (v1.escrowEstimatedDepletionUtc as Date).toString()
+      )
     },
     {
       label: "Stream id:",
@@ -710,30 +751,6 @@ export const MoneyStreamDetails = (props: {
     );
   }
 
-  const renderImg = () => {
-    if (!stream) { return null; }
-
-    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-      event.currentTarget.src = FALLBACK_COIN_IMAGE;
-      event.currentTarget.className = "error";
-    };
-  
-    let img;
-    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
-
-    if (stream.associatedToken) {
-      if (token) {
-        img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
-      } else {
-        img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-      }
-    } else {
-      img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-    }
-
-    return img;
-  }
-
   const title = stream ? getStreamTitle(stream) : `Unknown ${isStreamIncoming ? "incoming" : "outgoing"} stream`;
   const subtitle = stream ? getStreamSubtitle(stream) : "--";
   const status = stream ? getStreamStatus(stream) : "--";
@@ -765,7 +782,7 @@ export const MoneyStreamDetails = (props: {
 
         {stream && (
           <ResumeItem
-            img={renderImg()}
+            img={getStreamIcon(stream)}
             title={title}
             extraTitle={renderBadges()}
             status={status}
