@@ -3,7 +3,7 @@ import BN from 'bn.js';
 import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity } from '@mean-dao/msp';
-import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress, toUiAmount } from '../../../../utils/utils';
+import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress, toUiAmount, toUiAmount2 } from '../../../../utils/utils';
 import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
@@ -229,14 +229,14 @@ export const MoneyStreamDetails = (props: {
     if (item) {
       switch (item.status) {
         case STREAM_STATUS.Schedule:
-          return t('streams.status.scheduled', { date: getShortDate(item.startUtc as string, false) });
+          return t('streams.status.scheduled', { date: getShortDate(item.startUtc.toString(), false) });
         case STREAM_STATUS.Paused:
           if (item.isManuallyPaused) {
             return t('streams.status.stopped-manually');
           }
           return t('vesting.vesting-account-streams.stream-status-complete');
         default:
-          return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate as string) });
+          return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate.toString()) });
       }
     }
   }, [t]);
@@ -316,18 +316,17 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderPaymentRate = () => {
-    if (!stream) { return null; }
-
-    const token = getTokenByMintAddress(stream.associatedToken as string);
+    if (!stream || !selectedToken) { return null; }
 
     return (
       <>
         {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(stream.rateAmount), token?.decimals || 6), 
+          ? `${getAmountWithSymbol(
+              toUiAmount2(new BN(stream.rateAmount), selectedToken.decimals),
               stream.associatedToken as string,
               false,
-              splTokenList
+              splTokenList,
+              selectedToken.decimals
             )} ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
           : '--'
         }
@@ -336,18 +335,17 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderReservedAllocation = () => {
-    if (!stream) { return null; }
-
-    const token = getTokenByMintAddress(stream.associatedToken as string);
+    if (!stream || !selectedToken) { return null; }
 
     return (
       <>
         {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(stream.remainingAllocationAmount), token?.decimals || 6),
+          ? `${getAmountWithSymbol(
+              toUiAmount2(new BN(stream.remainingAllocationAmount), selectedToken.decimals),
               stream.associatedToken as string,
               false,
-              splTokenList
+              splTokenList,
+              selectedToken.decimals
             )}`
           : '--'
         }
@@ -356,18 +354,17 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderFundsLeftInAccount = () => {
-    if (!stream) { return null; }
-
-    const token = getTokenByMintAddress(stream.associatedToken as string);
+    if (!stream || !selectedToken) { return null; }
 
     return (
       <>
         {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(stream.fundsLeftInStream), token?.decimals || 6),
+          ? `${getAmountWithSymbol(
+              toUiAmount2(new BN(stream.fundsLeftInStream), selectedToken.decimals),
               stream.associatedToken as string,
               false,
-              splTokenList
+              splTokenList,
+              selectedToken.decimals
             )}`
           : '--'
         }
@@ -376,18 +373,17 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderFundsSendToRecipient = () => {
-    if (!stream) { return null; }
-
-    const token = getTokenByMintAddress(stream.associatedToken as string);
+    if (!stream || !selectedToken) { return null; }
 
     return (
       <>
         {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(stream.fundsSentToBeneficiary), token?.decimals || 6),
+          ? `${getAmountWithSymbol(
+              toUiAmount2(new BN(stream.fundsSentToBeneficiary), selectedToken.decimals),
               stream.associatedToken as string,
               false,
-              splTokenList
+              splTokenList,
+              selectedToken.decimals
             )}`
           : '--'
         }
@@ -426,11 +422,12 @@ export const MoneyStreamDetails = (props: {
   const renderCliffVestAmount = () => {
     if (!stream || !selectedToken) { return null; }
 
-    return getTokenAmountAndSymbolByTokenAddress(
-      toUiAmount(new BN(stream.cliffVestAmount), selectedToken.decimals || 6),
+    return getAmountWithSymbol(
+      toUiAmount2(new BN(stream.cliffVestAmount), selectedToken.decimals),
       stream.associatedToken as string,
       false,
-      splTokenList
+      splTokenList,
+      selectedToken.decimals
     );
   }
 
@@ -529,11 +526,11 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && "Funds will run out in:",
-      value: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && `${getReadableDate(stream.estimatedDepletionDate as string)} (${getTimeToNow(stream.estimatedDepletionDate as string)})`
+      value: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && `${getReadableDate(stream.estimatedDepletionDate.toString())} (${getTimeToNow(stream.estimatedDepletionDate.toString())})`
     },
     {
       label: stream && stream.status === STREAM_STATUS.Paused && "Funds ran out on:",
-      value: stream && stream.status === STREAM_STATUS.Paused && getRelativeDate(stream.estimatedDepletionDate as string)
+      value: stream && stream.status === STREAM_STATUS.Paused && getRelativeDate(stream.estimatedDepletionDate.toString())
     },
     {
       label: "Stream id:",
@@ -614,6 +611,8 @@ export const MoneyStreamDetails = (props: {
   };
 
   const renderStreamBalance = (item: Stream) => {
+    if (!stream || !selectedToken) { return null; }
+
     return (
       <div className="details-panel-meta mt-2 mb-2">
         <div className="info-label text-truncate line-height-110">
@@ -627,17 +626,19 @@ export const MoneyStreamDetails = (props: {
           <span className="info-data line-height-110">
             {
               isInboundStream
-                ? getTokenAmountAndSymbolByTokenAddress(
-                    toUiAmount(new BN(item.withdrawableAmount), selectedToken?.decimals || 6),
-                    item.associatedToken as string,
+                ? getAmountWithSymbol(
+                    toUiAmount2(new BN(stream.withdrawableAmount), selectedToken.decimals),
+                    stream.associatedToken as string,
                     false,
-                    splTokenList
+                    splTokenList,
+                    selectedToken.decimals
                   )
-                : getTokenAmountAndSymbolByTokenAddress(
-                    toUiAmount(new BN(item.fundsLeftInStream), selectedToken?.decimals || 6),
-                    item.associatedToken as string,
+                : getAmountWithSymbol(
+                    toUiAmount2(new BN(stream.fundsLeftInStream), selectedToken.decimals),
+                    stream.associatedToken as string,
                     false,
-                    splTokenList
+                    splTokenList,
+                    selectedToken.decimals
                   )
             }
           </span>

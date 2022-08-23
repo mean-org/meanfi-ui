@@ -372,7 +372,7 @@ export const VestingContractStreamList = (props: {
                     }
                     return t('vesting.vesting-account-streams.stream-status-complete');
                 default:
-                    return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate as string) });
+                    return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate.toString()) });
             }
         }
     }, [t]);
