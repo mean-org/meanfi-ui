@@ -8,7 +8,7 @@ on:
           default: 'development'
           options: 
             - development
-            #- staging
+            - staging
   # push:
   #   branches:
   #     - 'feature/*'
@@ -16,8 +16,8 @@ on:
 env:
   NODE_VERSION: 17
   BUILD_NUMBER: $GITHUB_RUN_NUMBER
-  REACT_APP_ENV: ${{ github.event.inputs.release }}
-  BUCKET_NAME: "meanfi-dev"
+  APP_ENV: ${{ github.event.inputs.release }}
+  BUCKET_NAME: "meanfi-${{ env.APP_ENV }}"
   ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
 
 jobs:
@@ -35,8 +35,10 @@ jobs:
         run: yarn install
 
         # Build react app
-      - name: Generate build
+      - name: Generate build for ${{ env.APP_ENV }}
         run: npm run build:s3
+        env:
+          REACT_APP_ENV: ${{ env.APP_ENV }}
 
       - name: Copy robots.txt
         run: cp ci/${{ env.ROBOTS_TXT_FILE_NAME }} build/robots.txt
@@ -45,7 +47,7 @@ jobs:
       - name: Share artifact inside workflow
         uses: actions/upload-artifact@v3
         with:
-          name: mean-ui-build-${{env.REACT_APP_ENV}}
+          name: mean-ui-build-${{env.APP_ENV}}
           path: build
   deploy:
     runs-on: ubuntu-latest
@@ -57,7 +59,7 @@ jobs:
       - name: Get artifact
         uses: actions/download-artifact@v3
         with:
-          name: mean-ui-build-${{env.REACT_APP_ENV}}
+          name: mean-ui-build-${{env.APP_ENV}}
       # Set the credentials from repository settings/secrets
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
