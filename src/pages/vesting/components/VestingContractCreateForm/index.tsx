@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmount2, toUiAmount2 } from '../../../../utils/utils';
+import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmount2, toTokenAmountBn, toUiAmount2, toUiAmountBn } from '../../../../utils/utils';
 import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
@@ -464,21 +464,24 @@ export const VestingContractCreateForm = (props: {
     }
 
     const isStepOneValid = (): boolean => {
+        if (!selectedToken) { return false; }
+
         let maxAmount = new BN(0);
-        if (selectedToken) {
-            if (selectedToken.address === NATIVE_SOL.address) {
-                const amount = getMaxAmount();
-                maxAmount = new BN(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-            } else {
-                maxAmount = tokenBalanceBn;
-            }
+        if (selectedToken.address === NATIVE_SOL.address) {
+            const amount = getMaxAmount();
+            maxAmount = new BN(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+        } else {
+            maxAmount = tokenBalanceBn;
         }
+
+        const fundingAmount = toTokenAmountBn(vestingLockFundingAmount, selectedToken.decimals);
+
         return  publicKey &&
                 ((!proposalTitle && !isMultisigContext) || (proposalTitle && isMultisigContext)) &&
                 vestingLockName &&
                 selectedToken &&
                 nativeBalance > 0 && nativeBalance >= getMinSolBlanceRequired() &&
-                (!vestingLockFundingAmount || maxAmount.gtn(parseFloat(vestingLockFundingAmount)))
+                (!vestingLockFundingAmount || fundingAmount.lte(maxAmount))
             ? true
             : false;
     };
@@ -505,6 +508,7 @@ export const VestingContractCreateForm = (props: {
 
     const getStepOneButtonLabel = () => {
         let maxAmount = new BN(0);
+        let fundingAmount = new BN(0);
         if (selectedToken) {
             if (selectedToken.address === NATIVE_SOL.address) {
                 const amount = getMaxAmount();
@@ -512,7 +516,11 @@ export const VestingContractCreateForm = (props: {
             } else {
                 maxAmount = tokenBalanceBn;
             }
+            fundingAmount = toTokenAmountBn(vestingLockFundingAmount, selectedToken.decimals);
+        } else {
+            fundingAmount = toTokenAmountBn(vestingLockFundingAmount, 9);
         }
+
         return  !publicKey
             ? t('transactions.validation.not-connected')
             : isMultisigContext && !proposalTitle
@@ -521,14 +529,17 @@ export const VestingContractCreateForm = (props: {
                     ? 'Add contract name'
                     : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
                         ? t('transactions.validation.amount-sol-low')
-                        : (vestingLockFundingAmount && maxAmount.ltn(parseFloat(vestingLockFundingAmount)))
-                            ? t('transactions.validation.amount-high')
-                            : t('transactions.validation.valid-continue');
+                        : !selectedToken
+                            ? 'No token selected'
+                            : (vestingLockFundingAmount && fundingAmount.gt(maxAmount))
+                                ? t('transactions.validation.amount-high')
+                                : t('transactions.validation.valid-continue');
 
     }
 
     const getStepTwoButtonLabel = () => {
         let maxAmount = new BN(0);
+        let fundingAmount = new BN(0);
         if (selectedToken) {
             if (selectedToken.address === NATIVE_SOL.address) {
                 const amount = getMaxAmount();
@@ -536,7 +547,11 @@ export const VestingContractCreateForm = (props: {
             } else {
                 maxAmount = tokenBalanceBn;
             }
+            fundingAmount = toTokenAmountBn(vestingLockFundingAmount, selectedToken.decimals);
+        } else {
+            fundingAmount = toTokenAmountBn(vestingLockFundingAmount, 9);
         }
+
         return  !publicKey
             ? t('transactions.validation.not-connected')
             : isMultisigContext && !proposalTitle
@@ -545,13 +560,15 @@ export const VestingContractCreateForm = (props: {
                     ? 'Add contract name'
                     : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
                         ? t('transactions.validation.amount-sol-low')
-                        : (vestingLockFundingAmount && maxAmount.ltn(parseFloat(vestingLockFundingAmount)))
-                            ? t('transactions.validation.amount-high')
-                            : !lockPeriodAmount
-                                ? 'Set vesting period'
-                                : !lockPeriodFrequency
+                        : !selectedToken
+                            ? 'No token selected'
+                            : (vestingLockFundingAmount && fundingAmount.gt(maxAmount))
+                                ? t('transactions.validation.amount-high')
+                                : !lockPeriodAmount
                                     ? 'Set vesting period'
-                                    : t('vesting.create-account.create-cta');
+                                    : !lockPeriodFrequency
+                                        ? 'Set vesting period'
+                                        : t('vesting.create-account.create-cta');
 
     }
 

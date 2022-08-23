@@ -403,28 +403,11 @@ export const getSdkValue = (amount: number | string, asString = false) => {
   return asString ? value.toString() : value;
 }
 
+
+
 export const toUiAmount = (amount: BN, decimals: number) => {
   if (!decimals) { return 0; }
   return amount.toNumber() / (10 ** decimals);
-}
-
-export const toTokenAmount = (amount: number, decimals: number) => {
-  if (!amount || !decimals) { return 0; }
-  return amount * (10 ** decimals);
-}
-
-// TODO: Change method name to the one above and try to replace every usage of the above method with this one.
-export const toTokenAmount2 = (amount: number | string, decimals: number, asString = false) => {
-  if (!amount || !decimals) {
-    return asString ? '0' : new BigNumber(0);
-  }
-
-  const multiplier = new BigNumber(10 ** decimals);
-  const value = new BigNumber(amount);
-  if (asString) {
-    return value.multipliedBy(multiplier).toString();
-  }
-  return value.multipliedBy(multiplier);
 }
 
 export const toUiAmount2 = (amount: number | BN, decimals: number) => {
@@ -453,6 +436,39 @@ export const toUiAmountBn = (amount: number | BN, decimals: number, asBn = false
   }
 }
 
+
+
+export const toTokenAmount = (amount: number, decimals: number) => {
+  if (!amount || !decimals) { return 0; }
+  return amount * (10 ** decimals);
+}
+
+export const toTokenAmount2 = (amount: number | string, decimals: number, asString = false) => {
+  if (!amount || !decimals) {
+    return asString ? '0' : new BigNumber(0);
+  }
+
+  const multiplier = new BigNumber(10 ** decimals);
+  const value = new BigNumber(amount);
+  if (asString) {
+    return value.multipliedBy(multiplier).toString();
+  }
+  return value.multipliedBy(multiplier);
+}
+
+export const toTokenAmountBn = (amount: number | string, decimals: number) => {
+  if (!amount || !decimals) {
+    return new BN(0);
+  }
+
+  const multiplier = new BigNumber(10 ** decimals);
+  const value = new BigNumber(amount);
+  const valueToString = value.multipliedBy(multiplier).toString();
+  return new BN(valueToString);
+}
+
+
+
 export function cutNumber(amount: number, decimals: number) {
   const str = `${amount}`;
 
@@ -467,6 +483,8 @@ export const makeInteger = (amount: number, decimals: number): BN => {
   if (!amount || !decimals) { return new BN(0); }
   return new BN(amount * (10 ** decimals))
 }
+
+
 
 export const addSeconds = (date: Date, seconds: number) => {
   return new Date(date.getTime() + seconds*1000);
