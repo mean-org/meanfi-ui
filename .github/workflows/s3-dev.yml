@@ -17,7 +17,7 @@ env:
   NODE_VERSION: 17
   BUILD_NUMBER: $GITHUB_RUN_NUMBER
   APP_ENV: ${{ github.event.inputs.release }}
-  BUCKET_NAME: "meanfi-${{ env.APP_ENV }}"
+  BUCKET_NAME: "meanfi-${{ github.event.inputs.release }}"
   ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
 
 jobs:
