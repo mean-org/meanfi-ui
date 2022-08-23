@@ -1676,6 +1676,7 @@ export const VestingContractStreamList = (props: {
                     highlightedStream={highlightedStream}
                     isVisible={isVestingContractStreamDetailModalVisible}
                     msp={msp}
+                    selectedToken={selectedToken}
                 />
             )}
 
