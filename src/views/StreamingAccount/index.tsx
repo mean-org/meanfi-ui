@@ -2710,7 +2710,8 @@ export const StreamingAccountView = (props: {
         getTreasuryUnallocatedBalance(streamingAccountSelected, selectedToken),
         selectedToken.address,
         false,
-        splTokenList
+        splTokenList,
+        selectedToken.decimals
       );
     }
     return "--";
