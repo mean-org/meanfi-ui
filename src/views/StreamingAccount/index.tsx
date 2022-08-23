@@ -2871,7 +2871,7 @@ export const StreamingAccountView = (props: {
                 event.currentTarget.className = "error";
               };
 
-              const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+              const token = stream.associatedToken ? getTokenByMintAddress((stream.associatedToken as PublicKey).toBase58()) : undefined;
 
               let img;
 
@@ -2884,12 +2884,12 @@ export const StreamingAccountView = (props: {
               } else {
                 img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
               }
-      
+
               const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
               const subtitle = getStreamSubtitle(stream);
               const status = getStreamStatus(stream);
               const resume = getStreamResume(stream);
-      
+
               return (
                 <div
                   key={index}

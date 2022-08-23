@@ -2579,7 +2579,7 @@ export const MoneyStreamsInfoView = (props: {
               event.currentTarget.className = "error";
             };
 
-            const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+            const token = stream.associatedToken ? getTokenByMintAddress((stream.associatedToken as PublicKey).toBase58()) : undefined;
 
             let img;
 
@@ -2661,7 +2661,7 @@ export const MoneyStreamsInfoView = (props: {
                 event.currentTarget.className = "error";
               };
 
-              const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
+              const token = stream.associatedToken ? getTokenByMintAddress((stream.associatedToken as PublicKey).toBase58()) : undefined;
 
               let img;
 
