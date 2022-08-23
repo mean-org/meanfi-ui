@@ -336,7 +336,7 @@ export const VestingContractDetails = (props: {
                                 <div className="vesting-progress">
                                     <Progress
                                         percent={completedVestingPercentage}
-                                        showInfo={false}
+                                        showInfo={true}
                                         status={completedVestingPercentage === 0
                                                 ? "normal"
                                                 : completedVestingPercentage === 100

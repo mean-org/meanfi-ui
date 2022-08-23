@@ -324,57 +324,54 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderReservedAllocation = () => {
-    if (!stream || !selectedToken) { return null; }
+    if (!stream || !selectedToken) { return '--'; }
 
     return (
       <>
-        {stream
-          ? `${getAmountWithSymbol(
-              new BN(stream.remainingAllocationAmount),
-              selectedToken.address,
-              false,
-              splTokenList,
-              selectedToken.decimals
-            )}`
-          : '--'
+        {
+          getAmountWithSymbol(
+            new BN(stream.remainingAllocationAmount),
+            selectedToken.address,
+            false,
+            splTokenList,
+            selectedToken.decimals
+          )
         }
       </>
     )
   }
 
   const renderFundsLeftInAccount = () => {
-    if (!stream || !selectedToken) { return null; }
+    if (!stream || !selectedToken) { return '--'; }
 
     return (
       <>
-        {stream
-          ? `${getAmountWithSymbol(
-              new BN(stream.fundsLeftInStream),
-              selectedToken.address,
-              false,
-              splTokenList,
-              selectedToken.decimals
-            )}`
-          : '--'
+        {
+          getAmountWithSymbol(
+            new BN(stream.fundsLeftInStream),
+            selectedToken.address,
+            false,
+            splTokenList,
+            selectedToken.decimals
+          )
         }
       </>
     )
   }
 
   const renderFundsSendToRecipient = () => {
-    if (!stream || !selectedToken) { return null; }
+    if (!stream || !selectedToken) { return '--'; }
 
     return (
       <>
-        {stream
-          ? `${getAmountWithSymbol(
-              new BN(stream.fundsSentToBeneficiary),
-              selectedToken.address,
-              false,
-              splTokenList,
-              selectedToken.decimals
-            )}`
-          : '--'
+        {
+          getAmountWithSymbol(
+            new BN(stream.fundsSentToBeneficiary),
+            selectedToken.address,
+            false,
+            splTokenList,
+            selectedToken.decimals
+          )
         }
       </>
     )

@@ -6,7 +6,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { IconEllipsisVertical } from "../../Icons";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, copyText, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
   TransactionFees,
@@ -17,10 +17,10 @@ import {
   MSP,
   Constants as MSPV2Constants
 } from '@mean-dao/msp';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toTokenAmount, toUiAmount } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
@@ -38,7 +38,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../contexts/accounts";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from "react-router-dom";
-import { openNotification } from "../../components/Notifications";
+import { readAccountInfo } from "../../utils/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -52,12 +52,13 @@ export const MoneyStreamsIncomingView = (props: {
     splTokenList,
     deletedStreams,
     transactionStatus,
-    refreshTokenBalance,
     streamProgramAddress,
     streamV2ProgramAddress,
-    getTokenByMintAddress,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
+    getTokenByMintAddress,
     setTransactionStatus,
+    refreshTokenBalance,
     setStreamDetail,
   } = useContext(AppStateContext);
   const {
@@ -77,14 +78,11 @@ export const MoneyStreamsIncomingView = (props: {
   const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
-
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [lastStreamTransferAddress, setLastStreamTransferAddress] = useState('');
-
   const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
-  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>();
-
+  const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
   const hideDetailsHandler = () => {
@@ -153,23 +151,6 @@ export const MoneyStreamsIncomingView = (props: {
     publicKey,
     endpoint,
   ]);
-
-  // Copy address to clipboard
-  const copyAddressToClipboard = useCallback((address: any) => {
-
-    if (copyText(address.toString())) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: "error"
-      });
-    }
-
-  },[t]);
 
   const isNewStream = useCallback(() => {
     if (streamSelected) {
@@ -673,10 +654,10 @@ export const MoneyStreamsIncomingView = (props: {
         });
 
         const stream = new PublicKey(streamSelected.id as string);
-        
+
         const beneficiary = new PublicKey((streamSelected as StreamInfo).beneficiaryAddress as string);
         const amount = parseFloat(withdrawData.amount);
-        const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
+        const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
         const valueInUsd = price * amount;
 
         const data = {
@@ -829,7 +810,7 @@ export const MoneyStreamsIncomingView = (props: {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (!publicKey || !streamSelected || !msp || !selectedToken) {
+      if (!publicKey || !streamSelected || !msp || !workingToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -847,8 +828,8 @@ export const MoneyStreamsIncomingView = (props: {
       const stream = new PublicKey(streamSelected.id as string);
 
       const beneficiary = new PublicKey((streamSelected as Stream).beneficiary as string);
-      const amount = toTokenAmount(parseFloat(withdrawData.amount as string), selectedToken.decimals);
-      const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
+      const amount = toTokenAmount(parseFloat(withdrawData.amount as string), workingToken.decimals);
+      const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
       const valueInUsd = price * parseFloat(withdrawData.amount);
 
       const data = {
@@ -1056,8 +1037,8 @@ export const MoneyStreamsIncomingView = (props: {
       }
     }
 
-    if (wallet && streamSelected && selectedToken) {
-      const token = Object.assign({}, selectedToken);
+    if (wallet && streamSelected && workingToken) {
+      const token = Object.assign({}, workingToken);
       showWithdrawFundsTransactionModal();
       let created: boolean;
       if (streamSelected.version < 2) {
@@ -1197,6 +1178,43 @@ export const MoneyStreamsIncomingView = (props: {
     return beneficiary === accountAddress ? true : false
   }
 
+  const getTokenOrCustomToken = useCallback(async (address: string) => {
+
+    const token = getTokenByMintAddress(address);
+
+    const unkToken = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: 6,
+      symbol: `[${shortenAddress(address)}]`,
+    };
+
+    if (token) {
+      return token;
+    } else {
+      try {
+        const tokeninfo = await readAccountInfo(connection, address);
+        if ((tokeninfo as any).data["parsed"]) {
+          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+          unkToken.decimals = decimals || 0;
+          return unkToken as TokenInfo;
+        } else {
+          return unkToken as TokenInfo;
+        }
+      } catch (error) {
+        console.error('Could not get token info, assuming decimals = 6');
+        return unkToken as TokenInfo;
+      }
+    }
+  }, [connection, getTokenByMintAddress]);
+
+
+  /////////////////////
+  // Data management //
+  /////////////////////
+
+  // Refresh stream data
   useEffect(() => {
     if (!ms || !msp || !streamSelected) { return; }
 
@@ -1261,13 +1279,27 @@ export const MoneyStreamsIncomingView = (props: {
     refreshTokenBalance
   ]);
 
+  // Set selected token to the stream associated token as soon as the stream is available or changes
   useEffect(() => {
-    if (streamSelected) {
-      const token = getTokenByMintAddress(streamSelected.associatedToken as string);
-  
-      setSelectedToken(token);
+    if (!publicKey) { return; }
+
+    if (streamSelected?.associatedToken) {
+      getTokenOrCustomToken((streamSelected.associatedToken as PublicKey).toBase58())
+      .then(token => {
+        consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
+        setWorkingToken(token);
+      });
     }
-  }, [getTokenByMintAddress, streamSelected])
+  }, [
+    getTokenOrCustomToken,
+    publicKey,
+    streamSelected?.associatedToken
+  ]);
+
+
+  ///////////////
+  // Rendering //
+  ///////////////
 
   const renderFundsToWithdraw = () => {
     if (!streamSelected) { return null; }
@@ -1379,7 +1411,7 @@ export const MoneyStreamsIncomingView = (props: {
               )}
           </Button> */}
         </Col>
-  
+
         <Col xs={4} sm={6} md={4} lg={6}>
           <Dropdown
             overlay={menu}
@@ -1410,13 +1442,14 @@ export const MoneyStreamsIncomingView = (props: {
           infoData={infoData}
           isStreamIncoming={true}
           buttons={buttons()}
+          selectedToken={workingToken}
         />
       </Spin>
 
       {isWithdrawModalVisible && (
         <StreamWithdrawModal
           startUpData={lastStreamDetail}
-          selectedToken={selectedToken}
+          selectedToken={workingToken}
           transactionFees={transactionFees}
           isVisible={isWithdrawModalVisible}
           handleOk={(options: StreamWithdrawData) => onAcceptWithdraw(options)}
@@ -1448,7 +1481,7 @@ export const MoneyStreamsIncomingView = (props: {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {withdrawFundsAmount ? withdrawFundsAmount.inputAmount : 0} {selectedToken?.symbol}</h5>
+              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {withdrawFundsAmount ? withdrawFundsAmount.inputAmount : 0} {workingToken?.symbol}</h5>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                 <div className="indication">{t('transactions.status.instructions')}</div>
               )}
