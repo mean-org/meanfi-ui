@@ -195,7 +195,7 @@ export const VestingContractAddFundsModal = (props: {
   // Data management //
   /////////////////////
 
-  // When modal goes visible, Set available balance in BN either from user's wallet or from treasury is a streams is being funded
+  // When modal goes visible, Set available balance in BN either from user's wallet or from treasury if a streams is being funded
   useEffect(() => {
 
     const getUnallocatedBalance = (details: Treasury) => {
@@ -534,13 +534,11 @@ export const VestingContractAddFundsModal = (props: {
                                   const maxAmount = getMaxAmount(true);
                                   consoleOut('Treasury pays for fees...', '', 'blue');
                                   consoleOut('Settings maxAmount to:', maxAmount, 'blue');
-                                  // setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
                                   setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 } else {
                                   const maxAmount = getMaxAmount();
                                   consoleOut('Settings maxAmount to:', maxAmount.toString(), 'blue');
-                                  // setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
                                   setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 }

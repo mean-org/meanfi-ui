@@ -8,7 +8,7 @@ on:
           default: 'development'
           options: 
             - development
-            #- staging
+            - staging
   # push:
   #   branches:
   #     - 'feature/*'
@@ -16,8 +16,8 @@ on:
 env:
   NODE_VERSION: 17
   BUILD_NUMBER: $GITHUB_RUN_NUMBER
-  REACT_APP_ENV: development #${{ github.event.inputs.release }}
-  BUCKET_NAME: "meanfi-dev"
+  APP_ENV: ${{ github.event.inputs.release }}
+  BUCKET_NAME: "meanfi-${{ github.event.inputs.release }}"
   ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
 
 jobs:
@@ -31,21 +31,23 @@ jobs:
           cache: 'yarn' 
 
         # Install Yarn
-      - name: Install Packages
-        run: |
-          echo "${{ github.event.inputs.release }}"
-          yarn install --frozen-lockfile
+      - name: Install packages
+        run: yarn install
 
-      - name: Generate build for Dev
+        # Build react app
+      - name: Generate build for ${{ env.APP_ENV }}
         run: npm run build:s3
+        env:
+          REACT_APP_ENV: ${{ env.APP_ENV }}
 
-      - name: Copy Robot.txt
+      - name: Copy robots.txt
         run: cp ci/${{ env.ROBOTS_TXT_FILE_NAME }} build/robots.txt
+
       # Share artifact inside workflow
       - name: Share artifact inside workflow
         uses: actions/upload-artifact@v3
         with:
-          name: mean-ui-build-${{env.REACT_APP_ENV}}
+          name: mean-ui-build-${{env.APP_ENV}}
           path: build
   deploy:
     runs-on: ubuntu-latest
@@ -57,7 +59,7 @@ jobs:
       - name: Get artifact
         uses: actions/download-artifact@v3
         with:
-          name: mean-ui-build-${{env.REACT_APP_ENV}}
+          name: mean-ui-build-${{env.APP_ENV}}
       # Set the credentials from repository settings/secrets
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -75,7 +77,15 @@ jobs:
           aws s3 cp index.html ${{env.AWS_S3_PATH}}/index.html --acl public-read --cache-control max-age=0
         working-directory: .
 
-      - name: Update OriginPath
+      - name: Set distribution to development
+        if: ${{ env.APP_ENV == 'development' }}
+        run: echo "DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID_DEV }}" >> $GITHUB_ENV
+
+      - name: Set distribution to staging
+        if: ${{ env.APP_ENV == 'staging' }}
+        run: echo "DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID_STAGE }}" >> $GITHUB_ENV
+
+      - name: Update originPath
         uses: mean-dao/cloudfront-manager@v4
         env:
           FOLDER_PATH: "/v${{ github.run_number }}"
@@ -83,5 +93,5 @@ jobs:
           ORIGIN_PATH: "/v${{ github.run_number }}"
           AWS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DISTRIBUTION_ID: ${{ secrets.CLOUD_FRONT_DISTRIBUTION_ID }}
           AWS_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          AWS_DISTRIBUTION_ID: ${{ env.DISTRIBUTION_ID }}
