@@ -636,7 +636,7 @@ export const MoneyStreamsOutgoingView = (props: {
         contributor: publicKey.toBase58(),                              // contributor
         treasury: treasury.toBase58(),                                  // treasury
         stream: stream.toBase58(),                                      // stream
-        amount: `${amount.toNumber()} (${addFundsData.amount})`,        // amount
+        amount: `${amount.toString()} (${addFundsData.amount})`,        // amount
       }
 
       consoleOut('add funds data:', data);
@@ -2682,6 +2682,7 @@ export const MoneyStreamsOutgoingView = (props: {
           }
           handleOk={onAcceptAddFunds}
           handleClose={closeAddFundsModal}
+          selectedToken={workingToken}
         />
       )}
 

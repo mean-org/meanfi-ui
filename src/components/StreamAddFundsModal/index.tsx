@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { cutNumber, formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, toTokenAmount2, toUiAmount2 } from '../../utils/utils';
+import { getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeInteger, toTokenAmount2, toUiAmount2 } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
@@ -18,6 +18,7 @@ import BN from 'bn.js';
 import { StreamTopupParams } from '../../models/common-types';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
@@ -28,17 +29,17 @@ export const StreamAddFundsModal = (props: {
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
   withdrawTransactionFees: TransactionFees;
+  selectedToken?: TokenInfo | undefined;
 }) => {
   const {
     splTokenList,
     tokenBalance,
     loadingPrices,
-    selectedToken,
-    effectiveRate,
     isWhitelisted,
     getTokenPriceBySymbol,
     refreshPrices,
   } = useContext(AppStateContext);
+  const { selectedToken } = props;
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
