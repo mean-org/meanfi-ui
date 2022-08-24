@@ -27,6 +27,7 @@ import { NATIVE_SOL } from '../../../../utils/tokens';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 import moment from 'moment';
 import ReactJson from 'react-json-view'
+import { appConfig } from '../../../..';
 
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
@@ -99,7 +100,8 @@ export const ProgramDetailsView = (props: {
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      new PublicKey(appConfig.getConfig().multisigProgramAddress)
     );
   }, [
     connection,

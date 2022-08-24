@@ -34,6 +34,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useParams } from "react-router-dom";
 import { title } from "process";
+import { appConfig } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -134,7 +135,8 @@ export const MoneyStreamsOutgoingView = (props: {
     return new MeanMultisig(
       endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      new PublicKey(appConfig.getConfig().multisigProgramAddress)
     );
 
   }, [

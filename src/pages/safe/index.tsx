@@ -89,6 +89,7 @@ import { MultisigEditSafeModal } from '../../components/MultisigEditSafeModal';
 import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
+import { appConfig } from '../..';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -229,7 +230,8 @@ export const SafeView = () => {
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      new PublicKey(appConfig.getConfig().multisigProgramAddress)
     );
 
   }, [

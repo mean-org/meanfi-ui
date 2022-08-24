@@ -42,6 +42,7 @@ import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { getTokenAccountBalanceByAddress, readAccountInfo } from "../../utils/accounts";
 import { NATIVE_SOL } from "../../utils/tokens";
+import { appConfig } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -182,7 +183,8 @@ export const StreamingAccountView = (props: {
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      new PublicKey(appConfig.getConfig().multisigProgramAddress)
     );
 
   }, [

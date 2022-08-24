@@ -52,6 +52,7 @@ import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { readAccountInfo } from "../../utils/accounts";
+import { appConfig } from '../..';
 
 const { TabPane } = Tabs;
 
@@ -178,7 +179,8 @@ export const MoneyStreamsInfoView = (props: {
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      new PublicKey(appConfig.getConfig().multisigProgramAddress)
     );
 
   }, [

@@ -39,6 +39,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
+import { appConfig } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -145,7 +146,8 @@ export const MoneyStreamsIncomingView = (props: {
     return new MeanMultisig(
       endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      new PublicKey(appConfig.getConfig().multisigProgramAddress)
     );
 
   }, [

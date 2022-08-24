@@ -92,6 +92,7 @@ import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
 import notification from 'antd/lib/notification';
 import { SolBalanceModal } from '../../components/SolBalanceModal';
+import { appConfig } from '../..';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -286,7 +287,8 @@ export const AccountsNewView = () => {
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      new PublicKey(appConfig.getConfig().multisigProgramAddress)
     );
   }, [
     connection,
