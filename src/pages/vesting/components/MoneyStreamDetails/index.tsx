@@ -4,7 +4,7 @@ import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity } from '@mean-dao/msp';
 import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
-import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../utils/ui';
+import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates, stringNumberFormat } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
@@ -107,54 +107,41 @@ export const MoneyStreamDetails = (props: {
   }
 
   const getRateAmountDisplay = useCallback((item: Stream): string => {
+    if (!selectedToken) {
+      return '';
+    }
     let value = '';
 
-    if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      const decimals = token?.decimals || 6;
+    const rateAmount = new BN(item.rateAmount);
 
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
+    value += stringNumberFormat(
+      toUiAmount2(rateAmount, selectedToken.decimals),
+      friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
+    )
 
-      const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
-      value += formatThousands(
-        rateAmount,
-        friendlyDisplayDecimalPlaces(rateAmount, decimals),
-        2
-      );
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken)}]`;
-    }
+    value += ' ';
+    value += selectedToken.symbol || `[${shortenAddress(item.associatedToken)}]`;
+
     return value;
-  }, [getTokenByMintAddress]);
+  }, [selectedToken]);
 
   const getDepositAmountDisplay = useCallback((item: Stream): string => {
+    if (!selectedToken) {
+      return '';
+    }
     let value = '';
 
-    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      const decimals = token?.decimals || 6;
+    const allocationAssigned = new BN(item.allocationAssigned);
+    value += stringNumberFormat(
+      toUiAmount2(allocationAssigned, selectedToken.decimals),
+      friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
+    )
 
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
+    value += ' ';
+    value += selectedToken.symbol || `[${shortenAddress(item.associatedToken)}]`;
 
-      const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
-      value += formatThousands(
-        allocationAssigned,
-        friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
-        2
-      );
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken)}]`;
-    }
     return value;
-  }, [getTokenByMintAddress]);
+  }, [selectedToken]);
 
   const getStreamSubtitle = useCallback((item: Stream) => {
     let title = '';

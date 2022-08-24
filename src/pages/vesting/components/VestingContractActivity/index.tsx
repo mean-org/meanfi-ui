@@ -113,12 +113,15 @@ export const VestingContractActivity = (props: {
         let amount = '';
 
         if (typeof item.amount === "string") {
-            amount = item.amount
-                ? stringNumberFormat(
-                    toUiAmount2(new BN(item.amount), decimals),
-                    4,
-                )
-                : '0';
+            if (!item.amount) {
+                amount = '0';
+            } else {
+                const convertedAmount = toUiAmount2(new BN(item.amount), decimals);
+                amount = stringNumberFormat(
+                    convertedAmount,
+                    friendlyDisplayDecimalPlaces(convertedAmount) || decimals
+                );
+            }
         } else {
             const value = item.amount ? makeDecimal(new BN(item.amount), decimals) : 0;
             amount = item.amount

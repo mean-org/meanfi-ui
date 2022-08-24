@@ -11,12 +11,25 @@ import {
     Constants as MSPV2Constants,
     StreamTemplate
 } from '@mean-dao/msp';
-import { consoleOut, copyText, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getShortDate, getTimeToNow, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, toTimestamp } from '../../../../utils/ui';
+import {
+    consoleOut,
+    copyText,
+    friendlyDisplayDecimalPlaces,
+    getIntervalFromSeconds,
+    getPaymentIntervalFromSeconds,
+    getShortDate,
+    getTimeToNow,
+    getTransactionModalTitle,
+    getTransactionOperationDescription,
+    getTransactionStatusForLogs,
+    stringNumberFormat,
+    toTimestamp
+} from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
@@ -85,7 +98,6 @@ export const VestingContractStreamList = (props: {
         setHighLightableStreamId,
         getTokenPriceByAddress,
         getTokenPriceBySymbol,
-        getTokenByMintAddress,
         setTransactionStatus,
         refreshTokenBalance,
     } = useContext(AppStateContext);
@@ -105,6 +117,7 @@ export const VestingContractStreamList = (props: {
     const [paymentStartDate, setPaymentStartDate] = useState<string>("");
     const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
     const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
+    const [streamList, setStreamList] = useState<Stream[]>([]);
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
 
@@ -167,54 +180,41 @@ export const VestingContractStreamList = (props: {
     }, [deletedStreams]);
 
     const getRateAmountDisplay = useCallback((item: Stream): string => {
+        if (!selectedToken) {
+            return '';
+        }
         let value = '';
 
-        if (item) {
-            let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-            const decimals = token?.decimals || 6;
+        const rateAmount = new BN(item.rateAmount);
 
-            if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-                token = Object.assign({}, token, {
-                    symbol: 'SOL'
-                }) as TokenInfo;
-            }
+        value += stringNumberFormat(
+            toUiAmount2(rateAmount, selectedToken.decimals),
+            friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
+        )
 
-            const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
-            value += formatThousands(
-              rateAmount,
-              friendlyDisplayDecimalPlaces(rateAmount, decimals),
-              2
-            );
-            value += ' ';
-            value += token ? token.symbol : `[${shortenAddress(item.associatedToken)}]`;
-        }
+        value += ' ';
+        value += selectedToken.symbol || `[${shortenAddress(item.associatedToken)}]`;
+
         return value;
-    }, [getTokenByMintAddress]);
+    }, [selectedToken]);
 
     const getDepositAmountDisplay = useCallback((item: Stream): string => {
+        if (!selectedToken) {
+            return '';
+        }
         let value = '';
 
-        if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-            let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-            const decimals = token?.decimals || 6;
+        const allocationAssigned = new BN(item.allocationAssigned);
+        value += stringNumberFormat(
+            toUiAmount2(allocationAssigned, selectedToken.decimals),
+            friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
+        )
 
-            if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-                token = Object.assign({}, token, {
-                    symbol: 'SOL'
-                }) as TokenInfo;
-            }
+        value += ' ';
+        value += selectedToken.symbol || `[${shortenAddress(item.associatedToken)}]`;
 
-            const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
-            value += formatThousands(
-              allocationAssigned,
-              friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
-              2
-            );
-            value += ' ';
-            value += token ? token.symbol : `[${shortenAddress(item.associatedToken)}]`;
-        }
         return value;
-    }, [getTokenByMintAddress]);
+    }, [selectedToken]);
 
     const getNoStreamsMessage = useCallback(() => {
         if (vestingContract && streamTemplate) {
@@ -1516,6 +1516,34 @@ export const VestingContractStreamList = (props: {
         );
     }
 
+    /////////////////////
+    // Data processing //
+    /////////////////////
+
+    // Update the streamList with treasuryStreams
+    useEffect(() => {
+        if (treasuryStreams) {
+            setStreamList(treasuryStreams);
+        }
+    }, [treasuryStreams]);
+
+    // Refresh the stream list
+    useEffect(() => {
+        if (!streamList || !msp) { return; }
+
+        const timeout = setTimeout(() => {
+            msp.refreshStreams(streamList || [], undefined, undefined, undefined, undefined, false)
+            .then(streams => {
+                setStreamList(streams);
+            })
+        }, 1000);
+
+        return () => {
+            clearTimeout(timeout);
+        }
+    }, [msp, streamList]);
+
+
     ///////////////
     // Rendering //
     ///////////////
@@ -1599,8 +1627,8 @@ export const VestingContractStreamList = (props: {
         <>
             <div className="tab-inner-content-wrapper vesting-contract-streams vertical-scroll">
                 <Spin spinning={loadingTreasuryStreams}>
-                    {(treasuryStreams && treasuryStreams.length > 0) ? (
-                        treasuryStreams.map((item, index) => {
+                    {(streamList && streamList.length > 0) ? (
+                        streamList.map((item, index) => {
                             // const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
                             // const onStreamClick = () => {
                             //     setSelectedStream(item);
@@ -1661,7 +1689,7 @@ export const VestingContractStreamList = (props: {
                     selectedToken={selectedToken}
                     streamTemplate={streamTemplate}
                     transactionFees={transactionFees}
-                    treasuryStreams={treasuryStreams}
+                    treasuryStreams={streamList}
                     userBalances={userBalances}
                     vestingContract={vestingContract}
                     withdrawTransactionFees={withdrawTransactionFees}
