@@ -343,8 +343,7 @@ export const VestingContractCreateForm = (props: {
             cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
             startDate: startUtc,
             multisig: isMultisigContext ? accountAddress : '',
-            // fundingAmount: toTokenAmount2(vestingLockFundingAmount, (selectedToken as TokenInfo).decimals, true) as string
-            fundingAmount: toTokenAmount(parseFloat(vestingLockFundingAmount), (selectedToken as TokenInfo).decimals)
+            fundingAmount: toTokenAmount2(vestingLockFundingAmount, (selectedToken as TokenInfo).decimals, true) as string
         };
         onStartTransaction(options);
     }

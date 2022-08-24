@@ -24,7 +24,7 @@ import {
 } from '@mean-dao/msp';
 import "./style.scss";
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount2 } from '../../utils/utils';
+import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount, toUiAmount2 } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
 import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -925,7 +925,7 @@ export const VestingView = () => {
           new PublicKey(data.associatedTokenAddress),           // treasuryAssociatedTokenMint
           data.duration,                                        // duration
           data.durationUnit,                                    // durationUnit
-          data.fundingAmount as number,                         // fundingAmount
+          data.fundingAmount,                                   // fundingAmount
           data.vestingCategory,                                 // vestingCategory
           data.startUtc,                                        // startUtc
           data.cliffVestPercent,                                // cliffVestPercent
@@ -949,7 +949,7 @@ export const VestingView = () => {
         treasuryAssociatedTokenMint,                          // treasuryAssociatedTokenMint
         data.duration,                                        // duration
         data.durationUnit,                                    // durationUnit
-        data.fundingAmount as number,                         // fundingAmount
+        data.fundingAmount,                                   // fundingAmount
         data.vestingCategory,                                 // vestingCategory
         data.startUtc,                                        // startUtc
         data.cliffVestPercent,                                // cliffVestPercent
@@ -3532,9 +3532,9 @@ export const VestingView = () => {
         if (!vestingFlowRatesCache.get(selectedVestingContract.id as string)) {
           consoleOut('getVestingFlowRate value:', value, 'darkgreen');
           const freshFlowRate: VestingFlowRateInfo = {
-            amount: makeDecimal(new BN(value[0]), associatedTokenDecimals || 6),
+            amountBn: value[0],
             durationUnit: new BN(value[1]).toNumber(),
-            streamableAmount: makeDecimal(new BN(value[2]), associatedTokenDecimals || 6),
+            streamableAmountBn: value[2]
           };
           vestingFlowRatesCache.add(selectedVestingContract.id as string, freshFlowRate);
           setVestingContractFlowRate(freshFlowRate);
@@ -4134,9 +4134,6 @@ export const VestingView = () => {
         {isUnderDevelopment() && (
           <div className="debug-bar">
             <span className="ml-1">isWorkflowLocked:</span><span className="ml-1 font-bold fg-dark-active">{isWorkflowLocked ? 'true' : 'false'}</span>
-            <span className="ml-1">FR - amount:</span><span className="ml-1 font-bold fg-dark-active">{vestingContractFlowRate ? vestingContractFlowRate.amount : '-'}</span>
-            <span className="ml-1">FR - amount:</span><span className="ml-1 font-bold fg-dark-active">{vestingContractFlowRate ? vestingContractFlowRate.durationUnit : '-'}</span>
-            <span className="ml-1">FR - amount:</span><span className="ml-1 font-bold fg-dark-active">{vestingContractFlowRate ? vestingContractFlowRate.streamableAmount : '-'}</span>
           </div>
         )}
 

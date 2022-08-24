@@ -4,9 +4,9 @@ import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 
 export type VestingFlowRateInfo = {
-    amount: number;
+    amountBn: BN;
     durationUnit: TimeUnit;
-    streamableAmount: number;
+    streamableAmountBn: BN;
 }
 
 export type VestingContractCategory = {
