@@ -14,11 +14,11 @@ import {
     toTimestamp,
     getlllDate,
     relativeTimeFromDates,
-    friendlyDisplayDecimalPlaces,
     consoleOut,
     stringNumberFormat,
     percentageBn,
     percentualBn,
+    friendlyDisplayDecimalPlaces,
 } from '../../../../utils/ui';
 import { makeDecimal, toUiAmount2 } from '../../../../utils/utils';
 import BN from 'bn.js';
@@ -48,7 +48,6 @@ export const VestingContractOverview = (props: {
     const { t } = useTranslation('common');
     const {
         theme,
-        splTokenList,
     } = useContext(AppStateContext);
     const [today, setToday] = useState(new Date());
     const [startRemainingTime, setStartRemainingTime] = useState('');
@@ -143,12 +142,6 @@ export const VestingContractOverview = (props: {
 
         return vestedBn;
     }, [cliffReleasePercentage, isContractFinished, lockPeriodAmount, lockPeriodFrequency, lockPeriodUnits, paymentStartDate, t, vestingContractFlowRate]);
-
-    const getAvailableStreamingBalanceTokenAmount = () => {
-        if (availableStreamingBalance) {
-            //
-        }
-    }
 
 
     /////////////////////

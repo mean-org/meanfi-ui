@@ -4,7 +4,7 @@ import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { environment } from "../environments/environment";
-import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
+import { BIGNUMBER_FORMAT, SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
 import dateFormat from "dateformat";
 import { TimeData } from "../models/common-types";
 import BN from "bn.js";
@@ -923,17 +923,28 @@ export const getRelativeDate = (timestamp: number) => {
     return relativeTimeFromDates(reference);
 }
 
-export function stringNumberFormat(value: string, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',', hideDecimalsIfZero = true) {
+export function stringNumberFormat(value: string, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',') {
     if (!value) {
         return '0';
     }
-    const parts = value.split('.');
-    const fnums = parts[0];
-    let decimals = '';
-    if (parts[1] && (+parts[1] !== 0 || !hideDecimalsIfZero)) {
-        decimals = decimalsSeparator + parts[1];
+    let fixed = '';
+    const valueBn = new BigNumber(value);
+    if (dec > 0) {
+        BigNumber.config({
+            CRYPTO: true,
+            FORMAT: BIGNUMBER_FORMAT,
+            DECIMAL_PLACES: dec
+        });
+        fixed = valueBn.toFormat(dec);
+    } else {
+        BigNumber.config({
+            CRYPTO: true,
+            FORMAT: BIGNUMBER_FORMAT,
+            DECIMAL_PLACES: 0
+        });
+        fixed = valueBn.toFormat(0);
     }
-    return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + thowsendsSeparator) + decimals;
+    return fixed;
 }
 
 function numberFormat(value: any, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',', hideDecimalsIfZero = true) {
