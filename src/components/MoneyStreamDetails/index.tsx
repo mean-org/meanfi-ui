@@ -8,7 +8,7 @@ import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-da
 import { Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress, toUiAmount, toUiAmount2 } from "../../utils/utils";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
+import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
@@ -338,7 +338,7 @@ export const MoneyStreamDetails = (props: {
     if (streamVersion < 2) {
       return item.amount;
     } else {
-      return toUiAmount(new BN(item.amount), token?.decimals || 6);
+      return parseFloat(toUiAmount2(new BN(item.amount), token?.decimals || 6));
     }
   }
 
@@ -374,10 +374,10 @@ export const MoneyStreamDetails = (props: {
     if (!stream || !searchParams || !streamActivity) { return; }
 
     if (searchParams.get('v') === "activity") {
-      getStreamActivity(stream.id as string, stream.version, true);
+      getStreamActivity((stream.id as PublicKey).toBase58(), stream.version, true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, streamActivity]);
+}, [searchParams, streamActivity]);
 
 
   ///////////////
@@ -448,7 +448,7 @@ export const MoneyStreamDetails = (props: {
                 role="link"
                 onClick={() => {
                 if (stream) {
-                  getStreamActivity(stream.id as string, stream.version);
+                  getStreamActivity((stream.id as PublicKey).toBase58(), stream.version);
                 }
               }}>
               {t('general.cta-load-more')}

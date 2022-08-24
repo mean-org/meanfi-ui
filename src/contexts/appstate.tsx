@@ -892,7 +892,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           })
           .catch(err => {
             console.error(err);
-            setStreamActivity(undefined);
+            setStreamActivity([]);
             setHasMoreStreamActivity(false);
           })
           .finally(() => setLoadingStreamActivity(false));
