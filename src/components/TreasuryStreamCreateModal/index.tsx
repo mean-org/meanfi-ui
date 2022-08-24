@@ -30,7 +30,6 @@ import {
   PaymentRateTypeOption,
   toUsCurrency,
 } from '../../utils/ui';
-import { NATIVE_SOL } from '../../utils/tokens';
 import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
@@ -43,8 +42,8 @@ import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { customLogger } from '../..';
-import { Beneficiary, Constants as MSPV2Constants, MSP, Stream, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { appConfig, customLogger } from '../..';
+import { Beneficiary, MSP, Stream, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { BN } from 'bn.js';
@@ -55,6 +54,8 @@ import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
 
 const { Option } = Select;
+
+const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
 
 export const TreasuryStreamCreateModal = (props: {
   associatedToken: string;
@@ -1175,7 +1176,7 @@ export const TreasuryStreamCreateModal = (props: {
           streamSeedData.bump,
           OperationType.StreamCreate,
           selectedMultisig.id,
-          MSPV2Constants.MSP,
+          mspV2AddressPK,
           ixAccounts,
           ixData
         );

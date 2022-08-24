@@ -29,7 +29,7 @@ import {
   shortenAddress,
 } from '../../utils/utils';
 
-import { Button, Dropdown, Empty, Menu, Spin, Tooltip } from 'antd';
+import { Button, Empty, Menu, Spin, Tooltip } from 'antd';
 import {
   consoleOut,
   getTransactionStatusForLogs,
@@ -43,7 +43,7 @@ import { MEAN_MULTISIG_ACCOUNT_LAMPORTS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
-import { IconEllipsisVertical, IconLoading, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
+import { IconLoading, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -84,9 +84,6 @@ import { ProgramAccounts } from '../../utils/accounts';
 import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
-// import { MultisigCreateModal } from '../../components/MultisigCreateModal';
-import { MultisigEditSafeModal } from '../../components/MultisigEditSafeModal';
-import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { appConfig } from '../..';
@@ -95,6 +92,7 @@ export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const proposalLoadStatusRegister = new Map<string, boolean>();
+const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
 export const SafeView = () => {
   const connectionConfig = useConnectionConfig();
@@ -231,7 +229,7 @@ export const SafeView = () => {
       connectionConfig.endpoint,
       publicKey,
       "confirmed",
-      new PublicKey(appConfig.getConfig().multisigProgramAddress)
+      multisigAddressPK
     );
 
   }, [

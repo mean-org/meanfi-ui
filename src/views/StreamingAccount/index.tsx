@@ -1,5 +1,5 @@
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
-import { Stream, STREAM_STATUS, TransactionFees, Treasury, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, Constants as MSPV2Constants, TreasuryType, VestingTreasuryActivity, VestingTreasuryActivityAction } from "@mean-dao/msp";
+import { Stream, STREAM_STATUS, TransactionFees, Treasury, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, TreasuryType, VestingTreasuryActivity, VestingTreasuryActivityAction } from "@mean-dao/msp";
 import { 
   MSP_ACTIONS, 
   calculateActionFees,
@@ -46,6 +46,9 @@ import { appConfig } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
+
+const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
 export const StreamingAccountView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
@@ -184,7 +187,7 @@ export const StreamingAccountView = (props: {
       connectionConfig.endpoint,
       publicKey,
       "confirmed",
-      new PublicKey(appConfig.getConfig().multisigProgramAddress)
+      multisigAddressPK
     );
 
   }, [
@@ -768,7 +771,7 @@ export const StreamingAccountView = (props: {
         new Date(expirationTime * 1_000),
         operationType,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -1123,7 +1126,7 @@ export const StreamingAccountView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.TreasuryWithdraw,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -1595,7 +1598,7 @@ export const StreamingAccountView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.TreasuryClose,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );

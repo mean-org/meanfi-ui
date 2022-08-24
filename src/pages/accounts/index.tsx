@@ -99,7 +99,7 @@ export type InspectedAccountType = "wallet" | "multisig" | undefined;
 export type CategoryOption = "networth" | "assets" | "streaming" | "other-assets";
 export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
 let isWorkflowLocked = false;
-
+const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 interface AssetCta {
   action: MetaInfoCtaAction;
   isVisible: boolean;
@@ -281,14 +281,14 @@ export const AccountsNewView = () => {
   /////////////////
   //  Init code  //
   /////////////////
-
+  
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
       "confirmed",
-      new PublicKey(appConfig.getConfig().multisigProgramAddress)
+      multisigAddressPK
     );
   }, [
     connection,

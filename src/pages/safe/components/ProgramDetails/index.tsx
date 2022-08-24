@@ -4,7 +4,6 @@ import { TransactionFees } from "@mean-dao/msp";
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, ParsedTransactionWithMeta, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
 import { Button, Col, Row } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-// import { useTranslation } from "react-i18next";
 import { MultisigSetProgramAuthModal } from "../../../../components/MultisigSetProgramAuthModal";
 import { MultisigUpgradeProgramModal } from "../../../../components/MultisigUpgradeProgramModal";
 import { NO_FEES } from "../../../../constants";
@@ -18,16 +17,16 @@ import { OperationType, TransactionStatus } from "../../../../models/enums";
 import { NATIVE_SOL_MINT } from "../../../../utils/ids";
 import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "../../../../utils/ui";
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../../../utils/utils";
-// import { ProgramAccounts } from "../../../../utils/accounts";
 import { customLogger } from "../../../..";
 import { TabsMean } from '../../../../components/TabsMean';
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import { NATIVE_SOL } from '../../../../utils/tokens';
-// import { CopyOutlined } from '@ant-design/icons';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 import moment from 'moment';
 import ReactJson from 'react-json-view'
 import { appConfig } from '../../../..';
+
+const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
@@ -101,7 +100,7 @@ export const ProgramDetailsView = (props: {
       connectionConfig.endpoint,
       publicKey,
       "confirmed",
-      new PublicKey(appConfig.getConfig().multisigProgramAddress)
+      multisigAddressPK
     );
   }, [
     connection,

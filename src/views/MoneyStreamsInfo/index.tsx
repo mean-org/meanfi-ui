@@ -21,7 +21,6 @@ import {
   Treasury,
   Stream,
   MSP,
-  Constants as MSPV2Constants,
   TreasuryType,
   STREAM_STATUS
 } from '@mean-dao/msp';
@@ -55,6 +54,9 @@ import { readAccountInfo } from "../../utils/accounts";
 import { appConfig } from '../..';
 
 const { TabPane } = Tabs;
+
+const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
 export const MoneyStreamsInfoView = (props: {
   accountAddress: string;
@@ -180,7 +182,7 @@ export const MoneyStreamsInfoView = (props: {
       connectionConfig.endpoint,
       publicKey,
       "confirmed",
-      new PublicKey(appConfig.getConfig().multisigProgramAddress)
+      multisigAddressPK
     );
 
   }, [
@@ -863,7 +865,7 @@ export const MoneyStreamsInfoView = (props: {
         new Date(expirationTime * 1_000),
         operationType,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -1289,7 +1291,7 @@ export const MoneyStreamsInfoView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.TreasuryCreate,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData,
         // preInstructions

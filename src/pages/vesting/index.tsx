@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useState, useContext, useCallback, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
@@ -16,7 +16,6 @@ import {
   Stream,
   TransactionFees,
   Treasury,
-  Constants as MSPV2Constants,
   StreamTemplate,
   Category,
   TreasuryType,
@@ -67,6 +66,9 @@ export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingAccountDetailTab = "overview" | "streams" | "activity" | undefined;
 let isWorkflowLocked = false;
 const notificationKey = 'updatable';
+
+const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
 export const VestingView = () => {
   const {
@@ -239,7 +241,7 @@ export const VestingView = () => {
       connectionConfig.endpoint,
       publicKey,
       "confirmed",
-      new PublicKey(appConfig.getConfig().multisigProgramAddress)
+      multisigAddressPK
     );
 
   }, [
@@ -998,7 +1000,7 @@ export const VestingView = () => {
         new Date(expirationTime * 1_000),
         OperationType.TreasuryCreate,
         multisig.id,
-        MSPV2Constants.MSP, // program
+        mspV2AddressPK, // program
         ixAccounts,         // keys o accounts of the Ix
         ixData,             // data of the Ix
         // preInstructions
@@ -1411,7 +1413,7 @@ export const VestingView = () => {
         new Date(expirationTime * 1_000),
         OperationType.TreasuryClose,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -1783,7 +1785,7 @@ export const VestingView = () => {
         new Date(expirationTime * 1_000),
         operationType,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -2188,7 +2190,7 @@ export const VestingView = () => {
         streamBump,
         OperationType.TreasuryStreamCreate,
         multisig.id,
-        MSPV2Constants.MSP, // program
+        mspV2AddressPK, // program
         ixAccounts,         // keys o accounts of the Ix
         ixData,             // data of the Ix
       );
@@ -2542,7 +2544,7 @@ export const VestingView = () => {
         new Date(expirationTime * 1_000),
         OperationType.TreasuryWithdraw,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -2872,7 +2874,6 @@ export const VestingView = () => {
       const tokenAddress = value[0].pubkey;
       const tokenAccount = AccountLayout.decode(value[0].account.data);
       const associatedTokenMint = new PublicKey(tokenAccount.mint);
-      const mspAddress = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
 
       const feeTreasuryAddress: PublicKey = new PublicKey(
         "3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw"
@@ -2881,7 +2882,7 @@ export const VestingView = () => {
       // TODO: This is imported from SDK V1 ????
       ixs.push(
         await refreshTreasuryBalanceInstruction(
-          mspAddress,
+          mspV2AddressPK,
           publicKey,
           associatedTokenMint,
           treasury,

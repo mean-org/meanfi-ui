@@ -14,8 +14,7 @@ import {
   calculateActionFees as calculateActionFeesV2,
   Stream,
   STREAM_STATUS,
-  MSP,
-  Constants as MSPV2Constants
+  MSP
 } from '@mean-dao/msp';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
@@ -42,6 +41,9 @@ import { openNotification } from "../../components/Notifications";
 import { appConfig } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+
+const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
 export const MoneyStreamsIncomingView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
@@ -147,7 +149,7 @@ export const MoneyStreamsIncomingView = (props: {
       endpoint,
       publicKey,
       "confirmed",
-      new PublicKey(appConfig.getConfig().multisigProgramAddress)
+      multisigAddressPK
     );
 
   }, [
@@ -324,7 +326,7 @@ export const MoneyStreamsIncomingView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.StreamTransferBeneficiary,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -820,7 +822,7 @@ export const MoneyStreamsIncomingView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.StreamWithdraw,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
