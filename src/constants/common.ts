@@ -225,6 +225,17 @@ export const BETA_TESTING_PROGRAM_WHITELIST = [
     'Ak8ir4C3XCCqcUVSt6fPdph1Y8YEiDnkPzTPFqtKimyz', // Drsamxy350#6255
 ];
 
+export const BIGNUMBER_FORMAT = {
+    prefix: '',
+    decimalSeparator: '.',
+    groupSeparator: ',',
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    fractionGroupSeparator: ' ',
+    fractionGroupSize: 0,
+    suffix: ''
+}
+
 // Date.UTC(year, month, day, hour, minute, second, millisecond)
 // REAL DATES
 export const IDO_START_DATE = { year: 2021, month: 11, day: 22, hour: 15, minute: 0, second: 0 };

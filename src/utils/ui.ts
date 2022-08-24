@@ -4,9 +4,11 @@ import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { environment } from "../environments/environment";
-import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
+import { BIGNUMBER_FORMAT, SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
 import dateFormat from "dateformat";
 import { TimeData } from "../models/common-types";
+import BN from "bn.js";
+import BigNumber from "bignumber.js";
 
 export const isDev = (): boolean => {
     return environment === 'development';
@@ -90,16 +92,29 @@ export class LockPeriodTypeOption {
     }
 }
 
-export const friendlyDisplayDecimalPlaces = (amount: number, decimals?: number) => {
-    const value = Math.abs(amount);
-    if (value < 1) {
-        return decimals || undefined;
-    } else if (value < 1000) {
-        return 4;
-    } else if (value >= 1000 && value < 100000) {
-        return 3;
+export const friendlyDisplayDecimalPlaces = (amount: number | string, decimals?: number) => {
+    if (typeof amount === "string") {
+        const value = new BigNumber(amount);
+        if (value.isLessThan(1)) {
+            return decimals || undefined;
+        } else if (value.isLessThan(1000)) {
+            return 4;
+        } else if (value.isGreaterThanOrEqualTo(1000) && value.isLessThan(100000)) {
+            return 3;
+        } else {
+            return 2;
+        }
     } else {
-        return 2;
+        const value = Math.abs(amount);
+        if (value < 1) {
+            return decimals || undefined;
+        } else if (value < 1000) {
+            return 4;
+        } else if (value >= 1000 && value < 100000) {
+            return 3;
+        } else {
+            return 2;
+        }
     }
 };
 
@@ -584,6 +599,28 @@ export const percentual = (partialValue: number, total: number): number => {
     return (100 * partialValue) / total;
 }
 
+export const percentualBn = (partialValue: string | BN, total: string | BN, asNumber = false): number | BN => {
+    let partialBn = new BigNumber(0);
+    let totalBn = new BigNumber(0);
+    if (!partialValue) {
+        return asNumber ? new BN(partialValue).toNumber() : new BN(partialValue)
+    }
+    if (typeof partialValue === "string") {
+        partialBn = new BigNumber(partialValue);
+    } else {
+        partialBn = new BigNumber((partialValue as BN).toString());
+    }
+    if (typeof total === "string") {
+        totalBn = new BigNumber(total);
+    } else {
+        totalBn = new BigNumber((total as BN).toString());
+    }
+    if (asNumber) {
+        return partialBn.multipliedBy(100).dividedBy(totalBn).toNumber();
+    }
+    return new BN(partialBn.multipliedBy(100).dividedBy(totalBn).toString());
+}
+
 /**
  * Get the given percent of total
  * @param {number} percent - The percentual value to obtain from the total amount
@@ -592,6 +629,22 @@ export const percentual = (partialValue: number, total: number): number => {
  */
 export const percentage = (percent: number, total: number): number => {
     return percent * total / 100;
+}
+
+export const percentageBn = (percent: number, total: string | BN, asNumber = false): number | BN => {
+    if (!percent) {
+        return asNumber ? 0 : new BN(0);
+    }
+    let totalBn = new BigNumber(0);
+    if (typeof total === "string") {
+        totalBn = new BigNumber(total);
+    } else {
+        totalBn = new BigNumber((total as BN).toString());
+    }
+    if (asNumber) {
+        return totalBn.multipliedBy(percent).dividedBy(100).toNumber();
+    }
+    return new BN(totalBn.multipliedBy(percent).dividedBy(100).toString());
 }
 
 export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
@@ -870,17 +923,28 @@ export const getRelativeDate = (timestamp: number) => {
     return relativeTimeFromDates(reference);
 }
 
-export function stringNumberFormat(value: string, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',', hideDecimalsIfZero = true) {
+export function stringNumberFormat(value: string, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',') {
     if (!value) {
         return '0';
     }
-    const parts = value.split('.');
-    const fnums = parts[0];
-    let decimals = '';
-    if (parts[1] && (+parts[1] !== 0 || !hideDecimalsIfZero)) {
-        decimals = decimalsSeparator + parts[1];
+    let fixed = '';
+    const valueBn = new BigNumber(value);
+    if (dec > 0) {
+        BigNumber.config({
+            CRYPTO: true,
+            FORMAT: BIGNUMBER_FORMAT,
+            DECIMAL_PLACES: dec
+        });
+        fixed = valueBn.toFormat(dec);
+    } else {
+        BigNumber.config({
+            CRYPTO: true,
+            FORMAT: BIGNUMBER_FORMAT,
+            DECIMAL_PLACES: 0
+        });
+        fixed = valueBn.toFormat(0);
     }
-    return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + thowsendsSeparator) + decimals;
+    return fixed;
 }
 
 function numberFormat(value: any, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',', hideDecimalsIfZero = true) {

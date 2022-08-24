@@ -631,10 +631,10 @@ export const TreasuryAddFundsModal = (props: {
                 }
               </span>
             </div>
-            <div className="subtitle text-truncate">{shortenAddress(item.id as string, 8)}</div>
+            <div className="subtitle text-truncate">{shortenAddress(item.id, 8)}</div>
           </>
         ) : (
-          <div className="title text-truncate">{shortenAddress(item.id as string, 8)}</div>
+          <div className="title text-truncate">{shortenAddress(item.id, 8)}</div>
         )}
       </>
     );

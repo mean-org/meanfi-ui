@@ -25,7 +25,7 @@ import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { fetchAccountTokens, findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, makeInteger, shortenAddress, toUiAmount2 } from "../../utils/utils";
+import { fetchAccountTokens, findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, makeInteger, openLinkInNewTab, shortenAddress, toUiAmount2 } from "../../utils/utils";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
@@ -330,12 +330,12 @@ export const StreamingAccountView = (props: {
     if (!streamingAccountSelectedId || !msp || loadingStreamingAccountActivity) {
       return;
     }
-  
+
     consoleOut('Loading streaming account activity...', '', 'crimson');
-  
+
     setLoadingStreamingAccountActivity(true);
     const streamingAccountPublicKey = new PublicKey(streamingAccountSelectedId);
-  
+
     const before = clearHistory
       ? ''
       : streamingAccountActivity && streamingAccountActivity.length > 0
@@ -365,7 +365,7 @@ export const StreamingAccountView = (props: {
         setHasMoreStreamingAccountActivity(false);
       })
       .finally(() => setLoadingStreamingAccountActivity(false));
-  
+
   }, [loadingStreamingAccountActivity, msp, streamingAccountActivity]);
 
   const getStreamingAccountName = useCallback(() => {
@@ -2928,11 +2928,6 @@ export const StreamingAccountView = (props: {
       {!loadingStreamingAccountActivity ? (
         streamingAccountActivity !== undefined && streamingAccountActivity.length > 0 ? (
           streamingAccountActivity.map((item, index) => {
-            const openInNewTab = (url: string) => {
-              // 👇️ setting target to _blank with window.open
-              window.open(url, '_blank', 'noopener,noreferrer');
-            };
-
             const title = getStreamingAccountActivityAction(item);
             const subtitle = <CopyExtLinkGroup
               content={item.signature}
@@ -2946,9 +2941,8 @@ export const StreamingAccountView = (props: {
             return (
               <div
                 key={index}
-                onClick={() => openInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`)}
-                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-              >
+                onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`)}
+                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
                 <ResumeItem
                   id={`${index}`}
                   title={title}
@@ -2957,7 +2951,7 @@ export const StreamingAccountView = (props: {
                   resume={resume}
                   hasRightIcon={true}
                   rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
-                  isLink={true}
+                  isLink={false}
                   classNameRightContent="resume-activity-row"
                   classNameIcon="icon-stream-row"
                 />
