@@ -21,7 +21,7 @@ import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
-import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toTokenAmount, toUiAmount } from "../../utils/utils";
+import { formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toTokenAmount, toUiAmount2 } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
@@ -1301,26 +1301,25 @@ export const MoneyStreamsIncomingView = (props: {
   // Rendering //
   ///////////////
 
-  const renderFundsToWithdraw = () => {
-    if (!streamSelected) { return null; }
+  const renderFundsToWithdraw = useCallback(() => {
+    if (!streamSelected || !workingToken) { return null; }
 
     const v1 = streamSelected as StreamInfo;
     const v2 = streamSelected as Stream;
-    const token = getTokenByMintAddress(streamSelected.associatedToken as string);
 
     return (
       <>
         <span className="info-data large mr-1">
-          {streamSelected
-            ? getTokenAmountAndSymbolByTokenAddress(
-                isNewStream()
-                  ? toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6)
-                  : v1.escrowVestedAmount,
-                streamSelected.associatedToken as string,
-                false,
-                splTokenList
-              )
-            : '--'
+          {
+            getAmountWithSymbol(
+              isNewStream()
+                ? parseFloat(toUiAmount2(new BN(v2.withdrawableAmount), workingToken.decimals))
+                : v1.escrowVestedAmount,
+              workingToken.address,
+              false,
+              splTokenList,
+              workingToken.decimals
+            )
           }
         </span>
         <span className="info-icon">
@@ -1332,7 +1331,7 @@ export const MoneyStreamsIncomingView = (props: {
         </span>
       </>
     )
-  }
+  }, [getStreamStatus, isNewStream, splTokenList, streamSelected, workingToken])
 
   // Info Data
   const infoData = [

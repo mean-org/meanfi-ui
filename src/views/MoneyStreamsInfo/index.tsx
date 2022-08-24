@@ -29,7 +29,7 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { cutNumber, fetchAccountTokens, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from "../../utils/utils";
+import { cutNumber, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount2 } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
 import { useNativeAccount } from "../../contexts/accounts";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
@@ -1755,7 +1755,7 @@ export const MoneyStreamsInfoView = (props: {
     if (item) {
       let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
       if (item.rateAmount > 0) {
-        rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), true, t);
+        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds as number, true, t);
       }
 
       subtitle = rateAmount;
@@ -2125,7 +2125,7 @@ export const MoneyStreamsInfoView = (props: {
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-          const rateAmountValue = isNew ? toUiAmount(new BN(v2.rateAmount), token.decimals) : v1.rateAmount;
+          const rateAmountValue = isNew ? parseFloat(toUiAmount2(new BN(v2.rateAmount), token.decimals)) : v1.rateAmount;
           const valueOfDay = rateAmountValue * tokenPrice / new BN(stream.rateIntervalInSeconds).toNumber() * 86400;
           totalRateAmountValuePerDay += valueOfDay
 
@@ -2183,7 +2183,7 @@ export const MoneyStreamsInfoView = (props: {
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-          const rateAmountValue = isNew ? toUiAmount(new BN(v2.rateAmount), token?.decimals || 6) : v1.rateAmount;
+          const rateAmountValue = isNew ? parseFloat(toUiAmount2(new BN(v2.rateAmount), token?.decimals || 6)) : v1.rateAmount;
           const valueOfDay = rateAmountValue * tokenPrice / new BN(stream.rateIntervalInSeconds).toNumber() * 86400;
           totalRateAmountValue += valueOfDay;
 
@@ -2602,14 +2602,14 @@ export const MoneyStreamsInfoView = (props: {
             const v2 = stream as Stream;
             const isNew = stream.version >= 2 ? true : false;
 
-            const isV2Stream = toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
+            const isV2Stream = parseFloat(toUiAmount2(new BN(v2.withdrawableAmount), token?.decimals || 6));
             const isV1Stream = v1.escrowVestedAmount;
           
-            const withdrawResume = getTokenAmountAndSymbolByTokenAddress(
+            const withdrawResume = getAmountWithSymbol(
                                     isNew
                                       ? isV2Stream
                                       : isV1Stream,
-                                      stream.associatedToken as string
+                                    (stream.associatedToken as PublicKey).toString()
                                   )
     
             return (
