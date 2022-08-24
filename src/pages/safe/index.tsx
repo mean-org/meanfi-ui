@@ -92,7 +92,6 @@ export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const proposalLoadStatusRegister = new Map<string, boolean>();
-const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
 export const SafeView = () => {
   const connectionConfig = useConnectionConfig();
@@ -192,6 +191,8 @@ export const SafeView = () => {
 
   const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
+
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",

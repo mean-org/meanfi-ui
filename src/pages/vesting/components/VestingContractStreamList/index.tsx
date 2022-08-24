@@ -42,8 +42,6 @@ import { segmentAnalytics } from '../../../../App';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-
 export const VestingContractStreamList = (props: {
     accountAddress: string;
     isMultisigTreasury: boolean;
@@ -107,6 +105,8 @@ export const VestingContractStreamList = (props: {
     const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+
+    const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
 
     const isDateInTheFuture = useCallback((date: string): boolean => {
         const now = new Date().toUTCString();

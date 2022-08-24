@@ -47,9 +47,6 @@ import { appConfig } from '../..';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
 
-const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-
 export const StreamingAccountView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
   streamingAccountSelected: Treasury | TreasuryInfo | undefined;
@@ -128,6 +125,9 @@ export const StreamingAccountView = (props: {
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(0);
   const [associatedTokenDecimals, setAssociatedTokenDecimals] = useState(6);
   const [treasuryEffectiveBalance, setTreasuryEffectiveBalance] = useState(0);
+
+  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();

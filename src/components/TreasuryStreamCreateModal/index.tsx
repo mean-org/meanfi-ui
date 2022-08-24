@@ -55,8 +55,6 @@ import { InputMean } from '../InputMean';
 
 const { Option } = Select;
 
-const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-
 export const TreasuryStreamCreateModal = (props: {
   associatedToken: string;
   connection: Connection;
@@ -153,6 +151,8 @@ export const TreasuryStreamCreateModal = (props: {
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] = useState('');
   const [proposalTitle, setProposalTitle] = useState('');
 
+  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  
   const isNewTreasury = useCallback(() => {
     if (workingTreasuryDetails) {
       const v2 = workingTreasuryDetails as Treasury;

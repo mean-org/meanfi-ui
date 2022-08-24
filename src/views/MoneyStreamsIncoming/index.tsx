@@ -42,9 +42,6 @@ import { appConfig } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-
 export const MoneyStreamsIncomingView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
   onSendFromIncomingStreamDetails?: any;
@@ -89,6 +86,9 @@ export const MoneyStreamsIncomingView = (props: {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>();
 
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+
+  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
   const hideDetailsHandler = () => {
     onSendFromIncomingStreamDetails();

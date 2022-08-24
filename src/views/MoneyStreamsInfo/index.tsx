@@ -55,9 +55,6 @@ import { appConfig } from '../..';
 
 const { TabPane } = Tabs;
 
-const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-
 export const MoneyStreamsInfoView = (props: {
   accountAddress: string;
   loadingStreams: boolean;
@@ -156,6 +153,9 @@ export const MoneyStreamsInfoView = (props: {
   const [hasIncomingStreamsRunning, setHasIncomingStreamsRunning] = useState<number>();
   const [hasOutgoingStreamsRunning, setHasOutgoingStreamsRunning] = useState<number>();
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+
+  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
   // Detect XS screen
   useEffect(() => {

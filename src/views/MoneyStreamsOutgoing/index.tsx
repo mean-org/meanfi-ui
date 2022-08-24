@@ -38,9 +38,6 @@ import { appConfig } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-
 export const MoneyStreamsOutgoingView = (props: {
   streamSelected: Stream | StreamInfo | undefined;
   streamList?: Array<Stream | StreamInfo> | undefined;
@@ -91,6 +88,9 @@ export const MoneyStreamsOutgoingView = (props: {
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
+
+  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {

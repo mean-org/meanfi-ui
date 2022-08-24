@@ -67,9 +67,6 @@ export type VestingAccountDetailTab = "overview" | "streams" | "activity" | unde
 let isWorkflowLocked = false;
 const notificationKey = 'updatable';
 
-const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-
 export const VestingView = () => {
   const {
     userTokens,
@@ -157,6 +154,9 @@ export const VestingView = () => {
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
+  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  
   /////////////////////////
   //  Setup & Init code  //
   /////////////////////////
