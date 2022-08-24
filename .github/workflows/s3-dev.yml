@@ -40,6 +40,7 @@ jobs:
         env:
           REACT_APP_ENV: ${{ env.APP_ENV }}
 
+      # Copy the appropiate robots.txt
       - name: Copy robots.txt
         run: cp ci/${{ env.ROBOTS_TXT_FILE_NAME }} build/robots.txt
 
@@ -77,21 +78,22 @@ jobs:
           aws s3 cp index.html ${{env.AWS_S3_PATH}}/index.html --acl public-read --cache-control max-age=0
         working-directory: .
 
+      # Only runs when it's development env
       - name: Set distribution to development
         if: ${{ env.APP_ENV == 'development' }}
         run: echo "DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID_DEV }}" >> $GITHUB_ENV
 
+      # Only runs when it's staging env
       - name: Set distribution to staging
         if: ${{ env.APP_ENV == 'staging' }}
         run: echo "DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID_STAGE }}" >> $GITHUB_ENV
 
+      # Updates the distribution origin path
       - name: Update originPath
-        uses: mean-dao/cloudfront-manager@v4
+        uses: mean-dao/aws-web-deploy@v1
         env:
           FOLDER_PATH: "/v${{ github.run_number }}"
         with:
           ORIGIN_PATH: "/v${{ github.run_number }}"
-          AWS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
           AWS_DISTRIBUTION_ID: ${{ env.DISTRIBUTION_ID }}
+          AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
