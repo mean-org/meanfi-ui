@@ -130,11 +130,9 @@ export const VestingContractList = (props: {
                     const lockPeriodAmount = streamTemplate.durationNumberOfUnits;
                     const lockPeriodUnits = streamTemplate.rateIntervalInSeconds;
                     const lockPeriod = lockPeriodAmount * lockPeriodUnits;
-                    // const cliffReleasePercentage = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
                     const sdTimestamp = toTimestamp(startDate);
                     const finishDate = new Date((sdTimestamp + lockPeriod) * 1000).toUTCString();
                     const todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
-                    // completedVestingPercentage = todayPct > cliffReleasePercentage ? todayPct : cliffReleasePercentage;
                     completedVestingPercentage = todayPct > 100 ? 100 : todayPct;
                 }
             } else {
