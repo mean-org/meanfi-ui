@@ -27,7 +27,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../utils/ui";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, stringNumberFormat, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cutNumber, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount2 } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
@@ -1685,7 +1685,8 @@ export const MoneyStreamsInfoView = (props: {
     let value = '';
 
     if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      // let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
       const decimals = token?.decimals || 6;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
@@ -1702,15 +1703,20 @@ export const MoneyStreamsInfoView = (props: {
           2
         );
       } else {
-        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
-        value += formatThousands(
-          rateAmount,
-          friendlyDisplayDecimalPlaces(rateAmount, decimals),
-          2
-        );
+        const rateAmount = new BN(item.rateAmount);
+        value += stringNumberFormat(
+          toUiAmount2(rateAmount, decimals),
+          friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
+        )
+        // value += formatThousands(
+        //   rateAmount,
+        //   friendlyDisplayDecimalPlaces(rateAmount, decimals),
+        //   2
+        // );
       }
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -1736,15 +1742,21 @@ export const MoneyStreamsInfoView = (props: {
           2
         );
       } else {
-        const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
-        value += formatThousands(
-          allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
-          2
-        );
+        // const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
+        const allocationAssigned = new BN(item.allocationAssigned);
+        value += stringNumberFormat(
+          toUiAmount2(allocationAssigned, decimals),
+          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || decimals
+        )
+        // value += formatThousands(
+        //   allocationAssigned,
+        //   friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+        //   2
+        // );
       }
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -2121,7 +2133,8 @@ export const MoneyStreamsInfoView = (props: {
         const v2 = stream as Stream;
         const isNew = v2.version && v2.version >= 2 ? true : false;
 
-        const token = getTokenByMintAddress(stream.associatedToken as string);
+        // const token = getTokenByMintAddress(stream.associatedToken as string);
+        const token = getTokenByMintAddress((stream.associatedToken as PublicKey).toString());
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
@@ -2152,24 +2165,8 @@ export const MoneyStreamsInfoView = (props: {
 
   // Calculate the rate per day for outgoing streams
   useEffect(() => {
-    // if (outgoingStreamList && streamingAccountCombinedList && !loadingStreams) {
-
     if (outgoingStreamList && !loadingStreams) {
-
-      // const fromStreamingAccounts: (Stream | StreamInfo)[] = [];
-      // let runningOutgoingStreamsFromStreamingAccounts: (Stream | StreamInfo)[] = [];
-      // streamingAccountCombinedList.forEach(item => {
-      //   if (item.streams && item.streams.length > 0) {
-      //     fromStreamingAccounts.push(...item.streams);
-      //     runningOutgoingStreamsFromStreamingAccounts = fromStreamingAccounts.filter((stream: Stream | StreamInfo) => isStreamRunning(stream));
-      //   }
-      // });
-
       const runningOutgoingStreams = outgoingStreamList.filter((stream: Stream | StreamInfo) => isStreamRunning(stream));
-
-      // if (runningOutgoingStreamsFromStreamingAccounts.length > 0) {
-      //   runningOutgoingStreams.push(...runningOutgoingStreamsFromStreamingAccounts);
-      // }
 
       let totalRateAmountValue = 0;
       let totalRateAmountValuePerSecond = 0;
@@ -2179,7 +2176,8 @@ export const MoneyStreamsInfoView = (props: {
         const v2 = stream as Stream;
         const isNew = v2.version && v2.version >= 2 ? true : false;
 
-        const token = getTokenByMintAddress(stream.associatedToken as string);
+        // const token = getTokenByMintAddress(stream.associatedToken as string);
+        const token = getTokenByMintAddress((stream.associatedToken as PublicKey).toString());
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
@@ -2580,6 +2578,13 @@ export const MoneyStreamsInfoView = (props: {
             };
 
             const token = stream.associatedToken ? getTokenByMintAddress((stream.associatedToken as PublicKey).toBase58()) : undefined;
+
+            // const data = {
+            //   token: (stream.associatedToken as PublicKey).toBase58(),
+            //   tokenDecimals: token ? token.decimals : "--",
+            //   tokenSymbol: token ? token.symbol : "--"
+            // }
+            // console.log("token data test...", data);
 
             let img;
 
