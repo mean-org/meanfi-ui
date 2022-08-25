@@ -1140,7 +1140,7 @@ export const MoneyStreamsIncomingView = (props: {
     if (streamSelected && streamSelected.rateAmount === 0) {
       const now = new Date().toUTCString();
       const nowUtc = new Date(now);
-      const streamStartDate = new Date(streamSelected.startUtc);
+      const streamStartDate = new Date(streamSelected.startUtc as string);
       if (streamStartDate > nowUtc) {
         return true;
       }

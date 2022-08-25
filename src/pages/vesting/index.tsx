@@ -642,7 +642,7 @@ export const VestingView = () => {
       const periodUnits = streamTemplate.durationNumberOfUnits;
       const periodAmount = streamTemplate.rateIntervalInSeconds;
       // Start date timestamp
-      const sdTimestamp = toTimestamp(startDate);
+      const sdTimestamp = toTimestamp(startDate.toString());
       // Total length of vesting period in seconds
       const lockPeriod = periodAmount * periodUnits;
       // Final date = Start date + lockPeriod
@@ -876,7 +876,7 @@ export const VestingView = () => {
 
   const isContractLocked = useCallback(() => {
     if (!publicKey || !selectedVestingContract || !streamTemplate) { return true; }
-    return isStartDateGone(streamTemplate.startUtc);
+    return isStartDateGone(streamTemplate.startUtc.toString());
   }, [isStartDateGone, publicKey, selectedVestingContract, streamTemplate]);
 
 

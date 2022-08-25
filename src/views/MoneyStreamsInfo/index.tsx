@@ -2618,14 +2618,13 @@ export const MoneyStreamsInfoView = (props: {
               <div 
                 key={`incoming-stream-${index}`}
                 onClick={onSelectStream}
-                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-              >
+                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
                 <ResumeItem
                   id={index}
                   img={img}
                   title={title}
                   subtitle={subtitle}
-                  resume={(v2.withdrawableAmount.gtn(0) || v1.escrowVestedAmount > 0) ? `${withdrawResume} available` : resume}
+                  resume={((isNew && v2.withdrawableAmount.gtn(0)) || (!isNew && v1.escrowVestedAmount > 0)) ? `${withdrawResume} available` : resume}
                   status={status}
                   hasRightIcon={true}
                   rightIcon={<IconArrowForward className="mean-svg-icons" />}

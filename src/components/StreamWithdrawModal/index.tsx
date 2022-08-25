@@ -127,7 +127,7 @@ export const StreamWithdrawModal = (props: {
           setLoadingData(true);
           try {
             const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
-            getStreamDetails(v2.id as string, msp);
+            getStreamDetails(v2.id.toBase58(), msp);
           } catch (error) {
             openNotification({
               title: t('notifications.error-title'),

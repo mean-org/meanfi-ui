@@ -104,7 +104,7 @@ export const VestingContractStreamDetailModal = (props: {
 
   const loadMoreActivity = () => {
     if (!highlightedStream) { return; }
-    getStreamActivity(highlightedStream.id as string);
+    getStreamActivity(highlightedStream.id.toBase58());
   }
 
   return (

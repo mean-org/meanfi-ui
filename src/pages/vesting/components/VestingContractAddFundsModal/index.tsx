@@ -126,9 +126,9 @@ export const VestingContractAddFundsModal = (props: {
     }
 
     if (id) {
-      return treasuryStreams.find(ts => ts.id === id);
+      return treasuryStreams.find(ts => ts.id.toBase58() === id);
     } else if (highLightableStreamId) {
-      return treasuryStreams.find(ts => ts.id ===highLightableStreamId);
+      return treasuryStreams.find(ts => ts.id.toBase58() === highLightableStreamId);
     }
 
     return undefined;
