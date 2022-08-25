@@ -280,7 +280,7 @@ export const MoneyStreamsIncomingView = (props: {
       if (!streamSelected || !multisigClient || !multisigAccounts) { return null; }
 
       const stream = streamSelected as Stream;
-      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === stream.beneficiary)[0];
+      const multisig = multisigAccounts.filter(m => m.authority.equals(stream.beneficiary))[0];
 
       if (!multisig) { return null; }
 
@@ -777,7 +777,7 @@ export const MoneyStreamsIncomingView = (props: {
       if (!streamSelected || !multisigClient || !multisigAccounts) { return null; }
 
       const stream = streamSelected as Stream;
-      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === stream.beneficiary)[0];
+      const multisig = multisigAccounts.filter(m => m.authority.equals(stream.beneficiary))[0];
 
       if (!multisig) { return null; }
 
@@ -825,9 +825,8 @@ export const MoneyStreamsIncomingView = (props: {
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      const stream = new PublicKey(streamSelected.id as string);
-
-      const beneficiary = new PublicKey((streamSelected as Stream).beneficiary as string);
+      const stream = (streamSelected as Stream).id;
+      const beneficiary = (streamSelected as Stream).beneficiary;
       const amount = toTokenAmount(parseFloat(withdrawData.amount as string), workingToken.decimals);
       const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
       const valueInUsd = price * parseFloat(withdrawData.amount);

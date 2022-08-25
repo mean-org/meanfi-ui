@@ -108,7 +108,7 @@ export const StreamCloseModal = (props: {
       const v2 = localStreamDetail as Stream;
       consoleOut('fetching treasury details...', '', 'blue');
       getTreasuryTypeByTreasuryId(
-        localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury as string,
+        localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury.toBase58(),
         localStreamDetail.version
       ).then(value => {
         consoleOut('streamTreasuryType:', value, 'crimson');
@@ -153,7 +153,7 @@ export const StreamCloseModal = (props: {
     if (localStreamDetail && publicKey) {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
-      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer === publicKey.toBase58())) {
+      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer.equals(publicKey))) {
         return true;
       }
     }
@@ -170,7 +170,7 @@ export const StreamCloseModal = (props: {
       if (v1.version < 2) {
         return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
       } else {
-        return v2.beneficiary === publicKey.toBase58() ? true : false;
+        return v2.beneficiary.equals(publicKey) ? true : false;
       }
     }
     return false;

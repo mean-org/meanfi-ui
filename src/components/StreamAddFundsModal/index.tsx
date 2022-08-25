@@ -233,7 +233,7 @@ export const StreamAddFundsModal = (props: {
         const v2 = localStreamDetail as Stream;
         consoleOut('fetching treasury details...', '', 'blue');
         getTreasuryTypeByTreasuryId(
-          localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury as string,
+          localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury.toBase58(),
           localStreamDetail.version
         ).then(value => {
           consoleOut('streamTreasuryType:', value, 'crimson');

@@ -1458,7 +1458,7 @@ export const VestingContractStreamList = (props: {
         let message = '';
 
         if (publicKey && highlightedStream) {
-            const beneficiary = highlightedStream.beneficiary as string;
+            const beneficiary = highlightedStream.beneficiary.toBase58();
             if (isDateInTheFuture(paymentStartDate)) {
                 message = t('vesting.close-account.close-stream-not-started');
             } else if (isContractFinished()) {
@@ -1478,8 +1478,8 @@ export const VestingContractStreamList = (props: {
 
         if (publicKey && highlightedStream) {
 
-            const treasury = highlightedStream.treasury as string;
-            const beneficiary = highlightedStream.beneficiary as string;
+            const treasury = highlightedStream.treasury.toBase58();
+            const beneficiary = highlightedStream.beneficiary.toBase58();
 
             message = t('streams.pause-stream-confirmation', {
                 treasury: shortenAddress(treasury),
@@ -1498,8 +1498,8 @@ export const VestingContractStreamList = (props: {
 
         if (publicKey && highlightedStream) {
 
-            const treasury = highlightedStream.treasury as string;
-            const beneficiary = highlightedStream.beneficiary as string;
+            const treasury = highlightedStream.treasury.toBase58();
+            const beneficiary = highlightedStream.beneficiary.toBase58();
 
             message = t('streams.resume-stream-confirmation', {
                 treasury: shortenAddress(treasury),

@@ -2813,7 +2813,7 @@ export const AccountsNewView = () => {
 
     for (const stream of updatedStreamsv2) {
 
-      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+      const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer)
         ? true
         : false;
 
@@ -2821,7 +2821,7 @@ export const AccountsNewView = () => {
       const freshStream = await msp.refreshStream(stream, undefined, false) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+      const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
@@ -2898,7 +2898,7 @@ export const AccountsNewView = () => {
 
     for (const stream of updatedStreamsv2) {
 
-      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+      const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer)
         ? true
         : false;
 
@@ -2906,7 +2906,7 @@ export const AccountsNewView = () => {
       const freshStream = await msp.refreshStream(stream, undefined, false) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+      const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);

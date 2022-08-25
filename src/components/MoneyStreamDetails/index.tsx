@@ -515,7 +515,7 @@ export const MoneyStreamDetails = (props: {
 
     return (
       <CopyExtLinkGroup
-        content={isNewStream() ? v2.treasurer as string : v1.treasurerAddress as string}
+        content={isNewStream() ? v2.treasurer.toBase58() : v1.treasurerAddress as string}
         number={8}
         externalLink={true}
       />
@@ -530,7 +530,7 @@ export const MoneyStreamDetails = (props: {
 
     return (
       <CopyExtLinkGroup
-        content={isNewStream() ? v2.beneficiary as string : v1.beneficiaryAddress as string}
+        content={isNewStream() ? v2.beneficiary.toBase58() : v1.beneficiaryAddress as string}
         number={8}
         externalLink={true}
       />

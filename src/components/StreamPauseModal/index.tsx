@@ -48,7 +48,7 @@ export const StreamPauseModal = (props: {
     if (props.streamDetail && publicKey) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
-      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer === publicKey.toBase58())) {
+      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer.equals(publicKey))) {
         return true;
       }
     }
@@ -65,7 +65,7 @@ export const StreamPauseModal = (props: {
       if (v1.version < 2) {
         return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
       } else {
-        return v2.beneficiary === publicKey.toBase58() ? true : false;
+        return v2.beneficiary.equals(publicKey) ? true : false;
       }
     }
     return false;

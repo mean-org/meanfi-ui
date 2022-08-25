@@ -3,11 +3,11 @@ import BN from 'bn.js';
 import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity } from '@mean-dao/msp';
-import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
+import { getAmountWithSymbol, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
 import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates, stringNumberFormat } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { useWallet } from '../../../../contexts/wallet';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
@@ -41,7 +41,6 @@ export const MoneyStreamDetails = (props: {
   } = props;
   const {
     splTokenList,
-    getTokenByMintAddress,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [tabOption, setTabOption] = useState<StreamDetailTab>("details");
@@ -290,7 +289,7 @@ export const MoneyStreamDetails = (props: {
 
     return (
       <AddressDisplay
-        address={stream.treasurer as string}
+        address={stream.treasurer.toBase58()}
         iconStyles={{ width: "15", height: "15" }}
         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
       />
@@ -384,7 +383,7 @@ export const MoneyStreamDetails = (props: {
 
     return (
       <AddressDisplay
-        address={stream.beneficiary as string}
+        address={stream.beneficiary.toBase58()}
         maxChars={8}
         iconStyles={{ width: "15", height: "15", verticalAlign: 'text-top' }}
         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}

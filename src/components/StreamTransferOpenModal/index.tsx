@@ -36,7 +36,7 @@ export const StreamTransferOpenModal = (props: {
       const v1 = streamDetail as StreamInfo;
       const v2 = streamDetail as Stream;
       if ((v1.version < 2 && v1.treasurerAddress === address) ||
-          (v2.version >= 2 && v2.treasurer === address)) {
+          (v2.version >= 2 && v2.treasurer.toBase58() === address)) {
         return true;
       }
     }

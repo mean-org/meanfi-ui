@@ -625,8 +625,8 @@ export const MoneyStreamsOutgoingView = (props: {
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      const stream = new PublicKey(streamSelected.id as string);
-      const treasury = new PublicKey((streamSelected as Stream).treasury as string);
+      const stream = (streamSelected as Stream).id;
+      const treasury = (streamSelected as Stream).treasury;
       const associatedToken = new PublicKey(streamSelected.associatedToken as string);
       const amount = addFundsData.tokenAmount;
       const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
@@ -1307,11 +1307,11 @@ export const MoneyStreamsOutgoingView = (props: {
     if (publicKey && streamSelected) {
 
       const treasury = streamSelected.version && streamSelected.version >= 2
-        ? (streamSelected as Stream).treasury as string
+        ? (streamSelected as Stream).treasury
         : (streamSelected as StreamInfo).treasuryAddress as string;
 
       const beneficiary = streamSelected.version && streamSelected.version >= 2
-        ? (streamSelected as Stream).beneficiary as string
+        ? (streamSelected as Stream).beneficiary
         : (streamSelected as StreamInfo).beneficiaryAddress as string;
 
       message = t('streams.pause-stream-confirmation', {
@@ -1757,11 +1757,11 @@ export const MoneyStreamsOutgoingView = (props: {
     if (publicKey && streamSelected) {
 
       const treasury = streamSelected.version && streamSelected.version >= 2
-        ? (streamSelected as Stream).treasury as string
+        ? (streamSelected as Stream).treasury
         : (streamSelected as StreamInfo).treasuryAddress as string;
 
       const beneficiary = streamSelected.version && streamSelected.version >= 2
-        ? (streamSelected as Stream).beneficiary as string
+        ? (streamSelected as Stream).beneficiary
         : (streamSelected as StreamInfo).beneficiaryAddress as string;
 
       message = t('streams.resume-stream-confirmation', {
@@ -2277,9 +2277,15 @@ export const MoneyStreamsOutgoingView = (props: {
     if (publicKey && streamSelected && streamList) {
 
       const me = publicKey.toBase58();
-      const treasury = streamSelected.version < 2 ? (streamSelected as StreamInfo).treasuryAddress as string : (streamSelected as Stream).treasury as string;
-      const treasurer = streamSelected.version < 2 ? (streamSelected as StreamInfo).treasurerAddress : (streamSelected as Stream).treasurer;
-      const beneficiary = streamSelected.version < 2 ? (streamSelected as StreamInfo).beneficiaryAddress as string : (streamSelected as Stream).beneficiary as string;
+      const treasury = streamSelected.version < 2
+        ? (streamSelected as StreamInfo).treasuryAddress as string
+        : (streamSelected as Stream).treasury;
+      const treasurer = streamSelected.version < 2
+        ? (streamSelected as StreamInfo).treasurerAddress as string
+        : (streamSelected as Stream).treasurer;
+      const beneficiary = streamSelected.version < 2
+        ? (streamSelected as StreamInfo).beneficiaryAddress as string
+        : (streamSelected as Stream).beneficiary;
       // Account for multiple beneficiaries funded by the same treasury (only 1 right now)
       const numTreasuryBeneficiaries = 1; // streamList.filter(s => s.treasurerAddress === me && s.treasuryAddress === treasury).length;
 
@@ -2406,7 +2412,7 @@ export const MoneyStreamsOutgoingView = (props: {
       const v2 = activeStream as Stream;
       consoleOut('Reading treasury data...', '', 'blue');
       getTreasuryByTreasuryId(
-        activeStream.version < 2 ? v1.treasuryAddress as string : v2.treasury as string, activeStream.version
+        activeStream.version < 2 ? v1.treasuryAddress as string : v2.treasury.toBase58(), activeStream.version
       );
     });
 
