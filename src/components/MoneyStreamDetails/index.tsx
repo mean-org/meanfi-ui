@@ -7,8 +7,8 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress, toUiAmount, toUiAmount2 } from "../../utils/utils";
-import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../utils/ui";
+import { formatThousands, getAmountWithSymbol, shortenAddress, toUiAmount2 } from "../../utils/utils";
+import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates, stringNumberFormat } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
@@ -138,7 +138,8 @@ export const MoneyStreamDetails = (props: {
     let value = '';
 
     if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      // let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
       const decimals = token?.decimals || 6;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
@@ -155,15 +156,21 @@ export const MoneyStreamDetails = (props: {
           2
         );
       } else {
-        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
-        value += formatThousands(
-          rateAmount,
-          friendlyDisplayDecimalPlaces(rateAmount, decimals),
-          2
-        );
+        // const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
+        const rateAmount = new BN(item.rateAmount);
+        // value += formatThousands(
+        //   rateAmount,
+        //   friendlyDisplayDecimalPlaces(rateAmount, decimals),
+        //   2
+        // );
+        value += stringNumberFormat(
+          toUiAmount2(rateAmount, decimals),
+          friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
+        )
       }
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -172,7 +179,15 @@ export const MoneyStreamDetails = (props: {
     let value = '';
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      const decimals = selectedToken?.decimals || 6;
+      // let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
+      const decimals = token?.decimals || 6;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
 
       if (item.version < 2) {
         const allocationAssigned = new BN(item.allocationAssigned).toNumber();
@@ -182,18 +197,24 @@ export const MoneyStreamDetails = (props: {
           2
         );
       } else {
-        const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
-        value += formatThousands(
-          allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
-          2
-        );
+        // const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
+        const allocationAssigned = new BN(item.allocationAssigned);
+        // value += formatThousands(
+        //   allocationAssigned,
+        //   friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+        //   2
+        // );
+        value += stringNumberFormat(
+          toUiAmount2(allocationAssigned, decimals),
+          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || decimals
+        )
       }
       value += ' ';
-      value += selectedToken ? selectedToken.symbol : item.associatedToken ? `[${shortenAddress(item.associatedToken)}]` : "";
+      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
     }
     return value;
-  }, [selectedToken]);
+  }, [getTokenByMintAddress]);
 
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';

@@ -24,8 +24,8 @@ import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contex
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { fetchAccountTokens, findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, makeInteger, openLinkInNewTab, shortenAddress, toUiAmount2 } from "../../utils/utils";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd, stringNumberFormat } from "../../utils/ui";
+import { fetchAccountTokens, findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeInteger, openLinkInNewTab, shortenAddress, toUiAmount2 } from "../../utils/utils";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
@@ -2486,7 +2486,8 @@ export const StreamingAccountView = (props: {
     let value = '';
 
     if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      // let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
       const decimals = token?.decimals || 6;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
@@ -2503,15 +2504,21 @@ export const StreamingAccountView = (props: {
           2
         );
       } else {
-        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
-        value += formatThousands(
-          rateAmount,
-          friendlyDisplayDecimalPlaces(rateAmount, decimals),
-          2
-        );
+        // const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
+        const rateAmount = new BN(item.rateAmount);
+        // value += formatThousands(
+        //   rateAmount,
+        //   friendlyDisplayDecimalPlaces(rateAmount, decimals),
+        //   2
+        // );
+        value += stringNumberFormat(
+          toUiAmount2(rateAmount, decimals),
+          friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
+        )
       }
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -2520,7 +2527,8 @@ export const StreamingAccountView = (props: {
     let value = '';
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      // let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
       const decimals = token?.decimals || 6;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
@@ -2530,22 +2538,28 @@ export const StreamingAccountView = (props: {
       }
 
       if (item.version < 2) {
-        const allocationAssigned = new BN(item.allocationAssigned).toNumber()
+        const allocationAssigned = new BN(item.allocationAssigned).toNumber();
         value += formatThousands(
           allocationAssigned,
           friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
           2
         );
       } else {
-        const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
-        value += formatThousands(
-          allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
-          2
-        );
+        // const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
+        const allocationAssigned = new BN(item.allocationAssigned);
+        // value += formatThousands(
+        //   allocationAssigned,
+        //   friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+        //   2
+        // );
+        value += stringNumberFormat(
+          toUiAmount2(allocationAssigned, decimals),
+          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || decimals
+        )
       }
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
