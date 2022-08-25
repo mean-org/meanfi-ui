@@ -6,10 +6,9 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
-import BN from 'bn.js';
 import { useWallet } from '../../../../contexts/wallet';
-import { percentage } from '../../../../utils/ui';
-import { getAmountWithSymbol, toUiAmount } from '../../../../utils/utils';
+import { percentage, percentageBn } from '../../../../utils/ui';
+import { getAmountWithSymbol, toUiAmount2 } from '../../../../utils/utils';
 
 export const StreamPauseModal = (props: {
   handleClose: any;
@@ -70,8 +69,8 @@ export const StreamPauseModal = (props: {
         if (v1.version < 2) {
           fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
         } else {
-          const wa = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
-          fee = percentage(fees.mspPercentFee, wa) || 0;
+          const wa = toUiAmount2(v2.withdrawableAmount, props.selectedToken?.decimals || 6);
+          fee = percentageBn(fees.mspPercentFee, wa, true) as number || 0;
         }
       } else if (isTreasurer) {
         fee = fees.mspFlatFee;
@@ -85,14 +84,14 @@ export const StreamPauseModal = (props: {
     amITreasurer,
   ]);
 
-  const getWithdrawableAmount = useCallback((): number => {
+  const getWithdrawableAmount = useCallback(() => {
     if (props.streamDetail && publicKey) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+        return toUiAmount2(v2.withdrawableAmount, props.selectedToken?.decimals || 6);
       }
     }
     return 0;
@@ -102,14 +101,14 @@ export const StreamPauseModal = (props: {
     props.selectedToken?.decimals
   ]);
 
-  const getUnvested = useCallback((): number => {
+  const getUnvested = useCallback(() => {
     if (props.streamDetail && publicKey) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount(new BN(v2.fundsLeftInStream), props.selectedToken?.decimals || 6);
+        return toUiAmount2(v2.fundsLeftInStream, props.selectedToken?.decimals || 6);
       }
     }
     return 0;

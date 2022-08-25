@@ -16,7 +16,6 @@ import {
     copyText,
     friendlyDisplayDecimalPlaces,
     getIntervalFromSeconds,
-    getPaymentIntervalFromSeconds,
     getShortDate,
     getTimeToNow,
     getTransactionModalTitle,
@@ -29,13 +28,13 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
+import { getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
 import { IconVerticalEllipsis } from '../../../../Icons';
 import { getSolanaExplorerClusterParam, useConnection } from '../../../../contexts/connection';
-import { OperationType, PaymentRateType, TransactionStatus } from '../../../../models/enums';
+import { OperationType, TransactionStatus } from '../../../../models/enums';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TreasuryTopupParams } from '../../../../models/common-types';
 import { VestingContractAddFundsModal } from '../VestingContractAddFundsModal';
@@ -118,8 +117,6 @@ export const VestingContractStreamList = (props: {
     const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
     const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
     const [streamList, setStreamList] = useState<Stream[]>([]);
-    const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
-    const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
 
     const isDateInTheFuture = useCallback((date: string): boolean => {
         const now = new Date().toUTCString();
@@ -218,7 +215,7 @@ export const VestingContractStreamList = (props: {
 
     const getNoStreamsMessage = useCallback(() => {
         if (vestingContract && streamTemplate) {
-            const paymentStartDate = streamTemplate.startUtc as string;
+            const paymentStartDate = (streamTemplate.startUtc as Date).toString();
             // When a contract has started with 0 streams, say it
             if (!isDateInTheFuture(paymentStartDate) && vestingContract.totalStreams === 0) {
                 return 'As this contract has started, no streams are able to be added to it.';
@@ -366,14 +363,14 @@ export const VestingContractStreamList = (props: {
         if (item) {
             switch (item.status) {
                 case STREAM_STATUS.Schedule:
-                    return t('streams.status.scheduled', { date: getShortDate(item.startUtc as string) });
+                    return t('streams.status.scheduled', { date: getShortDate(item.startUtc) });
                 case STREAM_STATUS.Paused:
                     if (item.isManuallyPaused) {
                         return t('streams.status.stopped-manually');
                     }
                     return t('vesting.vesting-account-streams.stream-status-complete');
                 default:
-                    return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate.toString()) });
+                    return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate) });
             }
         }
     }, [t]);
@@ -381,13 +378,9 @@ export const VestingContractStreamList = (props: {
     // Set template data
     useEffect(() => {
         if (vestingContract && streamTemplate) {
-            const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
-            setCliffReleasePercentage(cliffPercent);
-            setPaymentStartDate(streamTemplate.startUtc as string);
+            setPaymentStartDate((streamTemplate.startUtc as Date).toString());
             updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
             setLockPeriodUnits(streamTemplate.rateIntervalInSeconds);
-            const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
-            setLockPeriodFrequency(periodFrequency);
         }
     }, [
         streamTemplate,
@@ -535,7 +528,7 @@ export const VestingContractStreamList = (props: {
         }
 
         const createTx = async (): Promise<boolean> => {
-            if (!publicKey || !highlightedStream || !msp) {
+            if (!publicKey || !highlightedStream || !msp || !selectedToken) {
                 transactionLog.push({
                     action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
                     result: 'Cannot start transaction! Wallet not found!'
@@ -548,7 +541,7 @@ export const VestingContractStreamList = (props: {
                 lastOperation: TransactionStatus.TransactionStart,
                 currentOperation: TransactionStatus.InitTransaction
             });
-            const streamPublicKey = new PublicKey(highlightedStream.id as string);
+            const streamPublicKey = highlightedStream.id;
 
             const data = {
                 stream: streamPublicKey.toBase58(),                     // stream
@@ -559,6 +552,7 @@ export const VestingContractStreamList = (props: {
             const price = selectedToken
                 ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol)
                 : 0;
+            const usdValue = new BN(closeStreamOptions.vestedReturns).add(new BN(closeStreamOptions.unvestedReturns)).muln(price).toNumber();
 
             // Report event to Segment analytics
             const segmentData: SegmentStreamCloseData = {
@@ -570,7 +564,7 @@ export const VestingContractStreamList = (props: {
                 vestedReturns: closeStreamOptions.vestedReturns,
                 unvestedReturns: closeStreamOptions.unvestedReturns,
                 feeAmount: closeStreamOptions.feeAmount,
-                valueInUsd: price * (closeStreamOptions.vestedReturns + closeStreamOptions.unvestedReturns)
+                valueInUsd: usdValue
             };
             consoleOut('segment data:', segmentData, 'brown');
             segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFormButton, segmentData);
@@ -747,7 +741,7 @@ export const VestingContractStreamList = (props: {
             }
         }
 
-        if (wallet && highlightedStream && vestingContract) {
+        if (wallet && highlightedStream && vestingContract && selectedToken) {
             showTransactionExecutionModal();
             const created = await createTx();
             consoleOut('created:', created, 'blue');
@@ -764,16 +758,18 @@ export const VestingContractStreamList = (props: {
                             : undefined;
                         consoleOut('Send Tx to confirmation queue:', signature);
                         const message = `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of [${
-                            getTokenAmountAndSymbolByTokenAddress(
+                            getAmountWithSymbol(
                                 closeStreamOptions.vestedReturns,
-                                highlightedStream.associatedToken as string,
-                                false, splTokenList
+                                selectedToken.address,
+                                false,
+                                splTokenList
                             )
                         }] has been sent to [${shortenAddress(highlightedStream.beneficiary)}]. Unvested amount of [${
-                            getTokenAmountAndSymbolByTokenAddress(
+                            getAmountWithSymbol(
                                 closeStreamOptions.unvestedReturns,
-                                highlightedStream.associatedToken as string,
-                                false, splTokenList
+                                selectedToken.address,
+                                false,
+                                splTokenList
                             )
                         }] was returned to the vesting contract.`;
                         enqueueTransactionConfirmation({
@@ -903,7 +899,7 @@ export const VestingContractStreamList = (props: {
                 lastOperation: TransactionStatus.TransactionStart,
                 currentOperation: TransactionStatus.InitTransaction
             });
-            const streamPublicKey = new PublicKey(highlightedStream.id as string);
+            const streamPublicKey = highlightedStream.id;
 
             const data = {
                 stream: streamPublicKey.toBase58(),               // stream
@@ -1114,7 +1110,7 @@ export const VestingContractStreamList = (props: {
                             loadingMessage: `Pause stream: ${highlightedStream.name}`,
                             completedTitle: "Transaction confirmed",
                             completedMessage: `Successfully paused stream: ${highlightedStream.name}`,
-                            extras: highlightedStream.id as string
+                            extras: highlightedStream.id.toBase58()
                         });
                         setIsBusy(false);
                         onPauseStreamTransactionFinished();
@@ -1230,7 +1226,7 @@ export const VestingContractStreamList = (props: {
                 currentOperation: TransactionStatus.InitTransaction
             });
 
-            const streamPublicKey = new PublicKey(highlightedStream.id as string);
+            const streamPublicKey = highlightedStream.id;
             const data = {
                 stream: streamPublicKey.toBase58(),               // stream
                 payer: publicKey.toBase58(),                      // payer
@@ -1438,7 +1434,7 @@ export const VestingContractStreamList = (props: {
                             loadingMessage: `Resume stream: ${highlightedStream.name}`,
                             completedTitle: "Transaction confirmed",
                             completedMessage: `Successfully resumed stream: ${highlightedStream.name}`,
-                            extras: highlightedStream.id as string
+                            extras: highlightedStream.id.toBase58()
                         });
                         setIsBusy(false);
                         onResumeStreamTransactionFinished();
@@ -1561,7 +1557,7 @@ export const VestingContractStreamList = (props: {
                         {item.status === STREAM_STATUS.Paused
                             ? (
                                 <>
-                                    {item.fundsLeftInStream > 0 && (
+                                    {item.fundsLeftInStream.gtn(0) && (
                                         <Menu.Item key="1" onClick={showResumeStreamModal}>
                                             <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
                                         </Menu.Item>
@@ -1606,7 +1602,7 @@ export const VestingContractStreamList = (props: {
                 onVisibleChange={(visibleChange: any) => {
                     if (visibleChange) {
                         sethHighlightedStream(item);
-                        setHighLightableStreamId(item.id as string);
+                        setHighLightableStreamId(item.id.toBase58());
                     } else {
                         sethHighlightedStream(undefined);
                     }
@@ -1640,7 +1636,7 @@ export const VestingContractStreamList = (props: {
                             return (
                                 <div key={`${index + 50}`} id={`${item.id}`}
                                     className={
-                                        `transaction-list-row stripped-rows ${isDeletedStream(item.id as string)
+                                        `transaction-list-row stripped-rows ${isDeletedStream(item.id.toBase58())
                                             ? 'disabled blurry-1x'
                                             : highlightedStream && highlightedStream.id === item.id
                                                 ? 'selected'
@@ -1648,7 +1644,7 @@ export const VestingContractStreamList = (props: {
                                     }>
                                     <div className="description-cell no-padding simplelink" onClick={() => {
                                         sethHighlightedStream(item);
-                                        setHighLightableStreamId(item.id as string);
+                                        setHighLightableStreamId(item.id.toBase58());
                                         showVestingContractStreamDetailModal();
                                     }}>
                                         <div className="title text-truncate">{getStreamTitle(item)}</div>

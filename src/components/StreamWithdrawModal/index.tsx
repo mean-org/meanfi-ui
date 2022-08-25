@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { isValidNumber, shortenAddress, toUiAmount } from "../../utils/utils";
+import { isValidNumber, shortenAddress, toUiAmount, toUiAmount2 } from "../../utils/utils";
 import { consoleOut, percentage } from "../../utils/ui";
 import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useTranslation } from "react-i18next";
@@ -73,9 +73,11 @@ export const StreamWithdrawModal = (props: {
           if (v1.version < 2) {
             max = v1.escrowVestedAmount;
           } else {
-            max = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+            // TODO: lets use tuNumber() or parseFloat "for now" but we must upgrade to use BN all the way up
+            max = parseFloat(toUiAmount2(v2.withdrawableAmount, props.selectedToken?.decimals || 6));
             setFeePayedByTreasurer(v2.feePayedByTreasurer);
           }
+          // TODO: upgrade maxAmount state var to be BN
           setMaxAmount(max);
         } else {
           openNotification({
@@ -119,7 +121,7 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
         }
       } else {
-        max = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+        max = toUiAmount(v2.withdrawableAmount, props.selectedToken?.decimals || 6);
         if (v2.status === STREAM_STATUS.Running) {
           setMaxAmount(max);
           setLoadingData(true);

@@ -4,7 +4,7 @@ import { Modal, Button, Row, Col, Radio } from 'antd';
 import { LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { consoleOut, percentage } from '../../utils/ui';
-import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
+import { getAmountWithSymbol, toUiAmount, toUiAmount2 } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
@@ -210,7 +210,7 @@ export const StreamCloseModal = (props: {
     amITreasurer,
   ]);
 
-  const getWithdrawableAmount = useCallback((): number => {
+  const getWithdrawableAmount = useCallback(() => {
     if (localStreamDetail && publicKey) {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
@@ -220,7 +220,7 @@ export const StreamCloseModal = (props: {
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
+        return toUiAmount2(v2.withdrawableAmount, token?.decimals || 6);
       }
     }
     return 0;
@@ -231,7 +231,7 @@ export const StreamCloseModal = (props: {
 
   ]);
 
-  const getUnvested = useCallback((): number => {
+  const getUnvested = useCallback(() => {
     if (localStreamDetail && publicKey) {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
@@ -241,7 +241,7 @@ export const StreamCloseModal = (props: {
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6);
+        return toUiAmount2(v2.fundsLeftInStream, token?.decimals || 6);
       }
     }
     return 0;
@@ -381,7 +381,6 @@ export const StreamCloseModal = (props: {
           <div className="mb-2 fg-warning operation">
             <span>{props.content}</span>
           </div>
-          {/* <h4 className="operation">{props.content}</h4> */}
 
           {/* Info */}
           {localStreamDetail && localStreamDetail.associatedToken && (

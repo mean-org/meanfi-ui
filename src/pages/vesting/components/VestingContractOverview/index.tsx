@@ -153,7 +153,7 @@ export const VestingContractOverview = (props: {
         if (vestingContract && streamTemplate) {
             const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
             setCliffReleasePercentage(cliffPercent);
-            setPaymentStartDate(streamTemplate.startUtc as string);
+            setPaymentStartDate(streamTemplate.startUtc);
             updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
             const interval = new BN(streamTemplate.rateIntervalInSeconds).toNumber();
             setLockPeriodUnits(interval);

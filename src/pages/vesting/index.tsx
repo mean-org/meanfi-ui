@@ -638,7 +638,7 @@ export const VestingView = () => {
   const getContractFinishDate = useCallback(() => {
     if (streamTemplate) {
       // Payment start date
-      const startDate = streamTemplate.startUtc as string;
+      const startDate = streamTemplate.startUtc;
       const periodUnits = streamTemplate.durationNumberOfUnits;
       const periodAmount = streamTemplate.rateIntervalInSeconds;
       // Start date timestamp
@@ -655,7 +655,7 @@ export const VestingView = () => {
   const isContractRunning = useCallback((): boolean => {
     if (streamTemplate) {
       const now = new Date();
-      const startDate = new Date(streamTemplate.startUtc as string);
+      const startDate = new Date(streamTemplate.startUtc);
       const finishDate = getContractFinishDate();
       const hastStarted = now > startDate ? true : false;
       const hasFinished = finishDate && finishDate > now ? true : false;
@@ -876,7 +876,7 @@ export const VestingView = () => {
 
   const isContractLocked = useCallback(() => {
     if (!publicKey || !selectedVestingContract || !streamTemplate) { return true; }
-    return isStartDateGone(streamTemplate.startUtc as string);
+    return isStartDateGone(streamTemplate.startUtc);
   }, [isStartDateGone, publicKey, selectedVestingContract, streamTemplate]);
 
 

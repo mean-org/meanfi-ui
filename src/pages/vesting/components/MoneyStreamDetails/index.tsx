@@ -216,14 +216,14 @@ export const MoneyStreamDetails = (props: {
     if (item) {
       switch (item.status) {
         case STREAM_STATUS.Schedule:
-          return t('streams.status.scheduled', { date: getShortDate(item.startUtc.toString(), false) });
+          return t('streams.status.scheduled', { date: getShortDate(item.startUtc, false) });
         case STREAM_STATUS.Paused:
           if (item.isManuallyPaused) {
             return t('streams.status.stopped-manually');
           }
           return t('vesting.vesting-account-streams.stream-status-complete');
         default:
-          return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate.toString()) });
+          return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate) });
       }
     }
   }, [t]);
@@ -317,7 +317,7 @@ export const MoneyStreamDetails = (props: {
       <>
         {
           getAmountWithSymbol(
-            new BN(stream.remainingAllocationAmount),
+            stream.remainingAllocationAmount,
             selectedToken.address,
             false,
             splTokenList,
@@ -335,7 +335,7 @@ export const MoneyStreamDetails = (props: {
       <>
         {
           getAmountWithSymbol(
-            new BN(stream.fundsLeftInStream),
+            stream.fundsLeftInStream,
             selectedToken.address,
             false,
             splTokenList,
@@ -353,7 +353,7 @@ export const MoneyStreamDetails = (props: {
       <>
         {
           getAmountWithSymbol(
-            new BN(stream.fundsSentToBeneficiary),
+            stream.fundsSentToBeneficiary,
             selectedToken.address,
             false,
             splTokenList,
@@ -370,7 +370,7 @@ export const MoneyStreamDetails = (props: {
     return (
       <>
         <AddressDisplay
-          address={stream.id as string}
+          address={stream.id.toBase58()}
           maxChars={8}
           iconStyles={{ width: "15", height: "15", verticalAlign: 'text-top' }}
           newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.id}${getSolanaExplorerClusterParam()}`}
@@ -469,8 +469,8 @@ export const MoneyStreamDetails = (props: {
   // Tab details
   const detailsData = [
     {
-      label: stream ? isStartDateFuture(stream.startUtc as string) ? "Starting on:" : "Started on:" : "--",
-      value: stream ? getReadableDate(stream.startUtc as string, true) : "--"
+      label: stream ? isStartDateFuture(stream.startUtc) ? "Starting on:" : "Started on:" : "--",
+      value: stream ? getReadableDate(stream.startUtc, true) : "--"
     },
     {
       label: isInboundStream && "Receiving from:",
@@ -502,11 +502,11 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && "Funds will run out in:",
-      value: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && `${getReadableDate(stream.estimatedDepletionDate.toString())} (${getTimeToNow(stream.estimatedDepletionDate.toString())})`
+      value: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && `${getReadableDate(stream.estimatedDepletionDate)} (${getTimeToNow(stream.estimatedDepletionDate)})`
     },
     {
       label: stream && stream.status === STREAM_STATUS.Paused && "Funds ran out on:",
-      value: stream && stream.status === STREAM_STATUS.Paused && getRelativeDate(stream.estimatedDepletionDate.toString())
+      value: stream && stream.status === STREAM_STATUS.Paused && getRelativeDate(stream.estimatedDepletionDate)
     },
     {
       label: "Stream id:",
@@ -603,15 +603,15 @@ export const MoneyStreamDetails = (props: {
             {
               isInboundStream
                 ? getAmountWithSymbol(
-                    toUiAmount2(new BN(stream.withdrawableAmount), selectedToken.decimals),
-                    stream.associatedToken as string,
+                    toUiAmount2(stream.withdrawableAmount, selectedToken.decimals),
+                    selectedToken.address,
                     false,
                     splTokenList,
                     selectedToken.decimals
                   )
                 : getAmountWithSymbol(
-                    toUiAmount2(new BN(stream.fundsLeftInStream), selectedToken.decimals),
-                    stream.associatedToken as string,
+                    toUiAmount2(stream.fundsLeftInStream, selectedToken.decimals),
+                    selectedToken.address,
                     false,
                     splTokenList,
                     selectedToken.decimals

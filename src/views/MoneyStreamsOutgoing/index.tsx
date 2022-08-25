@@ -2535,7 +2535,7 @@ export const MoneyStreamsOutgoingView = (props: {
           {
             getAmountWithSymbol(
               isNewStream()
-                ? new BN(v2.fundsLeftInStream)
+                ? v2.fundsLeftInStream
                 : v1.escrowUnvestedAmount,
               workingToken.address,
               false,

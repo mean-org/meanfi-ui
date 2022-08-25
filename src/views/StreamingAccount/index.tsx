@@ -1,7 +1,19 @@
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
-import { Stream, STREAM_STATUS, TransactionFees, Treasury, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, Constants as MSPV2Constants, TreasuryType, VestingTreasuryActivity, VestingTreasuryActivityAction } from "@mean-dao/msp";
-import { 
-  MSP_ACTIONS, 
+import {
+  Stream,
+  STREAM_STATUS,
+  TransactionFees,
+  Treasury,
+  MSP_ACTIONS as MSP_ACTIONS_V2,
+  calculateActionFees as calculateActionFeesV2,
+  MSP,
+  Constants as MSPV2Constants,
+  TreasuryType,
+  VestingTreasuryActivity,
+  VestingTreasuryActivityAction,
+} from "@mean-dao/msp";
+import {
+  MSP_ACTIONS,
   calculateActionFees,
   MoneyStreaming,
   Constants,
@@ -11,7 +23,6 @@ import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Modal, Row, Spin, Tabs } from "antd";
-import BN from "bn.js";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
@@ -24,8 +35,30 @@ import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contex
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isProd, stringNumberFormat } from "../../utils/ui";
-import { fetchAccountTokens, findATokenAddress, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeInteger, openLinkInNewTab, shortenAddress, toUiAmount2 } from "../../utils/utils";
+import {
+  consoleOut,
+  friendlyDisplayDecimalPlaces,
+  getIntervalFromSeconds,
+  getShortDate,
+  getTransactionModalTitle,
+  getTransactionOperationDescription,
+  getTransactionStatusForLogs,
+  isProd,
+  stringNumberFormat,
+} from "../../utils/ui";
+import {
+  fetchAccountTokens,
+  findATokenAddress,
+  formatThousands,
+  getAmountWithSymbol,
+  getTokenAmountAndSymbolByTokenAddress,
+  getTxIxResume,
+  makeInteger,
+  openLinkInNewTab,
+  shortenAddress,
+  toUiAmount2,
+} from "../../utils/utils";
+import useWindowSize from "../../hooks/useWindowResize";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
@@ -38,11 +71,11 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
 import { Identicon } from "../../components/Identicon";
 import { SolBalanceModal } from "../../components/SolBalanceModal";
-import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { getTokenAccountBalanceByAddress, readAccountInfo } from "../../utils/accounts";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { AddFundsParams } from "../../models/vesting";
+import BN from "bn.js";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -713,23 +746,21 @@ export const StreamingAccountView = (props: {
 
       if (!isMultisigTreasury() || !params.fundFromSafe) {
         if (data.stream === '') {
-          // TODO: Modify method signature for amount parameters to string | number
           return await msp.addFunds(
             new PublicKey(data.payer),                    // payer
             new PublicKey(data.contributor),              // contributor
             new PublicKey(data.treasury),                 // treasury
             new PublicKey(data.associatedToken),          // associatedToken
-            data.amount,                                 // amount
+            data.amount,                                  // amount
           );
         }
 
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.allocate(
-          new PublicKey(data.payer),                   // payer
-          new PublicKey(data.contributor),             // treasurer
-          new PublicKey(data.treasury),                // treasury
-          new PublicKey(data.stream),                  // stream
-          data.amount,                                 // amount
+          new PublicKey(data.payer),                      // payer
+          new PublicKey(data.contributor),                // treasurer
+          new PublicKey(data.treasury),                   // treasury
+          new PublicKey(data.stream),                     // stream
+          data.amount,                                    // amount
         );
       }
 
@@ -745,7 +776,6 @@ export const StreamingAccountView = (props: {
       let addFundsTx: Transaction;
 
       if (data.stream) {
-        // TODO: Modify method signature for amount parameters to string | number
         addFundsTx = await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(multisig.authority),           // treasurer
@@ -755,7 +785,6 @@ export const StreamingAccountView = (props: {
         );
       } else {
         operationType = OperationType.TreasuryAddFunds;
-        // TODO: Modify method signature for amount parameters to string | number
         addFundsTx = await msp.addFunds(
           new PublicKey(data.payer),                    // payer
           new PublicKey(data.contributor),              // contributor
@@ -1110,7 +1139,6 @@ export const StreamingAccountView = (props: {
       if (!msp) { return null; }
 
       if (!isMultisigTreasury()) {
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.treasuryWithdraw(
           new PublicKey(data.payer),              // payer
           new PublicKey(data.destination),        // treasurer
@@ -1127,7 +1155,6 @@ export const StreamingAccountView = (props: {
 
       if (!multisig) { return null; }
 
-      // TODO: Modify method signature for amount parameters to string | number
       const msTreasuryWithdraw = await msp.treasuryWithdraw(
         new PublicKey(data.payer),              // payer
         new PublicKey(data.destination),        // treasurer
@@ -2661,14 +2688,14 @@ export const StreamingAccountView = (props: {
       } else {
         switch (v2.status) {
           case STREAM_STATUS.Schedule:
-            return `starts on ${getShortDate(v2.startUtc as string)}`;
+            return `starts on ${getShortDate(v2.startUtc)}`;
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
-              return `paused on ${getShortDate(v2.startUtc as string)}`;
+              return `paused on ${getShortDate(v2.startUtc)}`;
             }
-            return `out of funds on ${getShortDate(v2.startUtc as string)}`;
+            return `out of funds on ${getShortDate(v2.startUtc)}`;
           default:
-            return getTimeRemaining(v2.estimatedDepletionDate as string);
+            return getTimeRemaining(v2.estimatedDepletionDate);
         }
       }
     }
@@ -2686,24 +2713,18 @@ export const StreamingAccountView = (props: {
 
     if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
-        // const unallocated = getUnallocatedBalance(tsry);
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         if (isNewTreasury) {
           return getUnallocatedBalance(tsry);
         } else {
           return makeInteger((tsry as TreasuryInfo).balance - (tsry as TreasuryInfo).allocationAssigned, decimals)
         }
-        // const ub = isNewTreasury
-        //   ? makeDecimal(unallocated, decimals)
-        //   : unallocated;
-        // return ub;
     }
     return new BN(0);
   }, []);
 
   const getTreasuryClosureMessage = () => {
     return (
-      // <div>{t('treasuries.close-account.close-treasury-confirmation')}</div>
       <div>Since your streaming account has no streams you are able to close it</div>
     );
   };
@@ -2864,7 +2885,7 @@ export const StreamingAccountView = (props: {
       const vB2 = b as Stream;
 
       if (a && b) {
-        return((new Date(vA2.estimatedDepletionDate as string || vA1.escrowEstimatedDepletionUtc as string || "0").getTime()) - (new Date(vB2.estimatedDepletionDate as string || vB1.escrowEstimatedDepletionUtc as string || "0").getTime()));
+        return((new Date(vA2.estimatedDepletionDate || vA1.escrowEstimatedDepletionUtc as string || "0").getTime()) - (new Date(vB2.estimatedDepletionDate || vB1.escrowEstimatedDepletionUtc as string || "0").getTime()));
       } else {
         return 0;
       }

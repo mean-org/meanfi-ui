@@ -75,7 +75,7 @@ export const VestingContractEditModal = (props: {
     if (isVisible && vestingContract && streamTemplate) {
       const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
       setCliffReleasePercentage(cliffPercent.toString());
-      const contractStartDate = new Date(streamTemplate.startUtc as string);
+      const contractStartDate = new Date(streamTemplate.startUtc);
       const localUsDate = contractStartDate.toLocaleDateString("en-US");
       setPaymentStartDate(localUsDate);
       setLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());

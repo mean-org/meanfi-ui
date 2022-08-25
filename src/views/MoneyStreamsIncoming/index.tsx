@@ -1140,7 +1140,7 @@ export const MoneyStreamsIncomingView = (props: {
     if (streamSelected && streamSelected.rateAmount === 0) {
       const now = new Date().toUTCString();
       const nowUtc = new Date(now);
-      const streamStartDate = new Date(streamSelected.startUtc as string);
+      const streamStartDate = new Date(streamSelected.startUtc);
       if (streamStartDate > nowUtc) {
         return true;
       }
@@ -1313,7 +1313,7 @@ export const MoneyStreamsIncomingView = (props: {
           {
             getAmountWithSymbol(
               isNewStream()
-                ? parseFloat(toUiAmount2(new BN(v2.withdrawableAmount), workingToken.decimals))
+                ? parseFloat(toUiAmount2(v2.withdrawableAmount, workingToken.decimals))
                 : v1.escrowVestedAmount,
               workingToken.address,
               false,
@@ -1379,7 +1379,7 @@ export const MoneyStreamsIncomingView = (props: {
               isBusy ||
               hasStreamPendingTx() ||
               isScheduledOtp() ||
-              (isV2 ? v2.withdrawableAmount === 0 : v1.escrowVestedAmount === 0) ||
+              (isV2 ? v2.withdrawableAmount.isZero() : v1.escrowVestedAmount === 0) ||
               (isDeletedStream(streamSelected.id as string))
             }
             onClick={showWithdrawModal}>

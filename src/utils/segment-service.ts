@@ -229,8 +229,8 @@ export interface SegmentStreamCloseData {
     stream: string;
     initializer: string;
     closeTreasury: boolean;
-    vestedReturns: number;
-    unvestedReturns: number;
+    vestedReturns: number | string;
+    unvestedReturns: number | string;
     feeAmount: number;
     valueInUsd: number;
 }

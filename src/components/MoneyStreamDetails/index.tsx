@@ -268,7 +268,7 @@ export const MoneyStreamDetails = (props: {
       if (v1.version < 2) {
         switch (v1.state) {
           case STREAM_STATE.Schedule:
-            return t('streams.status.scheduled', {date: getShortDate((v1.startUtc as Date).toString())});
+            return t('streams.status.scheduled', {date: getShortDate(v1.startUtc as string)});
           case STREAM_STATE.Paused:
             return t('streams.status.stopped');
           default:
@@ -277,14 +277,14 @@ export const MoneyStreamDetails = (props: {
       } else {
         switch (v2.status) {
           case STREAM_STATUS.Schedule:
-            return `starts on ${getShortDate((v2.startUtc as Date).toString())}`;
+            return `starts on ${getShortDate(v2.startUtc)}`;
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
-              return `paused on ${getShortDate((v2.startUtc as Date).toString())}`;
+              return `paused on ${getShortDate(v2.startUtc)}`;
             }
-            return `out of funds on ${getShortDate((v2.startUtc as Date).toString())}`;
+            return `out of funds on ${getShortDate(v2.startUtc)}`;
           default:
-            return `streaming since ${getShortDate((v2.startUtc as Date).toString())}`;
+            return `streaming since ${getShortDate(v2.startUtc)}`;
         }
       }
     }
@@ -534,7 +534,7 @@ export const MoneyStreamDetails = (props: {
         {
           isNewStream()
             ? getAmountWithSymbol(
-                new BN(v2.remainingAllocationAmount),
+                v2.remainingAllocationAmount,
                 selectedToken.address,
                 false,
                 splTokenList,
@@ -563,7 +563,7 @@ export const MoneyStreamDetails = (props: {
         {
           isNewStream()
             ? getAmountWithSymbol(
-                toUiAmount2(new BN(v2.fundsLeftInStream), selectedToken.decimals),
+                toUiAmount2(v2.fundsLeftInStream, selectedToken.decimals),
                 selectedToken.address,
                 false,
                 splTokenList,
@@ -592,7 +592,7 @@ export const MoneyStreamDetails = (props: {
         {
           isNewStream()
             ? getAmountWithSymbol(
-                new BN(v2.fundsSentToBeneficiary),
+                v2.fundsSentToBeneficiary,
                 selectedToken.address,
                 false,
                 splTokenList,
@@ -701,16 +701,16 @@ export const MoneyStreamDetails = (props: {
       label: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && "Funds will run out in:",
       value: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && <Countdown className="align-middle" date={
         isNewStream()
-          ? (v2.estimatedDepletionDate as Date).toString()
-          : (v1.escrowEstimatedDepletionUtc as Date).toString()
+          ? v2.estimatedDepletionDate
+          : v1.escrowEstimatedDepletionUtc
         }
         renderer={renderer} />
     },
     {
       label: stream && getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
       value: stream && getStreamStatus(stream) === "Stopped" && getRelativeDate(isNewStream()
-        ? (v2.estimatedDepletionDate as Date).toString()
-        : (v1.escrowEstimatedDepletionUtc as Date).toString()
+        ? v2.estimatedDepletionDate
+        : v1.escrowEstimatedDepletionUtc as string
       )
     },
     {

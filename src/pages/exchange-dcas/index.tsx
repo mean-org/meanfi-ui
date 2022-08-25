@@ -997,7 +997,7 @@ export const ExchangeDcasView = () => {
   }
 
   const getRecurringBuySubTitle = (item: DdcaAccount) => {
-    return `Last purchased ${getShortDate(item.startUtc as string)}`;
+    return `Last purchased ${getShortDate(item.startUtc)}`;
   }
 
   const getRecurrencePeriod = (item: DdcaAccount | undefined): string => {
@@ -1234,7 +1234,7 @@ export const ExchangeDcasView = () => {
                     <IconClock className="mean-svg-icons" />
                   </span>
                   <span className="info-data">
-                    {getReadableDate(ddcaDetails.startUtc as string)}
+                    {getReadableDate(ddcaDetails.startUtc)}
                   </span>
                 </div>
               </div>
@@ -1379,7 +1379,7 @@ export const ExchangeDcasView = () => {
                             <span className="align-middle">{getOfflineActivityTitle(ddcaDetails)}</span>
                           </div>
                           <div className="std-table-cell fixed-width-150">
-                            <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                            <span className="align-middle">{getShortDate(ddcaDetails.startUtc, true)}</span>
                           </div>
                         </span>
                       )}
@@ -1393,7 +1393,7 @@ export const ExchangeDcasView = () => {
                           </span>
                         </div>
                         <div className="std-table-cell fixed-width-150">
-                          <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                          <span className="align-middle">{getShortDate(ddcaDetails.startUtc, true)}</span>
                         </div>
                       </span>
                     </>

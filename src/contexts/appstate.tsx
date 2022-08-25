@@ -1451,7 +1451,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     try {
       const allInfo = await multisigClient.getMultisigs(publicKey);
-      allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+      allInfo.sort((a: any, b: any) => new Date(b.createdOnUtc).getTime() - new Date(a.createdOnUtc).getTime());
       setMultisigAccounts(allInfo);
       consoleOut('multisigAccounts:', allInfo, 'darkorange');
       if (allInfo.length > 0) {

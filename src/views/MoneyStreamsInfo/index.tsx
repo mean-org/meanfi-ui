@@ -486,7 +486,7 @@ export const MoneyStreamsInfoView = (props: {
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         const decimals = token.decimals || 6;
-        const amount = new BN(freshStream.withdrawableAmount).toNumber();
+        const amount = freshStream.withdrawableAmount.toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (isIncoming) {
@@ -574,7 +574,7 @@ export const MoneyStreamsInfoView = (props: {
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         const decimals = token.decimals || 6;
-        const amount = new BN(freshStream.fundsLeftInStream).toNumber();
+        const amount = freshStream.fundsLeftInStream.toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (!isIncoming) {
@@ -1869,14 +1869,14 @@ export const MoneyStreamsInfoView = (props: {
       } else {
         switch (v2.status) {
           case STREAM_STATUS.Schedule:
-            return `starts on ${getShortDate(v2.startUtc as string)}`;
+            return `starts on ${getShortDate(v2.startUtc)}`;
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
-              return `paused on ${getShortDate(v2.startUtc as string)}`;
+              return `paused on ${getShortDate(v2.startUtc)}`;
             }
-            return `out of funds on ${getShortDate(v2.startUtc as string)}`;
+            return `out of funds on ${getShortDate(v2.startUtc)}`;
           default:
-            return getTimeRemaining(v2.estimatedDepletionDate as string);
+            return getTimeRemaining(v2.estimatedDepletionDate);
         }
       }
     }
@@ -1961,7 +1961,7 @@ export const MoneyStreamsInfoView = (props: {
       }
 
       if (tokenPriceA && tokenPriceB) {
-        const withdrawalAmountWithPrice = (((new BN(vB2.withdrawableAmount).toNumber() || new BN(vB1.escrowVestedAmount).toNumber() || 0) * tokenPriceB) - ((new BN(vA2.withdrawableAmount).toNumber() || new BN(vA1.escrowVestedAmount).toNumber() || 0) * tokenPriceA));
+        const withdrawalAmountWithPrice = (((vB2.withdrawableAmount.toNumber() || vB1.escrowVestedAmount || 0) * tokenPriceB) - ((vA2.withdrawableAmount.toNumber() || vA1.escrowVestedAmount || 0) * tokenPriceA));
 
         return withdrawalAmountWithPrice;
       } else {
@@ -1980,7 +1980,7 @@ export const MoneyStreamsInfoView = (props: {
       const vB2 = b as Stream;
 
       if (a && b) {
-        return((new Date(vA2.estimatedDepletionDate as string || vA1.escrowEstimatedDepletionUtc as string || "0").getTime()) - (new Date(vB2.estimatedDepletionDate as string || vB1.escrowEstimatedDepletionUtc as string || "0").getTime()));
+        return((new Date(vA2.estimatedDepletionDate || vA1.escrowEstimatedDepletionUtc as string || "0").getTime()) - (new Date(vB2.estimatedDepletionDate || vB1.escrowEstimatedDepletionUtc as string || "0").getTime()));
       } else {
         return 0;
       }
@@ -2597,7 +2597,7 @@ export const MoneyStreamsInfoView = (props: {
             } else {
               img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
             }
-    
+
             const title = stream ? getStreamTitle(stream) : "Unknown incoming stream";
             const subtitle = getStreamSubtitle(stream);
             const status = getStreamStatus(stream);
@@ -2607,16 +2607,13 @@ export const MoneyStreamsInfoView = (props: {
             const v2 = stream as Stream;
             const isNew = stream.version >= 2 ? true : false;
 
-            const isV2Stream = parseFloat(toUiAmount2(new BN(v2.withdrawableAmount), token?.decimals || 6));
-            const isV1Stream = v1.escrowVestedAmount;
-          
             const withdrawResume = getAmountWithSymbol(
                                     isNew
-                                      ? isV2Stream
-                                      : isV1Stream,
+                                      ? toUiAmount2(v2.withdrawableAmount, token?.decimals || 6)
+                                      : v1.escrowVestedAmount,
                                     (stream.associatedToken as PublicKey).toString()
                                   )
-    
+
             return (
               <div 
                 key={`incoming-stream-${index}`}
@@ -2628,7 +2625,7 @@ export const MoneyStreamsInfoView = (props: {
                   img={img}
                   title={title}
                   subtitle={subtitle}
-                  resume={(isV2Stream > 0 || isV1Stream > 0) ? `${withdrawResume} available` : resume}
+                  resume={(v2.withdrawableAmount.gtn(0) || v1.escrowVestedAmount > 0) ? `${withdrawResume} available` : resume}
                   status={status}
                   hasRightIcon={true}
                   rightIcon={<IconArrowForward className="mean-svg-icons" />}
