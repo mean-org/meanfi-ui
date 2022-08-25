@@ -229,9 +229,13 @@ export const VestingContractOverview = (props: {
         let vestedAmountBn = new BN(0);
         if (vestingContract && paymentStartDate && vestingContractFlowRate) {
 
-            if (isDateInTheFuture(paymentStartDate) || isContractFinished()) {
+            if (isDateInTheFuture(paymentStartDate)) {
                 setCurrentVestingAmount(vestedAmountBn);
                 setCompletedVestingPercentage(0);
+                return;
+            } else if (isContractFinished()) {
+                setCurrentVestingAmount(vestingContractFlowRate.streamableAmountBn);
+                setCompletedVestingPercentage(100);
                 return;
             }
 
