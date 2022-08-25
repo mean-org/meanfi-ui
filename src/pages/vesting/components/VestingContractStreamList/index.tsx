@@ -296,9 +296,10 @@ export const VestingContractStreamList = (props: {
 
         if (item) {
             const isInbound = isInboundStream(item);
-            let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
-            if (item.rateAmount > 0) {
-                rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), false, t);
+
+            let rateAmount = item.rateAmount.gtn(0) ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
+            if (item.rateAmount.gtn(0)) {
+              rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), false, t);
             }
 
             if (isInbound) {

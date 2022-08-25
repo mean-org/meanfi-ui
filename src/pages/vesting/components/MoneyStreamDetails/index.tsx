@@ -147,8 +147,8 @@ export const MoneyStreamDetails = (props: {
     let title = '';
 
     if (item) {
-      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
-      if (item.rateAmount > 0) {
+      let rateAmount = item.rateAmount.gtn(0) ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
+      if (item.rateAmount.gtn(0)) {
         rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), false, t);
       }
 
@@ -396,8 +396,7 @@ export const MoneyStreamDetails = (props: {
     if (!stream || !selectedToken) { return null; }
 
     return getAmountWithSymbol(
-      // toUiAmount2(new BN(stream.cliffVestAmount), selectedToken.decimals),
-      new BN(stream.cliffVestAmount),
+      stream.cliffVestAmount,
       selectedToken.address,
       false,
       splTokenList,

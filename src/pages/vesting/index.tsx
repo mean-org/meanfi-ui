@@ -2105,7 +2105,6 @@ export const VestingView = () => {
       consoleOut('createVestingStream received data:', data, 'blue');
 
       if (!data.multisig) {
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.createStreamWithTemplate(
           publicKey,                                                                // payer
           publicKey,                                                                // treasurer
@@ -2136,14 +2135,13 @@ export const VestingView = () => {
       consoleOut('selectedVestingContract:', selectedVestingContract, 'blue');
       consoleOut('associatedToken == treasuryAssociatedTokenMint?', selectedVestingContract?.associatedToken === data.treasuryAssociatedTokenMint ? 'true' : 'false', 'blue');
 
-      // TODO: Modify method signature for amount parameters to string | number
       const createStreamTx = await msp.createStreamWithTemplateFromPda(
         publicKey,                                                                // payer
         multisig.authority,                                                       // treasurer
         new PublicKey(data.treasury),                                             // treasury
         stream,                                                                   // stream
         new PublicKey(data.beneficiary),                                          // beneficiary
-        +data.allocationAssigned,                                                  // allocationAssigned
+        data.allocationAssigned,                                                  // allocationAssigned
         data.streamName,                                                          // streamName
       );
 
@@ -2198,7 +2196,7 @@ export const VestingView = () => {
         ? selectedMultisig.authority
         : publicKey;
       const price = associatedToken ? getTokenPriceByAddress(associatedToken.address) || getTokenPriceBySymbol(associatedToken.symbol) : 0;
-      const amount = toUiAmount2(params.tokenAmount, associatedToken.decimals);
+      const segmentAmount = toUiAmount2(params.tokenAmount, associatedToken.decimals);
 
       // Create a transaction
       const data: CreateVestingStreamParams = {
@@ -2220,7 +2218,7 @@ export const VestingView = () => {
         assetPrice: price,
         treasury: selectedVestingContract.id as string,
         beneficiary: params.beneficiaryAddress,
-        allocation: amount,
+        allocation: segmentAmount,
         rateAmount: params.rateAmount,
         interval: params.interval,
         category: selectedVestingContract.category,

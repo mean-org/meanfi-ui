@@ -1099,7 +1099,6 @@ export const TreasuryStreamCreateModal = (props: {
           } as Beneficiary
         });
 
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.createStreams(
           new PublicKey(data.payer),                                          // initializer
           new PublicKey(data.treasurer),                                      // treasurer
@@ -1152,7 +1151,6 @@ export const TreasuryStreamCreateModal = (props: {
         seedCounter += 1;
       }
 
-      // TODO: Modify method signature for amount parameters to string | number
       const createStreams = await msp.createStreamsFromPda(
         publicKey,                                                            // payer
         multisigSigner,                                                       // treasurer
@@ -1227,12 +1225,11 @@ export const TreasuryStreamCreateModal = (props: {
         : publicKey;
       const amount = tokenAmount.div(new BN(beneficiaries.length)).toString();
       // const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
-      const rateAmount = toTokenAmount2(paymentRateAmount, selectedToken.decimals, true);
+      const rateAmount = toTokenAmount2(paymentRateAmount, selectedToken.decimals, true) as string;
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       const startUtc = new Date(parsedDate);
-      // const cliffAmount = toTokenAmount(parseFloat(cliffRelease as string), selectedToken.decimals);
-      const cliffAmount = toTokenAmount2(cliffRelease, selectedToken.decimals, true);
+      const cliffAmount = toTokenAmount2(cliffRelease, selectedToken.decimals, true) as string;
       startUtc.setHours(now.getHours());
       startUtc.setMinutes(now.getMinutes());
       startUtc.setSeconds(now.getSeconds());
@@ -1285,7 +1282,7 @@ export const TreasuryStreamCreateModal = (props: {
        * rateAmount?: number | undefined,
        * rateIntervalInSeconds?: number | undefined,
        * startUtc?: Date | undefined,
-       * cliffVestAmount?: number | undefined,
+       * cliffVestAmount?: number | string | undefined,
        * cliffVestPercent?: number | undefined,
        * feePayedByTreasurer?: boolean | undefined
        */
