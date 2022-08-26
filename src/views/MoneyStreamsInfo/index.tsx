@@ -1921,6 +1921,7 @@ export const MoneyStreamsInfoView = (props: {
       return;
     }
 
+    // Sort the list of incoming streams by withdrawal amount
     const onlyIncomings = streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream));
     const sortedIncomingStreamsList = onlyIncomings.sort((a, b) => {
       const vA1 = a as StreamInfo;
@@ -1975,6 +1976,7 @@ export const MoneyStreamsInfoView = (props: {
     consoleOut('incoming streams:', sortedIncomingStreamsList, 'crimson');
     setIncomingStreamList(sortedIncomingStreamsList);
 
+    // Sort the list of outgoinng streams by estimated depletion date
     const onlyOuts = streamList.filter(item => !isInboundStream(item) && (item as any).category === 0);
     const sortedOutgoingStreamsList = onlyOuts.sort((a, b) => {
       const vA1 = a as StreamInfo;
@@ -1982,8 +1984,24 @@ export const MoneyStreamsInfoView = (props: {
       const vB1 = b as StreamInfo;
       const vB2 = b as Stream;
 
-      if (a && b) {
-        return((new Date(vA2.estimatedDepletionDate || vA1.escrowEstimatedDepletionUtc as string || "0").getTime()) - (new Date(vB2.estimatedDepletionDate || vB1.escrowEstimatedDepletionUtc as string || "0").getTime()));
+      const isNew = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
+      ? true
+      : false;
+
+      const timeA = isNew 
+        ? new Date(vA2.estimatedDepletionDate).getTime()
+        : new Date(vA1.escrowEstimatedDepletionUtc as string).getTime();
+
+      const timeB = isNew 
+        ? new Date(vB2.estimatedDepletionDate).getTime()
+        : new Date(vB1.escrowEstimatedDepletionUtc as string).getTime();
+
+      if (timeA && timeB) {
+        if (timeA > timeB) {
+          return 1;
+        } else {
+          return -1;
+        }
       } else {
         return 0;
       }
