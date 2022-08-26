@@ -1933,12 +1933,12 @@ export const MoneyStreamsInfoView = (props: {
         : false;
 
       const associatedTokenA = isNew
-        ? vA1.associatedToken as string
-        : vA2.associatedToken.toBase58();
+        ? vA2.associatedToken.toBase58()
+        : vA1.associatedToken as string;
 
       const associatedTokenB = isNew
-        ? vB1.associatedToken as string
-        : vB2.associatedToken.toBase58();
+        ? vB2.associatedToken.toBase58()
+        : vB1.associatedToken as string;
 
       const tokenA = getTokenByMintAddress(associatedTokenA as string);
       const tokenB = getTokenByMintAddress(associatedTokenB as string);
@@ -1958,10 +1958,15 @@ export const MoneyStreamsInfoView = (props: {
         tokenPriceB = 0;
       }
 
-      if (tokenPriceA && tokenPriceB) {
-        const withdrawalAmountWithPrice = (((vB2.withdrawableAmount.toNumber() || vB1.escrowVestedAmount || 0) * tokenPriceB) - ((vA2.withdrawableAmount.toNumber() || vA1.escrowVestedAmount || 0) * tokenPriceA));
+      const priceB = isNew ? vB2.withdrawableAmount.muln(tokenPriceB) : new BN(vB1.escrowVestedAmount * tokenPriceB);
+      const priceA = isNew ? vA2.withdrawableAmount.muln(tokenPriceB) : new BN(vA1.escrowVestedAmount * tokenPriceB);
 
-        return withdrawalAmountWithPrice;
+      if (tokenPriceA && tokenPriceB) {
+        if (priceB.gt(priceA)) {
+          return 1;
+        } else {
+          return -1;
+        }
       } else {
         return 0;
       }
@@ -2579,7 +2584,8 @@ export const MoneyStreamsInfoView = (props: {
             const v2 = stream as Stream;
             const isNew = stream.version >= 2 ? true : false;
 
-            const associatedToken = stream.associatedToken ? (stream.associatedToken as PublicKey).toBase58() : undefined;
+            const associatedToken = isNew ? (stream.associatedToken as PublicKey).toBase58() : stream.associatedToken as string;
+
             const token = associatedToken ? getTokenByMintAddress(associatedToken) : undefined;
 
             let img;
