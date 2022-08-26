@@ -373,34 +373,33 @@ export const TreasuryTransferFundsModal = (props: {
   const renderTreasury = (item: Treasury | TreasuryInfo) => {
     const v1 = item as TreasuryInfo;
     const v2 = item as Treasury;
-    const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-    const token = isNewTreasury
-      ? v2.associatedToken
-        ? getTokenByMintAddress(v2.associatedToken as string)
-        : undefined
-      : v1.associatedTokenAddress
-        ? getTokenByMintAddress(v1.associatedTokenAddress as string)
-        : undefined;
+    const isNewTreasury = item.version >= 2 ? true : false;
+
+    const associatedToken = isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress;
+    const token = associatedToken ? getTokenByMintAddress(associatedToken as string) : undefined;
+
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
     };
 
+    let img;
+
+    if (associatedToken) {
+      if (token && token.logoURI) {
+        img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
+      } else {
+        img = <Identicon address={associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+      }
+    } else {
+      img = <Identicon address={isNewTreasury ? v2.id.toString() : v1.id?.toString()} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+    }
+
     return (
       <div className="transaction-list-row no-pointer">
         <div className="icon-cell">
           <div className="token-icon">
-            {(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
-              <>
-                {token ? (
-                  <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-                ) : (
-                  <Identicon address={(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "30", display: "inline-flex" }} />
-                )}
-              </>
-            ) : (
-              <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
-            )}
+            {img}
           </div>
         </div>
         <div className="description-cell">
