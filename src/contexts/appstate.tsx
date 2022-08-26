@@ -788,7 +788,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       const streamPublicKey = new PublicKey(streamId);
       try {
         if (msp && publicKey) {
-          const detail = await msp.getStream(streamPublicKey, false);
+          const detail = await msp.getStream(streamPublicKey);
           consoleOut('customStream', detail);
           if (detail) {
             setStreamDetail(detail);
@@ -1188,14 +1188,14 @@ const AppStateProvider: React.FC = ({ children }) => {
       listStreamsV2PerformanceCounter.reset();
       listStreamsV2PerformanceCounter.start();
 
-      msp.listStreams({treasurer: userPk, beneficiary: userPk, friendly: false})
+      msp.listStreams({ treasurer: userPk, beneficiary: userPk })
         .then(streamsv2 => {
           listStreamsV2PerformanceCounter.stop();
           streamAccumulator.push(...streamsv2);
           rawStreamsv2 = streamsv2;
           rawStreamsv2.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1);
           listStreamsV1PerformanceCounter.start();
-          ms.listStreams({treasurer: userPk, beneficiary: userPk, friendly: false})
+          ms.listStreams({ treasurer: userPk, beneficiary: userPk })
           .then(async streamsv1 => {
             listStreamsV1PerformanceCounter.stop();
             streamAccumulator.push(...streamsv1);

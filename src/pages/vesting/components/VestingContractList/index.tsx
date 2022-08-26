@@ -77,7 +77,7 @@ export const VestingContractList = (props: {
                     }
                     try {
                         const pk = new PublicKey(contract.id as string);
-                        const templateData = await msp.getStreamTemplate(pk, false);
+                        const templateData = await msp.getStreamTemplate(pk);
                         compiledTemplates[contract.id as string] = templateData;
                     } catch (error) {
                         console.error('Error fetching template data:', error);

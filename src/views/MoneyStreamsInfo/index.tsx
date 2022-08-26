@@ -233,7 +233,7 @@ export const MoneyStreamsInfoView = (props: {
     });
   }, [setTransactionStatus]);
 
-  const getTokenOrCustomToken = useCallback((address: string) => {
+  const getTokenOrCustomToken = useCallback(async (address: string) => {
 
     const token = getTokenByMintAddress(address);
 
@@ -248,19 +248,19 @@ export const MoneyStreamsInfoView = (props: {
     if (token) {
       return token;
     } else {
-      readAccountInfo(connection, address)
+      return await readAccountInfo(connection, address)
       .then(info => {
         if ((info as any).data["parsed"]) {
           const decimals = (info as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
           unkToken.decimals = decimals || 0;
           return unkToken as TokenInfo;
         } else {
-          return unkToken;
+          return unkToken as TokenInfo;
         }
       })
       .catch(err => {
         console.error('Could not get token info, assuming decimals = 6');
-        return unkToken;
+        return unkToken as TokenInfo;
       });
     }
   }, [connection, getTokenByMintAddress]);
@@ -443,8 +443,8 @@ export const MoneyStreamsInfoView = (props: {
       ? new PublicKey(accountAddress)
       : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer, undefined, undefined, connection.commitment, undefined, false);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer, undefined, undefined, undefined, false);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
     // consoleOut('=========== Block start ===========', '', 'orange');
 
@@ -531,8 +531,8 @@ export const MoneyStreamsInfoView = (props: {
       ? new PublicKey(accountAddress)
       : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer, undefined, undefined, connection.commitment, undefined, false);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer, undefined, undefined, undefined, false);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
     // consoleOut('=========== Block start ===========', '', 'orange');
 
@@ -543,7 +543,7 @@ export const MoneyStreamsInfoView = (props: {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream, undefined, false) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -566,7 +566,7 @@ export const MoneyStreamsInfoView = (props: {
         : false;
 
       // Get refreshed data
-      const freshStream = await msp.refreshStream(stream, undefined, false) as Stream;
+      const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
@@ -1103,7 +1103,7 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     if (publicKey && params) {
-      const token = getTokenOrCustomToken(params.associatedToken);
+      const token = await getTokenOrCustomToken(params.associatedToken);
       consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
       const treasury = treasuryList.find(t => t.id === params.treasuryId);
       if (!treasury) { return null; }
@@ -2577,7 +2577,12 @@ export const MoneyStreamsInfoView = (props: {
               event.currentTarget.className = "error";
             };
 
-            const token = stream.associatedToken ? getTokenByMintAddress((stream.associatedToken as PublicKey).toBase58()) : undefined;
+            const v1 = stream as StreamInfo;
+            const v2 = stream as Stream;
+            const isNew = stream.version >= 2 ? true : false;
+
+            const associatedToken = stream.associatedToken ? (stream.associatedToken as PublicKey).toBase58() : undefined;
+            const token = associatedToken ? getTokenByMintAddress(associatedToken) : undefined;
 
             // const data = {
             //   token: (stream.associatedToken as PublicKey).toBase58(),
@@ -2588,14 +2593,14 @@ export const MoneyStreamsInfoView = (props: {
 
             let img;
 
-            if (stream.associatedToken) {
-              if (token) {
+            if (associatedToken) {
+              if (token && token.logoURI) {
                 img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
               } else {
-                img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                img = <Identicon address={associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
               }
             } else {
-              img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+              img = <Identicon address={isNew ? v2.id.toBase58() : v1.id?.toString()} style={{ width: "30", display: "inline-flex" }} className="token-img" />
             }
 
             const title = stream ? getStreamTitle(stream) : "Unknown incoming stream";
@@ -2603,16 +2608,16 @@ export const MoneyStreamsInfoView = (props: {
             const status = getStreamStatus(stream);
             const resume = getStreamResume(stream);
 
-            const v1 = stream as StreamInfo;
-            const v2 = stream as Stream;
-            const isNew = stream.version >= 2 ? true : false;
-
             const withdrawResume = getAmountWithSymbol(
-                                    isNew
-                                      ? toUiAmount2(v2.withdrawableAmount, token?.decimals || 6)
-                                      : v1.escrowVestedAmount,
-                                    (stream.associatedToken as PublicKey).toString()
-                                  )
+              isNew
+                ? v2.withdrawableAmount.toString()
+                : v1.escrowVestedAmount,
+              isNew
+                ? v2.associatedToken.toString()
+                : v1.associatedToken as string,
+              false,
+              splTokenList,
+            )
 
             return (
               <div 

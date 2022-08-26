@@ -90,7 +90,7 @@ export const VestingContractStreamDetailModal = (props: {
 
     const timeout = setTimeout(() => {
       if (msp && streamDetail && streamDetail.status === STREAM_STATUS.Running) {
-        msp.refreshStream(streamDetail as Stream, undefined, false).then(detail => {
+        msp.refreshStream(streamDetail as Stream).then(detail => {
           setStreamDetail(detail as Stream);
         });
       }

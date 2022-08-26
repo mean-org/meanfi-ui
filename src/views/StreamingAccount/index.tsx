@@ -2759,7 +2759,7 @@ export const StreamingAccountView = (props: {
 
     if (isNewTreasury) {
       if (msp) {
-        msp.listStreams({treasury: treasuryPk, friendly: false})
+        msp.listStreams({ treasury: treasuryPk })
           .then((streams: any) => {
             consoleOut('treasuryStreams:', streams, 'blue');
             setStreamingAccountStreams(streams);
@@ -2774,7 +2774,7 @@ export const StreamingAccountView = (props: {
       }
     } else {
       if (ms) {
-        ms.listStreams({treasury: treasuryPk, friendly: false })
+        ms.listStreams({ treasury: treasuryPk })
           .then((streams: any) => {
             consoleOut('treasuryStreams:', streams, 'blue');
             setStreamingAccountStreams(streams);

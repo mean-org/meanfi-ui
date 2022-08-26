@@ -2785,8 +2785,8 @@ export const AccountsNewView = () => {
       ? new PublicKey(accountAddress)
       : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer, undefined, undefined, connection.commitment, undefined, false);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer, undefined, undefined, undefined, false);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
     for (const stream of updatedStreamsv1) {
 
@@ -2795,7 +2795,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream, undefined, false) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -2818,7 +2818,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await msp.refreshStream(stream, undefined, false) as Stream;
+      const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
@@ -2870,8 +2870,8 @@ export const AccountsNewView = () => {
       ? new PublicKey(accountAddress)
       : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer, undefined, undefined, connection.commitment, undefined, false);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer, undefined, undefined, undefined, false);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
   
     for (const stream of updatedStreamsv1) {
 

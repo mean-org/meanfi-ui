@@ -1529,7 +1529,7 @@ export const VestingContractStreamList = (props: {
         if (!streamList || !msp) { return; }
 
         const timeout = setTimeout(() => {
-            msp.refreshStreams(streamList || [], undefined, undefined, undefined, undefined, false)
+            msp.refreshStreams(streamList || [])
             .then(streams => {
                 setStreamList(streams);
             })
