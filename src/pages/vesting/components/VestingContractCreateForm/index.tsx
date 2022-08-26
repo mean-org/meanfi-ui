@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmount2, toTokenAmountBn, toUiAmount2, toUiAmountBn } from '../../../../utils/utils';
+import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount2, toTokenAmountBn, toUiAmount2 } from '../../../../utils/utils';
 import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
@@ -473,7 +473,7 @@ export const VestingContractCreateForm = (props: {
             maxAmount = tokenBalanceBn;
         }
 
-        const fundingAmount = toTokenAmountBn(vestingLockFundingAmount, selectedToken.decimals);
+        const fundingAmount = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
 
         return  publicKey &&
                 ((!proposalTitle && !isMultisigContext) || (proposalTitle && isMultisigContext)) &&
@@ -515,9 +515,9 @@ export const VestingContractCreateForm = (props: {
             } else {
                 maxAmount = tokenBalanceBn;
             }
-            fundingAmount = toTokenAmountBn(vestingLockFundingAmount, selectedToken.decimals);
+            fundingAmount = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
         } else {
-            fundingAmount = toTokenAmountBn(vestingLockFundingAmount, 9);
+            fundingAmount = toTokenAmountBn(parseFloat(vestingLockFundingAmount), 9);
         }
 
         return  !publicKey
@@ -546,9 +546,9 @@ export const VestingContractCreateForm = (props: {
             } else {
                 maxAmount = tokenBalanceBn;
             }
-            fundingAmount = toTokenAmountBn(vestingLockFundingAmount, selectedToken.decimals);
+            fundingAmount = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
         } else {
-            fundingAmount = toTokenAmountBn(vestingLockFundingAmount, 9);
+            fundingAmount = toTokenAmountBn(parseFloat(vestingLockFundingAmount), 9);
         }
 
         return  !publicKey

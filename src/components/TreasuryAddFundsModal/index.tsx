@@ -600,7 +600,7 @@ export const TreasuryAddFundsModal = (props: {
       <div className="token-icon">
         {(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
           <>
-            {token ? (
+            {token && token.logoURI ? (
               <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
               <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "20", display: "inline-flex" }} />

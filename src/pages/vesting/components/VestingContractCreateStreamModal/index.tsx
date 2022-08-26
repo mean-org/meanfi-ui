@@ -251,33 +251,26 @@ export const VestingContractCreateStreamModal = (props: {
 
         if (!selectedToken) { return; }
 
-        const fromBn = new BN(fromCoinAmount);
         const releasePct = parseFloat(cliffReleasePercentage) || 0;
 
-        if (fromBn.gtn(0) && releasePct > 0) {
-            const cr = fromBn.muln(releasePct).divn(100).toString();
-            const crAmount = toTokenAmountBn(cr, selectedToken.decimals);
-            setCliffReleaseBn(crAmount);
-            setCliffRelease(crAmount.toString());
+        if (tokenAmount.gtn(0) && releasePct > 0) {
+            const cr = tokenAmount.muln(releasePct).divn(100);
+            setCliffReleaseBn(cr);
+            setCliffRelease(cr.toString());
         }
 
-    }, [cliffReleasePercentage, fromCoinAmount, selectedToken]);
+    }, [cliffReleasePercentage, selectedToken, tokenAmount]);
 
     // Set payment rate amount
     useEffect(() => {
 
-        // setPaymentRateAmount(cutNumber((parseFloat(fromCoinAmount) - parseFloat(cliffRelease)) / parseFloat(lockPeriodAmount), selectedToken?.decimals || 6));
-
         if (!selectedToken) { return; }
 
-        const fromBn = new BN(fromCoinAmount);
         const releasePct = parseFloat(cliffReleasePercentage) || 0;
 
-        if (fromBn.gtn(0) && releasePct > 0) {
-            const cr = fromBn.muln(releasePct).divn(100).toString();
-            const crAmount = toTokenAmountBn(cr, selectedToken.decimals);
-            const amount = toTokenAmountBn(fromCoinAmount, selectedToken.decimals);
-            const toStream = amount.sub(crAmount);
+        if (tokenAmount.gtn(0) && releasePct > 0) {
+            const cr = tokenAmount.muln(releasePct).divn(100);
+            const toStream = tokenAmount.sub(cr);
 
             const lpa = parseFloat(lockPeriodAmount);
             const ra = toStream.divn(lpa);
@@ -285,26 +278,21 @@ export const VestingContractCreateStreamModal = (props: {
             setPaymentRateAmountBn(ra);
             setPaymentRateAmount(ra.toString());
         }
-    }, [cliffReleasePercentage, fromCoinAmount, lockPeriodAmount, selectedToken]);
+    }, [cliffReleasePercentage, fromCoinAmount, lockPeriodAmount, selectedToken, tokenAmount]);
 
     useEffect(() => {
 
-        // parseFloat(fromCoinAmount) - parseFloat(cliffRelease)
-
         if (!selectedToken) { return; }
 
-        const fromBn = new BN(fromCoinAmount);
         const releasePct = parseFloat(cliffReleasePercentage) || 0;
 
-        if (fromBn.gtn(0) && releasePct > 0) {
-            const cr = fromBn.muln(releasePct).divn(100).toString();
-            const crAmount = toTokenAmountBn(cr, selectedToken.decimals);
-            const amount = toTokenAmountBn(fromCoinAmount, selectedToken.decimals);
-            const toStream = amount.sub(crAmount);
+        if (tokenAmount.gtn(0) && releasePct > 0) {
+            const cr = tokenAmount.muln(releasePct).divn(100);
+            const toStream = tokenAmount.sub(cr);
             setAmountToBeStreamedBn(toStream);
         }
 
-    }, [cliffReleasePercentage, fromCoinAmount, selectedToken]);
+    }, [cliffReleasePercentage, fromCoinAmount, selectedToken, tokenAmount]);
 
     // Window resize listener
     useEffect(() => {
@@ -762,7 +750,7 @@ export const VestingContractCreateStreamModal = (props: {
                                 {
                                     fromCoinAmount && selectedToken
                                         ? `${displayAmountWithSymbol(
-                                                toTokenAmountBn(fromCoinAmount, selectedToken.decimals),
+                                                tokenAmount,
                                                 selectedToken.address,
                                                 selectedToken.decimals,
                                                 splTokenList,
