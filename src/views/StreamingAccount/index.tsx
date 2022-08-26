@@ -2906,18 +2906,21 @@ export const StreamingAccountView = (props: {
                 event.currentTarget.className = "error";
               };
 
-              const token = stream.associatedToken ? getTokenByMintAddress((stream.associatedToken as PublicKey).toBase58()) : undefined;
-
               let img;
-
-              if (stream.associatedToken) {
-                if (token) {
-                  img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
-                } else {
-                  img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-                }
+          
+              if (selectedToken && selectedToken.logoURI) {
+                img = <img
+                    alt={`${selectedToken.name}`}
+                    width={30}
+                    height={30}
+                    src={selectedToken.logoURI}
+                    onError={imageOnErrorHandler}
+                    className="token-img"/>
               } else {
-                img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                img = <Identicon
+                    address={(stream.associatedToken as PublicKey).toBase58()}
+                    style={{ width: "30", display: "inline-flex" }}
+                    className="token-img" />
               }
 
               const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";

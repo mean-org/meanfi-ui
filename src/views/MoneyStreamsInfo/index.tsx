@@ -507,7 +507,6 @@ export const MoneyStreamsInfoView = (props: {
     ms,
     msp,
     publicKey,
-    connection,
     streamListv1,
     streamListv2,
     accountAddress,
@@ -595,7 +594,6 @@ export const MoneyStreamsInfoView = (props: {
     ms,
     msp,
     publicKey,
-    connection,
     streamListv1,
     streamListv2,
     accountAddress,
@@ -2584,13 +2582,6 @@ export const MoneyStreamsInfoView = (props: {
             const associatedToken = stream.associatedToken ? (stream.associatedToken as PublicKey).toBase58() : undefined;
             const token = associatedToken ? getTokenByMintAddress(associatedToken) : undefined;
 
-            // const data = {
-            //   token: (stream.associatedToken as PublicKey).toBase58(),
-            //   tokenDecimals: token ? token.decimals : "--",
-            //   tokenSymbol: token ? token.symbol : "--"
-            // }
-            // console.log("token data test...", data);
-
             let img;
 
             if (associatedToken) {
@@ -2667,20 +2658,25 @@ export const MoneyStreamsInfoView = (props: {
                 event.currentTarget.className = "error";
               };
 
-              const token = stream.associatedToken ? getTokenByMintAddress((stream.associatedToken as PublicKey).toBase58()) : undefined;
+              const v1 = stream as StreamInfo;
+              const v2 = stream as Stream;
+              const isNew = stream.version >= 2 ? true : false;
+  
+              const associatedToken = stream.associatedToken ? (stream.associatedToken as PublicKey).toBase58() : undefined;
+              const token = associatedToken ? getTokenByMintAddress(associatedToken) : undefined;
 
               let img;
 
-              if (stream.associatedToken) {
-                if (token) {
+              if (associatedToken) {
+                if (token && token.logoURI) {
                   img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
                 } else {
-                  img = <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                  img = <Identicon address={associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
                 }
               } else {
-                img = <Identicon address={stream.id} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+                img = <Identicon address={isNew ? v2.id.toBase58() : v1.id?.toString()} style={{ width: "30", display: "inline-flex" }} className="token-img" />
               }
-
+  
               const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
               const subtitle = getStreamSubtitle(stream);
               const status = getStreamStatus(stream);
