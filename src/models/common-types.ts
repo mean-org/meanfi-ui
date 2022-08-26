@@ -1,4 +1,5 @@
 import { AllocationType } from "@mean-dao/msp";
+import BN from "bn.js";
 import { MetaInfoCtaAction } from "./enums";
 import { StreamTreasuryType } from "./treasuries";
 
@@ -28,8 +29,8 @@ export interface TreasuryTopupParams {
 }
 
 export interface StreamTopupParams {
-    amount: string;
-    tokenAmount: any;
+    amount: number | string;
+    tokenAmount: BN;
     treasuryType: StreamTreasuryType | undefined;
     fundFromTreasury: boolean;
     associatedToken: string;
@@ -40,7 +41,7 @@ export interface StreamTopupTxCreateParams {
     contributor: string;
     treasury: string;
     stream: string;
-    amount: string;
+    amount: number | string;
     associatedToken: string;
 }
 

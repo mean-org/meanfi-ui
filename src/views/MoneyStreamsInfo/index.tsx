@@ -2607,7 +2607,7 @@ export const MoneyStreamsInfoView = (props: {
 
             const withdrawResume = getAmountWithSymbol(
               isNew
-                ? v2.withdrawableAmount.toString()
+                ? toUiAmount2(v2.withdrawableAmount, token?.decimals || 6)
                 : v1.escrowVestedAmount,
               isNew
                 ? v2.associatedToken.toString()

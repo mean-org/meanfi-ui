@@ -3,7 +3,7 @@ import BN from 'bn.js';
 import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity } from '@mean-dao/msp';
-import { getAmountWithSymbol, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
+import { displayAmountWithSymbol, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
 import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates, stringNumberFormat } from '../../../../utils/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
@@ -315,12 +315,11 @@ export const MoneyStreamDetails = (props: {
     return (
       <>
         {
-          getAmountWithSymbol(
+          displayAmountWithSymbol(
             stream.remainingAllocationAmount,
             selectedToken.address,
-            false,
+            selectedToken.decimals,
             splTokenList,
-            selectedToken.decimals
           )
         }
       </>
@@ -333,12 +332,11 @@ export const MoneyStreamDetails = (props: {
     return (
       <>
         {
-          getAmountWithSymbol(
+          displayAmountWithSymbol(
             stream.fundsLeftInStream,
             selectedToken.address,
-            false,
+            selectedToken.decimals,
             splTokenList,
-            selectedToken.decimals
           )
         }
       </>
@@ -351,12 +349,11 @@ export const MoneyStreamDetails = (props: {
     return (
       <>
         {
-          getAmountWithSymbol(
+          displayAmountWithSymbol(
             stream.fundsSentToBeneficiary,
             selectedToken.address,
-            false,
+            selectedToken.decimals,
             splTokenList,
-            selectedToken.decimals
           )
         }
       </>
@@ -394,12 +391,11 @@ export const MoneyStreamDetails = (props: {
   const renderCliffVestAmount = () => {
     if (!stream || !selectedToken) { return null; }
 
-    return getAmountWithSymbol(
+    return displayAmountWithSymbol(
       stream.cliffVestAmount,
       selectedToken.address,
-      false,
+      selectedToken.decimals,
       splTokenList,
-      selectedToken.decimals
     );
   }
 
@@ -422,14 +418,14 @@ export const MoneyStreamDetails = (props: {
                   </div>
                   <div className="rate-cell">
                     <div className="rate-amount">
-                      {
-                        selectedToken ? getAmountWithSymbol(
-                          new BN(item.amount),
-                          item.mint,
-                          false,
-                          splTokenList,
-                          selectedToken.decimals
-                        ) : '--'
+                      { selectedToken
+                        ? displayAmountWithSymbol(
+                            new BN(item.amount),
+                            item.mint,
+                            selectedToken.decimals,
+                            splTokenList,
+                          )
+                        : '--'
                       }
                     </div>
                     <div className="interval">{getShortDate(item.utcDate as string, true)}</div>
@@ -601,19 +597,17 @@ export const MoneyStreamDetails = (props: {
           <span className="info-data line-height-110">
             {
               isInboundStream
-                ? getAmountWithSymbol(
-                    toUiAmount2(stream.withdrawableAmount, selectedToken.decimals),
+                ? displayAmountWithSymbol(
+                    stream.withdrawableAmount,
                     selectedToken.address,
-                    false,
+                    selectedToken.decimals,
                     splTokenList,
-                    selectedToken.decimals
                   )
-                : getAmountWithSymbol(
-                    toUiAmount2(stream.fundsLeftInStream, selectedToken.decimals),
+                : displayAmountWithSymbol(
+                    stream.fundsLeftInStream,
                     selectedToken.address,
-                    false,
+                    selectedToken.decimals,
                     splTokenList,
-                    selectedToken.decimals
                   )
             }
           </span>

@@ -7,8 +7,7 @@ import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/m
 import { useTranslation } from "react-i18next";
 import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress } from "../../utils/utils";
-import BN from "bn.js";
+import { formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount2 } from "../../utils/utils";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { segmentAnalytics } from "../../App";
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "../../utils/segment-service";
@@ -325,12 +324,11 @@ export const MoneyStreamsOutgoingView = (props: {
       contributor: PublicKey;
       treasury: PublicKey;
       stream: PublicKey;
-      amount: number;
+      amount: number | string;
     }) => {
       if (!msp) { return false; }
       // Create a transaction
       const autoWSol = addFundsData.associatedToken === NATIVE_SOL_MINT.toBase58() ? true : false;
-      // TODO: Modify method signature for amount parameters to string | number
       return await msp.fundStream(
         payload.payer,                                              // payer
         payload.contributor,                                        // contributor
@@ -373,7 +371,6 @@ export const MoneyStreamsOutgoingView = (props: {
       if (!msp) { return null; }
 
       if (data.stream === '') {
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.addFunds(
           new PublicKey(data.payer),                    // payer
           new PublicKey(data.contributor),              // contributor
@@ -384,7 +381,6 @@ export const MoneyStreamsOutgoingView = (props: {
       }
 
       if (!isMultisigTreasury()) {
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(data.contributor),             // treasurer
@@ -403,7 +399,6 @@ export const MoneyStreamsOutgoingView = (props: {
 
       multisigAuth = multisig.authority.toBase58();
 
-      // TODO: Modify method signature for amount parameters to string | number
       const allocateTx = await msp.allocate(
         new PublicKey(data.payer),                   // payer
         new PublicKey(multisig.authority),           // treasurer
@@ -436,7 +431,7 @@ export const MoneyStreamsOutgoingView = (props: {
       treasurer: PublicKey;
       treasury: PublicKey;
       stream: PublicKey;
-      amount: number;
+      amount: number | string;
     }) => {
       if (!msp) { return false; }
       // Create a transaction
@@ -445,7 +440,7 @@ export const MoneyStreamsOutgoingView = (props: {
         contributor: payload.payer.toBase58(),
         treasury: payload.treasury.toBase58(),
         stream: payload.stream.toBase58(),
-        amount: payload.amount.toString(),
+        amount: payload.amount,
         associatedToken: addFundsData.associatedToken
       };
       return await allocateToStream(data)
@@ -501,7 +496,7 @@ export const MoneyStreamsOutgoingView = (props: {
         const stream = new PublicKey(streamSelected.id as string);
         const treasury = new PublicKey((streamSelected as StreamInfo).treasuryAddress as string);
         const contributorMint = new PublicKey(streamSelected.associatedToken as string);
-        const amount = parseFloat(addFundsData.amount);
+        const amount = parseFloat(addFundsData.amount as string);
         const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
         setAddFundsPayload(addFundsData);
 
@@ -628,7 +623,7 @@ export const MoneyStreamsOutgoingView = (props: {
       const stream = (streamSelected as Stream).id;
       const treasury = (streamSelected as Stream).treasury;
       const associatedToken = new PublicKey(streamSelected.associatedToken as string);
-      const amount = addFundsData.tokenAmount;
+      const amount = addFundsData.tokenAmount.toString();
       const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
       setAddFundsPayload(addFundsData);
 
@@ -636,7 +631,7 @@ export const MoneyStreamsOutgoingView = (props: {
         contributor: publicKey.toBase58(),                              // contributor
         treasury: treasury.toBase58(),                                  // treasury
         stream: stream.toBase58(),                                      // stream
-        amount: `${amount.toString()} (${addFundsData.amount})`,        // amount
+        amount: `${amount} (${addFundsData.amount})`,                   // amount
       }
 
       consoleOut('add funds data:', data);
@@ -650,8 +645,8 @@ export const MoneyStreamsOutgoingView = (props: {
           ? `${workingToken.symbol} [${workingToken.address}]`
           : associatedToken.toBase58(),
         assetPrice: price,
-        amount: parseFloat(addFundsData.amount),
-        valueInUsd: price * parseFloat(addFundsData.amount)
+        amount: addFundsData.amount,
+        valueInUsd: price * parseFloat(addFundsData.amount as string)
       };
       consoleOut('segment data:', segmentData, 'brown');
       segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
@@ -852,12 +847,12 @@ export const MoneyStreamsOutgoingView = (props: {
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
               loadingMessage: `Fund stream with ${formatThousands(
-                parseFloat(addFundsData.amount),
+                parseFloat(addFundsData.amount as string),
                 token.decimals
               )} ${token.symbol}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Stream funded with ${formatThousands(
-                parseFloat(addFundsData.amount),
+                parseFloat(addFundsData.amount as string),
                 token.decimals
               )} ${token.symbol}`,
               extras: {
@@ -2377,6 +2372,25 @@ export const MoneyStreamsOutgoingView = (props: {
     }
   }, [connection, getTokenByMintAddress]);
 
+  const isNewStream = useCallback(() => {
+    if (streamSelected) {
+      return streamSelected.version >= 2 ? true : false;
+    }
+
+    return false;
+  }, [streamSelected]);
+
+  const getStreamAssociatedTokenAddress = useCallback(() => {
+    if (streamSelected) {
+      const v1 = streamSelected as StreamInfo;
+      const v2 = streamSelected as Stream;
+      const isNew = isNewStream();
+      return isNew
+        ? v2.associatedToken.toBase58()
+        : v1.associatedToken as string;
+    }
+  }, [isNewStream, streamSelected]);
+
 
   /////////////////////
   // Data management //
@@ -2488,14 +2502,6 @@ export const MoneyStreamsOutgoingView = (props: {
   // Rendering //
   ///////////////
 
-  const isNewStream = useCallback(() => {
-    if (streamSelected) {
-      return streamSelected.version >= 2 ? true : false;
-    }
-
-    return false;
-  }, [streamSelected]);
-
   const hideDetailsHandler = () => {
     onSendFromOutgoingStreamDetails();
   }
@@ -2541,7 +2547,7 @@ export const MoneyStreamsOutgoingView = (props: {
           {
             getAmountWithSymbol(
               isNewStream()
-                ? v2.fundsLeftInStream
+                ? toUiAmount2(v2.fundsLeftInStream, workingToken.decimals)
                 : v1.escrowUnvestedAmount,
               workingToken.address,
               false,
@@ -2750,8 +2756,8 @@ export const MoneyStreamsOutgoingView = (props: {
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(
-                  parseFloat(addFundsPayload ? addFundsPayload.amount : '0'),
-                  streamSelected?.associatedToken as string,
+                  parseFloat(addFundsPayload ? addFundsPayload.amount as string : '0'),
+                  getStreamAssociatedTokenAddress() || '',
                   false,
                   splTokenList
                 )}

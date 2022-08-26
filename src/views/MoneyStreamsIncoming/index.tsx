@@ -25,7 +25,6 @@ import { formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, to
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
-import BN from "bn.js";
 import ArrowDownOutlined from "@ant-design/icons/lib/icons/ArrowDownOutlined";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamTransferOpenModal } from "../../components/StreamTransferOpenModal";
@@ -1312,7 +1311,7 @@ export const MoneyStreamsIncomingView = (props: {
           {
             getAmountWithSymbol(
               isNewStream()
-                ? parseFloat(toUiAmount2(v2.withdrawableAmount, workingToken.decimals))
+                ? toUiAmount2(v2.withdrawableAmount, workingToken.decimals)
                 : v1.escrowVestedAmount,
               workingToken.address,
               false,

@@ -9,7 +9,7 @@ import {
 } from "@solana/web3.js";
 import { BIGNUMBER_FORMAT, CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
+import { friendlyDisplayDecimalPlaces, getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { TOKEN_PROGRAM_ID } from "./ids";
 import { NATIVE_SOL } from './tokens';
@@ -230,7 +230,7 @@ export const getAmountWithSymbol = (
   address: string,
   onlyValue = false,
   tokenList?: TokenInfo[],
-  tokenDecimals?: number
+  tokenDecimals?: number,
 ) => {
 
   let token: TokenInfo | undefined = undefined;
@@ -276,20 +276,92 @@ export const getAmountWithSymbol = (
     }
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
+    const decimals = token ? token.decimals : 6;
     BigNumber.config({
       CRYPTO: true,
-      FORMAT: BIGNUMBER_FORMAT
+      FORMAT: BIGNUMBER_FORMAT,
+      DECIMAL_PLACES: decimals
     });
-    const decimals = token ? token.decimals : 6;
-    const baseConvert = new BigNumber(10 ** decimals);
     const bigNumberAmount = typeof amount === "string"
       ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
-    const value = bigNumberAmount.dividedBy(baseConvert);
-    const inputAmount = value.toFormat(decimals);
+    const inputAmount = bigNumberAmount.toFormat(decimals);
     if (token) {
       return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
     } else {
       return onlyValue ? inputAmount : `${inputAmount} [${shortenAddress(address, 4)}]`;
+    }
+  }
+}
+
+export const displayAmountWithSymbol = (
+  amount: number | string | BN,
+  address: string,
+  tokenDecimals?: number,
+  tokenList?: TokenInfo[],
+  friendlyDecimals = true
+) => {
+
+  let token: TokenInfo | undefined = undefined;
+  if (address) {
+    if (address === NATIVE_SOL.address) {
+      token = NATIVE_SOL as TokenInfo;
+    } else {
+      token = tokenList && isProd()
+        ? tokenList.find(t => t.address === address)
+        : MEAN_TOKEN_LIST.find(t => t.address === address);
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+    }
+  }
+
+  if (tokenDecimals && !token) {
+    const unknownToken: TokenInfo = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: tokenDecimals,
+      symbol: `[${shortenAddress(address)}]`,
+    };
+    token = unknownToken;
+  }
+
+  if (typeof amount === "number") {
+    const inputAmount = amount || 0;
+    if (token) {
+      const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
+      const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
+      const formatted2 = formatted.toFixed(token.decimals);
+      const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
+      return `${toLocale} ${token.symbol}`;
+    } else if (address && !token) {
+      const formatted = formatThousands(inputAmount, 5, 5);
+      return `${formatted} [${shortenAddress(address, 4)}]`;
+    }
+    return `${formatThousands(inputAmount, 5, 5)}`;
+  } else {
+    const decimals = token ? token.decimals : 6;
+    BigNumber.config({
+      CRYPTO: true,
+      FORMAT: BIGNUMBER_FORMAT,
+      DECIMAL_PLACES: decimals
+    });
+    const baseConvert = new BigNumber(10 ** decimals);
+    const bigNumberAmount = typeof amount === "string"
+      ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
+    const value = bigNumberAmount.div(baseConvert);
+    const inputAmount = value.toFormat(
+      friendlyDecimals
+        ? friendlyDisplayDecimalPlaces(value.toString(), decimals)
+        : decimals
+    );
+    if (token) {
+      return `${inputAmount} ${token.symbol}`;
+    } else {
+      return `${inputAmount} [${shortenAddress(address, 4)}]`;
     }
   }
 }

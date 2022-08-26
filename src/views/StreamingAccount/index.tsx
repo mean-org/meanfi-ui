@@ -50,7 +50,7 @@ import {
   fetchAccountTokens,
   findATokenAddress,
   formatThousands,
-  getAmountWithSymbol,
+  displayAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   makeInteger,
@@ -153,7 +153,6 @@ export const StreamingAccountView = (props: {
   const [loadingStreamingAccountActivity, setLoadingStreamingAccountActivity] = useState(false);
   const [hasMoreStreamingAccountActivity, setHasMoreStreamingAccountActivity] = useState<boolean>(true);
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(new BN(0));
-  const [associatedTokenDecimals, setAssociatedTokenDecimals] = useState(6);
   const [treasuryEffectiveBalance, setTreasuryEffectiveBalance] = useState(0);
 
   const hideDetailsHandler = () => {
@@ -168,19 +167,6 @@ export const StreamingAccountView = (props: {
       setIsXsDevice(false);
     }
   }, [width]);
-
-  // const getQueryAccountType = useCallback(() => {
-  //   let accountTypeInQuery: string | null = null;
-  //   if (searchParams) {
-  //     accountTypeInQuery = searchParams.get('account-type');
-  //     if (accountTypeInQuery) {
-  //       return accountTypeInQuery;
-  //     }
-  //   }
-  //   return undefined;
-  // }, [searchParams]);
-
-  // const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const getQueryTabOption = useCallback(() => {
 
@@ -2741,12 +2727,11 @@ export const StreamingAccountView = (props: {
 
   const getStreamingAccountResume = useCallback(() => {
     if (streamingAccountSelected && selectedToken) {
-      return getAmountWithSymbol(
+      return displayAmountWithSymbol(
         getTreasuryUnallocatedBalance(streamingAccountSelected, selectedToken),
         selectedToken.address,
-        false,
-        splTokenList,
-        selectedToken.decimals
+        selectedToken.decimals,
+        splTokenList
       );
     }
     return "--";
