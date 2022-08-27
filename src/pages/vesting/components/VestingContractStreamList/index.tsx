@@ -552,7 +552,7 @@ export const VestingContractStreamList = (props: {
             const price = selectedToken
                 ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol)
                 : 0;
-            const usdValue = new BN(closeStreamOptions.vestedReturns).add(new BN(closeStreamOptions.unvestedReturns)).muln(price).toNumber();
+            const usdValue = (parseFloat(closeStreamOptions.vestedReturns as string) + parseFloat(closeStreamOptions.unvestedReturns as string)) * price;
 
             // Report event to Segment analytics
             const segmentData: SegmentStreamCloseData = {

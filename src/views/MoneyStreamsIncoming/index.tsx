@@ -21,7 +21,7 @@ import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
-import { formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toTokenAmount, toUiAmount2 } from "../../utils/utils";
+import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toTokenAmount, toUiAmount2 } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
@@ -1309,14 +1309,13 @@ export const MoneyStreamsIncomingView = (props: {
       <>
         <span className="info-data large mr-1">
           {
-            getAmountWithSymbol(
+            displayAmountWithSymbol(
               isNewStream()
-                ? toUiAmount2(v2.withdrawableAmount, workingToken.decimals)
+                ? v2.withdrawableAmount
                 : v1.escrowVestedAmount,
               workingToken.address,
-              false,
+              workingToken.decimals,
               splTokenList,
-              workingToken.decimals
             )
           }
         </span>

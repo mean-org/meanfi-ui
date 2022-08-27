@@ -7,7 +7,7 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { formatThousands, getAmountWithSymbol, shortenAddress, toUiAmount2 } from "../../utils/utils";
+import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, shortenAddress, toUiAmount2 } from "../../utils/utils";
 import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates, stringNumberFormat } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
@@ -560,12 +560,11 @@ export const MoneyStreamDetails = (props: {
       <>
         {
           isNewStream()
-            ? getAmountWithSymbol(
+            ? displayAmountWithSymbol(
                 v2.remainingAllocationAmount,
                 selectedToken.address,
-                false,
+                selectedToken.decimals,
                 splTokenList,
-                selectedToken.decimals
               )
             : getAmountWithSymbol(
                 v1.allocationAssigned || v1.allocationLeft,
@@ -589,12 +588,11 @@ export const MoneyStreamDetails = (props: {
       <>
         {
           isNewStream()
-            ? getAmountWithSymbol(
-                toUiAmount2(v2.fundsLeftInStream, selectedToken.decimals),
+            ? displayAmountWithSymbol(
+                v2.fundsLeftInStream,
                 selectedToken.address,
-                false,
+                selectedToken.decimals,
                 splTokenList,
-                selectedToken.decimals
               )
             : getAmountWithSymbol(
                 v1.escrowUnvestedAmount, 
@@ -618,12 +616,11 @@ export const MoneyStreamDetails = (props: {
       <>
         {
           isNewStream()
-            ? getAmountWithSymbol(
+            ? displayAmountWithSymbol(
                 v2.fundsSentToBeneficiary,
                 selectedToken.address,
-                false,
+                selectedToken.decimals,
                 splTokenList,
-                selectedToken.decimals
               )
             : getAmountWithSymbol(
                 v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount, 

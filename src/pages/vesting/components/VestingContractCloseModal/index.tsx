@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../../../utils/transactions';
 import { TransactionStatus } from '../../../../models/enums';
-import { getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress } from '../../../../utils/utils';
+import { displayAmountWithSymbol, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress } from '../../../../utils/utils';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { Treasury } from '@mean-dao/msp';
@@ -181,12 +181,11 @@ export const VestingContractCloseModal = (props: {
                     <div className="text-center">{t('vesting.close-account.funds-left-in-contract')}</div>
                     <div className="mt-2 two-column-layout px-5">
                       <div className="left text-right font-extrabold">
-                        {getAmountWithSymbol(
+                        {displayAmountWithSymbol(
                           getAvailableStreamingBalance(vestingContract),
                           selectedToken.address,
-                          false,
+                          selectedToken.decimals,
                           splTokenList,
-                          selectedToken.decimals
                         )}
                       </div>
                       <div className="right text-left font-extrabold">
