@@ -21,7 +21,7 @@ import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
-import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toTokenAmount, toUiAmount2 } from "../../utils/utils";
+import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toTokenAmount } from "../../utils/utils";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";

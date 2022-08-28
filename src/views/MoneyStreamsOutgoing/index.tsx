@@ -7,7 +7,7 @@ import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/m
 import { useTranslation } from "react-i18next";
 import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount2 } from "../../utils/utils";
+import { fetchAccountTokens, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount2 } from "../../utils/utils";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { segmentAnalytics } from "../../App";
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "../../utils/segment-service";
@@ -33,17 +33,26 @@ import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useParams } from "react-router-dom";
 import { title } from "process";
 import { readAccountInfo } from "../../utils/accounts";
+import { NATIVE_SOL } from "../../utils/tokens";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MoneyStreamsOutgoingView = (props: {
   accountAddress: string;
-  streamSelected: Stream | StreamInfo | undefined;
-  streamList?: Array<Stream | StreamInfo> | undefined;
-  streamingAccountSelected: Treasury | TreasuryInfo | undefined;
-  onSendFromOutgoingStreamDetails?: any;
   multisigAccounts: MultisigInfo[] | undefined;
+  onSendFromOutgoingStreamDetails?: any;
+  streamList?: Array<Stream | StreamInfo> | undefined;
+  streamSelected: Stream | StreamInfo | undefined;
+  streamingAccountSelected: Treasury | TreasuryInfo | undefined;
 }) => {
+  const {
+    accountAddress,
+    multisigAccounts,
+    onSendFromOutgoingStreamDetails,
+    streamList,
+    streamSelected,
+    streamingAccountSelected,
+  } = props;
   const {
     splTokenList,
     tokenBalance,
@@ -63,18 +72,8 @@ export const MoneyStreamsOutgoingView = (props: {
     confirmationHistory,
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
-
   const { wallet, publicKey } = useWallet();
   const connection = useConnection();
-
-  const {
-    accountAddress,
-    streamSelected,
-    streamList,
-    streamingAccountSelected,
-    onSendFromOutgoingStreamDetails,
-    multisigAccounts,
-  } = props;
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const { endpoint } = useConnectionConfig();
@@ -85,6 +84,7 @@ export const MoneyStreamsOutgoingView = (props: {
   });
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
+  const [userBalances, setUserBalances] = useState<any>();
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   // Treasury related
@@ -220,6 +220,50 @@ export const MoneyStreamsOutgoingView = (props: {
     connection,
   ]);
 
+  const refreshUserBalances = useCallback((source?: PublicKey) => {
+
+    if (!connection || !publicKey || !splTokenList) {
+      return;
+    }
+
+    const balancesMap: any = {};
+    const pk = source || publicKey;
+    consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
+
+    connection.getBalance(pk)
+    .then(solBalance => {
+      balancesMap[NATIVE_SOL.address] = solBalance / LAMPORTS_PER_SOL;
+    })
+
+    fetchAccountTokens(connection, pk)
+    .then(accTks => {
+      consoleOut('Token accounts:', accTks, 'darkpurple');
+      if (accTks) {
+        for (const item of accTks) {
+          const address = item.parsedInfo.mint;
+          const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+          balancesMap[address] = balance;
+        }
+      } else {
+        for (const t of splTokenList) {
+          balancesMap[t.address] = 0;
+        }
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      for (const t of splTokenList) {
+        balancesMap[t.address] = 0;
+      }
+    })
+    .finally(() => setUserBalances(balancesMap));
+
+  }, [
+    publicKey,
+    splTokenList,
+    connection,
+  ]);
+
   // Transaction execution (Applies to all transactions)
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -261,6 +305,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const showAddFundsModal = useCallback(() => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupButton);
+    refreshUserBalances();
 
     if (streamSelected) {
       if (streamSelected.version < 2) {
@@ -286,6 +331,7 @@ export const MoneyStreamsOutgoingView = (props: {
   }, [
     streamSelected,
     getTransactionFeesV2,
+    refreshUserBalances,
     refreshTokenBalance,
     getTransactionFees,
   ]);
@@ -2406,6 +2452,7 @@ export const MoneyStreamsOutgoingView = (props: {
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
+      refreshUserBalances();
       setNativeBalance(getAccountBalance());
       // Update previous balance
       setPreviousBalance(account?.lamports);
@@ -2414,7 +2461,8 @@ export const MoneyStreamsOutgoingView = (props: {
     account,
     nativeBalance,
     previousBalance,
-    refreshTokenBalance
+    refreshUserBalances,
+    refreshTokenBalance,
   ]);
 
   // Read treasury data
@@ -2685,6 +2733,7 @@ export const MoneyStreamsOutgoingView = (props: {
           withdrawTransactionFees={withdrawTransactionFees}
           streamDetail={streamSelected}
           nativeBalance={nativeBalance}
+          userBalances={userBalances}
           mspClient={
             streamSelected
               ? streamSelected.version < 2
