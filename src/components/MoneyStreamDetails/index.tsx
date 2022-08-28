@@ -1,4 +1,4 @@
-import { Col, Row, Tabs } from "antd";
+import { Col, Row, Spin, Tabs } from "antd";
 import { ResumeItem } from "../ResumeItem";
 import { RightInfoDetails } from "../RightInfoDetails";
 import { IconArrowBack, IconExternalLink } from "../../Icons";
@@ -6,7 +6,7 @@ import "./style.scss";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, shortenAddress, toUiAmount2 } from "../../utils/utils";
 import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates, stringNumberFormat } from "../../utils/ui";
 import { AppStateContext } from "../../contexts/appstate";
@@ -62,6 +62,7 @@ export const MoneyStreamDetails = (props: {
   const { publicKey } = useWallet();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+  const [activityLoaded, setActivityLoaded] = useState(false);
 
   // Detect XS screen
   useEffect(() => {
@@ -72,8 +73,7 @@ export const MoneyStreamDetails = (props: {
     }
   }, [width]);
 
-  const getQueryTabOption = useCallback(() => {
-
+  const tabOption = useMemo(() => {
     let tabOptionInQuery: string | null = null;
     if (searchParams) {
       tabOptionInQuery = searchParams.get('v');
@@ -81,7 +81,7 @@ export const MoneyStreamDetails = (props: {
         return tabOptionInQuery;
       }
     }
-    return undefined;
+    return tabOptionInQuery || "details";
   }, [searchParams]);
 
   const navigateToTab = useCallback((tab: string) => {
@@ -95,6 +95,20 @@ export const MoneyStreamDetails = (props: {
 
     return false;
   }, [stream]);
+
+  const getActivityList = useCallback((reload = false) => {
+    if (stream) {
+      const isNew = stream.version >= 2 ? true : false;
+      const streamId = isNew
+        ? (stream.id as PublicKey).toBase58()
+        : stream.id as string
+      if (reload) {
+        getStreamActivity(streamId, stream.version, true);
+      } else {
+        getStreamActivity(streamId, stream.version, false);
+      }
+    }
+  }, [getStreamActivity, stream]);
 
   const getStreamTitle = (item: Stream | StreamInfo): string => {
     let title = '';
@@ -419,13 +433,13 @@ export const MoneyStreamDetails = (props: {
 
   // Get stream activity
   useEffect(() => {
-    if (!stream || !searchParams || !streamActivity) { return; }
+    if (!stream) { return; }
 
-    if (searchParams.get('v') === "activity") {
-      getStreamActivity((stream.id as PublicKey).toBase58(), stream.version, true);
+    if (tabOption === "activity" && !activityLoaded) {
+      setActivityLoaded(true);
+      getActivityList(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [searchParams, streamActivity]);
+  }, [activityLoaded, getActivityList, stream, tabOption]);
 
 
   ///////////////
@@ -437,73 +451,67 @@ export const MoneyStreamDetails = (props: {
     return relativeTimeFromDates(reference);
   }
 
-  const renderActivities = (streamVersion: number) => {
+  const renderActivities = () => {
     return (
-      <>
-        {!loadingStreamActivity ? (
-          streamActivity !== undefined && streamActivity.length > 0 ? (
-            streamActivity.map((item, index) => {
-
-              const img = getActivityIcon(item);
-              const title = getActivityAction(item);
-              const subtitle = <CopyExtLinkGroup
-                content={item.signature}
-                number={8}
-                externalLink={false}
-              />
-
-              const amount = getAmountWithSymbol(
-                getActivityAmount(item, streamVersion),
-                item.mint,
-                false,
-                splTokenList
-              );
-
-              const resume = getShortDate(item.utcDate as string, true);
-
-              return (
-                <a
-                  key={index}
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`} 
-                  className={`w-100 simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                >
-                  <ResumeItem
-                    id={`${title} + ${index}`}
-                    img={img}
-                    title={title}
-                    subtitle={subtitle}
-                    amount={amount}
-                    resume={resume}
-                    hasRightIcon={true}
-                    rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
-                    isLink={true}
-                    classNameRightContent="resume-activity-row resume-activity-margin-left"
-                    classNameIcon="icon-stream-row"
-                  />
-                </a>
-            )})
-          ) : (
-            <span className="pl-1">This stream has no activity</span>
-          )
-        ) : (
-          <span className="pl-1">Loading activity stream ...</span>
-        )}
-        {(streamActivity && streamActivity.length >= 5 && hasMoreStreamActivity) && (
-          <div className="mt-1 text-center">
-            <span className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
+      <div className="stream-detail-component">
+        <div className="stream-activity-list">
+          <Spin spinning={loadingStreamActivity}>
+            {(streamActivity && streamActivity.length > 0) ? (
+              streamActivity.map((item, index) => {
+                return (
+                  <a key={`${index + 50}`} target="_blank" rel="noopener noreferrer"
+                    className="transaction-list-row"
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                    <div className="icon-cell">
+                      {getActivityIcon(item)}
+                    </div>
+                    <div className="description-cell no-padding">
+                      <div className="title text-truncate">{getActivityAction(item)}</div>
+                      <div className="subtitle text-truncate">{shortenAddress(item.initializer)}</div>
+                    </div>
+                    <div className="rate-cell">
+                      <div className="rate-amount">
+                        { selectedToken
+                          ? displayAmountWithSymbol(
+                              new BN(item.amount),
+                              item.mint,
+                              selectedToken.decimals,
+                              splTokenList,
+                            )
+                          : '--'
+                        }
+                      </div>
+                      <div className="interval">{getShortDate(item.utcDate as string, true)}</div>
+                    </div>
+                    <div className="actions-cell">
+                      <IconExternalLink className="mean-svg-icons" style={{ width: "15", height: "15" }} />
+                    </div>
+                  </a>
+                );
+              })
+            ) : (
+              <>
+                {loadingStreamActivity ? (
+                  <p>{t('streams.stream-activity.loading-activity')}</p>
+                ) : (
+                  <>
+                    <p>{t('streams.stream-activity.no-activity')}</p>
+                  </>
+                )}
+              </>
+            )}
+          </Spin>
+          {(streamActivity && streamActivity.length >= 5 && hasMoreStreamActivity) && (
+            <div className="mt-1 text-center">
+              <span className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
                 role="link"
-                onClick={() => {
-                if (stream) {
-                  getStreamActivity((stream.id as PublicKey).toBase58(), stream.version);
-                }
-              }}>
-              {t('general.cta-load-more')}
-            </span>
-          </div>
-        )}
-      </>
+                onClick={() => getActivityList(false)}>
+                {t('general.cta-load-more')}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
     );
   }
 
@@ -776,14 +784,13 @@ export const MoneyStreamDetails = (props: {
     {
       id: "activity",
       name: "Activity",
-      render: stream && renderActivities(stream.version)
+      render: stream && renderActivities()
     }
   ];
 
   const renderTabset = () => {
-    const option = getQueryTabOption() || 'details'
     return (
-      <Tabs activeKey={option} onChange={navigateToTab} className="neutral">
+      <Tabs activeKey={tabOption} onChange={navigateToTab} className="neutral">
         {tabs.map(item => {
           return (
             <TabPane tab={item.name} key={item.id} tabKey={item.id}>
