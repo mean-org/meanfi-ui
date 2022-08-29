@@ -2911,7 +2911,7 @@ export const AccountsNewView = () => {
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         const decimals = token.decimals || 6;
-        const amount = new BN(freshStream.fundsLeftInStream).toNumber();
+        const amount = freshStream.fundsLeftInStream.toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (!isIncoming) {
