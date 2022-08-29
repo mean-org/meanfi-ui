@@ -47,7 +47,7 @@ import { TextInput } from "../../components/TextInput";
 import { useNativeAccount } from "../../contexts/accounts";
 import { NATIVE_SOL } from "../../middleware/tokens";
 
-type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
+type TabOption = "first-tab" | "test-stream" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
 
 const CRYPTO_VALUES: number[] = [
   0.0004, 0.000003, 0.00000012345678, 1200.5, 1500.000009, 100500.000009226,
@@ -90,6 +90,7 @@ export const PlaygroundView = () => {
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [canFetchTokenAccounts, setCanFetchTokenAccounts] = useState<boolean>(splTokenList ? true : false);
+  const [streamId, setStreamId] = useState<string>("");
 
 
   ///////////////
@@ -163,6 +164,13 @@ export const PlaygroundView = () => {
     setRecipientAddress(trimmedValue);
   }
 
+  const handleStreamIdChange = (e: any) => {
+    const inputValue = e.target.value as string;
+    // Set the input value
+    const trimmedValue = inputValue.trim();
+    setStreamId(trimmedValue);
+  }
+
   const handleRecipientAddressFocusIn = () => {
     setTimeout(() => {
       triggerWindowResize();
@@ -179,6 +187,10 @@ export const PlaygroundView = () => {
     setAccountInfo(null);
     setParsedAccountInfo(null);
     setRecipientAddress('');
+  }
+
+  const onClearStreamId = () => {
+    setStreamId('');
   }
 
   const onScanMyAddress = () => {
@@ -420,6 +432,9 @@ export const PlaygroundView = () => {
     switch (optionInQuery as TabOption) {
       case "first-tab":
         setCurrentTab("first-tab");
+        break;
+      case "test-stream":
+        setCurrentTab("test-stream");
         break;
       case "second-tab":
         setCurrentTab("second-tab");
@@ -718,6 +733,100 @@ export const PlaygroundView = () => {
           )}
         </div>
       </div>
+    );
+  }
+
+  const renderTestStream = () => {
+    return (
+      <>
+        <div className="flex-fixed-right mt-4">
+          <div className="left">
+            <div className="form-label">Inspect stream</div>
+          </div>
+        </div>
+
+        <div className="two-column-form-layout col75x25">
+          <div className="left">
+            <div className="well">
+              <div className="flex-fixed-right">
+                <div className="left position-relative">
+                  <span className="recipient-field-wrapper">
+                    <input
+                      id="stream-id-recipient-field"
+                      className="general-text-input"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      type="text"
+                      onChange={handleStreamIdChange}
+                      placeholder="Introduce stream id (required)"
+                      required={true}
+                      spellCheck="false"
+                      value={streamId}/>
+                  </span>
+                </div>
+                <div className="right">
+                  <span>&nbsp;</span>
+                </div>
+              </div>
+              {
+                streamId && !isValidAddress(streamId) ? (
+                  <span className="form-field-error">
+                    Not a valid stream id
+                  </span>
+                ) : streamId && accountNotFound ? (
+                  <span className="form-field-error">
+                    Account info is not available for this stream id
+                  </span>
+                ) : null
+              }
+            </div>
+          </div>
+          <div className="right">
+            <div className="flex-fixed-right">
+              {/* <div className="left">
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  disabled={streamId === ""}
+                  onClick={() => readAccountInfo()}>
+                  Get info
+                </Button>
+              </div> */}
+              <div className="right">
+                <Button
+                  type="default"
+                  shape="round"
+                  size="large"
+                  disabled={streamId === ""}
+                  onClick={onClearStreamId}>
+                  Clear
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {streamId && isValidAddress(streamId) &&(
+          <div className="mb-3">
+            <div className="two-column-layout">
+              <div className="left">
+                <div className="form-label">Data</div>
+                <div className="well mb-1 proposal-summary-container vertical-scroll">
+                  HERE SHOW DATA
+                </div>
+              </div>
+              <div className="right">
+                <div className="form-label">SDK supply value</div>
+                <div className="well mb-1 proposal-summary-container vertical-scroll">
+                  HERE SHOW DATA
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -1171,6 +1280,8 @@ export const PlaygroundView = () => {
     switch (currentTab) {
       case "first-tab":
         return renderDemoNumberFormatting;
+      case "test-stream":
+        return renderTestStream();
       case "second-tab":
         return renderDemo2Tab();
       case "demo-notifications":
@@ -1189,6 +1300,11 @@ export const PlaygroundView = () => {
           className={`tab-button ${currentTab === "first-tab" ? "active" : ""}`}
           onClick={() => navigateToTab("first-tab")}>
           Demo 1
+        </div>
+        <div
+          className={`tab-button ${currentTab === "test-stream" ? "active" : ""}`}
+          onClick={() => navigateToTab("test-stream")}>
+          Test Stream
         </div>
         <div
           className={`tab-button ${currentTab === "second-tab" ? "active" : ""}`}
