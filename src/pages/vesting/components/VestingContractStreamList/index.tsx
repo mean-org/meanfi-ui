@@ -28,7 +28,7 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
+import { displayAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
@@ -552,7 +552,7 @@ export const VestingContractStreamList = (props: {
             const price = selectedToken
                 ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol)
                 : 0;
-            const usdValue = new BN(closeStreamOptions.vestedReturns).add(new BN(closeStreamOptions.unvestedReturns)).muln(price).toNumber();
+            const usdValue = (parseFloat(closeStreamOptions.vestedReturns as string) + parseFloat(closeStreamOptions.unvestedReturns as string)) * price;
 
             // Report event to Segment analytics
             const segmentData: SegmentStreamCloseData = {
@@ -758,17 +758,17 @@ export const VestingContractStreamList = (props: {
                             : undefined;
                         consoleOut('Send Tx to confirmation queue:', signature);
                         const message = `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of [${
-                            getAmountWithSymbol(
+                            displayAmountWithSymbol(
                                 closeStreamOptions.vestedReturns,
                                 selectedToken.address,
-                                false,
+                                selectedToken.decimals,
                                 splTokenList
                             )
                         }] has been sent to [${shortenAddress(highlightedStream.beneficiary)}]. Unvested amount of [${
-                            getAmountWithSymbol(
+                            displayAmountWithSymbol(
                                 closeStreamOptions.unvestedReturns,
                                 selectedToken.address,
-                                false,
+                                selectedToken.decimals,
                                 splTokenList
                             )
                         }] was returned to the vesting contract.`;

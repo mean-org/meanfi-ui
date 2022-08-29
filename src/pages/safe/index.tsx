@@ -314,7 +314,7 @@ export const SafeView = () => {
 
     const pk = new PublicKey(account);
 
-    return await msp.listTreasuries(pk, true, true, Category.vesting);
+    return await msp.listTreasuries(pk, true, Category.vesting);
 
   }, [msp]);
 

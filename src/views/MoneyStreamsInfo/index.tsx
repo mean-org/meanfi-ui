@@ -29,7 +29,7 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, stringNumberFormat, toUsCurrency } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { cutNumber, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount2 } from "../../utils/utils";
+import { cutNumber, displayAmountWithSymbol, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount2 } from "../../utils/utils";
 import { useTranslation } from "react-i18next";
 import { useNativeAccount } from "../../contexts/accounts";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
@@ -478,7 +478,7 @@ export const MoneyStreamsInfoView = (props: {
         : false;
 
       // Get refreshed data
-      const freshStream = await msp.refreshStream(stream, undefined, false) as Stream;
+      const freshStream = await msp.refreshStream(stream, undefined) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
@@ -2623,16 +2623,20 @@ export const MoneyStreamsInfoView = (props: {
             const status = getStreamStatus(stream);
             const resume = getStreamResume(stream);
 
-            const withdrawResume = getAmountWithSymbol(
-              isNew
-                ? v2.withdrawableAmount.toString()
-                : v1.escrowVestedAmount,
-              isNew
-                ? v2.associatedToken.toString()
-                : v1.associatedToken as string,
-              false,
-              splTokenList,
-            )
+            const withdrawResume = isNew
+              ? displayAmountWithSymbol(
+                  v2.withdrawableAmount,
+                  v2.associatedToken.toString(),
+                  token?.decimals || 6,
+                  splTokenList,
+                )
+              : getAmountWithSymbol(
+                  v1.escrowVestedAmount,
+                  v1.associatedToken as string,
+                  false,
+                  splTokenList,
+                  token?.decimals || 6,
+                );
 
             return (
               <div 

@@ -681,7 +681,7 @@ export const VestingView = () => {
 
     const pk = new PublicKey(account);
 
-    return await msp.listTreasuries(pk, true, true, Category.vesting);
+    return await msp.listTreasuries(pk, true, Category.vesting);
 
   }, [msp]);
 
@@ -693,20 +693,20 @@ export const VestingView = () => {
     vestingFlowRatesCache.clear();
 
     getAllUserV2Accounts(accountAddress)
-      .then(treasuries => {
-        consoleOut('Streaming accounts:', treasuries, 'blue');
-        setTreasuryList(treasuries.map(vc => {
+      .then(contracts => {
+        consoleOut('Vesting contracts:', contracts, 'blue');
+        setTreasuryList(contracts.map(vc => {
           return Object.assign({}, vc, {
             name: vc.name.trim()
           })
         }));
-        if (treasuries.length > 0) {
+        if (contracts.length > 0) {
           // /vesting/:address/contracts/:vestingContract
           if (reset) {
-            const contractId = treasuries[0].id.toString();
+            const contractId = contracts[0].id.toString();
             navigateToVestingContract(contractId);
           } else if (vestingContractAddress) {
-            const item = treasuries.find(i => (i.id as string) === vestingContractAddress);
+            const item = contracts.find(i => (i.id as string) === vestingContractAddress);
             if (item) {
               navigateToVestingContract(item.id as string);
             }
@@ -3439,7 +3439,7 @@ export const VestingView = () => {
 
     if (!publicKey || !accountAddress || treasuriesLoaded) { return; }
 
-    consoleOut('Calling refreshTreasuries...', '', 'blue');
+    consoleOut('Calling refreshVestingContracts...', '', 'blue');
     setTreasuriesLoaded(true);
     refreshVestingContracts(true);
 

@@ -166,7 +166,7 @@ export const VestingContractList = (props: {
                             <div className="icon-cell">
                                 <div className="token-icon">
                                     <>
-                                        {token ? (
+                                        {token && token.logoURI ? (
                                             <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
                                         ) : (
                                             <Identicon address={associatedToken} style={{ width: 30, height: 30, display: "inline-flex" }} />

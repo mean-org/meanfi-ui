@@ -106,7 +106,7 @@ export const VestingContractOverview = (props: {
             return vestingContractFlowRate.streamableAmountBn as BN;
         }
 
-        let ratePerSecond = 0;
+        let ratePerSecond = new BN(0);
         let vestedBn = new BN(0);
         let releasedBn = new BN(0);
         let streamableBn = new BN(0);
@@ -120,13 +120,7 @@ export const VestingContractOverview = (props: {
             streamableBn = vestingContractFlowRate.streamableAmountBn;
         }
 
-        ratePerSecond = new BigNumber(streamableBn.toString()).dividedToIntegerBy(lockPeriod).toNumber();
-
-        if (cliffReleasePercentage > 0) {
-            vestedBn = releasedBn.addn(elapsed * ratePerSecond);
-        } else {
-            vestedBn = new BN(elapsed * ratePerSecond);
-        }
+        ratePerSecond = streamableBn.divn(lockPeriod);
 
         if (log) {
             consoleOut('lockPeriodAmount:', lockPeriodAmount, 'purple');
@@ -136,7 +130,16 @@ export const VestingContractOverview = (props: {
             consoleOut('cliffReleasePercentage:', cliffReleasePercentage, 'purple');
             consoleOut('releasedBn:', releasedBn.toString(), 'purple');
             consoleOut('streamableAmountBn:', vestingContractFlowRate.streamableAmountBn.toString(), 'purple');
-            consoleOut('ratePerSecond:', ratePerSecond, 'purple');
+            consoleOut('ratePerSecond:', ratePerSecond.toString(), 'purple');
+        }
+
+        if (cliffReleasePercentage > 0 && releasedBn.gtn(0) && ratePerSecond.gtn(0)) {
+            vestedBn = ratePerSecond.muln(elapsed).add(releasedBn);
+        } else {
+            vestedBn = ratePerSecond.muln(elapsed);
+        }
+
+        if (log) {
             consoleOut('vestedBn:', vestedBn.toString(), 'purple');
         }
 

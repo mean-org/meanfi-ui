@@ -2616,7 +2616,7 @@ export const AccountsNewView = () => {
       const pk = new PublicKey(addr || accountAddress);
 
       consoleOut('Fetching treasuries for:', addr || accountAddress, 'orange');
-      const treasuries = await msp.listTreasuries(pk, true, false, Category.default);
+      const treasuries = await msp.listTreasuries(pk, true, Category.default);
       consoleOut('getAllUserV2Treasuries ->', treasuries, 'orange');
 
       return treasuries;
@@ -2903,7 +2903,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await msp.refreshStream(stream, undefined, false) as Stream;
+      const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());

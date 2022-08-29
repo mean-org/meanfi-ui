@@ -45,7 +45,7 @@ export const getSolanaExplorerClusterParam = (): string => {
     case 'local':
     case 'development':
     case 'staging':
-      return '?cluster=devnet';
+      return '?cluster=devnet-solana'; // ?cluster=devnet normally
     default:
       return '';
   }

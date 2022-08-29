@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCur
 import { isError } from '../../../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming';
-import { cutNumber, formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
+import { formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber, shortenAddress, toTokenAmount2, toTokenAmountBn, toUiAmount2 } from '../../../../utils/utils';
 import { useWallet } from '../../../../contexts/wallet';
 import { FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
@@ -154,7 +154,7 @@ export const VestingContractWithdrawFundsModal = (props: {
       setWithdrawAmount(".");
     } else if (isValidNumber(newValue)) {
       setWithdrawAmount(newValue);
-      setTokenAmount(makeInteger(newValue, selectedToken?.decimals || 6));
+      setTokenAmount(toTokenAmountBn(newValue, selectedToken?.decimals || 6));
     }
   };
 
@@ -177,15 +177,15 @@ export const VestingContractWithdrawFundsModal = (props: {
 
   // Validation
   const isValidForm = (): boolean => {
-    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
+    const userBalance = toTokenAmountBn(tokenBalance, selectedToken?.decimals || 6);
     return  publicKey &&
             to &&
             isValidAddress(to) &&
             selectedToken && 
             isVerifiedRecipient &&
-            ((shouldFundFromTreasury() && unallocatedBalance.toNumber() > 0) ||
-            (!shouldFundFromTreasury() && userBalance.toNumber() > 0)) &&
-            tokenAmount && tokenAmount.toNumber() > 0 &&
+            ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
+            (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
+            tokenAmount && tokenAmount.gtn(0) &&
             ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
             (shouldFundFromTreasury() && ((isfeePayedByTreasurerOn() && tokenAmount.lte(maxAllocatableAmount)) ||
             (!isfeePayedByTreasurerOn() && tokenAmount.lte(unallocatedBalance)))))
@@ -195,6 +195,24 @@ export const VestingContractWithdrawFundsModal = (props: {
 
   const isInputMultisigAddress = (address: string) => {
     return multisigAddresses.includes(address);
+  }
+
+  const getButtonLabel = () => {
+    return !to || !isValidAddress(to)
+      ? 'Add destination account'
+      : !unallocatedBalance || unallocatedBalance.isZero()
+        ? 'No balance'
+        : !withdrawAmount || tokenAmount.isZero()
+          ? 'No amount'
+          : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance)
+            ? 'Amount exceeded'
+            : !isVerifiedRecipient
+              ? t('transactions.validation.verified-recipient-unchecked')
+              : transactionStatus.currentOperation === TransactionStatus.Iddle
+                ? t('treasuries.withdraw-funds.main-cta')
+                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                  ? t('general.cta-finish')
+                  : t('general.retry');
   }
 
   const getMaxAmount = useCallback((preSetting = false) => {
@@ -220,16 +238,16 @@ export const VestingContractWithdrawFundsModal = (props: {
       if (isWhitelisted) {
         const debugTable: any[] = [];
         debugTable.push({
-          unallocatedBalance: unallocatedBalance.toNumber(),
+          unallocatedBalance: unallocatedBalance.toString(),
           feeNumerator: feeNumerator,
           feePercentage01: feeNumerator/feeDenaminator,
-          badStreamMaxAllocation: badStreamMaxAllocation.toNumber(),
-          feeAmount: feeAmount.toNumber(),
-          badTotal: badTotal.toNumber(),
-          badRemaining: badRemaining.toNumber(),
-          goodStreamMaxAllocation: goodStreamMaxAllocation.toNumber(),
-          goodTotal: goodTotal.toNumber(),
-          goodRemaining: goodRemaining.toNumber(),
+          badStreamMaxAllocation: badStreamMaxAllocation.toString(),
+          feeAmount: feeAmount.toString(),
+          badTotal: badTotal.toString(),
+          badRemaining: badRemaining.toString(),
+          goodStreamMaxAllocation: goodStreamMaxAllocation.toString(),
+          goodTotal: goodTotal.toString(),
+          goodRemaining: goodRemaining.toString(),
         });
         consoleOut('debug table', debugTable, 'blue');
       }
@@ -320,7 +338,7 @@ export const VestingContractWithdrawFundsModal = (props: {
       <div className="transaction-list-row no-pointer">
         <div className="icon-cell">
           <div className="token-icon">
-            {token ? (
+            {token && token.logoURI ? (
               <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
               <Identicon address={vestingContract.associatedToken} style={{ width: "30", height: "30", display: "inline-flex" }} />
@@ -426,7 +444,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                             className="token-max simplelink"
                             onClick={() => {
                               setWithdrawAmount(tokenBalance.toFixed(selectedToken.decimals));
-                              setTokenAmount(makeInteger(tokenBalance, selectedToken?.decimals || 6));
+                              setTokenAmount(toTokenAmountBn(tokenBalance, selectedToken?.decimals || 6));
                             }}>
                             MAX
                           </div>
@@ -441,14 +459,14 @@ export const VestingContractWithdrawFundsModal = (props: {
                               const decimals = selectedToken ? selectedToken.decimals : 6;
                               if (isfeePayedByTreasurerOn()) {
                                 const maxAmount = getMaxAmount(true);
-                                consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-                                consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                                setWithdrawAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                                setTokenAmount(new BN(maxAmount));
+                                consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+                                consoleOut('maxAmount:', maxAmount.toString(), 'blue');
+                                setWithdrawAmount(toUiAmount2(maxAmount, decimals));
+                                setTokenAmount(maxAmount);
                               } else {
                                 const maxAmount = getMaxAmount();
-                                setWithdrawAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                                setTokenAmount(new BN(maxAmount));
+                                setWithdrawAmount(toUiAmount2(maxAmount, decimals));
+                                setTokenAmount(maxAmount);
                               }
                             }}>
                             MAX
@@ -477,6 +495,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                 </div>
               </div>
               <div className="flex-fixed-right">
+
                 <div className="left inner-label">
                   {!vestingContract || (vestingContract && vestingContract.autoClose) ? (
                     <span>{t('add-funds.label-right')}:</span>
@@ -486,7 +505,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                   {vestingContract && vestingContract.autoClose ? (
                     <span>
                       {`${tokenBalance && selectedToken
-                          ? getTokenAmountAndSymbolByTokenAddress(
+                          ? getAmountWithSymbol(
                               tokenBalance,
                               selectedToken?.address,
                               true
@@ -499,8 +518,8 @@ export const VestingContractWithdrawFundsModal = (props: {
                       {selectedToken && unallocatedBalance ? (
                         <span>
                           {
-                            getTokenAmountAndSymbolByTokenAddress(
-                              makeDecimal(unallocatedBalance, selectedToken.decimals),
+                            getAmountWithSymbol(
+                              toUiAmount2(unallocatedBalance, selectedToken.decimals),
                               selectedToken.address,
                               true
                             )
@@ -509,7 +528,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                       ) : tokenBalance && selectedToken ? (
                         <span>
                           {
-                            getTokenAmountAndSymbolByTokenAddress(
+                            getAmountWithSymbol(
                               tokenBalance,
                               selectedToken.address,
                               true
@@ -520,6 +539,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                     </>
                   )}
                 </div>
+
                 <div className="right inner-label">
                   <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                     ~{withdrawAmount
@@ -528,11 +548,6 @@ export const VestingContractWithdrawFundsModal = (props: {
                   </span>
                 </div>
               </div>
-              {(parseFloat(withdrawAmount) > makeDecimal(unallocatedBalance, 6)) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.invalid-amount')}
-                </span>
-              )}
             </div>
 
             {/* explanatory paragraph */}
@@ -561,11 +576,11 @@ export const VestingContractWithdrawFundsModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       minRequiredBalance,
                       NATIVE_SOL_MINT.toBase58()
                     )})
@@ -601,57 +616,76 @@ export const VestingContractWithdrawFundsModal = (props: {
       </div>
 
       {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-        <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
+        <>
+          <div className="cta-container">
             <Button
-              block
-              type="text"
+              type="primary"
               shape="round"
-              size="middle"
-              className={isBusy ? 'inactive' : ''}
-              onClick={() => isError(transactionStatus.currentOperation)
-                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                  ? onCloseModal()
-                  : onAcceptWithdrawTreasuryFunds()
-                : onCloseModal()}>
-              {isError(transactionStatus.currentOperation)
-                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                  ? t('general.cta-close')
-                  : t('general.retry')
-                : t('general.cta-close')
+              size="large"
+              disabled={isBusy || !isValidForm() || isInputMultisigAddress(to)}
+              onClick={() => {
+                if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                  onAcceptWithdrawTreasuryFunds();
+                } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                  onCloseModal();
+                } else {
+                  onAcceptWithdrawTreasuryFunds();
+                }
+              }}>
+              {isBusy
+                ? t('multisig.transfer-tokens.main-cta-busy')
+                : getButtonLabel()
               }
             </Button>
           </div>
-          {!isError(transactionStatus.currentOperation) && (
-            <div className="col-6">
+          {/* <div className="row two-col-ctas mt-3 transaction-progress p-0">
+            <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
               <Button
-                className={`extra-height ${isBusy ? 'inactive' : ''}`}
                 block
-                type="primary"
+                type="text"
                 shape="round"
                 size="middle"
-                disabled={!isValidForm() || isInputMultisigAddress(to)}
-                onClick={() => {
-                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                    onAcceptWithdrawTreasuryFunds();
-                  } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                    onCloseModal();
-                  } else {
-                    refreshPage();
-                  }
-                }}>
-                {isBusy
-                  ? t('multisig.transfer-tokens.main-cta-busy')
-                  : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? t('treasuries.withdraw-funds.main-cta')
-                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                      ? t('general.cta-finish')
-                      : t('general.refresh')
+                className={isBusy ? 'inactive' : ''}
+                onClick={() => isError(transactionStatus.currentOperation)
+                  ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                    ? onCloseModal()
+                    : onAcceptWithdrawTreasuryFunds()
+                  : onCloseModal()}>
+                {isError(transactionStatus.currentOperation)
+                  ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                    ? t('general.cta-close')
+                    : t('general.retry')
+                  : t('general.cta-close')
                 }
               </Button>
             </div>
-          )}
-        </div>
+            {!isError(transactionStatus.currentOperation) && (
+              <div className="col-6">
+                <Button
+                  className={`extra-height ${isBusy ? 'inactive' : ''}`}
+                  block
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                  disabled={!isValidForm() || isInputMultisigAddress(to)}
+                  onClick={() => {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                      onAcceptWithdrawTreasuryFunds();
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                      onCloseModal();
+                    } else {
+                      onAcceptWithdrawTreasuryFunds();
+                    }
+                  }}>
+                  {isBusy
+                    ? t('multisig.transfer-tokens.main-cta-busy')
+                    : getButtonLabel()
+                  }
+                </Button>
+              </div>
+            )}
+          </div> */}
+        </>
       )}
     </Modal>
   );

@@ -219,7 +219,7 @@ export interface SegmentStreamAddFundsData {
     contributor: string;
     treasury: string;
     stream: string;
-    amount: number;
+    amount: number | string;
     valueInUsd: number;
 }
 
