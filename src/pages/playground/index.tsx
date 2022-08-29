@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { AppStateContext } from "../../contexts/appstate";
@@ -34,7 +34,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { openNotification } from "../../components/Notifications";
 import { IconType } from "antd/lib/notification";
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@solana/web3.js";
-import { useConnection } from "../../contexts/connection";
+import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { SYSTEM_PROGRAM_ID } from "../../middleware/ids";
 import { AddressDisplay } from "../../components/AddressDisplay";
 import { BN } from "bn.js";
@@ -46,6 +46,10 @@ import { TokenListItem } from "../../components/TokenListItem";
 import { TextInput } from "../../components/TextInput";
 import { useNativeAccount } from "../../contexts/accounts";
 import { NATIVE_SOL } from "../../middleware/tokens";
+import { getStreamForDebug } from "../../middleware/stream-debug-middleware";
+import { MSP } from "@mean-dao/msp";
+import { appConfig } from "../..";
+import ReactJson from "react-json-view";
 
 type TabOption = "first-tab" | "test-stream" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
 
@@ -66,6 +70,7 @@ export const PlaygroundView = () => {
   const navigate = useNavigate();
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
+  const connectionConfig = useConnectionConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     tokenList,
@@ -91,11 +96,43 @@ export const PlaygroundView = () => {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [canFetchTokenAccounts, setCanFetchTokenAccounts] = useState<boolean>(splTokenList ? true : false);
   const [streamId, setStreamId] = useState<string>("");
+  const [streamRawData, setStreamRawData] = useState();
+  const [streamParsedData, setStreamParsedData] = useState();
+
+  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
+
+  const msp = useMemo(() => {
+    return new MSP(
+      connectionConfig.endpoint,
+      streamV2ProgramAddressFromConfig,
+      "confirmed"
+    );
+  }, [
+    connectionConfig.endpoint,
+    streamV2ProgramAddressFromConfig
+  ]);
 
 
   ///////////////
   //  Actions  //
   ///////////////
+
+  const fetchStreamData = useCallback((id: string) => {
+    if (!id || !isValidAddress(id) || !msp) { return; }
+
+    const streamPK = new PublicKey(id);
+
+    getStreamForDebug(streamPK, msp).then(value => {
+      consoleOut("raw stream data payload:", value);
+      setStreamRawData(value);
+    });
+
+    msp.getStream(streamPK).then(value => {
+      consoleOut("parsed stream data payload:", value);
+      setStreamParsedData(value);
+    });
+
+  }, [msp]);
 
   const navigateToTab = useCallback((tab: TabOption) => {
     setSearchParams({option: tab as string});
@@ -452,6 +489,22 @@ export const PlaygroundView = () => {
     }
   }, [location.search, searchParams, setSearchParams]);
 
+  // Convert raw stream data to Json
+  const rawJsonData = useMemo(() => {
+    if (!streamRawData) { return ""; }
+
+    return JSON.stringify(streamRawData);
+
+  }, [streamRawData]);
+
+  // Convert parsed stream data to Json
+  const parsedJsonData = useMemo(() => {
+    if (!streamParsedData) { return ""; }
+
+    return JSON.stringify(streamParsedData);
+
+  }, [streamParsedData]);
+
   // Keep account balance updated
   useEffect(() => {
 
@@ -745,7 +798,7 @@ export const PlaygroundView = () => {
           </div>
         </div>
 
-        <div className="two-column-form-layout col75x25">
+        <div className="two-column-form-layout col70x30">
           <div className="left">
             <div className="well">
               <div className="flex-fixed-right">
@@ -783,17 +836,17 @@ export const PlaygroundView = () => {
           </div>
           <div className="right">
             <div className="flex-fixed-right">
-              {/* <div className="left">
+              <div className="left">
                 <Button
                   block
                   type="primary"
                   shape="round"
                   size="large"
-                  disabled={streamId === ""}
-                  onClick={() => readAccountInfo()}>
+                  disabled={!streamId || !isValidAddress(streamId)}
+                  onClick={() => fetchStreamData(streamId)}>
                   Get info
                 </Button>
-              </div> */}
+              </div>
               <div className="right">
                 <Button
                   type="default"
@@ -812,15 +865,23 @@ export const PlaygroundView = () => {
           <div className="mb-3">
             <div className="two-column-layout">
               <div className="left">
-                <div className="form-label">Data</div>
+                <div className="form-label">Raw stream data</div>
                 <div className="well mb-1 proposal-summary-container vertical-scroll">
-                  HERE SHOW DATA
+                  {streamRawData ? (
+                    <ReactJson src={streamRawData} />
+                  ) : (
+                    "--"
+                  )}
                 </div>
               </div>
               <div className="right">
-                <div className="form-label">SDK supply value</div>
+                <div className="form-label">Parsed stream data</div>
                 <div className="well mb-1 proposal-summary-container vertical-scroll">
-                  HERE SHOW DATA
+                  {streamParsedData ? (
+                    <ReactJson src={streamParsedData} />
+                  ) : (
+                    "--"
+                  )}
                 </div>
               </div>
             </div>
