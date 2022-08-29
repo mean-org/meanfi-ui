@@ -7,7 +7,7 @@ import { Stream, Treasury, MSP, TreasuryType } from '@mean-dao/msp';
 import { StreamTreasuryType } from '../../models/treasuries';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { consoleOut } from '../../utils/ui';
+import { consoleOut } from '../../middleware/ui';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 

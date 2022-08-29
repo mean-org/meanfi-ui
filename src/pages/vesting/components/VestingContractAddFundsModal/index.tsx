@@ -11,22 +11,22 @@ import {
   isValidNumber,
   toTokenAmount2,
   toUiAmount2,
-} from '../../../../utils/utils';
+} from '../../../../middleware/utils';
 import {
   consoleOut,
   getTransactionOperationDescription,
   toUsCurrency
-} from '../../../../utils/ui';
+} from '../../../../middleware/ui';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { TransactionStatus } from '../../../../models/enums';
 import { useWallet } from '../../../../contexts/wallet';
-import { NATIVE_SOL_MINT } from '../../../../utils/ids';
-import { isError } from '../../../../utils/transactions';
+import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
+import { isError } from '../../../../middleware/transactions';
 import { AllocationType, Stream, StreamTemplate, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { NATIVE_SOL } from '../../../../utils/tokens';
+import { NATIVE_SOL } from '../../../../middleware/tokens';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { QRCodeSVG } from 'qrcode.react';
 import { AddressDisplay } from '../../../../components/AddressDisplay';

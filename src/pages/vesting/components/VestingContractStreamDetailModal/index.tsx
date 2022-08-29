@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { MSP, Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
-import { consoleOut } from '../../../../utils/ui';
+import { consoleOut } from '../../../../middleware/ui';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
 import { PublicKey } from '@solana/web3.js';
 

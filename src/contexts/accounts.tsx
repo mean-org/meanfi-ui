@@ -4,9 +4,9 @@ import { useWallet } from "./wallet";
 import { AccountInfo, ConfirmedSignatureInfo, ConfirmedTransaction, Connection, PublicKey } from "@solana/web3.js";
 import { AccountLayout, u64, MintInfo, MintLayout } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { chunks } from "./../utils/utils";
-import { EventEmitter } from "./../utils/eventEmitter";
-import { WRAPPED_SOL_MINT, programIds } from "../utils/ids";
+import { chunks } from "../middleware/utils";
+import { EventEmitter } from "../middleware/eventEmitter";
+import { WRAPPED_SOL_MINT, programIds } from "../middleware/ids";
 
 const AccountsContext = React.createContext<any>(null);
 

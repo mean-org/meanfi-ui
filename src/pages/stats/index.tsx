@@ -9,7 +9,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { TokenStats } from './TokenStats';
 import { MEAN_TOKEN, MEAN_TOKEN_LIST, SMEAN_TOKEN } from '../../constants/token-list';
-import { getCoingeckoMarketChart, getMeanStats } from '../../utils/api';
+import { getCoingeckoMarketChart, getMeanStats } from '../../middleware/api';
 import { MeanFiStatsModel } from '../../models/meanfi-stats';
 import { appConfig } from "../..";
 

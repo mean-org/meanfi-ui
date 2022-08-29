@@ -24,7 +24,7 @@ import {
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
 import TxConfirmationProvider from "./contexts/transaction-status";
-import { isLocal, isProd } from "./utils/ui";
+import { isLocal, isProd } from "./middleware/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
 import { InvestView } from "./pages/invest";

@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
-import { isError } from '../../utils/transactions';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
+import { isError } from '../../middleware/transactions';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../middleware/utils';
 import { MultisigMint } from '../../models/multisig';
 import { Identicon } from '../Identicon';
 

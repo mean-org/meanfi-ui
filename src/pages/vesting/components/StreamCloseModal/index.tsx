@@ -9,8 +9,8 @@ import { PublicKey } from '@solana/web3.js';
 import { useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { StreamTreasuryType } from '../../../../models/treasuries';
-import { consoleOut, percentageBn } from '../../../../utils/ui';
-import { getAmountWithSymbol, toUiAmount2 } from '../../../../utils/utils';
+import { consoleOut, percentageBn } from '../../../../middleware/ui';
+import { getAmountWithSymbol, toUiAmount2 } from '../../../../middleware/utils';
 import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
 import { AppStateContext } from '../../../../contexts/appstate';
 

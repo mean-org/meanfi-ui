@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useState } from 'react';
 import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { isValidAddress } from '../../utils/ui';
+import { isValidAddress } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
 import { Stream } from '@mean-dao/msp';
 import { StreamInfo } from '@mean-dao/money-streaming';

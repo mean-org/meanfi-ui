@@ -3,7 +3,7 @@ import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { IconCopy } from '../../Icons';
-import { copyText } from '../../utils/ui';
+import { copyText } from '../../middleware/ui';
 import { openNotification } from '../Notifications';
 
 export const MultisigCreateProgramModal = (props: {

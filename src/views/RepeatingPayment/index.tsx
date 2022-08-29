@@ -19,7 +19,7 @@ import {
   isValidNumber,
   shortenAddress,
   toTokenAmount2,
-} from "../../utils/utils";
+} from "../../middleware/utils";
 import { Identicon } from "../../components/Identicon";
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
@@ -35,7 +35,7 @@ import {
   isValidAddress,
   PaymentRateTypeOption,
   toUsCurrency
-} from "../../utils/ui";
+} from "../../middleware/ui";
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
@@ -44,20 +44,20 @@ import {  useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { useLocation } from 'react-router-dom';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from "@mean-dao/msp";
-import { AppUsageEvent, SegmentStreamRPTransferData } from '../../utils/segment-service';
+import { AppUsageEvent, SegmentStreamRPTransferData } from '../../middleware/segment-service';
 import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
 import { TokenInfo } from '@solana/spl-token-registry';
 import useWindowSize from '../../hooks/useWindowResize';
 import { InfoIcon } from '../../components/InfoIcon';
-import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../middleware/tokens';
 import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 import { AccountTokenParsedInfo } from '../../models/token';

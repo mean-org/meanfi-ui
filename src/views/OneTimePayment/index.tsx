@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
-import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount2 } from "../../utils/utils";
+import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount2 } from "../../middleware/utils";
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
@@ -17,7 +17,7 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress
-} from "../../utils/ui";
+} from "../../middleware/ui";
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
@@ -32,9 +32,9 @@ import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { segmentAnalytics } from '../../App';
-import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
+import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../middleware/segment-service';
 import dateFormat from 'dateformat';
-import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../middleware/tokens';
 import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 import { AccountTokenParsedInfo } from '../../models/token';

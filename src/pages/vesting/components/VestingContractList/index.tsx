@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../../../components/Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { formatThousands, getSdkValue } from '../../../../utils/utils';
+import { formatThousands, getSdkValue } from '../../../../middleware/utils';
 import { PublicKey } from '@solana/web3.js';
-import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../utils/ui';
+import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../middleware/ui';
 import { IconLoading } from '../../../../Icons';
 
 export const VestingContractList = (props: {

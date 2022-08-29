@@ -1,13 +1,13 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { getTransactionOperationDescription } from '../../../../utils/ui';
+import { getTransactionOperationDescription } from '../../../../middleware/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { isError } from '../../../../utils/transactions';
+import { isError } from '../../../../middleware/transactions';
 import { TransactionStatus } from '../../../../models/enums';
-import { displayAmountWithSymbol, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress } from '../../../../utils/utils';
-import { NATIVE_SOL_MINT } from '../../../../utils/ids';
+import { displayAmountWithSymbol, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress } from '../../../../middleware/utils';
+import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { Treasury } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';

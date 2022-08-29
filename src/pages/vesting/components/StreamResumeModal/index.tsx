@@ -7,8 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
 import { useWallet } from '../../../../contexts/wallet';
-import { percentageBn } from '../../../../utils/ui';
-import { getAmountWithSymbol, toUiAmount2 } from '../../../../utils/utils';
+import { percentageBn } from '../../../../middleware/ui';
+import { getAmountWithSymbol, toUiAmount2 } from '../../../../middleware/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
 
 export const StreamResumeModal = (props: {

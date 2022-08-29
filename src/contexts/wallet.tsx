@@ -6,13 +6,13 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { isUnauthenticatedRoute, useLocalStorageState } from "./../utils/utils";
+import { isUnauthenticatedRoute, useLocalStorageState } from "../middleware/utils";
 import { useTranslation } from "react-i18next";
 import { isDesktop, isSafari } from "react-device-detect";
 import { DownOutlined, UpOutlined } from "@ant-design/icons";
 import { segmentAnalytics } from "../App";
-import { AppUsageEvent } from "../utils/segment-service";
-import { consoleOut, isProd } from "../utils/ui";
+import { AppUsageEvent } from "../middleware/segment-service";
+import { consoleOut, isProd } from "../middleware/ui";
 import {
   BitKeepWalletAdapter,
   BitKeepWalletName,

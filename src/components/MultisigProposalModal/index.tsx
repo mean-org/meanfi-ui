@@ -1,9 +1,9 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import "./style.scss";
-import { consoleOut, copyText, getTransactionOperationDescription } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionOperationDescription } from '../../middleware/ui';
 import { useTranslation } from 'react-i18next';
-import { isError } from '../../utils/transactions';
+import { isError } from '../../middleware/transactions';
 import { TransactionStatus } from '../../models/enums';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';

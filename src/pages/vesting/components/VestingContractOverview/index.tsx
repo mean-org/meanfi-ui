@@ -19,8 +19,8 @@ import {
     percentageBn,
     percentualBn,
     friendlyDisplayDecimalPlaces,
-} from '../../../../utils/ui';
-import { makeDecimal, toUiAmount2 } from '../../../../utils/utils';
+} from '../../../../middleware/ui';
+import { makeDecimal, toUiAmount2 } from '../../../../middleware/utils';
 import BN from 'bn.js';
 import { Alert, Progress } from 'antd';
 import { TokenIcon } from '../../../../components/TokenIcon';

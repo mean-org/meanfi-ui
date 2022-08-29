@@ -7,11 +7,11 @@ import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/m
 import { useTranslation } from "react-i18next";
 import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { AppStateContext } from "../../contexts/appstate";
-import { fetchAccountTokens, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount2 } from "../../utils/utils";
+import { fetchAccountTokens, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount2 } from "../../middleware/utils";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { segmentAnalytics } from "../../App";
-import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "../../utils/segment-service";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
+import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "../../middleware/segment-service";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../middleware/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { calculateActionFees } from "@mean-dao/money-streaming/lib/utils";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
@@ -20,7 +20,7 @@ import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamTopupParams, StreamTopupTxCreateParams } from "../../models/common-types";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT } from "../../utils/ids";
+import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { customLogger } from "../..";
 import { useWallet } from "../../contexts/wallet";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
@@ -32,8 +32,8 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useParams } from "react-router-dom";
 import { title } from "process";
-import { readAccountInfo } from "../../utils/accounts";
-import { NATIVE_SOL } from "../../utils/tokens";
+import { readAccountInfo } from "../../middleware/accounts";
+import { NATIVE_SOL } from "../../middleware/tokens";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { cutNumber, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, isValidNumber, toTokenAmount2, toTokenAmountBn, toUiAmount2 } from '../../utils/utils';
+import { cutNumber, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, isValidNumber, toTokenAmount2, toTokenAmountBn, toUiAmount2 } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
@@ -12,12 +12,12 @@ import { StreamTreasuryType } from '../../models/treasuries';
 import { useWallet } from '../../contexts/wallet';
 import { useConnection } from '../../contexts/connection';
 import { PublicKey } from '@solana/web3.js';
-import { consoleOut, toUsCurrency } from '../../utils/ui';
+import { consoleOut, toUsCurrency } from '../../middleware/ui';
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import BN from 'bn.js';
 import { StreamTopupParams } from '../../models/common-types';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TokenInfo } from '@solana/spl-token-registry';
 
 export const StreamAddFundsModal = (props: {

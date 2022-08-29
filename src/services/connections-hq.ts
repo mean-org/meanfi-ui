@@ -3,7 +3,7 @@ import { Cluster, clusterApiUrl, Connection } from "@solana/web3.js";
 import { appConfig } from "..";
 import { requestOptions } from "../constants";
 import { environment } from "../environments/environment";
-import { getRpcApiEndpoint } from "../utils/api";
+import { getRpcApiEndpoint } from "../middleware/api";
 
 export interface RpcConfig {
   cluster: Cluster;

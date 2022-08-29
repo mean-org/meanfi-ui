@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo } from "@solana/spl-token";
-import { TokenAccount } from "./../models";
+import { TokenAccount } from "../models";
 import {
   Connection,
   LAMPORTS_PER_SOL,

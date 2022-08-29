@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 

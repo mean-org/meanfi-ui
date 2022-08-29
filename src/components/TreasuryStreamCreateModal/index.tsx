@@ -14,7 +14,7 @@ import {
   shortenAddress,
   toTokenAmount2,
   toUiAmount2
-} from '../../utils/utils';
+} from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import {
@@ -31,7 +31,7 @@ import {
   PaymentRateTypeOption,
   stringNumberFormat,
   toUsCurrency,
-} from '../../utils/ui';
+} from '../../middleware/ui';
 import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
@@ -41,7 +41,7 @@ import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { Identicon } from '../Identicon';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';

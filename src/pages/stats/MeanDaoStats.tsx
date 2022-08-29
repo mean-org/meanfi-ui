@@ -1,6 +1,6 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Divider, Row } from 'antd';
-import { formatThousands } from '../../utils/utils';
+import { formatThousands } from '../../middleware/utils';
 import CardStats from './components/CardStats';
 
 const items = [

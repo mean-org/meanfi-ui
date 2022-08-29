@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect } from "react";
 import "./style.scss";
 import { AppStateContext } from "../../contexts/appstate";
-import { tabNameFormat } from "../../utils/utils";
+import { tabNameFormat } from "../../middleware/utils";
 import { useSearchParams } from "react-router-dom";
 
 export const TabsMean = (props: {

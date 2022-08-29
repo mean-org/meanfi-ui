@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { IconExternalLink } from "../../Icons";
-import { copyText } from "../../utils/ui";
-import { shortenAddress } from "../../utils/utils";
+import { copyText } from "../../middleware/ui";
+import { shortenAddress } from "../../middleware/utils";
 import { openNotification } from "../Notifications";
 
 export const CopyExtLinkGroup = (props: {

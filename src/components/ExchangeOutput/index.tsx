@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount } from "../../utils/utils";
+import { formatAmount } from "../../middleware/utils";
 import { TokenInfo } from "@mean-dao/hybrid-liquidity-ag/lib/types";
 import { TokenDisplay } from "../TokenDisplay";
 

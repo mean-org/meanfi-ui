@@ -9,7 +9,7 @@ import {
   UTC_DATE_TIME_FORMAT2
 } from "../../constants";
 import { useTranslation } from 'react-i18next';
-import { consoleOut, isLocal, isProd, isValidAddress, percentual, toUsCurrency } from '../../utils/ui';
+import { consoleOut, isLocal, isProd, isValidAddress, percentual, toUsCurrency } from '../../middleware/ui';
 import "./style.scss";
 import { IdoDeposit, IdoRedeem } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
@@ -25,7 +25,7 @@ import { useLocation } from 'react-router-dom';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress } from '../../middleware/utils';
 import { CUSTOM_USDC_TEST_IDO_DEVNET, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TxConfirmationContext } from '../../contexts/transaction-status';

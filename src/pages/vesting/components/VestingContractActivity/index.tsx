@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { IconExternalLink } from '../../../../Icons';
-import { friendlyDisplayDecimalPlaces, getShortDate, stringNumberFormat } from '../../../../utils/ui';
-import { formatThousands, makeDecimal, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
+import { friendlyDisplayDecimalPlaces, getShortDate, stringNumberFormat } from '../../../../middleware/ui';
+import { formatThousands, makeDecimal, shortenAddress, toUiAmount2 } from '../../../../middleware/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { BN } from 'bn.js';
 

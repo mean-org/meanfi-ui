@@ -6,7 +6,7 @@ import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
-import { consoleOut, copyText } from "../../utils/ui";
+import { consoleOut, copyText } from "../../middleware/ui";
 import { AppConfig, environment } from '../../environments/environment';
 import "./style.scss";
 import { ArrowLeftOutlined } from '@ant-design/icons';

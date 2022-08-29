@@ -20,7 +20,7 @@ import {
   intToString,
   isValidAddress,
   friendlyDisplayDecimalPlaces,
-} from "../../utils/ui";
+} from "../../middleware/ui";
 import {
   fetchAccountTokens,
   formatAmount,
@@ -28,14 +28,14 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   makeDecimal,
   shortenAddress,
-} from "../../utils/utils";
+} from "../../middleware/utils";
 import { IconCoin, IconCopy, IconExternalLink, IconTrash, IconWallet } from "../../Icons";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
 import { IconType } from "antd/lib/notification";
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@solana/web3.js";
 import { useConnection } from "../../contexts/connection";
-import { SYSTEM_PROGRAM_ID } from "../../utils/ids";
+import { SYSTEM_PROGRAM_ID } from "../../middleware/ids";
 import { AddressDisplay } from "../../components/AddressDisplay";
 import { BN } from "bn.js";
 import { TokenDisplay } from "../../components/TokenDisplay";
@@ -45,7 +45,7 @@ import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "../../constants";
 import { TokenListItem } from "../../components/TokenListItem";
 import { TextInput } from "../../components/TextInput";
 import { useNativeAccount } from "../../contexts/accounts";
-import { NATIVE_SOL } from "../../utils/tokens";
+import { NATIVE_SOL } from "../../middleware/tokens";
 
 type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
 

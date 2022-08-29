@@ -23,12 +23,12 @@ import {
     getTransactionStatusForLogs,
     stringNumberFormat,
     toTimestamp
-} from '../../../../utils/ui';
+} from '../../../../middleware/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { displayAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from '../../../../utils/utils';
+import { displayAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from '../../../../middleware/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
@@ -42,15 +42,15 @@ import { VestingContractStreamDetailModal } from '../VestingContractStreamDetail
 import { StreamCloseModal } from '../StreamCloseModal';
 import { StreamPauseModal } from '../StreamPauseModal';
 import { StreamResumeModal } from '../StreamResumeModal';
-import { isError, isSuccess } from '../../../../utils/transactions';
+import { isError, isSuccess } from '../../../../middleware/transactions';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '../../../../contexts/wallet';
 import { customLogger } from '../../../..';
-import { NATIVE_SOL_MINT } from '../../../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
-import { AppUsageEvent, SegmentStreamCloseData, SegmentStreamStatusChangeActionData } from '../../../../utils/segment-service';
+import { AppUsageEvent, SegmentStreamCloseData, SegmentStreamStatusChangeActionData } from '../../../../middleware/segment-service';
 import { segmentAnalytics } from '../../../../App';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

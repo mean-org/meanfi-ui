@@ -30,9 +30,9 @@ import {
   openLinkInNewTab,
   shortenAddress,
   tabNameFormat
-} from '../../utils/utils';
+} from '../../middleware/utils';
 import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   EMOJIS,
@@ -47,7 +47,7 @@ import {
 } from '../../constants';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
-import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
+import { fetchAccountHistory, MappedTransaction } from '../../middleware/history';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { AccountTokenParsedInfo } from '../../models/token';
@@ -61,22 +61,22 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from '../../middleware/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { AppUsageEvent } from '../../utils/segment-service';
+import { AppUsageEvent } from '../../middleware/segment-service';
 import { segmentAnalytics } from '../../App';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 import { QRCodeSVG } from 'qrcode.react';
-import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../middleware/tokens';
 import { customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
 import { INVEST_ROUTE_BASE_PATH } from '../invest';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
-import { closeTokenAccount } from '../../utils/accounts';
+import { closeTokenAccount } from '../../middleware/accounts';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';

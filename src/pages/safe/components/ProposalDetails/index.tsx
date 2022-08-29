@@ -1,12 +1,12 @@
 import './style.scss';
 import { Button, Col, Row, Tooltip } from "antd"
 import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus, IconThumbsDown } from "../../../../Icons"
-import { shortenAddress } from '../../../../utils/utils';
+import { shortenAddress } from '../../../../middleware/utils';
 import { TabsMean } from '../../../../components/TabsMean';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../../../../components/Notifications';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { consoleOut, copyText } from '../../../../utils/ui';
+import { consoleOut, copyText } from '../../../../middleware/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigParticipant, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';

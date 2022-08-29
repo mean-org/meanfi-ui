@@ -12,9 +12,9 @@ import { useNativeAccount } from "../../../../../contexts/accounts";
 import { AppStateContext } from "../../../../../contexts/appstate";
 import { IconEllipsisVertical, IconInfoCircle, IconLoading } from "../../../../../Icons";
 import { UserTokenAccount } from "../../../../../models/transactions";
-import { NATIVE_SOL } from "../../../../../utils/tokens";
-import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
-import { shortenAddress } from "../../../../../utils/utils";
+import { NATIVE_SOL } from "../../../../../middleware/tokens";
+import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../middleware/ui";
+import { shortenAddress } from "../../../../../middleware/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
 import { VESTING_ROUTE_BASE_PATH } from "../../../../vesting";
 

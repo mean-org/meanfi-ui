@@ -27,7 +27,7 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   shortenAddress,
-} from '../../utils/utils';
+} from '../../middleware/utils';
 
 import { Button, Dropdown, Empty, Menu, Spin, Tooltip } from 'antd';
 import {
@@ -37,7 +37,7 @@ import {
   isDev,
   toUsCurrency,
   delay
-} from '../../utils/ui';
+} from '../../middleware/ui';
 
 import { MEAN_MULTISIG_ACCOUNT_LAMPORTS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
 import { isDesktop } from "react-device-detect";
@@ -45,7 +45,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
 import { IconEllipsisVertical, IconLoading, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
 import { useNativeAccount } from '../../contexts/accounts';
-import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
+import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import './style.scss';
 
@@ -73,14 +73,14 @@ import {
   MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk/';
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken, getTrancheDepositIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
-import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../middleware/tokens';
 import { UserTokenAccount } from '../../models/transactions';
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
+import { ACCOUNT_LAYOUT } from '../../middleware/layouts';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
-import { AppUsageEvent } from '../../utils/segment-service';
+import { AppUsageEvent } from '../../middleware/segment-service';
 import { segmentAnalytics } from "../../App";
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ProgramAccounts } from '../../utils/accounts';
+import { ProgramAccounts } from '../../middleware/accounts';
 import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';

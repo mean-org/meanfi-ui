@@ -16,12 +16,12 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
   isLocal
-} from '../../utils/ui';
+} from '../../middleware/ui';
 import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { Identicon } from '../../components/Identicon';
 import "./style.scss";
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, useLocalStorageState } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, useLocalStorageState } from '../../middleware/utils';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
@@ -35,7 +35,7 @@ import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/we
 import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { useNavigate } from 'react-router-dom';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { DdcaCloseModal } from '../../components/DdcaCloseModal';

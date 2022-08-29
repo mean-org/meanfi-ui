@@ -14,19 +14,19 @@ import {
   shortenAddress,
   toTokenAmount2,
   toUiAmount2
-} from '../../utils/utils';
+} from '../../middleware/utils';
 import { IconHelpCircle } from '../../Icons';
 import {
   consoleOut,
   getTransactionOperationDescription,
   isValidAddress,
   toUsCurrency,
-} from '../../utils/ui';
+} from '../../middleware/ui';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryTopupParams } from '../../models/common-types';
 import { TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { AllocationType, Stream, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
@@ -36,10 +36,10 @@ import { Identicon } from '../Identicon';
 import { QRCodeSVG } from 'qrcode.react';
 import { AddressDisplay } from '../AddressDisplay';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../middleware/tokens';
 import { InputMean } from '../InputMean';
 import { AccountInfo, Connection, ParsedAccountData } from '@solana/web3.js';
-import { readAccountInfo } from '../../utils/accounts';
+import { readAccountInfo } from '../../middleware/accounts';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

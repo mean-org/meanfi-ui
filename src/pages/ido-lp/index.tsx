@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
 import { IDO_FETCH_FREQUENCY } from "../../constants";
-import { consoleOut, isLocal, isProd, isValidAddress } from '../../utils/ui';
+import { consoleOut, isLocal, isProd, isValidAddress } from '../../middleware/ui';
 import "./style.scss";
 import { IdoLpDeposit, IdoLpWithdraw } from '../../views';
 import Countdown from 'react-countdown';

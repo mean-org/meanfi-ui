@@ -5,17 +5,17 @@ import { Modal, Button, Dropdown, Menu, Row, Col } from 'antd';
 import { PaymentRateType, TransactionStatus } from '../../models/enums';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { TokenListItem } from "../TokenListItem";
-import { consoleOut, getPaymentRateOptionLabel, isValidAddress, PaymentRateTypeOption } from "../../utils/ui";
+import { consoleOut, getPaymentRateOptionLabel, isValidAddress, PaymentRateTypeOption } from "../../middleware/ui";
 import { useWallet } from "../../contexts/wallet";
 import { TokenDisplay } from "../TokenDisplay";
-import { getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { getAmountWithSymbol, isValidNumber } from "../../middleware/utils";
 import { TextInput } from "../TextInput";
 import { useNavigate } from "react-router-dom";
 import { IconCaretDown } from "../../Icons";
-import { isError } from "../../utils/transactions";
+import { isError } from "../../middleware/transactions";
 import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from "@mean-dao/msp";
-import { NATIVE_SOL } from "../../utils/tokens";
+import { NATIVE_SOL } from "../../middleware/tokens";
 import { CUSTOM_TOKEN_NAME } from "../../constants";
 
 export const StreamEditModal = (props: {

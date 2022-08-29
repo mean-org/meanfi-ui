@@ -6,9 +6,9 @@ import {
   getTokenDecimals,
   getTokenSymbol,
   isValidNumber
-} from "../../utils/utils";
+} from "../../middleware/utils";
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
-import { percentage } from "../../utils/ui";
+import { percentage } from "../../middleware/ui";
 import { useTranslation } from "react-i18next";
 
 export const DdcaWithdrawModal = (props: {

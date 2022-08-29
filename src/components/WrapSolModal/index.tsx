@@ -10,10 +10,10 @@ import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/type
 import { useNativeAccount } from '../../contexts/accounts';
 import { MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from '../../utils/ui';
+import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from '../../middleware/ui';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
-import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
+import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../middleware/utils';
 import { TokenDisplay } from '../TokenDisplay';
 import { LoadingOutlined } from '@ant-design/icons';
 

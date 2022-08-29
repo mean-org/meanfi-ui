@@ -5,7 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isDev, isLocal, isProd, toTimestamp } from '../../utils/ui';
+import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isDev, isLocal, isProd, toTimestamp } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -24,7 +24,7 @@ import {
 } from '@mean-dao/msp';
 import "./style.scss";
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount, toUiAmount2 } from '../../utils/utils';
+import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount, toUiAmount2 } from '../../middleware/utils';
 import { openNotification } from '../../components/Notifications';
 import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -41,7 +41,7 @@ import { CreateVestingStreamParams, CreateVestingTreasuryParams, getCategoryLabe
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useNativeAccount } from '../../contexts/accounts';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../utils/ids';
+import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../middleware/ids';
 import { appConfig, customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -49,7 +49,7 @@ import { VestingContractSolBalanceModal } from './components/VestingContractSolB
 import { VestingContractAddFundsModal } from './components/VestingContractAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
 import { segmentAnalytics } from '../../App';
-import { AppUsageEvent, SegmentRefreshAccountBalanceData, SegmentStreamAddFundsData, SegmentStreamCreateData, SegmentVestingContractCloseData, SegmentVestingContractCreateData, SegmentVestingContractWithdrawData } from '../../utils/segment-service';
+import { AppUsageEvent, SegmentRefreshAccountBalanceData, SegmentStreamAddFundsData, SegmentStreamCreateData, SegmentVestingContractCloseData, SegmentVestingContractCreateData, SegmentVestingContractWithdrawData } from '../../middleware/segment-service';
 import { ZERO_FEES } from '../../models/multisig';
 import { VestingContractCreateStreamModal } from './components/VestingContractCreateStreamModal';
 import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
@@ -58,9 +58,9 @@ import { AccountLayout, u64 } from '@solana/spl-token';
 import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import { BN } from 'bn.js';
 import { PendingProposalsComponent } from './components/PendingProposalsComponent';
-import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../middleware/tokens';
 import { VestingContractEditModal } from './components/VestingContractEditModal';
-import { getTokenAccountBalanceByAddress, readAccountInfo } from '../../utils/accounts';
+import { getTokenAccountBalanceByAddress, readAccountInfo } from '../../middleware/accounts';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';

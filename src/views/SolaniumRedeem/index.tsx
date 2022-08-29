@@ -1,21 +1,21 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../middleware/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
-import { getWhitelistAllocation } from '../../utils/api';
+import { getWhitelistAllocation } from '../../middleware/api';
 import { Allocation } from '../../models/common-types';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import CountUp from 'react-countup';
-import { updateCreateStream2Tx } from '../../utils/transactions';
+import { updateCreateStream2Tx } from '../../middleware/transactions';
 
 export const SolaniumRedeem = (props: {
   connection: Connection;

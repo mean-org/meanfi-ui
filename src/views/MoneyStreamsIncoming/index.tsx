@@ -6,7 +6,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { IconEllipsisVertical } from "../../Icons";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../middleware/ui";
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
   TransactionFees,
@@ -21,14 +21,14 @@ import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
-import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toTokenAmount } from "../../utils/utils";
-import { NATIVE_SOL_MINT } from "../../utils/ids";
+import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toTokenAmount } from "../../middleware/utils";
+import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import ArrowDownOutlined from "@ant-design/icons/lib/icons/ArrowDownOutlined";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamTransferOpenModal } from "../../components/StreamTransferOpenModal";
-import { AppUsageEvent, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "../../utils/segment-service";
+import { AppUsageEvent, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "../../middleware/segment-service";
 import { segmentAnalytics } from "../../App";
 import { StreamWithdrawModal } from "../../components/StreamWithdrawModal";
 import { StreamWithdrawData } from "../../models/streams";
@@ -37,7 +37,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../contexts/accounts";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from "react-router-dom";
-import { readAccountInfo } from "../../utils/accounts";
+import { readAccountInfo } from "../../middleware/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

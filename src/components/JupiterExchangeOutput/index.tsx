@@ -2,12 +2,12 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount, formatThousands } from "../../utils/utils";
+import { formatAmount, formatThousands } from "../../middleware/utils";
 import { TokenDisplay } from "../TokenDisplay";
 import { MarketInfo, RouteInfo } from "@jup-ag/core";
 import BN from "bn.js";
 import { useWallet } from "../../contexts/wallet";
-import { consoleOut, toUsCurrency } from "../../utils/ui";
+import { consoleOut, toUsCurrency } from "../../middleware/ui";
 
 export const JupiterExchangeOutput = (props: {
   fromToken: TokenInfo | undefined;

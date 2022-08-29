@@ -5,7 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { getAmountWithSymbol } from '../../../../utils/utils';
+import { getAmountWithSymbol } from '../../../../middleware/utils';
 
 export const VestingContractSolBalanceModal = (props: {
   address: string;

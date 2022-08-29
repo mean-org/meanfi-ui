@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { findATokenAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
+import { findATokenAddress, shortenAddress, useLocalStorageState } from "../middleware/utils";
 import {
   DAO_CORE_TEAM_WHITELIST,
   DDCA_FREQUENCY_OPTIONS,
@@ -24,14 +24,14 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./con
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices } from "../utils/api";
+import { getPrices } from "../middleware/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
 import { BANNED_TOKENS, MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
-import { NATIVE_SOL } from "../utils/tokens";
-import { MappedTransaction } from "../utils/history";
-import { consoleOut, isProd, msToTime } from "../utils/ui";
+import { NATIVE_SOL } from "../middleware/tokens";
+import { MappedTransaction } from "../middleware/history";
+import { consoleOut, isProd, msToTime } from "../middleware/ui";
 import { appConfig } from "..";
 import { DdcaAccount } from "@mean-dao/ddca";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
@@ -41,9 +41,9 @@ import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
 import { AccountDetails } from "../models";
 import { openNotification } from "../components/Notifications";
-import { PerformanceCounter } from "../utils/perf-counter";
+import { PerformanceCounter } from "../middleware/perf-counter";
 import { TokenPrice } from "../models/token";
-import { ProgramAccounts } from "../utils/accounts";
+import { ProgramAccounts } from "../middleware/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";

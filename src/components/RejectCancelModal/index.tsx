@@ -4,8 +4,8 @@ import { useCallback, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
-import { isError } from "../../utils/transactions";
-import { getTransactionOperationDescription } from "../../utils/ui";
+import { isError } from "../../middleware/transactions";
+import { getTransactionOperationDescription } from "../../middleware/ui";
 import "./style.scss";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

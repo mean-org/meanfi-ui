@@ -45,7 +45,7 @@ import {
   getTransactionStatusForLogs,
   isProd,
   stringNumberFormat,
-} from "../../utils/ui";
+} from "../../middleware/ui";
 import {
   fetchAccountTokens,
   findATokenAddress,
@@ -57,12 +57,12 @@ import {
   openLinkInNewTab,
   shortenAddress,
   toUiAmount2,
-} from "../../utils/utils";
+} from "../../middleware/utils";
 import useWindowSize from "../../hooks/useWindowResize";
 import { TreasuryTopupParams } from "../../models/common-types";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { NATIVE_SOL_MINT } from "../../utils/ids";
+import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { customLogger } from "../..";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFundsModal";
@@ -72,8 +72,8 @@ import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
 import { Identicon } from "../../components/Identicon";
 import { SolBalanceModal } from "../../components/SolBalanceModal";
 import { isMobile } from "react-device-detect";
-import { getTokenAccountBalanceByAddress, readAccountInfo } from "../../utils/accounts";
-import { NATIVE_SOL } from "../../utils/tokens";
+import { getTokenAccountBalanceByAddress, readAccountInfo } from "../../middleware/accounts";
+import { NATIVE_SOL } from "../../middleware/tokens";
 import { AddFundsParams } from "../../models/vesting";
 import BN from "bn.js";
 

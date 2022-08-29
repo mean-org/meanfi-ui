@@ -11,16 +11,16 @@ import { useTranslation } from 'react-i18next';
 import {
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress
-} from '../../utils/utils';
+} from '../../middleware/utils';
 import "./style.scss";
 import { Button, Col, Divider, Modal, Row, Spin } from 'antd';
 import {
   copyText,
   getTransactionOperationDescription,
   getReadableDate,
-} from '../../utils/ui';
+} from '../../middleware/ui';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import {
   MultisigInfo,
   MultisigParticipant,
@@ -33,8 +33,8 @@ import Countdown from 'react-countdown';
 
 // MULTISIG
 import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
-import { isError } from '../../utils/transactions';
-import { getOperationName } from '../../utils/multisig-helpers';
+import { isError } from '../../middleware/transactions';
+import { getOperationName } from '../../middleware/multisig-helpers';
 import { openNotification } from '../../components/Notifications';
 import { IconExternalLink } from '../../Icons';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';

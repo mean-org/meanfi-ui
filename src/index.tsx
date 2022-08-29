@@ -17,12 +17,15 @@ import common_zh from "./translations/zh/common.json";
 import common_vi from "./translations/vi/common.json";
 import common_ko from "./translations/ko/common.json";
 // import common_ru from "./translations/ru/common.json";
-import { CustomLoggerService } from "./utils/logger";
+import { CustomLoggerService } from "./middleware/logger";
 import GitInfo from 'react-git-info/macro';
 
 export const gitInfo = GitInfo();
 export const appConfig = new AppConfigService(process.env.REACT_APP_ENV);
+const appBuildInfo = `Branch: ${gitInfo.branch || '-'}. Commit: ${gitInfo.commit.shortHash || '-'}`;
 console.log(`%cApp version:`, 'color:brown', process.env.REACT_APP_VERSION);
+console.log(`%cBuild details:`, 'color:brown', appBuildInfo);
+console.log(`%cBuild date:`, 'color:brown', new Date(Date.parse(gitInfo.commit.date)).toLocaleString());
 console.log(`%cEnvironment:`, 'color:brown', process.env.REACT_APP_ENV);
 console.log(`%cProgramId:`, 'color:brown', appConfig.getConfig().streamProgramAddress);
 export const customLogger = new CustomLoggerService();

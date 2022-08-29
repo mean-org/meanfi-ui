@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { useState } from 'react';
 import { Modal, Button } from 'antd';
-import { isValidAddress } from '../../utils/ui';
+import { isValidAddress } from '../../middleware/ui';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../contexts/wallet';
 
