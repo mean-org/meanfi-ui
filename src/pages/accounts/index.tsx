@@ -3924,8 +3924,10 @@ export const AccountsNewView = () => {
   useEffect(() => {
     if (loadingStreams) { return; }
 
-    const wdb = parseFloat(incomingStreamsSummary.totalNet.toFixed(2));
-    const ub = parseFloat(outgoingStreamsSummary.totalNet.toFixed(2)) + parseFloat(streamingAccountsSummary.totalNet.toFixed(2));
+    const wdb = new BigNumber(incomingStreamsSummary.totalNet.toFixed(2)).toNumber();
+
+    const unallocatedTotalAmount = outgoingStreamsSummary.totalNet + streamingAccountsSummary.totalNet;
+    const ub = new BigNumber(unallocatedTotalAmount.toFixed(2)).toNumber();
 
     setTotalAccountBalance(wdb + ub);
     setCanShowStreamingAccountBalance(true);
