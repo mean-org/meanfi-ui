@@ -2,9 +2,9 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import BN from 'bn.js';
 import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
-import { Stream, STREAM_STATUS, StreamActivity } from '@mean-dao/msp';
+import { Stream, STREAM_STATUS, StreamActivity, MSP } from '@mean-dao/msp';
 import { displayAmountWithSymbol, shortenAddress, toUiAmount2 } from '../../../../middleware/utils';
-import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates, stringNumberFormat } from '../../../../middleware/ui';
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, isLocal, relativeTimeFromDates, stringNumberFormat } from '../../../../middleware/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
@@ -15,6 +15,7 @@ import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { IconExternalLink } from '../../../../Icons';
 import { Identicon } from '../../../../components/Identicon';
+import { getStreamForDebug } from '../../../../middleware/stream-debug-middleware';
 
 const { TabPane } = Tabs;
 export type StreamDetailTab = "details" | "activity";
@@ -24,6 +25,7 @@ export const MoneyStreamDetails = (props: {
   highlightedStream: Stream | undefined;
   isInboundStream: boolean;
   loadingStreamActivity: boolean;
+  msp?: MSP;
   onLoadMoreActivities: any;
   selectedToken: TokenInfo | undefined;
   stream: Stream | undefined;
@@ -34,6 +36,7 @@ export const MoneyStreamDetails = (props: {
     highlightedStream,
     isInboundStream,
     loadingStreamActivity,
+    msp,
     onLoadMoreActivities,
     selectedToken,
     stream,
@@ -582,7 +585,7 @@ export const MoneyStreamDetails = (props: {
   };
 
   const renderStreamBalance = (item: Stream) => {
-    if (!stream || !selectedToken) { return null; }
+    if (!item || !selectedToken) { return null; }
 
     return (
       <div className="details-panel-meta mt-2 mb-2">
@@ -598,13 +601,13 @@ export const MoneyStreamDetails = (props: {
             {
               isInboundStream
                 ? displayAmountWithSymbol(
-                    stream.withdrawableAmount,
+                    item.withdrawableAmount,
                     selectedToken.address,
                     selectedToken.decimals,
                     splTokenList,
                   )
                 : displayAmountWithSymbol(
-                    stream.fundsLeftInStream,
+                    item.fundsLeftInStream,
                     selectedToken.address,
                     selectedToken.decimals,
                     splTokenList,

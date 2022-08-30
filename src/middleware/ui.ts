@@ -644,7 +644,7 @@ export const percentageBn = (percent: number, total: string | BN, asNumber = fal
     if (asNumber) {
         return totalBn.multipliedBy(percent).dividedBy(100).toNumber();
     }
-    return new BN(totalBn.multipliedBy(percent).dividedBy(100).toString());
+    return new BN(totalBn.multipliedBy(percent).dividedToIntegerBy(100).toString());
 }
 
 export const maxTrailingZeroes = (original: any, zeroes = 2): string => {

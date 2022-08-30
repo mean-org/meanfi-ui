@@ -150,58 +150,63 @@ export const MoneyStreamDetails = (props: {
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
+    let associatedToken = '';
 
-    if (item) {
-      // let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-
-      if (item.version < 2) {
-        const rateAmount = new BN(item.rateAmount).toNumber();
-        value += formatThousands(
-          rateAmount,
-          friendlyDisplayDecimalPlaces(rateAmount, decimals),
-          2
-        );
-      } else {
-        // const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
-        const rateAmount = new BN(item.rateAmount);
-        // value += formatThousands(
-        //   rateAmount,
-        //   friendlyDisplayDecimalPlaces(rateAmount, decimals),
-        //   2
-        // );
-        value += stringNumberFormat(
-          toUiAmount2(rateAmount, decimals),
-          friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
-        )
-      }
-      value += ' ';
-      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
+    if (item.version < 2) {
+      associatedToken = (item as StreamInfo).associatedToken as string;
+    } else {
+      associatedToken = (item as Stream).associatedToken.toBase58();
     }
+
+    let token = getTokenByMintAddress(associatedToken);
+    const decimals = token?.decimals || 9;
+
+    if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+      token = Object.assign({}, token, {
+        symbol: 'SOL'
+      }) as TokenInfo;
+    }
+
+    if (item.version < 2) {
+      const rateAmount = new BN(item.rateAmount).toNumber();
+      value += formatThousands(
+        rateAmount,
+        friendlyDisplayDecimalPlaces(rateAmount, decimals),
+        2
+      );
+    } else {
+      const rateAmount = new BN(item.rateAmount);
+      value += stringNumberFormat(
+        toUiAmount2(rateAmount, decimals),
+        friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
+      )
+    }
+    value += ' ';
+    value += token ? token.symbol : `[${shortenAddress(associatedToken).toString()}]`;
+
     return value;
   }, [getTokenByMintAddress]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
+    let associatedToken = '';
 
-    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      // let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
-      const decimals = token?.decimals || 6;
+    if (item.version < 2) {
+      associatedToken = (item as StreamInfo).associatedToken as string;
+    } else {
+      associatedToken = (item as Stream).associatedToken.toBase58();
+    }
 
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
+    let token = getTokenByMintAddress(associatedToken);
+    const decimals = token?.decimals || 9;
+
+    if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+      token = Object.assign({}, token, {
+        symbol: 'SOL'
+      }) as TokenInfo;
+    }
+
+    if (item.rateAmount === 0 && item.allocationAssigned > 0) {
 
       if (item.version < 2) {
         const allocationAssigned = new BN(item.allocationAssigned).toNumber();
@@ -211,22 +216,17 @@ export const MoneyStreamDetails = (props: {
           2
         );
       } else {
-        // const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
         const allocationAssigned = new BN(item.allocationAssigned);
-        // value += formatThousands(
-        //   allocationAssigned,
-        //   friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
-        //   2
-        // );
         value += stringNumberFormat(
           toUiAmount2(allocationAssigned, decimals),
           friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || decimals
         )
       }
+
       value += ' ';
-      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
     }
+
     return value;
   }, [getTokenByMintAddress]);
 
@@ -410,6 +410,13 @@ export const MoneyStreamDetails = (props: {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
     };
+    let associatedToken = '';
+
+    if (item.version < 2) {
+      associatedToken = (item as StreamInfo).associatedToken as string;
+    } else {
+      associatedToken = (item as Stream).associatedToken.toBase58();
+    }
 
     if (selectedToken && selectedToken.logoURI) {
       return (
@@ -424,7 +431,7 @@ export const MoneyStreamDetails = (props: {
     } else {
       return (
         <Identicon
-          address={(item.associatedToken as PublicKey).toBase58()}
+          address={associatedToken}
           style={{ width: "30", display: "inline-flex" }}
           className="token-img" />
       );

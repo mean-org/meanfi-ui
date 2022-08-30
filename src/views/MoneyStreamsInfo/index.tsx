@@ -27,7 +27,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, stringNumberFormat, toUsCurrency } from "../../middleware/ui";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isProd, stringNumberFormat, toUsCurrency } from "../../middleware/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cutNumber, displayAmountWithSymbol, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount2 } from "../../middleware/utils";
 import { useTranslation } from "react-i18next";
@@ -86,6 +86,7 @@ export const MoneyStreamsInfoView = (props: {
     splTokenList,
     streamListv1,
     streamListv2,
+    isWhitelisted,
     treasuryOption,
     transactionStatus,
     streamProgramAddress,
@@ -1102,7 +1103,6 @@ export const MoneyStreamsInfoView = (props: {
 
     if (publicKey && params) {
       const token = await getTokenOrCustomToken(params.associatedToken);
-      consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
       const treasury = treasuryList.find(t => t.id === params.treasuryId);
       if (!treasury) { return null; }
       let created: boolean;
@@ -1681,41 +1681,40 @@ export const MoneyStreamsInfoView = (props: {
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
+    let associatedToken = '';
 
-    if (item) {
-      // let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-
-      if (item.version < 2) {
-        const rateAmount = new BN(item.rateAmount).toNumber();
-        value += formatThousands(
-          rateAmount,
-          friendlyDisplayDecimalPlaces(rateAmount, decimals),
-          2
-        );
-      } else {
-        const rateAmount = new BN(item.rateAmount);
-        value += stringNumberFormat(
-          toUiAmount2(rateAmount, decimals),
-          friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
-        )
-        // value += formatThousands(
-        //   rateAmount,
-        //   friendlyDisplayDecimalPlaces(rateAmount, decimals),
-        //   2
-        // );
-      }
-      value += ' ';
-      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
+    if (item.version < 2) {
+      associatedToken = (item as StreamInfo).associatedToken as string;
+    } else {
+      associatedToken = (item as Stream).associatedToken.toBase58();
     }
+
+    let token = getTokenByMintAddress(associatedToken);
+    const decimals = token?.decimals || 9;
+
+    if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+      token = Object.assign({}, token, {
+        symbol: 'SOL'
+      }) as TokenInfo;
+    }
+
+    if (item.version < 2) {
+      const rateAmount = new BN(item.rateAmount).toNumber();
+      value += formatThousands(
+        rateAmount,
+        friendlyDisplayDecimalPlaces(rateAmount, decimals),
+        2
+      );
+    } else {
+      const rateAmount = new BN(item.rateAmount);
+      value += stringNumberFormat(
+        toUiAmount2(rateAmount, decimals),
+        friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
+      )
+    }
+    value += ' ';
+    value += token ? token.symbol : `[${shortenAddress(associatedToken).toString()}]`;
+
     return value;
   }, [getTokenByMintAddress]);
 
@@ -1723,7 +1722,7 @@ export const MoneyStreamsInfoView = (props: {
     let value = '';
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
       const decimals = token?.decimals || 6;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
@@ -1740,20 +1739,13 @@ export const MoneyStreamsInfoView = (props: {
           2
         );
       } else {
-        // const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
         const allocationAssigned = new BN(item.allocationAssigned);
         value += stringNumberFormat(
           toUiAmount2(allocationAssigned, decimals),
           friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || decimals
         )
-        // value += formatThousands(
-        //   allocationAssigned,
-        //   friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
-        //   2
-        // );
       }
       value += ' ';
-      // value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
     }
     return value;
@@ -1771,9 +1763,16 @@ export const MoneyStreamsInfoView = (props: {
       subtitle = rateAmount;
     }
 
-    return subtitle;
+    return (
+      <>
+        <span>{subtitle || '0'}</span>
+        {!isProd() && isWhitelisted && item.version >= 2 && (
+          <span className={`ml-1 font-size-60${(item as Stream).streamUnitsPerSecond.isZero() ? ' fg-yellow pulsate-fast' : ''}`}>({(item as Stream).streamUnitsPerSecond.toString()} units/s)</span>
+        )}
+      </>
+    );
 
-  }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
+  }, [isWhitelisted, getRateAmountDisplay, getDepositAmountDisplay, t]);
 
   const isStreamRunning = useCallback((stream: Stream | StreamInfo) => {
     const v1 = stream as StreamInfo;
@@ -2627,7 +2626,7 @@ export const MoneyStreamsInfoView = (props: {
               ? displayAmountWithSymbol(
                   v2.withdrawableAmount,
                   v2.associatedToken.toString(),
-                  token?.decimals || 6,
+                  token?.decimals || 9,
                   splTokenList,
                 )
               : getAmountWithSymbol(
@@ -2635,7 +2634,7 @@ export const MoneyStreamsInfoView = (props: {
                   v1.associatedToken as string,
                   false,
                   splTokenList,
-                  token?.decimals || 6,
+                  token?.decimals || 9,
                 );
 
             return (

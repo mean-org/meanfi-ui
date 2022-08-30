@@ -3496,7 +3496,7 @@ export const VestingView = () => {
     if (selectedVestingContract?.associatedToken) {
       getTokenOrCustomToken(selectedVestingContract.associatedToken as string)
       .then(token => {
-        consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
+        consoleOut('getTokenOrCustomToken (VestingView) ->', token, 'blue');
         setWorkingToken(token);
       });
     }

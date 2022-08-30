@@ -2530,20 +2530,23 @@ export const MoneyStreamsOutgoingView = (props: {
 
   // Set selected token to the stream associated token as soon as the stream is available or changes
   useEffect(() => {
-    if (!publicKey) { return; }
+    if (!publicKey || !streamSelected) { return; }
+    let associatedToken = '';
 
-    if (streamSelected?.associatedToken) {
+    if (streamSelected.version < 2) {
+      associatedToken = (streamSelected as StreamInfo).associatedToken as string;
+    } else {
+      associatedToken = (streamSelected as Stream).associatedToken.toBase58();
+    }
+
+    if (associatedToken && (!workingToken || workingToken.address !== associatedToken)) {
       getTokenOrCustomToken((streamSelected.associatedToken as PublicKey).toBase58())
       .then(token => {
-        consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
+        consoleOut('getTokenOrCustomToken (MoneyStreamsOutgoingView) ->', token, 'blue');
         setWorkingToken(token);
       });
     }
-  }, [
-    getTokenOrCustomToken,
-    publicKey,
-    streamSelected?.associatedToken
-  ]);
+  }, [getTokenOrCustomToken, publicKey, streamSelected, workingToken]);
 
 
   ///////////////

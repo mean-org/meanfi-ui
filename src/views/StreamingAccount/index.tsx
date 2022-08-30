@@ -2443,7 +2443,7 @@ export const StreamingAccountView = (props: {
 
     getTokenOrCustomToken(ata)
     .then(token => {
-      consoleOut('Token returned by getTokenOrCustomToken ->', token, 'blue');
+      consoleOut('getTokenOrCustomToken (StreamingAccountView) ->', token, 'blue');
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         const modifiedToken = Object.assign({}, token, {
           symbol: 'SOL'

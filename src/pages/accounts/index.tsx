@@ -3812,7 +3812,20 @@ export const AccountsNewView = () => {
 
   // Preset the selected stream from the list if provided in path param (streamId)
   useEffect(() => {
-    if (publicKey && streamList && streamList.length > 0 && pathParamStreamId && (!streamDetail || !streamDetail.id || (streamDetail.id as PublicKey).toBase58() !== pathParamStreamId)) {
+    const inPath = (item: Stream | StreamInfo, param: string) => {
+      if (!item.id) {
+        return false;
+      }
+      const isNew = item.version >= 2 ? true : false;
+      if (isNew) {
+        return (item as Stream).id.toBase58() === param;
+      } else {
+        return (item as StreamInfo).id as string === param;
+      }
+    }
+
+    if (publicKey && streamList && streamList.length > 0 &&
+        pathParamStreamId && (!streamDetail || !inPath(streamDetail, pathParamStreamId))) {
       const item = streamList.find(s => s.id && (s.id as PublicKey).toString() === pathParamStreamId);
       consoleOut('streamList:', streamList, 'darkgreen');
       consoleOut('item:', item, 'darkgreen');

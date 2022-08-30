@@ -1190,6 +1190,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
       msp.listStreams({ treasurer: userPk, beneficiary: userPk })
         .then(streamsv2 => {
+          consoleOut('streamsv2 from AppSate:', streamsv2, 'blue');
           listStreamsV2PerformanceCounter.stop();
           streamAccumulator.push(...streamsv2);
           rawStreamsv2 = streamsv2;

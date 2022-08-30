@@ -489,22 +489,6 @@ export const PlaygroundView = () => {
     }
   }, [location.search, searchParams, setSearchParams]);
 
-  // Convert raw stream data to Json
-  const rawJsonData = useMemo(() => {
-    if (!streamRawData) { return ""; }
-
-    return JSON.stringify(streamRawData);
-
-  }, [streamRawData]);
-
-  // Convert parsed stream data to Json
-  const parsedJsonData = useMemo(() => {
-    if (!streamParsedData) { return ""; }
-
-    return JSON.stringify(streamParsedData);
-
-  }, [streamParsedData]);
-
   // Keep account balance updated
   useEffect(() => {
 
@@ -865,20 +849,20 @@ export const PlaygroundView = () => {
           <div className="mb-3">
             <div className="two-column-layout">
               <div className="left">
-                <div className="form-label">Raw stream data</div>
-                <div className="well mb-1 proposal-summary-container vertical-scroll">
+                <div className="form-label">On-chain stream account data</div>
+                <div className="well mb-1 panel-max-height vertical-scroll">
                   {streamRawData ? (
-                    <ReactJson src={streamRawData} />
+                    <ReactJson src={streamRawData} theme={"ocean"} collapsed={1} />
                   ) : (
                     "--"
                   )}
                 </div>
               </div>
               <div className="right">
-                <div className="form-label">Parsed stream data</div>
-                <div className="well mb-1 proposal-summary-container vertical-scroll">
+                <div className="form-label">MSP SDK parsed stream data</div>
+                <div className="well mb-1 panel-max-height vertical-scroll">
                   {streamParsedData ? (
-                    <ReactJson src={streamParsedData} />
+                    <ReactJson src={streamParsedData} theme={"ocean"} collapsed={1} />
                   ) : (
                     "--"
                   )}

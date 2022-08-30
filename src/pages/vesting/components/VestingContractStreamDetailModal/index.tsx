@@ -120,6 +120,7 @@ export const VestingContractStreamDetailModal = (props: {
         highlightedStream={highlightedStream}
         isInboundStream={isInboundStream()}
         loadingStreamActivity={loadingStreamActivity}
+        msp={msp}
         onLoadMoreActivities={loadMoreActivity}
         selectedToken={selectedToken}
         stream={streamDetail}
