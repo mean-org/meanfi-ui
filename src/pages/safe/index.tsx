@@ -64,7 +64,6 @@ import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   getFees,
   MeanMultisig,
-  MEAN_MULTISIG_PROGRAM,
   MultisigInfo,
   MultisigParticipant,
   MultisigTransaction,
@@ -1137,7 +1136,7 @@ export const SafeView = () => {
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
-        MEAN_MULTISIG_PROGRAM
+        multisigAddressPK
       );
 
       const owners = data.owners.map((p: MultisigParticipant) => {

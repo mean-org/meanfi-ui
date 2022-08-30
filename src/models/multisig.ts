@@ -1,13 +1,15 @@
-import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, Message, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, Message, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { AnchorProvider, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
-import { IDL as SplTokenIdl } from "@project-serum/anchor/dist/cjs/spl/token";
-import { OperationType, PaymentRateType } from "./enums";
 import bs58 from "bs58";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { MEAN_MULTISIG_PROGRAM, MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
+import { AppConfig, UiInstruction } from "@mean-dao/mean-multisig-apps";
+import { MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
+import { OperationType, PaymentRateType } from "./enums";
 import { MeanSplTokenInstructionCoder } from "./spl-token-coder/instruction";
 import { MeanSystemInstructionCoder } from "./system-program-coder/instruction";
-import { AppConfig, UiInstruction } from "@mean-dao/mean-multisig-apps";
+import { appConfig } from "..";
+
+const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
 export const NATIVE_LOADER = new PublicKey("NativeLoader1111111111111111111111111111111");
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
@@ -214,9 +216,9 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
   let ix: any;
 
   if (!programIdl) {
-    switch(transaction.operation) {
+    switch (transaction.operation) {
       case OperationType.Transfer:
-      case OperationType.TransferTokens: 
+      case OperationType.TransferTokens:
         ix = "transfer";
         break;
       default: ix = undefined;
@@ -224,7 +226,7 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
     return ix;
   }
 
-  switch(transaction.operation) {
+  switch (transaction.operation) {
     // System Program
     case OperationType.Transfer:
       ix = "transfer";
@@ -292,12 +294,12 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
       ix = programIdl.instructions.find(ix => ix.name === "withdrawFunds");
       break;
     case OperationType.CredixDepositTranche:
-        ix = programIdl.instructions.find(ix => ix.name === "depositTranche");
-        break;
+      ix = programIdl.instructions.find(ix => ix.name === "depositTranche");
+      break;
     default: ix = undefined;
   }
 
-  if (typeof(ix) === "string") {
+  if (typeof (ix) === "string") {
     return ix.length ? ix : "";
   }
 
@@ -336,7 +338,7 @@ export const createAnchorProgram = (
 
     return new Program<SplToken>(programIdl as SplToken, programId, provider, coder());
   }
-  
+
   return new Program(programIdl, programId, provider);
 }
 
@@ -371,7 +373,7 @@ export const parseMultisigProposalIx = (
       return getMultisigInstructionSummary(ix);
     }
 
-    const coder = program.programId.equals(TOKEN_PROGRAM_ID) 
+    const coder = program.programId.equals(TOKEN_PROGRAM_ID)
       ? new MeanSplTokenInstructionCoder(program.idl)
       : new BorshInstructionCoder(program.idl);
 
@@ -390,7 +392,7 @@ export const parseMultisigProposalIx = (
     const formattedData = coder.format(
       {
         name: dataDecoded.name,
-        data: !program.programId.equals(MEAN_MULTISIG_PROGRAM) ? ixData : {
+        data: !program.programId.equals(multisigAddressPK) ? ixData : {
           label: ixData["label"],
           threshold: ixData["threshold"],
           owners: []
@@ -405,7 +407,7 @@ export const parseMultisigProposalIx = (
       return getMultisigInstructionSummary(ix);
     }
 
-    if (program.programId.equals(MEAN_MULTISIG_PROGRAM)) {
+    if (program.programId.equals(multisigAddressPK)) {
       for (const arg of formattedData.args) {
         if (arg.name === "owners") {
           arg.data = ixData["owners"].map((o: any) => {
@@ -431,7 +433,7 @@ export const parseMultisigProposalIx = (
 
       } as InstructionAccountInfo);
 
-      accIndex ++;
+      accIndex++;
     }
 
     const dataInfos: InstructionDataInfo[] = [];
@@ -443,7 +445,7 @@ export const parseMultisigProposalIx = (
         value: dataItem.data,
         index: dataIndex
       } as InstructionDataInfo);
-      dataIndex ++;
+      dataIndex++;
     }
 
     const nameArray = (program?.idl.name as string).split("_");
@@ -519,7 +521,7 @@ export const parseMultisigSystemProposalIx = (transaction: MultisigTransaction):
 
       } as InstructionAccountInfo);
 
-      accIndex ++;
+      accIndex++;
     }
 
     const dataInfos: InstructionDataInfo[] = [];
@@ -531,7 +533,7 @@ export const parseMultisigSystemProposalIx = (transaction: MultisigTransaction):
         value: dataItem.data,
         index: dataIndex
       } as InstructionDataInfo);
-      dataIndex ++;
+      dataIndex++;
     }
 
     const ixInfo = {
@@ -561,7 +563,7 @@ export const parseSerializedTx = async (
 ): Promise<Transaction | null> => {
   try {
 
-    if (!connection || !base64Str) { 
+    if (!connection || !base64Str) {
       throw Error(`Parse Serialized Transaction: Invalid parameters.`)
     }
 
@@ -575,14 +577,14 @@ export const parseSerializedTx = async (
     const buffer = Buffer.from(base64Str, 'base64');
 
     let tx: Transaction | null = null;
-    
+
     try {
       tx = Transaction.from(buffer);
     } catch (error) {
       // Errors above indicate that the bytes do not encode a transaction.
     }
 
-    if(!tx) {
+    if (!tx) {
       const message = Message.from(buffer);
       tx = Transaction.populate(message);
     }
@@ -614,7 +616,7 @@ export const getMultisigInstructionSummary = (
 
       } as InstructionAccountInfo);
 
-      accIndex ++;
+      accIndex++;
     }
 
     const bufferStr = Buffer.from(instruction.data).toString('hex');

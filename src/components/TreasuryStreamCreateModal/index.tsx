@@ -48,7 +48,7 @@ import { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM, DEFAULT_EXPIRATION_TIME_SECONDS, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, DEFAULT_EXPIRATION_TIME_SECONDS, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { InfoIcon } from '../InfoIcon';
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
@@ -152,6 +152,7 @@ export const TreasuryStreamCreateModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
   
   const isNewTreasury = useCallback(() => {
     if (workingTreasuryDetails) {
@@ -1112,7 +1113,7 @@ export const TreasuryStreamCreateModal = (props: {
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
-        MEAN_MULTISIG_PROGRAM
+        multisigAddressPK
       );
 
       const streams: StreamBeneficiary[] = [];
@@ -1126,7 +1127,7 @@ export const TreasuryStreamCreateModal = (props: {
         const timeStampCounter = new u64(timeStamp + seedCounter);
         const [stream, streamBump] = await PublicKey.findProgramAddress(
           [selectedMultisig.id.toBuffer(), timeStampCounter.toBuffer()],
-          MEAN_MULTISIG_PROGRAM
+          multisigAddressPK
         );
 
         streams.push({

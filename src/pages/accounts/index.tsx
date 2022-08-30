@@ -78,7 +78,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { closeTokenAccount } from '../../utils/accounts';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { BN } from 'bn.js';
 import { ZERO_FEES } from '../../models/multisig';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
@@ -1214,7 +1214,7 @@ export const AccountsNewView = () => {
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
-        MEAN_MULTISIG_PROGRAM
+        multisigAddressPK
       );
 
       const mintAddress = new PublicKey(data.token.address);
@@ -1587,9 +1587,7 @@ export const AccountsNewView = () => {
         ? NATIVE_SOL_MINT 
         : new PublicKey(fromAccount.mint);
 
-      let toAddress = new PublicKey(data.to);
-      // const programId = MEAN_MULTISIG_PROGRAM;
-      //
+      let toAddress = new PublicKey(data.to);      
       let transferIx = SystemProgram.transfer({
         fromPubkey: fromAddress,
         toPubkey: toAddress,

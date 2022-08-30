@@ -1,5 +1,5 @@
 import './style.scss';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MEAN_MULTISIG_PROGRAM } from "@mean-dao/mean-multisig-sdk";
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig } from "@mean-dao/mean-multisig-sdk";
 import { TransactionFees } from "@mean-dao/msp";
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, ParsedTransactionWithMeta, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
 import { Button, Col, Row } from "antd";
@@ -486,7 +486,7 @@ export const ProgramDetailsView = (props: {
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
-        MEAN_MULTISIG_PROGRAM
+        multisigAddressPK
       );
 
       const ixData = Buffer.from([4, 0, 0, 0]);

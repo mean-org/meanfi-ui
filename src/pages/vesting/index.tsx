@@ -39,7 +39,7 @@ import { VestingContractOverview } from './components/VestingContractOverview';
 import { CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useNativeAccount } from '../../contexts/accounts';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../utils/ids';
 import { appConfig, customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
@@ -2149,7 +2149,7 @@ export const VestingView = () => {
       consoleOut('timeStampCounter:', timeStampCounter.toString(), 'blue');
       const [stream, streamBump] = await PublicKey.findProgramAddress(
         [multisig.id.toBuffer(), timeStampCounter.toBuffer()],
-        MEAN_MULTISIG_PROGRAM
+        multisigAddressPK
       );
 
       consoleOut('data.treasury:', data.treasury, 'blue');
