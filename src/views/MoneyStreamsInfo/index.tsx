@@ -1237,12 +1237,6 @@ export const MoneyStreamsInfoView = (props: {
 
   const onTreasuryCreated = useCallback((createOptions: TreasuryCreateOptions) => {
     refreshTokenBalance();
-
-    openNotification({
-      description: `Navigate to outgoing tab to checkout streaming account: ${createOptions.treasuryName}`,
-      type: "info",
-      duration: 20,
-    });
   }, [refreshTokenBalance]);
 
   const onExecuteCreateTreasuryTx = async (createOptions: TreasuryCreateOptions) => {

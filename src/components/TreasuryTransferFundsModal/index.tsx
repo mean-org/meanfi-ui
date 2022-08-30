@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCur
 import { isError } from '../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
-import { formatThousands, getAmountWithSymbol, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeInteger, shortenAddress, toTokenAmount2, toUiAmount2 } from '../../middleware/utils';
+import { displayAmountWithSymbol, formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeInteger, shortenAddress, toTokenAmount2, toUiAmount2 } from '../../middleware/utils';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
@@ -610,12 +610,11 @@ export const TreasuryTransferFundsModal = (props: {
                       {selectedToken && unallocatedBalance ? (
                         <span>
                           {
-                            getAmountWithSymbol(
+                            displayAmountWithSymbol(
                               unallocatedBalance,
                               selectedToken.address,
-                              true,
-                              splTokenList,
-                              selectedToken.decimals
+                              selectedToken.decimals,
+                              splTokenList
                             )
                           }
                         </span>

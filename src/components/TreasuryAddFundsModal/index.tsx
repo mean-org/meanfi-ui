@@ -7,8 +7,8 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import {
+  displayAmountWithSymbol,
   formatThousands,
-  getAmountWithSymbol,
   getSdkValue,
   isValidNumber,
   shortenAddress,
@@ -852,12 +852,11 @@ export const TreasuryAddFundsModal = (props: {
                         )}
                         <span>
                           {`${availableBalance && selectedToken
-                              ? getAmountWithSymbol(
+                              ? displayAmountWithSymbol(
                                   availableBalance,
                                   selectedToken.address,
-                                  true,
-                                  splTokenList,
-                                  selectedToken.decimals
+                                  selectedToken.decimals,
+                                  splTokenList
                                 )
                               : "0"
                           }`}
