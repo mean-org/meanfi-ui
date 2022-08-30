@@ -9,8 +9,6 @@ import { MeanSplTokenInstructionCoder } from "./spl-token-coder/instruction";
 import { MeanSystemInstructionCoder } from "./system-program-coder/instruction";
 import { appConfig } from "..";
 
-const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-
 export const NATIVE_LOADER = new PublicKey("NativeLoader1111111111111111111111111111111");
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
 export const LAMPORTS_PER_SIG = 5000;
@@ -349,6 +347,7 @@ export const parseMultisigProposalIx = (
 ): MultisigTransactionInstructionInfo | null => {
 
   try {
+    const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
     const ix = new TransactionInstruction({
       programId: transaction.programId,
