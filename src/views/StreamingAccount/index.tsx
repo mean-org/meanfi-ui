@@ -2463,7 +2463,7 @@ export const StreamingAccountView = (props: {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
 
-      if (v1.version < 2) {
+      if (item.version < 2) {
         if (v1.streamName) {
           return `${v1.streamName}`;
         }

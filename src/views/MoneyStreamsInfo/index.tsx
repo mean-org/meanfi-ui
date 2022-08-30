@@ -29,7 +29,7 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isProd, stringNumberFormat, toUsCurrency } from "../../middleware/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { cutNumber, displayAmountWithSymbol, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount2 } from "../../middleware/utils";
+import { cutNumber, displayAmountWithSymbol, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from "../../middleware/utils";
 import { useTranslation } from "react-i18next";
 import { useNativeAccount } from "../../contexts/accounts";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
@@ -53,6 +53,7 @@ import { isMobile } from "react-device-detect";
 import { NATIVE_SOL } from "../../middleware/tokens";
 import { readAccountInfo } from "../../middleware/accounts";
 import { AddFundsParams } from "../../models/vesting";
+import BigNumber from "bignumber.js";
 
 const { TabPane } = Tabs;
 
@@ -359,8 +360,8 @@ export const MoneyStreamsInfoView = (props: {
         const unallocated = getUnallocatedBalance(tsry);
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         const ub = isNewTreasury
-          ? makeDecimal(unallocated, decimals)
-          : unallocated.toNumber();
+          ? new BigNumber(toUiAmount2(unallocated, decimals)).toNumber()
+          : new BigNumber(unallocated.toString()).toNumber();
         if (logUnallocatedBalances) {
           consoleOut(`unallocatedBalance for ${shortenAddress(tsry.id as string, 12)}:`, ub.toString(), 'blue');
         }
@@ -488,7 +489,7 @@ export const MoneyStreamsInfoView = (props: {
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         const decimals = token.decimals || 6;
-        const amount = freshStream.withdrawableAmount.toNumber();
+        const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (isIncoming) {
@@ -504,6 +505,7 @@ export const MoneyStreamsInfoView = (props: {
 
     // Update state
     setIncomingStreamsSummary(resume);
+
     return resume;
   }, [
     ms,
@@ -575,7 +577,7 @@ export const MoneyStreamsInfoView = (props: {
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         const decimals = token.decimals || 6;
-        const amount = freshStream.fundsLeftInStream.toNumber();
+        const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (!isIncoming) {
@@ -1652,7 +1654,7 @@ export const MoneyStreamsInfoView = (props: {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
 
-      if (v1.version < 2) {
+      if (item.version < 2) {
         if (v1.streamName) {
           return `${v1.streamName}`;
         }
@@ -2129,20 +2131,24 @@ export const MoneyStreamsInfoView = (props: {
   useEffect(() => {
     if (!streamList || loadingStreams || !incomingStreamsSummary) { return; }
 
-    setWithdrawalBalance(parseFloat(incomingStreamsSummary.totalNet.toFixed(2)));
+    const withdrawalTotalAmount = new BigNumber(incomingStreamsSummary.totalNet.toFixed(2)).toNumber();
 
+    setWithdrawalBalance(withdrawalTotalAmount);
   }, [incomingStreamsSummary, loadingStreams, streamList]);
 
   // Update outgoing balance
   useEffect(() => {
     if (!streamingAccountsSummary || !outgoingStreamsSummary) { return; }
 
-    setUnallocatedBalance(parseFloat(outgoingStreamsSummary.totalNet.toFixed(2)) + parseFloat(streamingAccountsSummary.totalNet.toFixed(2)));
+    const unallocatedTotalAmount = outgoingStreamsSummary.totalNet + streamingAccountsSummary.totalNet;
+    const convertToBN = new BigNumber(unallocatedTotalAmount.toFixed(2));
+
+    setUnallocatedBalance(convertToBN.toNumber());
   }, [ streamingAccountsSummary, outgoingStreamsSummary]);
 
   // Update total account balance
   useEffect(() => {
-      setTotalAccountBalance((withdrawalBalance + unallocatedBalance) as number);
+      setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
   }, [unallocatedBalance, withdrawalBalance]);
 
   // Calculate the rate per day for incoming streams
@@ -2158,16 +2164,15 @@ export const MoneyStreamsInfoView = (props: {
         const v2 = stream as Stream;
         const isNew = v2.version && v2.version >= 2 ? true : false;
 
-        // const token = getTokenByMintAddress(stream.associatedToken as string);
         const token = getTokenByMintAddress((stream.associatedToken as PublicKey).toString());
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-          const rateAmountValue = isNew ? parseFloat(toUiAmount2(new BN(v2.rateAmount), token.decimals)) : v1.rateAmount;
-          const valueOfDay = rateAmountValue * tokenPrice / new BN(stream.rateIntervalInSeconds).toNumber() * 86400;
+          const rateAmountValue = isNew ? new BigNumber(toUiAmount2(new BN(v2.rateAmount), token.decimals)).toNumber() : v1.rateAmount;
+          const valueOfDay = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
           totalRateAmountValuePerDay += valueOfDay
 
-          const valueOfSeconds = rateAmountValue * tokenPrice / new BN(stream.rateIntervalInSeconds).toNumber();
+          const valueOfSeconds = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds;
           totalRateAmountValuePerSecond += valueOfSeconds
         }
       }
@@ -2206,11 +2211,11 @@ export const MoneyStreamsInfoView = (props: {
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-          const rateAmountValue = isNew ? parseFloat(toUiAmount2(new BN(v2.rateAmount), token?.decimals || 6)) : v1.rateAmount;
-          const valueOfDay = rateAmountValue * tokenPrice / new BN(stream.rateIntervalInSeconds).toNumber() * 86400;
+          const rateAmountValue = isNew ? new BigNumber(toUiAmount2(new BN(v2.rateAmount), token?.decimals || 6)).toNumber() : v1.rateAmount;
+          const valueOfDay = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
           totalRateAmountValue += valueOfDay;
 
-          const valueOfSeconds = rateAmountValue * tokenPrice / new BN(stream.rateIntervalInSeconds).toNumber();
+          const valueOfSeconds = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds;
           totalRateAmountValuePerSecond += valueOfSeconds;
         }
       }
@@ -2268,12 +2273,12 @@ export const MoneyStreamsInfoView = (props: {
         <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
       ) : (
         <>
-          {totalAccountBalance && totalAccountBalance > 0 ? (
+          {(totalAccountBalance && totalAccountBalance > 0) ? (
             <span>{toUsCurrency(totalAccountBalance)}</span>
           ) : (
             <span>$0.0</span>
           )}
-          {totalAccountBalance && totalAccountBalance > 0 && (
+          {(totalAccountBalance && totalAccountBalance > 0) && (
             (withdrawalBalance > unallocatedBalance) ? (
               <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
             ) : (
@@ -2319,16 +2324,22 @@ export const MoneyStreamsInfoView = (props: {
     // consoleOut("incomingDivider test", incomingDivider);
 
     const calculateScaleBalanceIncoming = withdrawalBalance / incomingDivider;
+    // const calculateScaleBalanceIncoming = withdrawalBalance.divn(incomingDivider);
 
-    // const calculateScaleBalanceIncoming = (withdrawalBalance * 100) / (totalAccountBalance as number);
     const calculateScaleInHeightIncoming = (calculateScaleBalanceIncoming * 30) / 100;
+    // const calculateScaleInHeightIncoming = calculateScaleBalanceIncoming.muln(30).divn(100);
 
     if (calculateScaleInHeightIncoming > 0 && calculateScaleInHeightIncoming <= 3) {
+    // if (calculateScaleInHeightIncoming.gtn(0) && calculateScaleInHeightIncoming.lten(3)) {
       setWithdrawalScale(3);
     } else if (calculateScaleInHeightIncoming === 0) {
+    // } else if (calculateScaleInHeightIncoming.eqn(0)) {
       setWithdrawalScale(0);
     } else {
       setWithdrawalScale(Math.ceil(calculateScaleInHeightIncoming));
+      // const convertScaleToBN = new BigNumber(calculateScaleInHeightIncoming.toString());
+      // const roundedScale = convertScaleToBN.integerValue(BigNumber.ROUND_CEIL);
+      // setWithdrawalScale(roundedScale.toNumber());
     }
 
   }, [totalAccountBalance, withdrawalBalance]);
@@ -2348,15 +2359,22 @@ export const MoneyStreamsInfoView = (props: {
     // consoleOut("outgoingDivider test", outgoingDivider);
 
     const calculateScaleBalanceOutgoing = unallocatedBalance / outgoingDivider;
-    // const calculateScaleBalanceOutgoing = (unallocatedBalance * 100) / (totalAccountBalance as number);
+    // const calculateScaleBalanceOutgoing = unallocatedBalance.divn(outgoingDivider);
+
     const calculateScaleInHeightOutgoing = (calculateScaleBalanceOutgoing * 30) / 100;
+    // const calculateScaleInHeightOutgoing = calculateScaleBalanceOutgoing.muln(30).divn(100);
 
     if (calculateScaleInHeightOutgoing > 0 && calculateScaleInHeightOutgoing <= 3) {
+    // if (calculateScaleInHeightOutgoing.gtn(0) && calculateScaleInHeightOutgoing.lten(3)) {
       setUnallocatedScale(3);
     } else if (calculateScaleInHeightOutgoing === 0) {
+    // } else if (calculateScaleInHeightOutgoing.eqn(0)) {
       setUnallocatedScale(0);
     } else {
       setUnallocatedScale(Math.ceil(calculateScaleInHeightOutgoing));
+      // const convertScaleToBN = new BigNumber(calculateScaleInHeightOutgoing.toString());
+      // const roundedScale = convertScaleToBN.integerValue(BigNumber.ROUND_CEIL);
+      // setUnallocatedScale(roundedScale.toNumber());
     }
 
   }, [totalAccountBalance, unallocatedBalance]);

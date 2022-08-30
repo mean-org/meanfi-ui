@@ -1752,9 +1752,9 @@
     prompt-sync "^4.2.0"
     yaml "^1.10.2"
 
-"@mean-dao/msp@3.0.0-alpha.7":
-  version "3.0.0-alpha.7"
-  resolved "https://registry.yarnpkg.com/@mean-dao/msp/-/msp-3.0.0-alpha.7.tgz#bfe59827d5499b1f9914968be47645167b742be9"
+"@mean-dao/msp@3.0.0-alpha.9":
+  version "3.0.0-alpha.9"
+  resolved "https://registry.yarnpkg.com/@mean-dao/msp/-/msp-3.0.0-alpha.9.tgz#f52c3708cc8c3cfcab42570898012c6f0aed2b9c"
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@solana/spl-token" "^0.1.8"

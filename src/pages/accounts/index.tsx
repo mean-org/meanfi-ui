@@ -26,10 +26,10 @@ import {
   getSdkValue,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
-  makeDecimal,
   openLinkInNewTab,
   shortenAddress,
-  tabNameFormat
+  tabNameFormat,
+  toUiAmount2
 } from '../../middleware/utils';
 import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
@@ -93,6 +93,7 @@ import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
 import notification from 'antd/lib/notification';
 import { SolBalanceModal } from '../../components/SolBalanceModal';
+import BigNumber from 'bignumber.js';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -2710,8 +2711,8 @@ export const AccountsNewView = () => {
         const unallocated = getUnallocatedBalance(tsry);
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         const ub = isNewTreasury
-          ? makeDecimal(unallocated, decimals)
-          : unallocated.toNumber();
+          ? new BigNumber(toUiAmount2(unallocated, decimals)).toNumber()
+          : new BigNumber(unallocated.toString()).toNumber();
         return ub;
     }
     return 0;
@@ -2832,7 +2833,7 @@ export const AccountsNewView = () => {
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         const decimals = token.decimals || 6;
-        const amount = new BN(freshStream.withdrawableAmount).toNumber();
+        const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (isIncoming) {
@@ -2850,7 +2851,6 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
-    connection,
     streamListv1,
     streamListv2,
     accountAddress,
@@ -2917,7 +2917,7 @@ export const AccountsNewView = () => {
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         const decimals = token.decimals || 6;
-        const amount = freshStream.fundsLeftInStream.toNumber();
+        const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (!isIncoming) {
@@ -2934,7 +2934,6 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
-    connection,
     streamListv1,
     streamListv2,
     accountAddress,
