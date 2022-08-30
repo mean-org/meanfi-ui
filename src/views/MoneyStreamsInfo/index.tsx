@@ -1767,7 +1767,7 @@ export const MoneyStreamsInfoView = (props: {
       <>
         <span>{subtitle || '0'}</span>
         {!isProd() && isWhitelisted && item.version >= 2 && (
-          <span className={`ml-1 font-size-60${(item as Stream).streamUnitsPerSecond.isZero() ? ' fg-yellow pulsate-fast' : ''}`}>({(item as Stream).streamUnitsPerSecond.toString()} units/s)</span>
+          <span className={`ml-1 font-size-60${(item as Stream).streamUnitsPerSecond === 0 ? ' fg-yellow pulsate-fast' : ''}`}>({(item as Stream).streamUnitsPerSecond} units/s)</span>
         )}
       </>
     );

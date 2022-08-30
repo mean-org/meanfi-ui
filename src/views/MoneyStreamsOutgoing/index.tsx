@@ -2540,7 +2540,7 @@ export const MoneyStreamsOutgoingView = (props: {
     }
 
     if (associatedToken && (!workingToken || workingToken.address !== associatedToken)) {
-      getTokenOrCustomToken((streamSelected.associatedToken as PublicKey).toBase58())
+      getTokenOrCustomToken(associatedToken)
       .then(token => {
         consoleOut('getTokenOrCustomToken (MoneyStreamsOutgoingView) ->', token, 'blue');
         setWorkingToken(token);

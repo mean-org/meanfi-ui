@@ -149,6 +149,10 @@ export const MoneyStreamDetails = (props: {
   }
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    if (!selectedToken) {
+      return '';
+    }
+
     let value = '';
     let associatedToken = '';
 
@@ -156,38 +160,33 @@ export const MoneyStreamDetails = (props: {
       associatedToken = (item as StreamInfo).associatedToken as string;
     } else {
       associatedToken = (item as Stream).associatedToken.toBase58();
-    }
-
-    let token = getTokenByMintAddress(associatedToken);
-    const decimals = token?.decimals || 9;
-
-    if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-      token = Object.assign({}, token, {
-        symbol: 'SOL'
-      }) as TokenInfo;
     }
 
     if (item.version < 2) {
       const rateAmount = new BN(item.rateAmount).toNumber();
       value += formatThousands(
         rateAmount,
-        friendlyDisplayDecimalPlaces(rateAmount, decimals),
+        friendlyDisplayDecimalPlaces(rateAmount, selectedToken.decimals),
         2
       );
     } else {
       const rateAmount = new BN(item.rateAmount);
       value += stringNumberFormat(
-        toUiAmount2(rateAmount, decimals),
-        friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
+        toUiAmount2(rateAmount, selectedToken.decimals),
+        friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
       )
     }
     value += ' ';
-    value += token ? token.symbol : `[${shortenAddress(associatedToken).toString()}]`;
+    value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken).toString()}]`;
 
     return value;
-  }, [getTokenByMintAddress]);
+  }, [selectedToken]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    if (!selectedToken) {
+      return '';
+    }
+
     let value = '';
     let associatedToken = '';
 
@@ -195,15 +194,6 @@ export const MoneyStreamDetails = (props: {
       associatedToken = (item as StreamInfo).associatedToken as string;
     } else {
       associatedToken = (item as Stream).associatedToken.toBase58();
-    }
-
-    let token = getTokenByMintAddress(associatedToken);
-    const decimals = token?.decimals || 9;
-
-    if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-      token = Object.assign({}, token, {
-        symbol: 'SOL'
-      }) as TokenInfo;
     }
 
     if (item.rateAmount === 0 && item.allocationAssigned > 0) {
@@ -212,23 +202,23 @@ export const MoneyStreamDetails = (props: {
         const allocationAssigned = new BN(item.allocationAssigned).toNumber();
         value += formatThousands(
           allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+          friendlyDisplayDecimalPlaces(allocationAssigned, selectedToken.decimals),
           2
         );
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
         value += stringNumberFormat(
-          toUiAmount2(allocationAssigned, decimals),
-          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || decimals
+          toUiAmount2(allocationAssigned, selectedToken.decimals),
+          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
         )
       }
 
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
+      value += selectedToken ? selectedToken.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
     }
 
     return value;
-  }, [getTokenByMintAddress]);
+  }, [selectedToken]);
 
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';

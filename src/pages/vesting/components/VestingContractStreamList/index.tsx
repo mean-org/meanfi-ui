@@ -1653,7 +1653,7 @@ export const VestingContractStreamList = (props: {
                                         <div className="subtitle text-truncate">
                                             {getStreamSubtitle(item)}
                                             {!isProd() && isWhitelisted && (
-                                                <span className={`ml-1 font-size-60${item.streamUnitsPerSecond.isZero() ? ' fg-yellow pulsate-fast' : ''}`}>({item.streamUnitsPerSecond.toString()} units/s)</span>
+                                                <span className={`ml-1 font-size-60${item.streamUnitsPerSecond === 0 ? ' fg-yellow pulsate-fast' : ''}`}>({item.streamUnitsPerSecond} units/s)</span>
                                             )}
                                         </div>
                                     </div>
