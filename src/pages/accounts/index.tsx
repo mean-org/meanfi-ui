@@ -455,7 +455,7 @@ export const AccountsNewView = () => {
     setIsSendAssetModalOpen(false);
     resetContractValues();
     setIsVerifiedRecipient(false);
-  }, []);
+  }, [resetContractValues, setIsVerifiedRecipient]);
 
   // Wrap SOL token modal
   const [isWrapSolModalOpen, setIsWrapSolModalOpen] = useState(false);
@@ -920,6 +920,13 @@ export const AccountsNewView = () => {
     }
   }, []);
 
+  const fullAccountRefresh = () => {
+    const fullRefreshCta = document.getElementById("account-refresh-cta");
+    if (fullRefreshCta) {
+      fullRefreshCta.click();
+    }
+  };
+
   const reloadAssets = () => {
     const tokensRefreshCta = document.getElementById("account-assets-hard-refresh-cta");
     if (tokensRefreshCta) {
@@ -1116,6 +1123,7 @@ export const AccountsNewView = () => {
       } else if (item.operationType === OperationType.TransferTokens) {
         setIsBusy(false);
       }
+      fullAccountRefresh();
     }
     resetTransactionStatus();
   }, [recordTxConfirmation, resetTransactionStatus]);
@@ -4986,6 +4994,9 @@ export const AccountsNewView = () => {
       url += `?account-type=multisig`;
     }
 
+    setTimeout(() => {
+      setStreamDetail(undefined);
+    }, 100);
     navigate(url);
   }
 
@@ -4997,6 +5008,9 @@ export const AccountsNewView = () => {
     //   url += `?account-type=multisig`;
     // }
 
+    setTimeout(() => {
+      setStreamDetail(undefined);
+    }, 100);
     navigate(-1);
   }
 
@@ -5214,6 +5228,7 @@ export const AccountsNewView = () => {
                       <span className="icon-button-container secondary-button">
                         <Tooltip placement="bottom" title="Refresh payment streams">
                           <Button
+                            id="account-refresh-cta"
                             type="default"
                             shape="circle"
                             size="middle"

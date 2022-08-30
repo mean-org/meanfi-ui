@@ -1253,7 +1253,6 @@ export const MoneyStreamsIncomingView = (props: {
     ms,
     msp,
     streamSelected,
-    loadingStreamDetails,
   ]);
 
   // Keep account balance updated

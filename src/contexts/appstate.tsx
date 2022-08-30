@@ -1217,6 +1217,16 @@ const AppStateProvider: React.FC = ({ children }) => {
             setStreamListv2(rawStreamsv2);
             setStreamListv1(rawStreamsv1);
             consoleOut('Streams from AppSate:', streamAccumulator, 'blue');
+            if (streamDetail) {
+              const streamId = streamDetail.version < 2 ? (streamDetail as StreamInfo).id as string : (streamDetail as Stream).id.toBase58();
+              const item = streamAccumulator.find(s => {
+                const id = s.version < 2 ? (s as StreamInfo).id as string : (s as Stream).id.toBase58();
+                return id === streamId;
+              });
+              if (item) {
+                setStreamDetail(item);
+              }
+            }
             setDeletedStreams([]);
           })
           .catch(err => {
