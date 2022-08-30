@@ -98,6 +98,7 @@ export const PlaygroundView = () => {
   const [streamId, setStreamId] = useState<string>("");
   const [streamRawData, setStreamRawData] = useState();
   const [streamParsedData, setStreamParsedData] = useState();
+  const [displayStreamData, setDisplayStreamData] = useState<boolean>(false);
 
   const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
 
@@ -131,6 +132,8 @@ export const PlaygroundView = () => {
       consoleOut("parsed stream data payload:", value);
       setStreamParsedData(value);
     });
+
+    setDisplayStreamData(true);
 
   }, [msp]);
 
@@ -228,6 +231,7 @@ export const PlaygroundView = () => {
 
   const onClearStreamId = () => {
     setStreamId('');
+    setDisplayStreamData(false);
   }
 
   const onScanMyAddress = () => {
@@ -845,7 +849,7 @@ export const PlaygroundView = () => {
           </div>
         </div>
 
-        {streamId && isValidAddress(streamId) &&(
+        {streamId && isValidAddress(streamId) && displayStreamData && (
           <div className="mb-3">
             <div className="two-column-layout">
               <div className="left">
