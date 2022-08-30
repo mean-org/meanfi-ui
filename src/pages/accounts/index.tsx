@@ -151,12 +151,14 @@ export const AccountsNewView = () => {
     showDepositOptionsModal,
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
+    setIsVerifiedRecipient,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
     setShouldLoadTokens,
     setSelectedMultisig,
+    resetContractValues,
     refreshStreamList,
     setStreamsSummary,
     setAccountAddress,
@@ -447,8 +449,12 @@ export const AccountsNewView = () => {
 
   // Send selected token modal
   const [isSendAssetModalOpen, setIsSendAssetModalOpen] = useState(false);
-  const hideSendAssetModal = useCallback(() => setIsSendAssetModalOpen(false), []);
   const showSendAssetModal = useCallback(() => setIsSendAssetModalOpen(true), []);
+  const hideSendAssetModal = useCallback(() => {
+    setIsSendAssetModalOpen(false);
+    resetContractValues();
+    setIsVerifiedRecipient(false);
+  }, []);
 
   // Wrap SOL token modal
   const [isWrapSolModalOpen, setIsWrapSolModalOpen] = useState(false);

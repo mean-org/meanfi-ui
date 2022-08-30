@@ -92,6 +92,7 @@ export const MoneyStreamsInfoView = (props: {
     streamProgramAddress,
     streamV2ProgramAddress,
     getTokenPriceByAddress,
+    setIsVerifiedRecipient,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
@@ -637,8 +638,12 @@ export const MoneyStreamsInfoView = (props: {
 
   // Send selected token modal
   const [isCreateMoneyStreamModalOpen, setIsCreateMoneyStreamModalOpen] = useState(false);
-  const hideCreateMoneyStreamModal = useCallback(() => setIsCreateMoneyStreamModalOpen(false), []);
   const showCreateMoneyStreamModal = useCallback(() => setIsCreateMoneyStreamModalOpen(true), []);
+  const hideCreateMoneyStreamModal = useCallback(() => {
+    setIsCreateMoneyStreamModalOpen(false);
+    resetContractValues();
+    setIsVerifiedRecipient(false);
+  }, [resetContractValues, setIsVerifiedRecipient]);
 
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
