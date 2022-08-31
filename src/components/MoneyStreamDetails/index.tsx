@@ -196,8 +196,7 @@ export const MoneyStreamDetails = (props: {
       associatedToken = (item as Stream).associatedToken.toBase58();
     }
 
-    if (item.rateAmount === 0 && item.allocationAssigned > 0) {
-
+    if (item.rateIntervalInSeconds === 0) {
       if (item.version < 2) {
         const allocationAssigned = new BN(item.allocationAssigned).toNumber();
         value += formatThousands(
@@ -214,7 +213,7 @@ export const MoneyStreamDetails = (props: {
       }
 
       value += ' ';
-      value += selectedToken ? selectedToken.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
+      value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken)}]`;
     }
 
     return value;
@@ -545,11 +544,12 @@ export const MoneyStreamDetails = (props: {
   const renderPaymentRate = () => {
     if (!stream || !selectedToken) { return '--'; }
 
-    const rateAmountBN = new BN(stream.rateAmount);
+    let rateAmount = stream.rateAmount > 0 && stream.rateIntervalInSeconds !== 0
+      ? getRateAmountDisplay(stream)
+      : getDepositAmountDisplay(stream);
 
-    let rateAmount = rateAmountBN.gtn(0) ? getRateAmountDisplay(stream) : getDepositAmountDisplay(stream);
-    if (rateAmountBN.gtn(0)) {
-      rateAmount += ' ' + getIntervalFromSeconds(new BN(stream.rateIntervalInSeconds).toNumber(), false, t);
+    if (stream.rateAmount > 0) {
+      rateAmount += ' ' + getIntervalFromSeconds(stream.rateIntervalInSeconds, false, t);
     }
 
     return rateAmount;
@@ -711,7 +711,9 @@ export const MoneyStreamDetails = (props: {
       value: isStreamOutgoing && (stream ? renderSendingTo() : "--")
     },
     {
-      label: "Payment rate:",
+      label: stream && stream.rateAmount > 0 && stream.rateIntervalInSeconds !== 0
+        ? "Payment rate:"
+        : "Deposit amount:",
       value: renderPaymentRate()
     },
     {
@@ -731,7 +733,7 @@ export const MoneyStreamDetails = (props: {
       value: (isStreamOutgoing && stream && getStreamStatus(stream) === "running") && <Countdown className="align-middle" date={
         isNewStream()
           ? v2.estimatedDepletionDate
-          : v1.escrowEstimatedDepletionUtc
+          : v1.escrowEstimatedDepletionUtc as string
         }
         renderer={renderer} />
     },
