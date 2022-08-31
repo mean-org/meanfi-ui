@@ -1818,7 +1818,7 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [t]);
 
-  const getTimeRemaining = useCallback((time: any) => {
+  const getTimeRemaining = useCallback((time: string) => {
     if (time) {
       const countDownDate = new Date(time).getTime();
       const now = new Date().getTime();

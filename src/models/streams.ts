@@ -27,3 +27,19 @@ export interface StreamWithdrawData {
     fee: number;
     receiveAmount: number;
 }
+
+export interface CreateStreamParams {
+    proposalTitle?: string;
+    payer: string;
+    treasurer: string;
+    treasury: string;
+    beneficiaries: any;
+    associatedToken: string;
+    allocationAssigned: string;
+    rateAmount?: string;
+    rateIntervalInSeconds?: number;
+    startUtc?: Date;
+    cliffVestAmount?: string;
+    cliffVestPercent?: number;
+    feePayedByTreasurer?: boolean
+}

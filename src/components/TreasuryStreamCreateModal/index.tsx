@@ -54,6 +54,7 @@ import { MeanMultisig, MEAN_MULTISIG_PROGRAM, DEFAULT_EXPIRATION_TIME_SECONDS, M
 import { InfoIcon } from '../InfoIcon';
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
+import { CreateStreamParams } from '../../models/streams';
 
 const { Option } = Select;
 
@@ -1083,7 +1084,7 @@ export const TreasuryStreamCreateModal = (props: {
     setIsBusy(true);
     resetTransactionStatus();
 
-    const createStreams = async (data: any) => {
+    const createStreams = async (data: CreateStreamParams): Promise<Transaction[] | null> => {
 
       consoleOut('Is Multisig Treasury: ', isSelectedStreamingAccountMultisigTreasury, 'blue');
       consoleOut('Multisig authority: ', selectedMultisig ? selectedMultisig.authority.toBase58() : '--', 'blue');
@@ -1224,7 +1225,6 @@ export const TreasuryStreamCreateModal = (props: {
         ? selectedMultisig.id
         : publicKey;
       const amount = tokenAmount.div(new BN(beneficiaries.length)).toString();
-      // const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
       const rateAmount = toTokenAmount2(paymentRateAmount, selectedToken.decimals, true) as string;
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
@@ -1251,7 +1251,7 @@ export const TreasuryStreamCreateModal = (props: {
       }
 
       // Create a transaction
-      const data = {
+      const data: CreateStreamParams = {
         payer: publicKey.toBase58(),                                                // initializer
         treasurer: treasurer.toBase58(),                                            // treasurer
         treasury: treasury.toBase58(),                                              // treasury
@@ -1271,21 +1271,6 @@ export const TreasuryStreamCreateModal = (props: {
       displayParams = data;
 
       consoleOut('data:', data);
-
-      /**
-       * payer: PublicKey,
-       * treasurer: PublicKey,
-       * treasury: PublicKey | undefined,
-       * beneficiaries: any[],
-       * associatedToken: PublicKey,
-       * allocationAssigned: number,
-       * rateAmount?: number | undefined,
-       * rateIntervalInSeconds?: number | undefined,
-       * startUtc?: Date | undefined,
-       * cliffVestAmount?: number | string | undefined,
-       * cliffVestPercent?: number | undefined,
-       * feePayedByTreasurer?: boolean | undefined
-       */
 
       // Log input data
       transactionLog.push({
