@@ -1777,16 +1777,16 @@ export const MoneyStreamsInfoView = (props: {
       subtitle = rateAmount;
     }
 
-    return subtitle;
-    // return (
-    //   <>
-    //     <span>{subtitle || '0'}</span>
-    //     {!isProd() && isWhitelisted && item.version >= 2 && (
-    //       <span className={`ml-1 font-size-60${(item as Stream).streamUnitsPerSecond === 0 ? ' fg-yellow pulsate-fast' : ''}`}>({(item as Stream).streamUnitsPerSecond} units/s)</span>
-    //     )}
-    //   </>
-    // );
-  }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
+    // return subtitle;
+    return (
+      <>
+        <span>{subtitle || '0'}</span>
+        {!isProd() && isWhitelisted && item.version >= 2 && (
+          <span className={`ml-1 font-size-60${(item as Stream).streamUnitsPerSecond === 0 ? ' fg-yellow pulsate-fast' : ''}`}>({(item as Stream).streamUnitsPerSecond} units/s)</span>
+        )}
+      </>
+    );
+  }, [isWhitelisted, getRateAmountDisplay, getDepositAmountDisplay, t]);
 
   const isStreamRunning = useCallback((stream: Stream | StreamInfo) => {
     const v1 = stream as StreamInfo;

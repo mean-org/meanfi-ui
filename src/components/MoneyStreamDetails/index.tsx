@@ -449,6 +449,18 @@ export const MoneyStreamDetails = (props: {
     return stream && stream.rateAmount === 0 ? true : false;
   }
 
+  const isScheduledOtp = (): boolean => {
+    if (stream && stream.rateAmount === 0) {
+      const now = new Date().toUTCString();
+      const nowUtc = new Date(now);
+      const streamStartDate = new Date(stream.startUtc as string);
+      if (streamStartDate > nowUtc) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   ///////////////
   // Rendering //
@@ -579,7 +591,7 @@ export const MoneyStreamDetails = (props: {
                 splTokenList,
               )
             : getAmountWithSymbol(
-                v1.allocationAssigned || v1.allocationLeft,
+                v1.allocationReserved || v1.allocationLeft,
                 selectedToken.address,
                 false,
                 splTokenList,
@@ -724,8 +736,8 @@ export const MoneyStreamDetails = (props: {
       value: renderPaymentRate()
     },
     {
-      label: "Reserved allocation:",
-      value: renderReservedAllocation()
+      label: stream && !isScheduledOtp() && "Reserved allocation:",
+      value: stream && !isScheduledOtp() && renderReservedAllocation()
     },
     {
       label: isStreamIncoming && "Funds left in account:",
@@ -745,9 +757,7 @@ export const MoneyStreamDetails = (props: {
         renderer={renderer} />
     },
     {
-      label: stream && getStreamStatus(stream) === "stopped" && !isOtp() 
-        ? "Funds ran out on:"
-        : "",
+      label: stream && getStreamStatus(stream) === "stopped" && !isOtp() && "Funds ran out on:",
       value: stream && getStreamStatus(stream) === "stopped" && !isOtp() && getRelativeDate(isNewStream()
         ? v2.estimatedDepletionDate
         : v1.escrowEstimatedDepletionUtc as string
