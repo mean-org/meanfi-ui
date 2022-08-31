@@ -1,24 +1,17 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "./connection";
 import { useWallet } from "./wallet";
-import { AccountInfo, ConfirmedSignatureInfo, ConfirmedTransaction, Connection, PublicKey } from "@solana/web3.js";
+import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import { AccountLayout, u64, MintInfo, MintLayout } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
 import { chunks } from "./../utils/utils";
 import { EventEmitter } from "./../utils/eventEmitter";
 import { WRAPPED_SOL_MINT, programIds } from "../utils/ids";
+import { ONE_MINUTE_REFRESH_TIMEOUT } from "../constants";
 
 const AccountsContext = React.createContext<any>(null);
-
 const pendingCalls = new Map<string, Promise<ParsedAccountBase>>();
 const genericCache = new Map<string, ParsedAccountBase>();
-const transactionCache = new Map<string, ParsedLocalTransaction | null>();
-
-export interface ParsedLocalTransaction {
-  transactionType: number;
-  signature: ConfirmedSignatureInfo;
-  confirmedTx: ConfirmedTransaction | null;
-}
 
 export interface ParsedAccountBase {
   pubkey: PublicKey;
@@ -181,7 +174,6 @@ export const cache = {
     }
     return false;
   },
-
   byParser: (parser: AccountParser) => {
     const result: string[] = [];
     for (const id of keyToAccountParser.keys()) {
@@ -200,26 +192,8 @@ export const cache = {
 
     return pubkey;
   },
-  addTransaction: (signature: string, tx: ParsedLocalTransaction | null) => {
-    transactionCache.set(signature, tx);
-    return tx;
-  },
-  addBulkTransactions: (txs: Array<ParsedLocalTransaction>) => {
-    for (const tx of txs) {
-      transactionCache.set(tx.signature.signature, tx);
-    }
-    return txs;
-  },
-  getTransaction: (signature: string) => {
-    const transaction = transactionCache.get(signature);
-    return transaction;
-  },
-  getAllTransactions: () => {
-    return transactionCache;
-  },
   clear: () => {
     genericCache.clear();
-    transactionCache.clear();
     cache.emitter.raiseCacheCleared();
   },
 };
@@ -258,7 +232,7 @@ function wrapNativeAccount(
 
 const UseNativeAccount = () => {
   const connection = useConnection();
-  const { wallet, publicKey } = useWallet();
+  const { publicKey } = useWallet();
   const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>();
 
   const updateCache = useCallback(
@@ -279,9 +253,9 @@ const UseNativeAccount = () => {
     [publicKey, connection]
   );
 
-  useEffect(() => {
+  const refreshAccount = useCallback(() => {
     if (!connection || !publicKey) {
-      return;
+      return undefined;
     }
 
     connection.getAccountInfo(publicKey).then((acc) => {
@@ -296,21 +270,25 @@ const UseNativeAccount = () => {
     .catch(error => {
       throw(error);
     });
-    const listener = connection.onAccountChange(publicKey, (acc) => {
-      if (acc) {
-        updateCache(acc);
-        setNativeAccount(acc);
-      }
-    });
+
+  }, [connection, publicKey, updateCache]);
+
+  useEffect(() => {
+    if (!connection || !publicKey) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      refreshAccount();
+    }, ONE_MINUTE_REFRESH_TIMEOUT);
 
     return () => {
-      if (listener) {
-        connection.removeAccountChangeListener(listener);
-      }
-    };
-  }, [setNativeAccount, wallet, publicKey, connection, updateCache]);
+      clearTimeout(timeout);
+    }
 
-  return { nativeAccount };
+  }, [connection, publicKey, refreshAccount]);
+
+  return { nativeAccount, refreshAccount };
 };
 
 const PRECACHED_OWNERS = new Set<string>();
@@ -325,7 +303,6 @@ const precacheUserTokenAccounts = async (
   // used for filtering account updates over websocket
   PRECACHED_OWNERS.add(owner.toBase58());
 
-  // user accounts are update via ws subscription
   try {
     const accounts = await connection.getTokenAccountsByOwner(owner, {
       programId: programIds().token,
@@ -341,7 +318,7 @@ const precacheUserTokenAccounts = async (
 
 export function AccountsProvider({ children = null as any }) {
   const connection = useConnection();
-  const { publicKey, wallet, connected } = useWallet();
+  const { publicKey, wallet } = useWallet();
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
   const [userAccounts, setUserAccounts] = useState<TokenAccount[]>([]);
   const { nativeAccount } = UseNativeAccount();
@@ -368,57 +345,14 @@ export function AccountsProvider({ children = null as any }) {
   }, [nativeAccount, wallet, tokenAccounts, selectUserAccounts]);
 
   useEffect(() => {
-    const subs: number[] = [];
-    cache.emitter.onCache((args) => {
-      if (args.isNew) {
-        const id = args.id;
-        const deserialize = args.parser;
-        const listenerId = connection.onAccountChange(new PublicKey(id), (info) => {
-          cache.add(id, info, deserialize);
-        });
-        subs.push(listenerId);
-      }
-    });
-
-    return () => {
-      subs.forEach((id) => connection.removeAccountChangeListener(id));
-    };
-  }, [connection]);
-
-  useEffect(() => {
     if (!connection || !publicKey) {
       setTokenAccounts([]);
     } else {
       precacheUserTokenAccounts(connection, publicKey).then(() => {
         setTokenAccounts(selectUserAccounts());
       });
-
-      // This can return different types of accounts: token-account, mint, multisig
-      // TODO: web3.js expose ability to filter.
-      // this should use only filter syntax to only get accounts that are owned by user
-      const tokenSubID = connection.onProgramAccountChange(
-        programIds().token,
-        (info) => {
-          // TODO: fix type in web3.js
-          const id = (info.accountId as unknown) as string;
-          // TODO: do we need a better way to identify layout (maybe a enum identifing type?)
-          if (info.accountInfo.data.length === AccountLayout.span) {
-            const data = deserializeAccount(info.accountInfo.data);
-
-            if (PRECACHED_OWNERS.has(data.owner.toBase58())) {
-              cache.add(id, info.accountInfo, TokenAccountParser);
-              setTokenAccounts(selectUserAccounts());
-            }
-          }
-        },
-        "singleGossip"
-      );
-
-      return () => {
-        connection.removeProgramAccountChangeListener(tokenSubID);
-      };
     }
-  }, [connection, connected, publicKey, selectUserAccounts]);
+  }, [connection, publicKey, selectUserAccounts]);
 
   return (
     <AccountsContext.Provider

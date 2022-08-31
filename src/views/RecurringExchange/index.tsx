@@ -379,6 +379,7 @@ export const RecurringExchange = (props: {
   ]);
 
   // Automatically updates user account balance (SOL) 
+  /*
   useEffect(() => {
 
     if (!connection) {
@@ -400,6 +401,7 @@ export const RecurringExchange = (props: {
     connection, 
     publicKey
   ]);
+  */
 
   // Get Tx fees
   useEffect(() => {
