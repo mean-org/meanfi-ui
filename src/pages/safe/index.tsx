@@ -29,7 +29,7 @@ import {
   shortenAddress,
 } from '../../utils/utils';
 
-import { Button, Dropdown, Empty, Menu, Spin, Tooltip } from 'antd';
+import { Button, Empty, Menu, Spin, Tooltip } from 'antd';
 import {
   consoleOut,
   getTransactionStatusForLogs,
@@ -84,14 +84,12 @@ import { ProgramAccounts } from '../../utils/accounts';
 import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
-// import { MultisigCreateModal } from '../../components/MultisigCreateModal';
-import { MultisigEditSafeModal } from '../../components/MultisigEditSafeModal';
-import { MultisigCreateSafeModal } from '../../components/MultisigCreateSafeModal';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
+const CREDIX_GATEWAY_ADDRESS = new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz");
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -1519,7 +1517,7 @@ export const SafeView = () => {
 
     const gatewayToken = await getGatewayToken(
       investor,
-      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+      CREDIX_GATEWAY_ADDRESS
     ); 
 
     console.log("gatewayToken => ", gatewayToken.toBase58());
@@ -1539,7 +1537,7 @@ export const SafeView = () => {
     
     const gatewayToken = await getGatewayToken(
       investor,
-      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+      CREDIX_GATEWAY_ADDRESS
     );
 
     console.log("gatewayToken => ", gatewayToken.toBase58());
@@ -1560,7 +1558,7 @@ export const SafeView = () => {
 
     const gatewayToken = await getGatewayToken(
       investor,
-      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+      CREDIX_GATEWAY_ADDRESS
     ); 
 
     console.log("gatewayToken => ", gatewayToken.toBase58());
@@ -1580,7 +1578,7 @@ export const SafeView = () => {
     
     const gatewayToken = await getGatewayToken(
       investor,
-      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+      CREDIX_GATEWAY_ADDRESS
     );
 
     console.log("gatewayToken => ", gatewayToken.toBase58());
