@@ -2853,7 +2853,7 @@ main section {
   width: 100%;
   background: var(--color-panel-background);
   border-radius: var(--custom-border-radius);
-  padding: 2rem;
+  padding: 2rem !important;
   box-shadow: 0 3px 3px -1px rgba(0,0,0,0.08), 0 3px 7px 0 rgba(0,0,0,0.08), 0 1px 18px 0 rgba(0,0,0, 0.08);
   &.align-center {
     margin: 0 auto;

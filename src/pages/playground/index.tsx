@@ -1461,7 +1461,7 @@ export const PlaygroundView = () => {
 
       <section>
         <div className="container mt-4 flex-column flex-center">
-          <div className="boxed-area container-max-width-960">
+          <div className="boxed-area">
             {renderTabset}
             {/* <span className="secondary-link" onClick={getTopJupiterTokensByVolume}>Read list of top Jupiter tokens in volume over 1,000 USD</span> */}
           </div>
