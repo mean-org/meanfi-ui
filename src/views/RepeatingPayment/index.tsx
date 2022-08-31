@@ -19,6 +19,7 @@ import {
   isValidNumber,
   shortenAddress,
   toTokenAmount2,
+  toUiAmount2,
 } from "../../middleware/utils";
 import { Identicon } from "../../components/Identicon";
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
@@ -62,6 +63,7 @@ import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { RecipientAddressInfo } from '../../models/common-types';
+import BN from 'bn.js';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -122,6 +124,7 @@ export const RepeatingPayment = (props: {
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+  const [tokenBalanceBn, setSelectedTokenBalanceBn] = useState(new BN(0));
   const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
 
 
@@ -148,6 +151,19 @@ export const RepeatingPayment = (props: {
     const amount = nativeBalance - getMinSolBlanceRequired();
     return amount > 0 ? amount : 0;
   }, [getMinSolBlanceRequired, nativeBalance]);
+
+  const getDisplayAmount = useCallback((amount: BN) => {
+    if (selectedToken) {
+      return getAmountWithSymbol(
+        toUiAmount2(amount, selectedToken.decimals),
+        selectedToken.address,
+        true,
+        splTokenList,
+        selectedToken.decimals
+      );
+    }
+    return '0';
+  }, [selectedToken, splTokenList]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -605,11 +621,15 @@ export const RepeatingPayment = (props: {
 
     if (!connection || !publicKey || !userBalances || !selectedToken) {
       setSelectedTokenBalance(0);
+      setSelectedTokenBalanceBn(new BN(0));
       return;
     }
 
     const timeout = setTimeout(() => {
-      setSelectedTokenBalance(userBalances[selectedToken.address]);
+      const balance = userBalances[selectedToken.address] as number;
+      setSelectedTokenBalance(balance);
+      const balanceBn = toTokenAmount2(balance, selectedToken.decimals);
+      setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
     });
 
     return () => {
@@ -804,11 +824,11 @@ export const RepeatingPayment = (props: {
   const isSendAmountValid = (): boolean => {
     return connected &&
            selectedToken &&
-           tokenBalance &&
+           tokenBalanceBn.gtn(0) &&
            nativeBalance >= getMinSolBlanceRequired() &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
            ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
-            (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) <= tokenBalance))
+            (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gtn(parseFloat(fromCoinAmount))))
     ? true
     : false;
   }
@@ -838,7 +858,7 @@ export const RepeatingPayment = (props: {
         ? t('transactions.validation.select-recipient')
         : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
           ? 'Invalid recipient address'
-          : !selectedToken || !tokenBalance
+          : !selectedToken || tokenBalanceBn.isZero()
             ? t('transactions.validation.no-balance')
             : !paymentStartDate
               ? t('transactions.validation.no-valid-date')
@@ -856,12 +876,12 @@ export const RepeatingPayment = (props: {
         ? t('transactions.validation.select-recipient')
         : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
           ? 'Invalid recipient address'
-          : !selectedToken || !tokenBalance
+          : !selectedToken || tokenBalanceBn.isZero()
             ? t('transactions.validation.no-balance')
             : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
               ? t('transactions.validation.no-amount')
               : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
-                (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) > tokenBalance))
+                 (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.ltn(parseFloat(fromCoinAmount))))
                 ? t('transactions.validation.amount-high')
                 : !paymentStartDate
                   ? t('transactions.validation.no-valid-date')
@@ -880,7 +900,7 @@ export const RepeatingPayment = (props: {
     const rateAmount = parseFloat(paymentRateAmount || '0');
     return !rateAmount
       ? t('transactions.validation.no-payment-rate')
-      : rateAmount > tokenBalance
+      : tokenBalanceBn.ltn(rateAmount)
       ? t('transactions.validation.payment-rate-high')
       : '';
   }
@@ -1301,7 +1321,7 @@ export const RepeatingPayment = (props: {
             tokenChanged(t);
             setSelectedToken(t);
 
-            consoleOut("token selected:", t.symbol, 'blue');
+            consoleOut("token selected:", t, 'blue');
             const price = getTokenPriceByAddress(t.address) || getTokenPriceBySymbol(t.symbol);
             setEffectiveRate(price);
             onCloseTokenSelector();
@@ -1667,14 +1687,14 @@ export const RepeatingPayment = (props: {
                     fullTokenInfo={selectedToken}
                   />
                 )}
-                {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
+                {selectedToken && tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
                   <div className="token-max simplelink" onClick={() =>
                     {
                       if (selectedToken.address === NATIVE_SOL.address) {
                         const amount = nativeBalance - getMinSolBlanceRequired();
                         setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
                       } else {
-                        setFromCoinAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                        setFromCoinAmount(toUiAmount2(tokenBalanceBn, selectedToken.decimals));
                       }
                     }}>
                     MAX
@@ -1703,10 +1723,7 @@ export const RepeatingPayment = (props: {
             <div className="left inner-label">
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>
-                {`${tokenBalance && selectedToken
-                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
-                    : "0"
-                }`}
+                {getDisplayAmount(tokenBalanceBn)}
               </span>
             </div>
             <div className="right inner-label">
