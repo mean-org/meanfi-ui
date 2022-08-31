@@ -437,15 +437,22 @@ export const MoneyStreamDetails = (props: {
     }
   }, [activityLoaded, getActivityList, stream, tabOption]);
 
-
-  ///////////////
-  // Rendering //
-  ///////////////
-
   const getRelativeDate = (utcDate: string) => {
     const reference = new Date(utcDate);
     return relativeTimeFromDates(reference);
   }
+
+  const isOtp = (): boolean => {
+    if (stream && stream.rateAmount === 0 && stream.rateIntervalInSeconds !== 0) {
+      return true;
+    }
+    return false;
+  }
+
+
+  ///////////////
+  // Rendering //
+  ///////////////
 
   const renderActivities = () => {
     return (
@@ -544,7 +551,7 @@ export const MoneyStreamDetails = (props: {
   const renderPaymentRate = () => {
     if (!stream || !selectedToken) { return '--'; }
 
-    let rateAmount = stream.rateAmount > 0 && stream.rateIntervalInSeconds !== 0
+    let rateAmount = !isOtp()
       ? getRateAmountDisplay(stream)
       : getDepositAmountDisplay(stream);
 
@@ -711,7 +718,7 @@ export const MoneyStreamDetails = (props: {
       value: isStreamOutgoing && (stream ? renderSendingTo() : "--")
     },
     {
-      label: stream && stream.rateAmount > 0 && stream.rateIntervalInSeconds !== 0
+      label: stream && !isOtp()
         ? "Payment rate:"
         : "Deposit amount:",
       value: renderPaymentRate()
@@ -738,8 +745,10 @@ export const MoneyStreamDetails = (props: {
         renderer={renderer} />
     },
     {
-      label: stream && getStreamStatus(stream) === "stopped" && "Funds ran out on:",
-      value: stream && getStreamStatus(stream) === "stopped" && getRelativeDate(isNewStream()
+      label: stream && getStreamStatus(stream) === "stopped" && !isOtp() 
+        ? "Funds ran out on:"
+        : "",
+      value: stream && getStreamStatus(stream) === "stopped" && !isOtp() && getRelativeDate(isNewStream()
         ? v2.estimatedDepletionDate
         : v1.escrowEstimatedDepletionUtc as string
       )
