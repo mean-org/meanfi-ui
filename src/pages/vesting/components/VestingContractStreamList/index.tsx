@@ -21,7 +21,6 @@ import {
     getTransactionModalTitle,
     getTransactionOperationDescription,
     getTransactionStatusForLogs,
-    isProd,
     stringNumberFormat,
     toTimestamp
 } from '../../../../middleware/ui';
@@ -93,7 +92,6 @@ export const VestingContractStreamList = (props: {
     const {
         splTokenList,
         tokenBalance,
-        isWhitelisted,
         deletedStreams,
         transactionStatus,
         setHighLightableStreamId,
@@ -1650,12 +1648,7 @@ export const VestingContractStreamList = (props: {
                                         showVestingContractStreamDetailModal();
                                     }}>
                                         <div className="title text-truncate">{getStreamTitle(item)}</div>
-                                        <div className="subtitle text-truncate">
-                                            {getStreamSubtitle(item)}
-                                            {!isProd() && isWhitelisted && (
-                                                <span className={`ml-1 font-size-60${item.streamUnitsPerSecond === 0 ? ' fg-yellow pulsate-fast' : ''}`}>({item.streamUnitsPerSecond} units/s)</span>
-                                            )}
-                                        </div>
+                                        <div className="subtitle text-truncate">{getStreamSubtitle(item)}</div>
                                     </div>
                                     <div className="rate-cell">
                                         <div className="rate-amount">{getStreamStatus(item)}</div>
