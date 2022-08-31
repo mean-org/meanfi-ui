@@ -71,7 +71,7 @@ import {
   MultisigTransactionSummary,
   MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk/';
-import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken, getTrancheDepositIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
+import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken, getTrancheDepositIx, getTrancheWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { UserTokenAccount } from '../../models/transactions';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -89,6 +89,7 @@ import { appConfig } from '../..';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
+const CREDIX_GATEWAY_ADDRESS = new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz");
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -1519,7 +1520,7 @@ export const SafeView = () => {
 
     const gatewayToken = await getGatewayToken(
       investor,
-      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+      CREDIX_GATEWAY_ADDRESS
     ); 
 
     console.log("gatewayToken => ", gatewayToken.toBase58());
@@ -1539,7 +1540,7 @@ export const SafeView = () => {
     
     const gatewayToken = await getGatewayToken(
       investor,
-      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+      CREDIX_GATEWAY_ADDRESS
     );
 
     console.log("gatewayToken => ", gatewayToken.toBase58());
@@ -1560,12 +1561,32 @@ export const SafeView = () => {
 
     const gatewayToken = await getGatewayToken(
       investor,
-      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+      CREDIX_GATEWAY_ADDRESS
     ); 
 
     console.log("gatewayToken => ", gatewayToken.toBase58());
 
     return await getWithdrawIx(program, investor, amount, marketplace);
+
+  }, [
+    connection, 
+    connectionConfig
+  ]);
+
+  const createCredixWithdrawTrancheIx = useCallback(async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
+
+    if (!connection || !connectionConfig) { return null; }
+
+    const program = createProgram(connection, "confirmed");
+    
+    const gatewayToken = await getGatewayToken(
+      investor,
+      CREDIX_GATEWAY_ADDRESS
+    );
+
+    console.log("gatewayToken => ", gatewayToken.toBase58());
+
+    return await getTrancheWithdrawIx(program, investor, deal, amount, trancheIndex, marketplace);
 
   }, [
     connection, 
@@ -1627,6 +1648,17 @@ export const SafeView = () => {
           case 'depositTranche':
             operation = OperationType.CredixDepositTranche;
             proposalIx = await createCredixDepositTrancheIx(
+              investorPK,
+              new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
+              amountVal,
+              parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
+              marketPlaceVal
+            );
+          break;
+
+          case 'withdrawTranche':
+            operation = OperationType.CredixWithdrawTranche;
+            proposalIx = await createCredixWithdrawTrancheIx(
               investorPK,
               new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
               amountVal,

@@ -530,21 +530,21 @@ export const ProposalDetailsView = (props: {
   ];
 
   const anyoneCanExecuteTx = () => {
-    if (selectedProposal.operation !== OperationType.StreamWithdraw &&
-        selectedProposal.operation !== OperationType.EditMultisig &&
-        selectedProposal.operation !== OperationType.TransferTokens &&
-        selectedProposal.operation !== OperationType.UpgradeProgram &&
-        selectedProposal.operation !== OperationType.SetMultisigAuthority &&
-        selectedProposal.operation !== OperationType.SetAssetAuthority &&
-        selectedProposal.operation !== OperationType.DeleteAsset &&
-        selectedProposal.operation !== OperationType.StreamTransferBeneficiary &&
-        selectedProposal.operation !== OperationType.CredixDepositFunds &&
-        selectedProposal.operation !== OperationType.CredixDepositTranche &&
-        selectedProposal.operation !== OperationType.CredixWithdrawFunds) {
-      return false;
-    } else {
-      return true;
-    }
+    const allowedOperations = [
+      OperationType.StreamWithdraw,
+      OperationType.EditMultisig,
+      OperationType.TransferTokens,
+      OperationType.UpgradeProgram,
+      OperationType.SetMultisigAuthority,
+      OperationType.SetAssetAuthority,
+      OperationType.DeleteAsset,
+      OperationType.StreamTransferBeneficiary,
+      OperationType.CredixDepositFunds,
+      OperationType.CredixWithdrawFunds,
+      OperationType.CredixDepositTranche,
+      OperationType.CredixWithdrawTranche,
+    ];
+    return allowedOperations.includes(selectedProposal.operation);
   };
 
   const isProposer = (
