@@ -75,6 +75,7 @@ import { getTokenAccountBalanceByAddress, readAccountInfo } from "../../middlewa
 import { NATIVE_SOL } from "../../middleware/tokens";
 import { AddFundsParams } from "../../models/vesting";
 import BN from "bn.js";
+import { getStreamTitle } from "../../middleware/streams";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -2433,46 +2434,6 @@ export const StreamingAccountView = (props: {
     });
   }, [getTokenOrCustomToken, publicKey, streamingAccountSelected]);
 
-
-
-  const getStreamTitle = (item: Stream | StreamInfo): string => {
-    let title = '';
-    if (item) {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-
-      if (item.version < 2) {
-        if (v1.streamName) {
-          return `${v1.streamName}`;
-        }
-        
-        if (v1.isUpdatePending) {
-          title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else if (v1.state === STREAM_STATE.Schedule) {
-          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else {
-          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        }
-      } else {
-        if (v2.name) {
-          return `${v2.name}`;
-        }
-
-        if (v2.status === STREAM_STATUS.Schedule) {
-          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        } else if (v2.status === STREAM_STATUS.Paused) {
-          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        } else {
-          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        }
-      }
-    }
-
-    return title;
-  }
-
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
 
@@ -2901,7 +2862,7 @@ export const StreamingAccountView = (props: {
                     id={index}
                     img={img}
                     title={title}
-                    subtitle={subtitle}
+                    subtitle={subtitle || "0.00"}
                     resume={resume}
                     status={status}
                     hasRightIcon={true}

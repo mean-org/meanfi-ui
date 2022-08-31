@@ -12,7 +12,7 @@ import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, 
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useSearchParams } from "react-router-dom";
 import { useWallet } from "../../contexts/wallet";
@@ -24,6 +24,7 @@ import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { getCategoryLabelByValue } from "../../models/enums";
 import { PublicKey } from "@solana/web3.js";
+import { getStreamTitle } from "../../middleware/streams";
 
 const { TabPane } = Tabs;
 
@@ -109,44 +110,6 @@ export const MoneyStreamDetails = (props: {
       }
     }
   }, [getStreamActivity, stream]);
-
-  const getStreamTitle = (item: Stream | StreamInfo): string => {
-    let title = '';
-    if (item) {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-
-      if (item.version < 2) {
-        if (v1.streamName) {
-          return `${v1.streamName}`;
-        }
-        
-        if (v1.isUpdatePending) {
-          title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else if (v1.state === STREAM_STATE.Schedule) {
-          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else if (v1.state === STREAM_STATE.Paused) {
-          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        } else {
-          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
-        }
-      } else {
-        if (v2.name) {
-          return `${v2.name}`;
-        }
-
-        if (v2.status === STREAM_STATUS.Schedule) {
-          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        } else if (v2.status === STREAM_STATUS.Paused) {
-          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        } else {
-          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
-        }
-      }
-    }
-
-    return title;
-  }
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     if (!selectedToken) {
@@ -385,15 +348,6 @@ export const MoneyStreamDetails = (props: {
       ? t('streams.stream-activity.action-deposit')
       : t('streams.stream-activity.action-withdraw');
     return actionText;
-  }
-
-  const getActivityAmount = (item: StreamActivity, streamVersion: number): number => {
-    const token = getTokenByMintAddress(item.mint as string);
-    if (streamVersion < 2) {
-      return item.amount;
-    } else {
-      return parseFloat(toUiAmount2(new BN(item.amount), token?.decimals || 6));
-    }
   }
 
   const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
