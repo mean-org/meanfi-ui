@@ -27,7 +27,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isProd, stringNumberFormat, toUsCurrency } from "../../middleware/ui";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, stringNumberFormat, toUsCurrency } from "../../middleware/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cutNumber, displayAmountWithSymbol, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from "../../middleware/utils";
 import { useTranslation } from "react-i18next";
@@ -87,7 +87,6 @@ export const MoneyStreamsInfoView = (props: {
     splTokenList,
     streamListv1,
     streamListv2,
-    isWhitelisted,
     treasuryOption,
     transactionStatus,
     streamProgramAddress,
@@ -1777,16 +1776,8 @@ export const MoneyStreamsInfoView = (props: {
       subtitle = rateAmount;
     }
 
-    // return subtitle;
-    return (
-      <>
-        <span>{subtitle || '0'}</span>
-        {!isProd() && isWhitelisted && item.version >= 2 && (
-          <span className={`ml-1 font-size-60${(item as Stream).streamUnitsPerSecond === 0 ? ' fg-yellow pulsate-fast' : ''}`}>({(item as Stream).streamUnitsPerSecond} units/s)</span>
-        )}
-      </>
-    );
-  }, [isWhitelisted, getRateAmountDisplay, getDepositAmountDisplay, t]);
+    return subtitle;
+  }, [getDepositAmountDisplay, getRateAmountDisplay, t]);
 
   const isStreamRunning = useCallback((stream: Stream | StreamInfo) => {
     const v1 = stream as StreamInfo;
@@ -2648,7 +2639,7 @@ export const MoneyStreamsInfoView = (props: {
             }
 
             const title = stream ? getStreamTitle(stream) : "Unknown incoming stream";
-            const subtitle = getStreamSubtitle(stream);
+            const subtitle = getStreamSubtitle(stream) || "0.00";
             const status = getStreamStatus(stream);
             const resume = getStreamResume(stream);
 
@@ -2735,7 +2726,7 @@ export const MoneyStreamsInfoView = (props: {
               }
   
               const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
-              const subtitle = getStreamSubtitle(stream);
+              const subtitle = getStreamSubtitle(stream) || "0.00";
               const status = getStreamStatus(stream);
               const resume = getStreamResume(stream);
 
