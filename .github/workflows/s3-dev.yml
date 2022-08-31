@@ -14,7 +14,7 @@ on:
   #     - 'feature/*'
 
 env:
-  NODE_VERSION: 17
+  NODE_VERSION: 18
   BUILD_NUMBER: $GITHUB_RUN_NUMBER
   REACT_APP_ENV: development #${{ github.event.inputs.release }}
   BUCKET_NAME: "meanfi-dev"
