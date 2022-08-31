@@ -1723,8 +1723,15 @@ export const MoneyStreamsInfoView = (props: {
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
+    let associatedToken = '';
 
-    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
+    if (item.version < 2) {
+      associatedToken = (item as StreamInfo).associatedToken as string;
+    } else {
+      associatedToken = (item as Stream).associatedToken.toBase58();
+    }
+
+    if (item && item.rateIntervalInSeconds === 0 && item.allocationAssigned > 0) {
       let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
       const decimals = token?.decimals || 6;
 
@@ -1749,7 +1756,7 @@ export const MoneyStreamsInfoView = (props: {
         )
       }
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
+      value += token ? token.symbol : `[${shortenAddress(associatedToken)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -1758,9 +1765,12 @@ export const MoneyStreamsInfoView = (props: {
     let subtitle = '';
 
     if (item) {
-      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
+      let rateAmount = item.rateAmount > 0 && item.rateIntervalInSeconds !== 0
+        ? getRateAmountDisplay(item)
+        : getDepositAmountDisplay(item);
+
       if (item.rateAmount > 0) {
-        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds as number, true, t);
+        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
       }
 
       subtitle = rateAmount;
