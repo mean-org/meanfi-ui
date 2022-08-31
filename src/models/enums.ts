@@ -114,6 +114,7 @@ export enum OperationType {
     CredixDepositFunds = 110,
     CredixWithdrawFunds = 111,
     CredixDepositTranche = 112,
+    CredixWithdrawTranche = 113,
 }
 
 export enum WhitelistClaimType
