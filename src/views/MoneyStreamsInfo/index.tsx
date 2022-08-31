@@ -1758,6 +1758,7 @@ export const MoneyStreamsInfoView = (props: {
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(associatedToken)}]`;
     }
+
     return value;
   }, [getTokenByMintAddress]);
 
@@ -1765,27 +1766,27 @@ export const MoneyStreamsInfoView = (props: {
     let subtitle = '';
 
     if (item) {
-      let rateAmount = item.rateAmount > 0 && item.rateIntervalInSeconds !== 0
+      let rateAmount = new BN(item.rateAmount).gtn(0)
         ? getRateAmountDisplay(item)
         : getDepositAmountDisplay(item);
 
-      if (item.rateAmount > 0) {
+      if (new BN(item.rateAmount).gtn(0)) {
         rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
       }
 
       subtitle = rateAmount;
     }
 
-    return (
-      <>
-        <span>{subtitle || '0'}</span>
-        {!isProd() && isWhitelisted && item.version >= 2 && (
-          <span className={`ml-1 font-size-60${(item as Stream).streamUnitsPerSecond === 0 ? ' fg-yellow pulsate-fast' : ''}`}>({(item as Stream).streamUnitsPerSecond} units/s)</span>
-        )}
-      </>
-    );
-
-  }, [isWhitelisted, getRateAmountDisplay, getDepositAmountDisplay, t]);
+    return subtitle;
+    // return (
+    //   <>
+    //     <span>{subtitle || '0'}</span>
+    //     {!isProd() && isWhitelisted && item.version >= 2 && (
+    //       <span className={`ml-1 font-size-60${(item as Stream).streamUnitsPerSecond === 0 ? ' fg-yellow pulsate-fast' : ''}`}>({(item as Stream).streamUnitsPerSecond} units/s)</span>
+    //     )}
+    //   </>
+    // );
+  }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
 
   const isStreamRunning = useCallback((stream: Stream | StreamInfo) => {
     const v1 = stream as StreamInfo;
@@ -2718,7 +2719,7 @@ export const MoneyStreamsInfoView = (props: {
               const v2 = stream as Stream;
               const isNew = stream.version >= 2 ? true : false;
   
-              const associatedToken = stream.associatedToken ? (stream.associatedToken as PublicKey).toBase58() : undefined;
+              const associatedToken = isNew ? (stream.associatedToken as PublicKey).toBase58() : stream.associatedToken as string;
               const token = associatedToken ? getTokenByMintAddress(associatedToken) : undefined;
 
               let img;

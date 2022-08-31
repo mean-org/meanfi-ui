@@ -223,9 +223,12 @@ export const MoneyStreamDetails = (props: {
     let subtitle = '';
 
     if (item) {
-      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
-      if (item.rateAmount > 0) {
-        rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), true, t);
+      let rateAmount = new BN(item.rateAmount).gtn(0)
+        ? getRateAmountDisplay(item)
+        : getDepositAmountDisplay(item);
+
+      if (new BN(item.rateAmount).gtn(0)) {
+        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
       }
 
       subtitle = rateAmount;
@@ -443,10 +446,7 @@ export const MoneyStreamDetails = (props: {
   }
 
   const isOtp = (): boolean => {
-    if (stream && stream.rateAmount === 0 && stream.rateIntervalInSeconds !== 0) {
-      return true;
-    }
-    return false;
+    return stream && stream.rateAmount === 0 ? true : false;
   }
 
 
