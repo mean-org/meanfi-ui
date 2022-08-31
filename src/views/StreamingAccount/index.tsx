@@ -29,7 +29,6 @@ import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
@@ -109,8 +108,6 @@ export const StreamingAccountView = (props: {
   const connectionConfig = useConnectionConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation('common');
-  const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const { width } = useWindowSize();
   const { address, streamingItemId } = useParams();
   
@@ -122,7 +119,6 @@ export const StreamingAccountView = (props: {
     onSendFromStreamingAccountStreamInfo,
   } = props;
 
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
 
@@ -283,12 +279,13 @@ export const StreamingAccountView = (props: {
 
     connection.getBalance(pk)
     .then(solBalance => {
-      balancesMap[NATIVE_SOL.address] = solBalance / LAMPORTS_PER_SOL;
-    })
+      const uiBalance = solBalance / LAMPORTS_PER_SOL;
+      balancesMap[NATIVE_SOL.address] = uiBalance;
+      setNativeBalance(uiBalance);
+    });
 
     fetchAccountTokens(connection, pk)
     .then(accTks => {
-      consoleOut('Token accounts:', accTks, 'darkpurple');
       if (accTks) {
         for (const item of accTks) {
           const address = item.parsedInfo.mint;
@@ -309,9 +306,9 @@ export const StreamingAccountView = (props: {
     })
     .finally(() => setUserBalances(balancesMap));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
-    splTokenList,
     connection,
   ]);
 
@@ -1033,6 +1030,7 @@ export const StreamingAccountView = (props: {
 
     if (publicKey && streamingAccountSelected) {
       const token = await getTokenOrCustomToken(params.associatedToken);
+      consoleOut('onExecuteAddFundsTransaction token:', token, 'blue');
       let created: boolean;
       if ((streamingAccountSelected as Treasury).version && (streamingAccountSelected as Treasury).version >= 2) {
         created = await createTxV2();
@@ -2293,25 +2291,6 @@ export const StreamingAccountView = (props: {
     hasStreamingAccountPendingTx,
   ]);
 
-  // Keep account balance updated
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-  ]);
-
   // Keep Streaming Account ATA balance
   useEffect(() => {
 
@@ -2376,7 +2355,6 @@ export const StreamingAccountView = (props: {
     }
 
   }, [
-    accounts,
     splTokenList,
     publicKey,
     connection,

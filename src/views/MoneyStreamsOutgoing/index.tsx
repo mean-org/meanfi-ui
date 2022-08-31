@@ -28,7 +28,6 @@ import { StreamPauseModal } from "../../components/StreamPauseModal";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { CloseStreamTransactionParams, StreamTreasuryType } from "../../models/treasuries";
-import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useParams } from "react-router-dom";
 import { title } from "process";
@@ -75,14 +74,12 @@ export const MoneyStreamsOutgoingView = (props: {
   const { wallet, publicKey } = useWallet();
   const connection = useConnection();
   const { t } = useTranslation('common');
-  const { account } = useNativeAccount();
   const { endpoint } = useConnectionConfig();
   const { treasuryId } = useParams();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [userBalances, setUserBalances] = useState<any>();
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
@@ -232,12 +229,13 @@ export const MoneyStreamsOutgoingView = (props: {
 
     connection.getBalance(pk)
     .then(solBalance => {
-      balancesMap[NATIVE_SOL.address] = solBalance / LAMPORTS_PER_SOL;
-    })
+      const uiBalance = solBalance / LAMPORTS_PER_SOL;
+      balancesMap[NATIVE_SOL.address] = uiBalance;
+      setNativeBalance(uiBalance);
+    });
 
     fetchAccountTokens(connection, pk)
     .then(accTks => {
-      consoleOut('Token accounts:', accTks, 'darkpurple');
       if (accTks) {
         for (const item of accTks) {
           const address = item.parsedInfo.mint;
@@ -258,9 +256,9 @@ export const MoneyStreamsOutgoingView = (props: {
     })
     .finally(() => setUserBalances(balancesMap));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
-    splTokenList,
     connection,
   ]);
 
@@ -2442,27 +2440,32 @@ export const MoneyStreamsOutgoingView = (props: {
   // Data management //
   /////////////////////
 
-  // Keep account balance updated
+
+  // Automatically update all token balances (in token list)
   useEffect(() => {
 
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    if (!connection) {
+      console.error('No connection');
+      return;
     }
 
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      refreshUserBalances();
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
+    if (!publicKey || !splTokenList) {
+      return;
     }
+
+    const timeout = setTimeout(() => {
+      refreshUserBalances();
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
   }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshUserBalances,
-    refreshTokenBalance,
+    splTokenList,
+    publicKey,
+    connection,
+    refreshUserBalances
   ]);
 
   // Read treasury data

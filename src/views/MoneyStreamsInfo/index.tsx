@@ -315,12 +315,13 @@ export const MoneyStreamsInfoView = (props: {
 
     connection.getBalance(pk)
     .then(solBalance => {
-      balancesMap[NATIVE_SOL.address] = solBalance / LAMPORTS_PER_SOL;
-    })
+      const uiBalance = solBalance / LAMPORTS_PER_SOL;
+      balancesMap[NATIVE_SOL.address] = uiBalance;
+      setNativeBalance(uiBalance);
+    });
 
     fetchAccountTokens(connection, pk)
     .then(accTks => {
-      consoleOut('Token accounts:', accTks, 'darkpurple');
       if (accTks) {
         for (const item of accTks) {
           const address = item.parsedInfo.mint;
@@ -341,9 +342,9 @@ export const MoneyStreamsInfoView = (props: {
     })
     .finally(() => setUserBalances(balancesMap));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
-    splTokenList,
     connection,
   ]);
 
@@ -1110,6 +1111,7 @@ export const MoneyStreamsInfoView = (props: {
 
     if (publicKey && params) {
       const token = await getTokenOrCustomToken(params.associatedToken);
+      consoleOut('onExecuteAddFundsTransaction token:', token, 'blue');
       const treasury = treasuryList.find(t => t.id === params.treasuryId);
       if (!treasury) { return null; }
       let created: boolean;
