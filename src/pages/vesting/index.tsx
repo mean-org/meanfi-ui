@@ -3805,10 +3805,6 @@ export const VestingView = () => {
       }
     }
 
-    return () => {
-      clearTimeout();
-    };
-
   }, [
     connected,
     publicKey,

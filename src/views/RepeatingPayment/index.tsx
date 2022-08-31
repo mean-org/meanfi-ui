@@ -686,10 +686,6 @@ export const RepeatingPayment = (props: {
       setSelectedTokenBalance(0);
     }
 
-    return () => {
-      clearTimeout();
-    };
-
   }, [
     connected,
     publicKey,
