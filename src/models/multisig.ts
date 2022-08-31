@@ -294,6 +294,9 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
     case OperationType.CredixDepositTranche:
         ix = programIdl.instructions.find(ix => ix.name === "depositTranche");
         break;
+    case OperationType.CredixWithdrawTranche:
+        ix = programIdl.instructions.find(ix => ix.name === "withdrawTranche");
+        break;
     default: ix = undefined;
   }
 

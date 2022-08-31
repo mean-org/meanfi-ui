@@ -43,7 +43,7 @@ import { MEAN_MULTISIG_ACCOUNT_LAMPORTS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
-import { IconEllipsisVertical, IconLoading, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
+import { IconLoading, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -72,7 +72,7 @@ import {
   MultisigTransactionSummary,
   MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk/';
-import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken, getTrancheDepositIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
+import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken, getTrancheDepositIx, getTrancheWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { UserTokenAccount } from '../../models/transactions';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -1572,6 +1572,26 @@ export const SafeView = () => {
     connectionConfig
   ]);
 
+  const createCredixWithdrawTrancheIx = useCallback(async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
+
+    if (!connection || !connectionConfig) { return null; }
+
+    const program = createProgram(connection, "confirmed");
+    
+    const gatewayToken = await getGatewayToken(
+      investor,
+      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+    );
+
+    console.log("gatewayToken => ", gatewayToken.toBase58());
+
+    return await getTrancheWithdrawIx(program, investor, deal, amount, trancheIndex, marketplace);
+
+  }, [
+    connection, 
+    connectionConfig
+  ]);
+
   const onExecuteCreateTransactionProposal = useCallback(async (data: CreateNewProposalParams) => {
 
     let transaction: Transaction;
@@ -1627,6 +1647,17 @@ export const SafeView = () => {
           case 'depositTranche':
             operation = OperationType.CredixDepositTranche;
             proposalIx = await createCredixDepositTrancheIx(
+              investorPK,
+              new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
+              amountVal,
+              parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
+              marketPlaceVal
+            );
+          break;
+
+          case 'withdrawTranche':
+            operation = OperationType.CredixWithdrawTranche;
+            proposalIx = await createCredixWithdrawTrancheIx(
               investorPK,
               new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
               amountVal,
