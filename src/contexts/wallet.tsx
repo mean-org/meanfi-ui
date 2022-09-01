@@ -225,40 +225,40 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
   }
 ];
 
-const getIsProviderInstalled = (provider: any): boolean => {
-  if (provider) {
-    switch (provider.name) {
-      case PhantomWalletName:
-        return !!(window as any).solana?.isPhantom;
-      case ExodusWalletName:
-        return !!(window as any).exodus?.solana;
-      case SlopeWalletName:
-        return typeof (window as any).Slope === 'function' || (window as any).slopeApp ? true : false;
-      case SolletWalletName:
-      case SolletExtensionWalletName:
-        return !!(window as any).sollet && typeof (window as any).sollet?.postMessage === 'function';
-      case SolongWalletName:
-        return !!(window as any).solong;
-      case MathWalletName:
-        return !!(window as any).solana?.isMathWallet;
-      case Coin98WalletName:
-        return !!(window as any).coin98?.sol;
-      case SolflareWalletName:
-        return !!(window as any).solflare?.isSolflare || !!(window as any).SolflareApp;
-      case BitKeepWalletName:
-        return !!(window as any).bitkeep?.solana;
-      case CoinbaseWalletName:
-        return !!(window as any).coinbaseSolana;
-      case TrustWalletName:
-        return !!(window as any).trustwallet?.solana;
-      case LedgerWalletName:
-        return true;
-      default:
-        return false;
-    }
-  }
-  return true;
-}
+// const getIsProviderInstalled = (provider: any): boolean => {
+//   if (provider) {
+//     switch (provider.name) {
+//       case PhantomWalletName:
+//         return !!(window as any).solana?.isPhantom;
+//       case ExodusWalletName:
+//         return !!(window as any).exodus?.solana;
+//       case SlopeWalletName:
+//         return typeof (window as any).Slope === 'function' || (window as any).slopeApp ? true : false;
+//       case SolletWalletName:
+//       case SolletExtensionWalletName:
+//         return !!(window as any).sollet && typeof (window as any).sollet?.postMessage === 'function';
+//       case SolongWalletName:
+//         return !!(window as any).solong;
+//       case MathWalletName:
+//         return !!(window as any).solana?.isMathWallet;
+//       case Coin98WalletName:
+//         return !!(window as any).coin98?.sol;
+//       case SolflareWalletName:
+//         return !!(window as any).solflare?.isSolflare || !!(window as any).SolflareApp;
+//       case BitKeepWalletName:
+//         return !!(window as any).bitkeep?.solana;
+//       case CoinbaseWalletName:
+//         return !!(window as any).coinbaseSolana;
+//       case TrustWalletName:
+//         return !!(window as any).trustwallet?.solana?.isTrust;
+//       case LedgerWalletName:
+//         return true;
+//       default:
+//         return false;
+//     }
+//   }
+//   return true;
+// }
 
 const WalletContext = React.createContext<{
   wallet: MeanFiWallet;
@@ -447,12 +447,12 @@ export function WalletProvider({ children = null as any }) {
           <div className={`wallet-providers ${walletListExpanded ? 'expanded' : ''}`}>
             {WALLET_PROVIDERS.map((item, index) => {
 
-              const isInstalled = getIsProviderInstalled(item);
+              // const isInstalled = getIsProviderInstalled(item);
 
               // Skip items that won't show up
-              if ((item.underDevelopment && isProd()) || (item.hideIfUnavailable && !isInstalled)) {
-                return null;
-              }
+              // if ((item.underDevelopment && isProd()) || (item.hideIfUnavailable && !isInstalled)) {
+              //   return null;
+              // }
 
               const onClick = function () {
                 if (item.name === provider?.name && connected) {
@@ -471,9 +471,9 @@ export function WalletProvider({ children = null as any }) {
                 });
 
                 // If not installed take the user to its extension url
-                if (!isInstalled) {
-                  window.open(item.url, '_blank');
-                }
+                // if (!isInstalled) {
+                //   window.open(item.url, '_blank');
+                // }
 
                 consoleOut('Selected wallet:', item.name, 'blue');
                 setProviderName(item.name);
