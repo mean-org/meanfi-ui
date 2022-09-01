@@ -470,7 +470,7 @@ export function WalletProvider({ children = null as any }) {
                   isWebWallet: item.isWebWallet
                 });
 
-                // Only for the Exodus Wallet (if not installed take the user to its extension url)
+                // If not installed take the user to its extension url
                 if (!isInstalled) {
                   window.open(item.url, '_blank');
                 }
