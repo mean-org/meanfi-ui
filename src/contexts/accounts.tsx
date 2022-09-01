@@ -8,6 +8,7 @@ import { chunks } from "./../utils/utils";
 import { EventEmitter } from "./../utils/eventEmitter";
 import { WRAPPED_SOL_MINT, programIds } from "../utils/ids";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../constants";
+import { consoleOut } from "../utils/ui";
 
 const AccountsContext = React.createContext<any>(null);
 const pendingCalls = new Map<string, Promise<ParsedAccountBase>>();
@@ -279,6 +280,7 @@ const UseNativeAccount = () => {
     }
 
     const timeout = setTimeout(() => {
+      consoleOut('Refreshing native account...', '', 'blue');
       refreshAccount();
     }, ONE_MINUTE_REFRESH_TIMEOUT);
 
