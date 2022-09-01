@@ -259,6 +259,7 @@ const UseNativeAccount = () => {
       return undefined;
     }
 
+    consoleOut('Refreshing native account...', '', 'blue');
     connection.getAccountInfo(publicKey).then((acc) => {
       if (acc) {
         updateCache(acc);
@@ -280,7 +281,6 @@ const UseNativeAccount = () => {
     }
 
     const timeout = setTimeout(() => {
-      consoleOut('Refreshing native account...', '', 'blue');
       refreshAccount();
     }, ONE_MINUTE_REFRESH_TIMEOUT);
 
@@ -323,7 +323,7 @@ export function AccountsProvider({ children = null as any }) {
   const { publicKey, wallet } = useWallet();
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
   const [userAccounts, setUserAccounts] = useState<TokenAccount[]>([]);
-  const { nativeAccount } = UseNativeAccount();
+  const { nativeAccount, refreshAccount } = UseNativeAccount();
 
   const selectUserAccounts = useCallback(() => {
     if (!publicKey) {
@@ -361,7 +361,8 @@ export function AccountsProvider({ children = null as any }) {
       value={{
         userAccounts,
         nativeAccount,
-        tokenAccounts
+        tokenAccounts,
+        refreshAccount
       }}>
       {children}
     </AccountsContext.Provider>
