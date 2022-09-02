@@ -14,8 +14,7 @@ import {
   calculateActionFees as calculateActionFeesV2,
   Stream,
   STREAM_STATUS,
-  MSP,
-  Constants as MSPV2Constants
+  MSP
 } from '@mean-dao/msp';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
@@ -39,6 +38,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
+import { appConfig } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -86,6 +86,9 @@ export const MoneyStreamsIncomingView = (props: {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>();
 
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+
+  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
   const hideDetailsHandler = () => {
     onSendFromIncomingStreamDetails();
@@ -145,7 +148,8 @@ export const MoneyStreamsIncomingView = (props: {
     return new MeanMultisig(
       endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      multisigAddressPK
     );
 
   }, [
@@ -322,7 +326,7 @@ export const MoneyStreamsIncomingView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.StreamTransferBeneficiary,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -818,7 +822,7 @@ export const MoneyStreamsIncomingView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.StreamWithdraw,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );

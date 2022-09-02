@@ -21,7 +21,7 @@ import {
   toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
@@ -40,7 +40,7 @@ import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
+import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
@@ -107,7 +107,6 @@ export const RepeatingPayment = (props: {
   const location = useLocation();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const { width } = useWindowSize();
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -685,10 +684,6 @@ export const RepeatingPayment = (props: {
     } else if (!connected) {
       setSelectedTokenBalance(0);
     }
-
-    return () => {
-      clearTimeout();
-    };
 
   }, [
     connected,

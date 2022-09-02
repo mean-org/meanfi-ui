@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect } from 'react';
+import { useCallback, useContext, useEffect } from 'react';
 import { useState } from 'react';
 import { Modal, Button, Spin, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,6 @@ import { getTransactionOperationDescription, isValidAddress } from '../../utils/
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
-import { MultisigParticipants } from '../MultisigParticipants';
 import { MultisigParticipant, MultisigTransactionFees, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 import { InputMean } from '../InputMean';

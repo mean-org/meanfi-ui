@@ -21,7 +21,6 @@ import {
   Treasury,
   Stream,
   MSP,
-  Constants as MSPV2Constants,
   TreasuryType,
   STREAM_STATUS
 } from '@mean-dao/msp';
@@ -52,6 +51,7 @@ import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { readAccountInfo } from "../../utils/accounts";
+import { appConfig } from '../..';
 
 const { TabPane } = Tabs;
 
@@ -154,6 +154,9 @@ export const MoneyStreamsInfoView = (props: {
   const [hasOutgoingStreamsRunning, setHasOutgoingStreamsRunning] = useState<number>();
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
 
+  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+
   // Detect XS screen
   useEffect(() => {
     if (width < 576) {
@@ -178,7 +181,8 @@ export const MoneyStreamsInfoView = (props: {
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      multisigAddressPK
     );
 
   }, [
@@ -861,7 +865,7 @@ export const MoneyStreamsInfoView = (props: {
         new Date(expirationTime * 1_000),
         operationType,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -1287,7 +1291,7 @@ export const MoneyStreamsInfoView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.TreasuryCreate,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData,
         // preInstructions

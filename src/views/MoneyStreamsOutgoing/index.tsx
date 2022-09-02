@@ -2,7 +2,7 @@ import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
 import { IconEllipsisVertical } from "../../Icons";
 import { MoneyStreamDetails } from "../../components/MoneyStreamDetails";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Stream, STREAM_STATUS, TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, AllocationType, Treasury, Constants as MSPV2Constants, TreasuryType } from "@mean-dao/msp";
+import { Stream, STREAM_STATUS, TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, AllocationType, Treasury, TreasuryType } from "@mean-dao/msp";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
@@ -34,6 +34,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useParams } from "react-router-dom";
 import { title } from "process";
+import { appConfig } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -88,6 +89,9 @@ export const MoneyStreamsOutgoingView = (props: {
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
 
+  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
 
@@ -134,7 +138,8 @@ export const MoneyStreamsOutgoingView = (props: {
     return new MeanMultisig(
       endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      multisigAddressPK
     );
 
   }, [
@@ -474,7 +479,7 @@ export const MoneyStreamsOutgoingView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.StreamAddFunds,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -1096,7 +1101,7 @@ export const MoneyStreamsOutgoingView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.StreamPause,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -1549,7 +1554,7 @@ export const MoneyStreamsOutgoingView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.StreamResume,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -2031,7 +2036,7 @@ export const MoneyStreamsOutgoingView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.StreamClose,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
