@@ -8,7 +8,7 @@ import { chunks } from "../middleware/utils";
 import { EventEmitter } from "../middleware/eventEmitter";
 import { WRAPPED_SOL_MINT, programIds } from "../middleware/ids";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../constants";
-import { consoleOut } from "../utils/ui";
+import { consoleOut } from "../middleware/ui";
 
 interface AccountsContextConfig {
   userAccounts: TokenAccount[];
@@ -261,7 +261,7 @@ const UseNativeAccount = () => {
       if (wrapped !== undefined) {
         const id = publicKey.toBase58();
         cache.registerParser(id, TokenAccountParser);
-        genericCache.set(id, wrapped as TokenAccount);
+        genericCache.set(id, wrapped);
         cache.emitter.raiseCacheUpdated(id, false, TokenAccountParser);
       }
     },
