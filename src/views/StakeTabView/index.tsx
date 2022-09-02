@@ -20,6 +20,7 @@ import { AppUsageEvent, SegmentStakeMeanData } from "../../middleware/segment-se
 import { segmentAnalytics } from "../../App";
 import { openNotification } from "../../components/Notifications";
 import { INVEST_ROUTE_BASE_PATH } from "../../pages/invest";
+import { useAccountsContext } from "../../contexts/accounts";
 
 let inputDebounceTimeout: any;
 
@@ -45,6 +46,7 @@ export const StakeTabView = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
+  const { refreshAccount } = useAccountsContext();
   const connection = useConnection();
   const [isBusy, setIsBusy] = useState(false);
   const { connected, wallet, publicKey } = useWallet();
@@ -522,10 +524,15 @@ export const StakeTabView = (props: {
       recordTxConfirmation(item.signature, item.operationType, true);
       setIsBusy(false);
       onTxFinished();
+      refreshAccount();
       reloadStakePools();
     }
 
-  }, [onTxFinished, recordTxConfirmation]);
+  }, [
+    onTxFinished,
+    refreshAccount,
+    recordTxConfirmation
+  ]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -543,8 +550,9 @@ export const StakeTabView = (props: {
       consoleOut("onTxTimedout event executed:", item, 'crimson');
       recordTxConfirmation(item.signature, item.operationType, false);
       setIsBusy(false);
+      refreshAccount();
       openNotification({
-        title: 'Create vesting contract status',
+        title: 'Stake MEAN status',
         description: 'The transaction to stake MEAN was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully created.',
         duration: null,
         type: "info",
@@ -552,7 +560,11 @@ export const StakeTabView = (props: {
       });
       onTxFinished();
     }
-  }, [onTxFinished, recordTxConfirmation]);
+  }, [
+    onTxFinished,
+    refreshAccount,
+    recordTxConfirmation
+  ]);
 
 
   /////////////////////

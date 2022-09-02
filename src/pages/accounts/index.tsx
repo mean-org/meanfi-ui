@@ -79,7 +79,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { closeTokenAccount } from '../../middleware/accounts';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { BN } from 'bn.js';
 import { ZERO_FEES } from '../../models/multisig';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
@@ -94,13 +94,13 @@ import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/
 import notification from 'antd/lib/notification';
 import { SolBalanceModal } from '../../components/SolBalanceModal';
 import BigNumber from 'bignumber.js';
+import { appConfig } from '../..';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
 export type CategoryOption = "networth" | "assets" | "streaming" | "other-assets";
 export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
 let isWorkflowLocked = false;
-
 interface AssetCta {
   action: MetaInfoCtaAction;
   isVisible: boolean;
@@ -240,6 +240,8 @@ export const AccountsNewView = () => {
   const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
   const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
 
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+
   // Perform premature redirect here if no address was provided in path
   // to the current wallet address if the user is connected
   useEffect(() => {
@@ -284,13 +286,14 @@ export const AccountsNewView = () => {
   /////////////////
   //  Init code  //
   /////////////////
-
+  
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      multisigAddressPK
     );
   }, [
     connection,
@@ -1237,7 +1240,7 @@ export const AccountsNewView = () => {
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
-        MEAN_MULTISIG_PROGRAM
+        multisigAddressPK
       );
 
       const mintAddress = new PublicKey(data.token.address);
@@ -1610,9 +1613,7 @@ export const AccountsNewView = () => {
         ? NATIVE_SOL_MINT 
         : new PublicKey(fromAccount.mint);
 
-      let toAddress = new PublicKey(data.to);
-      // const programId = MEAN_MULTISIG_PROGRAM;
-      //
+      let toAddress = new PublicKey(data.to);      
       let transferIx = SystemProgram.transfer({
         fromPubkey: fromAddress,
         toPubkey: toAddress,

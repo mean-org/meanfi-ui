@@ -20,6 +20,7 @@ import { AppUsageEvent, SegmentUnstakeMeanData } from "../../middleware/segment-
 import { segmentAnalytics } from "../../App";
 import { openNotification } from "../../components/Notifications";
 import { INVEST_ROUTE_BASE_PATH } from "../../pages/invest";
+import { useAccountsContext } from "../../contexts/accounts";
 
 let inputDebounceTimeout: any;
 
@@ -41,6 +42,7 @@ export const UnstakeTabView = (props: {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { connected, wallet, publicKey } = useWallet();
+  const { refreshAccount } = useAccountsContext();
   const percentages = ["25", "50", "75", "100"];
   const [fromCoinAmount, setFromCoinAmount] = useState<string>('');
   const [percentageValue, setPercentageValue] = useState<string>('');
@@ -472,10 +474,14 @@ export const UnstakeTabView = (props: {
       consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
       recordTxConfirmation(item.signature, item.operationType, true);
       setIsBusy(false);
+      refreshAccount();
       reloadStakePools();
     }
 
-  }, [recordTxConfirmation]);
+  }, [
+    refreshAccount,
+    recordTxConfirmation
+  ]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -493,8 +499,9 @@ export const UnstakeTabView = (props: {
       consoleOut("onTxTimedout event executed:", item, 'crimson');
       recordTxConfirmation(item.signature, item.operationType, false);
       setIsBusy(false);
+      refreshAccount();
       openNotification({
-        title: 'Create vesting contract status',
+        title: 'Unstake MEAN status',
         description: 'The transaction to unstake MEAN was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully created.',
         duration: null,
         type: "info",
@@ -502,6 +509,7 @@ export const UnstakeTabView = (props: {
       });
     }
   }, [
+    refreshAccount,
     recordTxConfirmation,
   ]);
 

@@ -1,7 +1,7 @@
 import './style.scss';
 import { formatThousands, shortenAddress } from "../../../../middleware/utils";
 import { SafeInfo } from "../UI/SafeInfo";
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { consoleOut } from '../../../../middleware/ui';
@@ -20,6 +20,7 @@ import { ACCOUNT_LAYOUT } from '../../../../middleware/layouts';
 import BN from 'bn.js';
 import { IconArrowForward } from '../../../../Icons';
 import { ResumeItem } from '../../../../components/ResumeItem';
+import { appConfig } from '../../../..';
 
 export const SafeMeanInfo = (props: {
   assetSelected?: any;
@@ -91,7 +92,8 @@ export const SafeMeanInfo = (props: {
   // Tabs
   const [amountOfProposals, setAmountOfProposals] = useState<string>("");
   const [amountOfPrograms, setAmountOfPrograms] = useState<string>("");
-
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  
   const getMultisigVaults = useCallback(async (
     connection: Connection,
     multisig: PublicKey
@@ -100,7 +102,7 @@ export const SafeMeanInfo = (props: {
 
     const [multisigSigner] = await PublicKey.findProgramAddress(
       [multisig.toBuffer()],
-      MEAN_MULTISIG_PROGRAM
+      multisigAddressPK
     );
 
     const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
