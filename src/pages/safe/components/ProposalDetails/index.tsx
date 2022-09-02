@@ -9,7 +9,7 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { consoleOut, copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigParticipant, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MultisigParticipant, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { useWallet } from '../../../../contexts/wallet';
 import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
@@ -23,6 +23,7 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { IDL as SplTokenIdl } from '@project-serum/anchor/dist/cjs/spl/token';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
+import { appConfig } from '../../../..';
 
 export const ProposalDetailsView = (props: {
   appsProvider?: any;
@@ -76,6 +77,8 @@ export const ProposalDetailsView = (props: {
   const [loadingActivity, setLoadingActivity] = useState<boolean>(false);
 
   const [isCancelRejectModalVisible, setIsCancelRejectModalVisible] = useState(false);
+  
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -318,7 +321,7 @@ export const ProposalDetailsView = (props: {
         }
 
         {
-          proposalIxInfo.programId === MEAN_MULTISIG_PROGRAM.toBase58() ? (
+          proposalIxInfo.programId === multisigAddressPK.toBase58() ? (
             proposalIxInfo.data.map((item: InstructionDataInfo, index: number) => {
               return (
                 <Row gutter={[8, 8]} className="mb-2" key={`more-items-${index}`}>

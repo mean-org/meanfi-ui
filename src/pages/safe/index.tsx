@@ -64,14 +64,13 @@ import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   getFees,
   MeanMultisig,
-  MEAN_MULTISIG_PROGRAM,
   MultisigInfo,
   MultisigParticipant,
   MultisigTransaction,
   MultisigTransactionFees,
   MultisigTransactionSummary,
   MULTISIG_ACTIONS
-} from '@mean-dao/mean-multisig-sdk/';
+} from '@mean-dao/mean-multisig-sdk';
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken, getTrancheDepositIx, getTrancheWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { UserTokenAccount } from '../../models/transactions';
@@ -86,6 +85,7 @@ import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
+import { appConfig } from '../..';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -192,6 +192,8 @@ export const SafeView = () => {
   const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
 
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
@@ -227,7 +229,8 @@ export const SafeView = () => {
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      multisigAddressPK
     );
 
   }, [
@@ -1134,7 +1137,7 @@ export const SafeView = () => {
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
-        MEAN_MULTISIG_PROGRAM
+        multisigAddressPK
       );
 
       const owners = data.owners.map((p: MultisigParticipant) => {
@@ -1508,86 +1511,73 @@ export const SafeView = () => {
     publicKey
   ]);
 
+  const getCredixProgram = useCallback(async (connection: Connection, investor: PublicKey) => {
+    const program = createProgram(connection, "confirmed");
+    console.log("data => ", investor.toBase58());
+  
+    const gatewayToken = await getGatewayToken(
+      investor,
+      CREDIX_GATEWAY_ADDRESS
+    );
+  
+    console.log("gatewayToken => ", gatewayToken.toBase58());
+    return program;
+  }, []);
+
   const createCredixDepositIx = useCallback(async (investor: PublicKey, amount: number, marketplace: string) => {
 
     if (!connection || !connectionConfig) { return null; }
 
-    const program = createProgram(connection, "confirmed");
-    console.log("data => ", investor.toBase58(), amount);
-
-    const gatewayToken = await getGatewayToken(
-      investor,
-      CREDIX_GATEWAY_ADDRESS
-    ); 
-
-    console.log("gatewayToken => ", gatewayToken.toBase58());
+    const program = await getCredixProgram(connection, investor);
 
     return await getDepositIx(program, investor, amount, marketplace);
 
   }, [
     connection, 
-    connectionConfig
+    connectionConfig,
+    getCredixProgram
   ]);
 
   const createCredixDepositTrancheIx = useCallback(async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
 
     if (!connection || !connectionConfig) { return null; }
 
-    const program = createProgram(connection, "confirmed");
-    
-    const gatewayToken = await getGatewayToken(
-      investor,
-      CREDIX_GATEWAY_ADDRESS
-    );
-
-    console.log("gatewayToken => ", gatewayToken.toBase58());
+    const program = await getCredixProgram(connection, investor);
 
     return await getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
 
   }, [
     connection, 
-    connectionConfig
+    connectionConfig,
+    getCredixProgram
   ]);
 
   const createCredixWithdrawIx = useCallback(async (investor: PublicKey, amount: number, marketplace: string) => {
 
     if (!connection || !connectionConfig) { return null; }
 
-    const program = createProgram(connection, "confirmed");
-    console.log("data => ", investor.toBase58(), amount);
-
-    const gatewayToken = await getGatewayToken(
-      investor,
-      CREDIX_GATEWAY_ADDRESS
-    ); 
-
-    console.log("gatewayToken => ", gatewayToken.toBase58());
+    const program = await getCredixProgram(connection, investor);
 
     return await getWithdrawIx(program, investor, amount, marketplace);
 
   }, [
     connection, 
-    connectionConfig
+    connectionConfig,
+    getCredixProgram
   ]);
 
   const createCredixWithdrawTrancheIx = useCallback(async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
 
     if (!connection || !connectionConfig) { return null; }
 
-    const program = createProgram(connection, "confirmed");
-    
-    const gatewayToken = await getGatewayToken(
-      investor,
-      CREDIX_GATEWAY_ADDRESS
-    );
-
-    console.log("gatewayToken => ", gatewayToken.toBase58());
+    const program = await getCredixProgram(connection, investor);
 
     return await getTrancheWithdrawIx(program, investor, deal, amount, trancheIndex, marketplace);
 
   }, [
     connection, 
-    connectionConfig
+    connectionConfig,
+    getCredixProgram
   ]);
 
   const onExecuteCreateTransactionProposal = useCallback(async (data: CreateNewProposalParams) => {
