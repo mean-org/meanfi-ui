@@ -10,7 +10,21 @@ import { WRAPPED_SOL_MINT, programIds } from "../utils/ids";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../constants";
 import { consoleOut } from "../utils/ui";
 
-const AccountsContext = React.createContext<any>(null);
+interface AccountsContextConfig {
+  userAccounts: TokenAccount[];
+  nativeAccount: AccountInfo<Buffer> | undefined;
+  tokenAccounts: TokenAccount[];
+  refreshAccount: () => void;
+}
+
+const contextDefaultValues: AccountsContextConfig = {
+  userAccounts: [],
+  nativeAccount: undefined,
+  tokenAccounts: [],
+  refreshAccount: () => {},
+}
+
+const AccountsContext = React.createContext<AccountsContextConfig>(contextDefaultValues);
 const pendingCalls = new Map<string, Promise<ParsedAccountBase>>();
 const genericCache = new Map<string, ParsedAccountBase>();
 

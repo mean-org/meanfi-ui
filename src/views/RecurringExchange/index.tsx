@@ -378,31 +378,6 @@ export const RecurringExchange = (props: {
     renderCount
   ]);
 
-  // Automatically updates user account balance (SOL) 
-  /*
-  useEffect(() => {
-
-    if (!connection) {
-      return;
-    }
-
-    if (!connected || !publicKey) { return; }
-    
-    const listener = connection.onAccountChange(publicKey, (info) => {
-      setUserAccount(info);
-    });
-
-    return () => {
-      connection.removeAccountChangeListener(listener);
-    }
-
-  },[
-    connected, 
-    connection, 
-    publicKey
-  ]);
-  */
-
   // Get Tx fees
   useEffect(() => {
 
