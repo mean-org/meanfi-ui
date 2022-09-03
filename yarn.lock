@@ -2008,14 +2008,14 @@
     prompt-sync "^4.2.0"
     yaml "^1.10.2"
 
-"@mean-dao/msp@3.0.0-alpha.10":
-  version "3.0.0-alpha.10"
-  resolved "https://registry.yarnpkg.com/@mean-dao/msp/-/msp-3.0.0-alpha.10.tgz#104bbe74fb31b605a19e90511ead9a9b77e184d4"
-  integrity sha512-3efe4lEb8NAlNLdU61n5Q9HBCukCvIsu1BEfpZ2zSeLR+7a01OQQKBA5Orjkz1SXtjE/ZVCh09UPORrNT9AKww==
+"@mean-dao/msp@3.0.0-alpha.13":
+  version "3.0.0-alpha.13"
+  resolved "https://registry.yarnpkg.com/@mean-dao/msp/-/msp-3.0.0-alpha.13.tgz#abe9ce0ea62d00df4bdcea4d666be6dc7582aa25"
+  integrity sha512-0Xv9UYn3Akq7XZ0Vrljk+oMnUm5a2a9RCcSz5cpVtoB9W0whMnvAjsI9o7OVL1Kob82xpavvp1WqmhVfGClLng==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@solana/spl-token" "^0.1.8"
-    "@solana/web3.js" "^1.36.0"
+    "@solana/web3.js" "1.56.0"
     bignumber.js "^9.1.0"
     bn.js "^5.2.0"
 

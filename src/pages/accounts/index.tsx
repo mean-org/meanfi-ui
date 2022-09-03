@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo, useRef } from 'react';
+import React, { useCallback, useContext, useMemo, useRef, useEffect, useState } from 'react';
 import "./style.scss";
 import {
   ArrowLeftOutlined,
@@ -9,7 +9,6 @@ import {
   WarningFilled
 } from '@ant-design/icons';
 import { Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -70,7 +69,7 @@ import { segmentAnalytics } from '../../App';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 import { QRCodeSVG } from 'qrcode.react';
 import { NATIVE_SOL } from '../../middleware/tokens';
-import { customLogger } from '../..';
+import { appConfig, customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
 import { INVEST_ROUTE_BASE_PATH } from '../invest';
@@ -94,7 +93,6 @@ import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/
 import notification from 'antd/lib/notification';
 import { SolBalanceModal } from '../../components/SolBalanceModal';
 import BigNumber from 'bignumber.js';
-import { appConfig } from '../..';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -240,7 +238,7 @@ export const AccountsNewView = () => {
   const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
   const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
 
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   // Perform premature redirect here if no address was provided in path
   // to the current wallet address if the user is connected
@@ -267,7 +265,7 @@ export const AccountsNewView = () => {
       navigate(url, { replace: true });
     } else {
       // If an asset is specified or user goes inside any tab of the streaming category, enable it
-      if (asset || streamingTab) {
+      if (streamingTab) {
         setAutoOpenDetailsPanel(true);
       }
       setTimeout(() => {
@@ -298,6 +296,7 @@ export const AccountsNewView = () => {
   }, [
     connection,
     publicKey,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -367,17 +366,13 @@ export const AccountsNewView = () => {
       const v2 = item as Stream;
       let beneficiary = '';
       if (v1.version < 2) {
-        beneficiary = v1.beneficiaryAddress
-          ? typeof v1.beneficiaryAddress === "string"
-            ? (v1.beneficiaryAddress as string)
-            : (v1.beneficiaryAddress as PublicKey).toBase58()
-          : '';
+        beneficiary = typeof v1.beneficiaryAddress === "string"
+          ? v1.beneficiaryAddress
+          : (v1.beneficiaryAddress as PublicKey).toBase58();
       } else {
-        beneficiary = v2.beneficiary
-          ? typeof v2.beneficiary === "string"
-            ? (v2.beneficiary as string)
-            : (v2.beneficiary as PublicKey).toBase58()
-          : '';
+        beneficiary = typeof v2.beneficiary === "string"
+          ? v2.beneficiary
+          : v2.beneficiary.toBase58();
       }
       return beneficiary === accountAddress ? true : false
     }
@@ -809,7 +804,6 @@ export const AccountsNewView = () => {
   const selectAsset = useCallback((
     asset: UserTokenAccount,
     clearTxList = true,
-    openDetails = false
   ) => {
     setStatus(FetchStatus.Fetching);
     if (clearTxList) {
@@ -817,9 +811,6 @@ export const AccountsNewView = () => {
       setTransactions(undefined);
     }
     setSelectedAsset(asset);
-    if (openDetails) {
-      setDetailsPanelOpen(true);
-    }
     setTimeout(() => {
       startSwitch();
     }, 10);
@@ -827,7 +818,6 @@ export const AccountsNewView = () => {
     startSwitch,
     setTransactions,
     setSelectedAsset,
-    setDetailsPanelOpen,
   ]);
 
   const shouldHideAsset = useCallback((asset: UserTokenAccount) => {
@@ -3090,8 +3080,7 @@ export const AccountsNewView = () => {
       setSelectedCategory("assets");
       if (!asset) {
         setPathParamAsset('');
-      }
-      if (autoOpenDetailsPanel) {
+      } else if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
     } else if (location.pathname.indexOf('/streaming') !== -1) {
@@ -4260,7 +4249,10 @@ export const AccountsNewView = () => {
   //////////////
 
   const onBackButtonClicked = () => {
-    if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamingItemId}`) {
+    if (location.pathname.indexOf('/assets') !== -1) {
+      setDetailsPanelOpen(false);
+      setAutoOpenDetailsPanel(false);
+    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamingItemId}`) {
       let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
       if (inspectedAccountType && inspectedAccountType === "multisig") {
         url += `?account-type=multisig`;
@@ -4350,9 +4342,7 @@ export const AccountsNewView = () => {
 
   const renderMoneyStreamsSummary = (
     <>
-      {/* <Tooltip title={isInspectedAccountTheConnectedWallet()
-          ? "See your Money Streams"
-          : "To see your Money Streams you need to connect your wallet"}> */}
+      {
         <div key="streams" onClick={() => {
           navigateToStreaming();
           setAutoOpenDetailsPanel(true);
@@ -4410,7 +4400,7 @@ export const AccountsNewView = () => {
             )}
           </div>
         </div>
-      {/* </Tooltip> */}
+      }
     </>
   );
 
@@ -4418,35 +4408,51 @@ export const AccountsNewView = () => {
     const onTokenAccountClick = () => {
       setSelectedCategory("assets");
       consoleOut('clicked on asset:', asset.publicAddress, 'blue');
-      // if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
-      //   reloadSwitch();
-      // } else {
-      // }
-      // selectAsset(asset, true, true);
+      setDetailsPanelOpen(true);
+      setAutoOpenDetailsPanel(true);
       navigateToAsset(asset);
     }
+
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
+
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
     };
+
     const isSelectedToken = (): boolean => {
       return selectedAsset && asset && selectedAsset.displayIndex === asset.displayIndex
         ? true
         : false;
     }
 
+    const getRowSelectionClass = (): string => {
+      if (isSelectedToken() && selectedCategory === "assets") {
+        return 'selected';
+      } else {
+        if (hideLowBalances && (shouldHideAsset(asset) || !asset.balance)) {
+          return 'hidden';
+        }
+      }
+      return '';
+    }
+
+    const getRateAmountDisplay = (): string => {
+      if (tokenPrice > 0) {
+        if (!asset.valueInUsd) { return '$0.00'; }
+        return asset.valueInUsd > 0 && asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
+          ? '< $0.01'
+          : toUsCurrency(asset.valueInUsd || 0);
+      }
+      return '—';
+    }
+
     return (
       <div key={`${asset.displayIndex}`}
             onClick={onTokenAccountClick}
             id={asset.publicAddress}
-            className={`transaction-list-row ${isSelectedToken() && selectedCategory === "assets"
-              ? 'selected'
-              : hideLowBalances && (shouldHideAsset(asset) || !asset.balance)
-                ? 'hidden'
-                : ''
-            }`
+            className={`transaction-list-row ${getRowSelectionClass()}`
         }>
         <div className="icon-cell">
           <div className="token-icon">
@@ -4470,15 +4476,7 @@ export const AccountsNewView = () => {
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
-            {
-              tokenPrice > 0
-                ? !asset.valueInUsd
-                  ? '$0.00'
-                  : asset.valueInUsd > 0 && asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
-                    ? '< $0.01'
-                    : toUsCurrency(asset.valueInUsd || 0)
-                : '—'
-            }
+            {getRateAmountDisplay()}
           </div>
           <div className="interval">
               {(asset.balance || 0) > 0 ? formatThousands(asset.balance || 0, asset.decimals, asset.decimals) : '0'}
@@ -4497,6 +4495,23 @@ export const AccountsNewView = () => {
   ]);
 
   const renderAssetsList = () => {
+
+    const renderMessages = () => {
+      if (tokensLoaded) {
+        return (
+          <div className="flex flex-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex flex-center">
+            <Spin indicator={antIcon} />
+          </div>
+        );
+      }
+    }
+
     return (
       <>
         {accountTokens && accountTokens.length > 0 ? (
@@ -4523,15 +4538,7 @@ export const AccountsNewView = () => {
             {/* Render user token accounts */}
             {accountTokens.map(asset => renderAsset(asset))}
           </>
-        ) : tokensLoaded ? (
-          <div className="flex flex-center">
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          </div>
-        ) : (
-          <div className="flex flex-center">
-            <Spin indicator={antIcon} />
-          </div>
-        )}
+        ) : renderMessages()}
       </>
     );
   }
@@ -4545,6 +4552,24 @@ export const AccountsNewView = () => {
           <Spin indicator={antIcon} />
         </div>
       );
+    }
+
+    const renderMessages = () => {
+      if (status === FetchStatus.Fetched && !hasTransactions()) {
+        return (
+          <div className="h-100 flex-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
+          </div>
+        );
+      } else if (status === FetchStatus.FetchFailed) {
+        return (
+          <div className="h-100 flex-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.loading-error')}</p>} />
+          </div>
+        );
+      } else {
+        return null;
+      }
     }
 
     return (
@@ -4563,15 +4588,7 @@ export const AccountsNewView = () => {
                 <div className="item-list-body compact">
                   {renderTransactions()}
                 </div>
-              ) : status === FetchStatus.Fetched && !hasTransactions() ? (
-                <div className="h-100 flex-center">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
-                </div>
-              ) : status === FetchStatus.FetchFailed && (
-                <div className="h-100 flex-center">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.loading-error')}</p>} />
-                </div>
-              )
+              ) : renderMessages()
             }
             {lastTxSignature && (
                 <div className="mt-1 text-center">
@@ -4592,10 +4609,6 @@ export const AccountsNewView = () => {
       </>
     );
   };
-
-  // const renderSolanaIcon = (
-  //   <img className="token-icon" src="/solana-logo.png" alt="Solana logo" />
-  // );
 
   const renderTransactions = () => {
     if (transactions) {
