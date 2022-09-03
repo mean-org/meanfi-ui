@@ -19,7 +19,7 @@ import { INPUT_DEBOUNCE_TIME } from "../../constants";
 import { AppUsageEvent, SegmentUnstakeMeanData } from "../../utils/segment-service";
 import { segmentAnalytics } from "../../App";
 import { openNotification } from "../../components/Notifications";
-import { INVEST_ROUTE_BASE_PATH } from "../../pages/invest";
+import { STAKING_ROUTE_BASE_PATH } from "../../pages/staking";
 import { useAccountsContext } from "../../contexts/accounts";
 
 let inputDebounceTimeout: any;
@@ -113,14 +113,14 @@ export const UnstakeTabView = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-        ? `${t("invest.panel-right.tabset.unstake.unstake-button-busy")} ${props.selectedToken && props.selectedToken.symbol}`
+        ? `${t("staking.panel-right.tabset.unstake.unstake-button-busy")} ${props.selectedToken && props.selectedToken.symbol}`
         : !props.selectedToken || !props.tokenBalance
-          ? `${t("invest.panel-right.tabset.unstake.unstake-button-unavailable")} ${props.selectedToken && props.selectedToken.symbol}`
+          ? `${t("staking.panel-right.tabset.unstake.unstake-button-unavailable")} ${props.selectedToken && props.selectedToken.symbol}`
           : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
             ? t('transactions.validation.no-amount')
             : parseFloat(fromCoinAmount) > props.tokenBalance
               ? t('transactions.validation.amount-high')
-              : `${t("invest.panel-right.tabset.unstake.unstake-button-available")} ${props.selectedToken && props.selectedToken.symbol}`;
+              : `${t("staking.panel-right.tabset.unstake.unstake-button-available")} ${props.selectedToken && props.selectedToken.symbol}`;
   }, [
     fromCoinAmount,
     props.selectedToken,
@@ -457,7 +457,7 @@ export const UnstakeTabView = (props: {
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
     const path = window.location.pathname;
-    if (!path.startsWith(INVEST_ROUTE_BASE_PATH)) {
+    if (!path.startsWith(STAKING_ROUTE_BASE_PATH)) {
       return;
     }
 
@@ -651,11 +651,11 @@ export const UnstakeTabView = (props: {
               ? (
                 <span>You have {cutNumber(props.tokenBalance, 6)} sMEAN staked{meanWorthOfsMean ? ` which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.` : '.'}</span>
               )
-              : t("invest.panel-right.tabset.unstake.notification-label-one-error")
+              : t("staking.panel-right.tabset.unstake.notification-label-one-error")
           }
         </span>
       </div>
-      <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
+      <div className="form-label mt-2">{t("staking.panel-right.tabset.unstake.amount-label")}</div>
       <div className={`well${isBusy ? ' disabled' : ''}`}>
         <div className="flexible-right mb-1">
           <div className="token-group">
@@ -698,7 +698,7 @@ export const UnstakeTabView = (props: {
         </div>
         <div className="flex-fixed-right">
           <div className="left inner-label">
-            <span>{t('invest.panel-right.tabset.unstake.send-amount.label-right')}:</span>
+            <span>{t('staking.panel-right.tabset.unstake.send-amount.label-right')}:</span>
             <span>
               {`${props.tokenBalance && props.selectedToken
                   ? getAmountWithSymbol(props.tokenBalance, props.selectedToken?.address, true)
@@ -715,17 +715,7 @@ export const UnstakeTabView = (props: {
           </div>
         </div>
       </div>
-      <span className="info-label">{t("invest.panel-right.tabset.unstake.notification-label-two")}</span>
-      
-      {/* Confirm that have read the terms and conditions */}
-      {/* <div className="mt-2 confirm-terms">
-        <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.unstake.verified-label")}</Checkbox>
-        <Tooltip placement="top" title={t("invest.panel-right.tabset.unstake.terms-and-conditions-tooltip")}>
-          <span>
-            <IconHelpCircle className="mean-svg-icons" />
-          </span>
-        </Tooltip>
-      </div> */}
+      <span className="info-label">{t("staking.panel-right.tabset.unstake.notification-label-two")}</span>
 
       {/* Action button */}
       <Button

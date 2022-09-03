@@ -59,7 +59,7 @@ import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
-import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
+import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
 import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
@@ -72,7 +72,7 @@ import { NATIVE_SOL } from '../../utils/tokens';
 import { customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
-import { INVEST_ROUTE_BASE_PATH } from '../invest';
+import { STAKING_ROUTE_BASE_PATH } from '../staking';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
 import { closeTokenAccount } from '../../utils/accounts';
@@ -210,7 +210,6 @@ export const AccountsNewView = () => {
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
-  const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
@@ -488,10 +487,6 @@ export const AccountsNewView = () => {
     hideUnwrapSolModal();
   }
 
-  const handleScanAnotherAddressButtonClick = () => {
-    setAddAccountPanelOpen(true);
-  }
-
   const isInspectedAccountTheConnectedWallet = useCallback(() => {
     return accountAddress && publicKey && publicKey.toBase58() === accountAddress
       ? true
@@ -535,28 +530,21 @@ export const AccountsNewView = () => {
   const investButtonEnabled = useCallback(() => {
     if (!selectedAsset || !isInspectedAccountTheConnectedWallet()) { return false; }
 
-    const investPageUsedAssets = ['SOL', 'MEAN', 'sMEAN', 'RAY', 'USDC'];
+    const investPageUsedAssets = ['MEAN', 'sMEAN'];
     return investPageUsedAssets.includes(selectedAsset.symbol);
   }, [isInspectedAccountTheConnectedWallet, selectedAsset]);
 
   const handleGoToInvestClick = useCallback(() => {
     setDetailsPanelOpen(false);
-    let url = INVEST_ROUTE_BASE_PATH;
+    let url = STAKING_ROUTE_BASE_PATH;
 
     if (selectedAsset) {
       switch (selectedAsset.symbol) {
-        case "SOL":
-          url += `/${InvestItemPaths.StakeSol}`;
-          break;
         case "MEAN":
-          url += `/${InvestItemPaths.StakeMean}?option=stake`;
+          url += '?option=stake';
           break;
         case "sMEAN":
-          url += `/${InvestItemPaths.StakeMean}?option=unstake`;
-          break;
-        case "RAY":
-        case "USDC":
-          url += `/${InvestItemPaths.MeanLiquidityPools}`;
+          url += '?option=unstake';
           break;
         default:
           break;
@@ -571,17 +559,6 @@ export const AccountsNewView = () => {
     if (!selectedAsset) { return; }
 
     goToExchangeWithPresetAsset();
-
-    // let token: TokenInfo | null;
-    // if (isSelectedAssetNativeAccount()) {
-    //   token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
-    // } else {
-    //   token = getTokenByMintAddress(selectedAsset.address);
-    // }
-    // if (token) {
-    //   setSelectedToken(token as TokenInfo);
-    // }
-    // showExchangeAssetModal();
 
   }, [goToExchangeWithPresetAsset, selectedAsset]);
 
@@ -633,18 +610,6 @@ export const AccountsNewView = () => {
     }
 
   },[t])
-
-  // Call only if you have control over every loop
-  const getStreamingAccountStreams = useCallback(async (treasuryPk: PublicKey, isNewTreasury: boolean) => {
-    if (!publicKey || !ms || !msp || !treasuryPk || !streamList) { return undefined; }
-
-    if (isNewTreasury) {
-      return streamList.filter((item: any) => item.treasury === treasuryPk.toBase58());
-    } else {
-      return  streamList.filter((item: any) => item.treasuryAddress === treasuryPk.toBase58());
-    }
-
-  }, [ms, msp, publicKey, streamList]);
 
   const hasTransactions = useCallback(() => {
     return transactions && transactions.length > 0 ? true : false;
@@ -2999,7 +2964,7 @@ export const AccountsNewView = () => {
   useEffect(() => {
     let timer: any;
 
-    if (publicKey && !customStreamDocked) {
+    if (publicKey) {
       timer = setInterval(() => {
         consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshTreasuries(false);
@@ -3011,7 +2976,6 @@ export const AccountsNewView = () => {
     publicKey,
     accountAddress,
     loadingTreasuries,
-    customStreamDocked,
     refreshTreasuries
   ]);
 
@@ -3104,10 +3068,10 @@ export const AccountsNewView = () => {
     }
 
     // Invest
-    if (investButtonEnabled() && !isSelectedAssetWsol() && !isCustomAsset) {
+    if (investButtonEnabled()) {
       actions.push({
         action: MetaInfoCtaAction.Invest,
-        caption: 'Invest',
+        caption: selectedAsset.symbol === 'sMEAN' ? 'Unstake' : 'Stake',
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
