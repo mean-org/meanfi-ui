@@ -2,6 +2,7 @@ import './style.scss';
 
 export const AccountSelectorItem = (props: {
   id?: string;
+  img?: any;
   src?: string;
   title?: any;
   subtitle?: string;
@@ -11,6 +12,7 @@ export const AccountSelectorItem = (props: {
 
   const {
     id,
+    img,
     src,
     title,
     subtitle,
@@ -26,6 +28,7 @@ export const AccountSelectorItem = (props: {
             {src && (
               <img src={src} alt={title} width={35} height={35} style={{borderRadius: "0.25em !important"}} />
             )}
+            {img && img}
           </div>
           <div className="resume-left-text">
             <div className="resume-title">

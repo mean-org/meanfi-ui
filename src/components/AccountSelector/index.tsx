@@ -6,6 +6,7 @@ import { shortenAddress } from "../../middleware/utils";
 import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { toUsCurrency } from "../../middleware/ui";
+import { Identicon } from "../Identicon";
 
 export const AccountSelector = () => {
   const {
@@ -49,6 +50,15 @@ export const AccountSelector = () => {
 
                 const safeAccountAddress = shortenAddress(item.authority.toBase58() as string, 8);
                 const safeAccountBalance = toUsCurrency(item.balance);
+                const img = <>
+                  {(item.version === 0) ? (
+                    <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />
+                  ) : (item.version === 2) ? (
+                    <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" alt="Meanfi Multisig" width={30} height={30} />
+                  ) : (
+                    <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
+                  )}
+                </>
 
                 return (
                   <div 
@@ -57,7 +67,7 @@ export const AccountSelector = () => {
                       >
                     <AccountSelectorItem
                       id={item.authority.toBase58()}
-                      src={walletAccountIcon}
+                      img={img}
                       title={item.label}
                       subtitle={safeAccountAddress}
                       amount={safeAccountBalance}
