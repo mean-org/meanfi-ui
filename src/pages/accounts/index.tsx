@@ -5242,12 +5242,14 @@ export const AccountsNewView = () => {
                         ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                           <MoneyStreamsIncomingView
                             accountAddress={accountAddress}
+                            loadingStreams={loadingStreams}
                             streamSelected={streamDetail}
                             multisigAccounts={multisigAccounts}
                             onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                           />
                         ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
                           <MoneyStreamsOutgoingView
+                            loadingStreams={loadingStreams}
                             streamSelected={streamDetail}
                             streamList={streamList}
                             streamingAccountSelected={treasuryDetail}
