@@ -278,9 +278,6 @@ const UseNativeAccount = () => {
       if (acc) {
         updateCache(acc);
         setNativeAccount(acc);
-      } else {
-        updateCache(undefined);
-        setNativeAccount(undefined);
       }
     })
     .catch(error => {
@@ -294,6 +291,10 @@ const UseNativeAccount = () => {
       return;
     }
 
+    if (nativeAccount === undefined) {
+      refreshAccount();
+    }
+
     const timeout = setTimeout(() => {
       refreshAccount();
     }, ONE_MINUTE_REFRESH_TIMEOUT);
@@ -302,7 +303,7 @@ const UseNativeAccount = () => {
       clearTimeout(timeout);
     }
 
-  }, [connection, publicKey, refreshAccount]);
+  }, [connection, nativeAccount, publicKey, refreshAccount]);
 
   return { nativeAccount, refreshAccount };
 };

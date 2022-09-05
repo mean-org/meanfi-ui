@@ -7,7 +7,7 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount } from "../../utils/utils";
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import {
@@ -96,11 +96,7 @@ export const OneTimePayment = (props: {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
-
-
-  const [otpFees, setOtpFees] = useState<TransactionFees>({
-    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-  });
+  const [otpFees, setOtpFees] = useState<TransactionFees>(NO_FEES);
 
   const isScheduledPayment = useCallback((): boolean => {
     const now = new Date();
@@ -114,8 +110,9 @@ export const OneTimePayment = (props: {
   }, [isScheduledPayment, otpFees.blockchainFee, otpFees.mspFlatFee]);
 
   const getMinSolBlanceRequired = useCallback(() => {
-    return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED
-      ? getFeeAmount()
+    const feeAmount = getFeeAmount();
+    return feeAmount > MIN_SOL_BALANCE_REQUIRED
+      ? feeAmount
       : MIN_SOL_BALANCE_REQUIRED;
 
   }, [getFeeAmount]);
