@@ -774,7 +774,7 @@ export const MoneyStreamDetails = (props: {
     );
   }
 
-  const title = stream ? getStreamTitle(stream) : `Unknown ${isStreamIncoming ? "incoming" : "outgoing"} stream`;
+  const title = stream ? getStreamTitle(stream, t) : `Unknown ${isStreamIncoming ? "incoming" : "outgoing"} stream`;
   const subtitle = stream ? getStreamSubtitle(stream) : "--";
   const resume = stream ? getStreamResume(stream) : "--";
 

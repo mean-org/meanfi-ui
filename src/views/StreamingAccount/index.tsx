@@ -2847,7 +2847,7 @@ export const StreamingAccountView = (props: {
                     className="token-img" />
               }
 
-              const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+              const title = stream ? getStreamTitle(stream, t) : "Unknown outgoing stream";
               const subtitle = getStreamSubtitle(stream);
               const status = getStreamStatus(stream);
               const resume = getStreamResume(stream);

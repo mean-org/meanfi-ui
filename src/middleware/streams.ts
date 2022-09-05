@@ -1,10 +1,9 @@
 import { Stream, STREAM_STATUS } from "@mean-dao/msp";
 import { StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { shortenAddress } from "./utils";
-import { t } from "i18next";
 
 // Stream title
-export const getStreamTitle = (item: Stream | StreamInfo): string => {
+export const getStreamTitle = (item: Stream | StreamInfo, trans?: any): string => {
   let title = '';
   if (item) {
     const v1 = item as StreamInfo;
@@ -16,13 +15,13 @@ export const getStreamTitle = (item: Stream | StreamInfo): string => {
       }
       
       if (v1.isUpdatePending) {
-        title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        title = `${trans ? trans('streams.stream-list.title-pending-from') : "Pending execution from"} (${shortenAddress(`${v1.treasurerAddress}`)})`;
       } else if (v1.state === STREAM_STATE.Schedule) {
-        title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        title = `${trans ? trans('streams.stream-list.title-scheduled-from') : "Scheduled stream from"} (${shortenAddress(`${v1.treasurerAddress}`)})`;
       } else if (v1.state === STREAM_STATE.Paused) {
-        title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        title = `${trans ? trans('streams.stream-list.title-paused-from') : "Paused stream from"} (${shortenAddress(`${v1.treasurerAddress}`)})`;
       } else {
-        title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        title = `${trans ? trans('streams.stream-list.title-receiving-from') : "Receiving from"} (${shortenAddress(`${v1.treasurerAddress}`)})`;
       }
     } else {
       if (v2.name) {
@@ -30,11 +29,11 @@ export const getStreamTitle = (item: Stream | StreamInfo): string => {
       }
 
       if (v2.status === STREAM_STATUS.Schedule) {
-        title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        title = `${trans ? trans('streams.stream-list.title-scheduled-from') : "Scheduled stream from"} (${shortenAddress(`${v2.treasurer}`)})`;
       } else if (v2.status === STREAM_STATUS.Paused) {
-        title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        title = `${trans ? trans('streams.stream-list.title-paused-from') : "Paused stream from"} (${shortenAddress(`${v2.treasurer}`)})`;
       } else {
-        title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        title = `${trans ? trans('streams.stream-list.title-receiving-from') : "Receiving from"} (${shortenAddress(`${v2.treasurer}`)})`;
       }
     }
   }

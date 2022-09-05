@@ -2601,7 +2601,7 @@ export const MoneyStreamsInfoView = (props: {
               img = <Identicon address={isNew ? v2.id.toBase58() : v1.id?.toString()} style={{ width: "30", display: "inline-flex" }} className="token-img" />
             }
 
-            const title = stream ? getStreamTitle(stream) : "Unknown incoming stream";
+            const title = stream ? getStreamTitle(stream, t) : "Unknown incoming stream";
             const subtitle = getStreamSubtitle(stream) || "0.00";
             const status = getStreamStatus(stream);
             const resume = getStreamResume(stream);
@@ -2688,7 +2688,7 @@ export const MoneyStreamsInfoView = (props: {
                 img = <Identicon address={isNew ? v2.id.toBase58() : v1.id?.toString()} style={{ width: "30", display: "inline-flex" }} className="token-img" />
               }
   
-              const title = stream ? getStreamTitle(stream) : "Unknown outgoing stream";
+              const title = stream ? getStreamTitle(stream, t) : "Unknown outgoing stream";
               const subtitle = getStreamSubtitle(stream) || "0.00";
               const status = getStreamStatus(stream);
               const resume = getStreamResume(stream);
