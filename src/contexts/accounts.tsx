@@ -122,7 +122,6 @@ export const cache = {
       return query;
     }
 
-    // TODO: refactor to use multiple accounts query with flush like behavior
     query = connection.getAccountInfo(id).then((data) => {
       if (!data) {
         throw new Error("Account not found");
@@ -445,7 +444,6 @@ const getMultipleAccountsCore = async (
     return { keys, array };
   }
 
-  // TODO: fix
   throw new Error();
 };
 
@@ -535,7 +533,6 @@ export function useAccount(pubKey?: PublicKey) {
   return account;
 }
 
-// TODO: expose in spl package
 const deserializeAccount = (data: Buffer) => {
   const accountInfo = AccountLayout.decode(data);
   accountInfo.mint = new PublicKey(accountInfo.mint);
@@ -570,7 +567,6 @@ const deserializeAccount = (data: Buffer) => {
   return accountInfo;
 };
 
-// TODO: expose in spl package
 export const deserializeMint = (data: Buffer) => {
 
   const mintInfo = MintLayout.decode(data);
