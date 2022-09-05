@@ -21,6 +21,7 @@ export interface AppConfig {
     exchangeFlatFee: number;
     stakingRewardsAcl: string[];
     meanStakingVault: string;
+    multisigProgramAddress: string;
 }
 
 export class AppConfigService {
@@ -48,7 +49,8 @@ export class AppConfigService {
             stakingRewardsAcl: [
                 'EWHAwQfAGuBG23tU13s38qdzSpyD7PrJd5zpnG6271mM'
             ],
-            meanStakingVault: 'GMG74Wi8Mj4KpS6qxUgcofBSNMa8qkqtVgtUc3g5sPpF'
+            meanStakingVault: 'GMG74Wi8Mj4KpS6qxUgcofBSNMa8qkqtVgtUc3g5sPpF',
+            multisigProgramAddress: 'FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j'
         },
         staging: {
             appUrl: 'https://app-dev.meanfi.com',
@@ -56,7 +58,7 @@ export class AppConfigService {
             transakUrl: 'https://staging-global.transak.com',
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
-            streamV2ProgramAddress: 'MSPCUMbLfy2MeT6geLMMzrUkv1Tx88XRApaVRdyxTuu',
+            streamV2ProgramAddress: 'MSPdQo5ZdrPh6rU1LsvUv5nRhAnj1mj6YQEqBUq8YwZ',
             segmentAnalyticsKey: '1VSk356IiaThR9fBBDko2QMJFDas33Yf',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
             influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
@@ -75,7 +77,8 @@ export class AppConfigService {
                 'HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv',
                 '49XcDH9tWX67uw53TzNrPE5ovGsXd7VxgH735jBg6K64'
             ],
-            meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD'
+            meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD',
+            multisigProgramAddress: 'MMSdTDhtwBs2w4MxGCbqfWLgerMQNbXazizghoh7uMJ'
         },
         development: {
             appUrl: 'https://app-dev.meanfi.com',
@@ -83,7 +86,7 @@ export class AppConfigService {
             transakUrl: 'https://staging-global.transak.com',
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
-            streamV2ProgramAddress: 'MSPCUMbLfy2MeT6geLMMzrUkv1Tx88XRApaVRdyxTuu',
+            streamV2ProgramAddress: 'MSPdQo5ZdrPh6rU1LsvUv5nRhAnj1mj6YQEqBUq8YwZ',
             segmentAnalyticsKey: '1VSk356IiaThR9fBBDko2QMJFDas33Yf',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
             influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
@@ -102,7 +105,8 @@ export class AppConfigService {
                 'HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv',
                 '49XcDH9tWX67uw53TzNrPE5ovGsXd7VxgH735jBg6K64'
             ],
-            meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD'
+            meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD',
+            multisigProgramAddress: 'MMSdTDhtwBs2w4MxGCbqfWLgerMQNbXazizghoh7uMJ'
         },
         local: {
             appUrl: 'http://localhost:3000',
@@ -110,7 +114,7 @@ export class AppConfigService {
             transakUrl: 'https://staging-global.transak.com',
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
-            streamV2ProgramAddress: 'MSPCUMbLfy2MeT6geLMMzrUkv1Tx88XRApaVRdyxTuu',
+            streamV2ProgramAddress: 'MSPdQo5ZdrPh6rU1LsvUv5nRhAnj1mj6YQEqBUq8YwZ',
             segmentAnalyticsKey: '1VSk356IiaThR9fBBDko2QMJFDas33Yf',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
             influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
@@ -124,7 +128,8 @@ export class AppConfigService {
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25,
             stakingRewardsAcl: [],
-            meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD'
+            meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD',
+            multisigProgramAddress: 'MMSdTDhtwBs2w4MxGCbqfWLgerMQNbXazizghoh7uMJ'
         },
     };
 

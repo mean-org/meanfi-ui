@@ -76,6 +76,7 @@ import { NATIVE_SOL } from "../../middleware/tokens";
 import { AddFundsParams } from "../../models/vesting";
 import BN from "bn.js";
 import { getStreamTitle } from "../../middleware/streams";
+import { appConfig } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const { TabPane } = Tabs;
@@ -152,6 +153,9 @@ export const StreamingAccountView = (props: {
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(new BN(0));
   const [treasuryEffectiveBalance, setTreasuryEffectiveBalance] = useState(0);
 
+  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
   }
@@ -196,7 +200,8 @@ export const StreamingAccountView = (props: {
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      multisigAddressPK
     );
 
   }, [
@@ -789,7 +794,7 @@ export const StreamingAccountView = (props: {
         new Date(expirationTime * 1_000),
         operationType,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -1159,7 +1164,7 @@ export const StreamingAccountView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.TreasuryWithdraw,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );
@@ -1635,7 +1640,7 @@ export const StreamingAccountView = (props: {
         new Date(expirationTime * 1_000),
         OperationType.TreasuryClose,
         multisig.id,
-        MSPV2Constants.MSP,
+        mspV2AddressPK,
         ixAccounts,
         ixData
       );

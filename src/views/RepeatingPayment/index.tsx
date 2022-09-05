@@ -41,7 +41,7 @@ import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import {  useNativeAccount } from "../../contexts/accounts";
+import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
@@ -704,10 +704,6 @@ export const RepeatingPayment = (props: {
     } else if (!connected) {
       setSelectedTokenBalance(0);
     }
-
-    return () => {
-      clearTimeout();
-    };
 
   }, [
     connected,

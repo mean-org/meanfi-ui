@@ -543,10 +543,6 @@ export const OneTimePayment = (props: {
       setSelectedTokenBalance(0);
     }
 
-    return () => {
-      clearTimeout();
-    };
-
   }, [
     connected,
     publicKey,
