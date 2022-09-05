@@ -203,7 +203,34 @@ export const MoneyStreamDetails = (props: {
 
   }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
 
-  const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
+  const getStreamStatus = useCallback((item: Stream | StreamInfo): "scheduled" | "stopped" | "stopped-manually" | "running" => {
+    const v1 = item as StreamInfo;
+    const v2 = item as Stream;
+    if (v1.version < 2) {
+      switch (v1.state) {
+        case STREAM_STATE.Schedule:
+          return "scheduled";
+        case STREAM_STATE.Paused:
+          return "stopped";
+        default:
+          return "running";
+      }
+    } else {
+      switch (v2.status) {
+        case STREAM_STATUS.Schedule:
+          return "scheduled";
+        case STREAM_STATUS.Paused:
+          if (v2.isManuallyPaused) {
+            return "stopped-manually";
+          }
+          return "stopped";
+        default:
+          return "running";
+      }
+    }
+  }, []);
+
+  const getStreamStatusLabel = useCallback((item: Stream | StreamInfo) => {
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
@@ -620,12 +647,12 @@ export const MoneyStreamDetails = (props: {
       value: isStreamOutgoing && (stream ? renderFundsSendToRecipient() : "--")
     },
     {
-      label: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && "Funds will run out in:",
-      value: (isStreamOutgoing && stream && getStreamStatus(stream) === "Running") && <Countdown className="align-middle" date={isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string} renderer={renderer} />
+      label: (isStreamOutgoing && stream && getStreamStatus(stream) === "running") && "Funds will run out in:",
+      value: (isStreamOutgoing && stream && getStreamStatus(stream) === "running") && <Countdown className="align-middle" date={isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string} renderer={renderer} />
     },
     {
-      label: stream && getStreamStatus(stream) === "Stopped" && "Funds ran out on:",
-      value: stream && getStreamStatus(stream) === "Stopped" && getRelativeDate(isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string)
+      label: stream && getStreamStatus(stream) === "stopped" && "Funds ran out on:",
+      value: stream && getStreamStatus(stream) === "stopped" && getRelativeDate(isNewStream() ? v2.estimatedDepletionDate as string : v1.escrowEstimatedDepletionUtc as string)
     },
     {
       label: "Stream id:",
@@ -708,14 +735,13 @@ export const MoneyStreamDetails = (props: {
 
   const title = stream ? getStreamTitle(stream) : `Unknown ${isStreamIncoming ? "incoming" : "outgoing"} stream`;
   const subtitle = stream ? getStreamSubtitle(stream) : "--";
-  const status = stream ? getStreamStatus(stream) : "--";
   const resume = stream ? getStreamResume(stream) : "--";
 
   return (
     <>
       <div className="stream-fields-container">
         {/* Background animation */}
-        {(stream && getStreamStatus(stream) === "Running") ? (
+        {(stream && getStreamStatus(stream) === "running") ? (
           <div className="stream-background">
             {isInboundStream(stream) ? (
               <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
@@ -740,7 +766,7 @@ export const MoneyStreamDetails = (props: {
             img={img}
             title={title}
             extraTitle={renderBadges()}
-            status={status}
+            status={getStreamStatusLabel(stream)}
             subtitle={subtitle}
             resume={resume}
             isDetailsPanel={true}
@@ -765,12 +791,6 @@ export const MoneyStreamDetails = (props: {
 
         {tabs && renderTabset()}
 
-        {/* {tabs && (
-          <TabsMean
-            tabs={tabs}
-            defaultTab="details"
-          />
-        )} */}
       </div>
     </>
   )

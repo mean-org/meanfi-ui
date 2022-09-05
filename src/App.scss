@@ -2702,6 +2702,14 @@ main section {
     color: inherit;
     font-weight: 600;
   }
+  .elastic-form-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 1rem;
+    .cta-container {
+        margin: 2rem 0;
+    }
+  }
 }
 .button-tabset-container {
   border-top-left-radius: var(--custom-border-radius);

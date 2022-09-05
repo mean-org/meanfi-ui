@@ -199,7 +199,7 @@ export const SecondCardsLayout = ({
       description: "stats.market.token-total-value-locked"
     },
     {
-      label: 'invest.panel-right.stats.total-mean-rewards',
+      label: 'staking.panel-right.stats.total-mean-rewards',
       value: `${formatThousands(sMeanTotalSupply)}`,
       description: "stats.market.token-smean-supply"
     },

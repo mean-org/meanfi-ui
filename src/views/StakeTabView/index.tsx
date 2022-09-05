@@ -19,7 +19,8 @@ import { INPUT_DEBOUNCE_TIME } from "../../constants";
 import { AppUsageEvent, SegmentStakeMeanData } from "../../utils/segment-service";
 import { segmentAnalytics } from "../../App";
 import { openNotification } from "../../components/Notifications";
-import { INVEST_ROUTE_BASE_PATH } from "../../pages/invest";
+import { STAKING_ROUTE_BASE_PATH } from "../../pages/staking";
+import { useAccountsContext } from "../../contexts/accounts";
 
 let inputDebounceTimeout: any;
 
@@ -45,44 +46,12 @@ export const StakeTabView = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
+  const { refreshAccount } = useAccountsContext();
   const connection = useConnection();
   const [isBusy, setIsBusy] = useState(false);
   const { connected, wallet, publicKey } = useWallet();
   const { t } = useTranslation('common');
-
-  /*
-  const periods = [
-    {
-      value: 0,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: 1
-    },
-    {
-      value: 30,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: 1.1
-    },
-    {
-      value: 90,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: 1.2
-    },
-    {
-      value: 1,
-      time: t("invest.panel-right.tabset.stake.year"),
-      multiplier: 2.0
-    },
-    {
-      value: 4,
-      time: t("invest.panel-right.tabset.stake.years"),
-      multiplier: 4.0
-    },
-  ];
-  */
-
   const [fromCoinAmount, setFromCoinAmount] = useState<string>('');
-  // const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
-  // const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<number>(0);
   const [stakedMeanPrice, setStakedMeanPrice] = useState<number>(0);
   const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(false);
@@ -149,14 +118,14 @@ export const StakeTabView = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-        ? `${t("invest.panel-right.tabset.stake.stake-button-busy")} ${selectedToken && selectedToken.symbol}`
+        ? `${t("staking.panel-right.tabset.stake.stake-button-busy")} ${selectedToken && selectedToken.symbol}`
         : !selectedToken || !meanBalance
           ? t('transactions.validation.no-balance')
           : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
             ? t('transactions.validation.no-amount')
             : parseFloat(fromCoinAmount) > meanBalance
               ? t('transactions.validation.amount-high')
-              : `${t("invest.panel-right.tabset.stake.stake-button")} ${selectedToken && selectedToken.symbol}`;
+              : `${t("staking.panel-right.tabset.stake.stake-button")} ${selectedToken && selectedToken.symbol}`;
   }, [
     fromCoinAmount,
     selectedToken,
@@ -504,7 +473,7 @@ export const StakeTabView = (props: {
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
     const path = window.location.pathname;
-    if (!path.startsWith(INVEST_ROUTE_BASE_PATH)) {
+    if (!path.startsWith(STAKING_ROUTE_BASE_PATH)) {
       return;
     }
 
@@ -522,10 +491,15 @@ export const StakeTabView = (props: {
       recordTxConfirmation(item.signature, item.operationType, true);
       setIsBusy(false);
       onTxFinished();
+      refreshAccount();
       reloadStakePools();
     }
 
-  }, [onTxFinished, recordTxConfirmation]);
+  }, [
+    onTxFinished,
+    refreshAccount,
+    recordTxConfirmation
+  ]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -543,8 +517,9 @@ export const StakeTabView = (props: {
       consoleOut("onTxTimedout event executed:", item, 'crimson');
       recordTxConfirmation(item.signature, item.operationType, false);
       setIsBusy(false);
+      refreshAccount();
       openNotification({
-        title: 'Create vesting contract status',
+        title: 'Stake MEAN status',
         description: 'The transaction to stake MEAN was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully created.',
         duration: null,
         type: "info",
@@ -552,7 +527,11 @@ export const StakeTabView = (props: {
       });
       onTxFinished();
     }
-  }, [onTxFinished, recordTxConfirmation]);
+  }, [
+    onTxFinished,
+    refreshAccount,
+    recordTxConfirmation
+  ]);
 
 
   /////////////////////
@@ -682,11 +661,11 @@ export const StakeTabView = (props: {
               ? (
                 <span>You have {cutNumber(smeanBalance, 6)} sMEAN staked{meanWorthOfsMean ? ` which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.` : '.'}</span>
               )
-              : t("invest.panel-right.tabset.unstake.notification-label-one-error")
+              : t("staking.panel-right.tabset.unstake.notification-label-one-error")
           }
         </span>
       </div>
-      <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
+      <div className="form-label">{t("staking.panel-right.tabset.stake.amount-label")}</div>
       <div className={`well mb-1${isBusy ? ' disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
@@ -765,30 +744,6 @@ export const StakeTabView = (props: {
             )
         }
       </div>
-
-      {/* Periods */}
-      {/* <span className="info-label">{t("invest.panel-right.tabset.stake.period-label")}</span>
-      <div className="flexible-left mb-1 mt-2">
-        <div className="left token-group">
-          {periods.map((period, index) => (
-            <div key={index} className="mb-1 d-flex flex-column align-items-center">
-              <div className={`token-max simplelink ${period.value === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(period.value, period.time, period.multiplier)}>{period.value} {period.time}</div>
-              <span>{`${period.multiplier}x`}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime, unstakeStartDate: unstakeStartDate })}</span> */}
-
-      {/* Confirm that have read the terms and conditions */}
-      {/* <div className="mt-2 d-flex confirm-terms">
-        <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
-        <Tooltip placement="top" title={t("invest.panel-right.tabset.stake.terms-and-conditions-tooltip")}>
-          <span>
-            <IconHelpCircle className="mean-svg-icons" />
-          </span>
-        </Tooltip>
-      </div> */}
 
       {/* Action button */}
       <Button

@@ -8,7 +8,6 @@ import {
     TransactionFees,
     Treasury,
     TreasuryType,
-    Constants as MSPV2Constants,
     StreamTemplate
 } from '@mean-dao/msp';
 import { consoleOut, copyText, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getPaymentIntervalFromSeconds, getShortDate, getTimeToNow, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, toTimestamp } from '../../../../utils/ui';
@@ -34,7 +33,7 @@ import { isError, isSuccess } from '../../../../utils/transactions';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '../../../../contexts/wallet';
-import { customLogger } from '../../../..';
+import { appConfig, customLogger } from '../../../..';
 import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
@@ -106,6 +105,8 @@ export const VestingContractStreamList = (props: {
     const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+
+    const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
 
     const isDateInTheFuture = useCallback((date: string): boolean => {
         const now = new Date().toUTCString();
@@ -524,7 +525,7 @@ export const VestingContractStreamList = (props: {
                 new Date(expirationTime * 1_000),
                 OperationType.StreamClose,
                 multisig.id,
-                MSPV2Constants.MSP,
+                mspV2AddressPK,
                 ixAccounts,
                 ixData
             );
@@ -879,7 +880,7 @@ export const VestingContractStreamList = (props: {
                 new Date(expirationTime * 1_000),
                 OperationType.StreamPause,
                 multisig.id,
-                MSPV2Constants.MSP,
+                mspV2AddressPK,
                 ixAccounts,
                 ixData
             );
@@ -1205,7 +1206,7 @@ export const VestingContractStreamList = (props: {
                 new Date(expirationTime * 1_000),
                 OperationType.StreamResume,
                 multisig.id,
-                MSPV2Constants.MSP,
+                mspV2AddressPK,
                 ixAccounts,
                 ixData
             );

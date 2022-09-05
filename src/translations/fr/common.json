@@ -291,7 +291,7 @@
 		"yes": "Oui",
 		"you": "vous"
 	},
-	"invest": {
+	"staking": {
 		"panel-left": {
 			"invest-liquidity-tab-title": "Pools de liquidité MEAN",
 			"invest-stake-sol-tab-title": "Stake SOL",
@@ -380,7 +380,7 @@
 		"refresh-tooltip": "Actualiser les données d'investissement",
 		"screen-title": "Options d'investissement",
 		"subtitle": "Le moyen le plus simple de faire fructifier votre réserve d'argent",
-		"title": "Investir"
+		"title": "Jalonnement"
 	},
 	"language-selector": {
 		"modal-title": "Sélecteur de langue",
@@ -1310,22 +1310,10 @@
 			"accounts": "Comptes",
 			"charts": "Graphiques",
 			"deposits": "Dépôts",
-			"invest": {
-				"pol-bonds": "Obligations POL",
-				"staking": "Jalonnement",
-				"submenu-title": "Investir"
-			},
-			"services": {
-				"custody": "Garde",
-				"faucet": "Robinet",
-				"multisig": "Multisig",
-				"safes": "Multisig V2",
-				"submenu-title": "Prestations de service",
-				"unwrap": "Unwrap",
-				"wallet-guide": "Guide du portefeuille",
-				"wrap": "Envelopper",
-				"vesting": "Vesting"
-			},
+			"multisig": "Multisig",
+			"staking": "Jalonnement",
+			"vesting": "Vesting",
+			"wallet-guide": "Guide du portefeuille",
 			"stats": "Statistiques",
 			"swap": "Échanger",
 			"transfers": "Transferts"

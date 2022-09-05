@@ -498,6 +498,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
   const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
+  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
   if (!streamProgramAddress) {
     setStreamProgramAddress(streamProgramAddressFromConfig);
@@ -535,7 +536,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     return new MeanMultisig(
       connectionConfig.endpoint,
       publicKey,
-      "confirmed"
+      "confirmed",
+      multisigAddressPK
     );
 
   }, [

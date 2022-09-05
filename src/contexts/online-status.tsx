@@ -31,7 +31,7 @@ const checkOnlineStatus = async () => {
     return true;
   } catch (error) {
     // Error Log
-    console.error(error);
+    // console.error(error);
 
     // This can be because of request timed out
     // so we abort the request for any case
