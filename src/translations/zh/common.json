@@ -291,7 +291,7 @@
 		"yes": "是",
 		"you": "你"
 	},
-	"invest": {
+	"staking": {
 		"panel-left": {
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
 			"invest-stake-sol-tab-title": "Stake SOL",
@@ -380,7 +380,7 @@
 		"refresh-tooltip": "Refresh invest data",
 		"screen-title": "Invest Options",
 		"subtitle": "The easiest way to grow your money stash",
-		"title": "Invest"
+		"title": "质押"
 	},
 	"language-selector": {
 		"modal-title": "语言选择器",
@@ -1310,22 +1310,10 @@
 			"accounts": "账户",
 			"charts": "图表",
 			"deposits": "存款",
-			"invest": {
-				"pol-bonds": "POL债券",
-				"staking": "质押",
-				"submenu-title": "投资"
-			},
-			"services": {
-				"custody": "托管",
-				"faucet": "水龙头",
-				"multisig": "多重签名",
-				"safes": "Multisig V2",
-				"submenu-title": "服务",
-				"unwrap": "Unwrap",
-				"wallet-guide": "钱包指南",
-				"wrap": "包装",
-				"vesting": "Vesting"
-			},
+			"multisig": "多重签名",
+			"staking": "质押",
+			"vesting": "Vesting",
+			"wallet-guide": "钱包指南",
 			"stats": "统计数据",
 			"swap": "交换",
 			"transfers": "转换"

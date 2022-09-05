@@ -12,6 +12,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { openNotification } from "../components/Notifications";
 import { notification } from "antd";
+import { useAccountsContext } from "./accounts";
 
 export type TxStatus = "fetching" | "fetched" | "error";
 const key = 'updatable';
@@ -148,6 +149,7 @@ export const TxConfirmationContext = React.createContext<TxConfirmationState>(de
 const TxConfirmationProvider: React.FC = ({ children }) => {
   const today = new Date();
   const connection = useConnection();
+  const { refreshAccount } = useAccountsContext();
   const { t } = useTranslation('common');
 
   // Variables
@@ -375,6 +377,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
       consoleOut('Emitting event:', EventType.TxConfirmSuccess, 'orange');
       confirmationEvents.emit(EventType.TxConfirmSuccess, data);
       rebuildHistoryFromCache();
+      refreshAccount();
     } else {
       txConfirmationCache.update(
         data.signature,
@@ -412,6 +415,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
       consoleOut('Emitting event:', EventType.TxConfirmTimeout, 'orange');
       confirmationEvents.emit(EventType.TxConfirmTimeout, data);
       rebuildHistoryFromCache();
+      refreshAccount();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

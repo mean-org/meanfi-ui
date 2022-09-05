@@ -748,7 +748,7 @@ export const StakingRewardsView = () => {
             <div className="title-and-subtitle w-75 h-100">
               <div className="title">
                 <IconStats className="mean-svg-icons" />
-                <div>{t('invest.title')}</div>
+                <div>{t('staking.title')}</div>
               </div>
               <div className="subtitle text-center">
                 Staking Rewards &amp; History
@@ -785,7 +785,7 @@ export const StakingRewardsView = () => {
           <div className="title-and-subtitle">
             <div className="title">
               <IconStats className="mean-svg-icons" />
-              <div>{t('invest.title')}</div>
+              <div>{t('staking.title')}</div>
             </div>
             <div className="subtitle text-center">
               Staking Rewards &amp; History

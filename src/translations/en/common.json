@@ -291,7 +291,7 @@
 		"yes": "Yes",
 		"you": "you"
 	},
-	"invest": {
+	"staking": {
 		"panel-left": {
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
 			"invest-stake-sol-tab-title": "Stake SOL",
@@ -380,7 +380,7 @@
 		"refresh-tooltip": "Refresh invest data",
 		"screen-title": "Invest Options",
 		"subtitle": "The easiest way to grow your money stash",
-		"title": "Invest"
+		"title": "Staking"
 	},
 	"language-selector": {
 		"modal-title": "Language selector",
@@ -1314,22 +1314,10 @@
 			"accounts": "Accounts",
 			"charts": "Charts",
 			"deposits": "Deposits",
-			"invest": {
-				"pol-bonds": "POL Bonds",
-				"staking": "Staking",
-				"submenu-title": "Invest"
-			},
-			"services": {
-				"custody": "Custody",
-				"faucet": "Faucet",
-				"multisig": "Multisig",
-				"safes": "Multisig V2",
-				"submenu-title": "Services",
-				"unwrap": "Unwrap",
-				"wallet-guide": "Wallet Guide",
-				"wrap": "Wrap",
-				"vesting": "Vesting"
-			},
+			"multisig": "Multisig",
+			"staking": "Staking",
+			"vesting": "Vesting",
+			"wallet-guide": "Wallet Guide",
 			"stats": "Stats",
 			"swap": "Exchange",
 			"transfers": "Transfers"

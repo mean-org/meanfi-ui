@@ -291,7 +291,7 @@
 		"yes": "Evet",
 		"you": "sen"
 	},
-	"invest": {
+	"staking": {
 		"panel-left": {
 			"invest-liquidity-tab-title": "MEAN likiditasyon havuzları",
 			"invest-stake-sol-tab-title": "",
@@ -380,7 +380,7 @@
 		"refresh-tooltip": "Yatırım bilgisini güncelle",
 		"screen-title": "Yatırım seçenekleri",
 		"subtitle": "Para çantanızı büyütmenin en kolay yolu",
-		"title": "Yatırım"
+		"title": "Kilitleme"
 	},
 	"language-selector": {
 		"modal-title": "Dil seç",
@@ -1310,22 +1310,10 @@
 			"accounts": "Hesaplar",
 			"charts": "Grafikler",
 			"deposits": "Yatir",
-			"invest": {
-				"pol-bonds": "POL Tahvilleri",
-				"staking": "Kilitleme",
-				"submenu-title": "Yatırım"
-			},
-			"services": {
-				"custody": "Velayet",
-				"faucet": "Musluk(Faucet)",
-				"multisig": "Çoklu-imza",
-				"safes": "Multisig V2",
-				"submenu-title": "Hizmetler",
-				"unwrap": "",
-				"wallet-guide": "Cüzdan Rehberi",
-				"wrap": "Wrap",
-				"vesting": "Vesting"
-			},
+			"multisig": "Çoklu-imza",
+			"staking": "Kilitleme",
+			"vesting": "Vesting",
+			"wallet-guide": "Cüzdan Rehberi",
 			"stats": "İstatistikler",
 			"swap": "Alım-Satım",
 			"transfers": "Transferler"

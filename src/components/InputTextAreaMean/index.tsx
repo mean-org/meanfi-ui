@@ -1,5 +1,3 @@
-// import { useEffect, useState } from "react";
-
 export const InputTextAreaMean = (props: {
   id: string;
   className?: string;
@@ -12,18 +10,6 @@ export const InputTextAreaMean = (props: {
   onPaste?: any;
 }) => {
   const { id, className, autoComplete, rows, maxLength, placeholder, onChange, value, onPaste } = props;
-
-  // const [lettersLeft, setLettersLeft] = useState(256);
-  // const [countWords, setCountWords] = useState(0);
-
-  // const onChange = (e: any) => {
-  //   setValue(e.target.value);
-  //   setCountWords(e.target.value.length);
-  // }
-
-  // useEffect(() => {
-  //   setLettersLeft(256 - countWords);
-  // }, [countWords]);
 
   return (
     <>

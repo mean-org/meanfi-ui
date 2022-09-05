@@ -59,7 +59,7 @@ import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
-import { EventType, InvestItemPaths, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
+import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
 import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
@@ -72,7 +72,7 @@ import { NATIVE_SOL } from '../../utils/tokens';
 import { customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
-import { INVEST_ROUTE_BASE_PATH } from '../invest';
+import { STAKING_ROUTE_BASE_PATH } from '../staking';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
 import { closeTokenAccount } from '../../utils/accounts';
@@ -150,12 +150,14 @@ export const AccountsNewView = () => {
     showDepositOptionsModal,
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
+    setIsVerifiedRecipient,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
     setShouldLoadTokens,
     setSelectedMultisig,
+    resetContractValues,
     refreshStreamList,
     setStreamsSummary,
     setAccountAddress,
@@ -208,7 +210,6 @@ export const AccountsNewView = () => {
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
-  const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
@@ -236,7 +237,7 @@ export const AccountsNewView = () => {
   const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
   const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
 
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   // Perform premature redirect here if no address was provided in path
   // to the current wallet address if the user is connected
@@ -263,7 +264,7 @@ export const AccountsNewView = () => {
       navigate(url, { replace: true });
     } else {
       // If an asset is specified or user goes inside any tab of the streaming category, enable it
-      if (asset || streamingTab) {
+      if (streamingTab) {
         setAutoOpenDetailsPanel(true);
       }
       setTimeout(() => {
@@ -294,6 +295,7 @@ export const AccountsNewView = () => {
   }, [
     connection,
     publicKey,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -361,11 +363,17 @@ export const AccountsNewView = () => {
     if (item && publicKey && accountAddress) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
+      let beneficiary = '';
       if (v1.version < 2) {
-        return v1.beneficiaryAddress === accountAddress ? true : false;
+        beneficiary = typeof v1.beneficiaryAddress === "string"
+          ? v1.beneficiaryAddress
+          : (v1.beneficiaryAddress as PublicKey).toBase58();
       } else {
-        return v2.beneficiary === accountAddress ? true : false;
+        beneficiary = typeof v2.beneficiary === "string"
+          ? v2.beneficiary
+          : v2.beneficiary.toBase58();
       }
+      return beneficiary === accountAddress ? true : false
     }
     return false;
   }, [accountAddress, publicKey]);
@@ -439,8 +447,12 @@ export const AccountsNewView = () => {
 
   // Send selected token modal
   const [isSendAssetModalOpen, setIsSendAssetModalOpen] = useState(false);
-  const hideSendAssetModal = useCallback(() => setIsSendAssetModalOpen(false), []);
   const showSendAssetModal = useCallback(() => setIsSendAssetModalOpen(true), []);
+  const hideSendAssetModal = useCallback(() => {
+    setIsSendAssetModalOpen(false);
+    resetContractValues();
+    setIsVerifiedRecipient(false);
+  }, [resetContractValues, setIsVerifiedRecipient]);
 
   // Wrap SOL token modal
   const [isWrapSolModalOpen, setIsWrapSolModalOpen] = useState(false);
@@ -473,10 +485,6 @@ export const AccountsNewView = () => {
 
   const onAfterUnwrap = () => {
     hideUnwrapSolModal();
-  }
-
-  const handleScanAnotherAddressButtonClick = () => {
-    setAddAccountPanelOpen(true);
   }
 
   const isInspectedAccountTheConnectedWallet = useCallback(() => {
@@ -522,28 +530,21 @@ export const AccountsNewView = () => {
   const investButtonEnabled = useCallback(() => {
     if (!selectedAsset || !isInspectedAccountTheConnectedWallet()) { return false; }
 
-    const investPageUsedAssets = ['SOL', 'MEAN', 'sMEAN', 'RAY', 'USDC'];
+    const investPageUsedAssets = ['MEAN', 'sMEAN'];
     return investPageUsedAssets.includes(selectedAsset.symbol);
   }, [isInspectedAccountTheConnectedWallet, selectedAsset]);
 
   const handleGoToInvestClick = useCallback(() => {
     setDetailsPanelOpen(false);
-    let url = INVEST_ROUTE_BASE_PATH;
+    let url = STAKING_ROUTE_BASE_PATH;
 
     if (selectedAsset) {
       switch (selectedAsset.symbol) {
-        case "SOL":
-          url += `/${InvestItemPaths.StakeSol}`;
-          break;
         case "MEAN":
-          url += `/${InvestItemPaths.StakeMean}?option=stake`;
+          url += '?option=stake';
           break;
         case "sMEAN":
-          url += `/${InvestItemPaths.StakeMean}?option=unstake`;
-          break;
-        case "RAY":
-        case "USDC":
-          url += `/${InvestItemPaths.MeanLiquidityPools}`;
+          url += '?option=unstake';
           break;
         default:
           break;
@@ -558,17 +559,6 @@ export const AccountsNewView = () => {
     if (!selectedAsset) { return; }
 
     goToExchangeWithPresetAsset();
-
-    // let token: TokenInfo | null;
-    // if (isSelectedAssetNativeAccount()) {
-    //   token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
-    // } else {
-    //   token = getTokenByMintAddress(selectedAsset.address);
-    // }
-    // if (token) {
-    //   setSelectedToken(token as TokenInfo);
-    // }
-    // showExchangeAssetModal();
 
   }, [goToExchangeWithPresetAsset, selectedAsset]);
 
@@ -620,18 +610,6 @@ export const AccountsNewView = () => {
     }
 
   },[t])
-
-  // Call only if you have control over every loop
-  const getStreamingAccountStreams = useCallback(async (treasuryPk: PublicKey, isNewTreasury: boolean) => {
-    if (!publicKey || !ms || !msp || !treasuryPk || !streamList) { return undefined; }
-
-    if (isNewTreasury) {
-      return streamList.filter((item: any) => item.treasury === treasuryPk.toBase58());
-    } else {
-      return  streamList.filter((item: any) => item.treasuryAddress === treasuryPk.toBase58());
-    }
-
-  }, [ms, msp, publicKey, streamList]);
 
   const hasTransactions = useCallback(() => {
     return transactions && transactions.length > 0 ? true : false;
@@ -791,7 +769,6 @@ export const AccountsNewView = () => {
   const selectAsset = useCallback((
     asset: UserTokenAccount,
     clearTxList = true,
-    openDetails = false
   ) => {
     setStatus(FetchStatus.Fetching);
     if (clearTxList) {
@@ -799,9 +776,6 @@ export const AccountsNewView = () => {
       setTransactions(undefined);
     }
     setSelectedAsset(asset);
-    if (openDetails) {
-      setDetailsPanelOpen(true);
-    }
     setTimeout(() => {
       startSwitch();
     }, 10);
@@ -809,7 +783,6 @@ export const AccountsNewView = () => {
     startSwitch,
     setTransactions,
     setSelectedAsset,
-    setDetailsPanelOpen,
   ]);
 
   const shouldHideAsset = useCallback((asset: UserTokenAccount) => {
@@ -904,6 +877,13 @@ export const AccountsNewView = () => {
       }
     }
   }, []);
+
+  const fullAccountRefresh = () => {
+    const fullRefreshCta = document.getElementById("account-refresh-cta");
+    if (fullRefreshCta) {
+      fullRefreshCta.click();
+    }
+  };
 
   const reloadAssets = () => {
     const tokensRefreshCta = document.getElementById("account-assets-hard-refresh-cta");
@@ -1101,6 +1081,7 @@ export const AccountsNewView = () => {
       } else if (item.operationType === OperationType.TransferTokens) {
         setIsBusy(false);
       }
+      fullAccountRefresh();
     }
     resetTransactionStatus();
   }, [recordTxConfirmation, resetTransactionStatus]);
@@ -1517,6 +1498,7 @@ export const AccountsNewView = () => {
     connection,
     nativeBalance,
     selectedMultisig,
+    multisigAddressPK,
     transactionCancelled,
     transactionAssetFees,
     transactionStatus.currentOperation,
@@ -2982,7 +2964,7 @@ export const AccountsNewView = () => {
   useEffect(() => {
     let timer: any;
 
-    if (publicKey && !customStreamDocked) {
+    if (publicKey) {
       timer = setInterval(() => {
         consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshTreasuries(false);
@@ -2994,7 +2976,6 @@ export const AccountsNewView = () => {
     publicKey,
     accountAddress,
     loadingTreasuries,
-    customStreamDocked,
     refreshTreasuries
   ]);
 
@@ -3087,10 +3068,10 @@ export const AccountsNewView = () => {
     }
 
     // Invest
-    if (investButtonEnabled() && !isSelectedAssetWsol() && !isCustomAsset) {
+    if (investButtonEnabled()) {
       actions.push({
         action: MetaInfoCtaAction.Invest,
-        caption: 'Invest',
+        caption: selectedAsset.symbol === 'sMEAN' ? 'Unstake' : 'Stake',
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
@@ -3230,8 +3211,7 @@ export const AccountsNewView = () => {
       setSelectedCategory("assets");
       if (!asset) {
         setPathParamAsset('');
-      }
-      if (autoOpenDetailsPanel) {
+      } else if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
     } else if (location.pathname.indexOf('/streaming') !== -1) {
@@ -4198,7 +4178,10 @@ export const AccountsNewView = () => {
   //////////////
 
   const onBackButtonClicked = () => {
-    if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamingItemId}`) {
+    if (location.pathname.indexOf('/assets') !== -1) {
+      setDetailsPanelOpen(false);
+      setAutoOpenDetailsPanel(false);
+    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamingItemId}`) {
       let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
       if (inspectedAccountType && inspectedAccountType === "multisig") {
         url += `?account-type=multisig`;
@@ -4288,9 +4271,7 @@ export const AccountsNewView = () => {
 
   const renderMoneyStreamsSummary = (
     <>
-      {/* <Tooltip title={isInspectedAccountTheConnectedWallet()
-          ? "See your Money Streams"
-          : "To see your Money Streams you need to connect your wallet"}> */}
+      {
         <div key="streams" onClick={() => {
           navigateToStreaming();
           setAutoOpenDetailsPanel(true);
@@ -4348,7 +4329,7 @@ export const AccountsNewView = () => {
             )}
           </div>
         </div>
-      {/* </Tooltip> */}
+      }
     </>
   );
 
@@ -4356,35 +4337,51 @@ export const AccountsNewView = () => {
     const onTokenAccountClick = () => {
       setSelectedCategory("assets");
       consoleOut('clicked on asset:', asset.publicAddress, 'blue');
-      // if (selectedAsset && selectedAsset.publicAddress === asset.publicAddress) {
-      //   reloadSwitch();
-      // } else {
-      // }
-      // selectAsset(asset, true, true);
+      setDetailsPanelOpen(true);
+      setAutoOpenDetailsPanel(true);
       navigateToAsset(asset);
     }
+
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
+
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
     };
+
     const isSelectedToken = (): boolean => {
       return selectedAsset && asset && selectedAsset.displayIndex === asset.displayIndex
         ? true
         : false;
     }
 
+    const getRowSelectionClass = (): string => {
+      if (isSelectedToken() && selectedCategory === "assets") {
+        return 'selected';
+      } else {
+        if (hideLowBalances && (shouldHideAsset(asset) || !asset.balance)) {
+          return 'hidden';
+        }
+      }
+      return '';
+    }
+
+    const getRateAmountDisplay = (): string => {
+      if (tokenPrice > 0) {
+        if (!asset.valueInUsd) { return '$0.00'; }
+        return asset.valueInUsd > 0 && asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
+          ? '< $0.01'
+          : toUsCurrency(asset.valueInUsd || 0);
+      }
+      return '—';
+    }
+
     return (
       <div key={`${asset.displayIndex}`}
             onClick={onTokenAccountClick}
             id={asset.publicAddress}
-            className={`transaction-list-row ${isSelectedToken() && selectedCategory === "assets"
-              ? 'selected'
-              : hideLowBalances && (shouldHideAsset(asset) || !asset.balance)
-                ? 'hidden'
-                : ''
-            }`
+            className={`transaction-list-row ${getRowSelectionClass()}`
         }>
         <div className="icon-cell">
           <div className="token-icon">
@@ -4408,15 +4405,7 @@ export const AccountsNewView = () => {
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
-            {
-              tokenPrice > 0
-                ? !asset.valueInUsd
-                  ? '$0.00'
-                  : asset.valueInUsd > 0 && asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
-                    ? '< $0.01'
-                    : toUsCurrency(asset.valueInUsd || 0)
-                : '—'
-            }
+            {getRateAmountDisplay()}
           </div>
           <div className="interval">
               {(asset.balance || 0) > 0 ? formatThousands(asset.balance || 0, asset.decimals, asset.decimals) : '0'}
@@ -4435,6 +4424,23 @@ export const AccountsNewView = () => {
   ]);
 
   const renderAssetsList = () => {
+
+    const renderMessages = () => {
+      if (tokensLoaded) {
+        return (
+          <div className="flex flex-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex flex-center">
+            <Spin indicator={antIcon} />
+          </div>
+        );
+      }
+    }
+
     return (
       <>
         {accountTokens && accountTokens.length > 0 ? (
@@ -4461,15 +4467,7 @@ export const AccountsNewView = () => {
             {/* Render user token accounts */}
             {accountTokens.map(asset => renderAsset(asset))}
           </>
-        ) : tokensLoaded ? (
-          <div className="flex flex-center">
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          </div>
-        ) : (
-          <div className="flex flex-center">
-            <Spin indicator={antIcon} />
-          </div>
-        )}
+        ) : renderMessages()}
       </>
     );
   }
@@ -4483,6 +4481,24 @@ export const AccountsNewView = () => {
           <Spin indicator={antIcon} />
         </div>
       );
+    }
+
+    const renderMessages = () => {
+      if (status === FetchStatus.Fetched && !hasTransactions()) {
+        return (
+          <div className="h-100 flex-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
+          </div>
+        );
+      } else if (status === FetchStatus.FetchFailed) {
+        return (
+          <div className="h-100 flex-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.loading-error')}</p>} />
+          </div>
+        );
+      } else {
+        return null;
+      }
     }
 
     return (
@@ -4501,15 +4517,7 @@ export const AccountsNewView = () => {
                 <div className="item-list-body compact">
                   {renderTransactions()}
                 </div>
-              ) : status === FetchStatus.Fetched && !hasTransactions() ? (
-                <div className="h-100 flex-center">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
-                </div>
-              ) : status === FetchStatus.FetchFailed && (
-                <div className="h-100 flex-center">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.loading-error')}</p>} />
-                </div>
-              )
+              ) : renderMessages()
             }
             {lastTxSignature && (
                 <div className="mt-1 text-center">
@@ -4530,10 +4538,6 @@ export const AccountsNewView = () => {
       </>
     );
   };
-
-  // const renderSolanaIcon = (
-  //   <img className="token-icon" src="/solana-logo.png" alt="Solana logo" />
-  // );
 
   const renderTransactions = () => {
     if (transactions) {
@@ -4933,6 +4937,9 @@ export const AccountsNewView = () => {
       url += `?account-type=multisig`;
     }
 
+    setTimeout(() => {
+      setStreamDetail(undefined);
+    }, 100);
     navigate(url);
   }
 
@@ -4944,6 +4951,9 @@ export const AccountsNewView = () => {
     //   url += `?account-type=multisig`;
     // }
 
+    setTimeout(() => {
+      setStreamDetail(undefined);
+    }, 100);
     navigate(-1);
   }
 
@@ -5161,6 +5171,7 @@ export const AccountsNewView = () => {
                       <span className="icon-button-container secondary-button">
                         <Tooltip placement="bottom" title="Refresh payment streams">
                           <Button
+                            id="account-refresh-cta"
                             type="default"
                             shape="circle"
                             size="middle"
@@ -5230,13 +5241,15 @@ export const AccountsNewView = () => {
                           />
                         ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                           <MoneyStreamsIncomingView
-                            streamSelected={streamDetail}
                             accountAddress={accountAddress}
+                            loadingStreams={loadingStreams}
+                            streamSelected={streamDetail}
                             multisigAccounts={multisigAccounts}
                             onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                           />
                         ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
                           <MoneyStreamsOutgoingView
+                            loadingStreams={loadingStreams}
                             streamSelected={streamDetail}
                             streamList={streamList}
                             streamingAccountSelected={treasuryDetail}

@@ -383,7 +383,7 @@
 		"yes": "Có",
 		"you": "bạn"
 	},
-	"invest": {
+	"staking": {
 		"panel-left": {
 			"invest-stake-tab-title": "Stake MEAN",
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
@@ -471,7 +471,7 @@
 		"refresh-tooltip": "Làm mới dữ liệu đầu tư",
 		"screen-title": "Tuỳ chọn đầu tư",
 		"subtitle": "Cách dễ nhất để tăng số tiền của bạn",
-		"title": "Đầu tư"
+		"title": "Staking"
 	},
 	"language-selector": {
 		"modal-title": "Chọn ngôn ngữ",
@@ -1381,22 +1381,10 @@
 			"accounts": "Tài khoản",
 			"charts": "Biểu đồ",
 			"deposits": "Nạp",
-			"invest": {
-				"pol-bonds": "POL Bonds",
-				"staking": "Staking",
-				"submenu-title": "Đầu tư"
-			},
-			"services": {
-				"custody": "Lưu ký",
-				"faucet": "Faucet",
-				"multisig": "Multisig",
-				"safes": "Multisig V2",
-				"submenu-title": "Dịch vụ",
-				"wallet-guide": "Hướng dẫn Ví",
-				"wrap": "Wrap",
-				"unwrap": "Unwrap",
-				"vesting": "Vesting"
-			},
+			"multisig": "Multisig",
+			"staking": "Staking",
+			"vesting": "Vesting",
+			"wallet-guide": "Hướng dẫn Ví",
 			"stats": "Thống kê",
 			"swap": "Giao dịch",
 			"transfers": "Chuyển khoản"
