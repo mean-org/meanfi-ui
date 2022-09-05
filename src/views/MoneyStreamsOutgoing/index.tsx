@@ -2,7 +2,17 @@ import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
 import { IconEllipsisVertical } from "../../Icons";
 import { MoneyStreamDetails } from "../../components/MoneyStreamDetails";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Stream, STREAM_STATUS, TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, MSP, AllocationType, Treasury, TreasuryType } from "@mean-dao/msp";
+import {
+  Stream,
+  STREAM_STATUS,
+  TransactionFees,
+  MSP_ACTIONS as MSP_ACTIONS_V2,
+  calculateActionFees as calculateActionFeesV2,
+  MSP,
+  AllocationType,
+  Treasury,
+  TreasuryType
+} from "@mean-dao/msp";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
@@ -29,7 +39,6 @@ import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@me
 import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { CloseStreamTransactionParams, StreamTreasuryType } from "../../models/treasuries";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
-import { useParams } from "react-router-dom";
 import { title } from "process";
 import { appConfig } from '../..';
 import { readAccountInfo } from "../../middleware/accounts";
@@ -39,24 +48,27 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MoneyStreamsOutgoingView = (props: {
   accountAddress: string;
+  loadingStreams: boolean;
   multisigAccounts: MultisigInfo[] | undefined;
   onSendFromOutgoingStreamDetails?: any;
   streamList?: Array<Stream | StreamInfo> | undefined;
   streamSelected: Stream | StreamInfo | undefined;
   streamingAccountSelected: Treasury | TreasuryInfo | undefined;
 }) => {
+
   const {
     accountAddress,
+    loadingStreams,
     multisigAccounts,
     onSendFromOutgoingStreamDetails,
     streamList,
     streamSelected,
     streamingAccountSelected,
   } = props;
+
   const {
     splTokenList,
     tokenBalance,
-    activeStream,
     deletedStreams,
     transactionStatus,
     streamProgramAddress,
@@ -76,21 +88,21 @@ export const MoneyStreamsOutgoingView = (props: {
   const connection = useConnection();
   const { t } = useTranslation('common');
   const { endpoint } = useConnectionConfig();
-  const { treasuryId } = useParams();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
-  const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
-    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-  });
+  const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [userBalances, setUserBalances] = useState<any>();
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
-  const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
 
-  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  ////////////
+  //  Init  //
+  ////////////
+
+  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
@@ -126,11 +138,16 @@ export const MoneyStreamsOutgoingView = (props: {
     );
 
   }, [
-    connection,
-    publicKey,
     endpoint,
+    publicKey,
+    connection,
+    multisigAddressPK,
   ]);
-    
+
+  /////////////////
+  //  Callbacks  //
+  /////////////////
+
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
@@ -161,25 +178,36 @@ export const MoneyStreamsOutgoingView = (props: {
   ]);
 
   // confirmationHistory
-  const hasStreamPendingTx = useCallback(() => {
+  const hasStreamPendingTx = useCallback((type?: OperationType) => {
     if (!streamSelected) { return false; }
 
     if (confirmationHistory && confirmationHistory.length > 0) {
+      if (type !== undefined) {
+        return confirmationHistory.some(h =>
+          h.extras === streamSelected.id &&
+          h.txInfoFetchStatus === "fetching" &&
+          h.operationType === type
+        );
+      }
       return confirmationHistory.some(h => h.extras === streamSelected.id && h.txInfoFetchStatus === "fetching");
     }
 
     return false;
   }, [confirmationHistory, streamSelected]);
 
-  const isOtp = (): boolean => {
+  const isOtp = useCallback((): boolean => {
     return streamSelected?.rateAmount === 0 ? true : false;
-  }
+  }, [streamSelected?.rateAmount]);
 
-  const isDeletedStream = useCallback((id: string) => {
+  const isDeletedStream = useCallback((stream: Stream | StreamInfo) => {
     if (!deletedStreams) {
       return false;
     }
-    return deletedStreams.some(i => i === id);
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
+    const isNew = stream.version >= 2 ? true : false;
+    const streamId = isNew ? v2.id?.toString() : v1.id as string;
+    return deletedStreams.some(i => i === streamId);
   }, [deletedStreams]);
 
   const getTreasuryType = useCallback((): StreamTreasuryType | undefined => {
@@ -910,7 +938,6 @@ export const MoneyStreamsOutgoingView = (props: {
             });
             setIsBusy(false);
             onAddFundsTransactionFinished();
-            setLoadingStreamDetails(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1336,7 +1363,6 @@ export const MoneyStreamsOutgoingView = (props: {
             });
 
             setIsPauseStreamModalVisibility(false);
-            setLoadingStreamDetails(true);
             setOngoingOperation(undefined);
             onTransactionFinished();
           } else { setIsBusy(false); }
@@ -1786,7 +1812,6 @@ export const MoneyStreamsOutgoingView = (props: {
             });
             
             setIsResumeStreamModalVisibility(false);
-            setLoadingStreamDetails(true);
             setOngoingOperation(undefined);
             onTransactionFinished();
           } else { setIsBusy(false); }
@@ -2306,7 +2331,6 @@ export const MoneyStreamsOutgoingView = (props: {
             });
 
             setCloseStreamTransactionModalVisibility(false);
-            setLoadingStreamDetails(true);
             setOngoingOperation(undefined);
             onCloseStreamTransactionFinished();
           } else { setIsBusy(false); }
@@ -2475,22 +2499,25 @@ export const MoneyStreamsOutgoingView = (props: {
 
   // Read treasury data
   useEffect(() => {
-    if (!publicKey || !ms || !msp || !activeStream) { return; }
+    if (!publicKey || !ms || !msp || !streamSelected) { return; }
 
     const timeout = setTimeout(() => {
-      const v1 = activeStream as StreamInfo;
-      const v2 = activeStream as Stream;
-      consoleOut('Reading treasury data...', '', 'blue');
-      getTreasuryByTreasuryId(
-        activeStream.version < 2 ? v1.treasuryAddress as string : v2.treasury.toBase58(), activeStream.version
-      );
+      const v1 = streamSelected as StreamInfo;
+      const v2 = streamSelected as Stream;
+      const isNewStream = streamSelected.version >= 2 ? true : false;
+      const treasuryId = isNewStream ? v2.treasury.toBase58() : v1.treasuryAddress as string;
+      if (!treasuryDetails || treasuryDetails.id.toString() !== treasuryId) {
+        consoleOut('Reading treasury data...', '', 'blue');
+        getTreasuryByTreasuryId(treasuryId, streamSelected.version);
+      }
     });
 
     return () => {
       clearTimeout(timeout);
     }
 
-  }, [ms, msp, publicKey, activeStream, getTreasuryByTreasuryId, treasuryId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ms, msp, publicKey, streamSelected]);
 
   // Refresh stream data
   useEffect(() => {
@@ -2504,23 +2531,13 @@ export const MoneyStreamsOutgoingView = (props: {
         if (v2.status === STREAM_STATUS.Running) {
           msp.refreshStream(streamSelected as Stream).then(detail => {
             setStreamDetail(detail as Stream);
-            if (!hasStreamPendingTx()) {
-              setLoadingStreamDetails(false);
-            }
           });
-        } else {
-          setLoadingStreamDetails(false);
         }
       } else {
         if (v1.state === STREAM_STATE.Running) {
           ms.refreshStream(streamSelected as StreamInfo).then(detail => {
             setStreamDetail(detail as StreamInfo);
-            if (!hasStreamPendingTx()) {
-              setLoadingStreamDetails(false);
-            }
           });
-        } else {
-          setLoadingStreamDetails(false);
         }
       }
     }, 1000);
@@ -2533,7 +2550,6 @@ export const MoneyStreamsOutgoingView = (props: {
     ms,
     msp,
     streamSelected,
-    loadingStreamDetails,
   ]);
 
   // Set selected token to the stream associated token as soon as the stream is available or changes
@@ -2565,34 +2581,32 @@ export const MoneyStreamsOutgoingView = (props: {
     onSendFromOutgoingStreamDetails();
   }
 
-  const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
-    if (item) {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-      if (v1.version < 2) {
-        switch (v1.state) {
-          case STREAM_STATE.Schedule:
-            return t('streams.status.status-scheduled');
-          case STREAM_STATE.Paused:
-            return t('streams.status.status-stopped');
-          default:
-            return t('streams.status.status-running');
-        }
-      } else {
-        switch (v2.status) {
-          case STREAM_STATUS.Schedule:
-            return t('streams.status.status-scheduled');
-          case STREAM_STATUS.Paused:
-            if (v2.isManuallyPaused) {
-              return t('streams.status.status-paused');
-            }
-            return t('streams.status.status-stopped');
-          default:
-            return t('streams.status.status-running');
-        }
+  const getStreamStatus = useCallback((item: Stream | StreamInfo): "scheduled" | "stopped" | "stopped-manually" | "running" => {
+    const v1 = item as StreamInfo;
+    const v2 = item as Stream;
+    if (v1.version < 2) {
+      switch (v1.state) {
+        case STREAM_STATE.Schedule:
+          return "scheduled";
+        case STREAM_STATE.Paused:
+          return "stopped";
+        default:
+          return "running";
+      }
+    } else {
+      switch (v2.status) {
+        case STREAM_STATUS.Schedule:
+          return "scheduled";
+        case STREAM_STATUS.Paused:
+          if (v2.isManuallyPaused) {
+            return "stopped-manually";
+          }
+          return "stopped";
+        default:
+          return "running";
       }
     }
-  }, [t]);
+  }, []);
 
   const renderFundsLeftInAccount = () => {
     if (!streamSelected || !workingToken) {return "--";}
@@ -2616,7 +2630,7 @@ export const MoneyStreamsOutgoingView = (props: {
           }
         </span>
         <span className="info-icon">
-          {(streamSelected && getStreamStatus(streamSelected) === "Running") ? (
+          {(streamSelected && getStreamStatus(streamSelected) === "running") ? (
             <ArrowUpOutlined className="mean-svg-icons outgoing bounce" />
           ) : (
             <ArrowUpOutlined className="mean-svg-icons outgoing" />
@@ -2635,103 +2649,118 @@ export const MoneyStreamsOutgoingView = (props: {
   ];
 
   // Dropdown (three dots button)
-  const menu = (
-    <Menu>
-      {(getTreasuryType() === "open" || (getTreasuryType() === "locked" && streamSelected && (getStreamStatus(streamSelected) === "Stopped" || getStreamStatus(streamSelected) === "Paused"))) && (
-        <Menu.Item key="mso-00" disabled={isBusy || hasStreamPendingTx()} onClick={showCloseStreamModal}>
-          <span className="menu-item-text">Close stream</span>
+  const renderDropdownMenu = useCallback(() => {
+    return (
+      <Menu>
+        {(getTreasuryType() === "open" || (getTreasuryType() === "locked" && streamSelected && getStreamStatus(streamSelected) === "stopped")) && (
+          <Menu.Item key="mso-00" disabled={isBusy || hasStreamPendingTx()} onClick={showCloseStreamModal}>
+            <span className="menu-item-text">Close stream</span>
+          </Menu.Item>
+        )}
+        <Menu.Item key="mso-02">
+          <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
+            <span className="menu-item-text">{t('account-area.explorer-link')}</span>
+          </a>
         </Menu.Item>
-      )}
-      {/* <Menu.Item key="mso-01" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
-        <span className="menu-item-text">Copy stream id</span>
-      </Menu.Item> */}
-      <Menu.Item key="mso-02">
-        <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
-        </a>
-      </Menu.Item>
-    </Menu>
-  );
+      </Menu>
+    );
+  }, [getStreamStatus, getTreasuryType, hasStreamPendingTx, isBusy, showCloseStreamModal, streamSelected, t]);
 
   // Buttons
-  const buttons = (
-    <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
-      <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
-        <Button
-          type="default"
-          shape="round"
-          size="small"
-          className="thin-stroke btn-min-width"
-          disabled={
-            isBusy ||
-            hasStreamPendingTx() ||
-            isOtp() ||
-            (streamSelected && isDeletedStream(streamSelected.id as string)) ||
-            getTreasuryType() === "locked"
-          }
-          onClick={showAddFundsModal}>
-            <div className="btn-content">
-              Add funds
-            </div>
-        </Button>
-        {(streamSelected && getTreasuryType() !== "locked") && (
-          (getStreamStatus(streamSelected) === "Paused") ? (
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke btn-min-width"
-              disabled={isBusy || hasStreamPendingTx()}
-              onClick={showResumeStreamModal}>
-                <div className="btn-content">
-                  Resume stream
-                </div>
-            </Button>
-          ) : (getStreamStatus(streamSelected) === "Running") ? (
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke btn-min-width"
-              disabled={isBusy || hasStreamPendingTx()}
-              onClick={showPauseStreamModal}>
-                <div className="btn-content">
-                  Pause stream
-                </div>
-            </Button>
-          ) : null
-        )}
-      </Col>
-
-      <Col xs={4} sm={6} md={4} lg={6}>
-        <Dropdown
-          overlay={menu}
-          placement="bottomRight"
-          trigger={["click"]}>
-          <span className="ellipsis-icon icon-button-container mr-1">
-            <Button
-              type="default"
-              shape="circle"
-              size="middle"
-              icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-              onClick={(e) => e.preventDefault()}
-            />
-          </span>
-        </Dropdown>
-      </Col>
-    </Row>
-  );
+  const renderButtons = useCallback(() => {
+    return (
+      <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
+        <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke btn-min-width"
+            disabled={
+              isBusy ||
+              !streamSelected ||
+              !treasuryDetails ||
+              hasStreamPendingTx(OperationType.StreamAddFunds) ||
+              isOtp() ||
+              isDeletedStream(streamSelected) ||
+              getTreasuryType() === "locked"
+            }
+            onClick={showAddFundsModal}>
+              <div className="btn-content">
+                Add funds
+              </div>
+          </Button>
+          {(streamSelected && treasuryDetails && getTreasuryType() === "open") && (
+            (getStreamStatus(streamSelected) === "stopped-manually") ? (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke btn-min-width"
+                disabled={isBusy || hasStreamPendingTx()}
+                onClick={showResumeStreamModal}>
+                  <div className="btn-content">
+                    Resume stream
+                  </div>
+              </Button>
+            ) : (getStreamStatus(streamSelected) === "running") ? (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke btn-min-width"
+                disabled={isBusy || hasStreamPendingTx()}
+                onClick={showPauseStreamModal}>
+                  <div className="btn-content">
+                    Pause stream
+                  </div>
+              </Button>
+            ) : null
+          )}
+        </Col>
+        <Col xs={4} sm={6} md={4} lg={6}>
+          <Dropdown
+            overlay={renderDropdownMenu()}
+            placement="bottomRight"
+            trigger={["click"]}>
+            <span className="ellipsis-icon icon-button-container mr-1">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                onClick={(e) => e.preventDefault()}
+              />
+            </span>
+          </Dropdown>
+        </Col>
+      </Row>
+    );
+  }, [
+    isBusy,
+    streamSelected,
+    treasuryDetails,
+    showResumeStreamModal,
+    showPauseStreamModal,
+    hasStreamPendingTx,
+    renderDropdownMenu,
+    showAddFundsModal,
+    getStreamStatus,
+    getTreasuryType,
+    isDeletedStream,
+    isOtp,
+  ]);
 
   return (
     <>
-      <Spin spinning={loadingStreamDetails}>
+      <Spin spinning={loadingStreams}>
         <MoneyStreamDetails
           accountAddress={accountAddress}
           stream={streamSelected}
           hideDetailsHandler={hideDetailsHandler}
           infoData={infoData}
           isStreamOutgoing={true}
-          buttons={buttons}
+          buttons={renderButtons()}
           streamingAccountSelected={streamingAccountSelected}
           selectedToken={workingToken}
         />

@@ -2407,8 +2407,6 @@ export const TreasuryStreamCreateModal = (props: {
                             placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
                             spellCheck="false"
                             min={0}
-                            max={12}
-                            maxLength={2}
                             value={lockPeriodAmount}
                           />
                         </div>

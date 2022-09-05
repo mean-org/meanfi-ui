@@ -383,7 +383,7 @@
 		"yes": "네",
 		"you": "귀하"
 	},
-	"invest": {
+	"staking": {
 		"panel-left": {
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
 			"invest-stake-tab-title": "Stake MEAN",
@@ -471,7 +471,7 @@
 		"refresh-tooltip": "투자자료 갱신",
 		"screen-title": "투자 옵션",
 		"subtitle": "비상금을 키우는 가장 쉬운방법",
-		"title": "투자"
+		"title": "스테이킹"
 	},
 	"language-selector": {
 		"modal-title": "언어선택기",
@@ -1385,22 +1385,10 @@
 			"accounts": "계좌",
 			"charts": "차트",
 			"deposits": "입금",
-			"invest": {
-				"pol-bonds": "POL 본드",
-				"staking": "스테이킹",
-				"submenu-title": "투자"
-			},
-			"services": {
-				"custody": "보관",
-				"faucet": "Faucet",
-				"multisig": "Multisig",
-				"safes": "Multisig V2",
-				"submenu-title": "서비스",
-				"wallet-guide": "지갑 가이드",
-				"wrap": "랩",
-				"unwrap": "Unwrap",
-				"vesting": "Vesting"
-			},
+			"multisig": "Multisig",
+			"staking": "스테이킹",
+			"vesting": "Vesting",
+			"wallet-guide": "지갑 가이드",
 			"stats": "통계",
 			"swap": "교환",
 			"transfers": "전송"

@@ -808,7 +808,7 @@ export const MoneyStreamDetails = (props: {
             title={title}
             extraTitle={renderBadges()}
             status={getStreamStatusLabel(stream)}
-            subtitle={subtitle || "0.00"}
+            subtitle={subtitle}
             resume={resume}
             isDetailsPanel={true}
             isLink={false}
@@ -832,12 +832,6 @@ export const MoneyStreamDetails = (props: {
 
         {tabs && renderTabset()}
 
-        {/* {tabs && (
-          <TabsMean
-            tabs={tabs}
-            defaultTab="details"
-          />
-        )} */}
       </div>
     </>
   )

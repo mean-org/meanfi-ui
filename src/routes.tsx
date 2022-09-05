@@ -27,7 +27,7 @@ import TxConfirmationProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./middleware/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
-import { InvestView } from "./pages/invest";
+import { StakingView } from "./pages/staking";
 
 export function AppRoutes() {
 
@@ -72,8 +72,7 @@ export function AppRoutes() {
                       <Route path="/ido-blocked" element={<IdoBlockedView />} />
                       <Route path="/ido-lp" element={<IdoLpView />} />
                       {/* All others */}
-                      <Route path="/invest" element={<InvestView />} />
-                      <Route path="/invest/:investItem" element={<InvestView />} />
+                      <Route path="/staking" element={<StakingView />} />
                       <Route path="/staking-rewards" element={<StakingRewardsView />} />
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />

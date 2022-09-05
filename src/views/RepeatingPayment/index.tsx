@@ -22,7 +22,7 @@ import {
   toUiAmount2,
 } from "../../middleware/utils";
 import { Identicon } from "../../components/Identicon";
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
@@ -126,11 +126,7 @@ export const RepeatingPayment = (props: {
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [tokenBalanceBn, setSelectedTokenBalanceBn] = useState(new BN(0));
   const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
-
-
-  const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>({
-    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-  });
+  const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>(NO_FEES);
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return await calculateActionFees(connection, action);
@@ -141,8 +137,9 @@ export const RepeatingPayment = (props: {
   }, [repeatingPaymentFees.blockchainFee, repeatingPaymentFees.mspFlatFee]);
 
   const getMinSolBlanceRequired = useCallback(() => {
-    return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED
-      ? getFeeAmount()
+    const feeAmount = getFeeAmount();
+    return feeAmount > MIN_SOL_BALANCE_REQUIRED
+      ? feeAmount
       : MIN_SOL_BALANCE_REQUIRED;
 
   }, [getFeeAmount]);

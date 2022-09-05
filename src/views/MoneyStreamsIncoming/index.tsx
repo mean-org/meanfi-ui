@@ -43,13 +43,21 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MoneyStreamsIncomingView = (props: {
   accountAddress: string;
+  loadingStreams: boolean;
   multisigAccounts: MultisigInfo[] | undefined;
   onSendFromIncomingStreamDetails?: any;
   streamSelected: Stream | StreamInfo | undefined;
 }) => {
   const {
+    accountAddress,
+    loadingStreams,
+    multisigAccounts,
+    onSendFromIncomingStreamDetails,
+    streamSelected,
+  } = props;
+
+  const {
     splTokenList,
-    deletedStreams,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
@@ -64,13 +72,6 @@ export const MoneyStreamsIncomingView = (props: {
     confirmationHistory,
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
-  const { 
-    accountAddress,
-    multisigAccounts,
-    onSendFromIncomingStreamDetails,
-    streamSelected,
-  } = props;
-
   const connectionConfig = useConnectionConfig();
   const { endpoint } = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
@@ -80,29 +81,15 @@ export const MoneyStreamsIncomingView = (props: {
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [lastStreamTransferAddress, setLastStreamTransferAddress] = useState('');
-  const [loadingStreamDetails, setLoadingStreamDetails] = useState(true);
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
-  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  ////////////
+  //  Init  //
+  ////////////
 
-  const hideDetailsHandler = () => {
-    onSendFromIncomingStreamDetails();
-  }
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
+  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -150,10 +137,28 @@ export const MoneyStreamsIncomingView = (props: {
     );
 
   }, [
-    connection,
-    publicKey,
     endpoint,
+    publicKey,
+    connection,
+    multisigAddressPK
   ]);
+
+  /////////////////
+  //  Callbacks  //
+  /////////////////
+
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const isNewStream = useCallback(() => {
     if (streamSelected) {
@@ -573,6 +578,7 @@ export const MoneyStreamsIncomingView = (props: {
     nativeBalance,
     streamSelected,
     multisigClient,
+    mspV2AddressPK,
     multisigAccounts,
     transactionCancelled,
     transactionFees.mspFlatFee,
@@ -769,7 +775,6 @@ export const MoneyStreamsIncomingView = (props: {
       if (!msp || !publicKey) { return null; }
 
       if (!isIncomingMultisigStream()) {
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.withdraw(
           publicKey,                             // payer,
           new PublicKey(data.stream),            // stream,
@@ -786,7 +791,6 @@ export const MoneyStreamsIncomingView = (props: {
 
       multisigAuth = multisig.authority.toBase58();
 
-      // TODO: Modify method signature for amount parameters to string | number
       const withdrawFunds = await msp.withdraw(
         multisig.authority,                          // payer
         new PublicKey(data.stream),                  // stream,
@@ -1078,7 +1082,6 @@ export const MoneyStreamsIncomingView = (props: {
             });
 
             setIsWithdrawModalVisibility(false);
-            setLoadingStreamDetails(true);
             onWithdrawFundsTransactionFinished();
             setIsBusy(false);
           } else { setIsBusy(false); }
@@ -1098,47 +1101,56 @@ export const MoneyStreamsIncomingView = (props: {
     refreshTokenBalance();
   };
 
-  const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
-    if (item) {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-      if (v1.version < 2) {
-        switch (v1.state) {
-          case STREAM_STATE.Schedule:
-            return t('streams.status.status-scheduled');
-          case STREAM_STATE.Paused:
-            return t('streams.status.status-stopped');
-          default:
-            return t('streams.status.status-running');
-        }
-      } else {
-        switch (v2.status) {
-          case STREAM_STATUS.Schedule:
-            return t('streams.status.status-scheduled');
-          case STREAM_STATUS.Paused:
-            if (v2.isManuallyPaused) {
-              return t('streams.status.status-paused');
-            }
-            return t('streams.status.status-stopped');
-          default:
-            return t('streams.status.status-running');
-        }
+  const hideDetailsHandler = () => {
+    onSendFromIncomingStreamDetails();
+  }
+
+  const getStreamStatus = useCallback((item: Stream | StreamInfo): "scheduled" | "stopped" | "stopped-manually" | "running" => {
+    const v1 = item as StreamInfo;
+    const v2 = item as Stream;
+    if (v1.version < 2) {
+      switch (v1.state) {
+        case STREAM_STATE.Schedule:
+          return "scheduled";
+        case STREAM_STATE.Paused:
+          return "stopped";
+        default:
+          return "running";
+      }
+    } else {
+      switch (v2.status) {
+        case STREAM_STATUS.Schedule:
+          return "scheduled";
+        case STREAM_STATUS.Paused:
+          if (v2.isManuallyPaused) {
+            return "stopped-manually";
+          }
+          return "stopped";
+        default:
+          return "running";
       }
     }
-  }, [t]);
+  }, []);
 
   // confirmationHistory
-  const hasStreamPendingTx = useCallback(() => {
+  const hasStreamPendingTx = useCallback((type?: OperationType) => {
     if (!streamSelected) { return false; }
 
     if (confirmationHistory && confirmationHistory.length > 0) {
+      if (type !== undefined) {
+        return confirmationHistory.some(h =>
+          h.extras === streamSelected.id &&
+          h.txInfoFetchStatus === "fetching" &&
+          h.operationType === type
+        );
+      }
       return confirmationHistory.some(h => h.extras === streamSelected.id && h.txInfoFetchStatus === "fetching");
     }
 
     return false;
   }, [confirmationHistory, streamSelected]);
 
-  const isScheduledOtp = (): boolean => {
+  const isScheduledOtp = useCallback((): boolean => {
     if (streamSelected && streamSelected.rateAmount === 0) {
       const now = new Date().toUTCString();
       const nowUtc = new Date(now);
@@ -1148,17 +1160,19 @@ export const MoneyStreamsIncomingView = (props: {
       }
     }
     return false;
-  }
+  }, [streamSelected]);
 
-  const isDeletedStream = useCallback((id: string) => {
-    if (!deletedStreams) {
+  const getStreamWithdrawableAmount = useCallback((stream: Stream | StreamInfo) => {
+    const v1 = stream as StreamInfo;
+    const v2 = stream as Stream;
+    const isNew = stream.version >= 2 ? true : false;
+    return isNew ? v2.withdrawableAmount : v1.escrowVestedAmount;
+  }, []);
+
+  const canWithdraw = useCallback((stream: StreamInfo | Stream | undefined ) => {
+    if (!stream) {
       return false;
     }
-    return deletedStreams.some(i => i === id);
-  }, [deletedStreams]);
-
-  const canWithdraw = (stream: StreamInfo | Stream | undefined ) => {
-    if (!stream) { return null; }
 
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
@@ -1178,7 +1192,7 @@ export const MoneyStreamsIncomingView = (props: {
         : '';
     }
     return beneficiary === accountAddress ? true : false
-  }
+  }, [accountAddress]);
 
   const getTokenOrCustomToken = useCallback(async (address: string) => {
 
@@ -1228,23 +1242,13 @@ export const MoneyStreamsIncomingView = (props: {
         if (v2.status === STREAM_STATUS.Running) {
           msp.refreshStream(streamSelected as Stream).then(detail => {
             setStreamDetail(detail as Stream);
-            if (!hasStreamPendingTx()) {
-              setLoadingStreamDetails(false);
-            }
           });
-        } else {
-          setLoadingStreamDetails(false);
         }
       } else {
         if (v1.state === STREAM_STATE.Running) {
           ms.refreshStream(streamSelected as StreamInfo).then(detail => {
             setStreamDetail(detail as StreamInfo);
-            if (!hasStreamPendingTx()) {
-              setLoadingStreamDetails(false);
-            }
           });
-        } else {
-          setLoadingStreamDetails(false);
         }
       }
     }, 1000);
@@ -1326,7 +1330,7 @@ export const MoneyStreamsIncomingView = (props: {
           }
         </span>
         <span className="info-icon">
-          {(streamSelected && getStreamStatus(streamSelected) === "Running") ? (
+          {(streamSelected && getStreamStatus(streamSelected) === "running") ? (
             <ArrowDownOutlined className="mean-svg-icons incoming bounce" />
           ) : (
             <ArrowDownOutlined className="mean-svg-icons incoming" />
@@ -1345,29 +1349,24 @@ export const MoneyStreamsIncomingView = (props: {
   ];
 
   // Dropdown (three dots button)
-  const menu = (
-    <Menu>
-      <Menu.Item key="msi-00" onClick={showTransferStreamModal}>
-        <span className="menu-item-text">Transfer ownership</span>
-      </Menu.Item>
-      {/* <Menu.Item key="msi-01" onClick={() => streamSelected && copyAddressToClipboard(streamSelected.id)}>
-        <span className="menu-item-text">Copy stream id</span>
-      </Menu.Item> */}
-      <Menu.Item key="msi-02">
-        <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
-        </a>
-      </Menu.Item>
-    </Menu>
-  );
+  const renderDropdownMenu = useCallback(() => {
+    return (
+      <Menu>
+        <Menu.Item key="msi-00" onClick={showTransferStreamModal}>
+          <span className="menu-item-text">Transfer ownership</span>
+        </Menu.Item>
+        <Menu.Item key="msi-02">
+          <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
+            <span className="menu-item-text">{t('account-area.explorer-link')}</span>
+          </a>
+        </Menu.Item>
+      </Menu>
+    );
+  }, [showTransferStreamModal, streamSelected, t]);
 
   // Buttons
-  const buttons = () => {
+  const renderButtons = useCallback(() => {
     if (!streamSelected) { return null; }
-
-    const v1 = streamSelected as StreamInfo;
-    const v2 = streamSelected as Stream;
-    const isV2 = streamSelected.version >= 2 ? true : false;
 
     return (
       <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
@@ -1379,44 +1378,21 @@ export const MoneyStreamsIncomingView = (props: {
             className="thin-stroke btn-min-width"
             disabled={
               !canWithdraw(streamSelected) ||
-              isBusy ||
-              hasStreamPendingTx() ||
               isScheduledOtp() ||
-              (isV2 ? v2.withdrawableAmount.isZero() : v1.escrowVestedAmount === 0) ||
-              (isDeletedStream(streamSelected.id as string))
+              getStreamWithdrawableAmount(streamSelected) === 0 ||
+              isBusy ||
+              hasStreamPendingTx(OperationType.StreamWithdraw)
             }
             onClick={showWithdrawModal}>
               <div className="btn-content">
                 Withdraw funds
               </div>
           </Button>
-          {/* <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke btn-min-width"
-            disabled={isBusy ||
-              hasStreamPendingTx() ||
-              !streamSelected
-            }
-            onClick={() => {}}>
-              {streamSelected ? (
-                <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-                  <div className="btn-content">
-                      {t('account-area.explorer-link')}
-                  </div>
-                </a>
-              ) : (
-                <div className="btn-content">
-                  {t('account-area.explorer-link')}
-              </div>
-              )}
-          </Button> */}
         </Col>
 
         <Col xs={4} sm={6} md={4} lg={6}>
           <Dropdown
-            overlay={menu}
+            overlay={renderDropdownMenu()}
             placement="bottomRight"
             trigger={["click"]}>
             <span className="ellipsis-icon icon-button-container mr-1">
@@ -1432,18 +1408,27 @@ export const MoneyStreamsIncomingView = (props: {
         </Col>
       </Row>
     );
-  }
+  }, [
+    isBusy,
+    streamSelected,
+    getStreamWithdrawableAmount,
+    hasStreamPendingTx,
+    renderDropdownMenu,
+    showWithdrawModal,
+    isScheduledOtp,
+    canWithdraw,
+  ]);
 
   return (
     <>
-      <Spin spinning={loadingStreamDetails}>
+      <Spin spinning={loadingStreams}>
         <MoneyStreamDetails
           accountAddress={accountAddress}
           stream={streamSelected}
           hideDetailsHandler={hideDetailsHandler}
           infoData={infoData}
           isStreamIncoming={true}
-          buttons={buttons()}
+          buttons={renderButtons()}
           selectedToken={workingToken}
         />
       </Spin>

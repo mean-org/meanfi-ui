@@ -9,17 +9,14 @@ import { AppContextMenu } from "../AppContextMenu";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
-import { SOLANA_WALLET_GUIDE } from '../../constants';
-import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 import { CustomCSSProps } from '../../middleware/css-custom-props';
 import { isProd } from '../../middleware/ui';
 import { NotificationBell } from '../CurrentBalance';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 import { RoutingInfo } from '../../models/common-types';
-import { INVEST_ROUTE_BASE_PATH } from '../../pages/invest';
+import { STAKING_ROUTE_BASE_PATH } from '../../pages/staking';
 
-const { SubMenu } = Menu;
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
     key: 'accounts',
@@ -32,8 +29,8 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
     parent: 'root'
   },
   {
-    key: 'invest',
-    path: INVEST_ROUTE_BASE_PATH,
+    key: 'staking',
+    path: STAKING_ROUTE_BASE_PATH,
     parent: 'root'
   },
   {
@@ -45,16 +42,6 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
     key: 'multisig',
     path: '/multisig',
     parent: 'root'
-  },
-  {
-    key: 'custody',
-    path: '/custody',
-    parent: 'services'
-  },
-  {
-    key: 'faucet',
-    path: '/faucet',
-    parent: 'services'
   },
   {
     key: 'stats',
@@ -148,30 +135,15 @@ export const AppBar = (props: {
       <Menu.Item key="exchange">
         <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
-      <Menu.Item key="invest">
-        <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
+      <Menu.Item key="staking">
+        <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>
       </Menu.Item>
       <Menu.Item key="vesting">
-        <Link to="/vesting">{t('ui-menus.main-menu.services.vesting')}</Link>
+        <Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>
       </Menu.Item>
       <Menu.Item key="multisig">
-        <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+        <Link to="/multisig">{t('ui-menus.main-menu.multisig')}</Link>
       </Menu.Item>
-      <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
-        <Menu.Item key="custody">
-          <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
-        </Menu.Item>
-        <Menu.Item key="wallet-guide">
-          <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-            <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
-          </a>
-        </Menu.Item>
-        {!isProd() && (
-          <Menu.Item key="faucet">
-            <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
-          </Menu.Item>
-        )}
-      </SubMenu>
       <Menu.Item key="stats">
         <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
       </Menu.Item>
@@ -224,28 +196,14 @@ export const AppBar = (props: {
                 <li key="exchange" className={selectedItems.includes("exchange") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
                   <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
                 </li>
-                <li key="invest" className={selectedItems.includes("invest") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
-                  <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
+                <li key="staking" className={selectedItems.includes("staking") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
+                  <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>
                 </li>
                 <li key="vesting" className={selectedItems.includes("vesting") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
-                  <Link to="/vesting">{t('ui-menus.main-menu.services.vesting')}</Link>
+                  <Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>
                 </li>
                 <li key="multisig" className={selectedItems.includes("multisig") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
-                  <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
-                </li>
-                <li key="custody" className={selectedItems.includes("custody") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
-                  <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
-                </li>
-                {!isProd() && (
-                  <li key="faucet" className={selectedItems.includes("faucet") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
-                    <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
-                  </li>
-                )}
-                <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': 7} as CustomCSSProps}>
-                  <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-                    <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
-                    &nbsp;<IconExternalLink className="mean-svg-icons link" />
-                  </a>
+                  <Link to="/multisig">{t('ui-menus.main-menu.multisig')}</Link>
                 </li>
                 <li key="stats" className={selectedItems.includes("stats") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
                   <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>

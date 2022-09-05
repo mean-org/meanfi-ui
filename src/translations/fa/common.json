@@ -291,7 +291,7 @@
 		"yes": "آره",
 		"you": "شما"
 	},
-	"invest": {
+	"staking": {
 		"panel-left": {
 			"invest-liquidity-tab-title": "استخرهای نقدینگی MEAN",
 			"invest-stake-sol-tab-title": "Stake SOL",
@@ -379,7 +379,7 @@
 		"refresh-tooltip": "رفرش کردن داده های سرمایه گذاری",
 		"screen-title": "گزینه های سرمایه گذاری",
 		"subtitle": "ساده ترین راه برای افزایش ذخیره پول شما",
-		"title": "سرمایه گذاری"
+		"title": "استیک کردن"
 	},
 	"language-selector": {
 		"modal-title": "انتخابگر زبان",
@@ -1292,22 +1292,10 @@
 			"accounts": "حساب ها",
 			"charts": "نمودار",
 			"deposits": "واریز کردن",
-			"invest": {
-				"pol-bonds": "اوراق قرضه POL",
-				"staking": "استیک کردن",
-				"submenu-title": "سرمایه گذاری"
-			},
-			"services": {
-				"custody": "حضانت",
-				"faucet": "فاست",
-				"multisig": "Multisig",
-				"safes": "Multisig V2",
-				"submenu-title": "خدمات",
-				"unwrap": "Unwrap",
-				"wallet-guide": "راهنمای کیف پول",
-				"wrap": "رپ(Wrap) کردن",
-				"vesting": "Vesting"
-			},
+			"multisig": "Multisig",
+			"staking": "استیک کردن",
+			"vesting": "Vesting",
+			"wallet-guide": "راهنمای کیف پول",
 			"stats": "آمار",
 			"swap": "مبادله",
 			"transfers": "نقل و انتقالات"
