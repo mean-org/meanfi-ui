@@ -299,7 +299,7 @@ export function WalletProvider({ children = null as any }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [autoConnect, setAutoConnect] = useState(true);
-  const [providerName, setProviderName] = useLocalStorageState("providerName");
+  const [walletName, setWalletName] = useLocalStorageState("walletName");
   const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
@@ -313,14 +313,14 @@ export function WalletProvider({ children = null as any }) {
   const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
 
   const resetWalletProvider = () => {
-    setProviderName(null);
+    setWalletName(null);
   }
 
   const provider = useMemo(() => {
-    const item = WALLET_PROVIDERS.find(({ name }) => name === providerName);
+    const item = WALLET_PROVIDERS.find(({ name }) => name === walletName);
     return item;
   },
-    [providerName]
+    [walletName]
   );
 
   const network = environment === 'production' ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet;
@@ -346,22 +346,22 @@ export function WalletProvider({ children = null as any }) {
 
   useEffect(() => {
     if (wallets) {
-      if (providerName) {
-        consoleOut('providerName:', providerName, 'blue');
-        const wa = wallets.find(w => w.name === providerName);
+      if (walletName) {
+        consoleOut('walletName:', walletName, 'blue');
+        const wa = wallets.find(w => w.name === walletName);
         consoleOut('provider:', wa, 'blue');
         if (wa) {
           setWallet(wa);
         } else {
-          setProviderName(null);
+          setWalletName(null);
           setWallet(undefined);
         }
       } else {
-        setProviderName(null);
+        setWalletName(null);
         setWallet(undefined);
       }
     }
-  }, [providerName, setProviderName, wallets]);
+  }, [walletName, setWalletName, wallets]);
 
   // Keep up with connecting flag
   useEffect(() => {
@@ -425,7 +425,7 @@ export function WalletProvider({ children = null as any }) {
             description: `Cannot connect to ${wallet.name}. Wallet is not configured or enabled in your browser.`
           });
           setConnected(false);
-          setProviderName(null);
+          setWalletName(null);
           setWallet(undefined);
         }
       });
@@ -493,7 +493,7 @@ export function WalletProvider({ children = null as any }) {
                 }
 
                 consoleOut('Selected wallet:', item.name, 'blue');
-                setProviderName(item.name);
+                setWalletName(item.name);
                 setWallet(wallets.find(w => w.name === item.name));
 
               };

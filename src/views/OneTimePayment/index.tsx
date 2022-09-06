@@ -1240,14 +1240,6 @@ export const OneTimePayment = (props: {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar">
-          <span className="ml-1">symbol:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.symbol : '-'}</span>
-          <span className="ml-1">name:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.name : '-'}</span>
-          <span className="ml-1">address:</span><span className="ml-1 font-bold fg-dark-active">{selectedToken ? selectedToken.address : '-'}</span>
-        </div>
-      )} */}
-
       <div className="contract-wrapper">
 
         {/* Recipient */}
