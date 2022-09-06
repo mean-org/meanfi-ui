@@ -4213,16 +4213,6 @@ export const SafeView = () => {
 
   return (
     <>
-      {isUnderDevelopment() && (
-        <div className="debug-bar">
-          <span className="mr-1 align-middle">loadingProposals</span>
-          <span className={`status position-relative align-middle ${loadingProposals ? 'error' : 'success'}`}></span>
-          <span className="mx-1 align-middle">loadingPrograms</span>
-          <span className={`status position-relative align-middle ${loadingPrograms ? 'error' : 'success'}`}></span>
-          <span className="ml-1">proposals:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
-        </div>
-      )}
-
       {detailsPanelOpen && (
         <Button
           id="back-button"
@@ -4231,7 +4221,6 @@ export const SafeView = () => {
           icon={<ArrowLeftOutlined />}
           onClick={onBackButtonClicked}/>
       )}
-
       <div className="container main-container">
 
         <div className="interaction-area">

@@ -151,12 +151,14 @@ export const AccountsNewView = () => {
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
     setIsVerifiedRecipient,
+    setIsVerifiedRecipient,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
     setShouldLoadTokens,
     setSelectedMultisig,
+    resetContractValues,
     resetContractValues,
     refreshStreamList,
     setStreamsSummary,
@@ -237,7 +239,7 @@ export const AccountsNewView = () => {
   const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
   const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
 
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+  const multisigAddressPK = useMemo(() => useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []), []);
 
   // Perform premature redirect here if no address was provided in path
   // to the current wallet address if the user is connected
@@ -295,6 +297,7 @@ export const AccountsNewView = () => {
   }, [
     connection,
     publicKey,
+    multisigAddressPK,
     multisigAddressPK,
     connectionConfig.endpoint,
   ]);
@@ -364,6 +367,7 @@ export const AccountsNewView = () => {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
       let beneficiary = '';
+      let beneficiary = '';
       if (v1.version < 2) {
         beneficiary = typeof v1.beneficiaryAddress === "string"
           ? v1.beneficiaryAddress
@@ -373,6 +377,7 @@ export const AccountsNewView = () => {
           ? v2.beneficiary
           : v2.beneficiary.toBase58();
       }
+      return beneficiary === accountAddress ? true : false
       return beneficiary === accountAddress ? true : false
     }
     return false;
@@ -448,6 +453,11 @@ export const AccountsNewView = () => {
   // Send selected token modal
   const [isSendAssetModalOpen, setIsSendAssetModalOpen] = useState(false);
   const showSendAssetModal = useCallback(() => setIsSendAssetModalOpen(true), []);
+  const hideSendAssetModal = useCallback(() => {
+    setIsSendAssetModalOpen(false);
+    resetContractValues();
+    setIsVerifiedRecipient(false);
+  }, [resetContractValues, setIsVerifiedRecipient]);
   const hideSendAssetModal = useCallback(() => {
     setIsSendAssetModalOpen(false);
     resetContractValues();
@@ -885,6 +895,13 @@ export const AccountsNewView = () => {
     }
   };
 
+  const fullAccountRefresh = () => {
+    const fullRefreshCta = document.getElementById("account-refresh-cta");
+    if (fullRefreshCta) {
+      fullRefreshCta.click();
+    }
+  };
+
   const reloadAssets = () => {
     const tokensRefreshCta = document.getElementById("account-assets-hard-refresh-cta");
     if (tokensRefreshCta) {
@@ -1081,6 +1098,7 @@ export const AccountsNewView = () => {
       } else if (item.operationType === OperationType.TransferTokens) {
         setIsBusy(false);
       }
+      fullAccountRefresh();
       fullAccountRefresh();
     }
     resetTransactionStatus();
@@ -1498,6 +1516,7 @@ export const AccountsNewView = () => {
     connection,
     nativeBalance,
     selectedMultisig,
+    multisigAddressPK,
     multisigAddressPK,
     transactionCancelled,
     transactionAssetFees,
@@ -4217,6 +4236,9 @@ export const AccountsNewView = () => {
     if (location.pathname.indexOf('/assets') !== -1) {
       setDetailsPanelOpen(false);
       setAutoOpenDetailsPanel(false);
+    } else if (location.pathname.indexOf('/assets') !== -1) {
+      setDetailsPanelOpen(false);
+      setAutoOpenDetailsPanel(false);
     } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamingItemId}`) {
       let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
       if (inspectedAccountType && inspectedAccountType === "multisig") {
@@ -4378,18 +4400,42 @@ export const AccountsNewView = () => {
       navigateToAsset(asset);
     }
 
+
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
+
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
     };
 
+
     const isSelectedToken = (): boolean => {
       return selectedAsset && asset && selectedAsset.displayIndex === asset.displayIndex
         ? true
         : false;
+    }
+
+    const getRowSelectionClass = (): string => {
+      if (isSelectedToken() && selectedCategory === "assets") {
+        return 'selected';
+      } else {
+        if (hideLowBalances && (shouldHideAsset(asset) || !asset.balance)) {
+          return 'hidden';
+        }
+      }
+      return '';
+    }
+
+    const getRateAmountDisplay = (): string => {
+      if (tokenPrice > 0) {
+        if (!asset.valueInUsd) { return '$0.00'; }
+        return asset.valueInUsd > 0 && asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
+          ? '< $0.01'
+          : toUsCurrency(asset.valueInUsd || 0);
+      }
+      return '—';
     }
 
     const getRowSelectionClass = (): string => {
@@ -4477,6 +4523,23 @@ export const AccountsNewView = () => {
       }
     }
 
+
+    const renderMessages = () => {
+      if (tokensLoaded) {
+        return (
+          <div className="flex flex-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex flex-center">
+            <Spin indicator={antIcon} />
+          </div>
+        );
+      }
+    }
+
     return (
       <>
         {accountTokens && accountTokens.length > 0 ? (
@@ -4517,6 +4580,24 @@ export const AccountsNewView = () => {
           <Spin indicator={antIcon} />
         </div>
       );
+    }
+
+    const renderMessages = () => {
+      if (status === FetchStatus.Fetched && !hasTransactions()) {
+        return (
+          <div className="h-100 flex-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
+          </div>
+        );
+      } else if (status === FetchStatus.FetchFailed) {
+        return (
+          <div className="h-100 flex-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.loading-error')}</p>} />
+          </div>
+        );
+      } else {
+        return null;
+      }
     }
 
     const renderMessages = () => {
@@ -4976,6 +5057,9 @@ export const AccountsNewView = () => {
     setTimeout(() => {
       setStreamDetail(undefined);
     }, 100);
+    setTimeout(() => {
+      setStreamDetail(undefined);
+    }, 100);
     navigate(url);
   }
 
@@ -4987,6 +5071,9 @@ export const AccountsNewView = () => {
     //   url += `?account-type=multisig`;
     // }
 
+    setTimeout(() => {
+      setStreamDetail(undefined);
+    }, 100);
     setTimeout(() => {
       setStreamDetail(undefined);
     }, 100);
@@ -5006,13 +5093,6 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar">
-          <span className="ml-1">transactions:</span><span className="ml-1 font-bold fg-dark-active">{transactions ? `[${transactions.length}]` : '-'}</span>
-          <span className="ml-1">transactionStatus:</span><span className="ml-1 font-bold fg-dark-active">{transactionStatus && transactionStatus.currentOperation ? TransactionStatus[transactionStatus.currentOperation] : '-'}</span>
-        </div>
-      )} */}
-
       {detailsPanelOpen && (
         <Button
           id="back-button"
@@ -5021,7 +5101,6 @@ export const AccountsNewView = () => {
           icon={<ArrowLeftOutlined />}
           onClick={onBackButtonClicked}/>
       )}
-
       <div className="container main-container accounts">
 
         {/* SEO tags overrides */}
@@ -5208,6 +5287,7 @@ export const AccountsNewView = () => {
                         <Tooltip placement="bottom" title="Refresh payment streams">
                           <Button
                             id="account-refresh-cta"
+                            id="account-refresh-cta"
                             type="default"
                             shape="circle"
                             size="middle"
@@ -5278,6 +5358,8 @@ export const AccountsNewView = () => {
                         ) : pathParamStreamId && pathParamStreamingTab === "incoming" ? (
                           <MoneyStreamsIncomingView
                             accountAddress={accountAddress}
+                            loadingStreams={loadingStreams}
+                            streamSelected={streamDetail}
                             loadingStreams={loadingStreams}
                             streamSelected={streamDetail}
                             multisigAccounts={multisigAccounts}

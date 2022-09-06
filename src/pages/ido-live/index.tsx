@@ -873,29 +873,6 @@ export const IdoLiveView = () => {
         )}
       </div> */}
       <div className={`solid-bg position-relative`}>
-
-        {/* {isLocal() && (
-          <>
-            <div className="debug-bar">
-              <Button
-                type="default"
-                shape="circle"
-                size="small"
-                icon={<SettingOutlined style={{ fontSize: 14 }} />}
-                onClick={() => {
-                  consoleOut('Setting fireworks ON...', '', 'blue');
-                  setIdoFinishedFireworks(true);
-                }}
-              />
-              <span className="ml-1">idleTimeInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idleTimeInSeconds || '-'}</span>
-              <span className="ml-1">coolOffPeriodInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idoDetails ? idoDetails.coolOffPeriodInSeconds : '-'}</span>
-              <span className="ml-1">coolOffPeriodCountdown:</span><span className="ml-1 font-bold fg-dark-active">{coolOffPeriodCountdown || '-'}</span>
-              <span className="ml-1">redeemStarted:</span><span className="ml-1 font-bold fg-dark-active">{redeemStarted ? 'true' : 'false'}</span>
-              <span className="ml-1">idoFinishedFireworks:</span><span className="ml-1 font-bold fg-dark-active">{idoFinishedFireworks ? 'true' : 'false'}</span>
-            </div>
-          </>
-        )} */}
-
         {/* Page title */}
         <section className="content contrast-section no-padding">
           <div className="container">

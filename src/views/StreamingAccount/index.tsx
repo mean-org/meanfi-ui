@@ -92,6 +92,14 @@ export const StreamingAccountView = (props: {
     onSendFromStreamingAccountStreamInfo,
   } = props;
 
+  const { 
+    selectedMultisig,
+    multisigAccounts,
+    streamingAccountSelected,
+    onSendFromStreamingAccountDetails,
+    onSendFromStreamingAccountStreamInfo,
+  } = props;
+
   const {
     splTokenList,
     accountAddress,
@@ -163,6 +171,7 @@ export const StreamingAccountView = (props: {
   }, [
     connection,
     publicKey,
+    multisigAddressPK,
     multisigAddressPK,
     connectionConfig.endpoint,
   ]);
@@ -286,6 +295,44 @@ export const StreamingAccountView = (props: {
   const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
+
+  const getMultisigTxProposalFees = useCallback(() => {
+
+    if (!multisigClient) { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
+      .then(value => {
+        setMultisigTransactionFees(value);
+        consoleOut('multisigTransactionFees:', value, 'orange');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        consoleOut('networkFee:', value.networkFee, 'blue');
+        consoleOut('rentExempt:', value.rentExempt, 'blue');
+        const totalMultisigFee = value.multisigFee + (MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL);
+        consoleOut('multisigFee:', totalMultisigFee, 'blue');
+        const minRequired = totalMultisigFee + value.rentExempt + value.networkFee;
+        consoleOut('Min required balance:', minRequired, 'blue');
+        setMinRequiredBalance(minRequired);
+      });
+
+    resetTransactionStatus();
+
+  }, [multisigClient, nativeBalance, resetTransactionStatus]);
+
+  const getQueryTabOption = useCallback(() => {
+
+    let tabOptionInQuery: string | null = null;
+    if (searchParams) {
+      tabOptionInQuery = searchParams.get('v');
+      if (tabOptionInQuery) {
+        return tabOptionInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const navigateToTab = useCallback((tab: string) => {
+    setSearchParams({v: tab as string});
+  }, [setSearchParams]);
 
   const getMultisigTxProposalFees = useCallback(() => {
 
@@ -726,11 +773,13 @@ export const StreamingAccountView = (props: {
       consoleOut('withdrawTransactionFees:', value, 'orange');
     });
     setIsCreateStreamModalVisibility(true);
+    setIsCreateStreamModalVisibility(true);
   }, [
     selectedMultisig,
     refreshUserBalances,
     getTransactionFeesV2,
     resetTransactionStatus,
+    getMultisigTxProposalFees,
     getMultisigTxProposalFees,
   ]);
 
@@ -749,6 +798,7 @@ export const StreamingAccountView = (props: {
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
+    getMultisigTxProposalFees();
     getMultisigTxProposalFees();
     if (selectedMultisig) {
       refreshUserBalances(selectedMultisig.authority);
@@ -777,6 +827,7 @@ export const StreamingAccountView = (props: {
   }, [
     selectedMultisig,
     streamingAccountSelected,
+    getMultisigTxProposalFees,
     getMultisigTxProposalFees,
     resetTransactionStatus,
     getTransactionFeesV2,
@@ -817,10 +868,17 @@ export const StreamingAccountView = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
+<<<<<<< HEAD
     const createTxV1 = async (): Promise<boolean> => {
       if (publicKey && streamingAccountSelected) {
         consoleOut("Start transaction for treasury addFunds", '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
+=======
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTransactionFees.networkFee + multisigTransactionFees.multisigFee + multisigTransactionFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+>>>>>>> develop
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
@@ -1292,14 +1350,19 @@ export const StreamingAccountView = (props: {
   const showTransferFundsModal = useCallback(() => {
     setIsTransferFundsModalVisible(true);
     getMultisigTxProposalFees();
+    getMultisigTxProposalFees();
     getTransactionFeesV2(MSP_ACTIONS_V2.treasuryWithdraw).then(value => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
     resetTransactionStatus();
   }, [
+    
     getTransactionFeesV2,
+   
     resetTransactionStatus,
+    getMultisigTxProposalFees,
+  ,
     getMultisigTxProposalFees,
   ]);
 
@@ -1642,6 +1705,7 @@ export const StreamingAccountView = (props: {
   const [isCloseTreasuryModalVisible, setIsCloseTreasuryModalVisibility] = useState(false);
   const showCloseTreasuryModal = useCallback(() => {
     resetTransactionStatus();
+    getMultisigTxProposalFees();
     getMultisigTxProposalFees();
     if (streamingAccountSelected) {
       const v2 = streamingAccountSelected as Treasury;
@@ -2411,6 +2475,259 @@ export const StreamingAccountView = (props: {
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
+<<<<<<< HEAD
+=======
+    }
+  },[
+    msp,
+    wallet,
+    connected,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigTransactionFees,
+    transactionCancelled,
+    streamingAccountSelected,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    onRefreshTreasuryBalanceTransactionFinished,
+    enqueueTransactionConfirmation,
+    resetTransactionStatus,
+    setTransactionStatus,
+    isMultisigTreasury
+  ]);
+
+  // confirmationHistory
+  const hasStreamingAccountPendingTx = useCallback((type?: OperationType) => {
+    if (!streamingAccountSelected) { return false; }
+
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      if (type !== undefined) {
+        return confirmationHistory.some(h =>
+          h.extras === streamingAccountSelected.id &&
+          h.txInfoFetchStatus === "fetching" &&
+          h.operationType === type
+        );
+      }
+      return confirmationHistory.some(h => h.extras === streamingAccountSelected.id && h.txInfoFetchStatus === "fetching");
+    }
+
+    return false;
+  }, [confirmationHistory, streamingAccountSelected]);
+
+  const getStreamTitle = (item: Stream | StreamInfo): string => {
+    let title = '';
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+
+      if (v1.version < 2) {
+        if (v1.streamName) {
+          return `${v1.streamName}`;
+        }
+        
+        if (v1.isUpdatePending) {
+          title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else if (v1.state === STREAM_STATE.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else if (v1.state === STREAM_STATE.Paused) {
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        }
+      } else {
+        if (v2.name) {
+          return `${v2.name}`;
+        }
+
+        if (v2.status === STREAM_STATUS.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        } else if (v2.status === STREAM_STATUS.Paused) {
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        }
+      }
+    }
+
+    return title;
+  }
+
+  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+
+    if (item) {
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      const decimals = token?.decimals || 6;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
+      if (item.version < 2) {
+        value += formatThousands(
+          item.rateAmount,
+          friendlyDisplayDecimalPlaces(item.rateAmount, decimals),
+          2
+        );
+      } else {
+        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
+        value += formatThousands(
+          rateAmount,
+          friendlyDisplayDecimalPlaces(rateAmount, decimals),
+          2
+        );
+      }
+      value += ' ';
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+    }
+    return value;
+  }, [getTokenByMintAddress]);
+
+  const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+
+    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      const decimals = token?.decimals || 6;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
+      if (item.version < 2) {
+        value += formatThousands(
+          item.allocationAssigned,
+          friendlyDisplayDecimalPlaces(item.allocationAssigned, decimals),
+          2
+        );
+      } else {
+        const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
+        value += formatThousands(
+          allocationAssigned,
+          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+          2
+        );
+      }
+      value += ' ';
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
+    }
+    return value;
+  }, [getTokenByMintAddress]);
+
+  const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
+    let subtitle = '';
+
+    if (item) {
+      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
+      if (item.rateAmount > 0) {
+        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
+      }
+
+      subtitle = rateAmount;
+    }
+
+    return subtitle;
+
+  }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
+
+  const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATE.Paused:
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
+        }
+      } else {
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return t('streams.status.status-paused');
+            }
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
+        }
+      }
+    }
+  }, [t]);
+
+  const getTimeRemaining = useCallback((time: any) => {
+    if (time) {
+      const countDownDate = new Date(time).getTime();
+      const now = new Date().getTime();
+      const timeleft = countDownDate - now;
+  
+      const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
+      const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
+      const hours = Math.floor((timeleft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const days = Math.floor(timeleft / (1000 * 60 * 60 * 24));
+      const weeks = Math.floor(days/7);
+      const months = Math.floor(days/30);
+      const years = Math.floor(days/365);
+  
+      if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes === 0 && seconds === 0) {
+        return `out of funds`;
+      } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes === 0 && seconds <= 60) {
+        return <span className="fg-warning">less than a minute left</span>;
+      } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes <= 60) {
+        return <span className="fg-warning">{`only ${minutes} ${minutes > 1 ? "minutes" : "minute"} left`}</span>;
+      } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours <= 24) {
+        return <span className="fg-warning">{`only ${hours} ${hours > 1 ? "hours" : "hour"} left`}</span>;
+      } else if (years === 0 && months === 0 && weeks === 0 && days > 1 && days <= 7) {
+        return `${days} ${days > 1 ? "days" : "day"} left`;
+      } else if (years === 0 && months === 0 && days > 7 && days <= 30) {
+        return `${weeks} ${weeks > 1 ? "weeks" : "week"} left`;
+      } else if (years === 0 && days > 30 && days <= 365) {
+        return `${months} ${months > 1 ? "months" : "month"} left`;
+      } else if (days > 365) {
+        return `${years} ${years > 1 ? "years" : "year"} left`;
+      } else {
+        return ""
+      }
+    }
+  }, []);
+
+  const getStreamResume = useCallback((item: Stream | StreamInfo) => {
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.scheduled', {date: getShortDate(v1.startUtc as string)});
+          case STREAM_STATE.Paused:
+            return t('streams.status.stopped');
+          default:
+            return t('streams.status.streaming');
+        }
+      } else {
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return `starts on ${getShortDate(v2.startUtc as string)}`;
+          case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return `paused on ${getShortDate(v2.startUtc as string)}`;
+            }
+            return `out of funds on ${getShortDate(v2.startUtc as string)}`;
+          default:
+            return getTimeRemaining(v2.estimatedDepletionDate as string);
+        }
+      }
+>>>>>>> develop
     }
   },[
     msp,
@@ -2957,7 +3274,7 @@ export const StreamingAccountView = (props: {
               shape="round"
               size="small"
               className="thin-stroke btn-min-width"
-              disabled={hasStreamingAccountPendingTx(OperationType.TreasuryAddFunds)}
+              disabled={hasStreamingAccountPendingTx(OperationType.TreasuryAddFundsOperationType.TreasuryAddFunds)}
               onClick={showAddFundsModal}>
                 <div className="btn-content">
                   Add funds

@@ -44,7 +44,7 @@ import { StreamsSummary } from "../../models/streams";
 import { Identicon } from "../../components/Identicon";
 import { openNotification } from "../../components/Notifications";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { TreasuryTopupParams } from "../../models/common-types";
 import useWindowSize from "../../hooks/useWindowResize";
@@ -55,6 +55,7 @@ import { AddFundsParams } from "../../models/vesting";
 import BigNumber from "bignumber.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { appConfig } from '../..';
+import { ZERO_FEES } from "../../models/multisig";
 import { ZERO_FEES } from "../../models/multisig";
 
 const { TabPane } = Tabs;
@@ -178,6 +179,7 @@ export const MoneyStreamsInfoView = (props: {
     connection,
     publicKey,
     multisigAddressPK,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -205,6 +207,10 @@ export const MoneyStreamsInfoView = (props: {
     publicKey,
     streamV2ProgramAddress
   ]);
+
+  /////////////////
+  //  Callbacks  //
+  /////////////////
 
   /////////////////
   //  Callbacks  //
@@ -634,6 +640,7 @@ export const MoneyStreamsInfoView = (props: {
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
     getMultisigTxProposalFees();
+    getMultisigTxProposalFees();
     if (selectedMultisig) {
       refreshUserBalances(selectedMultisig.authority);
     } else {
@@ -655,6 +662,7 @@ export const MoneyStreamsInfoView = (props: {
     refreshUserBalances,
     getTransactionFeesV2,
     resetTransactionStatus,
+    getMultisigTxProposalFees,
     getMultisigTxProposalFees,
   ]);
 
@@ -1156,6 +1164,7 @@ export const MoneyStreamsInfoView = (props: {
     refreshUserBalances();
     refreshTokenBalance();
     getMultisigTxProposalFees();
+    getMultisigTxProposalFees();
     setIsCreateStreamModalVisibility(true);
     getTransactionFeesV2(MSP_ACTIONS_V2.createStreamWithFunds).then((value: any) => {
       setTransactionFees(value);
@@ -1170,6 +1179,7 @@ export const MoneyStreamsInfoView = (props: {
     refreshTokenBalance,
     getTransactionFeesV2,
     resetTransactionStatus,
+    getMultisigTxProposalFees,
     getMultisigTxProposalFees,
   ]);
 
@@ -1203,6 +1213,7 @@ export const MoneyStreamsInfoView = (props: {
   const showCreateTreasuryModal = useCallback(() => {
     resetTransactionStatus();
     getMultisigTxProposalFees();
+    getMultisigTxProposalFees();
     setIsCreateTreasuryModalVisibility(true);
     getTransactionFeesV2(MSP_ACTIONS_V2.createTreasury).then(value => {
       setTransactionFees(value);
@@ -1211,6 +1222,7 @@ export const MoneyStreamsInfoView = (props: {
   }, [
     getTransactionFeesV2,
     resetTransactionStatus,
+    getMultisigTxProposalFees,
     getMultisigTxProposalFees
   ]);
 
@@ -1562,10 +1574,16 @@ export const MoneyStreamsInfoView = (props: {
   };
 
   // confirmationHistory
-  const hasMoneyStreamPendingTx = useCallback((type?: OperationType) => {
+  const hasMoneyStreamPendingTx = useCallback((type?: OperationTypetype?: OperationType) => {
     if (!streamList || !treasuryList) { return false; }
 
     if (confirmationHistory && confirmationHistory.length > 0) {
+      if (type !== undefined) {
+        return confirmationHistory.some(h =>
+          h.txInfoFetchStatus === "fetching" &&
+          h.operationType === type
+        );
+      }
       if (type !== undefined) {
         return confirmationHistory.some(h =>
           h.txInfoFetchStatus === "fetching" &&
@@ -1829,6 +1847,55 @@ export const MoneyStreamsInfoView = (props: {
 
     navigate(url);
   }, [accountAddress, navigate, param]);
+
+
+  /////////////////////
+  // Data management //
+  /////////////////////
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
+
+  // Reset summaries and canDisplay flags when all dependencies start to load
+  useEffect(() => {
+    if (loadingStreams) {
+      setIncomingStreamsSummary(undefined);
+      setOutgoingStreamsSummary(undefined);
+      setCanDisplayIncomingBalance(false);
+      setCanDisplayOutgoingBalance(false);
+    }
+    if (loadingTreasuries) {
+      setStreamingAccountsSummary(undefined);
+      setCanDisplayTotalAccountBalance(false);
+    }
+  }, [loadingStreams, loadingTreasuries]);
 
 
   /////////////////////

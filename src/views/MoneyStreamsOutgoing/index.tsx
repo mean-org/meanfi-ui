@@ -53,11 +53,21 @@ export const MoneyStreamsOutgoingView = (props: {
   onSendFromOutgoingStreamDetails?: any;
   streamList?: Array<Stream | StreamInfo> | undefined;
   streamSelected: Stream | StreamInfo | undefined;
+  streamSelected: Stream | StreamInfo | undefined;
   streamingAccountSelected: Treasury | TreasuryInfo | undefined;
 }) => {
 
   const {
     accountAddress,
+    loadingStreams,
+    multisigAccounts,
+    onSendFromOutgoingStreamDetails,
+    streamList,
+    streamSelected,
+    streamingAccountSelected,
+  } = props;
+
+  const {
     loadingStreams,
     multisigAccounts,
     onSendFromOutgoingStreamDetails,
@@ -140,6 +150,8 @@ export const MoneyStreamsOutgoingView = (props: {
   }, [
     endpoint,
     publicKey,
+    endpoint,
+    publicKey,
     connection,
     multisigAddressPK,
   ]);
@@ -178,10 +190,17 @@ export const MoneyStreamsOutgoingView = (props: {
   ]);
 
   // confirmationHistory
-  const hasStreamPendingTx = useCallback((type?: OperationType) => {
+  const hasStreamPendingTx = useCallback((type?: OperationTypetype?: OperationType) => {
     if (!streamSelected) { return false; }
 
     if (confirmationHistory && confirmationHistory.length > 0) {
+      if (type !== undefined) {
+        return confirmationHistory.some(h =>
+          h.extras === streamSelected.id &&
+          h.txInfoFetchStatus === "fetching" &&
+          h.operationType === type
+        );
+      }
       if (type !== undefined) {
         return confirmationHistory.some(h =>
           h.extras === streamSelected.id &&
@@ -195,9 +214,9 @@ export const MoneyStreamsOutgoingView = (props: {
     return false;
   }, [confirmationHistory, streamSelected]);
 
-  const isOtp = useCallback((): boolean => {
+  const isOtp = useCallback(useCallback((): boolean => {
     return streamSelected?.rateAmount === 0 ? true : false;
-  }, [streamSelected?.rateAmount]);
+  }, [streamSelected?.rateAmount]);, [streamSelected?.rateAmount]);
 
   const isDeletedStream = useCallback((stream: Stream | StreamInfo) => {
     if (!deletedStreams) {

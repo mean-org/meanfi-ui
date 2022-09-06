@@ -4014,13 +4014,6 @@ export const VestingView = () => {
   const renderCreateFirstVestingAccount = useCallback(() => {
     return (
       <>
-        {/* {isLocal() && (
-          <div className="debug-bar">
-            <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
-            <span className="ml-1">treasuriesLoaded:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesLoaded ? 'true' : 'false'}</span>
-            <span className="ml-1">needReloadMultisigs:</span><span className="ml-1 font-bold fg-dark-active">{needReloadMultisigs ? 'true' : 'false'}</span>
-          </div>
-        )} */}
         <div className="container main-container">
           <div className="interaction-area">
             <div className="title-and-subtitle mb-2">

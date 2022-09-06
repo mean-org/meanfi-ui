@@ -46,11 +46,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { getDefaultRpc } from "../services/connections-hq";
 import { environment } from "../environments/environment";
 import { openNotification } from "../components/Notifications";
+import { SentreWalletAdapter, SentreWalletName } from '@sentre/connector';
+import { sentreAppId } from "../constants";
 
 export type MeanFiWallet = PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
                           | SlopeWalletAdapter | Coin98WalletAdapter | SolongWalletAdapter | SolletWalletAdapter
                           | SolletExtensionWalletAdapter | MathWalletAdapter | TrustWalletAdapter | LedgerWalletAdapter
-                          | BitKeepWalletAdapter | CoinbaseWalletAdapter | undefined;
+                          | BitKeepWalletAdapter | CoinbaseWalletAdapter | SentreWalletAdapter | undefined;
 
 export interface WalletProviderEntry {
   name: string;
@@ -200,6 +202,18 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideIfUnavailable: false
   },
   {
+    name: SentreWalletName,
+    url: 'https://hub.sentre.io',
+    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTg2IiBoZWlnaHQ9IjIyOCIgdmlld0JveD0iMCAwIDE4NiAyMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik05Mi42ODA5IDIyNy44ODJMMzAuODY2NyAxNjUuOTYzQzExLjEwMzEgMTQ2LjE2NSAwIDExOS4zMTUgMCA5MS4zMTY3QzAgNjMuMzE5NSAxMS4xMDMxIDM2LjQ2ODggMzAuODY2NyAxNi42NzE1TDQ3LjQ4MDkgMC4wMjkyMzU4TDEwOS4zMyA2MS45ODMzQzEyOS4wNzggODEuNzgzOCAxNDAuMTY4IDEwOC42MjkgMTQwLjE2MiAxMzYuNjE5QzE0MC4xNTUgMTY0LjYwOCAxMjkuMDUyIDE5MS40NDggMTA5LjI5NSAyMTEuMjM5TDkyLjY4MDkgMjI3Ljg4MloiIGZpbGw9InVybCgjcGFpbnQwX2xpbmVhcl8zMTdfNCkiLz4KPHBhdGggZD0iTTc2LjA3MzkgNjEuOTg4OUwxMzcuOTU4IDBMMTU0LjU3MiAxNi42NDIzQzE2NC4zNjggMjYuNDQ2MSAxNzIuMTM5IDM4LjA4NzggMTc3LjQ0MiA1MC45MDJDMTgyLjc0NCA2My43MTYyIDE4NS40NzQgNzcuNDUxMyAxODUuNDc0IDkxLjMyMjdDMTg1LjQ3NCAxMDUuMTk0IDE4Mi43NDQgMTE4LjkyOSAxNzcuNDQyIDEzMS43NDNDMTcyLjEzOSAxNDQuNTU3IDE2NC4zNjggMTU2LjE5OSAxNTQuNTcyIDE2Ni4wMDNMOTIuNzIyNSAyMjcuOTU3TDc2LjA3MzkgMjExLjI4QzU2LjMxMDIgMTkxLjQ4MyA0NS4yMDcgMTY0LjYzMiA0NS4yMDcgMTM2LjYzNUM0NS4yMDcgMTA4LjYzNyA1Ni4zMTAyIDgxLjc4NjEgNzYuMDczOSA2MS45ODg5WiIgZmlsbD0idXJsKCNwYWludDFfbGluZWFyXzMxN180KSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyXzMxN180IiB4MT0iMTQwLjIyIiB5MT0iMTEzLjk3MyIgeDI9Ii0wLjAyMjgyMDMiIHkyPSIxMTMuOTczIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNGOTU3NUUiLz4KPHN0b3Agb2Zmc2V0PSIwLjI3IiBzdG9wLWNvbG9yPSIjRjg1NTVCIi8+CjxzdG9wIG9mZnNldD0iMC40OSIgc3RvcC1jb2xvcj0iI0Y0NEY1MSIvPgo8c3RvcCBvZmZzZXQ9IjAuNjgiIHN0b3AtY29sb3I9IiNFRTQ1NDAiLz4KPHN0b3Agb2Zmc2V0PSIwLjg3IiBzdG9wLWNvbG9yPSIjRTYzNzI4Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0RFMkExMyIvPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MV9saW5lYXJfMzE3XzQiIHgxPSItNDIwNjA4IiB5MT0iMzUyNjM0IiB4Mj0iLTQyNDM3MSIgeTI9IjM1MTcxMiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjRjk1NzVFIi8+CjxzdG9wIG9mZnNldD0iMC4yNyIgc3RvcC1jb2xvcj0iI0Y4NTU1QiIvPgo8c3RvcCBvZmZzZXQ9IjAuNDkiIHN0b3AtY29sb3I9IiNGNDRGNTEiLz4KPHN0b3Agb2Zmc2V0PSIwLjY4IiBzdG9wLWNvbG9yPSIjRUU0NTQwIi8+CjxzdG9wIG9mZnNldD0iMC44NyIgc3RvcC1jb2xvcj0iI0U2MzcyOCIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNERTJBMTMiLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4K',
+    adapter: SentreWalletAdapter,
+    adapterParams: { appId: sentreAppId },
+    hideOnDesktop: false,
+    hideOnMobile: false,
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: false
+  },
+  {
     name: MathWalletName,
     url: 'https://mathwallet.org',
     icon: 'data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIHdpZHRoPSIxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJtMCAwaDEyOHYxMjhoLTEyOHoiIG9wYWNpdHk9IjAiLz48cGF0aCBkPSJtOTAuODQ3MDA4NiA1Ny43NjEwMDIzYy0yLjI3NzAzNjMtMi4yNzcwMzYzLTIuMjc3MDM2My01Ljk2ODg0MTYgMC04LjI0NTg3NzggMi4yNzcwMzYyLTIuMjc3MDM2MyA1Ljk2ODg0MTUtMi4yNzcwMzYzIDguMjQ1ODc3OCAwIDIuMjc3MDM2NiAyLjI3NzAzNjIgMi4yNzcwMzY2IDUuOTY4ODQxNSAwIDguMjQ1ODc3OC0yLjI3NzAzNjMgMi4yNzcwMzYyLTUuOTY4ODQxNiAyLjI3NzAzNjItOC4yNDU4Nzc4IDB6bS0xOS41ODM5NTk4IDE5LjU4Mzk1OTdjLTEuNzA3Nzc3Mi0xLjcwNzc3NzItMS43MDc3NzcyLTQuNDc2NjMxMSAwLTYuMTg0NDA4M3M0LjQ3NjYzMTEtMS43MDc3NzcyIDYuMTg0NDA4MyAwIDEuNzA3Nzc3MiA0LjQ3NjYzMTEgMCA2LjE4NDQwODMtNC40NzY2MzExIDEuNzA3Nzc3Mi02LjE4NDQwODMgMHptMzAuOTIyMDQyMi0xMC4zMDczNDcyYy0xLjcwNzc3OC0xLjcwNzc3NzItMS43MDc3NzgtNC40NzY2MzEyIDAtNi4xODQ0MDg0IDEuNzA3Nzc3LTEuNzA3Nzc3MiA0LjQ3NjYzMS0xLjcwNzc3NzIgNi4xODQ0MDggMHMxLjcwNzc3NyA0LjQ3NjYzMTIgMCA2LjE4NDQwODQtNC40NzY2MzEgMS43MDc3NzcyLTYuMTg0NDA4IDB6bS0xMC4zMDczNDc3IDEwLjMwNzM0NzJjLTEuNzA3Nzc3Mi0xLjcwNzc3NzItMS43MDc3NzcyLTQuNDc2NjMxMSAwLTYuMTg0NDA4M3M0LjQ3NjYzMTEtMS43MDc3NzcyIDYuMTg0NDA4MyAwIDEuNzA3Nzc3MiA0LjQ3NjYzMTEgMCA2LjE4NDQwODMtNC40NzY2MzExIDEuNzA3Nzc3Mi02LjE4NDQwODMgMHptMjEuNjQ1NDI4Ny0xLjAzMDczNDdjLTEuMTM4NTE4LTEuMTM4NTE4MS0xLjEzODUxOC0yLjk4NDQyMDggMC00LjEyMjkzODkgMS4xMzg1MTktMS4xMzg1MTgxIDIuOTg0NDIxLTEuMTM4NTE4MSA0LjEyMjkzOSAwIDEuMTM4NTE5IDEuMTM4NTE4MSAxLjEzODUxOSAyLjk4NDQyMDggMCA0LjEyMjkzODktMS4xMzg1MTggMS4xMzg1MTgxLTIuOTg0NDIgMS4xMzg1MTgxLTQuMTIyOTM5IDB6bS0xMC4zMDczNDcgMTAuMzA3MzQ3MmMtMS4xMzg1MTgtMS4xMzg1MTgxLTEuMTM4NTE4LTIuOTg0NDIwNyAwLTQuMTIyOTM4OSAxLjEzODUxOC0xLjEzODUxODEgMi45ODQ0MjEtMS4xMzg1MTgxIDQuMTIyOTM5IDAgMS4xMzg1MTggMS4xMzg1MTgyIDEuMTM4NTE4IDIuOTg0NDIwOCAwIDQuMTIyOTM4OS0xLjEzODUxOCAxLjEzODUxODItMi45ODQ0MjEgMS4xMzg1MTgyLTQuMTIyOTM5IDB6bS0yMi42NzYxNjM3LTE4LjU1MzIyNWMtMi4yNzcwMzYzLTIuMjc3MDM2My0yLjI3NzAzNjMtNS45Njg4NDE1IDAtOC4yNDU4Nzc4czUuOTY4ODQxNS0yLjI3NzAzNjMgOC4yNDU4Nzc4IDAgMi4yNzcwMzYzIDUuOTY4ODQxNSAwIDguMjQ1ODc3OC01Ljk2ODg0MTUgMi4yNzcwMzYzLTguMjQ1ODc3OCAwem0wLTIwLjYxNDY5NDVjLTIuMjc3MDM2My0yLjI3NzAzNjMtMi4yNzcwMzYzLTUuOTY4ODQxNSAwLTguMjQ1ODc3OHM1Ljk2ODg0MTUtMi4yNzcwMzYzIDguMjQ1ODc3OCAwIDIuMjc3MDM2MyA1Ljk2ODg0MTUgMCA4LjI0NTg3NzgtNS45Njg4NDE1IDIuMjc3MDM2My04LjI0NTg3NzggMHptLTEwLjMwNzM0NzIgMTAuMzA3MzQ3M2MtMi4yNzcwMzYzLTIuMjc3MDM2My0yLjI3NzAzNjMtNS45Njg4NDE2IDAtOC4yNDU4Nzc4IDIuMjc3MDM2Mi0yLjI3NzAzNjMgNS45Njg4NDE1LTIuMjc3MDM2MyA4LjI0NTg3NzggMCAyLjI3NzAzNjIgMi4yNzcwMzYyIDIuMjc3MDM2MiA1Ljk2ODg0MTUgMCA4LjI0NTg3NzgtMi4yNzcwMzYzIDIuMjc3MDM2Mi01Ljk2ODg0MTYgMi4yNzcwMzYyLTguMjQ1ODc3OCAwem0tMjAuNzEwNTA2IDBjLTIuMjc3MDM2Mi0yLjI3NzAzNjMtMi4yNzcwMzYyLTUuOTY4ODQxNiAwLTguMjQ1ODc3OCAyLjI3NzAzNjMtMi4yNzcwMzYzIDUuOTY4ODQxNi0yLjI3NzAzNjMgOC4yNDU4Nzc4IDAgMi4yNzcwMzYzIDIuMjc3MDM2MiAyLjI3NzAzNjMgNS45Njg4NDE1IDAgOC4yNDU4Nzc4LTIuMjc3MDM2MiAyLjI3NzAzNjItNS45Njg4NDE1IDIuMjc3MDM2Mi04LjI0NTg3NzggMHptLTE5LjU4Mzk1OTcgMTkuNTgzOTU5N2MtMS43MDc3NzcyLTEuNzA3Nzc3Mi0xLjcwNzc3NzItNC40NzY2MzExIDAtNi4xODQ0MDgzczQuNDc2NjMxMS0xLjcwNzc3NzIgNi4xODQ0MDgzIDAgMS43MDc3NzcyIDQuNDc2NjMxMSAwIDYuMTg0NDA4My00LjQ3NjYzMTEgMS43MDc3NzcyLTYuMTg0NDA4MyAwem0zMC45MjIwNDE3LTEwLjMwNzM0NzJjLTEuNzA3Nzc3Mi0xLjcwNzc3NzItMS43MDc3NzcyLTQuNDc2NjMxMiAwLTYuMTg0NDA4NHM0LjQ3NjYzMTItMS43MDc3NzcyIDYuMTg0NDA4NCAwIDEuNzA3Nzc3MiA0LjQ3NjYzMTIgMCA2LjE4NDQwODQtNC40NzY2MzEyIDEuNzA3Nzc3Mi02LjE4NDQwODQgMHptLTEwLjMwNzM0NzIgMTAuMzA3MzQ3MmMtMS43MDc3NzcyLTEuNzA3Nzc3Mi0xLjcwNzc3NzItNC40NzY2MzExIDAtNi4xODQ0MDgzczQuNDc2NjMxMS0xLjcwNzc3NzIgNi4xODQ0MDgzIDAgMS43MDc3NzcyIDQuNDc2NjMxMSAwIDYuMTg0NDA4My00LjQ3NjYzMTEgMS43MDc3NzcyLTYuMTg0NDA4MyAwem0tNDAuMTk4NjU0My0xLjAzMDczNDdjLTEuMTM4NTE4MTMtMS4xMzg1MTgxLTEuMTM4NTE4MTMtMi45ODQ0MjA4IDAtNC4xMjI5Mzg5IDEuMTM4NTE4MS0xLjEzODUxODEgMi45ODQ0MjA4LTEuMTM4NTE4MSA0LjEyMjkzODkgMHMxLjEzODUxODEgMi45ODQ0MjA4IDAgNC4xMjI5Mzg5LTIuOTg0NDIwOCAxLjEzODUxODEtNC4xMjI5Mzg5IDB6bTEwLjMwNzM0NzMgMTAuMzA3MzQ3MmMtMS4xMzg1MTgyLTEuMTM4NTE4MS0xLjEzODUxODItMi45ODQ0MjA3IDAtNC4xMjI5Mzg5IDEuMTM4NTE4MS0xLjEzODUxODEgMi45ODQ0MjA3LTEuMTM4NTE4MSA0LjEyMjkzODggMCAxLjEzODUxODIgMS4xMzg1MTgyIDEuMTM4NTE4MiAyLjk4NDQyMDggMCA0LjEyMjkzODktMS4xMzg1MTgxIDEuMTM4NTE4Mi0yLjk4NDQyMDcgMS4xMzg1MTgyLTQuMTIyOTM4OCAwem00MS4yMjkzODg5IDBjLTEuMTM4NTE4MS0xLjEzODUxODEtMS4xMzg1MTgxLTIuOTg0NDIwNyAwLTQuMTIyOTM4OSAxLjEzODUxODItMS4xMzg1MTgxIDIuOTg0NDIwOC0xLjEzODUxODEgNC4xMjI5Mzg5IDAgMS4xMzg1MTgyIDEuMTM4NTE4MiAxLjEzODUxODIgMi45ODQ0MjA4IDAgNC4xMjI5Mzg5LTEuMTM4NTE4MSAxLjEzODUxODItMi45ODQ0MjA3IDEuMTM4NTE4Mi00LjEyMjkzODkgMHptLTQyLjI2MDEyMzctMTkuNTgzOTU5N2MtMS43MDc3NzcyLTEuNzA3Nzc3Mi0xLjcwNzc3NzItNC40NzY2MzEyIDAtNi4xODQ0MDg0czQuNDc2NjMxMi0xLjcwNzc3NzIgNi4xODQ0MDg0IDAgMS43MDc3NzcyIDQuNDc2NjMxMiAwIDYuMTg0NDA4NC00LjQ3NjYzMTIgMS43MDc3NzcyLTYuMTg0NDA4NCAwem0xOS41ODM5NTk4IDEuMDMwNzM0N2MtMi4yNzcwMzYzLTIuMjc3MDM2My0yLjI3NzAzNjMtNS45Njg4NDE1IDAtOC4yNDU4Nzc4czUuOTY4ODQxNS0yLjI3NzAzNjMgOC4yNDU4Nzc4IDAgMi4yNzcwMzYzIDUuOTY4ODQxNSAwIDguMjQ1ODc3OC01Ljk2ODg0MTUgMi4yNzcwMzYzLTguMjQ1ODc3OCAwem0wLTIwLjYxNDY5NDVjLTIuMjc3MDM2My0yLjI3NzAzNjMtMi4yNzcwMzYzLTUuOTY4ODQxNSAwLTguMjQ1ODc3OHM1Ljk2ODg0MTUtMi4yNzcwMzYzIDguMjQ1ODc3OCAwIDIuMjc3MDM2MyA1Ljk2ODg0MTUgMCA4LjI0NTg3NzgtNS45Njg4NDE1IDIuMjc3MDM2My04LjI0NTg3NzggMHptLTEwLjMwNzM0NzMgMTAuMzA3MzQ3M2MtMi4yNzcwMzYyLTIuMjc3MDM2My0yLjI3NzAzNjItNS45Njg4NDE2IDAtOC4yNDU4Nzc4IDIuMjc3MDM2My0yLjI3NzAzNjMgNS45Njg4NDE2LTIuMjc3MDM2MyA4LjI0NTg3NzggMCAyLjI3NzAzNjMgMi4yNzcwMzYyIDIuMjc3MDM2MyA1Ljk2ODg0MTUgMCA4LjI0NTg3NzgtMi4yNzcwMzYyIDIuMjc3MDM2Mi01Ljk2ODg0MTUgMi4yNzcwMzYyLTguMjQ1ODc3OCAweiIvPjwvZz48L3N2Zz4=',
@@ -228,6 +242,8 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
 const getIsProviderInstalled = (provider: any): boolean => {
   if (provider) {
     switch (provider.name) {
+      case SentreWalletName:
+        return true;
       case PhantomWalletName:
         return !!(window as any).solana?.isPhantom;
       case ExodusWalletName:
@@ -283,7 +299,7 @@ export function WalletProvider({ children = null as any }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [autoConnect, setAutoConnect] = useState(true);
-  const [providerName, setProviderName] = useLocalStorageState("providerName");
+  const [walletName, setWalletName] = useLocalStorageState("walletName");
   const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
@@ -297,14 +313,14 @@ export function WalletProvider({ children = null as any }) {
   const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
 
   const resetWalletProvider = () => {
-    setProviderName(null);
+    setWalletName(null);
   }
 
   const provider = useMemo(() => {
-    const item = WALLET_PROVIDERS.find(({ name }) => name === providerName);
+    const item = WALLET_PROVIDERS.find(({ name }) => name === walletName);
     return item;
   },
-    [providerName]
+    [walletName]
   );
 
   const network = environment === 'production' ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet;
@@ -322,29 +338,30 @@ export function WalletProvider({ children = null as any }) {
           new SolletExtensionWalletAdapter(),
           new TrustWalletAdapter(),
           new MathWalletAdapter(),
-          new LedgerWalletAdapter()
+          new LedgerWalletAdapter(),
+          new SentreWalletAdapter({ appId: sentreAppId })
       ],
       [network]
   );
 
   useEffect(() => {
     if (wallets) {
-      if (providerName) {
-        consoleOut('providerName:', providerName, 'blue');
-        const wa = wallets.find(w => w.name === providerName);
+      if (walletName) {
+        consoleOut('walletName:', walletName, 'blue');
+        const wa = wallets.find(w => w.name === walletName);
         consoleOut('provider:', wa, 'blue');
         if (wa) {
           setWallet(wa);
         } else {
-          setProviderName(null);
+          setWalletName(null);
           setWallet(undefined);
         }
       } else {
-        setProviderName(null);
+        setWalletName(null);
         setWallet(undefined);
       }
     }
-  }, [providerName, setProviderName, wallets]);
+  }, [walletName, setWalletName, wallets]);
 
   // Keep up with connecting flag
   useEffect(() => {
@@ -408,7 +425,7 @@ export function WalletProvider({ children = null as any }) {
             description: `Cannot connect to ${wallet.name}. Wallet is not configured or enabled in your browser.`
           });
           setConnected(false);
-          setProviderName(null);
+          setWalletName(null);
           setWallet(undefined);
         }
       });
@@ -476,7 +493,7 @@ export function WalletProvider({ children = null as any }) {
                 }
 
                 consoleOut('Selected wallet:', item.name, 'blue');
-                setProviderName(item.name);
+                setWalletName(item.name);
                 setWallet(wallets.find(w => w.name === item.name));
 
               };

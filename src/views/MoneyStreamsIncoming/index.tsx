@@ -44,10 +44,21 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const MoneyStreamsIncomingView = (props: {
   accountAddress: string;
   loadingStreams: boolean;
+  loadingStreams: boolean;
   multisigAccounts: MultisigInfo[] | undefined;
   onSendFromIncomingStreamDetails?: any;
   streamSelected: Stream | StreamInfo | undefined;
+  onSendFromIncomingStreamDetails?: any;
+  streamSelected: Stream | StreamInfo | undefined;
 }) => {
+  const {
+    accountAddress,
+    loadingStreams,
+    multisigAccounts,
+    onSendFromIncomingStreamDetails,
+    streamSelected,
+  } = props;
+
   const {
     accountAddress,
     loadingStreams,
@@ -137,6 +148,8 @@ export const MoneyStreamsIncomingView = (props: {
     );
 
   }, [
+    endpoint,
+    publicKey,
     endpoint,
     publicKey,
     connection,
@@ -578,6 +591,7 @@ export const MoneyStreamsIncomingView = (props: {
     nativeBalance,
     streamSelected,
     multisigClient,
+    mspV2AddressPK,
     mspV2AddressPK,
     multisigAccounts,
     transactionCancelled,
@@ -1133,10 +1147,17 @@ export const MoneyStreamsIncomingView = (props: {
   }, []);
 
   // confirmationHistory
-  const hasStreamPendingTx = useCallback((type?: OperationType) => {
+  const hasStreamPendingTx = useCallback((type?: OperationTypetype?: OperationType) => {
     if (!streamSelected) { return false; }
 
     if (confirmationHistory && confirmationHistory.length > 0) {
+      if (type !== undefined) {
+        return confirmationHistory.some(h =>
+          h.extras === streamSelected.id &&
+          h.txInfoFetchStatus === "fetching" &&
+          h.operationType === type
+        );
+      }
       if (type !== undefined) {
         return confirmationHistory.some(h =>
           h.extras === streamSelected.id &&
@@ -1150,7 +1171,7 @@ export const MoneyStreamsIncomingView = (props: {
     return false;
   }, [confirmationHistory, streamSelected]);
 
-  const isScheduledOtp = useCallback((): boolean => {
+  const isScheduledOtp = useCallback(useCallback((): boolean => {
     if (streamSelected && streamSelected.rateAmount === 0) {
       const now = new Date().toUTCString();
       const nowUtc = new Date(now);
@@ -1160,7 +1181,7 @@ export const MoneyStreamsIncomingView = (props: {
       }
     }
     return false;
-  }, [streamSelected]);
+  }, [streamSelected]);, [streamSelected]);
 
   const getStreamWithdrawableAmount = useCallback((stream: Stream | StreamInfo) => {
     const v1 = stream as StreamInfo;
@@ -1169,7 +1190,7 @@ export const MoneyStreamsIncomingView = (props: {
     return isNew ? v2.withdrawableAmount : v1.escrowVestedAmount;
   }, []);
 
-  const canWithdraw = useCallback((stream: StreamInfo | Stream | undefined ) => {
+  const canWithdraw = useCallback(useCallback((stream: StreamInfo | Stream | undefined ) => {
     if (!stream) {
       return false;
     }
@@ -1409,6 +1430,15 @@ export const MoneyStreamsIncomingView = (props: {
       </Row>
     );
   }, [
+    isBusy,
+    streamSelected,
+    getStreamWithdrawableAmount,
+    hasStreamPendingTx,
+    renderDropdownMenu,
+    showWithdrawModal,
+    isScheduledOtp,
+    canWithdraw,
+  ]);, [
     isBusy,
     streamSelected,
     getStreamWithdrawableAmount,
