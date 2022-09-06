@@ -4,7 +4,7 @@ import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
-  cutNumber,
+  displayAmountWithSymbol,
   formatThousands,
   getAmountWithSymbol,
   getSdkValue,
@@ -13,7 +13,7 @@ import {
   makeDecimal,
   shortenAddress,
   toTokenAmount2,
-  toUiAmount2
+  toUiAmount2,
 } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -144,7 +144,10 @@ export const TreasuryStreamCreateModal = (props: {
   const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
   const percentages = [5, 10, 15, 20];
   const [percentageValue, setPercentageValue] = useState<number>(0);
-  const [cliffRelease, setCliffRelease] = useState<string>("")
+  const [cliffRelease, setCliffRelease] = useState<string>("");
+  const [cliffReleaseBn, setCliffReleaseBn] = useState(new BN(0));
+  const [paymentRateAmountBn, setPaymentRateAmountBn] = useState(new BN(0));
+  const [amountToBeStreamedBn, setAmountToBeStreamedBn] = useState(new BN(0));
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [workingAssociatedToken, setWorkingAssociatedToken] = useState('');
@@ -153,8 +156,8 @@ export const TreasuryStreamCreateModal = (props: {
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] = useState('');
   const [proposalTitle, setProposalTitle] = useState('');
 
-  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
   
   const isNewTreasury = useCallback(() => {
     if (workingTreasuryDetails) {
@@ -545,7 +548,7 @@ export const TreasuryStreamCreateModal = (props: {
         setWorkingTreasuryType(treasuryType);
       }
     }
-  }, [isVisible, treasuryDetails, treasuryList]);
+  }, [isVisible, treasuryDetails]);
 
   // Preset a working copy of the first available streaming account in the list if treasuryDetails was not passed in
   useEffect(() => {
@@ -1036,20 +1039,54 @@ export const TreasuryStreamCreateModal = (props: {
     csvArray,
   ]);
 
+  // Set Cliff release
   useEffect(() => {
-    const percentageFromCoinAmount = parseFloat(fromCoinAmount) > 0 ? `${(parseFloat(fromCoinAmount)*percentageValue/100)}` : '';
 
-    setCliffRelease(percentageFromCoinAmount);
-    
-  }, [fromCoinAmount, percentageValue]);
+    if (!selectedToken) { return; }
 
-  useEffect(() => {
-    if (workingTreasuryType === TreasuryType.Lock) {
-      setPaymentRateAmount(cutNumber((parseFloat(fromCoinAmount) - parseFloat(cliffRelease)) / parseFloat(lockPeriodAmount), selectedToken?.decimals || 6));
+    if (tokenAmount.gtn(0) && percentageValue > 0) {
+      const cr = tokenAmount.muln(percentageValue).divn(100);
+      setCliffReleaseBn(cr);
+      setCliffRelease(toUiAmount2(cr, selectedToken.decimals));
+
+      // consoleOut('tokenAmount BN:', tokenAmount.toString(), 'orange');
+      // consoleOut('tokenAmount:', toUiAmount2(tokenAmount, selectedToken.decimals), 'orange');
+      // consoleOut('percentageValue:', percentageValue, 'orange');
+      // consoleOut('cliffRelease BN:', cr.toString(), 'orange');
+      // consoleOut('cliffRelease:', toUiAmount2(cr, selectedToken.decimals), 'orange');
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cliffRelease, lockPeriodAmount]);
+  }, [percentageValue, selectedToken, tokenAmount]);
+
+  // Set payment rate amount
+  useEffect(() => {
+
+    if (!selectedToken) { return; }
+
+    if (tokenAmount.gtn(0) && percentageValue > 0) {
+      const cr = tokenAmount.muln(percentageValue).divn(100);
+      const toStream = tokenAmount.sub(cr);
+
+      const lpa = parseFloat(lockPeriodAmount);
+      const ra = toStream.divn(lpa);
+
+      setPaymentRateAmountBn(ra);
+      setPaymentRateAmount(ra.toString());
+    }
+  }, [lockPeriodAmount, percentageValue, selectedToken, setPaymentRateAmount, tokenAmount]);
+
+  // Set the amount to be streamed
+  useEffect(() => {
+
+    if (!selectedToken) { return; }
+
+    if (tokenAmount.gtn(0) && percentageValue > 0) {
+      const cr = tokenAmount.muln(percentageValue).divn(100);
+      const toStream = tokenAmount.sub(cr);
+      setAmountToBeStreamedBn(toStream);
+    }
+
+  }, [percentageValue, selectedToken, tokenAmount]);
 
   // Keep token balance updated
   useEffect(() => {
@@ -2387,7 +2424,20 @@ export const TreasuryStreamCreateModal = (props: {
                   {(recipientNote && recipientAddress && fromCoinAmount && selectedToken) && (
                     <div className="flex-fixed-right">
                       <div className="left">
-                        <div className="mb-3">{t('treasuries.treasury-streams.add-stream-locked.panel2-summary', { recipientNote: recipientNote, fromCoinAmount: fromCoinAmount, selectedTokenName: selectedToken && selectedToken.name, recipientShortenAddress: shortenAddress(recipientAddress)})}</div>
+                        <div className="mb-3">
+                          {
+                            t('treasuries.treasury-streams.add-stream-locked.panel2-summary', {
+                                recipientNote: recipientNote,
+                                fromCoinAmount: formatThousands(
+                                  parseFloat(fromCoinAmount),
+                                  friendlyDisplayDecimalPlaces(fromCoinAmount, selectedToken.decimals)
+                                ),
+                                selectedTokenName: selectedToken && selectedToken.name,
+                                recipientShortenAddress: shortenAddress(recipientAddress)
+                              }
+                            )
+                          }
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2541,33 +2591,69 @@ export const TreasuryStreamCreateModal = (props: {
 
                   <Row className="mb-2">
                     <Col span={24}>
-                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), selectedToken?.decimals || 6)} ${selectedToken && selectedToken.symbol}` : "--"}
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}</strong>
+                      <span className="ml-1">
+                        {
+                          fromCoinAmount && selectedToken
+                            ? `${displayAmountWithSymbol(
+                              tokenAmount,
+                              selectedToken.address,
+                              selectedToken.decimals,
+                              splTokenList,
+                            )}`
+                            : "--"
+                        }
+                      </span>
+                    </Col>
+                    <Col span={24} className="text-truncate">
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}</strong>
+                      <span className="ml-1">{recipientAddress ? recipientAddress : "--"}</span>
                     </Col>
                     <Col span={24}>
-                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}  </strong> {recipientAddress ? recipientAddress : "--"}
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}</strong>
+                      <span className="ml-1">{paymentStartDate}</span>
                     </Col>
                     <Col span={24}>
-                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}  </strong> {paymentStartDate}
-                    </Col>
-                    <Col span={24}>
-                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken && selectedToken.symbol} (on commencement)`) : "--"}
-                    </Col>
-                    <Col span={24}>
-                      <strong>Amount to be streamed: </strong>
-                      <span>
-                      {
-                        (cliffRelease && lockPeriodAmount && selectedToken)
-                          ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.symbol} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`)
-                          : "--"
-                      }
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}</strong>
+                      <span className="ml-1">
+                        {
+                          cliffRelease && selectedToken
+                            ? `${displayAmountWithSymbol(
+                              cliffReleaseBn,
+                              selectedToken.address,
+                              selectedToken.decimals,
+                              splTokenList,
+                            )} (on commencement)`
+                            : "--"
+                        }
                       </span>
                     </Col>
                     <Col span={24}>
-                      <strong>Release rate: </strong>
-                      <span>
+                      <strong>Amount to be streamed:</strong>
+                      <span className="ml-1">
                         {
-                          (cliffRelease && lockPeriodAmount && selectedToken)
-                            ? (`${paymentRateAmount} ${selectedToken.symbol} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`)
+                          lockPeriodAmount && selectedToken
+                            ? `${displayAmountWithSymbol(
+                              amountToBeStreamedBn,
+                              selectedToken.address,
+                              selectedToken.decimals,
+                              splTokenList,
+                            )} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`
+                            : "--"
+                        }
+                      </span>
+                    </Col>
+                    <Col span={24}>
+                      <strong>Release rate:</strong>
+                      <span className="ml-1">
+                        {
+                          lockPeriodAmount && selectedToken
+                            ? `${displayAmountWithSymbol(
+                              paymentRateAmountBn,
+                              selectedToken.address,
+                              selectedToken.decimals,
+                              splTokenList,
+                            )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`
                             : "--"
                         }
                       </span>

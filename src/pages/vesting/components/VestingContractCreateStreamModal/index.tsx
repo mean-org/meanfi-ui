@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useContext, useState, useMemo } from 're
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { cutNumber, displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount2, toTokenAmountBn, toUiAmount2 } from '../../../../middleware/utils';
+import { cutNumber, displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount2, toUiAmount2 } from '../../../../middleware/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, stringNumberFormat, toUsCurrency } from '../../../../middleware/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
@@ -280,6 +280,7 @@ export const VestingContractCreateStreamModal = (props: {
         }
     }, [cliffReleasePercentage, fromCoinAmount, lockPeriodAmount, selectedToken, tokenAmount]);
 
+    // Set the amount to be streamed
     useEffect(() => {
 
         if (!selectedToken) { return; }
@@ -802,19 +803,19 @@ export const VestingContractCreateStreamModal = (props: {
                             </span>
                         </Col>
                         <Col span={24}>
-                        <strong>Release rate:</strong>
-                        <span className="ml-1">
-                            {
-                                lockPeriodAmount && selectedToken
-                                    ? `${displayAmountWithSymbol(
-                                            paymentRateAmountBn,
-                                            selectedToken.address,
-                                            selectedToken.decimals,
-                                            splTokenList,
-                                        )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`
-                                    : "--"
-                            }
-                        </span>
+                            <strong>Release rate:</strong>
+                            <span className="ml-1">
+                                {
+                                    lockPeriodAmount && selectedToken
+                                        ? `${displayAmountWithSymbol(
+                                                paymentRateAmountBn,
+                                                selectedToken.address,
+                                                selectedToken.decimals,
+                                                splTokenList,
+                                            )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`
+                                        : "--"
+                                }
+                            </span>
                         </Col>
                     </Row>
 
