@@ -286,7 +286,7 @@ export const TreasuryAddFundsModal = (props: {
         setWorkingAssociatedToken(treasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
       }
     }
-  }, [isVisible, treasuryDetails, treasuryList]);
+  }, [isVisible, treasuryDetails]);
 
   // Preset a working copy of the first available streaming account in the list if treasuryDetails was not passed in
   useEffect(() => {
@@ -351,7 +351,7 @@ export const TreasuryAddFundsModal = (props: {
         consoleOut('unallocatedBalance:', ub.toString(), 'blue');
         setAvailableBalance(ub);
       } else {
-        // Take source balance from the user's wallet
+        // Take source balance from the user's wallet or safe
         const userBalance = selectFromTokenBalance();
         const toBignumber = toTokenAmount2(userBalance, decimals);
         consoleOut(`User's balance:`, toBignumber.toString(), 'blue');
@@ -403,7 +403,7 @@ export const TreasuryAddFundsModal = (props: {
 
   useEffect(() => {
     if (isVisible) {
-      if (param === "multisig" && selectedMultisig && !treasuryDetails && !highLightableStreamId) {
+      if (param === "multisig" && selectedMultisig && !highLightableStreamId) {
         consoleOut('Getting funds from safe...', '', 'blue');
         setFundFromSafeOption(true);
       }

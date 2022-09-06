@@ -29,7 +29,7 @@ import {
   shortenAddress,
 } from '../../middleware/utils';
 
-import { Button, Empty, Menu, Spin, Tooltip } from 'antd';
+import { Button, Empty, Spin, Tooltip } from 'antd';
 import {
   consoleOut,
   getTransactionStatusForLogs,
@@ -188,11 +188,14 @@ export const SafeView = () => {
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
   const [queryParamV, setQueryParamV] = useState<string | null>(null);
   const [lastError, setLastError] = useState<TransactionStatusInfo | undefined>(undefined);
-
   const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
 
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  /////////////////
+  //  Init code  //
+  /////////////////
+
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -236,6 +239,7 @@ export const SafeView = () => {
   }, [
     connection,
     publicKey,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -294,6 +298,10 @@ export const SafeView = () => {
   useEffect(() => {
     lastErrorRef.current = lastError;
   }, [lastError]);
+
+  /////////////////
+  //  Callbacks  //
+  /////////////////
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -1435,6 +1443,7 @@ export const SafeView = () => {
     multisigClient,
     transactionFees,
     selectedMultisig,
+    multisigAddressPK,
     transactionCancelled,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
@@ -1928,23 +1937,25 @@ export const SafeView = () => {
       }
     }
   }, [
-    resetTransactionStatus, 
-    wallet, 
-    publicKey, 
-    selectedMultisig, 
-    multisigClient, 
-    connection, 
-    createCredixDepositIx, 
-    createCredixWithdrawIx, 
-    createProposalIx, 
-    setTransactionStatus, 
-    nativeBalance, 
-    transactionFees.networkFee, 
-    transactionFees.rentExempt, 
-    transactionFees.multisigFee, 
-    transactionStatus.currentOperation, 
-    transactionCancelled, 
-    enqueueTransactionConfirmation
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigClient,
+    selectedMultisig,
+    transactionCancelled,
+    transactionFees.networkFee,
+    transactionFees.rentExempt,
+    transactionFees.multisigFee,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    createCredixWithdrawTrancheIx,
+    createCredixDepositTrancheIx,
+    createCredixWithdrawIx,
+    resetTransactionStatus,
+    createCredixDepositIx,
+    setTransactionStatus,
+    createProposalIx,
   ]);
 
   const saveOperationPayloadOnStart = (payload: any) => {
@@ -3886,6 +3897,8 @@ export const SafeView = () => {
           if (item) {
             if (selectedMultisigRef.current && selectedMultisigRef.current.authority.equals(item.authority)) {
               consoleOut('Multisig is already selected!', 'skipping...', 'blue');
+              setNeedRefreshTxs(true);
+              setNeedReloadPrograms(true);
               return;
             }
             consoleOut('selected via address in route:', item, 'purple');
@@ -4161,7 +4174,7 @@ export const SafeView = () => {
         )}
       </>
     );
-  }, [connected, isCreatingMultisig, multisigAccounts, multisigUsdValues, navigate, selectedMultisig, setMultisigSolBalance, setTotalSafeBalance, t]);
+  }, [connected, isCreatingMultisig, loadingMultisigTxPendingCount, multisigAccounts, multisigUsdValues, navigate, selectedMultisig, setMultisigSolBalance, setTotalSafeBalance, t]);
 
   const onRefresLevel1Tabs = () => {
     setNeedRefreshTxs(true);
@@ -4197,15 +4210,6 @@ export const SafeView = () => {
     const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}?v=programs`;
     navigate(url);
   }
-
-  // Dropdown (three dots button)
-  const menu = (
-    <Menu>
-      <Menu.Item key="0" onClick={onAcceptCreateSerumMultisig}>
-        <span className="menu-item-text">Create Serum safe</span>
-      </Menu.Item>
-    </Menu>
-  );
 
   return (
     <>
