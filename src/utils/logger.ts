@@ -41,7 +41,7 @@ export class CustomLoggerService {
 
     constructor() {
         this.applicationName = appConfig.getConfig().logglyTag;
-        this.walletProviderKey = 'providerName';
+        this.walletProviderKey = 'walletName';
         logger.push({
             'logglyKey': appConfig.getConfig().logglyCustomerKey,
             'tag': this.applicationName,
@@ -107,8 +107,8 @@ export class CustomLoggerService {
         try {
             const item = window.localStorage.getItem(this.walletProviderKey);
             if (item) {
-                const providerName = JSON.parse(item);
-                const provider = WALLET_PROVIDERS.find(p => p.name === providerName);
+                const walletName = JSON.parse(item);
+                const provider = WALLET_PROVIDERS.find(p => p.name === walletName);
                 if (provider) {
                     logBody.WalletAdapter = provider.name;
                 }

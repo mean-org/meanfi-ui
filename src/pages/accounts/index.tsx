@@ -4970,13 +4970,6 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar">
-          <span className="ml-1">transactions:</span><span className="ml-1 font-bold fg-dark-active">{transactions ? `[${transactions.length}]` : '-'}</span>
-          <span className="ml-1">transactionStatus:</span><span className="ml-1 font-bold fg-dark-active">{transactionStatus && transactionStatus.currentOperation ? TransactionStatus[transactionStatus.currentOperation] : '-'}</span>
-        </div>
-      )} */}
-
       {detailsPanelOpen && (
         <Button
           id="back-button"
@@ -4985,7 +4978,6 @@ export const AccountsNewView = () => {
           icon={<ArrowLeftOutlined />}
           onClick={onBackButtonClicked}/>
       )}
-
       <div className="container main-container accounts">
 
         {/* SEO tags overrides */}
