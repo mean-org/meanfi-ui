@@ -272,7 +272,6 @@ const UseNativeAccount = () => {
       return undefined;
     }
 
-    consoleOut('Refreshing native account...', '', 'blue');
     connection.getAccountInfo(publicKey).then((acc) => {
       if (acc) {
         updateCache(acc);
