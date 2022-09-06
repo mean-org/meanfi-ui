@@ -1636,14 +1636,6 @@ export const JupiterExchange = (props: {
 
     return (
         <>
-            {/* {isLocal() && (
-                <div className="debug-bar">
-                    <span className="ml-1">feeInfo:</span><span className="ml-1 font-bold fg-dark-active">{feeInfo ? feeInfo.signatureFee : '-'}</span>
-                    <span className="ml-1">minInAmount:</span><span className="ml-1 font-bold fg-dark-active">{minInAmount || '-'}</span>
-                    <span className="ml-1">minOutAmount:</span><span className="ml-1 font-bold fg-dark-active">{minOutAmount || '-'}</span>
-                </div>
-            )} */}
-
             {wSolBalance > 0 && (
                 <div className="swap-wrapper">
                     <div className="well mb-1">
@@ -1663,7 +1655,6 @@ export const JupiterExchange = (props: {
                     </div>
                 </div>
             )}
-
             <div className="swap-wrapper">
 
                 {/* Source token / amount */}

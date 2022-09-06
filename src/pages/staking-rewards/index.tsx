@@ -773,13 +773,6 @@ export const StakingRewardsView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar">
-          <span className="ml-1">isDepositing:</span><span className="ml-1 font-bold fg-dark-active">{isDepositing ? 'true' : 'false'}</span>
-          <span className="ml-1">lastDepositSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastDepositSignature || '-'}</span>
-        </div>
-      )} */}
-
       <div className="container main-container">
         <div className="interaction-area">
           <div className="title-and-subtitle">
