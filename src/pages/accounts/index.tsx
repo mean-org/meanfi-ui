@@ -151,14 +151,12 @@ export const AccountsNewView = () => {
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
     setIsVerifiedRecipient,
-    setIsVerifiedRecipient,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
     setShouldLoadTokens,
     setSelectedMultisig,
-    resetContractValues,
     resetContractValues,
     refreshStreamList,
     setStreamsSummary,
@@ -239,7 +237,7 @@ export const AccountsNewView = () => {
   const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
   const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
 
-  const multisigAddressPK = useMemo(() => useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []), []);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   // Perform premature redirect here if no address was provided in path
   // to the current wallet address if the user is connected
@@ -295,9 +293,8 @@ export const AccountsNewView = () => {
       multisigAddressPK
     );
   }, [
-    connection,
     publicKey,
-    multisigAddressPK,
+    connection,
     multisigAddressPK,
     connectionConfig.endpoint,
   ]);
@@ -367,8 +364,7 @@ export const AccountsNewView = () => {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
       let beneficiary = '';
-      let beneficiary = '';
-      if (v1.version < 2) {
+      if (item.version < 2) {
         beneficiary = typeof v1.beneficiaryAddress === "string"
           ? v1.beneficiaryAddress
           : (v1.beneficiaryAddress as PublicKey).toBase58();
@@ -377,7 +373,6 @@ export const AccountsNewView = () => {
           ? v2.beneficiary
           : v2.beneficiary.toBase58();
       }
-      return beneficiary === accountAddress ? true : false
       return beneficiary === accountAddress ? true : false
     }
     return false;
@@ -453,11 +448,6 @@ export const AccountsNewView = () => {
   // Send selected token modal
   const [isSendAssetModalOpen, setIsSendAssetModalOpen] = useState(false);
   const showSendAssetModal = useCallback(() => setIsSendAssetModalOpen(true), []);
-  const hideSendAssetModal = useCallback(() => {
-    setIsSendAssetModalOpen(false);
-    resetContractValues();
-    setIsVerifiedRecipient(false);
-  }, [resetContractValues, setIsVerifiedRecipient]);
   const hideSendAssetModal = useCallback(() => {
     setIsSendAssetModalOpen(false);
     resetContractValues();
@@ -887,13 +877,6 @@ export const AccountsNewView = () => {
       }
     }
   }, []);
-
-  const fullAccountRefresh = () => {
-    const fullRefreshCta = document.getElementById("account-refresh-cta");
-    if (fullRefreshCta) {
-      fullRefreshCta.click();
-    }
-  };
 
   const fullAccountRefresh = () => {
     const fullRefreshCta = document.getElementById("account-refresh-cta");
@@ -1516,7 +1499,6 @@ export const AccountsNewView = () => {
     connection,
     nativeBalance,
     selectedMultisig,
-    multisigAddressPK,
     multisigAddressPK,
     transactionCancelled,
     transactionAssetFees,
@@ -4233,34 +4215,25 @@ export const AccountsNewView = () => {
   //////////////
 
   const onBackButtonClicked = () => {
+    let url = '';
+
     if (location.pathname.indexOf('/assets') !== -1) {
       setDetailsPanelOpen(false);
       setAutoOpenDetailsPanel(false);
-    } else if (location.pathname.indexOf('/assets') !== -1) {
-      setDetailsPanelOpen(false);
-      setAutoOpenDetailsPanel(false);
     } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamingItemId}`) {
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
-      if (inspectedAccountType && inspectedAccountType === "multisig") {
-        url += `?account-type=multisig`;
-      }
-      navigate(url);
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
     } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/${streamingItemId}`) {
-      // let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
-      // if (inspectedAccountType && inspectedAccountType === "multisig") {
-      //   url += `?account-type=multisig`;
-      // }
-      navigate(-1);
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+      setStreamDetail(undefined);
     } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts/${streamingItemId}`) {
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts`;
-      if (inspectedAccountType && inspectedAccountType === "multisig") {
-        url += `?account-type=multisig`;
-      }
-      navigate(url);
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts`;
     } else {
       setDetailsPanelOpen(false);
       setAutoOpenDetailsPanel(false);
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+    }
+    // Navigate if needed but first append multisig param if exists
+    if (url) {
       if (inspectedAccountType && inspectedAccountType === "multisig") {
         url += `?account-type=multisig`;
       }
@@ -4400,42 +4373,18 @@ export const AccountsNewView = () => {
       navigateToAsset(asset);
     }
 
-
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
-
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
     };
 
-
     const isSelectedToken = (): boolean => {
       return selectedAsset && asset && selectedAsset.displayIndex === asset.displayIndex
         ? true
         : false;
-    }
-
-    const getRowSelectionClass = (): string => {
-      if (isSelectedToken() && selectedCategory === "assets") {
-        return 'selected';
-      } else {
-        if (hideLowBalances && (shouldHideAsset(asset) || !asset.balance)) {
-          return 'hidden';
-        }
-      }
-      return '';
-    }
-
-    const getRateAmountDisplay = (): string => {
-      if (tokenPrice > 0) {
-        if (!asset.valueInUsd) { return '$0.00'; }
-        return asset.valueInUsd > 0 && asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
-          ? '< $0.01'
-          : toUsCurrency(asset.valueInUsd || 0);
-      }
-      return '—';
     }
 
     const getRowSelectionClass = (): string => {
@@ -4523,23 +4472,6 @@ export const AccountsNewView = () => {
       }
     }
 
-
-    const renderMessages = () => {
-      if (tokensLoaded) {
-        return (
-          <div className="flex flex-center">
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          </div>
-        );
-      } else {
-        return (
-          <div className="flex flex-center">
-            <Spin indicator={antIcon} />
-          </div>
-        );
-      }
-    }
-
     return (
       <>
         {accountTokens && accountTokens.length > 0 ? (
@@ -4580,24 +4512,6 @@ export const AccountsNewView = () => {
           <Spin indicator={antIcon} />
         </div>
       );
-    }
-
-    const renderMessages = () => {
-      if (status === FetchStatus.Fetched && !hasTransactions()) {
-        return (
-          <div className="h-100 flex-center">
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
-          </div>
-        );
-      } else if (status === FetchStatus.FetchFailed) {
-        return (
-          <div className="h-100 flex-center">
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.loading-error')}</p>} />
-          </div>
-        );
-      } else {
-        return null;
-      }
     }
 
     const renderMessages = () => {
@@ -5063,23 +4977,6 @@ export const AccountsNewView = () => {
     navigate(url);
   }
 
-  // TODO: Make navigate(-1) works correctly
-  const returnFromOutgoingStreamDetailsHandler = () => {
-    // let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
-
-    // if (inspectedAccountType && inspectedAccountType === "multisig") {
-    //   url += `?account-type=multisig`;
-    // }
-
-    setTimeout(() => {
-      setStreamDetail(undefined);
-    }, 100);
-    setTimeout(() => {
-      setStreamDetail(undefined);
-    }, 100);
-    navigate(-1);
-  }
-
   const returnFromStreamingAccountDetailsHandler = () => {
 
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts`;
@@ -5287,7 +5184,6 @@ export const AccountsNewView = () => {
                         <Tooltip placement="bottom" title="Refresh payment streams">
                           <Button
                             id="account-refresh-cta"
-                            id="account-refresh-cta"
                             type="default"
                             shape="circle"
                             size="middle"
@@ -5360,8 +5256,6 @@ export const AccountsNewView = () => {
                             accountAddress={accountAddress}
                             loadingStreams={loadingStreams}
                             streamSelected={streamDetail}
-                            loadingStreams={loadingStreams}
-                            streamSelected={streamDetail}
                             multisigAccounts={multisigAccounts}
                             onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                           />
@@ -5373,7 +5267,7 @@ export const AccountsNewView = () => {
                             streamList={streamList}
                             streamingAccountSelected={treasuryDetail}
                             multisigAccounts={multisigAccounts}
-                            onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
+                            onSendFromOutgoingStreamDetails={onBackButtonClicked}
                           />
                         ) : pathParamTreasuryId && pathParamStreamingTab === "streaming-accounts" && treasuryDetail && treasuryDetail.id === pathParamTreasuryId ? (
                           <StreamingAccountView

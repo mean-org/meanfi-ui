@@ -23,7 +23,7 @@ import {
 } from '@mean-dao/msp';
 import "./style.scss";
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount, toUiAmount2 } from '../../middleware/utils';
+import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from '../../middleware/utils';
 import { openNotification } from '../../components/Notifications';
 import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -39,7 +39,7 @@ import { VestingContractOverview } from './components/VestingContractOverview';
 import { CreateVestingStreamParams, CreateVestingTreasuryParams, getCategoryLabelByValue, AddFundsParams, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { useNativeAccount } from '../../contexts/accounts';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../middleware/ids';
 import { appConfig, customLogger } from '../..';
 import { InspectedAccountType } from '../accounts';
@@ -154,8 +154,8 @@ export const VestingView = () => {
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
-  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
   
   /////////////////////////
   //  Setup & Init code  //
@@ -247,6 +247,7 @@ export const VestingView = () => {
   }, [
     connection,
     publicKey,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -1294,6 +1295,7 @@ export const VestingView = () => {
     nativeBalance,
     multisigTxFees,
     multisigClient,
+    mspV2AddressPK,
     multisigAccounts,
     isMultisigContext,
     transactionCancelled,
@@ -2479,7 +2481,6 @@ export const VestingView = () => {
       if (!msp) { return null; }
 
       if (!isMultisigTreasury()) {
-        // TODO: Modify method signature for amount parameters to string | number
         return await msp.treasuryWithdraw(
           new PublicKey(data.payer),              // payer
           new PublicKey(data.destination),        // treasurer
@@ -2497,7 +2498,6 @@ export const VestingView = () => {
       if (!multisig) { return null; }
       multisigAuthority = multisig.authority.toBase58();
 
-      // TODO: Modify method signature for amount parameters to string | number
       const msTreasuryWithdraw = await msp.treasuryWithdraw(
         new PublicKey(data.payer),              // payer
         new PublicKey(data.destination),        // treasurer
@@ -3135,6 +3135,7 @@ export const VestingView = () => {
     publicKey,
     connection,
     nativeBalance,
+    mspV2AddressPK,
     transactionCancelled,
     selectedVestingContract,
     transactionStatus.currentOperation,
@@ -4120,12 +4121,6 @@ export const VestingView = () => {
     // Render normal UI
     return (
       <>
-        {isUnderDevelopment() && (
-          <div className="debug-bar">
-            <span className="ml-1">isWorkflowLocked:</span><span className="ml-1 font-bold fg-dark-active">{isWorkflowLocked ? 'true' : 'false'}</span>
-          </div>
-        )}
-
         {detailsPanelOpen && (
           <Button
             id="back-button"

@@ -44,7 +44,7 @@ import { StreamsSummary } from "../../models/streams";
 import { Identicon } from "../../components/Identicon";
 import { openNotification } from "../../components/Notifications";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { TreasuryTopupParams } from "../../models/common-types";
 import useWindowSize from "../../hooks/useWindowResize";
@@ -55,7 +55,6 @@ import { AddFundsParams } from "../../models/vesting";
 import BigNumber from "bignumber.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { appConfig } from '../..';
-import { ZERO_FEES } from "../../models/multisig";
 import { ZERO_FEES } from "../../models/multisig";
 
 const { TabPane } = Tabs;
@@ -104,7 +103,6 @@ export const MoneyStreamsInfoView = (props: {
     openStreamById
   } = useContext(AppStateContext);
   const {
-    confirmationHistory,
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
   const connectionConfig = useConnectionConfig();
@@ -178,7 +176,6 @@ export const MoneyStreamsInfoView = (props: {
   }, [
     connection,
     publicKey,
-    multisigAddressPK,
     multisigAddressPK,
     connectionConfig.endpoint,
   ]);
@@ -640,7 +637,6 @@ export const MoneyStreamsInfoView = (props: {
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
     getMultisigTxProposalFees();
-    getMultisigTxProposalFees();
     if (selectedMultisig) {
       refreshUserBalances(selectedMultisig.authority);
     } else {
@@ -662,7 +658,6 @@ export const MoneyStreamsInfoView = (props: {
     refreshUserBalances,
     getTransactionFeesV2,
     resetTransactionStatus,
-    getMultisigTxProposalFees,
     getMultisigTxProposalFees,
   ]);
 
@@ -1164,7 +1159,6 @@ export const MoneyStreamsInfoView = (props: {
     refreshUserBalances();
     refreshTokenBalance();
     getMultisigTxProposalFees();
-    getMultisigTxProposalFees();
     setIsCreateStreamModalVisibility(true);
     getTransactionFeesV2(MSP_ACTIONS_V2.createStreamWithFunds).then((value: any) => {
       setTransactionFees(value);
@@ -1179,7 +1173,6 @@ export const MoneyStreamsInfoView = (props: {
     refreshTokenBalance,
     getTransactionFeesV2,
     resetTransactionStatus,
-    getMultisigTxProposalFees,
     getMultisigTxProposalFees,
   ]);
 
@@ -1213,7 +1206,6 @@ export const MoneyStreamsInfoView = (props: {
   const showCreateTreasuryModal = useCallback(() => {
     resetTransactionStatus();
     getMultisigTxProposalFees();
-    getMultisigTxProposalFees();
     setIsCreateTreasuryModalVisibility(true);
     getTransactionFeesV2(MSP_ACTIONS_V2.createTreasury).then(value => {
       setTransactionFees(value);
@@ -1223,7 +1215,6 @@ export const MoneyStreamsInfoView = (props: {
     getTransactionFeesV2,
     resetTransactionStatus,
     getMultisigTxProposalFees,
-    getMultisigTxProposalFees
   ]);
 
   const closeCreateTreasuryModal = useCallback(() => {
@@ -1573,29 +1564,6 @@ export const MoneyStreamsInfoView = (props: {
     }
   };
 
-  // confirmationHistory
-  const hasMoneyStreamPendingTx = useCallback((type?: OperationTypetype?: OperationType) => {
-    if (!streamList || !treasuryList) { return false; }
-
-    if (confirmationHistory && confirmationHistory.length > 0) {
-      if (type !== undefined) {
-        return confirmationHistory.some(h =>
-          h.txInfoFetchStatus === "fetching" &&
-          h.operationType === type
-        );
-      }
-      if (type !== undefined) {
-        return confirmationHistory.some(h =>
-          h.txInfoFetchStatus === "fetching" &&
-          h.operationType === type
-        );
-      }
-      return confirmationHistory.some(h => h.txInfoFetchStatus === "fetching");
-    }
-
-    return false;
-  }, [confirmationHistory, streamList, treasuryList]);
-
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
     if (item && publicKey && accountAddress) {
       const v1 = item as StreamInfo;
@@ -1847,55 +1815,6 @@ export const MoneyStreamsInfoView = (props: {
 
     navigate(url);
   }, [accountAddress, navigate, param]);
-
-
-  /////////////////////
-  // Data management //
-  /////////////////////
-
-  // Detect XS screen
-  useEffect(() => {
-    if (width < 576) {
-      setIsXsDevice(true);
-    } else {
-      setIsXsDevice(false);
-    }
-  }, [width]);
-
-  // Keep account balance updated
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshTokenBalance
-  ]);
-
-  // Reset summaries and canDisplay flags when all dependencies start to load
-  useEffect(() => {
-    if (loadingStreams) {
-      setIncomingStreamsSummary(undefined);
-      setOutgoingStreamsSummary(undefined);
-      setCanDisplayIncomingBalance(false);
-      setCanDisplayOutgoingBalance(false);
-    }
-    if (loadingTreasuries) {
-      setStreamingAccountsSummary(undefined);
-      setCanDisplayTotalAccountBalance(false);
-    }
-  }, [loadingStreams, loadingTreasuries]);
 
 
   /////////////////////
@@ -2944,21 +2863,6 @@ export const MoneyStreamsInfoView = (props: {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar inner-bottom">
-          <span className="mr-1 align-middle">loadingStreams</span>
-          <span className={`status position-relative align-middle ${loadingStreams ? 'error' : 'success'}`}></span>
-          <span className="mx-1 align-middle">loadingTreasuries</span>
-          <span className={`status position-relative align-middle ${loadingTreasuries ? 'error' : 'success'}`}></span>
-          <div>
-            <span className="mr-1 align-middle">canDisplayOutgoingBalance</span>
-            <span className="font-extrabold align-middle">{canDisplayOutgoingBalance ? 'true' : 'false'}</span>
-            <span className="mx-1 align-middle">canDisplayTotalAccountBalance</span>
-            <span className="font-extrabold align-middle">{canDisplayTotalAccountBalance ? 'true' : 'false'}</span>
-          </div>
-        </div>
-      )} */}
-
       <Spin spinning={loadingStreams || loadingTreasuries}>
 
         <RightInfoDetails infoData={infoData} />

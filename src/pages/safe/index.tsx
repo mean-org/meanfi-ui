@@ -4057,7 +4057,6 @@ export const SafeView = () => {
   const onBackButtonClicked = () => {
     setDetailsPanelOpen(false);
     setAutoOpenDetailsPanel(false);
-    // navigate(-1);
   }
 
   const onNavigateAway = () => {
