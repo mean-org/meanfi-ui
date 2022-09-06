@@ -10,7 +10,6 @@ import {
   getSdkValue,
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
-  makeDecimal,
   shortenAddress,
   toTokenAmount2,
   toUiAmount2,
@@ -941,12 +940,11 @@ export const TreasuryStreamCreateModal = (props: {
           2
         );
       } else {
-        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
-        value += formatThousands(
-          rateAmount,
-          friendlyDisplayDecimalPlaces(rateAmount, decimals),
-          2
-        );
+        const rateAmount = new BN(item.rateAmount);
+        value += stringNumberFormat(
+          toUiAmount2(rateAmount, decimals),
+          friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
+        )
       }
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
@@ -2679,7 +2677,7 @@ export const TreasuryStreamCreateModal = (props: {
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
                 (!selectedToken || unallocatedBalance.isZero()) ||
-                (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
+                tokenAmount.isZero() || tokenAmount.gt(unallocatedBalance) ||
                 !arePaymentSettingsValid()
               ) : (
                 !publicKey ||
@@ -2710,7 +2708,7 @@ export const TreasuryStreamCreateModal = (props: {
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
                 (!selectedToken || unallocatedBalance.isZero()) ||
-                (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
+                tokenAmount.isZero() || tokenAmount.gt(unallocatedBalance) ||
                 (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
                 parseFloat(cliffRelease) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals))
               ) : (

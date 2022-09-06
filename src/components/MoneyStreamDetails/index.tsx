@@ -125,12 +125,11 @@ export const MoneyStreamDetails = (props: {
     }
 
     if (item.version < 2) {
-      const rateAmount = new BN(item.rateAmount).toNumber();
-      value += formatThousands(
-        rateAmount,
-        friendlyDisplayDecimalPlaces(rateAmount, selectedToken.decimals),
-        2
-      );
+      const rateAmount = new BN(item.rateAmount);
+      value += stringNumberFormat(
+        toUiAmount2(rateAmount, selectedToken.decimals),
+        friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
+      )
     } else {
       const rateAmount = new BN(item.rateAmount);
       value += stringNumberFormat(
