@@ -55,7 +55,6 @@ export const MoneyStreamDetails = (props: {
     streamActivity,
     hasMoreStreamActivity,
     loadingStreamActivity,
-    getTokenByMintAddress,
     getStreamActivity,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');

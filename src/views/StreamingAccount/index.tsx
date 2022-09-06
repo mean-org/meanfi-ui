@@ -459,78 +459,86 @@ export const StreamingAccountView = (props: {
   }, [confirmationHistory, streamingAccountSelected]);
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
-    let value = '';
-
-    if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-
-      if (item.version < 2) {
-        const rateAmount = new BN(item.rateAmount).toNumber();
-        value += formatThousands(
-          rateAmount,
-          friendlyDisplayDecimalPlaces(rateAmount, decimals),
-          2
-        );
-      } else {
-        const rateAmount = new BN(item.rateAmount);
-        value += stringNumberFormat(
-          toUiAmount2(rateAmount, decimals),
-          friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
-        )
-      }
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
+    if (!selectedToken) {
+      return '';
     }
+
+    let value = '';
+    let associatedToken = '';
+
+    if (item.version < 2) {
+      associatedToken = (item as StreamInfo).associatedToken as string;
+    } else {
+      associatedToken = (item as Stream).associatedToken.toBase58();
+    }
+
+    if (item.version < 2) {
+      const rateAmount = new BN(item.rateAmount).toNumber();
+      value += formatThousands(
+        rateAmount,
+        friendlyDisplayDecimalPlaces(rateAmount, selectedToken.decimals),
+        2
+      );
+    } else {
+      const rateAmount = new BN(item.rateAmount);
+      value += stringNumberFormat(
+        toUiAmount2(rateAmount, selectedToken.decimals),
+        friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
+      )
+    }
+    value += ' ';
+    value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken).toString()}]`;
+
     return value;
-  }, [getTokenByMintAddress]);
+  }, [selectedToken]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    if (!selectedToken) {
+      return '';
+    }
+
     let value = '';
+    let associatedToken = '';
 
-    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
-      const decimals = token?.decimals || 6;
+    if (item.version < 2) {
+      associatedToken = (item as StreamInfo).associatedToken as string;
+    } else {
+      associatedToken = (item as Stream).associatedToken.toBase58();
+    }
 
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-
+    if (item.rateIntervalInSeconds === 0) {
       if (item.version < 2) {
         const allocationAssigned = new BN(item.allocationAssigned).toNumber();
         value += formatThousands(
           allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
+          friendlyDisplayDecimalPlaces(allocationAssigned, selectedToken.decimals),
           2
         );
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
         value += stringNumberFormat(
-          toUiAmount2(allocationAssigned, decimals),
-          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || decimals
+          toUiAmount2(allocationAssigned, selectedToken.decimals),
+          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
         )
       }
+
       value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
+      value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken)}]`;
     }
+
     return value;
-  }, [getTokenByMintAddress]);
+  }, [selectedToken]);
 
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';
 
     if (item) {
-      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
-      if (item.rateAmount > 0) {
-        rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), true, t);
+      let rateAmount = new BN(item.rateAmount).gtn(0)
+        ? getRateAmountDisplay(item)
+        : getDepositAmountDisplay(item);
+
+      if (new BN(item.rateAmount).gtn(0)) {
+        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
       }
 
       subtitle = rateAmount;
@@ -540,7 +548,7 @@ export const StreamingAccountView = (props: {
 
   }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
 
-  const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
+  const getStreamStatusLabel = useCallback((item: Stream | StreamInfo) => {
     if (item) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
@@ -2717,13 +2725,19 @@ export const StreamingAccountView = (props: {
       }
     });
 
+    const renderMessages = () => {
+      if (loadingStreamingAccountStreams && (!sortedStreamingAccountsStreamsList || sortedStreamingAccountsStreamsList.length === 0)) {
+        return (<span className="pl-1">Loading streams ...</span>);
+      }
+      return (<span className="pl-1">This streaming account has no streams</span>);
+    }
+
     return (
       <>
-        {!loadingStreamingAccountStreams ? (
-          (sortedStreamingAccountsStreamsList !== undefined && sortedStreamingAccountsStreamsList.length > 0) ? (
+        {
+          sortedStreamingAccountsStreamsList && sortedStreamingAccountsStreamsList.length > 0 ? (
             sortedStreamingAccountsStreamsList.map((stream, index) => {
               const onSelectStream = () => {
-                // Sends stream value to the parent component "Accounts"
                 onSendFromStreamingAccountStreamInfo(stream);
               };
 
@@ -2751,22 +2765,20 @@ export const StreamingAccountView = (props: {
 
               const title = stream ? getStreamTitle(stream, t) : "Unknown outgoing stream";
               const subtitle = getStreamSubtitle(stream);
-              const status = getStreamStatus(stream);
               const resume = getStreamResume(stream);
 
               return (
                 <div
                   key={index}
                   onClick={onSelectStream}
-                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                >
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
                   <ResumeItem
                     id={index}
                     img={img}
                     title={title}
                     subtitle={subtitle || "0.00"}
                     resume={resume}
-                    status={status}
+                    status={getStreamStatusLabel(stream)}
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
                     isLink={true}
@@ -2777,12 +2789,8 @@ export const StreamingAccountView = (props: {
                 </div>
               )
             })
-          ) : (
-            <span className="pl-1">This streaming account has no streams</span>
-          )
-        ) : (
-          <span className="pl-1">Loading streams ...</span>
-        )}
+          ) : renderMessages()
+        }
       </>
     );
   };
@@ -2863,7 +2871,7 @@ export const StreamingAccountView = (props: {
     externalLink={true}
   />;
 
-  const streamAccountContent = "Available streaming balance";
+  const streamAccountContent = t('treasuries.treasury-detail.unallocated-treasury-balance');
 
   const renderTabset = () => {
     const option = getQueryTabOption() || 'streams'

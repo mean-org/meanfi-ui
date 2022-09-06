@@ -280,6 +280,19 @@ export const TreasuryStreamCreateModal = (props: {
 
   }, [publicKey, selectedMultisig, workingTreasuryDetails]);
 
+  const getReleaseRate = useCallback(() => {
+    if (!lockPeriodAmount || !selectedToken) {
+      return '--';
+    }
+
+    return `${displayAmountWithSymbol(
+      paymentRateAmountBn,
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
+    )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
+  }, [lockPeriodAmount, lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
+
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
@@ -383,17 +396,15 @@ export const TreasuryStreamCreateModal = (props: {
                   ? t('transactions.validation.no-amount')
                   : (parseFloat(fromCoinAmount) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals)))
                     ? t('Invalid amount')
-                    : (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0)
+                    : !lockPeriodAmount || parseFloat(lockPeriodAmount) === 0
                       ? 'Lock period cannot be empty'
-                      : !cliffRelease
-                        ? 'Add cliff to release'
-                        : (parseFloat(cliffRelease) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals)))
-                          ? 'Invalid cliff amount'
-                          : !paymentStartDate
-                            ? t('transactions.validation.no-valid-date')
-                            : !areSendAmountSettingsValid()
-                              ? getPaymentSettingsButtonLabel()
-                              : t('transactions.validation.valid-continue');
+                      : cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals))
+                        ? 'Invalid cliff amount'
+                        : !paymentStartDate
+                          ? t('transactions.validation.no-valid-date')
+                          : !areSendAmountSettingsValid()
+                            ? getPaymentSettingsButtonLabel()
+                            : t('transactions.validation.valid-continue');
   }
 
   const getTransactionStartButtonLabel = (): string => {
@@ -446,19 +457,17 @@ export const TreasuryStreamCreateModal = (props: {
                     ? t('Invalid amount')
                     : !lockPeriodAmount || parseFloat(lockPeriodAmount) === 0
                       ? 'Lock period cannot be empty'
-                      : (!cliffRelease || parseFloat(cliffRelease) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals)))
-                        ? 'Add cliff to release'
-                        :  (parseFloat(cliffRelease) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals)))
-                          ? 'Invalid cliff amount'
-                          : !paymentStartDate
-                            ? t('transactions.validation.no-valid-date')
-                            : !arePaymentSettingsValid()
-                              ? getPaymentSettingsButtonLabel()
-                              : !isVerifiedRecipient
-                                ? t('transactions.validation.verified-recipient-unchecked')
-                                : nativeBalance < getMinBalanceRequired()
-                                  ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-                                  : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
+                      : cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals))
+                        ? 'Invalid cliff amount'
+                        : !paymentStartDate
+                          ? t('transactions.validation.no-valid-date')
+                          : !arePaymentSettingsValid()
+                            ? getPaymentSettingsButtonLabel()
+                            : !isVerifiedRecipient
+                              ? t('transactions.validation.verified-recipient-unchecked')
+                              : nativeBalance < getMinBalanceRequired()
+                                ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
+                                : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
   };
 
   const getPaymentSettingsButtonLabel = (): string => {
@@ -757,14 +766,6 @@ export const TreasuryStreamCreateModal = (props: {
     setLockPeriodFrequency(val);
   }
 
-  const onTokenChange = (e: any) => {
-    consoleOut("token selected:", e, 'blue');
-    const token = getTokenByMintAddress(e);
-    if (token) {
-      setSelectedToken(token as TokenInfo);
-    }
-  }
-
   const handleFromCoinAmountChange = (e: any) => {
 
     let newValue = e.target.value;
@@ -919,15 +920,6 @@ export const TreasuryStreamCreateModal = (props: {
 
   }, [isSelectedStreamingAccountMultisigTreasury, minRequiredBalance, transactionFees]);
 
-  const getStreamingAccountName = useCallback((item: Treasury | TreasuryInfo | undefined) => {
-    if (item) {
-      const v1 = item as TreasuryInfo;
-      const v2 = item as Treasury;
-      return v1.version < 2 ? v1.label : v2.name;
-    }
-    return '';
-  }, []);
-
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
 
@@ -1048,12 +1040,6 @@ export const TreasuryStreamCreateModal = (props: {
       const cr = tokenAmount.muln(percentageValue).divn(100);
       setCliffReleaseBn(cr);
       setCliffRelease(toUiAmount2(cr, selectedToken.decimals));
-
-      // consoleOut('tokenAmount BN:', tokenAmount.toString(), 'orange');
-      // consoleOut('tokenAmount:', toUiAmount2(tokenAmount, selectedToken.decimals), 'orange');
-      // consoleOut('percentageValue:', percentageValue, 'orange');
-      // consoleOut('cliffRelease BN:', cr.toString(), 'orange');
-      // consoleOut('cliffRelease:', toUiAmount2(cr, selectedToken.decimals), 'orange');
     }
 
   }, [percentageValue, selectedToken, tokenAmount]);
@@ -1063,12 +1049,18 @@ export const TreasuryStreamCreateModal = (props: {
 
     if (!selectedToken) { return; }
 
-    if (tokenAmount.gtn(0) && percentageValue > 0) {
-      const cr = tokenAmount.muln(percentageValue).divn(100);
-      const toStream = tokenAmount.sub(cr);
-
+    if (tokenAmount.gtn(0)) {
+      let cliffReleaseAmount = new BN(0);
+      let toStream = tokenAmount;
+      let ra = new BN(0);
+      if (percentageValue > 0) {
+        cliffReleaseAmount = tokenAmount.muln(percentageValue).divn(100);
+        toStream = toStream.sub(cliffReleaseAmount);
+      }
       const lpa = parseFloat(lockPeriodAmount);
-      const ra = toStream.divn(lpa);
+      if (lpa) {
+        ra = toStream.divn(lpa);
+      }
 
       setPaymentRateAmountBn(ra);
       setPaymentRateAmount(ra.toString());
@@ -1265,11 +1257,11 @@ export const TreasuryStreamCreateModal = (props: {
         ? selectedMultisig.id
         : publicKey;
       const amount = tokenAmount.div(new BN(beneficiaries.length)).toString();
-      const rateAmount = toTokenAmount2(paymentRateAmount, selectedToken.decimals, true) as string;
+      const rateAmount = paymentRateAmountBn.toString();
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       const startUtc = new Date(parsedDate);
-      const cliffAmount = toTokenAmount2(cliffRelease, selectedToken.decimals, true) as string;
+      const cliffAmount = cliffReleaseBn.toString();
       startUtc.setHours(now.getHours());
       startUtc.setMinutes(now.getMinutes());
       startUtc.setSeconds(now.getSeconds());
@@ -1507,10 +1499,14 @@ export const TreasuryStreamCreateModal = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Txs to confirmation queue:', signatures);
             const isMultisig = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
-            ? selectedMultisig.authority.toBase58()
-            : "";
-            const messageLoading = isMultisig ? `Creating stream proposal to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.` : `Creating stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.`
-            const messageCompleted = isMultisig ? `Proposal to create stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.` : `Stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)} has been proposed.`
+              ? selectedMultisig.authority.toBase58()
+              : "";
+            const messageLoading = isMultisig
+              ? `Proposal to create stream to send ${getReleaseRate()}.`
+              : `Create stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.`
+            const messageCompleted = isMultisig
+              ? `Proposal to create stream to send ${getReleaseRate()} sent for approval.`
+              : `Stream to send ${getReleaseRate()} created successfully.`
             enqueueTransactionConfirmation({
               signature: signatures[0],
               operationType: OperationType.TreasuryStreamCreate,
@@ -2645,18 +2641,7 @@ export const TreasuryStreamCreateModal = (props: {
                     </Col>
                     <Col span={24}>
                       <strong>Release rate:</strong>
-                      <span className="ml-1">
-                        {
-                          lockPeriodAmount && selectedToken
-                            ? `${displayAmountWithSymbol(
-                              paymentRateAmountBn,
-                              selectedToken.address,
-                              selectedToken.decimals,
-                              splTokenList,
-                            )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`
-                            : "--"
-                        }
-                      </span>
+                      <span className="ml-1">{getReleaseRate()}</span>
                     </Col>
                   </Row>
 
@@ -2717,8 +2702,8 @@ export const TreasuryStreamCreateModal = (props: {
               type="primary"
               shape="round"
               size="large"
-              onClick={(workingTreasuryType === TreasuryType.Lock) ? onContinueStepTwoButtonClick : onTransactionStart}
-              disabled={(workingTreasuryType === TreasuryType.Lock) ? (
+              onClick={workingTreasuryType === TreasuryType.Lock ? onContinueStepTwoButtonClick : onTransactionStart}
+              disabled={workingTreasuryType === TreasuryType.Lock ? (
                 !publicKey ||
                 (param === "multisig" && !proposalTitle) ||
                 !isMemoValid() ||
@@ -2727,8 +2712,7 @@ export const TreasuryStreamCreateModal = (props: {
                 (!selectedToken || unallocatedBalance.isZero()) ||
                 (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
                 (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
-                !cliffRelease ||
-                (parseFloat(cliffRelease) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals)))
+                parseFloat(cliffRelease) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals))
               ) : (
                 !publicKey ||
                 (param === "multisig" && !proposalTitle) ||
@@ -2748,7 +2732,6 @@ export const TreasuryStreamCreateModal = (props: {
                 )
               )}
               {(workingTreasuryType === TreasuryType.Open) && (isBusy
-                // ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
                 ? t('streams.create-new-stream-cta-busy')
                 : getTransactionStartButtonLabel()
               )}
@@ -2774,8 +2757,7 @@ export const TreasuryStreamCreateModal = (props: {
                 (!selectedToken || unallocatedBalance.isZero()) ||
                 (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) ||
                 (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
-                !cliffRelease ||
-                (parseFloat(cliffRelease) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals))) ||
+                parseFloat(cliffRelease) > parseFloat(toUiAmount2(unallocatedBalance, selectedToken.decimals)) ||
                 !arePaymentSettingsValid() ||
                 !areSendAmountSettingsValid() ||
                 !isVerifiedRecipient ||
