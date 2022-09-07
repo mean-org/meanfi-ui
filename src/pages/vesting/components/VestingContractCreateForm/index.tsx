@@ -32,6 +32,7 @@ import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Identicon } from '../../../../components/Identicon';
 import { InputMean } from '../../../../components/InputMean';
 import { BN } from 'bn.js';
+import BigNumber from 'bignumber.js';
 
 const timeFormat="hh:mm A"
 
@@ -465,15 +466,18 @@ export const VestingContractCreateForm = (props: {
     const isStepOneValid = (): boolean => {
         if (!selectedToken) { return false; }
 
-        let maxAmount = new BN(0);
+        let maxAmount = new BigNumber(0);
         if (selectedToken.address === NATIVE_SOL.address) {
             const amount = getMaxAmount();
-            maxAmount = new BN(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+            if (amount > 0) {
+                maxAmount = new BigNumber(amount);
+            }
         } else {
-            maxAmount = tokenBalanceBn;
+            maxAmount = new BigNumber(tokenBalanceBn.toString());
         }
 
-        const fundingAmount = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+        const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+        const fundingAmount = new BigNumber(fa.toString());
 
         return  publicKey &&
                 ((!proposalTitle && !isMultisigContext) || (proposalTitle && isMultisigContext)) &&
@@ -506,19 +510,20 @@ export const VestingContractCreateForm = (props: {
     };
 
     const getStepOneButtonLabel = () => {
-        let maxAmount = new BN(0);
-        let fundingAmount = new BN(0);
-        if (selectedToken) {
-            if (selectedToken.address === NATIVE_SOL.address) {
-                const amount = getMaxAmount();
-                maxAmount = new BN(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-            } else {
-                maxAmount = tokenBalanceBn;
+        if (!selectedToken) { return false; }
+
+        let maxAmount = new BigNumber(0);
+        if (selectedToken.address === NATIVE_SOL.address) {
+            const amount = getMaxAmount();
+            if (amount > 0) {
+                maxAmount = new BigNumber(amount);
             }
-            fundingAmount = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
         } else {
-            fundingAmount = toTokenAmountBn(parseFloat(vestingLockFundingAmount), 9);
+            maxAmount = new BigNumber(tokenBalanceBn.toString());
         }
+
+        const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+        const fundingAmount = new BigNumber(fa.toString());
 
         return  !publicKey
             ? t('transactions.validation.not-connected')
@@ -537,19 +542,20 @@ export const VestingContractCreateForm = (props: {
     }
 
     const getStepTwoButtonLabel = () => {
-        let maxAmount = new BN(0);
-        let fundingAmount = new BN(0);
-        if (selectedToken) {
-            if (selectedToken.address === NATIVE_SOL.address) {
-                const amount = getMaxAmount();
-                maxAmount = new BN(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-            } else {
-                maxAmount = tokenBalanceBn;
+        if (!selectedToken) { return false; }
+
+        let maxAmount = new BigNumber(0);
+        if (selectedToken.address === NATIVE_SOL.address) {
+            const amount = getMaxAmount();
+            if (amount > 0) {
+                maxAmount = new BigNumber(amount);
             }
-            fundingAmount = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
         } else {
-            fundingAmount = toTokenAmountBn(parseFloat(vestingLockFundingAmount), 9);
+            maxAmount = new BigNumber(tokenBalanceBn.toString());
         }
+
+        const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+        const fundingAmount = new BigNumber(fa.toString());
 
         return  !publicKey
             ? t('transactions.validation.not-connected')
@@ -868,7 +874,6 @@ export const VestingContractCreateForm = (props: {
                                                     const amount = getMaxAmount();
                                                     setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
                                                 } else {
-                                                    // setVestingLockFundingAmount(cutNumber(tokenBalance, selectedToken.decimals));
                                                     setVestingLockFundingAmount(toUiAmount2(tokenBalanceBn, selectedToken.decimals));
                                                 }
                                             }}>
