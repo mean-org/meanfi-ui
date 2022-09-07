@@ -14,6 +14,7 @@ import {
 } from '../../../../middleware/utils';
 import {
   consoleOut,
+  friendlyDisplayDecimalPlaces,
   getTransactionOperationDescription,
   toUsCurrency
 } from '../../../../middleware/ui';
@@ -577,7 +578,7 @@ export const VestingContractAddFundsModal = (props: {
                       <span>
                         {`${availableBalance && selectedToken
                             ? getAmountWithSymbol(
-                                availableBalance,
+                                toUiAmount2(availableBalance, selectedToken.decimals),
                                 selectedToken.address,
                                 true,
                                 splTokenList,
