@@ -525,10 +525,9 @@ export const TreasuryStreamCreateModal = (props: {
   const getPaymentRateAmount = useCallback(() => {
 
     let outStr = selectedToken
-      ? getTokenAmountAndSymbolByTokenAddress(
-          parseFloat(paymentRateAmount),
-          selectedToken.address,
-          false
+      ? stringNumberFormat(
+          paymentRateAmount,
+          friendlyDisplayDecimalPlaces(parseFloat(paymentRateAmount)) || selectedToken.decimals
         )
       : '-'
     outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
@@ -1060,20 +1059,29 @@ export const TreasuryStreamCreateModal = (props: {
         ra = toStream.divn(lpa);
       }
 
-      setPaymentRateAmountBn(ra);
-      setPaymentRateAmount(ra.toString());
+      if (workingTreasuryType === TreasuryType.Lock) {
+        setPaymentRateAmountBn(ra);
+        setPaymentRateAmount(ra.toString());
+      } else {
+        const openRateAmount = toTokenAmount2(paymentRateAmount || '0', selectedToken.decimals, true) as string;
+        setPaymentRateAmountBn(new BN(openRateAmount));
+      }
     }
-  }, [lockPeriodAmount, percentageValue, selectedToken, setPaymentRateAmount, tokenAmount]);
+  }, [lockPeriodAmount, paymentRateAmount, percentageValue, selectedToken, setPaymentRateAmount, tokenAmount, workingTreasuryType]);
 
   // Set the amount to be streamed
   useEffect(() => {
 
     if (!selectedToken) { return; }
 
-    if (tokenAmount.gtn(0) && percentageValue > 0) {
-      const cr = tokenAmount.muln(percentageValue).divn(100);
-      const toStream = tokenAmount.sub(cr);
-      setAmountToBeStreamedBn(toStream);
+    if (tokenAmount.gtn(0)) {
+      if (percentageValue > 0) {
+        const cr = tokenAmount.muln(percentageValue).divn(100);
+        const toStream = tokenAmount.sub(cr);
+        setAmountToBeStreamedBn(toStream);
+      } else {
+        setAmountToBeStreamedBn(tokenAmount);
+      }
     }
 
   }, [percentageValue, selectedToken, tokenAmount]);
@@ -1939,33 +1947,6 @@ export const TreasuryStreamCreateModal = (props: {
                                   fullTokenInfo={selectedToken}
                                 />
                               )}
-
-                              {/* {(selectedToken && tokenList) && (
-                                <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
-                                  {tokenList.map((option) => {
-                                    if (option.address === NATIVE_SOL.address) {
-                                      return null;
-                                    }
-                                    return (
-                                      <Option key={option.address} value={option.address}>
-                                        <div className="option-container">
-                                          <TokenDisplay onClick={() => {}}
-                                            mintAddress={option.address}
-                                            name={option.name}
-                                            showCaretDown={workingAssociatedToken ? false : true}
-                                            fullTokenInfo={selectedToken}
-                                          />
-                                          <div className="balance">
-                                            {userBalances && userBalances[option.address] > 0 && (
-                                              <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </Option>
-                                    );
-                                  })}
-                                </Select>
-                              )} */}
                             </span>
                           </div>
                           <div className="right">
@@ -2411,9 +2392,7 @@ export const TreasuryStreamCreateModal = (props: {
                 </>
               ) : (
                 <>
-                  {(workingTreasuryType === TreasuryType.Lock) && (
-                    <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel2-name')}</div>
-                  )}
+                  <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel2-name')}</div>
 
                   {(recipientNote && recipientAddress && fromCoinAmount && selectedToken) && (
                     <div className="flex-fixed-right">
