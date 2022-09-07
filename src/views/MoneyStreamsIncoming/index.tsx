@@ -38,6 +38,7 @@ import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@me
 import { useSearchParams } from "react-router-dom";
 import { readAccountInfo } from "../../middleware/accounts";
 import { appConfig } from '../..';
+import BN from "bn.js";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1173,7 +1174,7 @@ export const MoneyStreamsIncomingView = (props: {
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
     const isNew = stream.version >= 2 ? true : false;
-    return isNew ? v2.withdrawableAmount : v1.escrowVestedAmount;
+    return isNew ? v2.withdrawableAmount : new BN(v1.escrowVestedAmount);
   }, []);
 
   const canWithdraw = useCallback((stream: StreamInfo | Stream | undefined ) => {
@@ -1386,7 +1387,7 @@ export const MoneyStreamsIncomingView = (props: {
             disabled={
               !canWithdraw(streamSelected) ||
               isScheduledOtp() ||
-              getStreamWithdrawableAmount(streamSelected) === 0 ||
+              getStreamWithdrawableAmount(streamSelected).isZero() ||
               isBusy ||
               hasStreamPendingTx(OperationType.StreamWithdraw)
             }
