@@ -180,6 +180,32 @@ export const VestingContractCreateStreamModal = (props: {
         return false;
     }, [today]);
 
+    const getReleaseRate = useCallback(() => {
+        if (!lockPeriodAmount || !selectedToken) {
+            return '--';
+        }
+
+        return `${displayAmountWithSymbol(
+            paymentRateAmountBn,
+            selectedToken.address,
+            selectedToken.decimals,
+            splTokenList,
+        )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
+    }, [lockPeriodAmount, lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
+
+    const getCliffReleaseAmount = useCallback(() => {
+        if (!cliffRelease || !selectedToken) {
+            return '--';
+        }
+
+        return displayAmountWithSymbol(
+            cliffReleaseBn,
+            selectedToken.address,
+            selectedToken.decimals,
+            splTokenList,
+        );
+    }, [cliffRelease, cliffReleaseBn, selectedToken, splTokenList]);
+
 
     /////////////////////
     // Data management //
@@ -343,18 +369,22 @@ export const VestingContractCreateStreamModal = (props: {
     }, [getMaxAmount, selectedToken, setFromCoinAmount, isFeePaidByTreasurer, tokenAmount]);
 
     const getStreamTxConfirmDescription = (multisig: string) => {
-        const cliff = `${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol}`;
-        const rate = `${paymentRateAmount} ${selectedToken?.symbol} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
-        return `Create stream to send ${rate} with ${cliff} released on commencement.`;
+        if (!selectedToken) { return ''; }
+        const cliff = getCliffReleaseAmount();
+        const rate = `${getReleaseRate()} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
+        return `Create stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement.`;
     }
 
     const getStreamTxConfirmedDescription = (multisig: string) => {
-        const cliff = `${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol}`;
-        const rate = `${paymentRateAmount} ${selectedToken?.symbol} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
-        return `Stream to send ${rate} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
+        if (!selectedToken) { return ''; }
+        const cliff = getCliffReleaseAmount();
+        const rate = `${getReleaseRate()} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
+        return `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
     }
 
     const onStreamCreateClick = () => {
+        if (!selectedToken) { return; }
+
         const multisig = isMultisigTreasury && selectedMultisig
             ? selectedMultisig.authority.toBase58()
             : '';
@@ -777,12 +807,7 @@ export const VestingContractCreateStreamModal = (props: {
                             <span className="ml-1">
                                 {
                                     cliffRelease && selectedToken
-                                        ? `${displayAmountWithSymbol(
-                                                cliffReleaseBn,
-                                                selectedToken.address,
-                                                selectedToken.decimals,
-                                                splTokenList,
-                                            )} (on commencement)`
+                                        ? `${getCliffReleaseAmount()} (on commencement)`
                                         : "--"
                                 }
                             </span>
@@ -804,18 +829,7 @@ export const VestingContractCreateStreamModal = (props: {
                         </Col>
                         <Col span={24}>
                             <strong>Release rate:</strong>
-                            <span className="ml-1">
-                                {
-                                    lockPeriodAmount && selectedToken
-                                        ? `${displayAmountWithSymbol(
-                                                paymentRateAmountBn,
-                                                selectedToken.address,
-                                                selectedToken.decimals,
-                                                splTokenList,
-                                            )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`
-                                        : "--"
-                                }
-                            </span>
+                            <span className="ml-1">{getReleaseRate()}</span>
                         </Col>
                     </Row>
 
