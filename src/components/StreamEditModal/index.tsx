@@ -50,15 +50,7 @@ export const StreamEditModal = (props: {
 
   useEffect(() => {
     if (props.streamDetail) {
-      // setRecipientNote();
-
-      // setFromCoinAmount(toUiAmount(new BN(props.streamDetail.rateAmount), 6).toString());
-
-      // let frequency = getIntervalFromSeconds(props.streamDetail.rateIntervalInSeconds, false, t);
-      // const camalize = frequency.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
-      // const rateType = camalize.charAt(0).toUpperCase() + camalize.slice(1);
-      
-      // setPaymentRateFrequency(PaymentRateType[rateType]);
+      //
     }
   }, [
     props.streamDetail,
@@ -66,15 +58,7 @@ export const StreamEditModal = (props: {
 
   const refreshPage = () => {
     if (props.streamDetail) {
-      // setRecipientNote();
-
-      // setFromCoinAmount(toUiAmount(new BN(props.streamDetail.rateAmount), 6).toString());
-
-      // let frequency = getIntervalFromSeconds(props.streamDetail.rateIntervalInSeconds, false, t);
-      // const camalize = frequency.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
-      // const rateType = camalize.charAt(0).toUpperCase() + camalize.slice(1);
-      
-      // setPaymentRateFrequency(PaymentRateType[rateType]);
+      //
     }
     props.handleClose();
     window.location.reload();

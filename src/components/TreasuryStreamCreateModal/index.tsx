@@ -12,6 +12,7 @@ import {
   isValidNumber,
   shortenAddress,
   toTokenAmount2,
+  toTokenAmountBn,
   toUiAmount2,
 } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
@@ -278,6 +279,16 @@ export const TreasuryStreamCreateModal = (props: {
     return false;
 
   }, [publicKey, selectedMultisig, workingTreasuryDetails]);
+
+  const getRateAmountBn = useCallback((item: Stream | StreamInfo) => {
+    if (item && selectedToken) {
+      const rateAmount = item.version < 2
+        ? toTokenAmountBn(item.rateAmount as number, selectedToken.decimals)
+        : item.rateAmount;
+      return rateAmount;
+    }
+    return new BN(0);
+  }, [selectedToken]);
 
   const getReleaseRate = useCallback(() => {
     if (!lockPeriodAmount || !selectedToken) {
@@ -879,21 +890,6 @@ export const TreasuryStreamCreateModal = (props: {
     setPercentageValue(value);
   };
 
-  // Multi-recipient
-  // const onCloseMultipleStreamsChanged = useCallback((e: any) => {
-  //   setEnableMultipleStreamsOption(e.target.value);
-  
-  //   if (!enableMultipleStreamsOption) {
-  //     setCsvArray([]);
-  //     setIsCsvSelected(false);
-  //   }
-
-  // }, [enableMultipleStreamsOption]);
-
-  // const onAllocationReservedChanged = (e: any) => {
-  //   setIsAllocationReserved(e.target.value);
-  // }
-
   const selectCsvHandler = (e: any) => {
     const reader = new FileReader();
 
@@ -931,25 +927,17 @@ export const TreasuryStreamCreateModal = (props: {
           }) as TokenInfo;
       }
 
-      if (item.version < 2) {
-        const rateAmount = new BN(item.rateAmount).toNumber();
-        value += formatThousands(
-          rateAmount,
-          friendlyDisplayDecimalPlaces(rateAmount, decimals),
-          2
-        );
-      } else {
-        const rateAmount = new BN(item.rateAmount);
-        value += stringNumberFormat(
-          toUiAmount2(rateAmount, decimals),
-          friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
-        )
-      }
+      const rateAmount = getRateAmountBn(item);
+      value += stringNumberFormat(
+        toUiAmount2(rateAmount, decimals),
+        friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
+      )
+
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
-  }, [getTokenByMintAddress]);
+  }, [getRateAmountBn, getTokenByMintAddress]);
 
 
   useEffect(() => {

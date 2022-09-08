@@ -203,8 +203,12 @@ export const MoneyStreamsOutgoingView = (props: {
   }, [confirmationHistory, streamSelected]);
 
   const isOtp = useCallback((): boolean => {
-    return streamSelected?.rateAmount === 0 ? true : false;
-  }, [streamSelected?.rateAmount]);
+    if (!streamSelected) {
+      return false;
+    }
+    const rate = +streamSelected.rateAmount.toString();
+    return rate ? false : true;
+  }, [streamSelected]);
 
   const isDeletedStream = useCallback((stream: Stream | StreamInfo) => {
     if (!deletedStreams) {

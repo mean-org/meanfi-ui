@@ -20,7 +20,7 @@ import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
-import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toTokenAmount } from "../../middleware/utils";
+import { displayAmountWithSymbol, getAmountWithSymbol, getTxIxResume, shortenAddress } from "../../middleware/utils";
 import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
@@ -1166,7 +1166,13 @@ export const MoneyStreamsIncomingView = (props: {
   }, [confirmationHistory, streamSelected]);
 
   const isScheduledOtp = useCallback((): boolean => {
-    if (streamSelected && streamSelected.rateAmount === 0) {
+    if (streamSelected) {
+      const isNew = streamSelected.version >= 2 ? true : false;
+      if (isNew) {
+        if ((streamSelected.rateAmount as BN).gtn(0)) { return false; }
+      } else {
+        if (streamSelected.rateAmount as number > 0) { return false; }
+      }
       const now = new Date().toUTCString();
       const nowUtc = new Date(now);
       const streamStartDate = new Date(streamSelected.startUtc as string);

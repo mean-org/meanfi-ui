@@ -28,7 +28,7 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigTransactionFees, MULTISIG_ACTIONS } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, stringNumberFormat, toUsCurrency } from "../../middleware/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { cutNumber, displayAmountWithSymbol, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from "../../middleware/utils";
+import { cutNumber, displayAmountWithSymbol, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toTokenAmountBn, toUiAmount, toUiAmount2 } from "../../middleware/utils";
 import { useTranslation } from "react-i18next";
 import { useNativeAccount } from "../../contexts/accounts";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
@@ -209,10 +209,6 @@ export const MoneyStreamsInfoView = (props: {
   //  Callbacks  //
   /////////////////
 
-  /////////////////
-  //  Callbacks  //
-  /////////////////
-
   const getQueryAccountType = useCallback(() => {
     let accountTypeInQuery: string | null = null;
     if (searchParams) {
@@ -331,6 +327,16 @@ export const MoneyStreamsInfoView = (props: {
     publicKey,
     connection,
   ]);
+
+  const getRateAmountBn = useCallback((item: Stream | StreamInfo, decimals: number) => {
+    if (item) {
+      const rateAmount = item.version < 2
+        ? toTokenAmountBn(item.rateAmount as number, decimals)
+        : item.rateAmount as BN;
+      return rateAmount;
+    }
+    return new BN(0);
+  }, []);
 
   const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined, logUnallocatedBalances = false) => {
 
@@ -1598,25 +1604,17 @@ export const MoneyStreamsInfoView = (props: {
         }) as TokenInfo;
       }
 
-      if (item.version < 2) {
-        const rateAmount = new BN(item.rateAmount).toNumber();
-        value += formatThousands(
-          rateAmount,
-          friendlyDisplayDecimalPlaces(rateAmount, decimals),
-          2
-        );
-      } else {
-        const rateAmount = new BN(item.rateAmount);
-        value += stringNumberFormat(
-          toUiAmount2(rateAmount, decimals),
-          friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
-        )
-      }
+      const rateAmount = getRateAmountBn(item, decimals);
+      value += stringNumberFormat(
+        toUiAmount2(rateAmount, decimals),
+        friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
+      )
+
       value += ' ';
       value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
     }
     return value;
-  }, [getTokenByMintAddress]);
+  }, [getRateAmountBn, getTokenByMintAddress]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
@@ -1663,11 +1661,12 @@ export const MoneyStreamsInfoView = (props: {
     let subtitle = '';
 
     if (item) {
-      let rateAmount = new BN(item.rateAmount).gtn(0)
+      const rate = +item.rateAmount.toString();
+      let rateAmount = rate > 0
         ? getRateAmountDisplay(item)
         : getDepositAmountDisplay(item);
 
-      if (new BN(item.rateAmount).gtn(0)) {
+      if (rate > 0) {
         rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
       }
 
@@ -2151,17 +2150,31 @@ export const MoneyStreamsInfoView = (props: {
         const v2 = stream as Stream;
         const isNew = v2.version && v2.version >= 2 ? true : false;
 
-        // const token = getTokenByMintAddress(stream.associatedToken as string);
-        const token = getTokenByMintAddress((stream.associatedToken as PublicKey).toString());
+        let associatedToken = '';
+
+        if (isNew) {
+          associatedToken = v2.associatedToken.toBase58();
+        } else {
+          associatedToken = v1.associatedToken as string;
+        }
+        const token = getTokenByMintAddress(associatedToken);
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-          const rateAmountValue = isNew ? new BigNumber(toUiAmount2(new BN(v2.rateAmount), token?.decimals || 6)).toNumber() : v1.rateAmount;
-          const valueOfDay = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
-          totalRateAmountValue += valueOfDay;
-
-          const valueOfSeconds = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds;
-          totalRateAmountValuePerSecond += valueOfSeconds;
+          if (!tokenPrice) {
+            continue;
+          }
+          BigNumber.config({
+            CRYPTO: true,
+            DECIMAL_PLACES: 16
+          });
+          const rateAmountBn = getRateAmountBn(stream, token.decimals);
+          const rateAmountToUi = toUiAmount2(rateAmountBn, token.decimals);
+          const totalValue = new BigNumber(rateAmountToUi).multipliedBy(tokenPrice);
+          const amountAsecond = totalValue.dividedBy(stream.rateIntervalInSeconds).toNumber();
+          const amountAday = totalValue.dividedBy(stream.rateIntervalInSeconds).multipliedBy(86400).toNumber();
+          totalRateAmountValue += amountAday;
+          totalRateAmountValuePerSecond += amountAsecond;
         }
       }
 
@@ -2176,6 +2189,7 @@ export const MoneyStreamsInfoView = (props: {
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     isStreamRunning,
+    getRateAmountBn,
     t,
   ]);
 

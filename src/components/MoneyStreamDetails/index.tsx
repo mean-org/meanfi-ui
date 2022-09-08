@@ -7,7 +7,7 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, shortenAddress, toUiAmount2 } from "../../middleware/utils";
+import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, shortenAddress, toTokenAmountBn, toUiAmount2 } from "../../middleware/utils";
 import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates, stringNumberFormat } from "../../middleware/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
@@ -110,6 +110,16 @@ export const MoneyStreamDetails = (props: {
     }
   }, [getStreamActivity, stream]);
 
+  const getRateAmountBn = useCallback((item: Stream | StreamInfo) => {
+    if (item && selectedToken) {
+      const rateAmount = item.version < 2
+        ? toTokenAmountBn(item.rateAmount as number, selectedToken.decimals)
+        : item.rateAmount as BN;
+      return rateAmount;
+    }
+    return new BN(0);
+  }, [selectedToken]);
+
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     if (!selectedToken) {
       return '';
@@ -124,24 +134,17 @@ export const MoneyStreamDetails = (props: {
       associatedToken = (item as Stream).associatedToken.toBase58();
     }
 
-    if (item.version < 2) {
-      const rateAmount = new BN(item.rateAmount);
-      value += stringNumberFormat(
-        toUiAmount2(rateAmount, selectedToken.decimals),
-        friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
-      )
-    } else {
-      const rateAmount = new BN(item.rateAmount);
-      value += stringNumberFormat(
-        toUiAmount2(rateAmount, selectedToken.decimals),
-        friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
-      )
-    }
+    const rateAmount = getRateAmountBn(item);
+    value += stringNumberFormat(
+      toUiAmount2(rateAmount, selectedToken.decimals),
+      friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
+    )
+
     value += ' ';
     value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken).toString()}]`;
 
     return value;
-  }, [selectedToken]);
+  }, [getRateAmountBn, selectedToken]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     if (!selectedToken) {
@@ -159,7 +162,7 @@ export const MoneyStreamDetails = (props: {
 
     if (item.rateIntervalInSeconds === 0) {
       if (item.version < 2) {
-        const allocationAssigned = new BN(item.allocationAssigned).toNumber();
+        const allocationAssigned = item.allocationAssigned as number;
         value += formatThousands(
           allocationAssigned,
           friendlyDisplayDecimalPlaces(allocationAssigned, selectedToken.decimals),
@@ -183,12 +186,13 @@ export const MoneyStreamDetails = (props: {
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';
 
-    if (item) {
-      let rateAmount = new BN(item.rateAmount).gtn(0)
+    if (item && selectedToken) {
+      const rate = +item.rateAmount.toString();
+      let rateAmount = rate > 0
         ? getRateAmountDisplay(item)
         : getDepositAmountDisplay(item);
 
-      if (new BN(item.rateAmount).gtn(0)) {
+      if (rate > 0) {
         rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
       }
 
@@ -197,7 +201,7 @@ export const MoneyStreamDetails = (props: {
 
     return subtitle;
 
-  }, [getRateAmountDisplay, getDepositAmountDisplay, t]);
+  }, [getDepositAmountDisplay, getRateAmountDisplay, selectedToken, t]);
 
   const getStreamStatus = useCallback((item: Stream | StreamInfo): "scheduled" | "stopped" | "stopped-manually" | "running" => {
     const v1 = item as StreamInfo;
@@ -398,16 +402,23 @@ export const MoneyStreamDetails = (props: {
   }
 
   const isOtp = (): boolean => {
-    return stream && stream.rateAmount === 0 ? true : false;
+    if (stream) {
+      const rateAmount = getRateAmountBn(stream);
+      return rateAmount.isZero();
+    }
+    return false;
   }
 
   const isScheduledOtp = (): boolean => {
-    if (stream && stream.rateAmount === 0) {
-      const now = new Date().toUTCString();
-      const nowUtc = new Date(now);
-      const streamStartDate = new Date(stream.startUtc as string);
-      if (streamStartDate > nowUtc) {
-        return true;
+    if (stream) {
+      const rateAmount = getRateAmountBn(stream);
+      if (rateAmount.isZero()) {
+        const now = new Date().toUTCString();
+        const nowUtc = new Date(now);
+        const streamStartDate = new Date(stream.startUtc as string);
+        if (streamStartDate > nowUtc) {
+          return true;
+        }
       }
     }
     return false;
@@ -515,15 +526,16 @@ export const MoneyStreamDetails = (props: {
   const renderPaymentRate = () => {
     if (!stream || !selectedToken) { return '--'; }
 
-    let rateAmount = !isOtp()
+    const rateAmount = getRateAmountBn(stream);
+    let rate = !isOtp()
       ? getRateAmountDisplay(stream)
       : getDepositAmountDisplay(stream);
 
-    if (stream.rateAmount > 0) {
-      rateAmount += ' ' + getIntervalFromSeconds(stream.rateIntervalInSeconds, false, t);
+    if (rateAmount.gtn(0)) {
+      rate += ' ' + getIntervalFromSeconds(stream.rateIntervalInSeconds, false, t);
     }
 
-    return rateAmount;
+    return rate;
   }
 
   const renderReservedAllocation = () => {

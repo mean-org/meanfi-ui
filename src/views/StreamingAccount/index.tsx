@@ -54,6 +54,7 @@ import {
   shortenAddress,
   toUiAmount2,
   getAmountWithSymbol,
+  toTokenAmountBn,
 } from "../../middleware/utils";
 import useWindowSize from "../../hooks/useWindowResize";
 import { TreasuryTopupParams } from "../../models/common-types";
@@ -281,6 +282,16 @@ export const StreamingAccountView = (props: {
     connection,
   ]);
 
+  const getRateAmountBn = useCallback((item: Stream | StreamInfo) => {
+    if (item && selectedToken) {
+      const rateAmount = item.version < 2
+        ? toTokenAmountBn(item.rateAmount as number, selectedToken.decimals)
+        : item.rateAmount;
+      return rateAmount;
+    }
+    return new BN(0);
+  }, [selectedToken]);
+
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return await calculateActionFees(connection, action);
   }, [connection]);
@@ -473,25 +484,17 @@ export const StreamingAccountView = (props: {
       associatedToken = (item as Stream).associatedToken.toBase58();
     }
 
-    if (item.version < 2) {
-      const rateAmount = new BN(item.rateAmount).toNumber();
-      value += formatThousands(
-        rateAmount,
-        friendlyDisplayDecimalPlaces(rateAmount, selectedToken.decimals),
-        2
-      );
-    } else {
-      const rateAmount = new BN(item.rateAmount);
-      value += stringNumberFormat(
-        toUiAmount2(rateAmount, selectedToken.decimals),
-        friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
-      )
-    }
+    const rateAmount = getRateAmountBn(item);
+    value += stringNumberFormat(
+      toUiAmount2(rateAmount, selectedToken.decimals),
+      friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
+    )
+
     value += ' ';
     value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken).toString()}]`;
 
     return value;
-  }, [selectedToken]);
+  }, [getRateAmountBn, selectedToken]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     if (!selectedToken) {
@@ -534,11 +537,12 @@ export const StreamingAccountView = (props: {
     let subtitle = '';
 
     if (item) {
-      let rateAmount = new BN(item.rateAmount).gtn(0)
+      const rate = +item.rateAmount.toString();
+      let rateAmount = rate > 0
         ? getRateAmountDisplay(item)
         : getDepositAmountDisplay(item);
 
-      if (new BN(item.rateAmount).gtn(0)) {
+      if (rate > 0) {
         rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, true, t);
       }
 
