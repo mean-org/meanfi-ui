@@ -25,9 +25,9 @@ import {
   fetchAccountTokens,
   formatAmount,
   formatThousands,
-  getTokenAmountAndSymbolByTokenAddress,
-  makeDecimal,
+  getAmountWithSymbol,
   shortenAddress,
+  toUiAmount2,
 } from "../../middleware/utils";
 import { IconCoin, IconCopy, IconExternalLink, IconTrash, IconWallet } from "../../Icons";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -37,7 +37,6 @@ import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@so
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { SYSTEM_PROGRAM_ID } from "../../middleware/ids";
 import { AddressDisplay } from "../../components/AddressDisplay";
-import { BN } from "bn.js";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
 import { TokenInfo } from "@solana/spl-token-registry";
@@ -639,27 +638,29 @@ export const PlaygroundView = () => {
     return CRYPTO_VALUES.map((value: number, index: number) => {
       return (
         <div className="item-list-row" key={index}>
-          <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
-            {selectedToken
-              ? getTokenAmountAndSymbolByTokenAddress(
-                value,
-                selectedToken.address
-              )
-              : ""}
-          </div>
-          <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
+          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
             {selectedToken
               ? `${formatThousands(value, selectedToken.decimals)} ${selectedToken.symbol
               }`
               : ""}
           </div>
-          <div className="std-table-cell responsive-cell text-monospace text-right">
+          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
             {selectedToken
               ? `${formatThousands(
-                  value,
-                  friendlyDisplayDecimalPlaces(value, selectedToken.decimals)
-                )} ${selectedToken.symbol
-              }`
+                    value,
+                    friendlyDisplayDecimalPlaces(value, selectedToken.decimals)
+                  )} ${selectedToken.symbol}`
+              : ""}
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
+            {selectedToken
+              ? getAmountWithSymbol(
+                value,
+                selectedToken.address,
+                false,
+                splTokenList,
+                selectedToken.decimals
+              )
               : ""}
           </div>
         </div>
@@ -717,24 +718,24 @@ export const PlaygroundView = () => {
       <div className="tabset-heading">Number Formatting</div>
       <div className="item-list-header">
         <div className="header-row">
-          <div className="std-table-cell responsive-cell text-right pr-2">
+          <div className="std-table-cell responsive-cell text-right px-1">
             Format 1
           </div>
-          <div className="std-table-cell responsive-cell text-right pr-2">
+          <div className="std-table-cell responsive-cell text-right px-1">
             Format 2
           </div>
-          <div className="std-table-cell responsive-cell text-right">
+          <div className="std-table-cell responsive-cell text-right px-1">
             Format 3
           </div>
         </div>
       </div>
       <div className="item-list-body">{renderTable()}</div>
       <div className="mb-2">
-        Format 1:&nbsp;<code>getTokenAmountAndSymbolByTokenAddress(value, mintAddress)</code>
+        Format 1:&nbsp;<code>formatThousands</code>
         <br />
-        Format 2:&nbsp;<code>formatThousands(value, decimals)</code>
+        Format 2:&nbsp;<code>formatThousands + friendlyDisplayDecimalPlaces</code>
         <br />
-        Format 3:&nbsp;<code>formatThousands(value, friendlyDisplayDecimalPlaces(value, decimals), minDecimals)</code>
+        Format 3:&nbsp;<code>getAmountWithSymbol</code>
       </div>
 
       <Divider />
@@ -1019,7 +1020,13 @@ export const PlaygroundView = () => {
                     isTokenAccount
                       ? infoRow('Token Balance', formatThousands(parsedAccountInfo.data.parsed.info.tokenAmount.uiAmount, decimals, decimals))
                       : isTokenMint
-                        ? infoRow('Current Supply:', formatThousands(makeDecimal(new BN(parsedAccountInfo.data.parsed.info.supply), decimals), decimals, decimals))
+                        ? infoRow('Current Supply:', getAmountWithSymbol(
+                            toUiAmount2(parsedAccountInfo.data.parsed.info.supply, decimals),
+                            parsedAccountInfo.data.parsed.info.mint,
+                            true,
+                            splTokenList,
+                            decimals
+                          ))
                         : ''
                   }
                   {isTokenMint && infoRow('Mint Authority:', parsedAccountInfo.data.parsed.info.mintAuthority)}

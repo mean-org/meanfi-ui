@@ -892,11 +892,6 @@ export const AccountsNewView = () => {
     }
   };
 
-  const refreshAssetBalances = useCallback((reset = false) => {
-    setAccountTokens([]);
-    reloadAssets();
-  }, []);
-
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
@@ -1018,9 +1013,7 @@ export const AccountsNewView = () => {
             refreshMultisigs(false);
             notifyMultisigActionFollowup(item);
           }
-          setTimeout(() => {
-            softReloadStreams();
-          }, 20);
+          softReloadStreams();
           break;
         case OperationType.TreasuryCreate:
         case OperationType.StreamWithdraw:
@@ -1030,10 +1023,8 @@ export const AccountsNewView = () => {
             refreshMultisigs(false);
             notifyMultisigActionFollowup(item);
           }
-          setTimeout(() => {
-            softReloadAssets();
-            softReloadStreams();
-          }, 100);
+          softReloadAssets();
+          softReloadStreams();
           break;
         case OperationType.StreamClose:
         case OperationType.TreasuryClose:
@@ -1069,7 +1060,7 @@ export const AccountsNewView = () => {
       }
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, navigate, setHighLightableMultisigId]);
+  }, []);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {

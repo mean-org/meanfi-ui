@@ -13,7 +13,6 @@ import {
   fetchAccountTokens,
   formatThousands,
   getAmountWithSymbol,
-  getTokenAmountAndSymbolByTokenAddress,
   getTokenBySymbol,
   getTxIxResume,
   isValidNumber,
@@ -28,6 +27,7 @@ import { EventType, OperationType, PaymentRateType, TransactionStatus } from "..
 import {
   consoleOut,
   disabledDate,
+  friendlyDisplayDecimalPlaces,
   getIntervalFromSeconds,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
@@ -35,6 +35,7 @@ import {
   isToday,
   isValidAddress,
   PaymentRateTypeOption,
+  stringNumberFormat,
   toUsCurrency
 } from "../../middleware/ui";
 import moment from "moment";
@@ -46,7 +47,6 @@ import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { useLocation } from 'react-router-dom';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
@@ -105,8 +105,6 @@ export const RepeatingPayment = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
-  // const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const { width } = useWindowSize();
@@ -140,7 +138,7 @@ export const RepeatingPayment = (props: {
     const feeAmount = getFeeAmount();
     return feeAmount > MIN_SOL_BALANCE_REQUIRED
       ? feeAmount
-      : MIN_SOL_BALANCE_REQUIRED;
+      : MIN_SOL_BALANCE_REQUIRED as number;
 
   }, [getFeeAmount]);
 
@@ -421,10 +419,9 @@ export const RepeatingPayment = (props: {
   const getPaymentRateAmount = useCallback(() => {
 
     let outStr = selectedToken
-      ? getTokenAmountAndSymbolByTokenAddress(
-          parseFloat(paymentRateAmount),
-          selectedToken.address,
-          false
+      ? stringNumberFormat(
+          paymentRateAmount,
+          friendlyDisplayDecimalPlaces(parseFloat(paymentRateAmount)) || selectedToken.decimals
         )
       : '-'
     outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
@@ -1232,7 +1229,7 @@ export const RepeatingPayment = (props: {
               loadingTitle: "Confirming transaction",
               loadingMessage: `Send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `${location.pathname.includes("streaming") ? "Outgoing stream" : "Stream"} to send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} has been created.`
+              completedMessage: `Stream to send ${getPaymentRateAmount()} has been created.`
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -1263,7 +1260,6 @@ export const RepeatingPayment = (props: {
     paymentStartDate,
     paymentRateAmount,
     transferCompleted,
-    location.pathname,
     paymentRateFrequency,
     transactionCancelled,
     streamV2ProgramAddress,
@@ -1271,6 +1267,7 @@ export const RepeatingPayment = (props: {
     enqueueTransactionConfirmation,
     resetTransactionStatus,
     setIsVerifiedRecipient,
+    getPaymentRateAmount,
     setTransactionStatus,
     resetContractValues,
     getPaymentRateLabel,

@@ -1,3 +1,5 @@
+import { TokenInfo } from "@solana/spl-token-registry";
+
 export interface StreamsSummary {
     totalNet: number;
     incomingAmount: number;
@@ -21,7 +23,7 @@ export interface TreasuryStreamsBreakdown {
 
 export interface StreamWithdrawData {
     title?: string;
-    token: string;
+    token: TokenInfo;
     amount: string;
     inputAmount: number;
     fee: number;

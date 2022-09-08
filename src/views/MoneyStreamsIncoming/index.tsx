@@ -680,7 +680,7 @@ export const MoneyStreamsIncomingView = (props: {
 
         // Report event to Segment analytics
         const segmentData: SegmentStreamWithdrawData = {
-          asset: withdrawData.token,
+          asset: withdrawData.token.symbol,
           assetPrice: price,
           stream: data.stream,
           beneficiary: data.beneficiary,
@@ -848,7 +848,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       // Report event to Segment analytics
       const segmentData: SegmentStreamWithdrawData = {
-        asset: withdrawData.token,
+        asset: withdrawData.token.symbol,
         assetPrice: price,
         stream: data.stream,
         beneficiary: data.beneficiary,
@@ -1045,7 +1045,7 @@ export const MoneyStreamsIncomingView = (props: {
     }
 
     if (wallet && streamSelected && workingToken) {
-      const token = Object.assign({}, workingToken);
+      const token = withdrawData.token;
       showWithdrawFundsTransactionModal();
       let created: boolean;
       if (streamSelected.version < 2) {
@@ -1062,21 +1062,28 @@ export const MoneyStreamsIncomingView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const amountDisplay = displayAmountWithSymbol(
+              withdrawData.amount,
+              token.address,
+              token.decimals,
+              splTokenList,
+              true
+            );
+            const loadingMessage = multisigAuth
+              ? `Create proposal to withdraw ${amountDisplay}`
+              : `Withdraw ${amountDisplay}`;
+            const completed = multisigAuth
+              ? `Proposal to withdraw ${amountDisplay} has been submitted for approval.`
+              : `Successfully withdrawn ${amountDisplay}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.StreamWithdraw,
               finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Withdraw ${formatThousands(
-                parseFloat(withdrawData.amount),
-                token.decimals
-              )} ${token.symbol}`,
+              loadingMessage: loadingMessage,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully withdrawn ${formatThousands(
-                parseFloat(withdrawData.amount),
-                token.decimals
-              )} ${token.symbol}`,
+              completedMessage: completed,
               extras: {
                 multisigAuthority: multisigAuth
               }

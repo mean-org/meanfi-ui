@@ -231,7 +231,7 @@ export const StreamWithdrawModal = (props: {
 
     const withdrawData: StreamWithdrawData = {
       title: proposalTitle,
-      token: selectedToken.symbol,
+      token: selectedToken,
       amount: isMaxAmount ? `${maxAmountBn.toString()}` : `${withdrawAmountBn.toString()}`,
       inputAmount: parseFloat(withdrawAmountInput),
       fee: feeAmount || 0,
