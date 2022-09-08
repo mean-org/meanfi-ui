@@ -835,9 +835,9 @@ export const MoneyStreamsIncomingView = (props: {
 
       const stream = (streamSelected as Stream).id;
       const beneficiary = (streamSelected as Stream).beneficiary;
-      const amount = toTokenAmount(parseFloat(withdrawData.amount as string), workingToken.decimals);
+      const amount = withdrawData.amount;
       const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
-      const valueInUsd = price * parseFloat(withdrawData.amount);
+      const valueInUsd = price * withdrawData.inputAmount;
 
       const data = {
         stream: stream.toBase58(),

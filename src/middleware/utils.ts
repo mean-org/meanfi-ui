@@ -522,9 +522,10 @@ export const toTokenAmountBn = (amount: number | string, decimals: number) => {
     return new BN(0);
   }
 
-  const multiplier = new BN(10 ** decimals);
-  const value = new BN(amount);
-  return value.mul(multiplier);
+  const multiplier = new BigNumber(10 ** decimals);
+  const value = new BigNumber(amount);
+  const result = value.multipliedBy(multiplier).integerValue();
+  return new BN(result.toString());
 }
 
 

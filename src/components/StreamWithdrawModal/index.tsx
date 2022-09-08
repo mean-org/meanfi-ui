@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { isValidNumber, shortenAddress, toUiAmount, toUiAmount2 } from "../../middleware/utils";
-import { consoleOut, percentage } from "../../middleware/ui";
+import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount2 } from "../../middleware/utils";
+import { consoleOut, percentageBn } from "../../middleware/ui";
 import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useTranslation } from "react-i18next";
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -18,6 +18,8 @@ import { StreamWithdrawData } from '../../models/streams';
 import { InputMean } from '../InputMean';
 import { TransactionStatus } from '../../models/enums';
 import { useSearchParams } from 'react-router-dom';
+import { BN } from 'bn.js';
+import BigNumber from 'bignumber.js';
 
 export const StreamWithdrawModal = (props: {
   handleClose: any;
@@ -40,12 +42,14 @@ export const StreamWithdrawModal = (props: {
   const { wallet, publicKey } = useWallet();
   const [searchParams] = useSearchParams();
   const {
+    splTokenList,
     streamProgramAddress,
     streamV2ProgramAddress,
     setTransactionStatus,
   } = useContext(AppStateContext);
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>("");
-  const [maxAmount, setMaxAmount] = useState<number>(0);
+  const [withdrawAmountBn, setWithdrawAmountBn] = useState(new BN(0));
+  const [maxAmountBn, setMaxAmountBn] = useState(new BN(0));
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [feePayedByTreasurer, setFeePayedByTreasurer] = useState(false);
@@ -62,7 +66,55 @@ export const StreamWithdrawModal = (props: {
     return undefined;
   }, [searchParams]);
 
+  const getFeeAmount = useCallback((fees: TransactionFees, amount = new BN(0)): number => {
+    if (!selectedToken) { return 0; }
+
+    let fee = 0;
+    if (fees) {
+      if (fees.mspPercentFee) {
+        if (amount.gtn(0)) {
+          const pctgTokens = percentageBn(fees.mspPercentFee, amount);
+          const uiAmount = toUiAmount2(pctgTokens, selectedToken.decimals);
+          fee = parseFloat(uiAmount);
+        }
+      } else if (fees.mspFlatFee) {
+        fee = fees.mspFlatFee;
+      }
+    }
+    return feePayedByTreasurer ? 0 : fee;
+  }, [feePayedByTreasurer, selectedToken]);
+
+  const getDisplayAmount = useCallback((amount: string | number, addSymbol = false): string => {
+    if (selectedToken) {
+      const token = selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+        ? Object.assign({}, selectedToken, {
+            symbol: 'SOL'
+          }) as TokenInfo
+        : selectedToken;
+      const bareAmount = typeof amount === "number"
+        ? amount.toFixed(token.decimals)
+        : amount;
+      if (addSymbol) {
+        return token.name === CUSTOM_TOKEN_NAME ? `${bareAmount} ${selectedToken.symbol}` : `${bareAmount} ${token ? token.symbol : selectedToken.symbol}`;
+      }
+      return bareAmount;
+    }
+
+    return '';
+  }, [selectedToken]);
+
   const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
+
+  const isMaxAmount = useMemo(() => {
+    if (!selectedToken || !withdrawAmountInput) { return false; }
+
+    const value = new BigNumber(withdrawAmountInput);
+    const multiplier = new BigNumber(10 ** selectedToken.decimals);
+    const result = value.multipliedBy(multiplier).integerValue();
+    const withdrawInput = new BN(result.toString());
+
+    return withdrawInput.eq(maxAmountBn);
+  }, [maxAmountBn, selectedToken, withdrawAmountInput]);
 
   useEffect(() => {
 
@@ -77,21 +129,19 @@ export const StreamWithdrawModal = (props: {
           const isNew = detail.version >= 2 ? true : false;
           const v1 = detail as StreamInfo;
           const v2 = detail as Stream;
-          let max = 0;
+          let max = new BN(0);
           if (isNew) {
-            // TODO: lets use toNumber() or parseFloat "for now" but we must upgrade to use BN all the way up
-            max = parseFloat(toUiAmount2(v2.withdrawableAmount, selectedToken.decimals));
+            max = new BN(v2.withdrawableAmount);
             setFeePayedByTreasurer(v2.feePayedByTreasurer);
           } else {
-            max = v1.escrowVestedAmount;
+            max = new BN(v1.escrowVestedAmount);
           }
-          // TODO: upgrade maxAmount state var to be BN
-          setMaxAmount(max);
-          consoleOut('maxAmount:', max, 'blue');
+          setMaxAmountBn(max);
+          consoleOut('maxAmount:', max.toString(), 'blue');
         } else {
           openNotification({
             title: t('notifications.error-title'),
-            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
             type: "error"
           });
         }
@@ -99,7 +149,7 @@ export const StreamWithdrawModal = (props: {
         console.error(error);
         openNotification({
           title: t('notifications.error-title'),
-          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
           type: "error"
         });
       } finally {
@@ -110,11 +160,11 @@ export const StreamWithdrawModal = (props: {
     const isNew = startUpData.version >= 2 ? true : false;
     const v1 = startUpData as StreamInfo;
     const v2 = startUpData as Stream;
-    let max = 0;
+    let max = new BN(0);
     if (isNew) {
-      max = toUiAmount(v2.withdrawableAmount, selectedToken.decimals);
+      max = new BN(v2.withdrawableAmount);
       if (v2.status === STREAM_STATUS.Running) {
-        setMaxAmount(max);
+        setMaxAmountBn(max);
         setLoadingData(true);
         try {
           const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
@@ -127,13 +177,13 @@ export const StreamWithdrawModal = (props: {
           });
         }
       } else {
-        setMaxAmount(max);
+        setMaxAmountBn(max);
         setFeePayedByTreasurer(v2.feePayedByTreasurer);
       }
     } else {
-      max = v1.escrowVestedAmount;
+      max = new BN(v1.escrowVestedAmount);
       if (v1.state === STREAM_STATE.Running) {
-        setMaxAmount(max);
+        setMaxAmountBn(max);
         setLoadingData(true);
         try {
           const ms = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
@@ -146,7 +196,7 @@ export const StreamWithdrawModal = (props: {
           });
         }
       } else {
-        setMaxAmount(max);
+        setMaxAmountBn(max);
       }
     }
 
@@ -161,19 +211,6 @@ export const StreamWithdrawModal = (props: {
     selectedToken
   ]);
 
-  const getFeeAmount = useCallback((fees: TransactionFees, amount?: any): number => {
-    let fee = 0;
-    const inputAmount = amount ? parseFloat(amount) : 0;
-    if (fees) {
-      if (fees.mspPercentFee) {
-        fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
-      } else if (fees.mspFlatFee) {
-        fee = fees.mspFlatFee;
-      }
-    }
-    return feePayedByTreasurer ? 0 : fee;
-  }, [feePayedByTreasurer]);
-
   useEffect(() => {
     if (!feeAmount && transactionFees) {
       setFeeAmount(getFeeAmount(transactionFees));
@@ -185,30 +222,37 @@ export const StreamWithdrawModal = (props: {
   ]);
 
   const onAcceptWithdrawal = () => {
-    const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(+withdrawAmountInput)
-      ? true : false;
-    setWithdrawAmountInput('');
+    if (!selectedToken) { return; }
+
+    consoleOut('withdrawAmountInput:', withdrawAmountInput, 'orange');
+    consoleOut('withdrawAmountBn:', withdrawAmountBn.toString(), 'orange');
+    consoleOut('maxAmountBn:', maxAmountBn.toString(), 'orange');
+    consoleOut('isMaxAmount:', isMaxAmount ? 'true' : 'false', 'orange');
+
     const withdrawData: StreamWithdrawData = {
       title: proposalTitle,
-      token: selectedToken ? selectedToken.symbol || '-' : '-',
-      amount: isMaxAmount ? `${maxAmount}` : withdrawAmountInput,
+      token: selectedToken.symbol,
+      amount: isMaxAmount ? `${maxAmountBn.toString()}` : `${withdrawAmountBn.toString()}`,
       inputAmount: parseFloat(withdrawAmountInput),
       fee: feeAmount || 0,
       receiveAmount: parseFloat(withdrawAmountInput) - (feeAmount as number)
     };
+    setWithdrawAmountInput('');
+    setWithdrawAmountBn(new BN(0));
     handleOk(withdrawData);
   };
-
+  
   const onCloseModal = () => {
     onAfterClose();
     handleClose();
   }
-
+  
   const onAfterClose = () => {
-
+    
     setTimeout(() => {
       setProposalTitle('');
       setWithdrawAmountInput('');
+      setWithdrawAmountBn(new BN(0));
     }, 50);
 
     setTransactionStatus({
@@ -228,13 +272,16 @@ export const StreamWithdrawModal = (props: {
   const setPercentualValue = (value: number) => {
     let newValue = '';
     let fee = 0;
-    if (startUpData) {
+    if (startUpData && selectedToken) {
       if (value === 100) {
-        fee = getFeeAmount(transactionFees, maxAmount)
-        newValue = getDisplayAmount(maxAmount);
+        setWithdrawAmountBn(maxAmountBn);
+        fee = getFeeAmount(transactionFees, maxAmountBn)
+        newValue = getDisplayAmount(toUiAmount2(maxAmountBn, selectedToken.decimals));
       } else {
-        const partialAmount = percentage(value, maxAmount);
-        fee = getFeeAmount(transactionFees, partialAmount)
+        const pctgAmount = new BN(percentageBn(value, maxAmountBn));
+        const partialAmount = toUiAmount2(pctgAmount, selectedToken.decimals);
+        setWithdrawAmountBn(pctgAmount);
+        fee = getFeeAmount(transactionFees, pctgAmount)
         newValue = getDisplayAmount(partialAmount);
       }
     }
@@ -262,20 +309,23 @@ export const StreamWithdrawModal = (props: {
 
     if (newValue === null || newValue === undefined || newValue === "") {
       setValue("");
+      setWithdrawAmountBn(new BN(0));
     } else if (newValue === '.') {
       setValue(".");
     } else if (isValidNumber(newValue)) {
       setValue(newValue);
-      setFeeAmount(getFeeAmount(transactionFees, newValue));
+      const withdrawInput = toTokenAmountBn(newValue, decimals);
+      setWithdrawAmountBn(withdrawInput);
+      setFeeAmount(getFeeAmount(transactionFees, withdrawInput));
     }
   };
 
   // Validation
   const isValidForm = (): boolean => {
     return startUpData &&
-      withdrawAmountInput &&
-      parseFloat(withdrawAmountInput) <= parseFloat(getDisplayAmount(maxAmount)) &&
-      parseFloat(withdrawAmountInput) > (feeAmount as number)
+           withdrawAmountInput &&
+           withdrawAmountBn.lte(maxAmountBn) &&
+           withdrawAmountBn.gtn(feeAmount || 0)
       ? true
       : false;
   }
@@ -283,20 +333,20 @@ export const StreamWithdrawModal = (props: {
   // Validation if multisig
   const isValidFormMultisig = (): boolean => {
     return proposalTitle &&
-      startUpData &&
-      withdrawAmountInput &&
-      parseFloat(withdrawAmountInput) <= parseFloat(getDisplayAmount(maxAmount)) &&
-      parseFloat(withdrawAmountInput) > (feeAmount as number)
+           startUpData &&
+           withdrawAmountInput &&
+           withdrawAmountBn.lte(maxAmountBn) &&
+           withdrawAmountBn.gtn(feeAmount || 0)
       ? true
       : false;
   }
 
   const getTransactionStartButtonLabel = () => {
-    return !withdrawAmountInput || +withdrawAmountInput === 0
+    return !withdrawAmountInput || withdrawAmountBn.isZero()
         ? 'Enter amount'
-        : parseFloat(getDisplayAmount(maxAmount)) === 0
+        : maxAmountBn.isZero()
           ? 'No balance'
-          : parseFloat(withdrawAmountInput) > parseFloat(getDisplayAmount(maxAmount))
+          : withdrawAmountBn.gt(maxAmountBn)
             ? 'Amount exceeded'
             : t('transactions.validation.valid-start-withdrawal')
   }
@@ -304,30 +354,13 @@ export const StreamWithdrawModal = (props: {
   const getTransactionStartButtonLabelMultisig = () => {
     return !proposalTitle
       ? "Add a proposal title"
-      : !withdrawAmountInput || +withdrawAmountInput === 0
+      : !withdrawAmountInput || withdrawAmountBn.isZero()
         ? 'Enter amount'
-        : parseFloat(getDisplayAmount(maxAmount)) === 0
+        : maxAmountBn.isZero()
           ? 'No balance'
-          : parseFloat(withdrawAmountInput) > parseFloat(getDisplayAmount(maxAmount))
+          : withdrawAmountBn.gt(maxAmountBn)
             ? 'Amount exceeded'
             : 'Sign proposal'
-  }
-
-  const getDisplayAmount = (amount: number, addSymbol = false): string => {
-    if (props && startUpData && selectedToken) {
-      const token = selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-        ? Object.assign({}, selectedToken, {
-            symbol: 'SOL'
-          }) as TokenInfo
-        : selectedToken;
-      const bareAmount = amount.toFixed(token.decimals);
-      if (addSymbol) {
-        return token.name === CUSTOM_TOKEN_NAME ? `${bareAmount} ${selectedToken.symbol}` : `${bareAmount} ${token ? token.symbol : selectedToken.symbol}`;
-      }
-      return bareAmount;
-    }
-
-    return '';
   }
 
   const infoRow = (caption: string, value: string) => {
@@ -369,7 +402,17 @@ export const StreamWithdrawModal = (props: {
             <div className="right">&nbsp;</div>
           </div>
           <div className="flex-fixed-right">
-            <div className="left static-data-field">{startUpData && getDisplayAmount(maxAmount, true)}</div>
+            <div className="left static-data-field">
+              {
+                startUpData && selectedToken && getAmountWithSymbol(
+                  toUiAmount2(maxAmountBn, selectedToken.decimals),
+                  selectedToken.address,
+                  true,
+                  splTokenList,
+                  selectedToken.decimals
+                )
+              }
+            </div>
             <div className="right">&nbsp;</div>
           </div>
         </div>
@@ -423,7 +466,7 @@ export const StreamWithdrawModal = (props: {
           </div>
           <div className="right">&nbsp;</div>
         </div>
-        {parseFloat(withdrawAmountInput) > parseFloat(getDisplayAmount(maxAmount)) ? (
+        {withdrawAmountBn.gt(maxAmountBn) ? (
           <span className="form-field-error">
             {t('transactions.validation.amount-withdraw-high')}
           </span>
@@ -435,7 +478,7 @@ export const StreamWithdrawModal = (props: {
         <div className="p-2 mb-2">
           {(isValidForm() || isValidFormMultisig()) && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
-            `~${getDisplayAmount((feeAmount as number), true)}`
+            `~${getDisplayAmount(feeAmount || 0, true)}`
           )}
           {(isValidForm() || isValidFormMultisig()) && infoRow(
             t('transactions.transaction-info.you-receive') + ':',
