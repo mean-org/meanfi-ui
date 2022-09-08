@@ -2,13 +2,12 @@ import './style.scss';
 import { formatThousands, shortenAddress } from "../../../../middleware/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { MeanMultisig, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { consoleOut } from '../../../../middleware/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
-import { useWallet } from '../../../../contexts/wallet';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { openNotification } from '../../../../components/Notifications';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { useTranslation } from 'react-i18next';
@@ -64,7 +63,6 @@ export const SafeMeanInfo = (props: {
     programs,
     multisigTxs,
     multisigSolBalance,
-    previousWalletConnectState,
     setMultisigSolBalance,
     refreshTokenBalance,
     setMultisigVaults,
@@ -75,7 +73,6 @@ export const SafeMeanInfo = (props: {
     lastSentTxOperationType,
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
-  const navigate = useNavigate();
   const location = useLocation();
   const { address } = useParams();
   const { t } = useTranslation('common');
@@ -92,8 +89,8 @@ export const SafeMeanInfo = (props: {
   // Tabs
   const [amountOfProposals, setAmountOfProposals] = useState<string>("");
   const [amountOfPrograms, setAmountOfPrograms] = useState<string>("");
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-  
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+
   const getMultisigVaults = useCallback(async (
     connection: Connection,
     multisig: PublicKey
@@ -122,7 +119,7 @@ export const SafeMeanInfo = (props: {
 
     return results;
 
-  },[]);
+  },[multisigAddressPK]);
 
   const getSolToken = useCallback(() => {
 

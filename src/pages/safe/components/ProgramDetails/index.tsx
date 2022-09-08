@@ -71,7 +71,7 @@ export const ProgramDetailsView = (props: {
   const [programTransactions, setProgramTransactions] = useState<any>();
   const noIdlInfo = "The program IDL is not initialized. To load the IDL info please run `anchor idl init` with the required parameters from your program workspace.";
 
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   // When back button is clicked, goes to Safe Info
   const hideProgramDetailsHandler = () => {

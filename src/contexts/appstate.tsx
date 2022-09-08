@@ -496,7 +496,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
   const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   if (!streamProgramAddress) {
     setStreamProgramAddress(streamProgramAddressFromConfig);
@@ -539,8 +539,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     );
 
   }, [
-    connection,
     publicKey,
+    connection,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -1247,6 +1248,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     ms,
     msp,
     publicKey,
+    streamDetail,
     accountAddress,
     loadingStreams,
     customStreamDocked,

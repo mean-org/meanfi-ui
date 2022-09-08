@@ -2596,7 +2596,9 @@ export const AccountsNewView = () => {
 
   const refreshTreasuries = useCallback((reset = false) => {
 
-    if (!publicKey) { return; }
+    if (!publicKey || !accountAddress) { return; }
+
+    const pk = new PublicKey(accountAddress);
 
     if (msp && ms) {
 
@@ -2612,7 +2614,7 @@ export const AccountsNewView = () => {
           const param = getQueryAccountType();
           if (!param || param !== "multisig") {
             try {
-              treasuriesv1 = await ms.listTreasuries(publicKey);
+              treasuriesv1 = await ms.listTreasuries(pk);
             } catch (error) {
               console.error(error);
             }
