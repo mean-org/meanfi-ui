@@ -1628,7 +1628,7 @@ export const RepeatingPayment = (props: {
                         ? shortenAddress(recipientAddress)
                         : t('transactions.validation.no-recipient')}
                     </div>
-                    <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                    <div className="inner-label text-truncate" style={{ maxWidth: '75%' }}>{recipientNote || '-'}</div>
                   </div>
                 </div>
                 <div className="middle flex-center">
@@ -1636,7 +1636,7 @@ export const RepeatingPayment = (props: {
                 </div>
                 <div className="right flex-column">
                   <div className="rate">{getPaymentRateAmount()}</div>
-                  <div className="inner-label mt-0">{paymentStartDate}</div>
+                  <div className="inner-label text-truncate">{paymentStartDate}</div>
                 </div>
               </div>
             </div>
