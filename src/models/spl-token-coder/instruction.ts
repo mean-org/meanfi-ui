@@ -25,23 +25,12 @@ export class MeanSplTokenInstructionCoder extends SplTokenInstructionCoder {
 
     const tag = ix.slice(0, 1);
     const data = ix.slice(1);
+    const variant = LAYOUT.getVariant(tag, 0);
 
-    try {
-      const variant = LAYOUT.getVariant(tag, 0);
-      console.log('variant:', variant);
-
-      if (!variant) {
-        return null;
-      }
-  
-      return {
-        data: variant.layout.decode(data),
-        name: variant.property,
-      };
-    } catch (error) {
-      throw new Error("Cannot get LAYOUT.getVariant()");
-    }
-
+    return {
+      data: variant.layout.decode(data),
+      name: variant.property,
+    };
   }
 
   public format(
