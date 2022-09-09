@@ -172,7 +172,7 @@ export const sendRecordClaimTxRequest = async (address: string, claimTxId: strin
 
 export const getMeanStats = async (): Promise<MeanFiStatsModel | null> => {
   try {
-    const path = `https://raw.githubusercontent.com/mean-dao/meanfi-stats/main/meanfi-stats.json`;
+    const path = `https://raw.githubusercontent.com/mean-dao/MEAN-stats/main/mean-stats.json`;
     const res = await fetch(path, { method: "GET" });
     // 400+ status codes are failed
     if (res.status >= 400) {
