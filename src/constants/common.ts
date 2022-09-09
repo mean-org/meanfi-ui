@@ -59,6 +59,7 @@ export const MEANFI_DOCS_URL = 'https://docs.meanfi.com/';
 export const MEANFI_SUPPORT_URL = 'https://help.meanfi.com/';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 export const FALLBACK_COIN_IMAGE = '/assets/coin-error.svg';
+export const MSP_FEE_TREASURY = '3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw';
 
 export const UNAUTHENTICATED_ROUTES = [
     '/stats',

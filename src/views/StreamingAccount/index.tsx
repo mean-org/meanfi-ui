@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, MSP_FEE_TREASURY, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
@@ -2132,7 +2132,7 @@ export const StreamingAccountView = (props: {
 
     const refreshBalance = async (treasury: PublicKey) => {
 
-      if (!connection || !connected || !publicKey || !msp) {
+      if (!connection || !connected || !publicKey) {
         return false;
       }
 
@@ -2150,9 +2150,7 @@ export const StreamingAccountView = (props: {
       const tokenAccount = AccountLayout.decode(value[0].account.data);
       const associatedTokenMint = new PublicKey(tokenAccount.mint);
       const mspAddress = isProd() ? Constants.MSP_PROGRAM : Constants.MSP_PROGRAM_DEV;
-      const feeTreasuryAddress: PublicKey = new PublicKey(
-        "3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw"
-      );
+      const feeTreasuryAddress: PublicKey = new PublicKey(MSP_FEE_TREASURY);
 
       ixs.push(
         await refreshTreasuryBalanceInstruction(
