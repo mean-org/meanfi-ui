@@ -1435,6 +1435,7 @@ export const SafeView = () => {
     multisigClient,
     transactionFees,
     selectedMultisig,
+    multisigAddressPK,
     transactionCancelled,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
@@ -1928,23 +1929,25 @@ export const SafeView = () => {
       }
     }
   }, [
-    resetTransactionStatus, 
-    wallet, 
-    publicKey, 
-    selectedMultisig, 
-    multisigClient, 
-    connection, 
-    createCredixDepositIx, 
-    createCredixWithdrawIx, 
-    createProposalIx, 
-    setTransactionStatus, 
-    nativeBalance, 
-    transactionFees.networkFee, 
-    transactionFees.rentExempt, 
-    transactionFees.multisigFee, 
-    transactionStatus.currentOperation, 
-    transactionCancelled, 
-    enqueueTransactionConfirmation
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigClient,
+    selectedMultisig,
+    transactionCancelled,
+    transactionFees.networkFee,
+    transactionFees.rentExempt,
+    transactionFees.multisigFee,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    createCredixWithdrawTrancheIx,
+    createCredixDepositTrancheIx,
+    resetTransactionStatus,
+    createCredixWithdrawIx,
+    createCredixDepositIx,
+    setTransactionStatus,
+    createProposalIx,
   ]);
 
   const saveOperationPayloadOnStart = (payload: any) => {
@@ -2218,6 +2221,7 @@ export const SafeView = () => {
                 transactionId: data.transaction.id
               }
             });
+            setIsBusy(false);
             resetTransactionStatus();
           } else { setIsBusy(false); }
         } else { 
@@ -2510,6 +2514,7 @@ export const SafeView = () => {
                 transactionId: data.transaction.id
               }
             });
+            setIsBusy(false);
             resetTransactionStatus();
           } else { setIsBusy(false); }
         } else { 
@@ -3320,16 +3325,13 @@ export const SafeView = () => {
         reloadMultisigs();
         break;
       case OperationType.ApproveTransaction:
-        setIsBusy(false);
         reloadSelectedProposal();
         break;
       case OperationType.RejectTransaction:
-        setIsBusy(false);
         reloadMultisigs();
         reloadSelectedProposal();
         break;
       case OperationType.ExecuteTransaction:
-        setIsBusy(false);
         reloadMultisigs();
         reloadSelectedProposal();
         break;
@@ -4161,7 +4163,7 @@ export const SafeView = () => {
         )}
       </>
     );
-  }, [connected, isCreatingMultisig, multisigAccounts, multisigUsdValues, navigate, selectedMultisig, setMultisigSolBalance, setTotalSafeBalance, t]);
+  }, [connected, isCreatingMultisig, loadingMultisigTxPendingCount, multisigAccounts, multisigUsdValues, navigate, selectedMultisig, setMultisigSolBalance, setTotalSafeBalance, t]);
 
   const onRefresLevel1Tabs = () => {
     setNeedRefreshTxs(true);
