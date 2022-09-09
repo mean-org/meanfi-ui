@@ -622,6 +622,18 @@ export const MoneyStreamDetails = (props: {
     )
   }
 
+  const renderDepletionDate = () => {
+    if (!stream) { return '--'; }
+    const date = isNewStream()
+      ? (stream as Stream).estimatedDepletionDate
+      : (stream as StreamInfo).escrowEstimatedDepletionUtc as string;
+    if (date){
+      return getRelativeDate(date);
+    } else {
+      return getReadableDate(stream.startUtc as string, true);
+    }
+  }
+
   const renderBadges = () => {
     if (!streamingAccountSelected) { return; }
 
@@ -676,9 +688,6 @@ export const MoneyStreamDetails = (props: {
     }
   };
 
-  const v1 = stream as StreamInfo;
-  const v2 = stream as Stream;
-
   // Tab details
   const detailsData = [
     {
@@ -715,17 +724,14 @@ export const MoneyStreamDetails = (props: {
       label: (isStreamOutgoing && stream && getStreamStatus(stream) === "running") && "Funds will run out in:",
       value: (isStreamOutgoing && stream && getStreamStatus(stream) === "running") && <Countdown className="align-middle" date={
         isNewStream()
-          ? v2.estimatedDepletionDate
-          : v1.escrowEstimatedDepletionUtc as string
+          ? (stream as Stream).estimatedDepletionDate
+          : (stream as StreamInfo).escrowEstimatedDepletionUtc as string
         }
         renderer={renderer} />
     },
     {
       label: stream && getStreamStatus(stream) === "stopped" && !isOtp() && "Funds ran out on:",
-      value: stream && getStreamStatus(stream) === "stopped" && !isOtp() && getRelativeDate(isNewStream()
-        ? v2.estimatedDepletionDate
-        : v1.escrowEstimatedDepletionUtc as string
-      )
+      value: stream && getStreamStatus(stream) === "stopped" && !isOtp() && renderDepletionDate()
     },
     {
       label: "Stream id:",

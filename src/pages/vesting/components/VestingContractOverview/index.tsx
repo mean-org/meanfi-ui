@@ -27,7 +27,6 @@ import { TokenIcon } from '../../../../components/TokenIcon';
 import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons';
 import { IconInfoCircle } from '../../../../Icons';
 import { VestingFlowRateInfo } from '../../../../models/vesting';
-import BigNumber from 'bignumber.js';
 
 export const VestingContractOverview = (props: {
     availableStreamingBalance: number | BN;
