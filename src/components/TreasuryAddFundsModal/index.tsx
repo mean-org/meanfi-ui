@@ -82,8 +82,9 @@ export const TreasuryAddFundsModal = (props: {
     loadingPrices,
     transactionStatus,
     highLightableStreamId,
-    getTokenByMintAddress,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
+    getTokenByMintAddress,
     refreshPrices,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -92,8 +93,8 @@ export const TreasuryAddFundsModal = (props: {
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
   const [, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
-  const [availableBalance, setAvailableBalance] = useState<any>();
-  const [tokenAmount, setTokenAmount] = useState<any>(0);
+  const [availableBalance, setAvailableBalance] = useState(new BN(0));
+  const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [searchParams] = useSearchParams();
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [showQrCode, setShowQrCode] = useState(false);
@@ -159,8 +160,10 @@ export const TreasuryAddFundsModal = (props: {
         return 0;
     }
 
-    return parseFloat(topupAmount) * getTokenPriceBySymbol(selectedToken.symbol);
-}, [topupAmount, selectedToken, getTokenPriceBySymbol]);
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+
+    return parseFloat(topupAmount) * price;
+  }, [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken, topupAmount]);
 
   const isfeePayedByTreasurerOn = useCallback(() => {
     if (highLightableStreamId) {
@@ -201,7 +204,7 @@ export const TreasuryAddFundsModal = (props: {
         return maxAmount;
       }
     }
-    return selectedToken && availableBalance ? availableBalance : 0;
+    return selectedToken && availableBalance ? availableBalance : new BN(0);
   },[
     selectedToken,
     availableBalance,
@@ -245,6 +248,7 @@ export const TreasuryAddFundsModal = (props: {
   const selectFromTokenBalance = useCallback(() => {
     if (!selectedToken) { return nativeBalance; }
     consoleOut(`selectedToken:`, selectedToken ? selectedToken.address : '-', 'blue');
+    consoleOut(`token decimals:`, selectedToken ? selectedToken.decimals : '-', 'blue');
     consoleOut(`tokenBalance:`, tokenBalance || 0, 'blue');
     if (fundFromSafeOption) {
       return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
@@ -271,6 +275,17 @@ export const TreasuryAddFundsModal = (props: {
   /////////////////////
   // Data management //
   /////////////////////
+
+  // Keep token balance updated
+  useEffect(() => {
+    if (selectedToken && userBalances) {
+      if (userBalances[selectedToken.address]) {
+        setSelectedTokenBalance(userBalances[selectedToken.address]);
+      } else {
+        setSelectedTokenBalance(0);
+      }
+    }
+  }, [selectedToken, userBalances]);
 
   // Set working copy of the selected streaming account if passed-in
   // Also set the working associated token
@@ -317,19 +332,13 @@ export const TreasuryAddFundsModal = (props: {
       consoleOut('Treasury workingAssociatedToken:', token, 'blue');
       setSelectedToken(token);
       setWorkingAssociatedToken(tokenAddress)
-    });
-  }, [getTokenOrCustomToken, hasNoStreamingAccounts, workingAssociatedToken, workingTreasuryDetails]);
-
-  // Keep token balance updated
-  useEffect(() => {
-    if (selectedToken && userBalances) {
-      if (userBalances[selectedToken.address]) {
-        setSelectedTokenBalance(userBalances[selectedToken.address]);
+      if (userBalances[tokenAddress]) {
+        setSelectedTokenBalance(userBalances[tokenAddress]);
       } else {
         setSelectedTokenBalance(0);
       }
-    }
-  }, [selectedToken, userBalances]);
+    });
+  }, [getTokenOrCustomToken, hasNoStreamingAccounts, userBalances, workingAssociatedToken, workingTreasuryDetails]);
 
   // Set available balance in BN either from user's wallet or from treasury if a stream is being funded
   useEffect(() => {
@@ -340,32 +349,47 @@ export const TreasuryAddFundsModal = (props: {
       return balance.sub(allocationAssigned);
     }
 
-    if (isVisible && workingTreasuryDetails && selectedToken) {
-      const decimals = selectedToken ? selectedToken.decimals : 6;
+    const isSameToken = () => {
+      if (workingTreasuryDetails && selectedToken) {
+        const v1 = workingTreasuryDetails as TreasuryInfo;
+        const v2 = workingTreasuryDetails as Treasury;
+        const tokenAddress = isNewTreasury(workingTreasuryDetails)
+          ? v1.associatedTokenAddress as string
+          : v2.associatedToken as string;
+        if (tokenAddress === selectedToken.address && tokenAddress === workingAssociatedToken) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    if (isVisible && workingTreasuryDetails && selectedToken && isSameToken()) {
       if (highLightableStreamId) {
         // Take source balance from the treasury
         const unallocated = getUnallocatedBalance(workingTreasuryDetails);
         const ub = isNewTreasury(workingTreasuryDetails)
-          ? unallocated
+          ? unallocated.toString()
           : toUiAmount2(unallocated, selectedToken.decimals);
-        consoleOut('unallocatedBalance:', ub.toString(), 'blue');
-        setAvailableBalance(ub);
+        consoleOut('unallocatedBalance:', ub, 'blue');
+        setAvailableBalance(new BN(ub));
       } else {
         // Take source balance from the user's wallet or safe
         const userBalance = selectFromTokenBalance();
-        const toBignumber = toTokenAmount2(userBalance, decimals);
-        consoleOut(`User's balance:`, toBignumber.toString(), 'blue');
-        setAvailableBalance(new BN(toBignumber.toString()));
+        consoleOut(`User's balance Ui:`, userBalance, 'blue');
+        const toBignumber = toTokenAmount2(userBalance, selectedToken.decimals, true) as string;
+        consoleOut(`User's balance Bn:`, toBignumber, 'blue');
+        setAvailableBalance(new BN(toBignumber));
       }
     } else {
       setAvailableBalance(new BN(0));
     }
   }, [
     isVisible,
-    tokenBalance,
     selectedToken,
-    workingTreasuryDetails,
     highLightableStreamId,
+    workingTreasuryDetails,
+    workingAssociatedToken,
     selectFromTokenBalance,
     isNewTreasury,
   ]);
@@ -493,7 +517,7 @@ export const TreasuryAddFundsModal = (props: {
 
     if (newValue === null || newValue === undefined || newValue === "") {
       setTopupAmount("");
-      setTokenAmount(0);
+      setTokenAmount(new BN(0));
     } else if (newValue === '.') {
       setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
@@ -518,9 +542,9 @@ export const TreasuryAddFundsModal = (props: {
     return publicKey &&
            (!fundFromSafeOption || (param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
            selectedToken &&
-           ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && (availableBalance as BN).gtn(0)))) &&
+           ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && availableBalance.gtn(0)))) &&
            nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
-           tokenAmount && (tokenAmount as BN).gtn(0) &&
+           tokenAmount.gtn(0) &&
            tokenAmount.lte(getMaxAmount())
             ? true
             : false;
@@ -801,7 +825,7 @@ export const TreasuryAddFundsModal = (props: {
                               fullTokenInfo={selectedToken}
                             />
                           )}
-                          {selectedToken && availableBalance ? (
+                          {selectedToken && availableBalance.gtn(0) ? (
                             <div
                               id="treasury-add-funds-max"
                               className="token-max simplelink"
@@ -810,14 +834,14 @@ export const TreasuryAddFundsModal = (props: {
                                 if (isfeePayedByTreasurerOn()) {
                                   const maxAmount = getMaxAmount(true);
                                   consoleOut('Treasury pays for fees...', '', 'blue');
-                                  consoleOut('Settings maxAmount to:', maxAmount, 'blue');
-                                  setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
-                                  setTokenAmount(new BN(maxAmount));
+                                  consoleOut('Settings maxAmount to:', maxAmount.toString(), 'blue');
+                                  setTopupAmount(toUiAmount2(maxAmount, decimals));
+                                  setTokenAmount(maxAmount);
                                 } else {
                                   const maxAmount = getMaxAmount();
                                   consoleOut('Settings maxAmount to:', maxAmount.toString(), 'blue');
-                                  setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
-                                  setTokenAmount(new BN(maxAmount));
+                                  setTopupAmount(toUiAmount2(maxAmount, decimals));
+                                  setTokenAmount(maxAmount);
                                 }
                               }}>
                               MAX
@@ -851,7 +875,7 @@ export const TreasuryAddFundsModal = (props: {
                           <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                         )}
                         <span>
-                          {`${availableBalance && selectedToken
+                          {`${selectedToken && availableBalance.gtn(0)
                               ? displayAmountWithSymbol(
                                   availableBalance,
                                   selectedToken.address,
