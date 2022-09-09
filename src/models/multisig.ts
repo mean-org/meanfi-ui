@@ -349,33 +349,21 @@ export const parseMultisigProposalIx = (
 
 ): MultisigTransactionInstructionInfo | null => {
 
-  /*
   try {
-    // do something
-  } catch (error: any) {
-    console.error(`Parse Multisig Transaction: ${error}`);
-    return null;
-  }
-  */
+    const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-  let ix: TransactionInstruction;
-
-  // Create a Tx instrujction based of provided transaction
-  try {
-    ix = new TransactionInstruction({
+    const ix = new TransactionInstruction({
       programId: transaction.programId,
       keys: transaction.accounts,
       data: transaction.data
     });
-    // console.log('ix', ix);
-  } catch (error: any) {
-    console.error(`Parse Multisig Transaction: ${error}`);
-    return null;
-  }
 
-  // Get a basic Multisig instruction summary if program or Ix name missing
-  try {
+    // console.log('ix', ix);
+
+    // if (!program || program.programId.equals(TOKEN_PROGRAM_ID)) { // HERE TOKEN IX
+    //   return getMultisigInstructionSummary(ix);
+    // }
+
     if (!program) {
       return getMultisigInstructionSummary(ix);
     }
@@ -387,35 +375,11 @@ export const parseMultisigProposalIx = (
       return getMultisigInstructionSummary(ix);
     }
 
-  } catch (error: any) {
-    console.error(`Parse Multisig Transaction: ${error}`);
-    return null;
-  }
-
-  let coder: MeanSplTokenInstructionCoder | BorshInstructionCoder;
-
-  // Try create the instruction coder
-  try {
-    const anchorProgramId = program.programId;
-    const tokenProgramId = TOKEN_PROGRAM_ID;
-
-    if (anchorProgramId) {
-      coder = program.programId.equals(TOKEN_PROGRAM_ID)
-        ? new BorshInstructionCoder(program.idl)
-        : new MeanSplTokenInstructionCoder(program.idl);
-    } else {
-      coder = new MeanSplTokenInstructionCoder(program.idl);
-    }
+    const coder = program.programId.equals(TOKEN_PROGRAM_ID)
+      ? new MeanSplTokenInstructionCoder(program.idl)
+      : new BorshInstructionCoder(program.idl);
 
     // console.log('coder', coder);
-
-  } catch (error: any) {
-    console.error(`Parse Multisig Transaction: ${error}`);
-    return null;
-  }
-
-  // Decode and format data to return instruction info
-  try {
 
     const dataEncoded = bs58.encode(ix.data);
     const dataDecoded = coder.decode(dataEncoded, "base58");
