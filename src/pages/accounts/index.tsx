@@ -49,7 +49,7 @@ import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLo
 import { fetchAccountHistory, MappedTransaction } from '../../middleware/history';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import { AccountTokenParsedInfo } from '../../models/token';
+import { AccountTokenParsedInfo } from "../../models/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { initialSummary, StreamsSummary } from '../../models/streams';
@@ -68,7 +68,7 @@ import { AppUsageEvent } from '../../middleware/segment-service';
 import { segmentAnalytics } from '../../App';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 import { QRCodeSVG } from 'qrcode.react';
-import { NATIVE_SOL } from '../../middleware/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { appConfig, customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';

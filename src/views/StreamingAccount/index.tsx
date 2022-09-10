@@ -70,7 +70,7 @@ import { Identicon } from "../../components/Identicon";
 import { SolBalanceModal } from "../../components/SolBalanceModal";
 import { isMobile } from "react-device-detect";
 import { getTokenAccountBalanceByAddress, readAccountInfo } from "../../middleware/accounts";
-import { NATIVE_SOL } from "../../middleware/tokens";
+import { NATIVE_SOL } from "../../constants/tokens";
 import { AddFundsParams } from "../../models/vesting";
 import BN from "bn.js";
 import { getStreamTitle } from "../../middleware/streams";

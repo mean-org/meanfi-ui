@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, toTokenAmount, toTokenAmount2 } from '../../middleware/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, toTokenAmount2 } from '../../middleware/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';

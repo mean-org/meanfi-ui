@@ -5,16 +5,17 @@ import { findATokenAddress, getTokenAmountAndSymbolByTokenAddress, getTxIxResume
 import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from '../../middleware/ui';
 import { useTranslation } from 'react-i18next';
 import { DdcaClient, DdcaDetails, TransactionFees } from '@mean-dao/ddca';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '../../contexts/wallet';
 import Slider, { SliderMarks } from 'antd/lib/slider';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '../../middleware/ids';
 import { LoadingOutlined } from '@ant-design/icons';
-import { MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { AppStateContext } from '../../contexts/appstate';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { getTokenAccountBalanceByAddress } from '../../middleware/accounts';
 
 export const DdcaAddFundsModal = (props: {
   endpoint: string;
@@ -166,27 +167,15 @@ export const DdcaAddFundsModal = (props: {
   //////////////////////////
 
   useEffect(() => {
-    const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
-      if (!address) return 0;
-      try {
-        const accountInfo = await props.connection.getAccountInfo(new PublicKey(address));
-        if (!accountInfo) return 0;
-        if (address === publicKey?.toBase58()) {
-          return accountInfo.lamports / LAMPORTS_PER_SOL;
-        }
-        const tokenAmount = (await props.connection.getTokenAccountBalance(new PublicKey(address))).value;
-        return tokenAmount.uiAmount || 0;
-      } catch (error) {
-        console.error(error);
-        throw(error);
-      }
-    }
 
     (async () => {
       if (props.ddcaDetails) {
         let balance = 0;
         const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, new PublicKey(props.ddcaDetails.fromMint));
-        balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
+        const result = await getTokenAccountBalanceByAddress(props.connection, selectedTokenAddress);
+        if (result) {
+          balance = result.uiAmount || 0;
+        }
         setFromTokenBalance(balance);
       }
     })();

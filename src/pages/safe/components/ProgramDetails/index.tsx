@@ -20,7 +20,7 @@ import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume }
 import { customLogger } from "../../../..";
 import { TabsMean } from '../../../../components/TabsMean';
 import { AnchorProvider, Program } from '@project-serum/anchor';
-import { NATIVE_SOL } from '../../../../middleware/tokens';
+import { NATIVE_SOL } from '../../../../constants/tokens';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 import moment from 'moment';
 import ReactJson from 'react-json-view'

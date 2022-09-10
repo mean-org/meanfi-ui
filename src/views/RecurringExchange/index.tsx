@@ -50,7 +50,7 @@ import {
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
 import { ExchangeOutput } from "../../components/ExchangeOutput";
 import { SABER } from "@mean-dao/hybrid-liquidity-ag/lib/types";
-import { MEAN_TOKEN_LIST } from "../../constants/token-list";
+import { MEAN_TOKEN_LIST } from "../../constants/tokens";
 
 let inputDebounceTimeout: any;
 

@@ -57,7 +57,7 @@ import { AccountLayout, u64 } from '@solana/spl-token';
 import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import { BN } from 'bn.js';
 import { PendingProposalsComponent } from './components/PendingProposalsComponent';
-import { NATIVE_SOL } from '../../middleware/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { VestingContractEditModal } from './components/VestingContractEditModal';
 import { getTokenAccountBalanceByAddress, readAccountInfo } from '../../middleware/accounts';
 

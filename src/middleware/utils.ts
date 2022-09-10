@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo } from "@solana/spl-token";
-import { TokenAccount } from "../models";
 import {
   Connection,
   LAMPORTS_PER_SOL,
@@ -8,18 +7,20 @@ import {
   Transaction,
 } from "@solana/web3.js";
 import { BIGNUMBER_FORMAT, CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
-import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { MEAN_TOKEN_LIST } from "../constants/tokens";
 import { friendlyDisplayDecimalPlaces, getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { TOKEN_PROGRAM_ID } from "./ids";
-import { NATIVE_SOL } from './tokens';
-import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
+import { NATIVE_SOL } from '../constants/tokens';
+import { AccountTokenParsedInfo } from "../models/accounts";
+import { TokenAccountInfo } from "../models/accounts";
 import { isMobile } from "react-device-detect";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getNetworkIdByEnvironment } from "../contexts/connection";
 import { environment } from "../environments/environment";
 import { BigNumber } from "bignumber.js";
 import BN from "bn.js";
+import { TokenAccount } from "../models/accounts";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -495,13 +496,6 @@ export const toUiAmountBn = (amount: number | BN, decimals: number, asBn = false
     const value = bigNumberAmount.dividedBy(baseConvert);
     return asBn ? new BN(value.toString()) : value.toFixed(decimals);
   }
-}
-
-
-
-export const toTokenAmount = (amount: number, decimals: number) => {
-  if (!amount || !decimals) { return 0; }
-  return amount * (10 ** decimals);
 }
 
 export const toTokenAmount2 = (amount: number | string, decimals: number, asString = false) => {

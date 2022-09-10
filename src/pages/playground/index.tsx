@@ -44,7 +44,7 @@ import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "../../constants";
 import { TokenListItem } from "../../components/TokenListItem";
 import { TextInput } from "../../components/TextInput";
 import { useNativeAccount } from "../../contexts/accounts";
-import { NATIVE_SOL } from "../../middleware/tokens";
+import { NATIVE_SOL } from "../../constants/tokens";
 import { getStreamForDebug } from "../../middleware/stream-debug-middleware";
 import { MSP } from "@mean-dao/msp";
 import { appConfig } from "../..";

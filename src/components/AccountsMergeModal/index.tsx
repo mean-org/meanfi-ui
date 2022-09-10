@@ -6,7 +6,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
 import { consoleOut, friendlyDisplayDecimalPlaces, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../middleware/ui';
 import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
-import { AccountTokenParsedInfo } from '../../models/token';
+import { AccountTokenParsedInfo } from "../../models/accounts";
 import { formatThousands, getTxIxResume, shortenAddress } from '../../middleware/utils';
 import { createTokenMergeTx } from '../../middleware/accounts';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';

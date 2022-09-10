@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { setProgramIds } from "../middleware/ids";
 import { cache, getMultipleAccounts, MintParser } from "./accounts";
 import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
-import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { MEAN_TOKEN_LIST } from "../constants/tokens";
 import { environment } from "../environments/environment";
 import { Cluster, Connection, ConnectionConfig, PublicKey } from "@solana/web3.js";
 import { DEFAULT_RPCS, RpcConfig } from "../services/connections-hq";

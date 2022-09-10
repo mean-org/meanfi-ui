@@ -3,7 +3,7 @@ import { meanFiHeaders } from "../constants";
 import { Allocation } from "../models/common-types";
 import { getDefaultRpc, RpcConfig } from "../services/connections-hq";
 import { WhitelistClaimType } from "../models/enums";
-import { TokenPrice } from "../models/token";
+import { TokenPrice } from "../models/accounts";
 import { PriceGraphModel } from "../models/price-graph";
 import { MeanFiStatsModel } from "../models/meanfi-stats";
 
@@ -186,9 +186,9 @@ export const getMeanStats = async (): Promise<MeanFiStatsModel | null> => {
 }
 
 export const getCoingeckoMarketChart = async (
-  coinGeckoId: string = 'meanfi',
-  decimals: number = 6,
-  days: number = 30,
+  coinGeckoId = 'meanfi',
+  decimals = 6,
+  days = 30,
   interval: 'daily' | 'hourly' = 'daily'
 ): Promise<[PriceGraphModel[], PriceGraphModel[]] | []> => {
   try {

@@ -12,7 +12,7 @@ import { DEFAULT_SLIPPAGE_PERCENT, ONE_MINUTE_REFRESH_TIMEOUT, MAX_TOKEN_LIST_IT
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
 import { useNativeAccount, useUserAccounts } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../middleware/layouts";
-import { cutNumber, formatThousands, getTxIxResume, isValidNumber, toTokenAmount, toUiAmount } from "../../middleware/utils";
+import { cutNumber, formatThousands, getTxIxResume, isValidNumber, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconSwapFlip } from "../../Icons";
 import { SwapSettings } from "../../components/SwapSettings";
@@ -24,8 +24,8 @@ import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, Warn
 import { appConfig, customLogger } from "../..";
 import BN from 'bn.js';
 import "./style.scss";
-import { NATIVE_SOL } from "../../middleware/tokens";
-import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/token-list";
+import { NATIVE_SOL } from "../../constants/tokens";
+import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/tokens";
 import { InfoIcon } from "../../components/InfoIcon";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
@@ -724,8 +724,8 @@ export const JupiterExchange = (props: {
 
     const isInAmountTooLow = useCallback(() => {
         if (inputToken && inputAmount && minInAmount) {
-            const tokenAmount = toTokenAmount(inputAmount, inputToken.decimals);
-            return tokenAmount < (minInAmount || 0) ? true : false;
+            const tokenAmount = toTokenAmountBn(inputAmount, inputToken.decimals);
+            return tokenAmount.ltn(minInAmount || 0) ? true : false;
         }
         return false;
     }, [

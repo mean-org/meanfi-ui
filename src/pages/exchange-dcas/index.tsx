@@ -18,7 +18,7 @@ import {
   isLocal
 } from '../../middleware/ui';
 import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
-import { MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { Identicon } from '../../components/Identicon';
 import "./style.scss";
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, useLocalStorageState } from '../../middleware/utils';

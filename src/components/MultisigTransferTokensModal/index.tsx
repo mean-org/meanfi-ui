@@ -19,7 +19,7 @@ import { InputMean } from '../InputMean';
 import { TokenDisplay } from '../TokenDisplay';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { useAccountsContext } from '../../contexts/accounts';
-import { NATIVE_SOL } from '../../middleware/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { TextInput } from '../TextInput';
 import { TokenListItem } from '../TokenListItem';
 import { environment } from '../../environments/environment';

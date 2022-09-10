@@ -27,7 +27,7 @@ import { AllocationType, Stream, StreamTemplate, Treasury, TreasuryType } from '
 import BN from 'bn.js';
 import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { NATIVE_SOL } from '../../../../middleware/tokens';
+import { NATIVE_SOL } from '../../../../constants/tokens';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { QRCodeSVG } from 'qrcode.react';
 import { AddressDisplay } from '../../../../components/AddressDisplay';

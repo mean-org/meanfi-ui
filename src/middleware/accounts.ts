@@ -11,24 +11,12 @@ import {
   Transaction,
   TransactionInstruction
 } from "@solana/web3.js"
-import { AccountTokenParsedInfo, TokenAccountInfo } from "../models/token";
+import { AccountTokenParsedInfo } from "../models/accounts";
+import { TokenAccountInfo } from "../models/accounts";
 import { consoleOut } from "./ui";
-import { SOLANA_ACCOUNT_INCINERATOR, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
-import { NATIVE_SOL } from "./tokens";
-
-export type ProgramAccounts = {
-  pubkey: PublicKey;
-  owner: PublicKey;
-  executable: PublicKey;
-  upgradeAuthority: PublicKey;
-  size: number;
-}
-
-export type AccountsDictionary = {
-  publicKey: PublicKey;
-  account: AccountInfo<Buffer>;
-  owner?: PublicKey;
-}
+import { WRAPPED_SOL_MINT_ADDRESS } from "../constants";
+import { NATIVE_SOL } from "../constants/tokens";
+import { AccountsDictionary } from "../models/accounts";
 
 export async function getMultipleAccounts(
   connection: Connection,
@@ -190,7 +178,6 @@ export async function closeTokenAccount(
   owner: PublicKey,
 ) {
   const ixs: TransactionInstruction[] = [];
-  const incinerator = new PublicKey(SOLANA_ACCOUNT_INCINERATOR);
   let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
 
   try {

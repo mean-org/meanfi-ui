@@ -19,7 +19,6 @@ import useLocalStorage from "../../hooks/useLocalStorage";
 import { reportConnectedAccount } from "../../middleware/api";
 import { Connection } from "@solana/web3.js";
 import useOnlineStatus from "../../contexts/online-status";
-import { AccountDetails } from "../../models";
 import { segmentAnalytics } from "../../App";
 import { AppUsageEvent } from "../../middleware/segment-service";
 import { openNotification } from "../Notifications";
@@ -28,6 +27,7 @@ import { TransactionConfirmationHistory } from "../TransactionConfirmationHistor
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { getDefaultRpc } from "../../services/connections-hq";
 import { isUnauthenticatedRoute } from "../../middleware/utils";
+import { AccountDetails } from "../../models/accounts";
 
 const { Header, Content, Footer } = Layout;
 

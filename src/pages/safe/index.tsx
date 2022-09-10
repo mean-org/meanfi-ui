@@ -72,14 +72,14 @@ import {
   MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk';
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken, getTrancheDepositIx, getTrancheWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
-import { NATIVE_SOL } from '../../middleware/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { UserTokenAccount } from '../../models/transactions';
 import { ACCOUNT_LAYOUT } from '../../middleware/layouts';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { AppUsageEvent } from '../../middleware/segment-service';
 import { segmentAnalytics } from "../../App";
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ProgramAccounts } from '../../middleware/accounts';
+import { ProgramAccounts } from "../../models/accounts";
 import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';

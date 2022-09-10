@@ -49,7 +49,7 @@ import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { TreasuryTopupParams } from "../../models/common-types";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
-import { NATIVE_SOL } from "../../middleware/tokens";
+import { NATIVE_SOL } from "../../constants/tokens";
 import { readAccountInfo } from "../../middleware/accounts";
 import { AddFundsParams } from "../../models/vesting";
 import BigNumber from "bignumber.js";

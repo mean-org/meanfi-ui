@@ -36,7 +36,7 @@ import { Identicon } from '../Identicon';
 import { QRCodeSVG } from 'qrcode.react';
 import { AddressDisplay } from '../AddressDisplay';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { NATIVE_SOL } from '../../middleware/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { InputMean } from '../InputMean';
 import { AccountInfo, Connection, ParsedAccountData } from '@solana/web3.js';
 import { readAccountInfo } from '../../middleware/accounts';

@@ -12,9 +12,9 @@ import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey
 import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from '../../middleware/ui';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { LoadingOutlined } from '@ant-design/icons';
-import { AccountTokenParsedInfo } from '../../models/token';
+import { AccountTokenParsedInfo } from "../../models/accounts";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { NATIVE_SOL } from '../../middleware/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { TokenListItem } from '../TokenListItem';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';

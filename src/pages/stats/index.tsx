@@ -8,7 +8,7 @@ import { IconStats } from '../../Icons';
 import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { TokenStats } from './TokenStats';
-import { MEAN_TOKEN, MEAN_TOKEN_LIST, SMEAN_TOKEN } from '../../constants/token-list';
+import { MEAN_TOKEN, MEAN_TOKEN_LIST, SMEAN_TOKEN } from '../../constants/tokens';
 import { getCoingeckoMarketChart, getMeanStats } from '../../middleware/api';
 import { MeanFiStatsModel } from '../../models/meanfi-stats';
 import { appConfig } from "../..";

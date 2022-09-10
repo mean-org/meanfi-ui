@@ -7,7 +7,7 @@ import { SafeInfo } from "../UI/SafeInfo";
 // import { MultisigVault } from '../../../../models/multisig';
 import { Idl, Program } from '@project-serum/anchor';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
-import { ProgramAccounts } from '../../../../middleware/accounts';
+import { ProgramAccounts } from "../../../../models/accounts";
 import { consoleOut } from '../../../../middleware/ui';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../../../contexts/appstate';

@@ -4,7 +4,7 @@ import { Modal, Button, Select, Divider, Input, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { NATIVE_SOL } from '../../middleware/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../middleware/utils';

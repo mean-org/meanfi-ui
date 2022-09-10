@@ -34,10 +34,10 @@ import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-da
 import { segmentAnalytics } from '../../App';
 import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../middleware/segment-service';
 import dateFormat from 'dateformat';
-import { NATIVE_SOL } from '../../middleware/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
-import { AccountTokenParsedInfo } from '../../models/token';
+import { AccountTokenParsedInfo } from "../../models/accounts";
 import { RecipientAddressInfo } from '../../models/common-types';
 import { OtpTxParams } from '../../models/transfers';
 import BN from 'bn.js';

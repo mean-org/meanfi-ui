@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, Spin, TimePicker } from 'antd';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { SubCategory, TransactionFees, TreasuryType } from '@mean-dao/msp';
-import { NATIVE_SOL } from '../../../../middleware/tokens';
+import { NATIVE_SOL } from '../../../../constants/tokens';
 import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TreasuryTypeOption } from '../../../../models/treasuries';

@@ -15,7 +15,7 @@ import { IconCaretDown } from "../../Icons";
 import { isError } from "../../middleware/transactions";
 import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from "@mean-dao/msp";
-import { NATIVE_SOL } from "../../middleware/tokens";
+import { NATIVE_SOL } from "../../constants/tokens";
 import { CUSTOM_TOKEN_NAME } from "../../constants";
 
 export const StreamEditModal = (props: {

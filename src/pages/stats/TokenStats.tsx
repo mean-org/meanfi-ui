@@ -9,7 +9,7 @@ import { copyText } from '../../middleware/ui';
 import { PriceGraph } from './PriceGraph';
 import CardStats from './components/CardStats';
 import { formatThousands, openLinkInNewTab } from "../../middleware/utils";
-import { MEAN_TOKEN } from "../../constants/token-list";
+import { MEAN_TOKEN } from "../../constants/tokens";
 import { AppStateContext } from "../../contexts/appstate";
 import { openNotification } from "../../components/Notifications";
 import { InfoIcon } from "../../components/InfoIcon";

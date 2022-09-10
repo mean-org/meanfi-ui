@@ -5,7 +5,7 @@ import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from ".
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { IconLoading } from "../../Icons";
 import { NATIVE_SOL_MINT } from "../../middleware/ids";
-import { NATIVE_SOL } from "../../middleware/tokens";
+import { NATIVE_SOL } from "../../constants/tokens";
 import { getTokenAmountAndSymbolByTokenAddress, toUiAmount } from "../../middleware/utils";
 import { AddressDisplay } from "../AddressDisplay";
 import BN from "bn.js";

@@ -12,7 +12,7 @@ import { useNativeAccount } from "../../../../../contexts/accounts";
 import { AppStateContext } from "../../../../../contexts/appstate";
 import { IconEllipsisVertical, IconInfoCircle, IconLoading } from "../../../../../Icons";
 import { UserTokenAccount } from "../../../../../models/transactions";
-import { NATIVE_SOL } from "../../../../../middleware/tokens";
+import { NATIVE_SOL } from "../../../../../constants/tokens";
 import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../middleware/ui";
 import { shortenAddress } from "../../../../../middleware/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";

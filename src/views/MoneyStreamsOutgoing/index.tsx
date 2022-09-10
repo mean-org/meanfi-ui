@@ -42,7 +42,7 @@ import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { title } from "process";
 import { appConfig } from '../..';
 import { readAccountInfo } from "../../middleware/accounts";
-import { NATIVE_SOL } from "../../middleware/tokens";
+import { NATIVE_SOL } from "../../constants/tokens";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

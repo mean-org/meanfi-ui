@@ -58,10 +58,10 @@ import dateFormat from 'dateformat';
 import { TokenInfo } from '@solana/spl-token-registry';
 import useWindowSize from '../../hooks/useWindowResize';
 import { InfoIcon } from '../../components/InfoIcon';
-import { NATIVE_SOL } from '../../middleware/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
-import { AccountTokenParsedInfo } from '../../models/token';
+import { AccountTokenParsedInfo } from "../../models/accounts";
 import { RecipientAddressInfo } from '../../models/common-types';
 import BN from 'bn.js';
 

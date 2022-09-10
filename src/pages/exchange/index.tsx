@@ -13,7 +13,7 @@ import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 
 type SwapOption = "one-time" | "recurring";
 
