@@ -28,7 +28,7 @@ import {
   openLinkInNewTab,
   shortenAddress,
   tabNameFormat,
-  toUiAmount2
+  toUiAmount
 } from '../../middleware/utils';
 import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
@@ -2670,7 +2670,7 @@ export const AccountsNewView = () => {
         const unallocated = getUnallocatedBalance(tsry);
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         const ub = isNewTreasury
-          ? new BigNumber(toUiAmount2(unallocated, decimals)).toNumber()
+          ? new BigNumber(toUiAmount(unallocated, decimals)).toNumber()
           : new BigNumber(unallocated.toString()).toNumber();
         return ub;
     }

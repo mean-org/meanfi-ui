@@ -17,8 +17,8 @@ import {
   getTxIxResume,
   isValidNumber,
   shortenAddress,
-  toTokenAmount2,
-  toUiAmount2,
+  toTokenAmount,
+  toUiAmount,
 } from "../../middleware/utils";
 import { Identicon } from "../../components/Identicon";
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
@@ -150,7 +150,7 @@ export const RepeatingPayment = (props: {
   const getDisplayAmount = useCallback((amount: BN) => {
     if (selectedToken) {
       return getAmountWithSymbol(
-        toUiAmount2(amount, selectedToken.decimals),
+        toUiAmount(amount, selectedToken.decimals),
         selectedToken.address,
         true,
         splTokenList,
@@ -622,7 +622,7 @@ export const RepeatingPayment = (props: {
     const timeout = setTimeout(() => {
       const balance = userBalances[selectedToken.address] as number;
       setSelectedTokenBalance(balance);
-      const balanceBn = toTokenAmount2(balance, selectedToken.decimals);
+      const balanceBn = toTokenAmount(balance, selectedToken.decimals);
       setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
     });
 
@@ -977,8 +977,8 @@ export const RepeatingPayment = (props: {
         const beneficiary = new PublicKey(recipientAddress as string);
         consoleOut('beneficiaryMint:', selectedToken.address);
         const associatedToken = new PublicKey(selectedToken.address as string);
-        const amount = toTokenAmount2(fromCoinAmount, selectedToken.decimals).toString();
-        const rateAmount = toTokenAmount2(paymentRateAmount, selectedToken.decimals).toString();
+        const amount = toTokenAmount(fromCoinAmount, selectedToken.decimals).toString();
+        const rateAmount = toTokenAmount(paymentRateAmount, selectedToken.decimals).toString();
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         const startUtc = new Date(parsedDate);
@@ -1684,7 +1684,7 @@ export const RepeatingPayment = (props: {
                         const amount = nativeBalance - getMinSolBlanceRequired();
                         setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
                       } else {
-                        setFromCoinAmount(toUiAmount2(tokenBalanceBn, selectedToken.decimals));
+                        setFromCoinAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
                       }
                     }}>
                     MAX

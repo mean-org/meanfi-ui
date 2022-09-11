@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount2, toTokenAmountBn, toUiAmount2 } from '../../../../middleware/utils';
+import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
 import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../middleware/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
@@ -241,7 +241,7 @@ export const VestingContractCreateForm = (props: {
         const timeout = setTimeout(() => {
             const balance = userBalances[selectedToken.address] as number;
             setSelectedTokenBalance(balance);
-            const balanceBn = toTokenAmount2(balance, selectedToken.decimals);
+            const balanceBn = toTokenAmount(balance, selectedToken.decimals);
             setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
         });
 
@@ -344,7 +344,7 @@ export const VestingContractCreateForm = (props: {
             cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
             startDate: startUtc,
             multisig: isMultisigContext ? accountAddress : '',
-            fundingAmount: toTokenAmount2(vestingLockFundingAmount, (selectedToken as TokenInfo).decimals, true) as string
+            fundingAmount: toTokenAmount(vestingLockFundingAmount, (selectedToken as TokenInfo).decimals, true) as string
         };
         onStartTransaction(options);
     }
@@ -874,7 +874,7 @@ export const VestingContractCreateForm = (props: {
                                                     const amount = getMaxAmount();
                                                     setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
                                                 } else {
-                                                    setVestingLockFundingAmount(toUiAmount2(tokenBalanceBn, selectedToken.decimals));
+                                                    setVestingLockFundingAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
                                                 }
                                             }}>
                                                 MAX

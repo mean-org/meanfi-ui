@@ -28,7 +28,18 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigTransactionFees, MULTISIG_ACTIONS } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, stringNumberFormat, toUsCurrency } from "../../middleware/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { cutNumber, displayAmountWithSymbol, fetchAccountTokens, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toTokenAmountBn, toUiAmount, toUiAmount2 } from "../../middleware/utils";
+import {
+  cutNumber,
+  displayAmountWithSymbol,
+  fetchAccountTokens,
+  formatThousands,
+  getAmountWithSymbol,
+  getTokenAmountAndSymbolByTokenAddress,
+  getTxIxResume,
+  shortenAddress,
+  toTokenAmountBn,
+  toUiAmount
+} from "../../middleware/utils";
 import { useTranslation } from "react-i18next";
 import { useNativeAccount } from "../../contexts/accounts";
 import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
@@ -351,7 +362,7 @@ export const MoneyStreamsInfoView = (props: {
         const unallocated = getUnallocatedBalance(tsry);
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         const ub = isNewTreasury
-          ? new BigNumber(toUiAmount2(unallocated, decimals)).toNumber()
+          ? new BigNumber(toUiAmount(unallocated, decimals)).toNumber()
           : new BigNumber(unallocated.toString()).toNumber();
         if (logUnallocatedBalances) {
           consoleOut(`unallocatedBalance for ${shortenAddress(tsry.id as string, 12)}:`, ub.toString(), 'blue');
@@ -1606,7 +1617,7 @@ export const MoneyStreamsInfoView = (props: {
 
       const rateAmount = getRateAmountBn(item, decimals);
       value += stringNumberFormat(
-        toUiAmount2(rateAmount, decimals),
+        toUiAmount(rateAmount, decimals),
         friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
       )
 
@@ -1646,7 +1657,7 @@ export const MoneyStreamsInfoView = (props: {
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
         value += stringNumberFormat(
-          toUiAmount2(allocationAssigned, decimals),
+          toUiAmount(allocationAssigned, decimals),
           friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || decimals
         )
       }
@@ -2112,7 +2123,7 @@ export const MoneyStreamsInfoView = (props: {
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-          const rateAmountValue = isNew ? new BigNumber(toUiAmount2(new BN(v2.rateAmount), token.decimals)).toNumber() : v1.rateAmount;
+          const rateAmountValue = isNew ? new BigNumber(toUiAmount(new BN(v2.rateAmount), token.decimals)).toNumber() : v1.rateAmount;
           const valueOfDay = rateAmountValue * tokenPrice / stream.rateIntervalInSeconds * 86400;
           totalRateAmountValuePerDay += valueOfDay
 
@@ -2169,7 +2180,7 @@ export const MoneyStreamsInfoView = (props: {
             DECIMAL_PLACES: 16
           });
           const rateAmountBn = getRateAmountBn(stream, token.decimals);
-          const rateAmountToUi = toUiAmount2(rateAmountBn, token.decimals);
+          const rateAmountToUi = toUiAmount(rateAmountBn, token.decimals);
           const totalValue = new BigNumber(rateAmountToUi).multipliedBy(tokenPrice);
           const amountAsecond = totalValue.dividedBy(stream.rateIntervalInSeconds).toNumber();
           const amountAday = totalValue.dividedBy(stream.rateIntervalInSeconds).multipliedBy(86400).toNumber();

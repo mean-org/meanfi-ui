@@ -10,7 +10,7 @@ import { useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { StreamTreasuryType } from '../../../../models/treasuries';
 import { consoleOut, percentageBn } from '../../../../middleware/ui';
-import { getAmountWithSymbol, toUiAmount2 } from '../../../../middleware/utils';
+import { getAmountWithSymbol, toUiAmount } from '../../../../middleware/utils';
 import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
 import { AppStateContext } from '../../../../contexts/appstate';
 
@@ -155,7 +155,7 @@ export const StreamCloseModal = (props: {
       const isTreasurer = amITreasurer();
       const isBeneficiary = amIBeneficiary();
       if (isBeneficiary) {
-        const wa = toUiAmount2(streamDetail.withdrawableAmount, selectedToken?.decimals || 6);
+        const wa = toUiAmount(streamDetail.withdrawableAmount, selectedToken?.decimals || 6);
         fee = percentageBn(fees.mspPercentFee, wa, true) as number || 0;
       } else if (isTreasurer) {
         fee = fees.mspFlatFee;
@@ -171,7 +171,7 @@ export const StreamCloseModal = (props: {
 
   const getWithdrawableAmount = useCallback(() => {
     if (streamDetail) {
-      return toUiAmount2(streamDetail.withdrawableAmount, selectedToken?.decimals || 6);
+      return toUiAmount(streamDetail.withdrawableAmount, selectedToken?.decimals || 6);
     }
     return '0';
   }, [
@@ -181,7 +181,7 @@ export const StreamCloseModal = (props: {
 
   const getUnvested = useCallback(() => {
     if (streamDetail) {
-      return toUiAmount2(streamDetail.fundsLeftInStream, selectedToken?.decimals || 6);
+      return toUiAmount(streamDetail.fundsLeftInStream, selectedToken?.decimals || 6);
     }
     return '0';
   }, [

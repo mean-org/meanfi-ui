@@ -3,12 +3,11 @@ import { useConnection } from "./connection";
 import { useWallet } from "./wallet";
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import { AccountLayout, u64, MintInfo, MintLayout } from "@solana/spl-token";
-import { TokenAccount } from "./../models";
 import { chunks } from "../middleware/utils";
 import { EventEmitter } from "../middleware/eventEmitter";
 import { WRAPPED_SOL_MINT, programIds } from "../middleware/ids";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../constants";
-import { consoleOut } from "../middleware/ui";
+import { TokenAccount } from "../models/accounts";
 
 interface AccountsContextConfig {
   userAccounts: TokenAccount[];

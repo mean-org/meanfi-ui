@@ -6,7 +6,7 @@ import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { IconExternalLink } from '../../../../Icons';
 import { friendlyDisplayDecimalPlaces, getShortDate, stringNumberFormat } from '../../../../middleware/ui';
-import { formatThousands, makeDecimal, shortenAddress, toUiAmount2 } from '../../../../middleware/utils';
+import { formatThousands, makeDecimal, shortenAddress, toUiAmount } from '../../../../middleware/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { BN } from 'bn.js';
 
@@ -116,7 +116,7 @@ export const VestingContractActivity = (props: {
             if (!item.amount) {
                 amount = '0';
             } else {
-                const convertedAmount = toUiAmount2(new BN(item.amount), decimals);
+                const convertedAmount = toUiAmount(new BN(item.amount), decimals);
                 amount = stringNumberFormat(
                     convertedAmount,
                     friendlyDisplayDecimalPlaces(convertedAmount) || decimals

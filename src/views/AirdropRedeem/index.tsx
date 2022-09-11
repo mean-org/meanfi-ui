@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, toTokenAmount2 } from '../../middleware/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, toTokenAmount } from '../../middleware/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
@@ -169,8 +169,8 @@ export const AirdropRedeem = (props: {
         const treasurer = new PublicKey(treasurerAddress);
         const treasury = new PublicKey(treasuryAddress);
         const associatedToken = new PublicKey(meanToken.address as string);
-        const allocation = toTokenAmount2(userAllocation.tokenAmount, meanToken.decimals, true) as string;
-        const rateAmount = toTokenAmount2(userAllocation.monthlyRate, meanToken.decimals, true) as string;
+        const allocation = toTokenAmount(userAllocation.tokenAmount, meanToken.decimals, true) as string;
+        const rateAmount = toTokenAmount(userAllocation.monthlyRate, meanToken.decimals, true) as string;
         const streamName = 'MEAN Airdrop';
         const now = new Date();
         const cliffAmount = 0;

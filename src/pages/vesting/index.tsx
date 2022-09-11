@@ -23,7 +23,7 @@ import {
 } from '@mean-dao/msp';
 import "./style.scss";
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from '../../middleware/utils';
+import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../middleware/utils';
 import { openNotification } from '../../components/Notifications';
 import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, MSP_FEE_TREASURY, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -2201,7 +2201,7 @@ export const VestingView = () => {
         ? selectedMultisig.authority
         : publicKey;
       const price = associatedToken ? getTokenPriceByAddress(associatedToken.address) || getTokenPriceBySymbol(associatedToken.symbol) : 0;
-      const segmentAmount = toUiAmount2(params.tokenAmount, associatedToken.decimals);
+      const segmentAmount = toUiAmount(params.tokenAmount, associatedToken.decimals);
 
       // Create a transaction
       const data: CreateVestingStreamParams = {
@@ -3568,7 +3568,7 @@ export const VestingView = () => {
           balance = new BN(ta.amount);
           decimals = ta.decimals;
         }
-        consoleOut('VC ATA balance:', toUiAmount2(balance, decimals), 'blue');
+        consoleOut('VC ATA balance:', toUiAmount(balance, decimals), 'blue');
         consoleOut('VC ATA balance (BN):', balance.toString(), 'blue');
         return balance;
       } catch (error) {
@@ -3743,7 +3743,7 @@ export const VestingView = () => {
 
     if (selectedVestingContract.associatedToken && workingToken && workingToken.address === selectedVestingContract.associatedToken) {
       streamingBalance = getUnallocatedBalance(selectedVestingContract);
-      consoleOut('Available streaming balance:', toUiAmount2(streamingBalance, workingToken.decimals), 'blue');
+      consoleOut('Available streaming balance:', toUiAmount(streamingBalance, workingToken.decimals), 'blue');
       consoleOut('Available streaming balance (BN):', streamingBalance.toString(), 'blue');
       setAvailableStreamingBalance(streamingBalance);
       setAssociatedTokenDecimals(workingToken.decimals);

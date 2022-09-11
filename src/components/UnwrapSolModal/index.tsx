@@ -15,7 +15,6 @@ import { EventType, OperationType, TransactionStatus } from '../../models/enums'
 import { customLogger } from '../..';
 import { cutNumber, formatThousands, getTxIxResume, isValidNumber, toUiAmount } from '../../middleware/utils';
 import { LoadingOutlined } from '@ant-design/icons';
-import BN from 'bn.js';
 import { closeTokenAccount } from "../../middleware/accounts";
 import { openNotification } from '../Notifications';
 
@@ -158,7 +157,7 @@ export const UnwrapSolModal = (props: {
         const mint = wSolInfo.mint.toBase58();
         const amount = wSolInfo.amount.toNumber();
         const token = tokenList.find((t) => t.address === mint);
-        balance = token ? toUiAmount(new BN(amount), token.decimals) : 0;
+        balance = token ? parseFloat(toUiAmount(amount, token.decimals)) : 0;
         setWsolPubKey(tokenAccounts[wSol].pubkey);
       }
     }

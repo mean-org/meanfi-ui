@@ -27,7 +27,7 @@ import {
   formatThousands,
   getAmountWithSymbol,
   shortenAddress,
-  toUiAmount2,
+  toUiAmount,
 } from "../../middleware/utils";
 import { IconCoin, IconCopy, IconExternalLink, IconTrash, IconWallet } from "../../Icons";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -1021,7 +1021,7 @@ export const PlaygroundView = () => {
                       ? infoRow('Token Balance', formatThousands(parsedAccountInfo.data.parsed.info.tokenAmount.uiAmount, decimals, decimals))
                       : isTokenMint
                         ? infoRow('Current Supply:', getAmountWithSymbol(
-                            toUiAmount2(parsedAccountInfo.data.parsed.info.supply, decimals),
+                            toUiAmount(parsedAccountInfo.data.parsed.info.supply, decimals),
                             parsedAccountInfo.data.parsed.info.mint,
                             true,
                             splTokenList,

@@ -12,8 +12,8 @@ import {
   getSdkValue,
   isValidNumber,
   shortenAddress,
-  toTokenAmount2,
-  toUiAmount2
+  toTokenAmount,
+  toUiAmount
 } from '../../middleware/utils';
 import { IconHelpCircle } from '../../Icons';
 import {
@@ -370,14 +370,14 @@ export const TreasuryAddFundsModal = (props: {
         const unallocated = getUnallocatedBalance(workingTreasuryDetails);
         const ub = isNewTreasury(workingTreasuryDetails)
           ? unallocated.toString()
-          : toUiAmount2(unallocated, selectedToken.decimals);
+          : toUiAmount(unallocated, selectedToken.decimals);
         consoleOut('unallocatedBalance:', ub, 'blue');
         setAvailableBalance(new BN(ub));
       } else {
         // Take source balance from the user's wallet or safe
         const userBalance = selectFromTokenBalance();
         consoleOut(`User's balance Ui:`, userBalance, 'blue');
-        const toBignumber = toTokenAmount2(userBalance, selectedToken.decimals, true) as string;
+        const toBignumber = toTokenAmount(userBalance, selectedToken.decimals, true) as string;
         consoleOut(`User's balance Bn:`, toBignumber, 'blue');
         setAvailableBalance(new BN(toBignumber));
       }
@@ -522,7 +522,7 @@ export const TreasuryAddFundsModal = (props: {
       setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
       setTopupAmount(newValue);
-      setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
+      setTokenAmount(new BN(toTokenAmount(newValue, decimals).toString()));
     }
   };
 
@@ -835,12 +835,12 @@ export const TreasuryAddFundsModal = (props: {
                                   const maxAmount = getMaxAmount(true);
                                   consoleOut('Treasury pays for fees...', '', 'blue');
                                   consoleOut('Settings maxAmount to:', maxAmount.toString(), 'blue');
-                                  setTopupAmount(toUiAmount2(maxAmount, decimals));
+                                  setTopupAmount(toUiAmount(maxAmount, decimals));
                                   setTokenAmount(maxAmount);
                                 } else {
                                   const maxAmount = getMaxAmount();
                                   consoleOut('Settings maxAmount to:', maxAmount.toString(), 'blue');
-                                  setTopupAmount(toUiAmount2(maxAmount, decimals));
+                                  setTopupAmount(toUiAmount(maxAmount, decimals));
                                   setTokenAmount(maxAmount);
                                 }
                               }}>

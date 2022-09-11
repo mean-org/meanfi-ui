@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
-import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount2, toUiAmount2 } from "../../middleware/utils";
+import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount, toUiAmount } from "../../middleware/utils";
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
@@ -128,7 +128,7 @@ export const OneTimePayment = (props: {
   const getDisplayAmount = useCallback((amount: BN) => {
     if (selectedToken) {
       return getAmountWithSymbol(
-        toUiAmount2(amount, selectedToken.decimals),
+        toUiAmount(amount, selectedToken.decimals),
         selectedToken.address,
         true,
         splTokenList,
@@ -463,7 +463,7 @@ export const OneTimePayment = (props: {
     const timeout = setTimeout(() => {
       const balance = userBalances[selectedToken.address] as number;
       setSelectedTokenBalance(balance);
-      const balanceBn = toTokenAmount2(balance, selectedToken.decimals);
+      const balanceBn = toTokenAmount(balance, selectedToken.decimals);
       setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
     });
 
@@ -832,7 +832,7 @@ export const OneTimePayment = (props: {
       const beneficiary = new PublicKey(recipientAddress as string);
       consoleOut('associatedToken:', selectedToken.address);
       const associatedToken = new PublicKey(selectedToken.address as string);
-      const amount = toTokenAmount2(fromCoinAmount, selectedToken.decimals, true);
+      const amount = toTokenAmount(fromCoinAmount, selectedToken.decimals, true);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       let startUtc = new Date(parsedDate);
@@ -1337,7 +1337,7 @@ export const OneTimePayment = (props: {
                         const amount = nativeBalance - getMinSolBlanceRequired();
                         setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
                       } else {
-                        setFromCoinAmount(toUiAmount2(tokenBalanceBn, selectedToken.decimals));
+                        setFromCoinAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
                       }
                     }}>
                     MAX

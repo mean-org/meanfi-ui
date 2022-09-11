@@ -8,7 +8,7 @@ import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
 import { useWallet } from '../../../../contexts/wallet';
 import { percentageBn } from '../../../../middleware/ui';
-import { getAmountWithSymbol, toUiAmount2 } from '../../../../middleware/utils';
+import { getAmountWithSymbol, toUiAmount } from '../../../../middleware/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
 
 export const StreamPauseModal = (props: {
@@ -66,7 +66,7 @@ export const StreamPauseModal = (props: {
       const isTreasurer = amITreasurer();
       const isBeneficiary = amIBeneficiary();
       if (isBeneficiary) {
-        const wa = toUiAmount2(streamDetail.withdrawableAmount, selectedToken?.decimals || 6);
+        const wa = toUiAmount(streamDetail.withdrawableAmount, selectedToken?.decimals || 6);
         fee = percentageBn(fees.mspPercentFee, wa, true) as number || 0;
       } else if (isTreasurer) {
         fee = fees.mspFlatFee;
@@ -82,7 +82,7 @@ export const StreamPauseModal = (props: {
 
   const getWithdrawableAmount = useCallback(() => {
     if (streamDetail) {
-      return toUiAmount2(streamDetail.withdrawableAmount, selectedToken?.decimals || 6);
+      return toUiAmount(streamDetail.withdrawableAmount, selectedToken?.decimals || 6);
     }
     return '0';
   }, [
@@ -92,7 +92,7 @@ export const StreamPauseModal = (props: {
 
   const getUnvested = useCallback(() => {
     if (streamDetail) {
-      return toUiAmount2(streamDetail.fundsLeftInStream, selectedToken?.decimals || 6);
+      return toUiAmount(streamDetail.fundsLeftInStream, selectedToken?.decimals || 6);
     }
     return '0';
   }, [

@@ -6,9 +6,8 @@ import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { IconLoading } from "../../Icons";
 import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { NATIVE_SOL } from "../../constants/tokens";
-import { getTokenAmountAndSymbolByTokenAddress, toUiAmount } from "../../middleware/utils";
+import { displayAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, toUiAmount } from "../../middleware/utils";
 import { AddressDisplay } from "../AddressDisplay";
-import BN from "bn.js";
 
 export const SolBalanceModal = (props: {
   accountAddress: string;
@@ -73,10 +72,13 @@ export const SolBalanceModal = (props: {
               <>
                 {selectedMultisig && selectedMultisig !== undefined ? (
                   <>
-                    {getTokenAmountAndSymbolByTokenAddress(
-                      toUiAmount(new BN(selectedMultisig.balance), NATIVE_SOL.decimals || 9),
-                      NATIVE_SOL_MINT.toBase58()
-                    )}
+                    {
+                      displayAmountWithSymbol(
+                        selectedMultisig.balance,
+                        NATIVE_SOL.address,
+                        NATIVE_SOL.decimals
+                      )
+                    }
                   </>
                 ) : (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
@@ -87,7 +89,7 @@ export const SolBalanceModal = (props: {
           {/* Warn if Safe balance is low */}
           {isStreamingAccount && (
             <p>
-              {(selectedMultisig && (toUiAmount(new BN(selectedMultisig.balance), NATIVE_SOL.decimals) < MIN_SOL_BALANCE_REQUIRED)) ? (
+              {(selectedMultisig && (parseFloat(toUiAmount(selectedMultisig.balance, NATIVE_SOL.decimals)) < MIN_SOL_BALANCE_REQUIRED)) ? (
                 <span className="form-field-error">
                   You are running low on SOL needed <br />
                   to pay for transaction fees.

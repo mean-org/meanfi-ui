@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount2 } from "../../middleware/utils";
+import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
 import { consoleOut, percentageBn } from "../../middleware/ui";
 import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useTranslation } from "react-i18next";
@@ -74,7 +74,7 @@ export const StreamWithdrawModal = (props: {
       if (fees.mspPercentFee) {
         if (amount.gtn(0)) {
           const pctgTokens = percentageBn(fees.mspPercentFee, amount);
-          const uiAmount = toUiAmount2(pctgTokens, selectedToken.decimals);
+          const uiAmount = toUiAmount(pctgTokens, selectedToken.decimals);
           fee = parseFloat(uiAmount);
         }
       } else if (fees.mspFlatFee) {
@@ -276,10 +276,10 @@ export const StreamWithdrawModal = (props: {
       if (value === 100) {
         setWithdrawAmountBn(maxAmountBn);
         fee = getFeeAmount(transactionFees, maxAmountBn)
-        newValue = getDisplayAmount(toUiAmount2(maxAmountBn, selectedToken.decimals));
+        newValue = getDisplayAmount(toUiAmount(maxAmountBn, selectedToken.decimals));
       } else {
         const pctgAmount = new BN(percentageBn(value, maxAmountBn));
-        const partialAmount = toUiAmount2(pctgAmount, selectedToken.decimals);
+        const partialAmount = toUiAmount(pctgAmount, selectedToken.decimals);
         setWithdrawAmountBn(pctgAmount);
         fee = getFeeAmount(transactionFees, pctgAmount)
         newValue = getDisplayAmount(partialAmount);
@@ -405,7 +405,7 @@ export const StreamWithdrawModal = (props: {
             <div className="left static-data-field">
               {
                 startUpData && selectedToken && getAmountWithSymbol(
-                  toUiAmount2(maxAmountBn, selectedToken.decimals),
+                  toUiAmount(maxAmountBn, selectedToken.decimals),
                   selectedToken.address,
                   true,
                   splTokenList,

@@ -4,7 +4,7 @@ import { Modal, Button, Row, Col } from 'antd';
 import { WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { percentage, percentageBn } from '../../middleware/ui';
-import { getAmountWithSymbol, toUiAmount2 } from '../../middleware/utils';
+import { getAmountWithSymbol, toUiAmount } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
@@ -90,7 +90,7 @@ export const StreamResumeModal = (props: {
         if (v1.version < 2) {
           fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
         } else {
-          const wa = toUiAmount2(v2.withdrawableAmount, token?.decimals || 6);
+          const wa = toUiAmount(v2.withdrawableAmount, token?.decimals || 6);
           fee = percentageBn(fees.mspPercentFee, wa, true) as number || 0;
         }
       } else if (isTreasurer) {
@@ -115,7 +115,7 @@ export const StreamResumeModal = (props: {
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount2(v2.withdrawableAmount, token?.decimals || 6);
+        return toUiAmount(v2.withdrawableAmount, token?.decimals || 6);
       }
     }
     return 0;
@@ -135,7 +135,7 @@ export const StreamResumeModal = (props: {
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount2(v2.fundsLeftInStream, token?.decimals || 6);
+        return toUiAmount(v2.fundsLeftInStream, token?.decimals || 6);
       }
     }
     return 0;

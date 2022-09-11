@@ -27,7 +27,7 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { displayAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount2 } from '../../../../middleware/utils';
+import { displayAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../../../middleware/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
@@ -186,7 +186,7 @@ export const VestingContractStreamList = (props: {
         const rateAmount = new BN(item.rateAmount);
 
         value += stringNumberFormat(
-            toUiAmount2(rateAmount, selectedToken.decimals),
+            toUiAmount(rateAmount, selectedToken.decimals),
             friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
         )
 
@@ -204,7 +204,7 @@ export const VestingContractStreamList = (props: {
 
         const allocationAssigned = new BN(item.allocationAssigned);
         value += stringNumberFormat(
-            toUiAmount2(allocationAssigned, selectedToken.decimals),
+            toUiAmount(allocationAssigned, selectedToken.decimals),
             friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
         )
 

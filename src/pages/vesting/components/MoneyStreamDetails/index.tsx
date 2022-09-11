@@ -3,7 +3,7 @@ import BN from 'bn.js';
 import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity, MSP } from '@mean-dao/msp';
-import { displayAmountWithSymbol, shortenAddress, toUiAmount2 } from '../../../../middleware/utils';
+import { displayAmountWithSymbol, shortenAddress, toUiAmount } from '../../../../middleware/utils';
 import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, isLocal, relativeTimeFromDates, stringNumberFormat } from '../../../../middleware/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
@@ -117,7 +117,7 @@ export const MoneyStreamDetails = (props: {
     const rateAmount = new BN(item.rateAmount);
 
     value += stringNumberFormat(
-      toUiAmount2(rateAmount, selectedToken.decimals),
+      toUiAmount(rateAmount, selectedToken.decimals),
       friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
     )
 
@@ -135,7 +135,7 @@ export const MoneyStreamDetails = (props: {
 
     const allocationAssigned = new BN(item.allocationAssigned);
     value += stringNumberFormat(
-      toUiAmount2(allocationAssigned, selectedToken.decimals),
+      toUiAmount(allocationAssigned, selectedToken.decimals),
       friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
     )
 

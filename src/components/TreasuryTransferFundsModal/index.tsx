@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCur
 import { isError } from '../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
-import { displayAmountWithSymbol, formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeInteger, shortenAddress, toTokenAmount2, toUiAmount2 } from '../../middleware/utils';
+import { displayAmountWithSymbol, formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeInteger, shortenAddress, toTokenAmount, toUiAmount } from '../../middleware/utils';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
@@ -213,7 +213,7 @@ export const TreasuryTransferFundsModal = (props: {
       setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
       setTopupAmount(newValue);
-      setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
+      setTokenAmount(new BN(toTokenAmount(newValue, decimals).toString()));
     }
   };
 
@@ -359,7 +359,7 @@ export const TreasuryTransferFundsModal = (props: {
       const unallocated = getUnallocatedBalance(treasuryDetails);
       const ub = isNewTreasury()
         ? unallocated
-        : toUiAmount2(unallocated, selectedToken?.decimals || 6);
+        : toUiAmount(unallocated, selectedToken?.decimals || 6);
       consoleOut('unallocatedBalance:', ub.toString(), 'blue');
       setUnallocatedBalance(new BN(ub));
     }
@@ -554,11 +554,11 @@ export const TreasuryTransferFundsModal = (props: {
                                 const maxAmount = getMaxAmount(true);
                                 consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
                                 consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                                setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
+                                setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
                                 setTokenAmount(new BN(maxAmount));
                               } else {
                                 const maxAmount = getMaxAmount();
-                                setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
+                                setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
                                 setTokenAmount(new BN(maxAmount));
                               }
                             }}>

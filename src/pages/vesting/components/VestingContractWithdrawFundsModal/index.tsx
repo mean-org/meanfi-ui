@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCur
 import { isError } from '../../../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming';
-import { formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber, shortenAddress, toTokenAmount2, toTokenAmountBn, toUiAmount2 } from '../../../../middleware/utils';
+import { formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber, shortenAddress, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
 import { useWallet } from '../../../../contexts/wallet';
 import { FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
@@ -461,11 +461,11 @@ export const VestingContractWithdrawFundsModal = (props: {
                                 const maxAmount = getMaxAmount(true);
                                 consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
                                 consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                                setWithdrawAmount(toUiAmount2(maxAmount, decimals));
+                                setWithdrawAmount(toUiAmount(maxAmount, decimals));
                                 setTokenAmount(maxAmount);
                               } else {
                                 const maxAmount = getMaxAmount();
-                                setWithdrawAmount(toUiAmount2(maxAmount, decimals));
+                                setWithdrawAmount(toUiAmount(maxAmount, decimals));
                                 setTokenAmount(maxAmount);
                               }
                             }}>
@@ -519,7 +519,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                         <span>
                           {
                             getAmountWithSymbol(
-                              toUiAmount2(unallocatedBalance, selectedToken.decimals),
+                              toUiAmount(unallocatedBalance, selectedToken.decimals),
                               selectedToken.address,
                               true
                             )

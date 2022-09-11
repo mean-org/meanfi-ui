@@ -7,7 +7,7 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, shortenAddress, toTokenAmountBn, toUiAmount2 } from "../../middleware/utils";
+import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, shortenAddress, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
 import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates, stringNumberFormat } from "../../middleware/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
@@ -136,7 +136,7 @@ export const MoneyStreamDetails = (props: {
 
     const rateAmount = getRateAmountBn(item);
     value += stringNumberFormat(
-      toUiAmount2(rateAmount, selectedToken.decimals),
+      toUiAmount(rateAmount, selectedToken.decimals),
       friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
     )
 
@@ -171,7 +171,7 @@ export const MoneyStreamDetails = (props: {
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
         value += stringNumberFormat(
-          toUiAmount2(allocationAssigned, selectedToken.decimals),
+          toUiAmount(allocationAssigned, selectedToken.decimals),
           friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
         )
       }

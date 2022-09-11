@@ -465,14 +465,7 @@ export const getSdkValue = (amount: number | string, asString = false) => {
   return asString ? value.toString() : value;
 }
 
-
-
-export const toUiAmount = (amount: BN, decimals: number) => {
-  if (!decimals) { return 0; }
-  return amount.toNumber() / (10 ** decimals);
-}
-
-export const toUiAmount2 = (amount: number | BN, decimals: number) => {
+export const toUiAmount = (amount: number | BN, decimals: number) => {
   if (!amount || !decimals) { return '0'; }
   if (typeof amount === "number") {
     const value = amount / (10 ** decimals);
@@ -498,7 +491,7 @@ export const toUiAmountBn = (amount: number | BN, decimals: number, asBn = false
   }
 }
 
-export const toTokenAmount2 = (amount: number | string, decimals: number, asString = false) => {
+export const toTokenAmount = (amount: number | string, decimals: number, asString = false) => {
   if (!amount || !decimals) {
     return asString ? '0' : new BigNumber(0);
   }
@@ -521,8 +514,6 @@ export const toTokenAmountBn = (amount: number | string, decimals: number) => {
   const result = value.multipliedBy(multiplier).integerValue();
   return new BN(result.toString());
 }
-
-
 
 export function cutNumber(amount: number, decimals: number) {
   const str = `${amount}`;

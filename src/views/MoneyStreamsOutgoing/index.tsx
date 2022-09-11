@@ -17,7 +17,7 @@ import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/m
 import { useTranslation } from "react-i18next";
 import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { AppStateContext } from "../../contexts/appstate";
-import { fetchAccountTokens, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount2 } from "../../middleware/utils";
+import { fetchAccountTokens, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from "../../middleware/utils";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { segmentAnalytics } from "../../App";
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "../../middleware/segment-service";
@@ -2631,7 +2631,7 @@ export const MoneyStreamsOutgoingView = (props: {
           {
             getAmountWithSymbol(
               isNewStream()
-                ? toUiAmount2(v2.fundsLeftInStream, workingToken.decimals)
+                ? toUiAmount(v2.fundsLeftInStream, workingToken.decimals)
                 : v1.escrowUnvestedAmount,
               workingToken.address,
               false,

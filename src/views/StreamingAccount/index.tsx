@@ -52,7 +52,7 @@ import {
   makeInteger,
   openLinkInNewTab,
   shortenAddress,
-  toUiAmount2,
+  toUiAmount,
   getAmountWithSymbol,
   toTokenAmountBn,
 } from "../../middleware/utils";
@@ -413,7 +413,7 @@ export const StreamingAccountView = (props: {
   }, [streamingAccountSelected]);
 
   const getStreamingAccountActivityAssociatedToken = (item: VestingTreasuryActivity) => {
-    const amount = item.amount ? toUiAmount2(new BN(item.amount), selectedToken?.decimals || 6) : 0;
+    const amount = item.amount ? toUiAmount(new BN(item.amount), selectedToken?.decimals || 6) : 0;
     let message = '';
     switch (item.action) {
         case VestingTreasuryActivityAction.TreasuryAddFunds:
@@ -486,7 +486,7 @@ export const StreamingAccountView = (props: {
 
     const rateAmount = getRateAmountBn(item);
     value += stringNumberFormat(
-      toUiAmount2(rateAmount, selectedToken.decimals),
+      toUiAmount(rateAmount, selectedToken.decimals),
       friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
     )
 
@@ -521,7 +521,7 @@ export const StreamingAccountView = (props: {
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
         value += stringNumberFormat(
-          toUiAmount2(allocationAssigned, selectedToken.decimals),
+          toUiAmount(allocationAssigned, selectedToken.decimals),
           friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
         )
       }

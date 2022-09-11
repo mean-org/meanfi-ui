@@ -20,7 +20,7 @@ import {
     percentualBn,
     friendlyDisplayDecimalPlaces,
 } from '../../../../middleware/ui';
-import { makeDecimal, toUiAmount2 } from '../../../../middleware/utils';
+import { makeDecimal, toUiAmount } from '../../../../middleware/utils';
 import BN from 'bn.js';
 import { Alert, Progress } from 'antd';
 import { TokenIcon } from '../../../../components/TokenIcon';
@@ -299,12 +299,12 @@ export const VestingContractOverview = (props: {
                             <span className="font-size-100 font-bold fg-secondary-75 pl-2">
                                 {
                                     stringNumberFormat(
-                                        toUiAmount2(currentVestingAmount, selectedToken.decimals),
+                                        toUiAmount(currentVestingAmount, selectedToken.decimals),
                                         friendlyDisplayDecimalPlaces(currentVestingAmount.toString()) || selectedToken.decimals
                                     )
                                 } of {
                                     stringNumberFormat(
-                                        toUiAmount2(vestingContractFlowRate.streamableAmountBn, selectedToken.decimals),
+                                        toUiAmount(vestingContractFlowRate.streamableAmountBn, selectedToken.decimals),
                                         friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmountBn.toString()) || selectedToken.decimals
                                     )
                                 } {selectedToken.symbol} vested
@@ -384,7 +384,7 @@ export const VestingContractOverview = (props: {
                                 {selectedToken ? (
                                     <>
                                         {`${stringNumberFormat(
-                                                toUiAmount2(availableStreamingBalance, selectedToken.decimals),
+                                                toUiAmount(availableStreamingBalance, selectedToken.decimals),
                                                 4,
                                             )} ${selectedToken.symbol}`
                                         }

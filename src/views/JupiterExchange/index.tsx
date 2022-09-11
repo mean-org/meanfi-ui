@@ -22,7 +22,6 @@ import { Identicon } from "../../components/Identicon";
 import { JupiterExchangeOutput } from "../../components/JupiterExchangeOutput";
 import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
 import { appConfig, customLogger } from "../..";
-import BN from 'bn.js';
 import "./style.scss";
 import { NATIVE_SOL } from "../../constants/tokens";
 import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/tokens";
@@ -185,7 +184,7 @@ export const JupiterExchange = (props: {
                 const mint = wSolInfo.mint.toBase58();
                 const amount = wSolInfo.amount.toNumber();
                 const token = tokenList.find(t => t.address === mint);
-                balance = token ? toUiAmount(new BN(amount), token.decimals) : 0;
+                balance = token ? parseFloat(toUiAmount(amount, token.decimals)) : 0;
                 setWsolPubKey(tokenAccounts[wSol].pubkey);
             }
         }
@@ -753,7 +752,7 @@ export const JupiterExchange = (props: {
                 label = t('transactions.validation.no-amount');
             } else if (isInAmountTooLow()) {
                 label = t('transactions.validation.minimum-swap-amount', {
-                    mintAmount: toUiAmount(new BN(minInAmount || 0), inputToken.decimals),
+                    mintAmount: toUiAmount(minInAmount || 0, inputToken.decimals),
                     fromMint: inputToken.symbol
                 });
             } else if (inputAmount > getMaxAllowedSwapAmount()) {
@@ -1381,13 +1380,13 @@ export const JupiterExchange = (props: {
                 {
                     !refreshingRoutes && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction === feeInfo.signatureFee && infoRow(
                         t('transactions.transaction-info.network-transaction-fee'),
-                        `${toUiAmount(new BN(feeInfo.signatureFee), sol.decimals)} SOL`
+                        `${toUiAmount(feeInfo.signatureFee, sol.decimals)} SOL`
                     )
                 }
                 {
                     !refreshingRoutes && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction > feeInfo.signatureFee && infoRow(
                         t('transactions.transaction-info.minimum-sol-for-transaction'),
-                        `${toUiAmount(new BN(feeInfo.minimumSOLForTransaction), sol.decimals)} SOL`
+                        `${toUiAmount(feeInfo.minimumSOLForTransaction, sol.decimals)} SOL`
                     )
                 }
                 {
@@ -1700,7 +1699,7 @@ export const JupiterExchange = (props: {
                 {(jupiterReady && inputToken && outputToken && inputAmount && isInAmountTooLow()) ? (
                     <div className="input-amount-too-low flex-row flex-center">
                         <InfoCircleOutlined className="font-size-75" />
-                        <span>Minimum swap is at least {toUiAmount(new BN(minInAmount || 0), inputToken.decimals)} {inputToken.symbol} for {toUiAmount(new BN(minOutAmount || 0), outputToken.decimals)} {outputToken.symbol}</span>
+                        <span>Minimum swap is at least {toUiAmount(minInAmount || 0, inputToken.decimals)} {inputToken.symbol} for {toUiAmount(minOutAmount || 0, outputToken.decimals)} {outputToken.symbol}</span>
                     </div>
                 ) : null}
 
@@ -1719,14 +1718,14 @@ export const JupiterExchange = (props: {
                                             {swapRate ? (
                                                 <>
                                                     1 {inputToken.symbol} ≈{' '}
-                                                    {(toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals) / inputAmount).toFixed(outputToken.decimals)}
+                                                    {(parseFloat(toUiAmount(selectedRoute.outAmount, outputToken.decimals)) / inputAmount).toFixed(outputToken.decimals)}
                                                     {' '}
                                                     {outputToken.symbol}
                                                 </>
                                             ) : (
                                                 <>
                                                     1 {outputToken.symbol} ≈{' '}
-                                                    {(inputAmount / toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals)).toFixed(outputToken.decimals)}
+                                                    {(inputAmount / parseFloat(toUiAmount(selectedRoute.outAmount, outputToken.decimals))).toFixed(outputToken.decimals)}
                                                     {' '}
                                                     {inputToken.symbol}
                                                 </>
@@ -1787,7 +1786,7 @@ export const JupiterExchange = (props: {
                         toTokenAmount={isFromSol()
                             ? fromAmount
                             : selectedRoute && outputToken
-                                ? toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals).toFixed(outputToken.decimals)
+                                ? toUiAmount(selectedRoute.outAmount, outputToken.decimals)
                                 : ''
                         }
                         mintList={mintList}

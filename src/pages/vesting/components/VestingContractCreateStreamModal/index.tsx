@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useContext, useState, useMemo } from 're
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { cutNumber, displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount2, toUiAmount2 } from '../../../../middleware/utils';
+import { cutNumber, displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount, toUiAmount } from '../../../../middleware/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, stringNumberFormat, toUsCurrency } from '../../../../middleware/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
@@ -363,7 +363,7 @@ export const VestingContractCreateStreamModal = (props: {
         consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
         consoleOut('maxAmount:', maxAmount.toString(), 'blue');
 
-        setFromCoinAmount(toUiAmount2(new BN(maxAmount), decimals));
+        setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
         setTokenAmount(new BN(maxAmount));
 
     }, [getMaxAmount, selectedToken, setFromCoinAmount, isFeePaidByTreasurer, tokenAmount]);
@@ -450,7 +450,7 @@ export const VestingContractCreateStreamModal = (props: {
             setFromCoinAmount(".");
         } else if (isValidNumber(newValue)) {
             setFromCoinAmount(newValue);
-            setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
+            setTokenAmount(new BN(toTokenAmount(newValue, decimals).toString()));
         }
     };
 
@@ -717,7 +717,7 @@ export const VestingContractCreateStreamModal = (props: {
                                     {
                                         unallocatedBalance && selectedToken
                                             ? stringNumberFormat(
-                                                toUiAmount2(unallocatedBalance, selectedToken.decimals),
+                                                toUiAmount(unallocatedBalance, selectedToken.decimals),
                                                 4,
                                             )
                                             : "0"

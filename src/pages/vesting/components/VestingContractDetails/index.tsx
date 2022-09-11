@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { StreamTemplate, Treasury } from '@mean-dao/msp';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
-import { makeDecimal, shortenAddress, toUiAmount2 } from '../../../../middleware/utils';
+import { makeDecimal, shortenAddress, toUiAmount } from '../../../../middleware/utils';
 import { Identicon } from '../../../../components/Identicon';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
@@ -286,7 +286,7 @@ export const VestingContractDetails = (props: {
                                 {vestingContractFlowRate.amountBn.gtn(0) && (
                                     <span className="mr-1">Sending {
                                         stringNumberFormat(
-                                            toUiAmount2(vestingContractFlowRate.amountBn, selectedToken.decimals),
+                                            toUiAmount(vestingContractFlowRate.amountBn, selectedToken.decimals),
                                             friendlyDisplayDecimalPlaces(vestingContractFlowRate.amountBn.toString()) || selectedToken.decimals
                                         )
                                     } {selectedToken.symbol} {getIntervalFromSeconds(vestingContractFlowRate.durationUnit)}</span>
@@ -329,7 +329,7 @@ export const VestingContractDetails = (props: {
                                         <div className="vested-amount">
                                             {
                                                 stringNumberFormat(
-                                                    toUiAmount2(vestingContractFlowRate.streamableAmountBn, selectedToken.decimals),
+                                                    toUiAmount(vestingContractFlowRate.streamableAmountBn, selectedToken.decimals),
                                                     friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmountBn.toString()) || selectedToken.decimals
                                                 )
                                             } {selectedToken.symbol} to be vested
@@ -338,7 +338,7 @@ export const VestingContractDetails = (props: {
                                         <div className="vested-amount">
                                             {
                                                 stringNumberFormat(
-                                                    toUiAmount2(currentVestingAmount, selectedToken.decimals),
+                                                    toUiAmount(currentVestingAmount, selectedToken.decimals),
                                                     friendlyDisplayDecimalPlaces(currentVestingAmount.toString()) || selectedToken.decimals
                                                 )
                                             } {selectedToken.symbol} vested

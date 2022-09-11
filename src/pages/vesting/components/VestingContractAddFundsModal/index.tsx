@@ -9,8 +9,8 @@ import {
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
-  toTokenAmount2,
-  toUiAmount2,
+  toTokenAmount,
+  toUiAmount,
 } from '../../../../middleware/utils';
 import {
   consoleOut,
@@ -215,7 +215,7 @@ export const VestingContractAddFundsModal = (props: {
       } else {
         // Take source balance from the user's wallet
         const userBalance = selectFromTokenBalance();
-        const toBignumber = toTokenAmount2(userBalance, decimals);
+        const toBignumber = toTokenAmount(userBalance, decimals);
         consoleOut(`User's balance:`, toBignumber.toString(), 'blue');
         setAvailableBalance(new BN(toBignumber.toString()));
       }
@@ -373,7 +373,7 @@ export const VestingContractAddFundsModal = (props: {
       setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
       setTopupAmount(newValue);
-      setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
+      setTokenAmount(new BN(toTokenAmount(newValue, decimals).toString()));
     }
   };
 
@@ -535,12 +535,12 @@ export const VestingContractAddFundsModal = (props: {
                                   const maxAmount = getMaxAmount(true);
                                   consoleOut('Treasury pays for fees...', '', 'blue');
                                   consoleOut('Settings maxAmount to:', maxAmount, 'blue');
-                                  setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
+                                  setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 } else {
                                   const maxAmount = getMaxAmount();
                                   consoleOut('Settings maxAmount to:', maxAmount.toString(), 'blue');
-                                  setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
+                                  setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 }
                               }
@@ -578,7 +578,7 @@ export const VestingContractAddFundsModal = (props: {
                       <span>
                         {`${availableBalance && selectedToken
                             ? getAmountWithSymbol(
-                                toUiAmount2(availableBalance, selectedToken.decimals),
+                                toUiAmount(availableBalance, selectedToken.decimals),
                                 selectedToken.address,
                                 true,
                                 splTokenList,

@@ -3,12 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col, Radio } from 'antd';
 import { LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
-import { consoleOut, percentage } from '../../middleware/ui';
-import { getAmountWithSymbol, toUiAmount, toUiAmount2 } from '../../middleware/utils';
+import { consoleOut, percentage, percentageBn } from '../../middleware/ui';
+import { getAmountWithSymbol, toUiAmount } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
-import BN from 'bn.js';
 import { useConnection } from '../../contexts/connection';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
@@ -195,8 +194,8 @@ export const StreamCloseModal = (props: {
         if (v1.version < 2) {
           fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
         } else {
-          const wa = toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
-          fee = percentage(fees.mspPercentFee, wa) || 0;
+          const wa = toUiAmount(v2.withdrawableAmount, token?.decimals || 6);
+          fee = percentageBn(fees.mspPercentFee, wa, true) as number || 0;
         }
       } else if (isTreasurer) {
         fee = fees.mspFlatFee;
@@ -220,7 +219,7 @@ export const StreamCloseModal = (props: {
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount2(v2.withdrawableAmount, token?.decimals || 6);
+        return toUiAmount(v2.withdrawableAmount, token?.decimals || 6);
       }
     }
     return 0;
@@ -241,7 +240,7 @@ export const StreamCloseModal = (props: {
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount2(v2.fundsLeftInStream, token?.decimals || 6);
+        return toUiAmount(v2.fundsLeftInStream, token?.decimals || 6);
       }
     }
     return 0;

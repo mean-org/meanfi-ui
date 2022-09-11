@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { cutNumber, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, isValidNumber, toTokenAmount2, toTokenAmountBn, toUiAmount2 } from '../../middleware/utils';
+import { cutNumber, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, isValidNumber, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
@@ -285,7 +285,7 @@ export const StreamAddFundsModal = (props: {
       const unallocated = getUnallocatedBalance(treasuryDetails);
       const ub = isNewTreasury()
         ? unallocated
-        : toUiAmount2(unallocated, selectedToken?.decimals || 6);
+        : toUiAmount(unallocated, selectedToken?.decimals || 6);
       consoleOut('unallocatedBalance:', ub.toString(), 'blue');
       setUnallocatedBalance(new BN(ub));
     }
@@ -349,7 +349,7 @@ export const StreamAddFundsModal = (props: {
       setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
       setTopupAmount(newValue);
-      setTokenAmount(new BN(toTokenAmount2(newValue, decimals).toString()));
+      setTokenAmount(new BN(toTokenAmount(newValue, decimals).toString()));
     }
   };
 
@@ -466,11 +466,11 @@ export const StreamAddFundsModal = (props: {
                               const maxAmount = getMaxAmount(true);
                               consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
                               consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                              setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
+                              setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
                               setTokenAmount(new BN(maxAmount));
                             } else {
                               const maxAmount = getMaxAmount();
-                              setTopupAmount(toUiAmount2(new BN(maxAmount), decimals));
+                              setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
                               setTokenAmount(new BN(maxAmount));
                             }
                           }}>
