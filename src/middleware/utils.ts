@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
-  Connection,
   LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
@@ -9,18 +8,14 @@ import {
 import { BIGNUMBER_FORMAT, CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST } from "../constants/tokens";
 import { friendlyDisplayDecimalPlaces, getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
-import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { TOKEN_PROGRAM_ID } from "./ids";
 import { NATIVE_SOL } from '../constants/tokens';
-import { AccountTokenParsedInfo } from "../models/accounts";
-import { TokenAccountInfo } from "../models/accounts";
 import { isMobile } from "react-device-detect";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getNetworkIdByEnvironment } from "../contexts/connection";
 import { environment } from "../environments/environment";
 import { BigNumber } from "bignumber.js";
 import BN from "bn.js";
-import { TokenAccount } from "../models/accounts";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -100,8 +95,8 @@ export function chunks<T>(array: T[], size: number): T[][] {
   ).map((_, index) => array.slice(index * size, (index + 1) * size));
 }
 
-export const getAmountFromLamports = (amount: number): number => {
-  return (amount || 0) / LAMPORTS_PER_SOL;
+export const getAmountFromLamports = (amount = 0): number => {
+  return amount / LAMPORTS_PER_SOL;
 }
 
 const SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
@@ -170,24 +165,6 @@ export const formatThousands = (val: number, maxDecimals?: number, minDecimals =
   }
 
   return convertedVlue.format(val);
-}
-
-export function convert(
-  account?: TokenAccount | number,
-  mint?: MintInfo,
-  rate = 1.0
-): number {
-  if (!account) {
-    return 0;
-  }
-
-  const amount =
-    typeof account === "number" ? account : account.info.amount?.toNumber();
-
-  const precision = Math.pow(10, mint?.decimals || 0);
-  const result = (amount / precision) * rate;
-
-  return result;
 }
 
 export function isValidNumber(str: string): boolean {
@@ -408,27 +385,6 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
 }
 
-export const getComputedFees = (fees: TransactionFees): number => {
-  return fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
-}
-
-export async function fetchAccountTokens(
-  connection: Connection,
-  pubkey: PublicKey
-) {
-  let data;
-  try {
-    const { value } = await connection.getParsedTokenAccountsByOwner(pubkey, { programId: TOKEN_PROGRAM_ID });
-    data = value.map((accountInfo: any) => {
-      const parsedInfo = accountInfo.account.data.parsed.info as TokenAccountInfo;
-      return { parsedInfo, pubkey: accountInfo.pubkey };
-    });
-    return data as AccountTokenParsedInfo[];
-  } catch (error) {
-    console.error(error);
-  }
-}
-
 export function getTxIxResume(tx: Transaction) {
   const programIds: string[] = [];
   tx.instructions.forEach(t => {
@@ -529,8 +485,6 @@ export const makeInteger = (amount: number, decimals: number): BN => {
   if (!amount || !decimals) { return new BN(0); }
   return new BN(amount * (10 ** decimals))
 }
-
-
 
 export const addSeconds = (date: Date, seconds: number) => {
   return new Date(date.getTime() + seconds*1000);

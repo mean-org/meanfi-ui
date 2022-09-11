@@ -22,9 +22,9 @@ import {
   friendlyDisplayDecimalPlaces,
 } from "../../middleware/ui";
 import {
-  fetchAccountTokens,
   formatAmount,
   formatThousands,
+  getAmountFromLamports,
   getAmountWithSymbol,
   shortenAddress,
   toUiAmount,
@@ -49,6 +49,7 @@ import { getStreamForDebug } from "../../middleware/stream-debug-middleware";
 import { MSP } from "@mean-dao/msp";
 import { appConfig } from "../..";
 import ReactJson from "react-json-view";
+import { fetchAccountTokens } from "../../middleware/accounts";
 
 type TabOption = "first-tab" | "test-stream" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
 
@@ -494,13 +495,8 @@ export const PlaygroundView = () => {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

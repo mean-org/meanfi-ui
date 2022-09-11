@@ -31,8 +31,8 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import {
   cutNumber,
   displayAmountWithSymbol,
-  fetchAccountTokens,
   formatThousands,
+  getAmountFromLamports,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
@@ -61,7 +61,7 @@ import { TreasuryTopupParams } from "../../models/common-types";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { NATIVE_SOL } from "../../constants/tokens";
-import { readAccountInfo } from "../../middleware/accounts";
+import { fetchAccountTokens, readAccountInfo } from "../../middleware/accounts";
 import { AddFundsParams } from "../../models/vesting";
 import BigNumber from "bignumber.js";
 import { getStreamTitle } from "../../middleware/streams";
@@ -306,7 +306,7 @@ export const MoneyStreamsInfoView = (props: {
 
     connection.getBalance(pk)
     .then(solBalance => {
-      const uiBalance = solBalance / LAMPORTS_PER_SOL;
+      const uiBalance = getAmountFromLamports(solBalance);
       balancesMap[NATIVE_SOL.address] = uiBalance;
       setNativeBalance(uiBalance);
     });
@@ -1840,15 +1840,10 @@ export const MoneyStreamsInfoView = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

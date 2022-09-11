@@ -28,10 +28,10 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
-  PaymentRateTypeOption,
   stringNumberFormat,
   toUsCurrency,
 } from '../../middleware/ui';
+import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
 import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';

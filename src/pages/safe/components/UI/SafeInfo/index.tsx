@@ -10,11 +10,11 @@ import { SolBalanceModal } from "../../../../../components/SolBalanceModal";
 import { MIN_SOL_BALANCE_REQUIRED } from "../../../../../constants";
 import { useNativeAccount } from "../../../../../contexts/accounts";
 import { AppStateContext } from "../../../../../contexts/appstate";
-import { IconEllipsisVertical, IconInfoCircle, IconLoading } from "../../../../../Icons";
+import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../constants/tokens";
 import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../middleware/ui";
-import { shortenAddress } from "../../../../../middleware/utils";
+import { getAmountFromLamports, shortenAddress } from "../../../../../middleware/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
 import { VESTING_ROUTE_BASE_PATH } from "../../../../vesting";
 
@@ -86,15 +86,10 @@ export const SafeInfo = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

@@ -16,7 +16,7 @@ import { IconArrowBack } from "../../../../Icons";
 import { OperationType, TransactionStatus } from "../../../../models/enums";
 import { NATIVE_SOL_MINT } from "../../../../middleware/ids";
 import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "../../../../middleware/ui";
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../../../middleware/utils";
+import { formatThousands, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../../../middleware/utils";
 import { customLogger } from "../../../..";
 import { TabsMean } from '../../../../components/TabsMean';
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -103,8 +103,9 @@ export const ProgramDetailsView = (props: {
       multisigAddressPK
     );
   }, [
-    connection,
     publicKey,
+    connection,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -745,33 +746,30 @@ export const ProgramDetailsView = (props: {
     }
 
   }, [
-    clearTxConfirmationContext,
-    resetTransactionStatus,
-    connection,
-    multisigClient,
-    nativeBalance,
-    onProgramAuthSet,
+    wallet,
     publicKey,
+    connection,
+    nativeBalance,
+    multisigClient,
     selectedMultisig,
-    setTransactionStatus,
-    startFetchTxSignatureInfo,
+    multisigAddressPK,
     transactionCancelled,
-    transactionFees.blockchainFee,
     transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
     transactionStatus.currentOperation,
-    wallet
+    clearTxConfirmationContext,
+    startFetchTxSignatureInfo,
+    resetTransactionStatus,
+    setTransactionStatus,
+    onProgramAuthSet,
   ]);
 
   // Keep account balance updated
   useEffect(() => {
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

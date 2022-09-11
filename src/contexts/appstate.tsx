@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { findATokenAddress, shortenAddress, useLocalStorageState } from "../middleware/utils";
+import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from "../middleware/utils";
 import {
   DAO_CORE_TEAM_WHITELIST,
   DDCA_FREQUENCY_OPTIONS,
@@ -21,7 +21,7 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { getPrices } from "../middleware/api";
@@ -1296,7 +1296,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         const accountInfo = await connection.getAccountInfo(address.toPublicKey());
         if (!accountInfo) return 0;
         if (address === publicKey?.toBase58()) {
-          return accountInfo.lamports / LAMPORTS_PER_SOL;
+          return getAmountFromLamports(accountInfo.lamports);
         }
         const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
         return tokenAmount.uiAmount || 0;

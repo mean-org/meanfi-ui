@@ -21,7 +21,7 @@ import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'a
 import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { Identicon } from '../../components/Identicon';
 import "./style.scss";
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, useLocalStorageState } from '../../middleware/utils';
+import { formatThousands, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, useLocalStorageState } from '../../middleware/utils';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
@@ -59,7 +59,6 @@ export const ExchangeDcasView = () => {
     setLoadingRecurringBuys,
   } = useContext(AppStateContext);
   const {
-    lastSentTxStatus,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
@@ -131,13 +130,8 @@ export const ExchangeDcasView = () => {
 
   // Keep track of current balance
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

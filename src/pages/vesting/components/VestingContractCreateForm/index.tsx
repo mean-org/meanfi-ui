@@ -4,7 +4,8 @@ import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/c
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
-import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../middleware/ui';
+import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
+import { PaymentRateTypeOption } from "../../../../models/PaymentRateTypeOption";
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
 import { TokenListItem } from '../../../../components/TokenListItem';

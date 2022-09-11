@@ -16,11 +16,11 @@ import {
   STREAM_STATUS,
   MSP
 } from '@mean-dao/msp';
-import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
-import { displayAmountWithSymbol, getAmountWithSymbol, getTxIxResume, shortenAddress } from "../../middleware/utils";
+import { displayAmountWithSymbol, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress } from "../../middleware/utils";
 import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
@@ -1286,15 +1286,10 @@ export const MoneyStreamsIncomingView = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

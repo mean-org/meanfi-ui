@@ -304,3 +304,20 @@ export const getTokenAccountBalanceByAddress = async (connection: Connection, to
     return null;
   }
 }
+
+export async function fetchAccountTokens(
+  connection: Connection,
+  pubkey: PublicKey
+) {
+  let data;
+  try {
+    const { value } = await connection.getParsedTokenAccountsByOwner(pubkey, { programId: TOKEN_PROGRAM_ID });
+    data = value.map((accountInfo: any) => {
+      const parsedInfo = accountInfo.account.data.parsed.info as TokenAccountInfo;
+      return { parsedInfo, pubkey: accountInfo.pubkey };
+    });
+    return data as AccountTokenParsedInfo[];
+  } catch (error) {
+    console.error(error);
+  }
+}

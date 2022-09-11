@@ -10,8 +10,8 @@ import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from ".
 import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   cutNumber,
-  fetchAccountTokens,
   formatThousands,
+  getAmountFromLamports,
   getAmountWithSymbol,
   getTokenBySymbol,
   getTxIxResume,
@@ -34,14 +34,14 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
-  PaymentRateTypeOption,
   stringNumberFormat,
   toUsCurrency
 } from "../../middleware/ui";
+import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountInfo, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
@@ -64,6 +64,7 @@ import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 import { AccountTokenParsedInfo } from "../../models/accounts";
 import { RecipientAddressInfo } from '../../models/common-types';
 import BN from 'bn.js';
+import { fetchAccountTokens } from '../../middleware/accounts';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -472,13 +473,8 @@ export const RepeatingPayment = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

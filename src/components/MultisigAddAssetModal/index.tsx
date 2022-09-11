@@ -17,7 +17,7 @@ import { TokenListItem } from '../TokenListItem';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TransactionFees } from '@mean-dao/msp';
-import { shortenAddress } from '../../middleware/utils';
+import { getAmountFromLamports, shortenAddress } from '../../middleware/utils';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
 export const MultisigAddAssetModal = (props: {
@@ -120,13 +120,8 @@ export const MultisigAddAssetModal = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

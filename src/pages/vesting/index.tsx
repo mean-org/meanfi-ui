@@ -8,7 +8,7 @@ import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } fro
 import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isDev, isLocal, isProd, toTimestamp } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
 import { useConnectionConfig } from '../../contexts/connection';
-import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
   calculateActionFees,
   MSP,
@@ -23,7 +23,7 @@ import {
 } from '@mean-dao/msp';
 import "./style.scss";
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { fetchAccountTokens, findATokenAddress, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../middleware/utils';
+import { findATokenAddress, formatThousands, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../middleware/utils';
 import { openNotification } from '../../components/Notifications';
 import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, MSP_FEE_TREASURY, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -59,7 +59,7 @@ import { BN } from 'bn.js';
 import { PendingProposalsComponent } from './components/PendingProposalsComponent';
 import { NATIVE_SOL } from '../../constants/tokens';
 import { VestingContractEditModal } from './components/VestingContractEditModal';
-import { getTokenAccountBalanceByAddress, readAccountInfo } from '../../middleware/accounts';
+import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from '../../middleware/accounts';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -3172,15 +3172,10 @@ export const VestingView = () => {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -3635,14 +3630,11 @@ export const VestingView = () => {
       let balance = 0;
       connection.getBalance(new PublicKey(vestingContractAddress))
       .then(solBalance => {
-        balance = solBalance / LAMPORTS_PER_SOL;
+        balance = getAmountFromLamports(solBalance);
         connection.getMinimumBalanceForRentExemption(300)
         .then(value => {
-          const re = value / LAMPORTS_PER_SOL;
+          const re = getAmountFromLamports(value);
           const eb = balance - re;
-          // consoleOut('treasuryRentExcemption:', re, 'blue');
-          // consoleOut('Treasury native balance:', balance, 'blue');
-          // consoleOut('Effective account balance:', eb, 'blue');
           setTreasuryEffectiveBalance(eb);
         })
         .catch(error => {

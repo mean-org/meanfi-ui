@@ -6,10 +6,10 @@ import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { findATokenAddress, formatThousands, getTxIxResume, isValidNumber } from "../../middleware/utils";
+import { findATokenAddress, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber } from "../../middleware/utils";
 import { IconStats } from "../../Icons";
 import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from "../../middleware/ui";
-import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { ConfirmOptions, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { confirmationEvents, TxConfirmationContext } from "../../contexts/transaction-status";
 import { MEAN_TOKEN_LIST } from "../../constants/tokens";
@@ -205,15 +205,10 @@ export const StakingRewardsView = () => {
 
   // Keep native account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balances
       refreshMeanStakingVaultBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

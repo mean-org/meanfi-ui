@@ -8,7 +8,7 @@ import { TransactionStatus } from '../../models/enums';
 import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
 import { isError } from '../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { cutNumber, fetchAccountTokens, formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../middleware/utils';
+import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../middleware/utils';
 import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
@@ -24,6 +24,7 @@ import { TextInput } from '../TextInput';
 import { TokenListItem } from '../TokenListItem';
 import { environment } from '../../environments/environment';
 import { MultisigInfo, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
+import { fetchAccountTokens } from '../../middleware/accounts';
 
 // const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

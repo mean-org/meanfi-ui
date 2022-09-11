@@ -21,7 +21,7 @@ import { MEAN_TOKEN_LIST } from "../../constants/tokens";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
 import { consoleOut, isProd } from "../../middleware/ui";
-import { findATokenAddress, formatThousands } from "../../middleware/utils";
+import { findATokenAddress, formatThousands, getAmountFromLamports } from "../../middleware/utils";
 import { getTokenAccountBalanceByAddress } from "../../middleware/accounts";
 
 export type StakeOption = "stake" | "unstake" | undefined;
@@ -248,14 +248,9 @@ export const StakingView = () => {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balances
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

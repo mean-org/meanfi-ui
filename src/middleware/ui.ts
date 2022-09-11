@@ -44,54 +44,6 @@ export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'blac
     }
 }
 
-export class CoolOffPeriodTypeOption {
-    key: number;
-    value: PaymentRateType;
-    text: string;
-
-    constructor(
-        public _key: number,
-        public _value: PaymentRateType,
-        public _text: string
-    ) {
-        this.key = _key;
-        this.value = _value;
-        this.text = _text;
-    }
-}
-
-export class PaymentRateTypeOption {
-    key: number;
-    value: PaymentRateType;
-    text: string;
-
-    constructor(
-        public _key: number,
-        public _value: PaymentRateType,
-        public _text: string
-    ) {
-        this.key = _key;
-        this.value = _value;
-        this.text = _text;
-    }
-}
-
-export class LockPeriodTypeOption {
-    key: number;
-    value: PaymentRateType;
-    text: string;
-
-    constructor(
-        public _key: number,
-        public _value: PaymentRateType,
-        public _text: string
-    ) {
-        this.key = _key;
-        this.value = _value;
-        this.text = _text;
-    }
-}
-
 export const friendlyDisplayDecimalPlaces = (amount: number | string, decimals?: number) => {
     if (typeof amount === "string") {
         const value = new BigNumber(amount);

@@ -17,7 +17,7 @@ import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/m
 import { useTranslation } from "react-i18next";
 import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { AppStateContext } from "../../contexts/appstate";
-import { fetchAccountTokens, formatThousands, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from "../../middleware/utils";
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from "../../middleware/utils";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { segmentAnalytics } from "../../App";
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "../../middleware/segment-service";
@@ -29,7 +29,7 @@ import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamTopupParams, StreamTopupTxCreateParams } from "../../models/common-types";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountInfo, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { customLogger } from "../..";
 import { useWallet } from "../../contexts/wallet";
@@ -41,7 +41,7 @@ import { CloseStreamTransactionParams, StreamTreasuryType } from "../../models/t
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { title } from "process";
 import { appConfig } from '../..';
-import { readAccountInfo } from "../../middleware/accounts";
+import { fetchAccountTokens, readAccountInfo } from "../../middleware/accounts";
 import { NATIVE_SOL } from "../../constants/tokens";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -273,7 +273,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
     connection.getBalance(pk)
     .then(solBalance => {
-      const uiBalance = solBalance / LAMPORTS_PER_SOL;
+      const uiBalance = getAmountFromLamports(solBalance);
       balancesMap[NATIVE_SOL.address] = uiBalance;
       setNativeBalance(uiBalance);
     });

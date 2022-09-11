@@ -6,13 +6,13 @@ import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useNativeAccount } from '../../contexts/accounts';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { consoleOut, getTransactionStatusForLogs } from '../../middleware/ui';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenListItem } from '../TokenListItem';
 import { TransactionFees } from '@mean-dao/msp';
-import { getTxIxResume } from '../../middleware/utils';
+import { getAmountFromLamports, getTxIxResume } from '../../middleware/utils';
 import { openNotification } from '../Notifications';
 import { closeTokenAccount } from '../../middleware/accounts';
 import { customLogger } from '../..';
@@ -56,13 +56,8 @@ export const AccountsCloseAssetModal = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

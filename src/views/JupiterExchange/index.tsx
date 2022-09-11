@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Divider, Drawer, Modal, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
@@ -12,7 +12,7 @@ import { DEFAULT_SLIPPAGE_PERCENT, ONE_MINUTE_REFRESH_TIMEOUT, MAX_TOKEN_LIST_IT
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
 import { useNativeAccount, useUserAccounts } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../middleware/layouts";
-import { cutNumber, formatThousands, getTxIxResume, isValidNumber, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
+import { cutNumber, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconSwapFlip } from "../../Icons";
 import { SwapSettings } from "../../components/SwapSettings";
@@ -150,13 +150,8 @@ export const JupiterExchange = (props: {
 
     // Keep account balance updated
     useEffect(() => {
-
-        const getAccountBalance = (): number => {
-            return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-        }
-
         if (account?.lamports !== previousBalance || !nativeBalance) {
-            setNativeBalance(getAccountBalance());
+            setNativeBalance(getAmountFromLamports(account?.lamports));
             // Update previous balance
             setPreviousBalance(account?.lamports);
         }

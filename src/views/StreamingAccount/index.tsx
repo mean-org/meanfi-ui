@@ -43,7 +43,6 @@ import {
   stringNumberFormat,
 } from "../../middleware/ui";
 import {
-  fetchAccountTokens,
   findATokenAddress,
   formatThousands,
   displayAmountWithSymbol,
@@ -55,6 +54,7 @@ import {
   toUiAmount,
   getAmountWithSymbol,
   toTokenAmountBn,
+  getAmountFromLamports,
 } from "../../middleware/utils";
 import useWindowSize from "../../hooks/useWindowResize";
 import { TreasuryTopupParams } from "../../models/common-types";
@@ -69,7 +69,7 @@ import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
 import { Identicon } from "../../components/Identicon";
 import { SolBalanceModal } from "../../components/SolBalanceModal";
 import { isMobile } from "react-device-detect";
-import { getTokenAccountBalanceByAddress, readAccountInfo } from "../../middleware/accounts";
+import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from "../../middleware/accounts";
 import { NATIVE_SOL } from "../../constants/tokens";
 import { AddFundsParams } from "../../models/vesting";
 import BN from "bn.js";
@@ -249,7 +249,7 @@ export const StreamingAccountView = (props: {
 
     connection.getBalance(pk)
     .then(solBalance => {
-      const uiBalance = solBalance / LAMPORTS_PER_SOL;
+      const uiBalance = getAmountFromLamports(solBalance);
       balancesMap[NATIVE_SOL.address] = uiBalance;
       setNativeBalance(uiBalance);
     });
@@ -2591,10 +2591,10 @@ export const StreamingAccountView = (props: {
       let balance = 0;
       connection.getBalance(new PublicKey(streamingAccountSelected.id))
       .then(solBalance => {
-        balance = solBalance / LAMPORTS_PER_SOL;
+        balance = getAmountFromLamports(solBalance);
         connection.getMinimumBalanceForRentExemption(300)
         .then(value => {
-          const re = value / LAMPORTS_PER_SOL;
+          const re = getAmountFromLamports(value);
           const eb = balance - re;
           consoleOut('treasuryRentExcemption:', re, 'darkgreen');
           consoleOut('Treasury native balance:', balance, 'darkgreen');

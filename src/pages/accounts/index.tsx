@@ -18,7 +18,6 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import {
-  fetchAccountTokens,
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
@@ -27,7 +26,6 @@ import {
   getTxIxResume,
   openLinkInNewTab,
   shortenAddress,
-  tabNameFormat,
   toUiAmount
 } from '../../middleware/utils';
 import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
@@ -75,7 +73,7 @@ import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModa
 import { STAKING_ROUTE_BASE_PATH } from '../staking';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
-import { closeTokenAccount } from '../../middleware/accounts';
+import { closeTokenAccount, fetchAccountTokens } from '../../middleware/accounts';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
@@ -120,7 +118,6 @@ export const AccountsNewView = () => {
   const connectionConfig = useConnectionConfig();
   const {
     theme,
-    activeTab,
     coinPrices,
     userTokens,
     streamList,
@@ -654,9 +651,9 @@ export const AccountsNewView = () => {
           let itemIndex = -1;
           itemIndex = tokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
           if (itemIndex !== -1) {
-            tokensCopy[itemIndex].balance = solBalance / LAMPORTS_PER_SOL;
-            tokensCopy[itemIndex].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(tokensCopy[itemIndex].symbol);
-            consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
+            tokensCopy[itemIndex].balance = getAmountFromLamports(solBalance);
+            tokensCopy[itemIndex].valueInUsd = (getAmountFromLamports(solBalance)) * getTokenPriceBySymbol(tokensCopy[itemIndex].symbol);
+            consoleOut('solBalance:', getAmountFromLamports(solBalance), 'blue');
             setAccountTokens(tokensCopy);
             setSelectedAsset(tokensCopy[itemIndex]);
           }
@@ -2653,6 +2650,7 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
+    accountAddress,
     getAllUserV2Treasuries,
     getQueryAccountType,
   ]);
@@ -2929,15 +2927,10 @@ export const AccountsNewView = () => {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -4246,11 +4239,7 @@ export const AccountsNewView = () => {
               let url = '/multisig';
               if (accountAddress) {
                 setHighLightableMultisigId(accountAddress);
-                if (activeTab) {
-                  url += `/${accountAddress}?v=${tabNameFormat(activeTab)}`;
-                } else {
-                  url += `/${accountAddress}?v=proposals`;
-                }
+                url += `/${accountAddress}?v=proposals`;
               }
               navigate(url);
             }}>
@@ -5029,7 +5018,7 @@ export const AccountsNewView = () => {
                                   if (selectedMultisig) {
                                     setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                                   }
-                                  navigate(`/multisig/${address}?v=${tabNameFormat(activeTab)}`)
+                                  navigate(`/multisig/${address}?v=proposals`);
                                 }}
                               />
                             </Tooltip>

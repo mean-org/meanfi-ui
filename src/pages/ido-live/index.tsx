@@ -16,7 +16,7 @@ import { IdoWithdraw } from '../../views/IdoWithdraw';
 import Countdown from 'react-countdown';
 import dateFormat from "dateformat";
 import { useNativeAccount } from '../../contexts/accounts';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import YoutubeEmbed from '../../components/YoutubeEmbed';
@@ -25,7 +25,7 @@ import { useLocation } from 'react-router-dom';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress } from '../../middleware/utils';
+import { formatThousands, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress } from '../../middleware/utils';
 import { CUSTOM_USDC_TEST_IDO_DEVNET, MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { PartnerImage } from '../../models/common-types';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
@@ -490,15 +490,10 @@ export const IdoLiveView = () => {
 
   // Keep track of account changes and updates token balance
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

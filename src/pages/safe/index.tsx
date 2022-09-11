@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import {
   formatThousands,
+  getAmountFromLamports,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   shortenAddress,
@@ -33,8 +34,6 @@ import { Button, Empty, Spin, Tooltip } from 'antd';
 import {
   consoleOut,
   getTransactionStatusForLogs,
-  isLocal,
-  isDev,
   toUsCurrency,
   delay
 } from '../../middleware/ui';
@@ -1079,10 +1078,6 @@ export const SafeView = () => {
     fetchTxInfoStatus,
     lastSentTxOperationType,
   ]);
-
-  const isUnderDevelopment = () => {
-    return isLocal() || (isDev() && isWhitelisted) ? true : false;
-  }
 
   // Modal visibility flags
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
@@ -3520,7 +3515,7 @@ export const SafeView = () => {
         
         let usdValue = 0;
         const solPrice = getPricePerToken(NATIVE_SOL);
-        const solBalance = account.balance / LAMPORTS_PER_SOL;
+        const solBalance = getAmountFromLamports(account.balance);
         const nativeSolUsdValue = solBalance * solPrice;  
         const assets = await getMultisigVaults(connection, account.id);
 
@@ -3674,15 +3669,10 @@ export const SafeView = () => {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
