@@ -39,14 +39,14 @@ import { OperationType, PaymentRateType, TransactionStatus } from '../../models/
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { appConfig, customLogger } from '../..';
-import { Beneficiary, MSP, Stream, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
+import { Beneficiary, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
@@ -279,18 +279,8 @@ export const TreasuryStreamCreateModal = (props: {
 
   }, [publicKey, selectedMultisig, workingTreasuryDetails]);
 
-  const getRateAmountBn = useCallback((item: Stream | StreamInfo) => {
-    if (item && selectedToken) {
-      const rateAmount = item.version < 2
-        ? toTokenAmountBn(item.rateAmount as number, selectedToken.decimals)
-        : item.rateAmount;
-      return rateAmount;
-    }
-    return new BN(0);
-  }, [selectedToken]);
-
   const getReleaseRate = useCallback(() => {
-    if (!lockPeriodAmount || !selectedToken) {
+    if (!selectedToken) {
       return '--';
     }
 
@@ -300,7 +290,7 @@ export const TreasuryStreamCreateModal = (props: {
       selectedToken.decimals,
       splTokenList,
     )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
-  }, [lockPeriodAmount, lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
+  }, [lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
@@ -921,31 +911,9 @@ export const TreasuryStreamCreateModal = (props: {
 
   }, [isSelectedStreamingAccountMultisigTreasury, minRequiredBalance, transactionFees]);
 
-  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
-    let value = '';
-
-    if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-          token = Object.assign({}, token, {
-              symbol: 'SOL'
-          }) as TokenInfo;
-      }
-
-      const rateAmount = getRateAmountBn(item);
-      value += stringNumberFormat(
-        toUiAmount(rateAmount, decimals),
-        friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
-      )
-
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-    }
-    return value;
-  }, [getRateAmountBn, getTokenByMintAddress]);
-
+  /////////////////////
+  // Data management //
+  /////////////////////
 
   // Recipient list - parse
   useEffect(() => {
@@ -1095,7 +1063,7 @@ export const TreasuryStreamCreateModal = (props: {
     let signedTransactions: Transaction[] = [];
     let signatures: string[] = [];
     let encodedTxs: string[] = [];
-    let displayParams: any = {};
+    let multisigAuth = '';
 
     const transactionLog: any[] = [];
 
@@ -1136,6 +1104,8 @@ export const TreasuryStreamCreateModal = (props: {
       }
 
       if (!workingTreasuryDetails || !multisigClient || !selectedMultisig || !publicKey) { return null; }
+
+      multisigAuth = selectedMultisig.authority.toBase58();
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
@@ -1286,9 +1256,6 @@ export const TreasuryStreamCreateModal = (props: {
         cliffVestPercent: 0,                                                        // cliffVestPercent
         feePayedByTreasurer: isFeePaidByTreasurer                                   // feePayedByTreasurer
       };
-
-      displayParams = data;
-
       consoleOut('data:', data);
 
       // Log input data
@@ -1485,15 +1452,18 @@ export const TreasuryStreamCreateModal = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Txs to confirmation queue:', signatures);
-            const isMultisig = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
-              ? selectedMultisig.authority.toBase58()
-              : "";
-            const messageLoading = isMultisig
-              ? `Proposal to create stream to send ${getReleaseRate()}.`
-              : `Create stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.`
-            const messageCompleted = isMultisig
-              ? `Proposal to create stream to send ${getReleaseRate()} sent for approval.`
-              : `Stream to send ${getReleaseRate()} created successfully.`
+            const isLockedTreasury = workingTreasuryType === TreasuryType.Lock ? true : false;
+            const rateDisplay = isLockedTreasury ? getReleaseRate() : getPaymentRateAmount();
+            const messageLoading = multisigAuth
+              ? `Proposal to create stream to send ${rateDisplay}.`
+              : `Create stream to send ${rateDisplay}.`
+            const messageCompleted = multisigAuth
+              ? `Proposal to create stream to send ${rateDisplay} sent for approval.`
+              : `Stream to send ${rateDisplay} created successfully.`
+
+            consoleOut('pending confirm msg:', messageLoading, 'blue');
+            consoleOut('confirmed msg:', messageCompleted, 'blue');
+
             enqueueTransactionConfirmation({
               signature: signatures[0],
               operationType: OperationType.TreasuryStreamCreate,
@@ -1504,10 +1474,9 @@ export const TreasuryStreamCreateModal = (props: {
               completedTitle: "Transaction confirmed",
               completedMessage: messageCompleted,
               extras: {
-                multisigAuthority: isMultisig
+                multisigAuthority: multisigAuth
               }
             });
-
             setIsBusy(false);
             resetTransactionStatus();
             handleOk();

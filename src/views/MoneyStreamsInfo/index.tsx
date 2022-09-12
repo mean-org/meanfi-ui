@@ -699,7 +699,7 @@ export const MoneyStreamsInfoView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
-    let multisigAuthority = '';
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -849,7 +849,7 @@ export const MoneyStreamsInfoView = (props: {
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
       if (!multisig) { return null; }
 
-      multisigAuthority = multisig.authority.toBase58();
+      multisigAuth = multisig.authority.toBase58();
 
       let operationType = OperationType.StreamAddFunds;
       let addFundsTx: Transaction;
@@ -1139,10 +1139,10 @@ export const MoneyStreamsInfoView = (props: {
               splTokenList,
               token.decimals
             );
-            const loadingMessage = multisigAuthority
+            const loadingMessage = multisigAuth
               ? `Create proposal to fund streaming account with ${amountDisplay}`
               : `Fund streaming account with ${amountDisplay}`;
-            const completed = multisigAuthority
+            const completed = multisigAuth
               ? `Streaming account funding has been submitted for approval.`
               : `Streaming account funded with ${amountDisplay}`;
             enqueueTransactionConfirmation({
@@ -1156,7 +1156,7 @@ export const MoneyStreamsInfoView = (props: {
               completedMessage: completed,
               extras: {
                 treasuryId: treasury.id as string,
-                multisigAuthority: multisigAuthority
+                multisigAuthority: multisigAuth
               }
             });
             onAddFundsTransactionFinished();

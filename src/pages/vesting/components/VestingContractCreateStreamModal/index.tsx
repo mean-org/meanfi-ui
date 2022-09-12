@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useContext, useState, useMemo } from 're
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { cutNumber, displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount, toUiAmount } from '../../../../middleware/utils';
+import { displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount, toUiAmount } from '../../../../middleware/utils';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, stringNumberFormat, toUsCurrency } from '../../../../middleware/ui';
 import { WizardStepSelector } from '../../../../components/WizardStepSelector';
@@ -371,14 +371,14 @@ export const VestingContractCreateStreamModal = (props: {
     const getStreamTxConfirmDescription = (multisig: string) => {
         if (!selectedToken) { return ''; }
         const cliff = getCliffReleaseAmount();
-        const rate = `${getReleaseRate()} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
+        const rate = getReleaseRate();
         return `Create stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement.`;
     }
 
     const getStreamTxConfirmedDescription = (multisig: string) => {
         if (!selectedToken) { return ''; }
         const cliff = getCliffReleaseAmount();
-        const rate = `${getReleaseRate()} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
+        const rate = getReleaseRate();
         return `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
     }
 

@@ -2418,6 +2418,8 @@ export const VestingView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            consoleOut('pending confirm msg:', params.txConfirmDescription, 'blue');
+            consoleOut('confirmed msg:', params.txConfirmedDescription, 'blue');
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.TreasuryStreamCreate,

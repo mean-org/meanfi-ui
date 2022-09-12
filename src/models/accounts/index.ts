@@ -5,3 +5,4 @@ export * from "./ProgramAccounts";
 export * from "./TokenAccount";
 export * from "./TokenAccountInfo";
 export * from "./TokenPrice";
+export * from "./UserTokensResponse";

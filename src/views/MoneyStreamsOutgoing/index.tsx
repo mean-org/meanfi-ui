@@ -1899,7 +1899,7 @@ export const MoneyStreamsOutgoingView = (props: {
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
-    let multisigAuthority = '';
+    let multisigAuth = '';
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -2037,7 +2037,7 @@ export const MoneyStreamsOutgoingView = (props: {
       const treasury = treasuryDetails as Treasury;
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
-      multisigAuthority = multisig.authority.toBase58();
+      multisigAuth = multisig.authority.toBase58();
 
       if (!multisig) { return null; }
 
@@ -2332,7 +2332,7 @@ export const MoneyStreamsOutgoingView = (props: {
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully closed stream: ${streamName}`,
               extras: {
-                multisigAuthority: multisigAuthority
+                multisigAuthority: multisigAuth
               }
             });
 
@@ -2663,7 +2663,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const renderDropdownMenu = useCallback(() => {
     return (
       <Menu>
-        {(getTreasuryType() === "open" || (getTreasuryType() === "locked" && streamSelected && getStreamStatus(streamSelected) === "stopped")) && (
+        {(getTreasuryType() === "open" || (getTreasuryType() === "locked" && streamSelected && getStreamStatus(streamSelected) !== "stopped")) && (
           <Menu.Item key="mso-00" disabled={isBusy || hasStreamPendingTx()} onClick={showCloseStreamModal}>
             <span className="menu-item-text">Close stream</span>
           </Menu.Item>
