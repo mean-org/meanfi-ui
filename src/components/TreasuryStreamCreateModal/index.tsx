@@ -157,15 +157,6 @@ export const TreasuryStreamCreateModal = (props: {
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-  
-  const isNewTreasury = useCallback(() => {
-    if (workingTreasuryDetails) {
-      const v2 = workingTreasuryDetails as Treasury;
-      return v2.version >= 2 ? true : false;
-    }
-
-    return false;
-  }, [workingTreasuryDetails]);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -596,25 +587,39 @@ export const TreasuryStreamCreateModal = (props: {
   // Set treasury unalocated balance in BN
   useEffect(() => {
 
-    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
-      const balance = new BN(details.balance);
-      const allocationAssigned = new BN(details.allocationAssigned);
-      return balance.sub(allocationAssigned);
+    if (!selectedToken) {
+      setUnallocatedBalance(new BN(0));
+      return;
     }
 
-    if (workingTreasuryDetails && selectedToken) {
-      const unallocated = getUnallocatedBalance(workingTreasuryDetails);
-      const ub = isNewTreasury()
-        ? unallocated
-        : toUiAmount(unallocated, selectedToken.decimals);
+    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+      const isNew = details && details.version >= 2 ? true : false;
+      let result = new BN(0);
+      let balance = new BN(0);
+      let allocationAssigned = new BN(0);
+
+      if (!isNew) {
+        balance = toTokenAmountBn(details.balance, selectedToken.decimals);
+        allocationAssigned = toTokenAmountBn(details.allocationAssigned, selectedToken.decimals);
+      } else {
+        balance = new BN(details.balance);
+        allocationAssigned = new BN(details.allocationAssigned);
+      }
+      result = balance.sub(allocationAssigned);
+
+      return result;
+    }
+
+    if (isVisible && treasuryDetails) {
+      const ub = getUnallocatedBalance(treasuryDetails);
       consoleOut('unallocatedBalance:', ub.toString(), 'blue');
       setUnallocatedBalance(new BN(ub));
     }
+
   }, [
     isVisible,
+    treasuryDetails,
     selectedToken,
-    workingTreasuryDetails,
-    isNewTreasury,
   ]);
 
   // Set max amount allocatable to a stream in BN the first time

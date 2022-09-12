@@ -66,15 +66,6 @@ export const StreamAddFundsModal = (props: {
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
 
-  const isNewTreasury = useCallback(() => {
-    if (treasuryDetails) {
-      const v2 = treasuryDetails as Treasury;
-      return v2.version >= 2 ? true : false;
-    }
-
-    return false;
-  }, [treasuryDetails]);
-
   const getTreasuryType = useCallback((details?: Treasury | TreasuryInfo | undefined): StreamTreasuryType | undefined => {
     if (details) {
       const v1 = details as TreasuryInfo;
@@ -275,25 +266,39 @@ export const StreamAddFundsModal = (props: {
   // Set treasury unalocated balance in BN
   useEffect(() => {
 
+    if (!selectedToken) {
+      setUnallocatedBalance(new BN(0));
+      return;
+    }
+
     const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
-      const balance = new BN(details.balance);
-      const allocationAssigned = new BN(details.allocationAssigned);
-      return balance.sub(allocationAssigned);
+      const isNew = details && details.version >= 2 ? true : false;
+      let result = new BN(0);
+      let balance = new BN(0);
+      let allocationAssigned = new BN(0);
+
+      if (!isNew) {
+        balance = toTokenAmountBn(details.balance, selectedToken.decimals);
+        allocationAssigned = toTokenAmountBn(details.allocationAssigned, selectedToken.decimals);
+      } else {
+        balance = new BN(details.balance);
+        allocationAssigned = new BN(details.allocationAssigned);
+      }
+      result = balance.sub(allocationAssigned);
+
+      return result;
     }
 
     if (isVisible && treasuryDetails) {
-      const unallocated = getUnallocatedBalance(treasuryDetails);
-      const ub = isNewTreasury()
-        ? unallocated
-        : toUiAmount(unallocated, selectedToken?.decimals || 6);
+      const ub = getUnallocatedBalance(treasuryDetails);
       consoleOut('unallocatedBalance:', ub.toString(), 'blue');
       setUnallocatedBalance(new BN(ub));
     }
+
   }, [
     isVisible,
     treasuryDetails,
-    selectedToken?.decimals,
-    isNewTreasury,
+    selectedToken,
   ]);
 
   // Set max amount allocatable to a stream in BN the first time
