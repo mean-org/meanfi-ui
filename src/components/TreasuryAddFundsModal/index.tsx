@@ -349,22 +349,7 @@ export const TreasuryAddFundsModal = (props: {
       return balance.sub(allocationAssigned);
     }
 
-    const isSameToken = () => {
-      if (workingTreasuryDetails && selectedToken) {
-        const v1 = workingTreasuryDetails as TreasuryInfo;
-        const v2 = workingTreasuryDetails as Treasury;
-        const tokenAddress = isNewTreasury(workingTreasuryDetails)
-          ? v1.associatedTokenAddress as string
-          : v2.associatedToken as string;
-        if (tokenAddress === selectedToken.address && tokenAddress === workingAssociatedToken) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    if (isVisible && workingTreasuryDetails && selectedToken && isSameToken()) {
+    if (isVisible && workingTreasuryDetails && selectedToken) {
       if (highLightableStreamId) {
         // Take source balance from the treasury
         const unallocated = getUnallocatedBalance(workingTreasuryDetails);
@@ -389,7 +374,6 @@ export const TreasuryAddFundsModal = (props: {
     selectedToken,
     highLightableStreamId,
     workingTreasuryDetails,
-    workingAssociatedToken,
     selectFromTokenBalance,
     isNewTreasury,
   ]);
