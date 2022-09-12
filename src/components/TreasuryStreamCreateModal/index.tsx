@@ -143,7 +143,6 @@ export const TreasuryStreamCreateModal = (props: {
   const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
   const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
   const percentages = [5, 10, 15, 20];
-  const [percentageValue, setPercentageValue] = useState<number>(0);
   const [cliffRelease, setCliffRelease] = useState<string>("");
   const [cliffReleaseBn, setCliffReleaseBn] = useState(new BN(0));
   const [paymentRateAmountBn, setPaymentRateAmountBn] = useState(new BN(0));
@@ -826,10 +825,12 @@ export const TreasuryStreamCreateModal = (props: {
 
     if (newValue === null || newValue === undefined || newValue === "") {
       setCliffRelease("");
+      setCliffReleaseBn(new BN(0));
     } else if (newValue === '.') {
       setCliffRelease(".");
     } else if (isValidNumber(newValue)) {
       setCliffRelease(newValue);
+      setCliffReleaseBn(toTokenAmountBn(newValue, decimals));
     }
   };
 
@@ -886,9 +887,15 @@ export const TreasuryStreamCreateModal = (props: {
     });
   } 
   
-  const onChangeValuePercentages = (value: number) => {
-    setPercentageValue(value);
-  };
+  const onChangeValuePercentages = useCallback((value: number) => {
+    if (!selectedToken) { return; }
+
+    if (value > 0 && tokenAmount.gtn(0)) {
+      const cr = tokenAmount.muln(value).divn(100);
+      setCliffReleaseBn(cr);
+      setCliffRelease(toUiAmount(cr, selectedToken.decimals));
+    }
+  }, [selectedToken, tokenAmount]);
 
   const selectCsvHandler = (e: any) => {
     const reader = new FileReader();
@@ -940,6 +947,7 @@ export const TreasuryStreamCreateModal = (props: {
   }, [getRateAmountBn, getTokenByMintAddress]);
 
 
+  // Recipient list - parse
   useEffect(() => {
     if (!csvFile) { return; }
 
@@ -971,6 +979,7 @@ export const TreasuryStreamCreateModal = (props: {
 
   }, [csvFile]);
 
+  // Recipient list - filter valid addresses
   useEffect(() => {
 
     if (!csvArray.length || !publicKey) { return; }
@@ -1001,6 +1010,7 @@ export const TreasuryStreamCreateModal = (props: {
     isSelectedStreamingAccountMultisigTreasury,
   ]);
 
+  // Recipient list - Set valid flag
   useEffect(() => {
     if (isCsvSelected) {
       if (listValidAddresses.length > 0) {
@@ -1016,31 +1026,16 @@ export const TreasuryStreamCreateModal = (props: {
     csvArray,
   ]);
 
-  // Set Cliff release
-  useEffect(() => {
-
-    if (!selectedToken) { return; }
-
-    if (tokenAmount.gtn(0) && percentageValue > 0) {
-      const cr = tokenAmount.muln(percentageValue).divn(100);
-      setCliffReleaseBn(cr);
-      setCliffRelease(toUiAmount(cr, selectedToken.decimals));
-    }
-
-  }, [percentageValue, selectedToken, tokenAmount]);
-
   // Set payment rate amount
   useEffect(() => {
 
     if (!selectedToken) { return; }
 
     if (tokenAmount.gtn(0)) {
-      let cliffReleaseAmount = new BN(0);
       let toStream = tokenAmount;
       let ra = new BN(0);
-      if (percentageValue > 0) {
-        cliffReleaseAmount = tokenAmount.muln(percentageValue).divn(100);
-        toStream = toStream.sub(cliffReleaseAmount);
+      if (cliffReleaseBn.gtn(0)) {
+        toStream = toStream.sub(cliffReleaseBn);
       }
       const lpa = parseFloat(lockPeriodAmount);
       if (lpa) {
@@ -1055,7 +1050,7 @@ export const TreasuryStreamCreateModal = (props: {
         setPaymentRateAmountBn(new BN(openRateAmount));
       }
     }
-  }, [lockPeriodAmount, paymentRateAmount, percentageValue, selectedToken, setPaymentRateAmount, tokenAmount, workingTreasuryType]);
+  }, [cliffReleaseBn, lockPeriodAmount, paymentRateAmount, selectedToken, setPaymentRateAmount, tokenAmount, workingTreasuryType]);
 
   // Set the amount to be streamed
   useEffect(() => {
@@ -1063,16 +1058,14 @@ export const TreasuryStreamCreateModal = (props: {
     if (!selectedToken) { return; }
 
     if (tokenAmount.gtn(0)) {
-      if (percentageValue > 0) {
-        const cr = tokenAmount.muln(percentageValue).divn(100);
-        const toStream = tokenAmount.sub(cr);
-        setAmountToBeStreamedBn(toStream);
-      } else {
-        setAmountToBeStreamedBn(tokenAmount);
+      let toStream = tokenAmount;
+      if (cliffReleaseBn.gtn(0)) {
+        toStream = toStream.sub(cliffReleaseBn);
       }
+      setAmountToBeStreamedBn(toStream);
     }
 
-  }, [percentageValue, selectedToken, tokenAmount]);
+  }, [cliffReleaseBn, selectedToken, tokenAmount]);
 
   // Keep token balance updated
   useEffect(() => {
