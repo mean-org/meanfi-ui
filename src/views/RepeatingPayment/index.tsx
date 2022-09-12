@@ -34,7 +34,6 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
-  stringNumberFormat,
   toUsCurrency
 } from "../../middleware/ui";
 import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
@@ -420,15 +419,18 @@ export const RepeatingPayment = (props: {
   const getPaymentRateAmount = useCallback(() => {
 
     let outStr = selectedToken
-      ? stringNumberFormat(
+      ? getAmountWithSymbol(
           paymentRateAmount,
+          selectedToken.address,
+          false,
+          splTokenList,
           friendlyDisplayDecimalPlaces(parseFloat(paymentRateAmount)) || selectedToken.decimals
         )
       : '-'
     outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
 
     return outStr;
-  }, [paymentRateAmount, paymentRateFrequency, selectedToken, t]);
+  }, [paymentRateAmount, paymentRateFrequency, selectedToken, splTokenList, t]);
 
 
   /////////////////////
@@ -891,37 +893,6 @@ export const RepeatingPayment = (props: {
       : '';
   }
 
-  const getPaymentRateLabel = useCallback((
-    rate: PaymentRateType,
-    amount: string | undefined
-  ): string => {
-    let label: string;
-    label = `${selectedToken ? getAmountWithSymbol(parseFloat(amount || '0'), selectedToken.address) : '--'}`;
-    switch (rate) {
-      case PaymentRateType.PerMinute:
-        label += ` ${t('transactions.rate-and-frequency.payment-rates.per-minute')}`;
-        break;
-      case PaymentRateType.PerHour:
-        label += ` ${t('transactions.rate-and-frequency.payment-rates.per-hour')}`;
-        break;
-      case PaymentRateType.PerDay:
-        label += ` ${t('transactions.rate-and-frequency.payment-rates.per-day')}`;
-        break;
-      case PaymentRateType.PerWeek:
-        label += ` ${t('transactions.rate-and-frequency.payment-rates.per-week')}`;
-        break;
-      case PaymentRateType.PerMonth:
-        label += ` ${t('transactions.rate-and-frequency.payment-rates.per-month')}`;
-        break;
-      case PaymentRateType.PerYear:
-        label += ` ${t('transactions.rate-and-frequency.payment-rates.per-year')}`;
-        break;
-      default:
-        break;
-    }
-    return label;
-  }, [selectedToken, t]);
-
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
@@ -1223,7 +1194,7 @@ export const RepeatingPayment = (props: {
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
+              loadingMessage: `Send ${getPaymentRateAmount()}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Stream to send ${getPaymentRateAmount()} has been created.`
             });
@@ -1266,7 +1237,6 @@ export const RepeatingPayment = (props: {
     getPaymentRateAmount,
     setTransactionStatus,
     resetContractValues,
-    getPaymentRateLabel,
     getTokenPrice,
     getFeeAmount,
   ]);
