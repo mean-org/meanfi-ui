@@ -28,6 +28,7 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   shortenAddress,
+  toUiAmount,
 } from '../../middleware/utils';
 
 import { Button, Empty, Spin, Tooltip } from 'antd';
@@ -85,6 +86,7 @@ import { ErrorReportModal } from '../../components/ErrorReportModal';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { appConfig } from '../..';
+import BigNumber from 'bignumber.js';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -3519,17 +3521,24 @@ export const SafeView = () => {
         const nativeSolUsdValue = solBalance * solPrice;  
         const assets = await getMultisigVaults(connection, account.id);
 
-        assets.forEach(asset => {
+        for (const asset of assets) {
           const token = getTokenByMintAddress(asset.mint.toBase58());
           
           if (token) {
-            const tokenAddress = getTokenPriceByAddress(token.address);
-            const tokenSymbol = getTokenPriceBySymbol(token.symbol);
-            const tokenPrice = tokenAddress || tokenSymbol;
-            const tokenBalance = asset.amount.toNumber() / 10 ** token.decimals;
-            usdValue += (tokenBalance * tokenPrice);
+            const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+            if (!tokenPrice) {
+              continue;
+            }
+            BigNumber.config({
+              CRYPTO: true,
+              DECIMAL_PLACES: 16
+            });
+            const tokenBalance = toUiAmount(asset.amount, token.decimals);
+            const assetValue = new BigNumber(tokenBalance).multipliedBy(tokenPrice);
+            usdValue += assetValue.toNumber();
           }
-        });
+        }
+
         usdValue += nativeSolUsdValue;  
         allUsdValueMap.set(account.authority.toBase58(), usdValue);  
       });
