@@ -5,10 +5,10 @@ import { IconArrowBack, IconExternalLink } from "../../Icons";
 import "./style.scss";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
-import { Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
+import { MSP, Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, shortenAddress, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
-import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates, stringNumberFormat } from "../../middleware/ui";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates, stringNumberFormat } from "../../middleware/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
@@ -17,7 +17,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useSearchParams } from "react-router-dom";
 import { useWallet } from "../../contexts/wallet";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { getSolanaExplorerClusterParam } from "../../contexts/connection";
+import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { Identicon } from "../Identicon";
 import Countdown from "react-countdown";
 import useWindowSize from "../../hooks/useWindowResize";
@@ -25,6 +25,7 @@ import { isMobile } from "react-device-detect";
 import { getCategoryLabelByValue } from "../../models/enums";
 import { PublicKey } from "@solana/web3.js";
 import { getStreamTitle } from "../../middleware/streams";
+import { MoneyStreaming } from "@mean-dao/money-streaming";
 
 const { TabPane } = Tabs;
 
@@ -33,7 +34,6 @@ export const MoneyStreamDetails = (props: {
   stream?: Stream | StreamInfo | undefined;
   hideDetailsHandler?: any;
   infoData?: any;
-  streamingAccountSelected?: Treasury | TreasuryInfo | undefined;
   isStreamIncoming?: boolean;
   isStreamOutgoing?: boolean;
   buttons?: any;
@@ -44,7 +44,6 @@ export const MoneyStreamDetails = (props: {
     stream,
     hideDetailsHandler,
     infoData,
-    streamingAccountSelected,
     isStreamIncoming,
     isStreamOutgoing,
     buttons,
@@ -53,25 +52,41 @@ export const MoneyStreamDetails = (props: {
   const {
     splTokenList,
     streamActivity,
+    streamProgramAddress,
     hasMoreStreamActivity,
     loadingStreamActivity,
+    streamV2ProgramAddress,
     getStreamActivity,
   } = useContext(AppStateContext);
+  const { endpoint } = useConnectionConfig();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { publicKey } = useWallet();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [activityLoaded, setActivityLoaded] = useState(false);
+  const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
 
-  // Detect XS screen
-  useEffect(() => {
-    if (width < 576) {
-      setIsXsDevice(true);
-    } else {
-      setIsXsDevice(false);
-    }
-  }, [width]);
+  // Create and cache Money Streaming Program instance
+  const ms = useMemo(() => new MoneyStreaming(
+    endpoint,
+    streamProgramAddress,
+    "confirmed"
+  ), [
+    endpoint,
+    streamProgramAddress
+  ]);
+
+  const msp = useMemo(() => {
+    return new MSP(
+      endpoint,
+      streamV2ProgramAddress,
+      "confirmed"
+    );
+  }, [
+    endpoint,
+    streamV2ProgramAddress
+  ]);
 
   const tabOption = useMemo(() => {
     let tabOptionInQuery: string | null = null;
@@ -386,6 +401,45 @@ export const MoneyStreamDetails = (props: {
     }
   }, [selectedToken]);
 
+  useEffect(() => {
+    if (!publicKey || !stream || !ms || !msp) { return; }
+
+    const isNew = stream.version >= 2 ? true : false;
+    const treasuryId = isNew ? (stream as Stream).treasury.toBase58() : (stream as StreamInfo).treasuryAddress as string;
+
+    if (treasuryDetails && treasuryDetails.id as string === treasuryId) {
+      return;
+    }
+
+    const mspInstance = isNew ? msp : ms;
+    consoleOut('treasuryId:', treasuryId, 'blue');
+    const treasueyPk = new PublicKey(treasuryId);
+
+    mspInstance.getTreasury(treasueyPk)
+    .then(details => {
+      if (details) {
+        setTreasuryDetails(details);
+      } else {
+        setTreasuryDetails(undefined);
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      setTreasuryDetails(undefined);
+    });
+
+  }, [ms, msp, publicKey, stream, treasuryDetails]);
+
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
+
   // Get stream activity
   useEffect(() => {
     if (!stream) { return; }
@@ -635,11 +689,11 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderBadges = () => {
-    if (!streamingAccountSelected) { return; }
+    if (!treasuryDetails) { return; }
 
-    const v1 = streamingAccountSelected as unknown as TreasuryInfo;
-    const v2 = streamingAccountSelected as Treasury;
-    const isNewTreasury = streamingAccountSelected && streamingAccountSelected.version >= 2 ? true : false;
+    const v1 = treasuryDetails as unknown as TreasuryInfo;
+    const v2 = treasuryDetails as Treasury;
+    const isNewTreasury = treasuryDetails && treasuryDetails.version >= 2 ? true : false;
 
     const type = isNewTreasury
       ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'

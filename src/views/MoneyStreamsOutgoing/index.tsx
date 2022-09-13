@@ -53,7 +53,6 @@ export const MoneyStreamsOutgoingView = (props: {
   onSendFromOutgoingStreamDetails?: any;
   streamList?: Array<Stream | StreamInfo> | undefined;
   streamSelected: Stream | StreamInfo | undefined;
-  streamingAccountSelected: Treasury | TreasuryInfo | undefined;
 }) => {
 
   const {
@@ -63,7 +62,6 @@ export const MoneyStreamsOutgoingView = (props: {
     onSendFromOutgoingStreamDetails,
     streamList,
     streamSelected,
-    streamingAccountSelected,
   } = props;
 
   const {
@@ -2772,7 +2770,6 @@ export const MoneyStreamsOutgoingView = (props: {
           infoData={infoData}
           isStreamOutgoing={true}
           buttons={renderButtons()}
-          streamingAccountSelected={streamingAccountSelected}
           selectedToken={workingToken}
         />
       </Spin>

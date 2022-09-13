@@ -5247,7 +5247,6 @@ export const AccountsNewView = () => {
                             accountAddress={accountAddress}
                             streamSelected={streamDetail}
                             streamList={streamList}
-                            streamingAccountSelected={treasuryDetail}
                             multisigAccounts={multisigAccounts}
                             onSendFromOutgoingStreamDetails={onBackButtonClicked}
                           />

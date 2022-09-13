@@ -4,7 +4,7 @@ import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity, MSP } from '@mean-dao/msp';
 import { displayAmountWithSymbol, shortenAddress, toUiAmount } from '../../../../middleware/utils';
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, isLocal, relativeTimeFromDates, stringNumberFormat } from '../../../../middleware/ui';
+import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates, stringNumberFormat } from '../../../../middleware/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
@@ -15,7 +15,6 @@ import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { IconExternalLink } from '../../../../Icons';
 import { Identicon } from '../../../../components/Identicon';
-import { getStreamForDebug } from '../../../../middleware/stream-debug-middleware';
 
 const { TabPane } = Tabs;
 export type StreamDetailTab = "details" | "activity";
