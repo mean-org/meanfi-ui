@@ -11,7 +11,6 @@ import { MIN_SOL_BALANCE_REQUIRED } from "../../../../../constants";
 import { useNativeAccount } from "../../../../../contexts/accounts";
 import { AppStateContext } from "../../../../../contexts/appstate";
 import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
-import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../constants/tokens";
 import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../middleware/ui";
 import { getAmountFromLamports, shortenAddress } from "../../../../../middleware/utils";
@@ -28,6 +27,7 @@ export const SafeInfo = (props: {
   onRefreshTabsInfo?: any;
   programsTabContent?: any;
   proposalsTabContent?: any;
+  totalSafeBalance?: number;
   safeNameImg?: string;
   safeNameImgAlt?: string;
   selectedMultisig?: MultisigInfo;
@@ -43,6 +43,7 @@ export const SafeInfo = (props: {
     onRefreshTabsInfo,
     programsTabContent,
     proposalsTabContent,
+    totalSafeBalance,
     safeNameImg,
     safeNameImgAlt,
     selectedMultisig,
@@ -51,16 +52,11 @@ export const SafeInfo = (props: {
     vestingAccountsCount,
   } = props;
   const {
-    coinPrices,
-    splTokenList,
     isWhitelisted,
     multisigVaults,
     accountAddress,
-    totalSafeBalance,
     multisigSolBalance,
-    getTokenByMintAddress,
     refreshTokenBalance,
-    setTotalSafeBalance,
     setActiveTab,
   } = useContext(AppStateContext);
   const navigate = useNavigate();
@@ -129,17 +125,9 @@ export const SafeInfo = (props: {
       <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig ? selectedMultisig.owners : []} />
     </>
   );
-  
+
   // Safe Balance
   const [assetsAmout, setAssetsAmount] = useState<string>();
-
-  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
 
   // Show amount of assets
   useEffect(() => {
@@ -157,43 +145,6 @@ export const SafeInfo = (props: {
   }, [
     multisigVaults, 
     selectedMultisig
-  ]);
-
-  // Fetch safe balance.
-  useEffect(() => {
-
-    if (!selectedMultisig || !multisigVaults || !multisigVaults.length) { return; }
-    
-    const timeout = setTimeout(() => {
-      let usdValue = 0;
-
-      usdValue = multisigSolBalance ? (multisigSolBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL) : 0;
-
-      for (const item of multisigVaults) {
-        const token = getTokenByMintAddress(item.mint.toBase58());
-
-        if (token) {
-          const rate = getPricePerToken(token);
-          const balance = item.amount.toNumber() / 10 ** token.decimals;
-          usdValue += balance * rate;
-        }
-      }
-      
-      setTotalSafeBalance(usdValue);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    getPricePerToken,
-    selectedMultisig,
-    splTokenList,
-    multisigVaults,
-    multisigSolBalance,
-    setTotalSafeBalance,
-    getTokenByMintAddress
   ]);
 
   const renderSafeBalance = (

@@ -5,13 +5,11 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import {
-  Account,
   ConfirmOptions,
   Connection,
   LAMPORTS_PER_SOL,
   MemcmpFilter,
   PublicKey,
-  SYSVAR_RENT_PUBKEY,
   Transaction,
   TransactionInstruction
 } from '@solana/web3.js';
@@ -161,30 +159,15 @@ export const SafeView = () => {
   // Other
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
-  // const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
-  const [operationPayload, setOperationPayload] = useState<any>(undefined);
   const [loadingProposalDetails, setLoadingProposalDetails] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isAssetDetails, setIsAssetDetails] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [assetSelected, setAssetSelected] = useState<any>();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [selectedTab, setSelectedTab] = useState<number>();
   const [multisigUsdValues, setMultisigUsdValues] = useState<Map<string, number> | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
   // Vesting contracts
-  const [loadingTreasuries, setLoadingTreasuries] = useState(true);
   const [treasuryList, setTreasuryList] = useState<Treasury[]>([]);
-
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
-  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
   const [queryParamV, setQueryParamV] = useState<string | null>(null);
   const [lastError, setLastError] = useState<TransactionStatusInfo | undefined>(undefined);
-
-  const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
 
   /////////////////
@@ -321,10 +304,6 @@ export const SafeView = () => {
 
     if (!msp) { return []; }
 
-    setTimeout(() => {
-      setLoadingTreasuries(true);
-    });
-
     const pk = new PublicKey(account);
 
     return await msp.listTreasuries(pk, true, Category.vesting);
@@ -346,8 +325,7 @@ export const SafeView = () => {
       })
       .catch(error => {
         console.error(error);
-      })
-      .finally(() => setLoadingTreasuries(false));
+      });
 
   }, [getAllUserV2Accounts, msp, publicKey]);
 
@@ -393,21 +371,6 @@ export const SafeView = () => {
     return false;
   }, [confirmationHistory]);
 
-  /*
-  const onOpenMultisigModalClick = useCallback(() => {
-    if (!multisigClient) { return; }
-
-    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createMultisig)
-      .then(value => {
-        setTransactionFees(value);
-        consoleOut('transactionFees:', value, 'orange');
-      });
-
-    resetTransactionStatus();
-    setIsMultisigCreateSafeModalVisible(true);
-  },[multisigClient, resetTransactionStatus]);
-  */
-
   const onCreateMultisigClick = useCallback(() => {
 
     if (!multisigClient) { return; }
@@ -428,30 +391,23 @@ export const SafeView = () => {
     onExecuteCreateMultisigTx(data);
   };
 
-  const onAcceptCreateSerumMultisig = (data: any) => {
-    consoleOut('serum multisig:', data, 'blue');
-    onExecuteCreateSerumMultisigTx(data);
-  };
-
   const onMultisigCreated = useCallback(() => {
 
     setIsCreateMultisigModalVisible(false);
-    setIsMultisigCreateSafeModalVisible(false);
     resetTransactionStatus();
     setIsBusy(false);
     setTransactionFees(ZERO_FEES);
 
   },[resetTransactionStatus])
 
-  /*
-  const onCloseCreateMultisigModal = useCallback(() => {
-    setIsBusy(false);
-    setIsEditMultisigModalVisible(false);
-    resetTransactionStatus();
-  },[
-    resetTransactionStatus
-  ]);
-  */
+  const getCurrentMultisigValue = useCallback(() => {
+    if (!selectedMultisig || !multisigUsdValues || multisigUsdValues.size === 0) {
+      return 0;
+    }
+
+    const valueInUsd = multisigUsdValues.get(selectedMultisig.authority.toBase58());
+    return valueInUsd || 0;
+  }, [multisigUsdValues, selectedMultisig]);
 
   const onMultisigModified = useCallback(() => {
     setIsBusy(false);
@@ -750,322 +706,6 @@ export const SafeView = () => {
     transactionFees,
     transactionCancelled,
     transactionStatus.currentOperation,
-    enqueueTransactionConfirmation,
-    resetTransactionStatus,
-    setTransactionStatus,
-    onMultisigCreated,
-  ]);
-
-  const onExecuteCreateSerumMultisigTx = useCallback(async (data: any) => {
-
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
-    let encodedTx: string;
-    const transactionLog: any[] = [];
-
-    resetTransactionStatus();
-    setTransactionCancelled(false);
-    setIsBusy(true);
-
-    const createMultisig = async (data: any) => {
-
-      if (!publicKey) { return null; }
-
-      const multisig = new Account();
-      // Disc. + threshold + nonce.
-      const baseSize = 8 + 8 + 1 + 4;
-      // Add enough for 2 more participants, in case the user changes one's
-      /// mind later.
-      const fudge = 64;
-      // Can only grow the participant set by 2x the initialized value.
-      const ownerSize = 10 * 32 + 8;
-      const multisigSize = baseSize + ownerSize + fudge;
-      const [, nonce] = await PublicKey.findProgramAddress(
-        [multisig.publicKey.toBuffer()],
-        multisigSerumClient.programId
-      );
-
-      const owners = [
-        new PublicKey("ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7"),
-        new PublicKey("HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa"),
-        new PublicKey("4BTx2qPnoxfXDKNyYzDTYXUGKGu9uTW3Cmbtfb2JY8AN"),
-        new PublicKey("9TKa7AoHtpDnZLMkkCkL7nqvrweCairodoD3DcK3WShZ"),
-        new PublicKey("qu32XN2Tys4zXT9AyBjUyKsUR4aAkaXJ4q6CrWMqcot"),
-      ];
-
-      const tx = multisigSerumClient.transaction.createMultisig(
-        owners,
-        new BN(1),
-        nonce,
-        {
-          accounts: {
-            multisig: multisig.publicKey,
-            rent: SYSVAR_RENT_PUBKEY,
-          },
-          signers: [multisig],
-          instructions: [
-            await multisigSerumClient.account.multisig.createInstruction(
-              multisig,
-              multisigSize
-            ),
-          ],
-        }
-      )
-
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash(connection.commitment);
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...[multisig]);
-
-      return tx;
-    };
-
-    const createTx = async (): Promise<boolean> => {
-
-      if (publicKey && data) {
-        consoleOut("Start transaction for create multisig", '', 'blue');
-        consoleOut('Wallet address:', publicKey.toBase58());
-
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
-
-        // Create a transaction
-        const payload = {
-          wallet: publicKey.toBase58(),    // wallet
-          label: data.label,               // multisig label
-          threshold: data.threshold,
-          owners: data.owners
-        };
-
-        consoleOut('data:', payload);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: payload
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        consoleOut('networkFee:', transactionFees.networkFee, 'blue');
-        consoleOut('rentExempt:', transactionFees.rentExempt, 'blue');
-        consoleOut('multisigFee:', transactionFees.multisigFee, 'blue');
-        const minRequired = transactionFees.multisigFee + transactionFees.rentExempt + transactionFees.networkFee;
-        consoleOut('Min required balance:', minRequired, 'blue');
-
-        if (nativeBalance < minRequired) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
-                minRequired, 
-                NATIVE_SOL_MINT.toBase58()
-              )
-            })`
-          });
-          customLogger.logWarning('Create multisig transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        return await createMultisig(data)
-          .then(value => {
-            if (!value) { return false; }
-            consoleOut('createMultisig returned transaction:', value);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-              result: getTxIxResume(value)
-            });
-            transaction = value;
-            return true;
-          })
-          .catch(error => {
-            console.error('createMultisig error:', error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-              result: `${error}`
-            });
-            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-            return false;
-          });
-
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch((error: any) => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
-    const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
-            });
-            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    if (wallet) {
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.CreateMultisig,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Creating safe ${data.label}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Safe ${data.label} successfully created`
-            });
-            onMultisigCreated();
-          } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
-    }
-
-  }, [
-    wallet,
-    publicKey,
-    connection,
-    nativeBalance,
-    transactionFees,
-    transactionCancelled,
-    multisigSerumClient.programId,
-    multisigSerumClient.transaction,
-    transactionStatus.currentOperation,
-    multisigSerumClient.account.multisig,
     enqueueTransactionConfirmation,
     resetTransactionStatus,
     setTransactionStatus,
@@ -1954,10 +1594,6 @@ export const SafeView = () => {
     setTransactionStatus,
     createProposalIx,
   ]);
-
-  const saveOperationPayloadOnStart = (payload: any) => {
-    setOperationPayload(payload);
-  };
 
   const onExecuteApproveTxCancelled = useCallback(() => {
     resetTransactionStatus();
@@ -4063,12 +3699,10 @@ export const SafeView = () => {
 
   const onBackButtonClicked = () => {
     setDetailsPanelOpen(false);
-    setAutoOpenDetailsPanel(false);
   }
 
   const onNavigateAway = () => {
     setDetailsPanelOpen(false);
-    setAutoOpenDetailsPanel(false);
   }
 
   ///////////////
@@ -4341,11 +3975,10 @@ export const SafeView = () => {
                           selectedMultisig.version === 0 ? (
                             <SafeSerumInfoView
                               connection={connection}
-                              isAssetDetails={isAssetDetails}
                               isProgramDetails={isProgramDetails}
                               isProposalDetails={isProposalDetails}
                               multisigClient={multisigSerumClient}
-                              multisigTxs={serumMultisigTxs}
+                              multisigTxs={[]}
                               onDataToProgramView={goToProgramDetailsHandler}
                               onDataToSafeView={goToProposalDetailsHandler}
                               onEditMultisigClick={onEditMultisigClick}
@@ -4356,14 +3989,13 @@ export const SafeView = () => {
                             />
                           ) : (
                             <SafeMeanInfo
-                              assetSelected={assetSelected}
                               connection={connection}
-                              isAssetDetails={isAssetDetails}
                               isProgramDetails={isProgramDetails}
                               isProposalDetails={isProposalDetails}
                               loadingPrograms={loadingPrograms}
                               loadingProposals={loadingProposals}
                               multisigClient={multisigClient}
+                              safeBalanceInUsd={getCurrentMultisigValue()}
                               onDataToProgramView={goToProgramDetailsHandler}
                               onDataToSafeView={goToProposalDetailsHandler}
                               onEditMultisigClick={onEditMultisigClick}
@@ -4373,7 +4005,7 @@ export const SafeView = () => {
                               proposalSelected={selectedProposal}
                               publicKey={publicKey}
                               selectedMultisig={selectedMultisig}
-                              selectedTab={selectedTab}
+                              selectedTab={queryParamV}
                               vestingAccountsCount={treasuryList ? treasuryList.length : 0}
                             />
                           )
@@ -4386,7 +4018,6 @@ export const SafeView = () => {
                             onProposalReject={onExecuteRejectTx}
                             onProposalExecute={onExecuteFinishTx}
                             onProposalCancel={onExecuteCancelTx}
-                            onOperationStarted={saveOperationPayloadOnStart}
                             connection={connection}
                             solanaApps={solanaApps}
                             appsProvider={appsProvider}
@@ -4431,28 +4062,16 @@ export const SafeView = () => {
 
       </div>
 
-      {/* {isMultisigCreateSafeModalVisible && ( */}
       {isCreateMultisigModalVisible && (
         <MultisigCreateModal
           isVisible={isCreateMultisigModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           multisigAccounts={multisigAccounts}
-          // handleOk={onAcceptCreateMultisig}
           handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
           handleClose={() => setIsCreateMultisigModalVisible(false)}
           isBusy={isBusy}
         />
-
-        // <MultisigCreateSafeModal
-        //   isVisible={isMultisigCreateSafeModalVisible}
-        //   nativeBalance={nativeBalance}
-        //   transactionFees={transactionFees}
-        //   multisigAccounts={multisigAccounts}
-        //   handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
-        //   handleClose={() => setIsMultisigCreateSafeModalVisible(false)}
-        //   isBusy={isBusy}
-        // />
       )}
 
       {(isEditMultisigModalVisible && selectedMultisig) && (
@@ -4469,20 +4088,6 @@ export const SafeView = () => {
           handleClose={() => setIsEditMultisigModalVisible(false)}
           isBusy={isBusy}
         />
-
-        // <MultisigEditSafeModal
-        //   isVisible={isEditMultisigModalVisible}
-        //   nativeBalance={nativeBalance}
-        //   transactionFees={transactionFees}
-        //   handleOk={onAcceptEditMultisig}
-        //   multisigName={selectedMultisig.label}
-        //   multisigThreshold={selectedMultisig.threshold}
-        //   multisigParticipants={selectedMultisig.owners}
-        //   multisigAccounts={multisigAccounts}
-        //   multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}
-        //   handleClose={onCloseCreateMultisigModal}
-        //   isBusy={isBusy}
-        // />
       )}
 
       {isErrorReportingModalVisible && (

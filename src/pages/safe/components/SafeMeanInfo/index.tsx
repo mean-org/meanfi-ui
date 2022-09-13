@@ -22,9 +22,7 @@ import { ResumeItem } from '../../../../components/ResumeItem';
 import { appConfig } from '../../../..';
 
 export const SafeMeanInfo = (props: {
-  assetSelected?: any;
   connection: Connection;
-  isAssetDetails: boolean;
   isProgramDetails: boolean;
   isProposalDetails: boolean;
   loadingPrograms: boolean;
@@ -38,12 +36,15 @@ export const SafeMeanInfo = (props: {
   onRefreshRequested: any;
   proposalSelected?: any;
   publicKey: PublicKey | null | undefined;
+  safeBalanceInUsd: number;
   selectedMultisig?: any;
   selectedTab?: any;
   vestingAccountsCount: number;
 }) => {
   const {
     connection,
+    isProgramDetails,
+    isProposalDetails,
     loadingPrograms,
     loadingProposals,
     multisigClient,
@@ -55,6 +56,7 @@ export const SafeMeanInfo = (props: {
     onRefreshRequested,
     proposalSelected,
     publicKey,
+    safeBalanceInUsd,
     selectedMultisig,
     selectedTab,
     vestingAccountsCount,
@@ -440,6 +442,7 @@ export const SafeMeanInfo = (props: {
         onRefreshTabsInfo={onRefreshRequested}
         selectedMultisig={selectedMultisig}
         selectedTab={selectedTab}
+        totalSafeBalance={safeBalanceInUsd}
         programsTabContent={programsTabContent()}
         proposalsTabContent={proposalsTabContent()}
         vestingAccountsCount={vestingAccountsCount}

@@ -33,7 +33,6 @@ export const ProposalDetailsView = (props: {
   loadingData: boolean;
   multisigClient?: MeanMultisig | undefined;
   onDataToSafeView: any;
-  onOperationStarted: any;
   onProposalApprove?: any;
   onProposalCancel?: any;
   onProposalExecute?: any;
@@ -57,7 +56,6 @@ export const ProposalDetailsView = (props: {
     loadingData,
     multisigClient, 
     onDataToSafeView, 
-    onOperationStarted,
     onProposalApprove,
     onProposalCancel,
     onProposalExecute,
@@ -92,7 +90,6 @@ export const ProposalDetailsView = (props: {
   const onAcceptCancelRejectProposalModal = () => {
     consoleOut('cancel reject proposal');
     const operation = { transaction: selectedProposal }
-    onOperationStarted(operation)
     onProposalCancel(operation);
   };
 
@@ -693,7 +690,6 @@ export const ProposalDetailsView = (props: {
                     }
                     onClick={() => {
                       const operation = { transaction: selectedProposal };
-                      onOperationStarted(operation)
                       onProposalApprove(operation);
                     }}>
                       {
@@ -726,7 +722,6 @@ export const ProposalDetailsView = (props: {
                     }
                     onClick={() => {
                       const operation = { transaction: selectedProposal };
-                      onOperationStarted(operation)
                       onProposalReject(operation);
                     }}>
                       {
@@ -783,7 +778,6 @@ export const ProposalDetailsView = (props: {
                     }
                     onClick={() => {
                       const operation = { transaction: selectedProposal }
-                      onOperationStarted(operation)
                       onProposalExecute(operation);
                     }}>
                       <div className="btn-content">
