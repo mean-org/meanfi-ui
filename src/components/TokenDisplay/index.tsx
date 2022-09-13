@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { IconCaretDown } from "../../Icons";
-import { shortenAddress } from "../../utils/utils";
+import { shortenAddress } from "../../middleware/utils";
 import { Identicon } from "../Identicon";
 import { AppStateContext } from "../../contexts/appstate";
 

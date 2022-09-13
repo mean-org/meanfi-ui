@@ -1,33 +1,21 @@
 import { useCallback, useState } from "react";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
-import { TokenAccount } from "./../models";
+import { ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
-  Account,
-  Connection,
-  Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
-  Signer,
-  SystemProgram,
   Transaction,
-  TransactionInstruction,
-  TransactionSignature
 } from "@solana/web3.js";
-import { CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
-import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
-import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
-import { NATIVE_SOL } from './tokens';
-import { ACCOUNT_LAYOUT } from './layouts';
-import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
-import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
-import { BigNumber } from "bignumber.js";
-import BN from "bn.js";
+import { BIGNUMBER_FORMAT, CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
+import { MEAN_TOKEN_LIST } from "../constants/tokens";
+import { friendlyDisplayDecimalPlaces, getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
+import { TOKEN_PROGRAM_ID } from "./ids";
+import { NATIVE_SOL } from '../constants/tokens';
 import { isMobile } from "react-device-detect";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getNetworkIdByEnvironment } from "../contexts/connection";
 import { environment } from "../environments/environment";
+import { BigNumber } from "bignumber.js";
+import BN from "bn.js";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -67,10 +55,18 @@ export function useLocalStorageState(key: string, defaultState?: string) {
 }
 
 // shorten the checksummed version of the input address to have 4 characters at start and end
-export function shortenAddress(address: string, chars = 4): string {
+export function shortenAddress(address: string | PublicKey, chars = 4): string {
   if (!address) { return ""; }
+  let output = '';
+  if (typeof address === "string") {
+    output = address;
+  } else if (address instanceof PublicKey) {
+    output = (address as PublicKey).toBase58();
+  } else {
+    output = `${address}`;
+  }
   const numChars = isMobile ? 4 : chars;
-  return `${address.slice(0, numChars)}...${address.slice(-numChars)}`;
+  return `${output.slice(0, numChars)}...${output.slice(-numChars)}`;
 }
 
 export function getTokenIcon(
@@ -99,8 +95,8 @@ export function chunks<T>(array: T[], size: number): T[][] {
   ).map((_, index) => array.slice(index * size, (index + 1) * size));
 }
 
-export const getAmountFromLamports = (amount: number): number => {
-  return (amount || 0) / LAMPORTS_PER_SOL;
+export const getAmountFromLamports = (amount = 0): number => {
+  return amount / LAMPORTS_PER_SOL;
 }
 
 const SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
@@ -171,24 +167,6 @@ export const formatThousands = (val: number, maxDecimals?: number, minDecimals =
   return convertedVlue.format(val);
 }
 
-export function convert(
-  account?: TokenAccount | number,
-  mint?: MintInfo,
-  rate = 1.0
-): number {
-  if (!account) {
-    return 0;
-  }
-
-  const amount =
-    typeof account === "number" ? account : account.info.amount?.toNumber();
-
-  const precision = Math.pow(10, mint?.decimals || 0);
-  const result = (amount / precision) * rate;
-
-  return result;
-}
-
 export function isValidNumber(str: string): boolean {
   if (str === null || str === undefined ) { return false; }
   return INPUT_AMOUNT_PATTERN.test(str);
@@ -197,21 +175,6 @@ export function isValidNumber(str: string): boolean {
 export function isValidInteger(str: string): boolean {
   if (str === null || str === undefined ) { return false; }
   return INTEGER_INPUT_AMOUNT_PATTERN.test(str);
-}
-
-/**
- * Gets a token as TokenInfo from a given token list based on the mint address.
- *
- * @deprecated Moved to the AppState. Use getTokenByMintAddress from the AppState instead.
- */
-export const getTokenByMintAddress = (address: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
-  const tokenFromTokenList = tokenList && isProd()
-    ? tokenList.find(t => t.address === address)
-    : MEAN_TOKEN_LIST.find(t => t.address === address);
-  if (tokenFromTokenList) {
-    return tokenFromTokenList;
-  }
-  return undefined;
 }
 
 export const getTokenBySymbol = (symbol: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
@@ -240,7 +203,14 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
-export const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false, tokenList?: TokenInfo[]) => {
+export const getAmountWithSymbol = (
+  amount: number | string | BN,
+  address: string,
+  onlyValue = false,
+  tokenList?: TokenInfo[],
+  tokenDecimals?: number,
+) => {
+
   let token: TokenInfo | undefined = undefined;
   if (address) {
     if (address === NATIVE_SOL.address) {
@@ -258,19 +228,120 @@ export const getAmountWithSymbol = (amount: number, address?: string, onlyValue 
     }
   }
 
-  const inputAmount = amount || 0;
-  if (token) {
-    const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
-    const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
-    const formatted2 = formatted.toFixed(token.decimals);
-    const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
-    if (onlyValue) { return toLocale; }
-    return `${toLocale} ${token.symbol}`;
-  } else if (address && !token) {
-    const formatted = formatThousands(inputAmount, 5, 5);
-    return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
+  if (tokenDecimals && !token) {
+    const unknownToken: TokenInfo = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: tokenDecimals,
+      symbol: `[${shortenAddress(address)}]`,
+    };
+    token = unknownToken;
   }
-  return `${formatThousands(inputAmount, 5, 5)}`;
+
+  if (typeof amount === "number") {
+    const inputAmount = amount || 0;
+    if (token) {
+      const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
+      const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
+      const formatted2 = formatted.toFixed(token.decimals);
+      const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
+      if (onlyValue) { return toLocale; }
+      return `${toLocale} ${token.symbol}`;
+    } else if (address && !token) {
+      const formatted = formatThousands(inputAmount, 5, 5);
+      return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
+    }
+    return `${formatThousands(inputAmount, 5, 5)}`;
+  } else {
+    const decimals = token ? token.decimals : 6;
+    BigNumber.config({
+      CRYPTO: true,
+      FORMAT: BIGNUMBER_FORMAT,
+      DECIMAL_PLACES: decimals
+    });
+    const bigNumberAmount = typeof amount === "string"
+      ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
+    const inputAmount = bigNumberAmount.toFormat(decimals);
+    if (token) {
+      return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
+    } else {
+      return onlyValue ? inputAmount : `${inputAmount} [${shortenAddress(address, 4)}]`;
+    }
+  }
+}
+
+export const displayAmountWithSymbol = (
+  amount: number | string | BN,
+  address: string,
+  tokenDecimals?: number,
+  tokenList?: TokenInfo[],
+  friendlyDecimals = true
+) => {
+
+  let token: TokenInfo | undefined = undefined;
+  if (address) {
+    if (address === NATIVE_SOL.address) {
+      token = NATIVE_SOL as TokenInfo;
+    } else {
+      token = tokenList && isProd()
+        ? tokenList.find(t => t.address === address)
+        : MEAN_TOKEN_LIST.find(t => t.address === address);
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+    }
+  }
+
+  if (tokenDecimals && !token) {
+    const unknownToken: TokenInfo = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: tokenDecimals,
+      symbol: `[${shortenAddress(address)}]`,
+    };
+    token = unknownToken;
+  }
+
+  if (typeof amount === "number") {
+    const inputAmount = amount || 0;
+    if (token) {
+      const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
+      const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
+      const formatted2 = formatted.toFixed(token.decimals);
+      const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
+      return `${toLocale} ${token.symbol}`;
+    } else if (address && !token) {
+      const formatted = formatThousands(inputAmount, 5, 5);
+      return `${formatted} [${shortenAddress(address, 4)}]`;
+    }
+    return `${formatThousands(inputAmount, 5, 5)}`;
+  } else {
+    const decimals = token ? token.decimals : 6;
+    BigNumber.config({
+      CRYPTO: true,
+      FORMAT: BIGNUMBER_FORMAT,
+      DECIMAL_PLACES: decimals
+    });
+    const baseConvert = new BigNumber(10 ** decimals);
+    const bigNumberAmount = typeof amount === "string"
+      ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
+    const value = bigNumberAmount.div(baseConvert);
+    const inputAmount = value.toFormat(
+      friendlyDecimals
+        ? friendlyDisplayDecimalPlaces(value.toString(), decimals)
+        : decimals
+    );
+    if (token) {
+      return `${inputAmount} ${token.symbol}`;
+    } else {
+      return `${inputAmount} [${shortenAddress(address, 4)}]`;
+    }
+  }
 }
 
 export const getTokenAmountAndSymbolByTokenAddress = (
@@ -314,27 +385,6 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
 }
 
-export const getComputedFees = (fees: TransactionFees): number => {
-  return fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
-}
-
-export async function fetchAccountTokens(
-  connection: Connection,
-  pubkey: PublicKey
-) {
-  let data;
-  try {
-    const { value } = await connection.getParsedTokenAccountsByOwner(pubkey, { programId: TOKEN_PROGRAM_ID });
-    data = value.map((accountInfo: any) => {
-      const parsedInfo = accountInfo.account.data.parsed.info as TokenAccountInfo;
-      return { parsedInfo, pubkey: accountInfo.pubkey };
-    });
-    return data as AccountTokenParsedInfo[];
-  } catch (error) {
-    console.error(error);
-  }
-}
-
 export function getTxIxResume(tx: Transaction) {
   const programIds: string[] = [];
   tx.instructions.forEach(t => {
@@ -362,14 +412,65 @@ export async function findATokenAddress(
   ))[0];
 }
 
-export const toUiAmount = (amount: BN, decimals: number) => {
-  if (!decimals) { return 0; }
-  return amount.toNumber() / (10 ** decimals);
+export const getSdkValue = (amount: number | string, asString = false) => {
+  if (!amount) {
+    return asString ? '0' : new BN(0);
+  }
+
+  const value = new BN(amount);
+  return asString ? value.toString() : value;
 }
 
-export const toTokenAmount = (amount: number, decimals: number) => {
-  if (!amount || !decimals) { return 0; }
-  return amount * (10 ** decimals);
+export const toUiAmount = (amount: number | BN, decimals: number) => {
+  if (!amount || !decimals) { return '0'; }
+  if (typeof amount === "number") {
+    const value = amount / (10 ** decimals);
+    return value.toFixed(decimals);
+  } else {
+    const baseConvert = new BigNumber(10 ** decimals);
+    const bigNumberAmount = new BigNumber((amount as BN).toString());
+    const value = bigNumberAmount.dividedBy(baseConvert);
+    return value.toFixed(decimals);
+  }
+}
+
+export const toUiAmountBn = (amount: number | BN, decimals: number, asBn = false) => {
+  if (!amount || !decimals) { return '0'; }
+  if (typeof amount === "number") {
+    const value = amount / (10 ** decimals);
+    return asBn ? new BN(value) : value.toFixed(decimals);
+  } else {
+    const baseConvert = new BigNumber(10 ** decimals);
+    const bigNumberAmount = new BigNumber((amount as BN).toString());
+    const value = bigNumberAmount.dividedBy(baseConvert);
+    return asBn ? new BN(value.toString()) : value.toFixed(decimals);
+  }
+}
+
+export const toTokenAmount = (amount: number | string, decimals: number, asString = false) => {
+  if (!amount || !decimals) {
+    return asString ? '0' : new BigNumber(0);
+  }
+
+  const multiplier = new BigNumber(10 ** decimals);
+  const value = new BigNumber(amount);
+  if (asString) {
+    const result = value.multipliedBy(multiplier).integerValue();
+    return result.toNumber().toLocaleString('fullwide', {useGrouping:false});
+  }
+  return value.multipliedBy(multiplier);
+}
+
+export const toTokenAmountBn = (amount: number | string, decimals: number) => {
+  if (!amount || !decimals) {
+    return new BN(0);
+  }
+
+  const multiplier = new BigNumber(10 ** decimals);
+  const value = new BigNumber(amount);
+  const result = value.multipliedBy(multiplier).integerValue();
+  const toFixed = result.toFixed(0);
+  return new BN(toFixed);
 }
 
 export function cutNumber(amount: number, decimals: number) {
@@ -378,14 +479,13 @@ export function cutNumber(amount: number, decimals: number) {
   return str.slice(0, str.indexOf('.') + decimals + 1);
 }
 
-// Some could prefer these instead of toUiAmount and toTokenAmount
 export const makeDecimal = (bn: BN, decimals: number): number => {
   return bn.toNumber() / Math.pow(10, decimals)
 }
 
-export const makeInteger = (num: number, decimals: number): BN => {
-  const mul = Math.pow(10, decimals)
-  return new BN(num * mul)
+export const makeInteger = (amount: number, decimals: number): BN => {
+  if (!amount || !decimals) { return new BN(0); }
+  return new BN(amount * (10 ** decimals))
 }
 
 export const addSeconds = (date: Date, seconds: number) => {

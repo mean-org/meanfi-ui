@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { CopyOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionOperationDescription } from '../../utils/ui';
-import { isError } from '../../utils/transactions';
-import { shortenAddress } from '../../utils/utils';
+import { consoleOut, copyText, getTransactionOperationDescription } from '../../middleware/ui';
+import { isError } from '../../middleware/transactions';
+import { shortenAddress } from '../../middleware/utils';
 import { openNotification } from '../Notifications';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 

@@ -2,12 +2,12 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import BN from 'bn.js';
 import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
-import { Stream, STREAM_STATUS, StreamActivity } from '@mean-dao/msp';
-import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress, toUiAmount } from '../../../../utils/utils';
-import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../utils/ui';
+import { Stream, STREAM_STATUS, StreamActivity, MSP } from '@mean-dao/msp';
+import { displayAmountWithSymbol, shortenAddress, toUiAmount } from '../../../../middleware/utils';
+import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates, stringNumberFormat } from '../../../../middleware/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { useWallet } from '../../../../contexts/wallet';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
@@ -24,6 +24,7 @@ export const MoneyStreamDetails = (props: {
   highlightedStream: Stream | undefined;
   isInboundStream: boolean;
   loadingStreamActivity: boolean;
+  msp?: MSP;
   onLoadMoreActivities: any;
   selectedToken: TokenInfo | undefined;
   stream: Stream | undefined;
@@ -34,6 +35,7 @@ export const MoneyStreamDetails = (props: {
     highlightedStream,
     isInboundStream,
     loadingStreamActivity,
+    msp,
     onLoadMoreActivities,
     selectedToken,
     stream,
@@ -41,7 +43,6 @@ export const MoneyStreamDetails = (props: {
   } = props;
   const {
     splTokenList,
-    getTokenByMintAddress,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [tabOption, setTabOption] = useState<StreamDetailTab>("details");
@@ -107,62 +108,49 @@ export const MoneyStreamDetails = (props: {
   }
 
   const getRateAmountDisplay = useCallback((item: Stream): string => {
+    if (!selectedToken) {
+      return '';
+    }
     let value = '';
 
-    if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      const decimals = token?.decimals || 6;
+    const rateAmount = new BN(item.rateAmount);
 
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
+    value += stringNumberFormat(
+      toUiAmount(rateAmount, selectedToken.decimals),
+      friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
+    )
 
-      const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
-      value += formatThousands(
-        rateAmount,
-        friendlyDisplayDecimalPlaces(rateAmount, decimals),
-        2
-      );
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-    }
+    value += ' ';
+    value += selectedToken.symbol || `[${shortenAddress(item.associatedToken)}]`;
+
     return value;
-  }, [getTokenByMintAddress]);
+  }, [selectedToken]);
 
   const getDepositAmountDisplay = useCallback((item: Stream): string => {
+    if (!selectedToken) {
+      return '';
+    }
     let value = '';
 
-    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      const decimals = token?.decimals || 6;
+    const allocationAssigned = new BN(item.allocationAssigned);
+    value += stringNumberFormat(
+      toUiAmount(allocationAssigned, selectedToken.decimals),
+      friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
+    )
 
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
+    value += ' ';
+    value += selectedToken.symbol || `[${shortenAddress(item.associatedToken)}]`;
 
-      const allocationAssigned = makeDecimal(new BN(item.allocationAssigned), decimals);
-      value += formatThousands(
-        allocationAssigned,
-        friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
-        2
-      );
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-    }
     return value;
-  }, [getTokenByMintAddress]);
+  }, [selectedToken]);
 
   const getStreamSubtitle = useCallback((item: Stream) => {
     let title = '';
 
     if (item) {
-      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
-      if (item.rateAmount > 0) {
-        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, false, t);
+      let rateAmount = item.rateAmount.gtn(0) ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
+      if (item.rateAmount.gtn(0)) {
+        rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), false, t);
       }
 
       if (isInboundStream) {
@@ -229,14 +217,14 @@ export const MoneyStreamDetails = (props: {
     if (item) {
       switch (item.status) {
         case STREAM_STATUS.Schedule:
-          return t('streams.status.scheduled', { date: getShortDate(item.startUtc as string, false) });
+          return t('streams.status.scheduled', { date: getShortDate(item.startUtc, false) });
         case STREAM_STATUS.Paused:
           if (item.isManuallyPaused) {
             return t('streams.status.stopped-manually');
           }
           return t('vesting.vesting-account-streams.stream-status-complete');
         default:
-          return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate as string) });
+          return t('vesting.vesting-account-streams.stream-status-streaming', { timeLeft: getTimeToNow(item.estimatedDepletionDate) });
       }
     }
   }, [t]);
@@ -298,17 +286,12 @@ export const MoneyStreamDetails = (props: {
     return actionText;
   }
 
-  const getActivityAmount = (item: StreamActivity) => {
-    const token = getTokenByMintAddress(item.mint as string);
-    return toUiAmount(new BN(item.amount), token?.decimals || 6);
-  }
-
   const renderReceivingFrom = () => {
     if (!stream) { return null; }
 
     return (
       <AddressDisplay
-        address={stream.treasurer as string}
+        address={stream.treasurer.toBase58()}
         iconStyles={{ width: "15", height: "15" }}
         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
       />
@@ -316,80 +299,64 @@ export const MoneyStreamDetails = (props: {
   }
 
   const renderPaymentRate = () => {
-    if (!stream) { return null; }
+    if (!stream || !selectedToken) { return '--'; }
 
-    const token = getTokenByMintAddress(stream.associatedToken as string);
+    const rateAmountBN = new BN(stream.rateAmount);
 
-    return (
-      <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(stream.rateAmount), token?.decimals || 6), 
-              stream.associatedToken as string,
-              false,
-              splTokenList
-            )} ${getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}`
-          : '--'
-        }
-      </>
-    )
+    let rateAmount = rateAmountBN.gtn(0) ? getRateAmountDisplay(stream) : getDepositAmountDisplay(stream);
+    if (rateAmountBN.gtn(0)) {
+      rateAmount += ' ' + getIntervalFromSeconds(new BN(stream.rateIntervalInSeconds).toNumber(), false, t);
+    }
+
+    return rateAmount;
   }
 
   const renderReservedAllocation = () => {
-    if (!stream) { return null; }
-
-    const token = getTokenByMintAddress(stream.associatedToken as string);
+    if (!stream || !selectedToken) { return '--'; }
 
     return (
       <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(stream.remainingAllocationAmount), token?.decimals || 6),
-              stream.associatedToken as string,
-              false,
-              splTokenList
-            )}`
-          : '--'
+        {
+          displayAmountWithSymbol(
+            stream.remainingAllocationAmount,
+            selectedToken.address,
+            selectedToken.decimals,
+            splTokenList,
+          )
         }
       </>
     )
   }
 
   const renderFundsLeftInAccount = () => {
-    if (!stream) { return null; }
-
-    const token = getTokenByMintAddress(stream.associatedToken as string);
+    if (!stream || !selectedToken) { return '--'; }
 
     return (
       <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(stream.fundsLeftInStream), token?.decimals || 6),
-              stream.associatedToken as string,
-              false,
-              splTokenList
-            )}`
-          : '--'
+        {
+          displayAmountWithSymbol(
+            stream.fundsLeftInStream,
+            selectedToken.address,
+            selectedToken.decimals,
+            splTokenList,
+          )
         }
       </>
     )
   }
 
   const renderFundsSendToRecipient = () => {
-    if (!stream) { return null; }
-
-    const token = getTokenByMintAddress(stream.associatedToken as string);
+    if (!stream || !selectedToken) { return '--'; }
 
     return (
       <>
-        {stream
-          ? `${getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(stream.fundsSentToBeneficiary), token?.decimals || 6),
-              stream.associatedToken as string,
-              false,
-              splTokenList
-            )}`
-          : '--'
+        {
+          displayAmountWithSymbol(
+            stream.fundsSentToBeneficiary,
+            selectedToken.address,
+            selectedToken.decimals,
+            splTokenList,
+          )
         }
       </>
     )
@@ -401,7 +368,7 @@ export const MoneyStreamDetails = (props: {
     return (
       <>
         <AddressDisplay
-          address={stream.id as string}
+          address={stream.id.toBase58()}
           maxChars={8}
           iconStyles={{ width: "15", height: "15", verticalAlign: 'text-top' }}
           newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.id}${getSolanaExplorerClusterParam()}`}
@@ -415,7 +382,7 @@ export const MoneyStreamDetails = (props: {
 
     return (
       <AddressDisplay
-        address={stream.beneficiary as string}
+        address={stream.beneficiary.toBase58()}
         maxChars={8}
         iconStyles={{ width: "15", height: "15", verticalAlign: 'text-top' }}
         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
@@ -426,11 +393,11 @@ export const MoneyStreamDetails = (props: {
   const renderCliffVestAmount = () => {
     if (!stream || !selectedToken) { return null; }
 
-    return getTokenAmountAndSymbolByTokenAddress(
-      toUiAmount(new BN(stream.cliffVestAmount), selectedToken.decimals || 6),
-      stream.associatedToken as string,
-      false,
-      splTokenList
+    return displayAmountWithSymbol(
+      stream.cliffVestAmount,
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
     );
   }
 
@@ -452,13 +419,16 @@ export const MoneyStreamDetails = (props: {
                     <div className="subtitle text-truncate">{shortenAddress(item.initializer)}</div>
                   </div>
                   <div className="rate-cell">
-                    <div className="rate-amount">{
-                      getAmountWithSymbol(
-                        getActivityAmount(item),
-                        item.mint,
-                        false,
-                        splTokenList
-                      )}
+                    <div className="rate-amount">
+                      { selectedToken
+                        ? displayAmountWithSymbol(
+                            new BN(item.amount),
+                            item.mint,
+                            selectedToken.decimals,
+                            splTokenList,
+                          )
+                        : '--'
+                      }
                     </div>
                     <div className="interval">{getShortDate(item.utcDate as string, true)}</div>
                   </div>
@@ -496,8 +466,8 @@ export const MoneyStreamDetails = (props: {
   // Tab details
   const detailsData = [
     {
-      label: stream ? isStartDateFuture(stream.startUtc as string) ? "Starting on:" : "Started on:" : "--",
-      value: stream ? getReadableDate(stream.startUtc as string, true) : "--"
+      label: stream ? isStartDateFuture(stream.startUtc) ? "Starting on:" : "Started on:" : "--",
+      value: stream ? getReadableDate(stream.startUtc, true) : "--"
     },
     {
       label: isInboundStream && "Receiving from:",
@@ -513,11 +483,11 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: "Payment rate:",
-      value: renderPaymentRate() ? renderPaymentRate() : "--"
+      value: renderPaymentRate()
     },
     {
       label: "Reserved allocation:",
-      value: renderReservedAllocation() ? renderReservedAllocation() : ""
+      value: renderReservedAllocation()
     },
     {
       label: isInboundStream && "Funds left in account:",
@@ -529,11 +499,11 @@ export const MoneyStreamDetails = (props: {
     },
     {
       label: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && "Funds will run out in:",
-      value: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && `${getReadableDate(stream.estimatedDepletionDate as string)} (${getTimeToNow(stream.estimatedDepletionDate as string)})`
+      value: (!isInboundStream && stream && stream.status === STREAM_STATUS.Running) && `${getReadableDate(stream.estimatedDepletionDate)} (${getTimeToNow(stream.estimatedDepletionDate)})`
     },
     {
       label: stream && stream.status === STREAM_STATUS.Paused && "Funds ran out on:",
-      value: stream && stream.status === STREAM_STATUS.Paused && getRelativeDate(stream.estimatedDepletionDate as string)
+      value: stream && stream.status === STREAM_STATUS.Paused && getRelativeDate(stream.estimatedDepletionDate)
     },
     {
       label: "Stream id:",
@@ -614,6 +584,8 @@ export const MoneyStreamDetails = (props: {
   };
 
   const renderStreamBalance = (item: Stream) => {
+    if (!item || !selectedToken) { return null; }
+
     return (
       <div className="details-panel-meta mt-2 mb-2">
         <div className="info-label text-truncate line-height-110">
@@ -627,17 +599,17 @@ export const MoneyStreamDetails = (props: {
           <span className="info-data line-height-110">
             {
               isInboundStream
-                ? getTokenAmountAndSymbolByTokenAddress(
-                    toUiAmount(new BN(item.withdrawableAmount), selectedToken?.decimals || 6),
-                    item.associatedToken as string,
-                    false,
-                    splTokenList
+                ? displayAmountWithSymbol(
+                    item.withdrawableAmount,
+                    selectedToken.address,
+                    selectedToken.decimals,
+                    splTokenList,
                   )
-                : getTokenAmountAndSymbolByTokenAddress(
-                    toUiAmount(new BN(item.fundsLeftInStream), selectedToken?.decimals || 6),
-                    item.associatedToken as string,
-                    false,
-                    splTokenList
+                : displayAmountWithSymbol(
+                    item.fundsLeftInStream,
+                    selectedToken.address,
+                    selectedToken.decimals,
+                    splTokenList,
                   )
             }
           </span>

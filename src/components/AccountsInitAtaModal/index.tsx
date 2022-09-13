@@ -9,19 +9,19 @@ import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
-import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from '../../middleware/ui';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { LoadingOutlined } from '@ant-design/icons';
-import { AccountTokenParsedInfo } from '../../models/token';
+import { AccountTokenParsedInfo } from "../../models/accounts";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { TokenListItem } from '../TokenListItem';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TransactionFees } from '@mean-dao/msp';
-import { getTxIxResume, shortenAddress } from '../../utils/utils';
+import { getAmountFromLamports, getTxIxResume, shortenAddress } from '../../middleware/utils';
 import { openNotification } from '../Notifications';
-import { createAtaAccount } from '../../utils/accounts';
+import { createAtaAccount } from '../../middleware/accounts';
 import { customLogger } from '../..';
 
 export const AccountsInitAtaModal = (props: {
@@ -126,13 +126,8 @@ export const AccountsInitAtaModal = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

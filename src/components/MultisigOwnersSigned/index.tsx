@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, Popover } from "antd";
 import { useTranslation } from "react-i18next";
 import { CloseOutlined } from "@ant-design/icons";
-import { shortenAddress } from "../../utils/utils";
+import { shortenAddress } from "../../middleware/utils";
 import "./style.scss";
 import { IconDocument } from "../../Icons";
 import { MultisigParticipant } from "@mean-dao/mean-multisig-sdk";

@@ -3,7 +3,7 @@ import { Modal } from "antd";
 import { useTranslation } from "react-i18next";
 import "./style.scss";
 import { IconCopy, IconFacebook, IconLinkedin, IconTelegram, IconTwitter, IconWhatsapp } from '../../Icons';
-import { copyText } from '../../utils/ui';
+import { copyText } from '../../middleware/ui';
 import {
   FacebookShareButton,
   LinkedinShareButton,

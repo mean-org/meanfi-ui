@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../../../components/Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { formatThousands } from '../../../../utils/utils';
+import { formatThousands, getSdkValue } from '../../../../middleware/utils';
 import { PublicKey } from '@solana/web3.js';
-import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../utils/ui';
+import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../middleware/ui';
 import { IconLoading } from '../../../../Icons';
 
 export const VestingContractList = (props: {
@@ -130,11 +130,9 @@ export const VestingContractList = (props: {
                     const lockPeriodAmount = streamTemplate.durationNumberOfUnits;
                     const lockPeriodUnits = streamTemplate.rateIntervalInSeconds;
                     const lockPeriod = lockPeriodAmount * lockPeriodUnits;
-                    // const cliffReleasePercentage = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
                     const sdTimestamp = toTimestamp(startDate);
                     const finishDate = new Date((sdTimestamp + lockPeriod) * 1000).toUTCString();
                     const todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
-                    // completedVestingPercentage = todayPct > cliffReleasePercentage ? todayPct : cliffReleasePercentage;
                     completedVestingPercentage = todayPct > 100 ? 100 : todayPct;
                 }
             } else {
@@ -168,7 +166,7 @@ export const VestingContractList = (props: {
                             <div className="icon-cell">
                                 <div className="token-icon">
                                     <>
-                                        {token ? (
+                                        {token && token.logoURI ? (
                                             <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
                                         ) : (
                                             <Identicon address={associatedToken} style={{ width: 30, height: 30, display: "inline-flex" }} />
@@ -211,7 +209,7 @@ export const VestingContractList = (props: {
                             </div>
                             <div className="rate-cell">
                                 <div className="rate-amount">
-                                    {formatThousands(item.totalStreams)}
+                                    {formatThousands(+getSdkValue(item.totalStreams))}
                                 </div>
                                 <div className="interval">{item.totalStreams === 1 ? 'stream' : 'streams'}</div>
                             </div>

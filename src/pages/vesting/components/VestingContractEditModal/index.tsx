@@ -6,17 +6,18 @@ import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, isValidInteger, isValidNumber, makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { addDays, isValidInteger, isValidNumber, makeDecimal, shortenAddress } from '../../../../middleware/utils';
 import { Identicon } from '../../../../components/Identicon';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
+import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
 import { FormLabelWithIconInfo } from '../../../../components/FormLabelWithIconInfo';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getRateIntervalInSeconds, PaymentRateTypeOption } from '../../../../utils/ui';
+import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getRateIntervalInSeconds } from '../../../../middleware/ui';
+import { PaymentRateTypeOption } from "../../../../models/PaymentRateTypeOption";
 import { PaymentRateType } from '../../../../models/enums';
 import { IconCaretDown } from '../../../../Icons';
 import moment from 'moment';
 import { LoadingOutlined } from '@ant-design/icons';
-import { isError } from '../../../../utils/transactions';
+import { isError } from '../../../../middleware/transactions';
 import { VestingContractEditOptions } from '../../../../models/vesting';
 import BN from 'bn.js';
 
@@ -75,7 +76,7 @@ export const VestingContractEditModal = (props: {
     if (isVisible && vestingContract && streamTemplate) {
       const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
       setCliffReleasePercentage(cliffPercent.toString());
-      const contractStartDate = new Date(streamTemplate.startUtc as string);
+      const contractStartDate = new Date(streamTemplate.startUtc);
       const localUsDate = contractStartDate.toLocaleDateString("en-US");
       setPaymentStartDate(localUsDate);
       setLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
@@ -272,7 +273,7 @@ export const VestingContractEditModal = (props: {
           </div>
           <div className="description-cell">
             <div className="title text-truncate">{selectedMultisig.label}</div>
-            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id.toBase58(), 8)}</div>
+            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id, 8)}</div>
           </div>
           <div className="rate-cell">
             <div className="rate-amount">
@@ -427,7 +428,6 @@ export const VestingContractEditModal = (props: {
                     <TokenDisplay onClick={() => { }}
                       mintAddress={selectedToken.address}
                       name={selectedToken.name}
-                      showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                       fullTokenInfo={selectedToken}
                     />
                   )}

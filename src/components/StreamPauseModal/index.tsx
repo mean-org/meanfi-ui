@@ -1,14 +1,13 @@
 import React, { useContext } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
-import { ExclamationCircleOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
+import { WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
-import { percentage } from '../../utils/ui';
-import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
+import { percentage, percentageBn } from '../../middleware/ui';
+import { getAmountWithSymbol, toUiAmount } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
-import BN from 'bn.js';
 import { InputMean } from '../InputMean';
 import { useSearchParams } from 'react-router-dom';
 import { AppStateContext } from '../../contexts/appstate';
@@ -49,7 +48,7 @@ export const StreamPauseModal = (props: {
     if (props.streamDetail && publicKey) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
-      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer === publicKey.toBase58())) {
+      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer.equals(publicKey))) {
         return true;
       }
     }
@@ -66,7 +65,7 @@ export const StreamPauseModal = (props: {
       if (v1.version < 2) {
         return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
       } else {
-        return v2.beneficiary === publicKey.toBase58() ? true : false;
+        return v2.beneficiary.equals(publicKey) ? true : false;
       }
     }
     return false;
@@ -91,8 +90,8 @@ export const StreamPauseModal = (props: {
         if (v1.version < 2) {
           fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
         } else {
-          const wa = toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
-          fee = percentage(fees.mspPercentFee, wa) || 0;
+          const wa = toUiAmount(v2.withdrawableAmount, token?.decimals || 6);
+          fee = percentageBn(fees.mspPercentFee, wa, true) as number || 0;
         }
       } else if (isTreasurer) {
         fee = fees.mspFlatFee;
@@ -106,7 +105,7 @@ export const StreamPauseModal = (props: {
     amITreasurer,
   ]);
 
-  const getWithdrawableAmount = useCallback((): number => {
+  const getWithdrawableAmount = useCallback(() => {
     if (props.streamDetail && publicKey) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
@@ -116,7 +115,7 @@ export const StreamPauseModal = (props: {
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
+        return toUiAmount(v2.withdrawableAmount, token?.decimals || 6);
       }
     }
     return 0;
@@ -126,7 +125,7 @@ export const StreamPauseModal = (props: {
     getTokenByMintAddress
   ]);
 
-  const getUnvested = useCallback((): number => {
+  const getUnvested = useCallback(() => {
     if (props.streamDetail && publicKey) {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
@@ -136,7 +135,7 @@ export const StreamPauseModal = (props: {
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6);
+        return toUiAmount(v2.fundsLeftInStream, token?.decimals || 6);
       }
     }
     return 0;

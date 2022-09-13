@@ -1,14 +1,13 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React from 'react';
 import { Treasury, VestingTreasuryActivity, VestingTreasuryActivityAction } from '@mean-dao/msp';
 import { Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { IconExternalLink } from '../../../../Icons';
-import { getShortDate } from '../../../../utils/ui';
-import { makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { friendlyDisplayDecimalPlaces, getShortDate, stringNumberFormat } from '../../../../middleware/ui';
+import { formatThousands, makeDecimal, shortenAddress, toUiAmount } from '../../../../middleware/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { AppStateContext } from '../../../../contexts/appstate';
 import { BN } from 'bn.js';
 
 export const VestingContractActivity = (props: {
@@ -16,27 +15,18 @@ export const VestingContractActivity = (props: {
     hasMoreStreamActivity: boolean;
     loadingStreamActivity: boolean;
     onLoadMoreActivities: any;
+    selectedToken: TokenInfo | undefined;
     vestingContract: Treasury | undefined;
   }) => {
-    const { contractActivity, hasMoreStreamActivity, loadingStreamActivity, onLoadMoreActivities, vestingContract } = props;
+    const {
+        contractActivity,
+        hasMoreStreamActivity,
+        loadingStreamActivity,
+        onLoadMoreActivities,
+        selectedToken,
+        vestingContract,
+    } = props;
     const { t } = useTranslation('common');
-    const { getTokenByMintAddress } = useContext(AppStateContext);
-    const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
-
-    // Set a working token based on the Vesting Contract's Associated Token
-    useEffect(() => {
-        if (vestingContract) {
-            let token = getTokenByMintAddress(vestingContract.associatedToken as string);
-            if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-                token = Object.assign({}, token, {
-                    symbol: 'SOL'
-                }) as TokenInfo;
-            }
-            setSelectedToken(token);
-        }
-
-        return () => { }
-    }, [getTokenByMintAddress, vestingContract])
 
     const getActivityDescription = (item: VestingTreasuryActivity) => {
         if (!vestingContract) {
@@ -97,7 +87,7 @@ export const VestingContractActivity = (props: {
             case VestingTreasuryActivityAction.TreasuryAddFunds:
             case VestingTreasuryActivityAction.TreasuryWithdraw:
             case VestingTreasuryActivityAction.TreasuryRefresh:
-                message += shortenAddress(vestingContract.id as string);
+                message += shortenAddress(vestingContract.id);
                 break;
             case VestingTreasuryActivityAction.StreamCreate:
             case VestingTreasuryActivityAction.StreamAllocateFunds:
@@ -115,11 +105,33 @@ export const VestingContractActivity = (props: {
     }
 
     const getActivityAssociatedToken = (item: VestingTreasuryActivity) => {
-        if (!vestingContract) {
+        if (!vestingContract || !selectedToken) {
             return '--';
         }
 
-        const amount = item.amount ? makeDecimal(new BN(item.amount), selectedToken?.decimals || 6) : 0;
+        const decimals = selectedToken.decimals;
+        let amount = '';
+
+        if (typeof item.amount === "string") {
+            if (!item.amount) {
+                amount = '0';
+            } else {
+                const convertedAmount = toUiAmount(new BN(item.amount), decimals);
+                amount = stringNumberFormat(
+                    convertedAmount,
+                    friendlyDisplayDecimalPlaces(convertedAmount) || decimals
+                );
+            }
+        } else {
+            const value = item.amount ? makeDecimal(new BN(item.amount), decimals) : 0;
+            amount = item.amount
+                ? formatThousands(
+                    value,
+                    friendlyDisplayDecimalPlaces(value) || decimals
+                )
+                : `${value}`;
+        }
+
         let message = '';
         switch (item.action) {
             case VestingTreasuryActivityAction.TreasuryAddFunds:

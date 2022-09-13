@@ -6,7 +6,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
 import { DDCA_FREQUENCY_OPTIONS } from '../../constants/ddca-frequency-options';
 import { DdcaFrequencyOption } from '../../models/ddca-models';
-import { getDayOfWeek, getOrdinalDay } from '../../utils/ui';
+import { getDayOfWeek, getOrdinalDay } from '../../middleware/ui';
 
 export const DdcaFrequencySelectorModal = (props: {
   handleClose: any;

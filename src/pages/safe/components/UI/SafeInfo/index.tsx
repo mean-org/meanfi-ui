@@ -10,11 +10,10 @@ import { SolBalanceModal } from "../../../../../components/SolBalanceModal";
 import { MIN_SOL_BALANCE_REQUIRED } from "../../../../../constants";
 import { useNativeAccount } from "../../../../../contexts/accounts";
 import { AppStateContext } from "../../../../../contexts/appstate";
-import { IconEllipsisVertical, IconInfoCircle, IconLoading } from "../../../../../Icons";
-import { UserTokenAccount } from "../../../../../models/transactions";
-import { NATIVE_SOL } from "../../../../../utils/tokens";
-import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
-import { shortenAddress } from "../../../../../utils/utils";
+import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
+import { NATIVE_SOL } from "../../../../../constants/tokens";
+import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../middleware/ui";
+import { getAmountFromLamports, shortenAddress } from "../../../../../middleware/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
 import { VESTING_ROUTE_BASE_PATH } from "../../../../vesting";
 
@@ -28,6 +27,7 @@ export const SafeInfo = (props: {
   onRefreshTabsInfo?: any;
   programsTabContent?: any;
   proposalsTabContent?: any;
+  totalSafeBalance?: number;
   safeNameImg?: string;
   safeNameImgAlt?: string;
   selectedMultisig?: MultisigInfo;
@@ -43,6 +43,7 @@ export const SafeInfo = (props: {
     onRefreshTabsInfo,
     programsTabContent,
     proposalsTabContent,
+    totalSafeBalance,
     safeNameImg,
     safeNameImgAlt,
     selectedMultisig,
@@ -51,16 +52,11 @@ export const SafeInfo = (props: {
     vestingAccountsCount,
   } = props;
   const {
-    coinPrices,
-    splTokenList,
     isWhitelisted,
     multisigVaults,
     accountAddress,
-    totalSafeBalance,
     multisigSolBalance,
-    getTokenByMintAddress,
     refreshTokenBalance,
-    setTotalSafeBalance,
     setActiveTab,
   } = useContext(AppStateContext);
   const navigate = useNavigate();
@@ -86,15 +82,10 @@ export const SafeInfo = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -111,7 +102,7 @@ export const SafeInfo = (props: {
       if (selectedMultisig.label) {
         setSelectedLabelName(selectedMultisig.label)
       } else {
-        setSelectedLabelName(shortenAddress(selectedMultisig.id.toBase58(), 4))
+        setSelectedLabelName(shortenAddress(selectedMultisig.id, 4))
       }
     }
   }, [selectedMultisig]);
@@ -134,17 +125,9 @@ export const SafeInfo = (props: {
       <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig ? selectedMultisig.owners : []} />
     </>
   );
-  
+
   // Safe Balance
   const [assetsAmout, setAssetsAmount] = useState<string>();
-
-  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
 
   // Show amount of assets
   useEffect(() => {
@@ -162,43 +145,6 @@ export const SafeInfo = (props: {
   }, [
     multisigVaults, 
     selectedMultisig
-  ]);
-
-  // Fetch safe balance.
-  useEffect(() => {
-
-    if (!selectedMultisig || !multisigVaults || !multisigVaults.length) { return; }
-    
-    const timeout = setTimeout(() => {
-      let usdValue = 0;
-
-      usdValue = multisigSolBalance ? (multisigSolBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL) : 0;
-
-      for (const item of multisigVaults) {
-        const token = getTokenByMintAddress(item.mint.toBase58());
-
-        if (token) {
-          const rate = getPricePerToken(token);
-          const balance = item.amount.toNumber() / 10 ** token.decimals;
-          usdValue += balance * rate;
-        }
-      }
-      
-      setTotalSafeBalance(usdValue);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    getPricePerToken,
-    selectedMultisig,
-    splTokenList,
-    multisigVaults,
-    multisigSolBalance,
-    setTotalSafeBalance,
-    getTokenByMintAddress
   ]);
 
   const renderSafeBalance = (

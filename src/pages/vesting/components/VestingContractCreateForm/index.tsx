@@ -3,8 +3,9 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount } from '../../../../utils/utils';
-import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
+import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
+import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
+import { PaymentRateTypeOption } from "../../../../models/PaymentRateTypeOption";
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
 import { TokenListItem } from '../../../../components/TokenListItem';
@@ -13,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, Spin, TimePicker } from 'antd';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { SubCategory, TransactionFees, TreasuryType } from '@mean-dao/msp';
-import { NATIVE_SOL } from '../../../../utils/tokens';
+import { NATIVE_SOL } from '../../../../constants/tokens';
 import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TreasuryTypeOption } from '../../../../models/treasuries';
@@ -23,7 +24,7 @@ import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../../../hooks/useWindowResize';
 import { IconCaretDown } from '../../../../Icons';
 import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from '../../../../models/vesting';
-import { isError } from '../../../../utils/transactions';
+import { isError } from '../../../../middleware/transactions';
 import moment from 'moment';
 import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { environment } from '../../../../environments/environment';
@@ -31,6 +32,8 @@ import { PendingProposalsComponent } from '../PendingProposalsComponent';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Identicon } from '../../../../components/Identicon';
 import { InputMean } from '../../../../components/InputMean';
+import { BN } from 'bn.js';
+import BigNumber from 'bignumber.js';
 
 const timeFormat="hh:mm A"
 
@@ -88,6 +91,7 @@ export const VestingContractCreateForm = (props: {
     const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
     const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
     const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+    const [tokenBalanceBn, setSelectedTokenBalanceBn] = useState(new BN(0));
     const [vestingLockName, setVestingLockName] = useState<string>('');
     const [vestingCategory, setVestingCategory] = useState<VestingContractCategory | undefined>(undefined);
     const [vestingLockFundingAmount, setVestingLockFundingAmount] = useState<string>('');
@@ -231,11 +235,15 @@ export const VestingContractCreateForm = (props: {
 
         if (!connection || !publicKey || !userBalances || !selectedToken) {
             setSelectedTokenBalance(0);
+            setSelectedTokenBalanceBn(new BN(0));
             return;
         }
 
         const timeout = setTimeout(() => {
-            setSelectedTokenBalance(userBalances[selectedToken.address]);
+            const balance = userBalances[selectedToken.address] as number;
+            setSelectedTokenBalance(balance);
+            const balanceBn = toTokenAmount(balance, selectedToken.decimals);
+            setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
         });
 
         return () => {
@@ -295,6 +303,16 @@ export const VestingContractCreateForm = (props: {
     // Events, actions and Validation //
     ////////////////////////////////////
 
+    const canShowMaxCta = () => {
+        if (tokenBalance && selectedToken) {
+            if (selectedToken.address === NATIVE_SOL.address) {
+                return tokenBalance > getMinSolBlanceRequired() ? true : false;
+            }
+            return tokenBalance > 0 ? true : false;
+        }
+        return false;
+    }
+
     const showDrawer = () => {
         setIsTokenSelectorVisible(true);
         autoFocusInput();
@@ -313,8 +331,6 @@ export const VestingContractCreateForm = (props: {
         startUtc.setHours(to24hTime.hours());
         startUtc.setMinutes(to24hTime.minutes());
         startUtc.setSeconds(to24hTime.seconds());
-        // const startDatePlusOffset = new Date(startUtc.getTime() + startUtc.getTimezoneOffset() * 60000);
-        // const timeShiftedStartUtc = new Date(startDatePlusOffset);
         consoleOut('start date in UTC:', startUtc, 'darkorange');
         const options: VestingContractCreateOptions = {
             vestingContractTitle: proposalTitle,
@@ -329,7 +345,7 @@ export const VestingContractCreateForm = (props: {
             cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
             startDate: startUtc,
             multisig: isMultisigContext ? accountAddress : '',
-            fundingAmount: toTokenAmount(parseFloat(vestingLockFundingAmount), (selectedToken as TokenInfo).decimals)
+            fundingAmount: toTokenAmount(vestingLockFundingAmount, (selectedToken as TokenInfo).decimals, true) as string
         };
         onStartTransaction(options);
     }
@@ -449,21 +465,27 @@ export const VestingContractCreateForm = (props: {
     }
 
     const isStepOneValid = (): boolean => {
-        let maxAmount = 0;
-        if (selectedToken) {
-            if (selectedToken.address === NATIVE_SOL.address) {
-                const amount = getMaxAmount();
-                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-            } else {
-                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+        if (!selectedToken) { return false; }
+
+        let maxAmount = new BigNumber(0);
+        if (selectedToken.address === NATIVE_SOL.address) {
+            const amount = getMaxAmount();
+            if (amount > 0) {
+                maxAmount = new BigNumber(amount);
             }
+        } else {
+            maxAmount = new BigNumber(tokenBalanceBn.toString());
         }
+
+        const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+        const fundingAmount = new BigNumber(fa.toString());
+
         return  publicKey &&
                 ((!proposalTitle && !isMultisigContext) || (proposalTitle && isMultisigContext)) &&
                 vestingLockName &&
                 selectedToken &&
                 nativeBalance > 0 && nativeBalance >= getMinSolBlanceRequired() &&
-                (!vestingLockFundingAmount || parseFloat(vestingLockFundingAmount) <= maxAmount)
+                (!vestingLockFundingAmount || fundingAmount.lte(maxAmount))
             ? true
             : false;
     };
@@ -489,15 +511,21 @@ export const VestingContractCreateForm = (props: {
     };
 
     const getStepOneButtonLabel = () => {
-        let maxAmount = 0;
-        if (selectedToken) {
-            if (selectedToken.address === NATIVE_SOL.address) {
-                const amount = getMaxAmount();
-                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-            } else {
-                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+        if (!selectedToken) { return false; }
+
+        let maxAmount = new BigNumber(0);
+        if (selectedToken.address === NATIVE_SOL.address) {
+            const amount = getMaxAmount();
+            if (amount > 0) {
+                maxAmount = new BigNumber(amount);
             }
+        } else {
+            maxAmount = new BigNumber(tokenBalanceBn.toString());
         }
+
+        const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+        const fundingAmount = new BigNumber(fa.toString());
+
         return  !publicKey
             ? t('transactions.validation.not-connected')
             : isMultisigContext && !proposalTitle
@@ -506,22 +534,30 @@ export const VestingContractCreateForm = (props: {
                     ? 'Add contract name'
                     : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
                         ? t('transactions.validation.amount-sol-low')
-                        : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
-                            ? t('transactions.validation.amount-high')
-                            : t('transactions.validation.valid-continue');
+                        : !selectedToken
+                            ? 'No token selected'
+                            : (vestingLockFundingAmount && fundingAmount.gt(maxAmount))
+                                ? t('transactions.validation.amount-high')
+                                : t('transactions.validation.valid-continue');
 
     }
 
     const getStepTwoButtonLabel = () => {
-        let maxAmount = 0;
-        if (selectedToken) {
-            if (selectedToken.address === NATIVE_SOL.address) {
-                const amount = getMaxAmount();
-                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-            } else {
-                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+        if (!selectedToken) { return false; }
+
+        let maxAmount = new BigNumber(0);
+        if (selectedToken.address === NATIVE_SOL.address) {
+            const amount = getMaxAmount();
+            if (amount > 0) {
+                maxAmount = new BigNumber(amount);
             }
+        } else {
+            maxAmount = new BigNumber(tokenBalanceBn.toString());
         }
+
+        const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+        const fundingAmount = new BigNumber(fa.toString());
+
         return  !publicKey
             ? t('transactions.validation.not-connected')
             : isMultisigContext && !proposalTitle
@@ -530,13 +566,15 @@ export const VestingContractCreateForm = (props: {
                     ? 'Add contract name'
                     : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
                         ? t('transactions.validation.amount-sol-low')
-                        : (vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > maxAmount)
-                            ? t('transactions.validation.amount-high')
-                            : !lockPeriodAmount
-                                ? 'Set vesting period'
-                                : !lockPeriodFrequency
+                        : !selectedToken
+                            ? 'No token selected'
+                            : (vestingLockFundingAmount && fundingAmount.gt(maxAmount))
+                                ? t('transactions.validation.amount-high')
+                                : !lockPeriodAmount
                                     ? 'Set vesting period'
-                                    : t('vesting.create-account.create-cta');
+                                    : !lockPeriodFrequency
+                                        ? 'Set vesting period'
+                                        : t('vesting.create-account.create-cta');
 
     }
 
@@ -711,7 +749,7 @@ export const VestingContractCreateForm = (props: {
                     </div>
                     <div className="description-cell">
                         <div className="title text-truncate">{selectedMultisig.label}</div>
-                        <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id.toBase58(), 8)}</div>
+                        <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id, 8)}</div>
                     </div>
                     <div className="rate-cell">
                         <div className="rate-amount">
@@ -828,17 +866,16 @@ export const VestingContractCreateForm = (props: {
                                                 mintAddress={selectedToken.address}
                                                 name={selectedToken.name}
                                                 showCaretDown={true}
-                                                showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                                 fullTokenInfo={selectedToken}
                                             />
                                         )}
-                                        {!isMultisigContext && selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
+                                        {!isMultisigContext && selectedToken && tokenBalance && canShowMaxCta() ? (
                                             <div className="token-max simplelink" onClick={() => {
                                                 if (selectedToken.address === NATIVE_SOL.address) {
                                                     const amount = getMaxAmount();
                                                     setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
                                                 } else {
-                                                    setVestingLockFundingAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                                                    setVestingLockFundingAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
                                                 }
                                             }}>
                                                 MAX
@@ -1069,7 +1106,6 @@ export const VestingContractCreateForm = (props: {
                                             <TokenDisplay onClick={() => { }}
                                                 mintAddress={selectedToken.address}
                                                 name={selectedToken.name}
-                                                showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                                 fullTokenInfo={selectedToken}
                                             />
                                         )}

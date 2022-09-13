@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
-import { isError } from '../../utils/transactions';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
+import { isError } from '../../middleware/transactions';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
 
@@ -105,6 +105,9 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   }
 
   const renderVault = (item: UserTokenAccount) => {
+    if (!item || !item.publicAddress) {
+      return null;
+    }
     const token = getTokenByMintAddress(item.address as string);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -129,8 +132,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.address as string, 6)}]`}</div>
-          <div className="subtitle text-truncate">{shortenAddress(item.publicAddress as string, 8)}</div>
+          <div className="title text-truncate">{token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.address, 6)}]`}</div>
+          <div className="subtitle text-truncate">{shortenAddress(item.publicAddress, 8)}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">

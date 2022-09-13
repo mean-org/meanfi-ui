@@ -9,14 +9,13 @@ import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
 import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { consoleOut, getTransactionStatusForLogs, percentage } from '../../middleware/ui';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
-import { cutNumber, formatThousands, getTxIxResume, isValidNumber, toUiAmount } from '../../utils/utils';
+import { cutNumber, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber, toUiAmount } from '../../middleware/utils';
 import { LoadingOutlined } from '@ant-design/icons';
-import BN from 'bn.js';
-import { closeTokenAccount } from "../../utils/accounts";
+import { closeTokenAccount } from "../../middleware/accounts";
 import { openNotification } from '../Notifications';
 
 export const UnwrapSolModal = (props: {
@@ -118,15 +117,10 @@ export const UnwrapSolModal = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -158,7 +152,7 @@ export const UnwrapSolModal = (props: {
         const mint = wSolInfo.mint.toBase58();
         const amount = wSolInfo.amount.toNumber();
         const token = tokenList.find((t) => t.address === mint);
-        balance = token ? toUiAmount(new BN(amount), token.decimals) : 0;
+        balance = token ? parseFloat(toUiAmount(amount, token.decimals)) : 0;
         setWsolPubKey(tokenAccounts[wSol].pubkey);
       }
     }

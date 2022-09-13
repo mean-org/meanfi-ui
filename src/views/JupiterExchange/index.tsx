@@ -1,18 +1,18 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Divider, Drawer, Modal, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
-import { TOKEN_PROGRAM_ID } from "../../utils/ids";
+import { TOKEN_PROGRAM_ID } from "../../middleware/ids";
 import { useWallet } from "../../contexts/wallet";
-import { consoleOut, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { getJupiterTokenList } from "../../utils/api";
+import { consoleOut, getTransactionStatusForLogs, isProd } from "../../middleware/ui";
+import { getJupiterTokenList } from "../../middleware/api";
 import { DEFAULT_SLIPPAGE_PERCENT, ONE_MINUTE_REFRESH_TIMEOUT, MAX_TOKEN_LIST_ITEMS, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
 import { useNativeAccount, useUserAccounts } from "../../contexts/accounts";
-import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { cutNumber, formatThousands, getTxIxResume, isValidNumber, toTokenAmount, toUiAmount } from "../../utils/utils";
+import { ACCOUNT_LAYOUT } from "../../middleware/layouts";
+import { cutNumber, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconSwapFlip } from "../../Icons";
 import { SwapSettings } from "../../components/SwapSettings";
@@ -22,17 +22,16 @@ import { Identicon } from "../../components/Identicon";
 import { JupiterExchangeOutput } from "../../components/JupiterExchangeOutput";
 import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
 import { appConfig, customLogger } from "../..";
-import BN from 'bn.js';
 import "./style.scss";
-import { NATIVE_SOL } from "../../utils/tokens";
-import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/token-list";
+import { NATIVE_SOL } from "../../constants/tokens";
+import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/tokens";
 import { InfoIcon } from "../../components/InfoIcon";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { openNotification } from "../../components/Notifications";
-import { closeTokenAccount } from "../../utils/accounts";
+import { closeTokenAccount } from "../../middleware/accounts";
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
@@ -151,13 +150,8 @@ export const JupiterExchange = (props: {
 
     // Keep account balance updated
     useEffect(() => {
-
-        const getAccountBalance = (): number => {
-            return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-        }
-
         if (account?.lamports !== previousBalance || !nativeBalance) {
-            setNativeBalance(getAccountBalance());
+            setNativeBalance(getAmountFromLamports(account?.lamports));
             // Update previous balance
             setPreviousBalance(account?.lamports);
         }
@@ -185,7 +179,7 @@ export const JupiterExchange = (props: {
                 const mint = wSolInfo.mint.toBase58();
                 const amount = wSolInfo.amount.toNumber();
                 const token = tokenList.find(t => t.address === mint);
-                balance = token ? toUiAmount(new BN(amount), token.decimals) : 0;
+                balance = token ? parseFloat(toUiAmount(amount, token.decimals)) : 0;
                 setWsolPubKey(tokenAccounts[wSol].pubkey);
             }
         }
@@ -724,8 +718,8 @@ export const JupiterExchange = (props: {
 
     const isInAmountTooLow = useCallback(() => {
         if (inputToken && inputAmount && minInAmount) {
-            const tokenAmount = toTokenAmount(inputAmount, inputToken.decimals);
-            return tokenAmount < (minInAmount || 0) ? true : false;
+            const tokenAmount = toTokenAmountBn(inputAmount, inputToken.decimals);
+            return tokenAmount.ltn(minInAmount || 0) ? true : false;
         }
         return false;
     }, [
@@ -753,7 +747,7 @@ export const JupiterExchange = (props: {
                 label = t('transactions.validation.no-amount');
             } else if (isInAmountTooLow()) {
                 label = t('transactions.validation.minimum-swap-amount', {
-                    mintAmount: toUiAmount(new BN(minInAmount || 0), inputToken.decimals),
+                    mintAmount: toUiAmount(minInAmount || 0, inputToken.decimals),
                     fromMint: inputToken.symbol
                 });
             } else if (inputAmount > getMaxAllowedSwapAmount()) {
@@ -1381,13 +1375,13 @@ export const JupiterExchange = (props: {
                 {
                     !refreshingRoutes && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction === feeInfo.signatureFee && infoRow(
                         t('transactions.transaction-info.network-transaction-fee'),
-                        `${toUiAmount(new BN(feeInfo.signatureFee), sol.decimals)} SOL`
+                        `${toUiAmount(feeInfo.signatureFee, sol.decimals)} SOL`
                     )
                 }
                 {
                     !refreshingRoutes && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction > feeInfo.signatureFee && infoRow(
                         t('transactions.transaction-info.minimum-sol-for-transaction'),
-                        `${toUiAmount(new BN(feeInfo.minimumSOLForTransaction), sol.decimals)} SOL`
+                        `${toUiAmount(feeInfo.minimumSOLForTransaction, sol.decimals)} SOL`
                     )
                 }
                 {
@@ -1700,7 +1694,7 @@ export const JupiterExchange = (props: {
                 {(jupiterReady && inputToken && outputToken && inputAmount && isInAmountTooLow()) ? (
                     <div className="input-amount-too-low flex-row flex-center">
                         <InfoCircleOutlined className="font-size-75" />
-                        <span>Minimum swap is at least {toUiAmount(new BN(minInAmount || 0), inputToken.decimals)} {inputToken.symbol} for {toUiAmount(new BN(minOutAmount || 0), outputToken.decimals)} {outputToken.symbol}</span>
+                        <span>Minimum swap is at least {toUiAmount(minInAmount || 0, inputToken.decimals)} {inputToken.symbol} for {toUiAmount(minOutAmount || 0, outputToken.decimals)} {outputToken.symbol}</span>
                     </div>
                 ) : null}
 
@@ -1719,14 +1713,14 @@ export const JupiterExchange = (props: {
                                             {swapRate ? (
                                                 <>
                                                     1 {inputToken.symbol} ≈{' '}
-                                                    {(toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals) / inputAmount).toFixed(outputToken.decimals)}
+                                                    {(parseFloat(toUiAmount(selectedRoute.outAmount, outputToken.decimals)) / inputAmount).toFixed(outputToken.decimals)}
                                                     {' '}
                                                     {outputToken.symbol}
                                                 </>
                                             ) : (
                                                 <>
                                                     1 {outputToken.symbol} ≈{' '}
-                                                    {(inputAmount / toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals)).toFixed(outputToken.decimals)}
+                                                    {(inputAmount / parseFloat(toUiAmount(selectedRoute.outAmount, outputToken.decimals))).toFixed(outputToken.decimals)}
                                                     {' '}
                                                     {inputToken.symbol}
                                                 </>
@@ -1787,7 +1781,7 @@ export const JupiterExchange = (props: {
                         toTokenAmount={isFromSol()
                             ? fromAmount
                             : selectedRoute && outputToken
-                                ? toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals).toFixed(outputToken.decimals)
+                                ? toUiAmount(selectedRoute.outAmount, outputToken.decimals)
                                 : ''
                         }
                         mintList={mintList}

@@ -1,11 +1,12 @@
 import { AllocationType, SubCategory, TimeUnit, TreasuryType } from "@mean-dao/msp";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { PublicKey } from "@solana/web3.js";
+import BN from "bn.js";
 
 export type VestingFlowRateInfo = {
-    amount: number;
+    amountBn: BN;
     durationUnit: TimeUnit;
-    streamableAmount: number;
+    streamableAmountBn: BN;
 }
 
 export type VestingContractCategory = {
@@ -73,7 +74,7 @@ export interface CreateVestingTreasuryParams {
     cliffVestPercent: number;
     feePayedByTreasurer?: boolean | undefined;
     multisig: string;
-    fundingAmount: number;
+    fundingAmount: string | number;
 }
 
 export interface VestingContractCreateOptions {
@@ -89,7 +90,7 @@ export interface VestingContractCreateOptions {
     cliffVestPercent: number;
     startDate: Date;
     multisig: string;
-    fundingAmount: number;
+    fundingAmount: string | number;
 }
 
 export interface VestingContractEditOptions {
@@ -105,7 +106,7 @@ export interface VestingContractEditOptions {
 
 export interface VestingContractWithdrawOptions {
     amount: string;
-    tokenAmount: any;
+    tokenAmount: BN;
     destinationAccount: string;
     associatedToken: TokenInfo | undefined;
     multisig: string;
@@ -119,27 +120,28 @@ export interface VestingContractStreamCreateOptions {
     multisig: string;
     rateAmount: number;
     streamName: string;
-    tokenAmount: number;
+    tokenAmount: BN;
     txConfirmDescription: string;
     txConfirmedDescription: string;
     proposalTitle?: string;
 }
 
 export interface CreateVestingStreamParams {
-    payer: PublicKey;
-    treasurer: PublicKey;
-    treasury: PublicKey;
-    beneficiary: PublicKey;
-    treasuryAssociatedTokenMint: PublicKey;
-    allocationAssigned: number;
+    proposalTitle?: string;
+    payer: string;
+    treasurer: string;
+    treasury: string;
+    beneficiary: string;
+    treasuryAssociatedTokenMint: string;
+    allocationAssigned: string;
     streamName: string;
     multisig: string;
 }
 
 export interface VestingContractCloseStreamOptions {
     closeTreasuryOption: boolean;
-    vestedReturns: number;
-    unvestedReturns: number;
+    vestedReturns: number | string;
+    unvestedReturns: number | string;
     feeAmount: number;
 }
 
@@ -149,9 +151,19 @@ export interface VestingContractTopupParams {
     allocationType: AllocationType;
     streamId: string;
     associatedToken: TokenInfo | undefined;
+    proposalTitle: string;
     contributor?: string;
-    proposalTitle?: string;
     fundFromSafe?: boolean;
+}
+
+export interface AddFundsParams {
+    proposalTitle?: string;
+    payer: string;
+    contributor: string;
+    treasury: string;
+    associatedToken: string;
+    stream: string;
+    amount: string;
 }
 
 // Map cache to maintain the vesting flow rates between reloads of the vesting accounts' list

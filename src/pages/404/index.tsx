@@ -2,7 +2,7 @@ import React from "react";
 import { PreFooter } from "../../components/PreFooter";
 import { Helmet } from "react-helmet";
 import "./style.scss";
-import { CustomCSSProps } from "../../utils/css-custom-props";
+import { CustomCSSProps } from "../../middleware/css-custom-props";
 import { Link } from "react-router-dom";
 import { Button } from "antd";
 import { useTranslation } from 'react-i18next';

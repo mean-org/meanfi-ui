@@ -1,7 +1,7 @@
 import { TokenInfo } from "@solana/spl-token-registry";
 import React, { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../middleware/utils";
 import { Identicon } from "../Identicon";
 
 export const TokenListItem = (props: {

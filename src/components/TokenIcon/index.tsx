@@ -25,7 +25,7 @@ export const TokenIcon = (props: {
   const token = getTokenByMintAddress(address);
   const defaultSize = size || 20;
 
-  if (token) {
+  if (token && token.logoURI) {
     return (
       <img
         alt="Token icon"

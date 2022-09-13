@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
 import { TokenDisplay } from '../TokenDisplay';
 import { useWallet } from '../../contexts/wallet';
-import { toUsCurrency } from '../../utils/ui';
-import { formatThousands } from '../../utils/utils';
+import { toUsCurrency } from '../../middleware/ui';
+import { formatThousands } from '../../middleware/utils';
 
 export const JupiterExchangeInput = (props: {
   token: TokenInfo | undefined;

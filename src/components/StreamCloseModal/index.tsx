@@ -3,12 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col, Radio } from 'antd';
 import { LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
-import { consoleOut, percentage } from '../../utils/ui';
-import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
+import { consoleOut, percentage, percentageBn } from '../../middleware/ui';
+import { getAmountWithSymbol, toUiAmount } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
-import BN from 'bn.js';
 import { useConnection } from '../../contexts/connection';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
@@ -108,7 +107,7 @@ export const StreamCloseModal = (props: {
       const v2 = localStreamDetail as Stream;
       consoleOut('fetching treasury details...', '', 'blue');
       getTreasuryTypeByTreasuryId(
-        localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury as string,
+        localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury.toBase58(),
         localStreamDetail.version
       ).then(value => {
         consoleOut('streamTreasuryType:', value, 'crimson');
@@ -153,7 +152,7 @@ export const StreamCloseModal = (props: {
     if (localStreamDetail && publicKey) {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
-      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer === publicKey.toBase58())) {
+      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer.equals(publicKey))) {
         return true;
       }
     }
@@ -170,7 +169,7 @@ export const StreamCloseModal = (props: {
       if (v1.version < 2) {
         return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
       } else {
-        return v2.beneficiary === publicKey.toBase58() ? true : false;
+        return v2.beneficiary.equals(publicKey) ? true : false;
       }
     }
     return false;
@@ -195,8 +194,8 @@ export const StreamCloseModal = (props: {
         if (v1.version < 2) {
           fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
         } else {
-          const wa = toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
-          fee = percentage(fees.mspPercentFee, wa) || 0;
+          const wa = toUiAmount(v2.withdrawableAmount, token?.decimals || 6);
+          fee = percentageBn(fees.mspPercentFee, wa, true) as number || 0;
         }
       } else if (isTreasurer) {
         fee = fees.mspFlatFee;
@@ -210,7 +209,7 @@ export const StreamCloseModal = (props: {
     amITreasurer,
   ]);
 
-  const getWithdrawableAmount = useCallback((): number => {
+  const getWithdrawableAmount = useCallback(() => {
     if (localStreamDetail && publicKey) {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
@@ -220,7 +219,7 @@ export const StreamCloseModal = (props: {
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount(new BN(v2.withdrawableAmount), token?.decimals || 6);
+        return toUiAmount(v2.withdrawableAmount, token?.decimals || 6);
       }
     }
     return 0;
@@ -231,7 +230,7 @@ export const StreamCloseModal = (props: {
 
   ]);
 
-  const getUnvested = useCallback((): number => {
+  const getUnvested = useCallback(() => {
     if (localStreamDetail && publicKey) {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
@@ -241,7 +240,7 @@ export const StreamCloseModal = (props: {
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount(new BN(v2.fundsLeftInStream), token?.decimals || 6);
+        return toUiAmount(v2.fundsLeftInStream, token?.decimals || 6);
       }
     }
     return 0;
@@ -381,7 +380,6 @@ export const StreamCloseModal = (props: {
           <div className="mb-2 fg-warning operation">
             <span>{props.content}</span>
           </div>
-          {/* <h4 className="operation">{props.content}</h4> */}
 
           {/* Info */}
           {localStreamDetail && localStreamDetail.associatedToken && (

@@ -6,7 +6,7 @@ import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button } from "antd";
 import { environment } from "../../environments/environment";
-import { getTokenAmountAndSymbolByTokenAddress } from "../../utils/utils";
+import { getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress } from "../../middleware/utils";
 import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { TokenInfo } from "@solana/spl-token-registry";
@@ -46,15 +46,10 @@ export const FaucetView = () => {
   ]);
 
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

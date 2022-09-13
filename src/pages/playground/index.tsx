@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { AppStateContext } from "../../contexts/appstate";
@@ -20,24 +20,23 @@ import {
   intToString,
   isValidAddress,
   friendlyDisplayDecimalPlaces,
-} from "../../utils/ui";
+} from "../../middleware/ui";
 import {
-  fetchAccountTokens,
   formatAmount,
   formatThousands,
-  getTokenAmountAndSymbolByTokenAddress,
-  makeDecimal,
+  getAmountFromLamports,
+  getAmountWithSymbol,
   shortenAddress,
-} from "../../utils/utils";
+  toUiAmount,
+} from "../../middleware/utils";
 import { IconCoin, IconCopy, IconExternalLink, IconTrash, IconWallet } from "../../Icons";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
 import { IconType } from "antd/lib/notification";
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@solana/web3.js";
-import { useConnection } from "../../contexts/connection";
-import { SYSTEM_PROGRAM_ID } from "../../utils/ids";
+import { useConnection, useConnectionConfig } from "../../contexts/connection";
+import { SYSTEM_PROGRAM_ID } from "../../middleware/ids";
 import { AddressDisplay } from "../../components/AddressDisplay";
-import { BN } from "bn.js";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
 import { TokenInfo } from "@solana/spl-token-registry";
@@ -45,9 +44,14 @@ import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "../../constants";
 import { TokenListItem } from "../../components/TokenListItem";
 import { TextInput } from "../../components/TextInput";
 import { useNativeAccount } from "../../contexts/accounts";
-import { NATIVE_SOL } from "../../utils/tokens";
+import { NATIVE_SOL } from "../../constants/tokens";
+import { getStreamForDebug } from "../../middleware/stream-debug-middleware";
+import { MSP } from "@mean-dao/msp";
+import { appConfig } from "../..";
+import ReactJson from "react-json-view";
+import { fetchAccountTokens } from "../../middleware/accounts";
 
-type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
+type TabOption = "first-tab" | "test-stream" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
 
 const CRYPTO_VALUES: number[] = [
   0.0004, 0.000003, 0.00000012345678, 1200.5, 1500.000009, 100500.000009226,
@@ -66,6 +70,7 @@ export const PlaygroundView = () => {
   const navigate = useNavigate();
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
+  const connectionConfig = useConnectionConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     tokenList,
@@ -90,11 +95,47 @@ export const PlaygroundView = () => {
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [canFetchTokenAccounts, setCanFetchTokenAccounts] = useState<boolean>(splTokenList ? true : false);
+  const [streamId, setStreamId] = useState<string>("");
+  const [streamRawData, setStreamRawData] = useState();
+  const [streamParsedData, setStreamParsedData] = useState();
+  const [displayStreamData, setDisplayStreamData] = useState<boolean>(false);
+
+  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
+
+  const msp = useMemo(() => {
+    return new MSP(
+      connectionConfig.endpoint,
+      streamV2ProgramAddressFromConfig,
+      "confirmed"
+    );
+  }, [
+    connectionConfig.endpoint,
+    streamV2ProgramAddressFromConfig
+  ]);
 
 
   ///////////////
   //  Actions  //
   ///////////////
+
+  const fetchStreamData = useCallback((id: string) => {
+    if (!id || !isValidAddress(id) || !msp) { return; }
+
+    const streamPK = new PublicKey(id);
+
+    getStreamForDebug(streamPK, msp).then(value => {
+      consoleOut("raw stream data payload:", value);
+      setStreamRawData(value);
+    });
+
+    msp.getStream(streamPK).then(value => {
+      consoleOut("parsed stream data payload:", value);
+      setStreamParsedData(value);
+    });
+
+    setDisplayStreamData(true);
+
+  }, [msp]);
 
   const navigateToTab = useCallback((tab: TabOption) => {
     setSearchParams({option: tab as string});
@@ -163,6 +204,13 @@ export const PlaygroundView = () => {
     setRecipientAddress(trimmedValue);
   }
 
+  const handleStreamIdChange = (e: any) => {
+    const inputValue = e.target.value as string;
+    // Set the input value
+    const trimmedValue = inputValue.trim();
+    setStreamId(trimmedValue);
+  }
+
   const handleRecipientAddressFocusIn = () => {
     setTimeout(() => {
       triggerWindowResize();
@@ -179,6 +227,11 @@ export const PlaygroundView = () => {
     setAccountInfo(null);
     setParsedAccountInfo(null);
     setRecipientAddress('');
+  }
+
+  const onClearStreamId = () => {
+    setStreamId('');
+    setDisplayStreamData(false);
   }
 
   const onScanMyAddress = () => {
@@ -421,6 +474,9 @@ export const PlaygroundView = () => {
       case "first-tab":
         setCurrentTab("first-tab");
         break;
+      case "test-stream":
+        setCurrentTab("test-stream");
+        break;
       case "second-tab":
         setCurrentTab("second-tab");
         break;
@@ -439,13 +495,8 @@ export const PlaygroundView = () => {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -583,27 +634,29 @@ export const PlaygroundView = () => {
     return CRYPTO_VALUES.map((value: number, index: number) => {
       return (
         <div className="item-list-row" key={index}>
-          <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
-            {selectedToken
-              ? getTokenAmountAndSymbolByTokenAddress(
-                value,
-                selectedToken.address
-              )
-              : ""}
-          </div>
-          <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
+          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
             {selectedToken
               ? `${formatThousands(value, selectedToken.decimals)} ${selectedToken.symbol
               }`
               : ""}
           </div>
-          <div className="std-table-cell responsive-cell text-monospace text-right">
+          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
             {selectedToken
               ? `${formatThousands(
-                  value,
-                  friendlyDisplayDecimalPlaces(value, selectedToken.decimals)
-                )} ${selectedToken.symbol
-              }`
+                    value,
+                    friendlyDisplayDecimalPlaces(value, selectedToken.decimals)
+                  )} ${selectedToken.symbol}`
+              : ""}
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
+            {selectedToken
+              ? getAmountWithSymbol(
+                value,
+                selectedToken.address,
+                false,
+                splTokenList,
+                selectedToken.decimals
+              )
               : ""}
           </div>
         </div>
@@ -661,24 +714,24 @@ export const PlaygroundView = () => {
       <div className="tabset-heading">Number Formatting</div>
       <div className="item-list-header">
         <div className="header-row">
-          <div className="std-table-cell responsive-cell text-right pr-2">
+          <div className="std-table-cell responsive-cell text-right px-1">
             Format 1
           </div>
-          <div className="std-table-cell responsive-cell text-right pr-2">
+          <div className="std-table-cell responsive-cell text-right px-1">
             Format 2
           </div>
-          <div className="std-table-cell responsive-cell text-right">
+          <div className="std-table-cell responsive-cell text-right px-1">
             Format 3
           </div>
         </div>
       </div>
       <div className="item-list-body">{renderTable()}</div>
       <div className="mb-2">
-        Format 1:&nbsp;<code>getTokenAmountAndSymbolByTokenAddress(value, mintAddress)</code>
+        Format 1:&nbsp;<code>formatThousands</code>
         <br />
-        Format 2:&nbsp;<code>formatThousands(value, decimals)</code>
+        Format 2:&nbsp;<code>formatThousands + friendlyDisplayDecimalPlaces</code>
         <br />
-        Format 3:&nbsp;<code>formatThousands(value, friendlyDisplayDecimalPlaces(value, decimals), minDecimals)</code>
+        Format 3:&nbsp;<code>getAmountWithSymbol</code>
       </div>
 
       <Divider />
@@ -718,6 +771,108 @@ export const PlaygroundView = () => {
           )}
         </div>
       </div>
+    );
+  }
+
+  const renderTestStream = () => {
+    return (
+      <>
+        <div className="flex-fixed-right mt-4">
+          <div className="left">
+            <div className="form-label">Inspect stream</div>
+          </div>
+        </div>
+
+        <div className="two-column-form-layout col70x30">
+          <div className="left">
+            <div className="well">
+              <div className="flex-fixed-right">
+                <div className="left position-relative">
+                  <span className="recipient-field-wrapper">
+                    <input
+                      id="stream-id-recipient-field"
+                      className="general-text-input"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      type="text"
+                      onChange={handleStreamIdChange}
+                      placeholder="Introduce stream id (required)"
+                      required={true}
+                      spellCheck="false"
+                      value={streamId}/>
+                  </span>
+                </div>
+                <div className="right">
+                  <span>&nbsp;</span>
+                </div>
+              </div>
+              {
+                streamId && !isValidAddress(streamId) ? (
+                  <span className="form-field-error">
+                    Not a valid stream id
+                  </span>
+                ) : streamId && accountNotFound ? (
+                  <span className="form-field-error">
+                    Account info is not available for this stream id
+                  </span>
+                ) : null
+              }
+            </div>
+          </div>
+          <div className="right">
+            <div className="flex-fixed-right">
+              <div className="left">
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  disabled={!streamId || !isValidAddress(streamId)}
+                  onClick={() => fetchStreamData(streamId)}>
+                  Get info
+                </Button>
+              </div>
+              <div className="right">
+                <Button
+                  type="default"
+                  shape="round"
+                  size="large"
+                  disabled={streamId === ""}
+                  onClick={onClearStreamId}>
+                  Clear
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {streamId && isValidAddress(streamId) && displayStreamData && (
+          <div className="mb-3">
+            <div className="two-column-layout">
+              <div className="left">
+                <div className="form-label">On-chain stream account data</div>
+                <div className="well mb-1 panel-max-height vertical-scroll">
+                  {streamRawData ? (
+                    <ReactJson src={streamRawData} theme={"ocean"} collapsed={1} />
+                  ) : (
+                    "--"
+                  )}
+                </div>
+              </div>
+              <div className="right">
+                <div className="form-label">MSP SDK parsed stream data</div>
+                <div className="well mb-1 panel-max-height vertical-scroll">
+                  {streamParsedData ? (
+                    <ReactJson src={streamParsedData} theme={"ocean"} collapsed={1} />
+                  ) : (
+                    "--"
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -861,7 +1016,13 @@ export const PlaygroundView = () => {
                     isTokenAccount
                       ? infoRow('Token Balance', formatThousands(parsedAccountInfo.data.parsed.info.tokenAmount.uiAmount, decimals, decimals))
                       : isTokenMint
-                        ? infoRow('Current Supply:', formatThousands(makeDecimal(new BN(parsedAccountInfo.data.parsed.info.supply), decimals), decimals, decimals))
+                        ? infoRow('Current Supply:', getAmountWithSymbol(
+                            toUiAmount(parsedAccountInfo.data.parsed.info.supply, decimals),
+                            parsedAccountInfo.data.parsed.info.mint,
+                            true,
+                            splTokenList,
+                            decimals
+                          ))
                         : ''
                   }
                   {isTokenMint && infoRow('Mint Authority:', parsedAccountInfo.data.parsed.info.mintAuthority)}
@@ -1171,6 +1332,8 @@ export const PlaygroundView = () => {
     switch (currentTab) {
       case "first-tab":
         return renderDemoNumberFormatting;
+      case "test-stream":
+        return renderTestStream();
       case "second-tab":
         return renderDemo2Tab();
       case "demo-notifications":
@@ -1189,6 +1352,11 @@ export const PlaygroundView = () => {
           className={`tab-button ${currentTab === "first-tab" ? "active" : ""}`}
           onClick={() => navigateToTab("first-tab")}>
           Demo 1
+        </div>
+        <div
+          className={`tab-button ${currentTab === "test-stream" ? "active" : ""}`}
+          onClick={() => navigateToTab("test-stream")}>
+          Test Stream
         </div>
         <div
           className={`tab-button ${currentTab === "second-tab" ? "active" : ""}`}
@@ -1296,7 +1464,7 @@ export const PlaygroundView = () => {
 
       <section>
         <div className="container mt-4 flex-column flex-center">
-          <div className="boxed-area container-max-width-960">
+          <div className="boxed-area">
             {renderTabset}
             {/* <span className="secondary-link" onClick={getTopJupiterTokensByVolume}>Read list of top Jupiter tokens in volume over 1,000 USD</span> */}
           </div>

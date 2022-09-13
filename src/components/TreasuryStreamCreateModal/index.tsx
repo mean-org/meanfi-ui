@@ -4,16 +4,17 @@ import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
-  cutNumber,
+  displayAmountWithSymbol,
   formatThousands,
   getAmountWithSymbol,
+  getSdkValue,
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
-  makeDecimal,
-  makeInteger,
   shortenAddress,
-  toTokenAmount
-} from '../../utils/utils';
+  toTokenAmount,
+  toTokenAmountBn,
+  toUiAmount,
+} from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import {
@@ -27,9 +28,10 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
-  PaymentRateTypeOption,
+  stringNumberFormat,
   toUsCurrency,
-} from '../../utils/ui';
+} from '../../middleware/ui';
+import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
 import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
@@ -37,14 +39,14 @@ import { OperationType, PaymentRateType, TransactionStatus } from '../../models/
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { appConfig, customLogger } from '../..';
-import { Beneficiary, MSP, Stream, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
+import { Beneficiary, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
@@ -52,6 +54,7 @@ import { MeanMultisig, DEFAULT_EXPIRATION_TIME_SECONDS, MultisigInfo } from '@me
 import { InfoIcon } from '../InfoIcon';
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
+import { CreateStreamParams } from '../../models/streams';
 
 const { Option } = Select;
 
@@ -72,7 +75,6 @@ export const TreasuryStreamCreateModal = (props: {
   withdrawTransactionFees: TransactionFees;
 }) => {
   const {
-    associatedToken,
     connection,
     handleClose,
     handleOk,
@@ -93,7 +95,7 @@ export const TreasuryStreamCreateModal = (props: {
   const { endpoint } = useConnectionConfig();
   const {
     theme,
-    tokenList,
+    splTokenList,
     loadingPrices,
     recipientNote,
     isWhitelisted,
@@ -141,8 +143,10 @@ export const TreasuryStreamCreateModal = (props: {
   const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
   const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
   const percentages = [5, 10, 15, 20];
-  const [percentageValue, setPercentageValue] = useState<number>(0);
-  const [cliffRelease, setCliffRelease] = useState<string>("")
+  const [cliffRelease, setCliffRelease] = useState<string>("");
+  const [cliffReleaseBn, setCliffReleaseBn] = useState(new BN(0));
+  const [paymentRateAmountBn, setPaymentRateAmountBn] = useState(new BN(0));
+  const [amountToBeStreamedBn, setAmountToBeStreamedBn] = useState(new BN(0));
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [workingAssociatedToken, setWorkingAssociatedToken] = useState('');
@@ -151,17 +155,8 @@ export const TreasuryStreamCreateModal = (props: {
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] = useState('');
   const [proposalTitle, setProposalTitle] = useState('');
 
-  const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-  
-  const isNewTreasury = useCallback(() => {
-    if (workingTreasuryDetails) {
-      const v2 = workingTreasuryDetails as Treasury;
-      return v2.version >= 2 ? true : false;
-    }
-
-    return false;
-  }, [workingTreasuryDetails]);
+  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -195,16 +190,16 @@ export const TreasuryStreamCreateModal = (props: {
       if (isWhitelisted) {
         const debugTable: any[] = [];
         debugTable.push({
-          unallocatedBalance: unallocatedBalance.toNumber(),
+          unallocatedBalance: unallocatedBalance.toString(),
           feeNumerator: feeNumerator,
           feePercentage01: feeNumerator/feeDenaminator,
-          badStreamMaxAllocation: badStreamMaxAllocation.toNumber(),
-          feeAmount: feeAmount.toNumber(),
-          badTotal: badTotal.toNumber(),
-          badRemaining: badRemaining.toNumber(),
-          goodStreamMaxAllocation: goodStreamMaxAllocation.toNumber(),
-          goodTotal: goodTotal.toNumber(),
-          goodRemaining: goodRemaining.toNumber(),
+          badStreamMaxAllocation: badStreamMaxAllocation.toString(),
+          feeAmount: feeAmount.toString(),
+          badTotal: badTotal.toString(),
+          badRemaining: badRemaining.toString(),
+          goodStreamMaxAllocation: goodStreamMaxAllocation.toString(),
+          goodTotal: goodTotal.toString(),
+          goodRemaining: goodRemaining.toString(),
         });
         consoleOut('debug table', debugTable, 'blue');
       }
@@ -275,6 +270,19 @@ export const TreasuryStreamCreateModal = (props: {
 
   }, [publicKey, selectedMultisig, workingTreasuryDetails]);
 
+  const getReleaseRate = useCallback(() => {
+    if (!selectedToken) {
+      return '--';
+    }
+
+    return `${displayAmountWithSymbol(
+      paymentRateAmountBn,
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
+    )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
+  }, [lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
+
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
@@ -324,7 +332,7 @@ export const TreasuryStreamCreateModal = (props: {
               ? t('transactions.validation.select-recipient') 
               : (enableMultipleStreamsOption && !validMultiRecipientsList)
                 ? t('transactions.validation.select-address-list')
-                : !selectedToken || unallocatedBalance.toNumber() === 0
+                : !selectedToken || unallocatedBalance.isZero()
                   ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
                     : (!paymentRateAmount || parseFloat(paymentRateAmount) === 0)
                     ? t('transactions.validation.no-amount')
@@ -348,11 +356,11 @@ export const TreasuryStreamCreateModal = (props: {
               ? t('transactions.validation.select-recipient') 
               : (enableMultipleStreamsOption && !validMultiRecipientsList)
                 ? t('transactions.validation.select-address-list')
-                : !selectedToken || unallocatedBalance.toNumber() === 0
+                : !selectedToken || unallocatedBalance.isZero()
                   ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
                   : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
                     ? t('transactions.validation.no-amount')
-                    : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
+                    : (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)))
                       ? t('Invalid amount')
                       : !paymentStartDate
                         ? t('transactions.validation.no-valid-date')
@@ -372,23 +380,21 @@ export const TreasuryStreamCreateModal = (props: {
             ? 'Set stream name'
             : !recipientAddress
               ? t('transactions.validation.select-recipient')
-              : !selectedToken || unallocatedBalance.toNumber() === 0
+              : !selectedToken || unallocatedBalance.isZero()
                 ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
                 : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
                   ? t('transactions.validation.no-amount')
-                  : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
+                  : (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)))
                     ? t('Invalid amount')
-                    : (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0)
+                    : !lockPeriodAmount || parseFloat(lockPeriodAmount) === 0
                       ? 'Lock period cannot be empty'
-                      : !cliffRelease
-                        ? 'Add cliff to release'
-                        : (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals))
-                          ? 'Invalid cliff amount'
-                          : !paymentStartDate
-                            ? t('transactions.validation.no-valid-date')
-                            : !areSendAmountSettingsValid()
-                              ? getPaymentSettingsButtonLabel()
-                              : t('transactions.validation.valid-continue');
+                      : cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
+                        ? 'Invalid cliff amount'
+                        : !paymentStartDate
+                          ? t('transactions.validation.no-valid-date')
+                          : !areSendAmountSettingsValid()
+                            ? getPaymentSettingsButtonLabel()
+                            : t('transactions.validation.valid-continue');
   }
 
   const getTransactionStartButtonLabel = (): string => {
@@ -433,27 +439,25 @@ export const TreasuryStreamCreateModal = (props: {
             ? 'Set stream name'
             : !recipientAddress
               ? t('transactions.validation.select-recipient') 
-              : !selectedToken || unallocatedBalance.toNumber() === 0
+              : !selectedToken || unallocatedBalance.isZero()
                 ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
                 : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
                   ? t('transactions.validation.no-amount')
-                  : (parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals))
+                  : (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)))
                     ? t('Invalid amount')
                     : !lockPeriodAmount || parseFloat(lockPeriodAmount) === 0
                       ? 'Lock period cannot be empty'
-                      : (!cliffRelease || parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, 6))
-                        ? 'Add cliff to release'
-                        :  (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals))
-                          ? 'Invalid cliff amount'
-                          : !paymentStartDate
-                            ? t('transactions.validation.no-valid-date')
-                            : !arePaymentSettingsValid()
-                              ? getPaymentSettingsButtonLabel()
-                              : !isVerifiedRecipient
-                                ? t('transactions.validation.verified-recipient-unchecked')
-                                : nativeBalance < getMinBalanceRequired()
-                                  ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-                                  : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
+                      : cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
+                        ? 'Invalid cliff amount'
+                        : !paymentStartDate
+                          ? t('transactions.validation.no-valid-date')
+                          : !arePaymentSettingsValid()
+                            ? getPaymentSettingsButtonLabel()
+                            : !isVerifiedRecipient
+                              ? t('transactions.validation.verified-recipient-unchecked')
+                              : nativeBalance < getMinBalanceRequired()
+                                ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
+                                : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
   };
 
   const getPaymentSettingsButtonLabel = (): string => {
@@ -512,16 +516,18 @@ export const TreasuryStreamCreateModal = (props: {
   const getPaymentRateAmount = useCallback(() => {
 
     let outStr = selectedToken
-      ? getTokenAmountAndSymbolByTokenAddress(
-          parseFloat(paymentRateAmount),
+      ? getAmountWithSymbol(
+          paymentRateAmount,
           selectedToken.address,
-          false
+          false,
+          splTokenList,
+          friendlyDisplayDecimalPlaces(parseFloat(paymentRateAmount)) || selectedToken.decimals
         )
       : '-'
     outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
 
     return outStr;
-  }, [paymentRateAmount, paymentRateFrequency, selectedToken, t]);
+  }, [paymentRateAmount, paymentRateFrequency, selectedToken, splTokenList, t]);
 
   /////////////////////
   // Data management //
@@ -543,7 +549,7 @@ export const TreasuryStreamCreateModal = (props: {
         setWorkingTreasuryType(treasuryType);
       }
     }
-  }, [isVisible, treasuryDetails, treasuryList]);
+  }, [isVisible, treasuryDetails]);
 
   // Preset a working copy of the first available streaming account in the list if treasuryDetails was not passed in
   useEffect(() => {
@@ -583,19 +589,40 @@ export const TreasuryStreamCreateModal = (props: {
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
-    if (workingTreasuryDetails) {
-      const unallocated = workingTreasuryDetails.balance - workingTreasuryDetails.allocationAssigned;
-      const ub = isNewTreasury()
-        ? new BN(unallocated)
-        : makeInteger(unallocated, selectedToken?.decimals || 6);
-      consoleOut('unallocatedBalance:', ub.toNumber(), 'blue');
-      setUnallocatedBalance(ub);
+
+    if (!selectedToken) {
+      setUnallocatedBalance(new BN(0));
+      return;
     }
+
+    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+      const isNew = details && details.version >= 2 ? true : false;
+      let result = new BN(0);
+      let balance = new BN(0);
+      let allocationAssigned = new BN(0);
+
+      if (!isNew) {
+        balance = toTokenAmountBn(details.balance, selectedToken.decimals);
+        allocationAssigned = toTokenAmountBn(details.allocationAssigned, selectedToken.decimals);
+      } else {
+        balance = new BN(details.balance);
+        allocationAssigned = new BN(details.allocationAssigned);
+      }
+      result = balance.sub(allocationAssigned);
+
+      return result;
+    }
+
+    if (isVisible && treasuryDetails) {
+      const ub = getUnallocatedBalance(treasuryDetails);
+      consoleOut('unallocatedBalance:', ub.toString(), 'blue');
+      setUnallocatedBalance(new BN(ub));
+    }
+
   }, [
     isVisible,
-    workingTreasuryDetails,
-    selectedToken?.decimals,
-    isNewTreasury,
+    treasuryDetails,
+    selectedToken,
   ]);
 
   // Set max amount allocatable to a stream in BN the first time
@@ -745,14 +772,6 @@ export const TreasuryStreamCreateModal = (props: {
     setLockPeriodFrequency(val);
   }
 
-  const onTokenChange = (e: any) => {
-    consoleOut("token selected:", e, 'blue');
-    const token = getTokenByMintAddress(e);
-    if (token) {
-      setSelectedToken(token as TokenInfo);
-    }
-  }
-
   const handleFromCoinAmountChange = (e: any) => {
 
     let newValue = e.target.value;
@@ -779,7 +798,7 @@ export const TreasuryStreamCreateModal = (props: {
       setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
-      setTokenAmount(makeInteger(newValue, selectedToken?.decimals || 6));
+      setTokenAmount(new BN(toTokenAmount(newValue, decimals).toString()));
     }
   };
 
@@ -804,10 +823,12 @@ export const TreasuryStreamCreateModal = (props: {
 
     if (newValue === null || newValue === undefined || newValue === "") {
       setCliffRelease("");
+      setCliffReleaseBn(new BN(0));
     } else if (newValue === '.') {
       setCliffRelease(".");
     } else if (isValidNumber(newValue)) {
       setCliffRelease(newValue);
+      setCliffReleaseBn(toTokenAmountBn(newValue, decimals));
     }
   };
 
@@ -821,11 +842,11 @@ export const TreasuryStreamCreateModal = (props: {
 
     if (e.target.checked && tokenAmount) {
       const maxAmount = getMaxAmount(true);
-      consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-      consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+      consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+      consoleOut('maxAmount:', maxAmount.toString(), 'blue');
       if (tokenAmount.gt(maxAmount)) {
         const decimals = selectedToken ? selectedToken.decimals : 6;
-        setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+        setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
         setTokenAmount(new BN(maxAmount));
       }
     }
@@ -864,24 +885,15 @@ export const TreasuryStreamCreateModal = (props: {
     });
   } 
   
-  const onChangeValuePercentages = (value: number) => {
-    setPercentageValue(value);
-  };
+  const onChangeValuePercentages = useCallback((value: number) => {
+    if (!selectedToken) { return; }
 
-  // Multi-recipient
-  // const onCloseMultipleStreamsChanged = useCallback((e: any) => {
-  //   setEnableMultipleStreamsOption(e.target.value);
-  
-  //   if (!enableMultipleStreamsOption) {
-  //     setCsvArray([]);
-  //     setIsCsvSelected(false);
-  //   }
-
-  // }, [enableMultipleStreamsOption]);
-
-  // const onAllocationReservedChanged = (e: any) => {
-  //   setIsAllocationReserved(e.target.value);
-  // }
+    if (value > 0 && tokenAmount.gtn(0)) {
+      const cr = tokenAmount.muln(value).divn(100);
+      setCliffReleaseBn(cr);
+      setCliffRelease(toUiAmount(cr, selectedToken.decimals));
+    }
+  }, [selectedToken, tokenAmount]);
 
   const selectCsvHandler = (e: any) => {
     const reader = new FileReader();
@@ -907,49 +919,11 @@ export const TreasuryStreamCreateModal = (props: {
 
   }, [isSelectedStreamingAccountMultisigTreasury, minRequiredBalance, transactionFees]);
 
-  const getStreamingAccountName = useCallback((item: Treasury | TreasuryInfo | undefined) => {
-    if (item) {
-      const v1 = item as TreasuryInfo;
-      const v2 = item as Treasury;
-      return v1.version < 2 ? v1.label : v2.name;
-    }
-    return '';
-  }, []);
+  /////////////////////
+  // Data management //
+  /////////////////////
 
-  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
-    let value = '';
-
-    if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-          token = Object.assign({}, token, {
-              symbol: 'SOL'
-          }) as TokenInfo;
-      }
-
-      if (item.version < 2) {
-        value += formatThousands(
-          item.rateAmount,
-          friendlyDisplayDecimalPlaces(item.rateAmount, decimals),
-          2
-        );
-      } else {
-        const rateAmount = makeDecimal(new BN(item.rateAmount), decimals);
-        value += formatThousands(
-          rateAmount,
-          friendlyDisplayDecimalPlaces(rateAmount, decimals),
-          2
-        );
-      }
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
-    }
-    return value;
-  }, [getTokenByMintAddress]);
-
-
+  // Recipient list - parse
   useEffect(() => {
     if (!csvFile) { return; }
 
@@ -981,6 +955,7 @@ export const TreasuryStreamCreateModal = (props: {
 
   }, [csvFile]);
 
+  // Recipient list - filter valid addresses
   useEffect(() => {
 
     if (!csvArray.length || !publicKey) { return; }
@@ -1011,6 +986,7 @@ export const TreasuryStreamCreateModal = (props: {
     isSelectedStreamingAccountMultisigTreasury,
   ]);
 
+  // Recipient list - Set valid flag
   useEffect(() => {
     if (isCsvSelected) {
       if (listValidAddresses.length > 0) {
@@ -1026,20 +1002,46 @@ export const TreasuryStreamCreateModal = (props: {
     csvArray,
   ]);
 
+  // Set payment rate amount
   useEffect(() => {
-    const percentageFromCoinAmount = parseFloat(fromCoinAmount) > 0 ? `${(parseFloat(fromCoinAmount)*percentageValue/100)}` : '';
 
-    setCliffRelease(percentageFromCoinAmount);
-    
-  }, [fromCoinAmount, percentageValue]);
+    if (!selectedToken) { return; }
 
+    if (tokenAmount.gtn(0)) {
+      let toStream = tokenAmount;
+      let ra = new BN(0);
+      if (cliffReleaseBn.gtn(0)) {
+        toStream = toStream.sub(cliffReleaseBn);
+      }
+      const lpa = parseFloat(lockPeriodAmount);
+      if (lpa) {
+        ra = toStream.divn(lpa);
+      }
+
+      if (workingTreasuryType === TreasuryType.Lock) {
+        setPaymentRateAmountBn(ra);
+        setPaymentRateAmount(ra.toString());
+      } else {
+        const openRateAmount = toTokenAmount(paymentRateAmount || '0', selectedToken.decimals, true) as string;
+        setPaymentRateAmountBn(new BN(openRateAmount));
+      }
+    }
+  }, [cliffReleaseBn, lockPeriodAmount, paymentRateAmount, selectedToken, setPaymentRateAmount, tokenAmount, workingTreasuryType]);
+
+  // Set the amount to be streamed
   useEffect(() => {
-    if (workingTreasuryType === TreasuryType.Lock) {
-      setPaymentRateAmount(cutNumber((parseFloat(fromCoinAmount) - parseFloat(cliffRelease)) / parseFloat(lockPeriodAmount), 6));
+
+    if (!selectedToken) { return; }
+
+    if (tokenAmount.gtn(0)) {
+      let toStream = tokenAmount;
+      if (cliffReleaseBn.gtn(0)) {
+        toStream = toStream.sub(cliffReleaseBn);
+      }
+      setAmountToBeStreamedBn(toStream);
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cliffRelease, lockPeriodAmount]);
+  }, [cliffReleaseBn, selectedToken, tokenAmount]);
 
   // Keep token balance updated
   useEffect(() => {
@@ -1069,7 +1071,7 @@ export const TreasuryStreamCreateModal = (props: {
     let signedTransactions: Transaction[] = [];
     let signatures: string[] = [];
     let encodedTxs: string[] = [];
-    let displayParams: any = {};
+    let multisigAuth = '';
 
     const transactionLog: any[] = [];
 
@@ -1077,7 +1079,7 @@ export const TreasuryStreamCreateModal = (props: {
     setIsBusy(true);
     resetTransactionStatus();
 
-    const createStreams = async (data: any) => {
+    const createStreams = async (data: CreateStreamParams): Promise<Transaction[] | null> => {
 
       consoleOut('Is Multisig Treasury: ', isSelectedStreamingAccountMultisigTreasury, 'blue');
       consoleOut('Multisig authority: ', selectedMultisig ? selectedMultisig.authority.toBase58() : '--', 'blue');
@@ -1110,6 +1112,8 @@ export const TreasuryStreamCreateModal = (props: {
       }
 
       if (!workingTreasuryDetails || !multisigClient || !selectedMultisig || !publicKey) { return null; }
+
+      multisigAuth = selectedMultisig.authority.toBase58();
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
@@ -1217,12 +1221,12 @@ export const TreasuryStreamCreateModal = (props: {
       const treasurer = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
         ? selectedMultisig.id
         : publicKey;
-      const amount = tokenAmount.div(new BN(beneficiaries.length)).toNumber();
-      const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
+      const amount = tokenAmount.div(new BN(beneficiaries.length)).toString();
+      const rateAmount = paymentRateAmountBn.toString();
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       const startUtc = new Date(parsedDate);
-      const cliffAmount = toTokenAmount(parseFloat(cliffRelease as string), selectedToken.decimals);
+      const cliffAmount = cliffReleaseBn.toString();
       startUtc.setHours(now.getHours());
       startUtc.setMinutes(now.getMinutes());
       startUtc.setSeconds(now.getSeconds());
@@ -1244,7 +1248,7 @@ export const TreasuryStreamCreateModal = (props: {
       }
 
       // Create a transaction
-      const data = {
+      const data: CreateStreamParams = {
         payer: publicKey.toBase58(),                                                // initializer
         treasurer: treasurer.toBase58(),                                            // treasurer
         treasury: treasury.toBase58(),                                              // treasury
@@ -1260,25 +1264,7 @@ export const TreasuryStreamCreateModal = (props: {
         cliffVestPercent: 0,                                                        // cliffVestPercent
         feePayedByTreasurer: isFeePaidByTreasurer                                   // feePayedByTreasurer
       };
-
-      displayParams = data;
-
       consoleOut('data:', data);
-
-      /**
-       * payer: PublicKey,
-       * treasurer: PublicKey,
-       * treasury: PublicKey | undefined,
-       * beneficiaries: any[],
-       * associatedToken: PublicKey,
-       * allocationAssigned: number,
-       * rateAmount?: number | undefined,
-       * rateIntervalInSeconds?: number | undefined,
-       * startUtc?: Date | undefined,
-       * cliffVestAmount?: number | undefined,
-       * cliffVestPercent?: number | undefined,
-       * feePayedByTreasurer?: boolean | undefined
-       */
 
       // Log input data
       transactionLog.push({
@@ -1474,11 +1460,18 @@ export const TreasuryStreamCreateModal = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Txs to confirmation queue:', signatures);
-            const isMultisig = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
-            ? selectedMultisig.authority.toBase58()
-            : "";
-            const messageLoading = isMultisig ? `Creating stream proposal to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.` : `Creating stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.`
-            const messageCompleted = isMultisig ? `Proposal to create stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)}.` : `Stream to send ${getRateAmountDisplay(displayParams)} ${getIntervalFromSeconds(displayParams.rateIntervalInSeconds)} has been proposed.`
+            const isLockedTreasury = workingTreasuryType === TreasuryType.Lock ? true : false;
+            const rateDisplay = isLockedTreasury ? getReleaseRate() : getPaymentRateAmount();
+            const messageLoading = multisigAuth
+              ? `Proposal to create stream to send ${rateDisplay}.`
+              : `Create stream to send ${rateDisplay}.`
+            const messageCompleted = multisigAuth
+              ? `Proposal to create stream to send ${rateDisplay} sent for approval.`
+              : `Stream to send ${rateDisplay} created successfully.`
+
+            consoleOut('pending confirm msg:', messageLoading, 'blue');
+            consoleOut('confirmed msg:', messageCompleted, 'blue');
+
             enqueueTransactionConfirmation({
               signature: signatures[0],
               operationType: OperationType.TreasuryStreamCreate,
@@ -1489,10 +1482,9 @@ export const TreasuryStreamCreateModal = (props: {
               completedTitle: "Transaction confirmed",
               completedMessage: messageCompleted,
               extras: {
-                multisigAuthority: isMultisig
+                multisigAuthority: multisigAuth
               }
             });
-
             setIsBusy(false);
             resetTransactionStatus();
             handleOk();
@@ -1522,7 +1514,7 @@ export const TreasuryStreamCreateModal = (props: {
   const isSendAmountValid = (): boolean => {
     return publicKey &&
            selectedToken &&
-           tokenAmount && tokenAmount.toNumber() > 0 &&
+           tokenAmount && tokenAmount.gtn(0) &&
            ((isFeePaidByTreasurer && tokenAmount.lte(maxAllocatableAmount)) ||
             (!isFeePaidByTreasurer && tokenAmount.lte(unallocatedBalance)))
     ? true
@@ -1626,7 +1618,7 @@ export const TreasuryStreamCreateModal = (props: {
       <div className="token-icon">
         {(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
           <>
-            {token ? (
+            {token && token.logoURI ? (
               <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
               <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "20", display: "inline-flex" }} />
@@ -1678,7 +1670,7 @@ export const TreasuryStreamCreateModal = (props: {
         ) : (
           <>
           <div className="rate-amount">
-            {formatThousands(isV2Treasury ? v2.totalStreams : v1.streamsAmount)}
+            {formatThousands(isV2Treasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
           </div>
           <div className="interval">streams</div>
           </>
@@ -1913,33 +1905,6 @@ export const TreasuryStreamCreateModal = (props: {
                                   fullTokenInfo={selectedToken}
                                 />
                               )}
-
-                              {/* {(selectedToken && tokenList) && (
-                                <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
-                                  {tokenList.map((option) => {
-                                    if (option.address === NATIVE_SOL.address) {
-                                      return null;
-                                    }
-                                    return (
-                                      <Option key={option.address} value={option.address}>
-                                        <div className="option-container">
-                                          <TokenDisplay onClick={() => {}}
-                                            mintAddress={option.address}
-                                            name={option.name}
-                                            showCaretDown={workingAssociatedToken ? false : true}
-                                            fullTokenInfo={selectedToken}
-                                          />
-                                          <div className="balance">
-                                            {userBalances && userBalances[option.address] > 0 && (
-                                              <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </Option>
-                                    );
-                                  })}
-                                </Select>
-                              )} */}
                             </span>
                           </div>
                           <div className="right">
@@ -2031,13 +1996,13 @@ export const TreasuryStreamCreateModal = (props: {
                                   const decimals = selectedToken ? selectedToken.decimals : 6;
                                   if (isFeePaidByTreasurer) {
                                     const maxAmount = getMaxAmount(true);
-                                    consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-                                    consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                                    setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                    consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+                                    consoleOut('maxAmount:', maxAmount.toString(), 'blue');
+                                    setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
                                     setTokenAmount(new BN(maxAmount));
                                   } else {
                                     const maxAmount = getMaxAmount();
-                                    setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                    setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
                                     setTokenAmount(new BN(maxAmount));
                                   }
                                 }}>
@@ -2070,9 +2035,11 @@ export const TreasuryStreamCreateModal = (props: {
                         <span>
                           {unallocatedBalance && selectedToken
                             ? getAmountWithSymbol(
-                                makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
+                                toUiAmount(new BN(unallocatedBalance), selectedToken.decimals),
                                 selectedToken.address,
-                                true
+                                true,
+                                splTokenList,
+                                selectedToken.decimals
                               )
                             : "0"
                           }
@@ -2291,13 +2258,13 @@ export const TreasuryStreamCreateModal = (props: {
                                 const decimals = selectedToken ? selectedToken.decimals : 6;
                                 if (isFeePaidByTreasurer) {
                                   const maxAmount = getMaxAmount(true);
-                                  consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-                                  consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                                  setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+                                  consoleOut('maxAmount:', maxAmount.toString(), 'blue');
+                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 } else {
                                   const maxAmount = getMaxAmount();
-                                  setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 }
                               }}>
@@ -2327,14 +2294,14 @@ export const TreasuryStreamCreateModal = (props: {
                       <div className="left inner-label">
                         <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                         <span>
-                          {`${unallocatedBalance && selectedToken
-                              ? getAmountWithSymbol(
-                                  makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
-                                  selectedToken.address,
-                                  true
-                                )
+                          {
+                            unallocatedBalance && selectedToken
+                              ? stringNumberFormat(
+                                toUiAmount(unallocatedBalance, selectedToken.decimals),
+                                4,
+                              )
                               : "0"
-                          }`}
+                          }
                         </span>
                       </div>
                       <div className="right inner-label">
@@ -2383,14 +2350,25 @@ export const TreasuryStreamCreateModal = (props: {
                 </>
               ) : (
                 <>
-                  {(workingTreasuryType === TreasuryType.Lock) && (
-                    <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel2-name')}</div>
-                  )}
+                  <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel2-name')}</div>
 
                   {(recipientNote && recipientAddress && fromCoinAmount && selectedToken) && (
                     <div className="flex-fixed-right">
                       <div className="left">
-                        <div className="mb-3">{t('treasuries.treasury-streams.add-stream-locked.panel2-summary', { recipientNote: recipientNote, fromCoinAmount: fromCoinAmount, selectedTokenName: selectedToken && selectedToken.name, recipientShortenAddress: shortenAddress(recipientAddress)})}</div>
+                        <div className="mb-3">
+                          {
+                            t('treasuries.treasury-streams.add-stream-locked.panel2-summary', {
+                                recipientNote: recipientNote,
+                                fromCoinAmount: formatThousands(
+                                  parseFloat(fromCoinAmount),
+                                  friendlyDisplayDecimalPlaces(fromCoinAmount, selectedToken.decimals)
+                                ),
+                                selectedTokenName: selectedToken && selectedToken.name,
+                                recipientShortenAddress: shortenAddress(recipientAddress)
+                              }
+                            )
+                          }
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2544,36 +2522,61 @@ export const TreasuryStreamCreateModal = (props: {
 
                   <Row className="mb-2">
                     <Col span={24}>
-                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), 6)} ${selectedToken && selectedToken.symbol}` : "--"}
-                    </Col>
-                    <Col span={24}>
-                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}  </strong> {recipientAddress ? recipientAddress : "--"}
-                    </Col>
-                    <Col span={24}>
-                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}  </strong> {paymentStartDate}
-                    </Col>
-                    <Col span={24}>
-                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.symbol} (on commencement)`) : "--"}
-                    </Col>
-                    <Col span={24}>
-                      <strong>Amount to be streamed: </strong>
-                      <span>
-                      {
-                        (cliffRelease && lockPeriodAmount && selectedToken)
-                          ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.symbol} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`)
-                          : "--"
-                      }
-                      </span>
-                    </Col>
-                    <Col span={24}>
-                      <strong>Release rate: </strong>
-                      <span>
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}</strong>
+                      <span className="ml-1">
                         {
-                          (cliffRelease && lockPeriodAmount && selectedToken)
-                            ? (`${paymentRateAmount} ${selectedToken.symbol} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`)
+                          fromCoinAmount && selectedToken
+                            ? `${displayAmountWithSymbol(
+                              tokenAmount,
+                              selectedToken.address,
+                              selectedToken.decimals,
+                              splTokenList,
+                            )}`
                             : "--"
                         }
                       </span>
+                    </Col>
+                    <Col span={24} className="text-truncate">
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}</strong>
+                      <span className="ml-1">{recipientAddress ? recipientAddress : "--"}</span>
+                    </Col>
+                    <Col span={24}>
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}</strong>
+                      <span className="ml-1">{paymentStartDate}</span>
+                    </Col>
+                    <Col span={24}>
+                      <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}</strong>
+                      <span className="ml-1">
+                        {
+                          cliffRelease && selectedToken
+                            ? `${displayAmountWithSymbol(
+                              cliffReleaseBn,
+                              selectedToken.address,
+                              selectedToken.decimals,
+                              splTokenList,
+                            )} (on commencement)`
+                            : "--"
+                        }
+                      </span>
+                    </Col>
+                    <Col span={24}>
+                      <strong>Amount to be streamed:</strong>
+                      <span className="ml-1">
+                        {
+                          lockPeriodAmount && selectedToken
+                            ? `${displayAmountWithSymbol(
+                              amountToBeStreamedBn,
+                              selectedToken.address,
+                              selectedToken.decimals,
+                              splTokenList,
+                            )} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`
+                            : "--"
+                        }
+                      </span>
+                    </Col>
+                    <Col span={24}>
+                      <strong>Release rate:</strong>
+                      <span className="ml-1">{getReleaseRate()}</span>
                     </Col>
                   </Row>
 
@@ -2610,8 +2613,8 @@ export const TreasuryStreamCreateModal = (props: {
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
-                (!selectedToken || unallocatedBalance.toNumber() === 0) ||
-                (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
+                (!selectedToken || unallocatedBalance.isZero()) ||
+                tokenAmount.isZero() || tokenAmount.gt(unallocatedBalance) ||
                 !arePaymentSettingsValid()
               ) : (
                 !publicKey ||
@@ -2619,7 +2622,7 @@ export const TreasuryStreamCreateModal = (props: {
                 (!enableMultipleStreamsOption && !isMemoValid()) ||
                 !isStreamingAccountSelected() ||
                 ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
-                (!paymentRateAmount || unallocatedBalance.toNumber() === 0) ||
+                (!paymentRateAmount || unallocatedBalance.isZero()) ||
                 (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
                 !arePaymentSettingsValid()
               )}>
@@ -2634,25 +2637,24 @@ export const TreasuryStreamCreateModal = (props: {
               type="primary"
               shape="round"
               size="large"
-              onClick={(workingTreasuryType === TreasuryType.Lock) ? onContinueStepTwoButtonClick : onTransactionStart}
-              disabled={(workingTreasuryType === TreasuryType.Lock) ? (
+              onClick={workingTreasuryType === TreasuryType.Lock ? onContinueStepTwoButtonClick : onTransactionStart}
+              disabled={workingTreasuryType === TreasuryType.Lock ? (
                 !publicKey ||
                 (param === "multisig" && !proposalTitle) ||
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
-                (!selectedToken || unallocatedBalance.toNumber() === 0) ||
-                (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
+                (!selectedToken || unallocatedBalance.isZero()) ||
+                tokenAmount.isZero() || tokenAmount.gt(unallocatedBalance) ||
                 (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
-                !cliffRelease ||
-                (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals))
+                parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
               ) : (
                 !publicKey ||
                 (param === "multisig" && !proposalTitle) ||
                 (!enableMultipleStreamsOption && !isMemoValid()) ||
                 !isStreamingAccountSelected() ||
                 ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : !validMultiRecipientsList)) ||
-                (!paymentRateAmount || unallocatedBalance.toNumber() === 0) ||
+                (!paymentRateAmount || unallocatedBalance.isZero()) ||
                 (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
                 !arePaymentSettingsValid() ||
                 !areSendAmountSettingsValid() ||
@@ -2665,7 +2667,6 @@ export const TreasuryStreamCreateModal = (props: {
                 )
               )}
               {(workingTreasuryType === TreasuryType.Open) && (isBusy
-                // ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
                 ? t('streams.create-new-stream-cta-busy')
                 : getTransactionStartButtonLabel()
               )}
@@ -2688,11 +2689,10 @@ export const TreasuryStreamCreateModal = (props: {
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
-                (!selectedToken || unallocatedBalance.toNumber() === 0) ||
+                (!selectedToken || unallocatedBalance.isZero()) ||
                 (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) ||
                 (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
-                !cliffRelease ||
-                (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
+                parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)) ||
                 !arePaymentSettingsValid() ||
                 !areSendAmountSettingsValid() ||
                 !isVerifiedRecipient ||

@@ -1,4 +1,4 @@
-import { Button, Col, DatePicker, Divider, Dropdown, Menu, Modal, Row, Spin, Switch, TimePicker, Tooltip } from "antd";
+import { Button, Col, Divider, Dropdown, Menu, Modal, Row, Spin, Switch, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
@@ -8,14 +8,15 @@ import { StepSelector } from "../StepSelector";
 import "./style.scss";
 import { IconCaretDown, IconInfoCircle, IconKey, IconLock } from "../../Icons";
 import { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
-import { DATEPICKER_FORMAT, MAX_MULTISIG_PARTICIPANTS } from "../../constants";
+import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { addDays, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
-import { NATIVE_SOL_MINT } from "../../utils/ids";
-import { getCoolOffPeriodOptionLabel, getTransactionOperationDescription, isValidAddress, PaymentRateTypeOption } from "../../utils/ui";
-import { isError } from "../../utils/transactions";
+import { addDays, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../middleware/utils";
+import { NATIVE_SOL_MINT } from "../../middleware/ids";
+import { getCoolOffPeriodOptionLabel, getTransactionOperationDescription, isValidAddress } from "../../middleware/ui";
+import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
+import { isError } from "../../middleware/transactions";
 import { CreateNewSafeParams } from "../../models/multisig";
 import moment from 'moment';
 import { isMobile } from "react-device-detect";
@@ -580,9 +581,9 @@ export const MultisigCreateSafeModal = (props: {
                           </Col>
                           <Col span={16} className="text-left pl-1">
                             {createdByName ? (
-                              <span>{`${createdByName} (${shortenAddress(publicKey.toBase58(), 4)})`}</span>
+                              <span>{`${createdByName} (${shortenAddress(publicKey, 4)})`}</span>
                             ) : (
-                              <span>{shortenAddress(publicKey.toBase58(), 4)}</span>
+                              <span>{shortenAddress(publicKey, 4)}</span>
                             )}
                           </Col>
                         </>

@@ -1,10 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { Button } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../middleware/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';

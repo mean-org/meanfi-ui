@@ -1,12 +1,12 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { setProgramIds } from "../utils/ids";
+import { setProgramIds } from "../middleware/ids";
 import { cache, getMultipleAccounts, MintParser } from "./accounts";
 import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
-import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { MEAN_TOKEN_LIST } from "../constants/tokens";
 import { environment } from "../environments/environment";
 import { Cluster, Connection, ConnectionConfig, PublicKey } from "@solana/web3.js";
 import { DEFAULT_RPCS, RpcConfig } from "../services/connections-hq";
-import { useLocalStorageState } from "./../utils/utils";
+import { useLocalStorageState } from "../middleware/utils";
 import { TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
 
 const DEFAULT = DEFAULT_RPCS[0].httpProvider;
@@ -45,7 +45,7 @@ export const getSolanaExplorerClusterParam = (): string => {
     case 'local':
     case 'development':
     case 'staging':
-      return '?cluster=devnet';
+      return '?cluster=devnet-solana'; // ?cluster=devnet normally
     default:
       return '';
   }

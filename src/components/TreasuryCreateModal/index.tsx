@@ -7,17 +7,16 @@ import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { AppStateContext } from '../../contexts/appstate';
 import { TreasuryCreateOptions, TreasuryTypeOption } from '../../models/treasuries';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress, toUsCurrency } from '../../utils/ui';
-import { isError } from '../../utils/transactions';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress } from '../../middleware/ui';
+import { isError } from '../../middleware/transactions';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
-import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TokenDisplay } from '../TokenDisplay';
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { TextInput } from '../TextInput';
-import { useAccountsContext } from '../../contexts/accounts';
 import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { TokenListItem } from '../TokenListItem';
@@ -26,6 +25,7 @@ import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
 import { environment } from '../../environments/environment';
+import { fetchAccountTokens } from '../../middleware/accounts';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -55,14 +55,10 @@ export const TreasuryCreateModal = (props: {
     tokenList,
     userTokens,
     splTokenList,
-    loadingPrices,
-    accountAddress,
     transactionStatus,
     getTokenPriceBySymbol,
     setTransactionStatus,
-    refreshPrices,
   } = useContext(AppStateContext);
-  const accounts = useAccountsContext();
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
   const [proposalTitle, setProposalTitle] = useState('');

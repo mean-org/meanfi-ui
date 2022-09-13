@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { CountdownTimer } from '../../components/CountdownTimer';
 import { IconDiscord, IconSolana } from '../../Icons';
 import { RELOAD_TIMER } from '../../services/connections-hq';
-import { useLocalStorageState } from '../../utils/utils';
+import { useLocalStorageState } from '../../middleware/utils';
 
 export const ServiceUnavailableView = () => {
   const { t } = useTranslation("common");

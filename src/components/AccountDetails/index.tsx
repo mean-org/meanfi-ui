@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useCallback, useState } from "react";
 import { useWallet } from "../../contexts/wallet";
-import { shortenAddress } from "../../utils/utils";
+import { shortenAddress } from "../../middleware/utils";
 import {
   IconCopy,
   IconExchange,
@@ -12,11 +12,11 @@ import {
 } from "../../Icons";
 import "./style.scss";
 import { Button, Dropdown, Menu, Modal } from "antd";
-import { copyText } from "../../utils/ui";
+import { copyText } from "../../middleware/ui";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from '../../contexts/appstate';
 import { segmentAnalytics } from '../../App';
-import { AppUsageEvent } from '../../utils/segment-service';
+import { AppUsageEvent } from '../../middleware/segment-service';
 import { openNotification } from '../Notifications';
 
 export const AccountDetails = () => {
@@ -134,7 +134,7 @@ export const AccountDetails = () => {
       <Menu.Divider />
       <Menu.Item key="2" onClick={onCopyAddress}>
         <IconUser className="mean-svg-icons" />
-        <span className="menu-item-text ml-1">{shortenAddress(wallet.publicKey.toBase58())}</span>
+        <span className="menu-item-text ml-1">{shortenAddress(wallet.publicKey)}</span>
       </Menu.Item>
       <Menu.Item key="3" onClick={switchWallet}>
         <IconExchange className="mean-svg-icons" />

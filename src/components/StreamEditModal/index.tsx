@@ -5,17 +5,18 @@ import { Modal, Button, Dropdown, Menu, Row, Col } from 'antd';
 import { PaymentRateType, TransactionStatus } from '../../models/enums';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { TokenListItem } from "../TokenListItem";
-import { consoleOut, getPaymentRateOptionLabel, isValidAddress, PaymentRateTypeOption } from "../../utils/ui";
+import { consoleOut, getPaymentRateOptionLabel, isValidAddress } from "../../middleware/ui";
+import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
 import { useWallet } from "../../contexts/wallet";
 import { TokenDisplay } from "../TokenDisplay";
-import { getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { getAmountWithSymbol, isValidNumber } from "../../middleware/utils";
 import { TextInput } from "../TextInput";
 import { useNavigate } from "react-router-dom";
 import { IconCaretDown } from "../../Icons";
-import { isError } from "../../utils/transactions";
+import { isError } from "../../middleware/transactions";
 import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from "@mean-dao/msp";
-import { NATIVE_SOL } from "../../utils/tokens";
+import { NATIVE_SOL } from "../../constants/tokens";
 import { CUSTOM_TOKEN_NAME } from "../../constants";
 
 export const StreamEditModal = (props: {
@@ -50,15 +51,7 @@ export const StreamEditModal = (props: {
 
   useEffect(() => {
     if (props.streamDetail) {
-      // setRecipientNote();
-
-      // setFromCoinAmount(toUiAmount(new BN(props.streamDetail.rateAmount), 6).toString());
-
-      // let frequency = getIntervalFromSeconds(props.streamDetail.rateIntervalInSeconds, false, t);
-      // const camalize = frequency.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
-      // const rateType = camalize.charAt(0).toUpperCase() + camalize.slice(1);
-      
-      // setPaymentRateFrequency(PaymentRateType[rateType]);
+      //
     }
   }, [
     props.streamDetail,
@@ -66,15 +59,7 @@ export const StreamEditModal = (props: {
 
   const refreshPage = () => {
     if (props.streamDetail) {
-      // setRecipientNote();
-
-      // setFromCoinAmount(toUiAmount(new BN(props.streamDetail.rateAmount), 6).toString());
-
-      // let frequency = getIntervalFromSeconds(props.streamDetail.rateIntervalInSeconds, false, t);
-      // const camalize = frequency.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
-      // const rateType = camalize.charAt(0).toUpperCase() + camalize.slice(1);
-      
-      // setPaymentRateFrequency(PaymentRateType[rateType]);
+      //
     }
     props.handleClose();
     window.location.reload();

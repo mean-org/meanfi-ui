@@ -143,6 +143,7 @@ export enum MetaInfoCtaAction {
     CloseAccount = 12,
     Share = 13,
     Close = 14,
+    CopyAssetMintAddress = 15,
     VestingContractCreateStreamOnce = 20,
     VestingContractCreateStreamBulk = 21,
     VestingContractAddFunds = 21,

@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconExternalLink } from '../../Icons';
-import { copyText } from '../../utils/ui';
-import { shortenAddress } from '../../utils/utils';
+import { copyText } from '../../middleware/ui';
+import { shortenAddress } from '../../middleware/utils';
 import { openNotification } from '../Notifications';
 
 export const AddressDisplay = (props: {

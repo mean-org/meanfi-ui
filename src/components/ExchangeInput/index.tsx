@@ -2,10 +2,10 @@ import React, { useContext } from 'react';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress } from '../../middleware/utils';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../TokenDisplay';
-import { toUsCurrency } from '../../utils/ui';
+import { toUsCurrency } from '../../middleware/ui';
 
 export const ExchangeInput = (props: {
   token: TokenInfo | undefined;

@@ -3,7 +3,7 @@ import Jazzicon from "jazzicon";
 import bs58 from "bs58";
 import "./style.scss";
 import { PublicKey } from "@solana/web3.js";
-import { isValidAddress } from "../../utils/ui";
+import { isValidAddress } from "../../middleware/ui";
 
 export const Identicon = (props: {
   address?: string | PublicKey;

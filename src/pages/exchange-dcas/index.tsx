@@ -16,12 +16,12 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
   isLocal
-} from '../../utils/ui';
+} from '../../middleware/ui';
 import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
-import { MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { Identicon } from '../../components/Identicon';
 import "./style.scss";
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, useLocalStorageState } from '../../utils/utils';
+import { formatThousands, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, useLocalStorageState } from '../../middleware/utils';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
@@ -35,7 +35,7 @@ import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/we
 import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { useNavigate } from 'react-router-dom';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { DdcaCloseModal } from '../../components/DdcaCloseModal';
@@ -59,7 +59,6 @@ export const ExchangeDcasView = () => {
     setLoadingRecurringBuys,
   } = useContext(AppStateContext);
   const {
-    lastSentTxStatus,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
@@ -131,13 +130,8 @@ export const ExchangeDcasView = () => {
 
   // Keep track of current balance
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -997,7 +991,7 @@ export const ExchangeDcasView = () => {
   }
 
   const getRecurringBuySubTitle = (item: DdcaAccount) => {
-    return `Last purchased ${getShortDate(item.startUtc as string)}`;
+    return `Last purchased ${getShortDate(item.startUtc)}`;
   }
 
   const getRecurrencePeriod = (item: DdcaAccount | undefined): string => {
@@ -1234,7 +1228,7 @@ export const ExchangeDcasView = () => {
                     <IconClock className="mean-svg-icons" />
                   </span>
                   <span className="info-data">
-                    {getReadableDate(ddcaDetails.startUtc as string)}
+                    {getReadableDate(ddcaDetails.startUtc)}
                   </span>
                 </div>
               </div>
@@ -1379,7 +1373,7 @@ export const ExchangeDcasView = () => {
                             <span className="align-middle">{getOfflineActivityTitle(ddcaDetails)}</span>
                           </div>
                           <div className="std-table-cell fixed-width-150">
-                            <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                            <span className="align-middle">{getShortDate(ddcaDetails.startUtc, true)}</span>
                           </div>
                         </span>
                       )}
@@ -1393,7 +1387,7 @@ export const ExchangeDcasView = () => {
                           </span>
                         </div>
                         <div className="std-table-cell fixed-width-150">
-                          <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                          <span className="align-middle">{getShortDate(ddcaDetails.startUtc, true)}</span>
                         </div>
                       </span>
                     </>

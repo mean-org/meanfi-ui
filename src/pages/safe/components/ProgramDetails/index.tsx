@@ -14,13 +14,13 @@ import { TxConfirmationContext } from "../../../../contexts/transaction-status";
 import { useWallet } from "../../../../contexts/wallet";
 import { IconArrowBack } from "../../../../Icons";
 import { OperationType, TransactionStatus } from "../../../../models/enums";
-import { NATIVE_SOL_MINT } from "../../../../utils/ids";
-import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "../../../../utils/ui";
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../../../utils/utils";
+import { NATIVE_SOL_MINT } from "../../../../middleware/ids";
+import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "../../../../middleware/ui";
+import { formatThousands, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../../../middleware/utils";
 import { customLogger } from "../../../..";
 import { TabsMean } from '../../../../components/TabsMean';
 import { AnchorProvider, Program } from '@project-serum/anchor';
-import { NATIVE_SOL } from '../../../../utils/tokens';
+import { NATIVE_SOL } from '../../../../constants/tokens';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 import moment from 'moment';
 import ReactJson from 'react-json-view'
@@ -71,7 +71,7 @@ export const ProgramDetailsView = (props: {
   const [programTransactions, setProgramTransactions] = useState<any>();
   const noIdlInfo = "The program IDL is not initialized. To load the IDL info please run `anchor idl init` with the required parameters from your program workspace.";
 
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   // When back button is clicked, goes to Safe Info
   const hideProgramDetailsHandler = () => {
@@ -103,8 +103,9 @@ export const ProgramDetailsView = (props: {
       multisigAddressPK
     );
   }, [
-    connection,
     publicKey,
+    connection,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -745,33 +746,30 @@ export const ProgramDetailsView = (props: {
     }
 
   }, [
-    clearTxConfirmationContext,
-    resetTransactionStatus,
-    connection,
-    multisigClient,
-    nativeBalance,
-    onProgramAuthSet,
+    wallet,
     publicKey,
+    connection,
+    nativeBalance,
+    multisigClient,
     selectedMultisig,
-    setTransactionStatus,
-    startFetchTxSignatureInfo,
+    multisigAddressPK,
     transactionCancelled,
-    transactionFees.blockchainFee,
     transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
     transactionStatus.currentOperation,
-    wallet
+    clearTxConfirmationContext,
+    startFetchTxSignatureInfo,
+    resetTransactionStatus,
+    setTransactionStatus,
+    onProgramAuthSet,
   ]);
 
   // Keep account balance updated
   useEffect(() => {
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

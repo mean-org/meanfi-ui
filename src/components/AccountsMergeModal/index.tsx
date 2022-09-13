@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, friendlyDisplayDecimalPlaces, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, friendlyDisplayDecimalPlaces, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../middleware/ui';
 import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
-import { AccountTokenParsedInfo } from '../../models/token';
-import { formatThousands, getTxIxResume, shortenAddress } from '../../utils/utils';
-import { createTokenMergeTx } from '../../utils/accounts';
+import { AccountTokenParsedInfo } from "../../models/accounts";
+import { formatThousands, getTxIxResume, shortenAddress } from '../../middleware/utils';
+import { createTokenMergeTx } from '../../middleware/accounts';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
 import { UserTokenAccount } from '../../models/transactions';
@@ -328,7 +328,7 @@ export const AccountsMergeModal = (props: {
                             />
                           )}
                         </span>
-                        <div className="public-address">{shortenAddress(item.pubkey.toBase58(), 10)}</div>
+                        <div className="public-address">{shortenAddress(item.pubkey, 10)}</div>
                       </div>
                       <div className="right">
                         {

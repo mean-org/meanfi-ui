@@ -3,10 +3,10 @@ import { SwapSettings } from "../../components/SwapSettings";
 import { ExchangeInput } from "../../components/ExchangeInput";
 import { TextInput } from "../../components/TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { formatAmount, formatThousands, isValidNumber } from "../../utils/utils";
+import { formatAmount, formatThousands, getAmountFromLamports, isValidNumber } from "../../middleware/utils";
 import { Identicon } from "../../components/Identicon";
 import { InfoCircleOutlined, WarningFilled } from "@ant-design/icons";
-import { consoleOut, getTxPercentFeeAmount } from "../../utils/ui";
+import { consoleOut, getTxPercentFeeAmount } from "../../middleware/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -50,7 +50,7 @@ import {
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
 import { ExchangeOutput } from "../../components/ExchangeOutput";
 import { SABER } from "@mean-dao/hybrid-liquidity-ag/lib/types";
-import { MEAN_TOKEN_LIST } from "../../constants/token-list";
+import { MEAN_TOKEN_LIST } from "../../constants/tokens";
 
 let inputDebounceTimeout: any;
 
@@ -769,7 +769,7 @@ export const RecurringExchange = (props: {
       let balance = 0;
 
       if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-        balance = !userAccount ? 0 : userAccount.lamports / LAMPORTS_PER_SOL;
+        balance = !userAccount ? 0 : getAmountFromLamports(userAccount.lamports);
       } else {
         balance = userBalances[fromMint] ? userBalances[fromMint] : 0;
       }
@@ -807,7 +807,7 @@ export const RecurringExchange = (props: {
       let balance = 0;
 
       if (toMint === NATIVE_SOL_MINT.toBase58()) {
-        balance = userAccount.lamports / LAMPORTS_PER_SOL;
+        balance = getAmountFromLamports(userAccount.lamports);
       } else {
         balance = userBalances[toMint] ? userBalances[toMint] : 0;
       }

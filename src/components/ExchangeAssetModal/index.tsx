@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal } from "antd";
 import { JupiterExchange } from '../../views';
-import { getTokenBySymbol, useLocalStorageState } from '../../utils/utils';
+import { getTokenBySymbol, useLocalStorageState } from '../../middleware/utils';
 import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { useNavigate } from 'react-router-dom';
 import { Connection } from '@solana/web3.js';
-import { consoleOut } from '../../utils/ui';
+import { consoleOut } from '../../middleware/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
 
 export const ExchangeAssetModal = (props: {

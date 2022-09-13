@@ -4,15 +4,16 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { isUnauthenticatedRoute, useLocalStorageState } from "./../utils/utils";
+import { isUnauthenticatedRoute, useLocalStorageState } from "../middleware/utils";
 import { useTranslation } from "react-i18next";
 import { isDesktop, isSafari } from "react-device-detect";
 import { DownOutlined, UpOutlined } from "@ant-design/icons";
 import { segmentAnalytics } from "../App";
-import { AppUsageEvent } from "../utils/segment-service";
-import { consoleOut, isProd } from "../utils/ui";
+import { AppUsageEvent } from "../middleware/segment-service";
+import { consoleOut, isProd } from "../middleware/ui";
 import {
   BitKeepWalletAdapter,
   BitKeepWalletName,
@@ -312,6 +313,32 @@ export function WalletProvider({ children = null as any }) {
   }, []);
   const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
 
+  // Live reference to the wallet adapter
+  const walletRef = useRef(wallet);
+  useEffect(() => {
+    walletRef.current = wallet;
+  }, [wallet]);
+
+  const connectOnDemand = useCallback(() => {
+    if (!wallet) { return; }
+
+    wallet.connect()
+    .catch(error => {
+      console.error('wallet.connect() error', error);
+      if (error.toString().indexOf('WalletNotReadyError') !== -1) {
+        console.warn('Enforcing wallet selection...');
+        openNotification({
+          type: "info",
+          title: 'Wallet adapter not configured',
+          description: `Cannot connect to ${wallet.name}. Wallet is not configured or enabled in your browser.`
+        });
+        setConnected(false);
+        setWalletName(null);
+        setWallet(undefined);
+      }
+    });
+  }, [setWalletName, wallet]);
+
   const resetWalletProvider = () => {
     setWalletName(null);
   }
@@ -375,7 +402,9 @@ export function WalletProvider({ children = null as any }) {
   // Setup listeners
   useEffect(() => {
     if (wallet) {
-      wallet.on("connect", () => {
+      wallet.on("connect", (pk) => {
+        const newAddress = pk.toBase58();
+        consoleOut('New wallet address:', newAddress, 'crimson');
         if (wallet.publicKey) {
           setConnected(true);
           close();
@@ -383,13 +412,15 @@ export function WalletProvider({ children = null as any }) {
       });
 
       wallet.on("disconnect", () => {
+        consoleOut('Wallet event disconnect!', '', 'crimson');
         setConnected(false);
         if (!isUnauthenticatedRoute(location.pathname)) {
           navigate('/');
         }
       });
 
-      wallet.on("error", () => {
+      wallet.on("error", (errorEvent) => {
+        consoleOut('Wallet event error:', errorEvent, 'crimson');
         if (wallet.connecting) {
           setConnected(false);
           wallet.removeAllListeners();
@@ -397,6 +428,10 @@ export function WalletProvider({ children = null as any }) {
           select();
         }
       });
+
+      wallet.on("readyStateChange", (state) => {
+        consoleOut('Wallet event readyStateChange:', state, 'crimson');
+      })
     }
 
     return () => {
@@ -414,21 +449,7 @@ export function WalletProvider({ children = null as any }) {
     // When a wallet is created, selected and the autoConnect is ON, lets connect
     if (wallet && autoConnect) {
       consoleOut('Auto-connecting...', '', 'blue');
-      wallet.connect()
-      .catch(error => {
-        console.error('wallet.connect() error', error);
-        if (error.toString().indexOf('WalletNotReadyError') !== -1) {
-          console.warn('Enforcing wallet selection...');
-          openNotification({
-            type: "info",
-            title: 'Wallet adapter not configured',
-            description: `Cannot connect to ${wallet.name}. Wallet is not configured or enabled in your browser.`
-          });
-          setConnected(false);
-          setWalletName(null);
-          setWallet(undefined);
-        }
-      });
+      connectOnDemand();
     }
 
     return () => {};

@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
-import { isError } from '../../utils/transactions';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
+import { isError } from '../../middleware/transactions';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../middleware/utils';
 import { MintTokensInfo, MultisigMint } from '../../models/multisig';
 import { Identicon } from '../Identicon';
 
@@ -120,7 +120,7 @@ export const MultisigMintTokenModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="title text-truncate">{shortenAddress(item.address, 8)}</div>
           <div className="subtitle text-truncate">decimals: {item.decimals}</div>
         </div>
         <div className="rate-cell">

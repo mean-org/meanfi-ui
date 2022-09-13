@@ -3,12 +3,12 @@ import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { TokenBalance } from "@solana/web3.js";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { formatThousands, getAmountFromLamports, shortenAddress } from "../../utils/utils";
+import { formatThousands, getAmountFromLamports, shortenAddress } from "../../middleware/utils";
 import { UserTokenAccount } from "../../models/transactions";
-import { NATIVE_SOL } from "../../utils/tokens";
+import { NATIVE_SOL } from "../../constants/tokens";
 import { Tooltip } from "antd";
-import { MappedTransaction } from "../../utils/history";
-import { getRelativeDate } from "../../utils/ui";
+import { MappedTransaction } from "../../middleware/history";
+import { getRelativeDate } from "../../middleware/ui";
 
 export const TransactionItemView = (props: {
   accountAddress: string;

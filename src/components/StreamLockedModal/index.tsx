@@ -7,7 +7,7 @@ import { Stream, Treasury, MSP, TreasuryType } from '@mean-dao/msp';
 import { StreamTreasuryType } from '../../models/treasuries';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { consoleOut } from '../../utils/ui';
+import { consoleOut } from '../../middleware/ui';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 
@@ -65,7 +65,7 @@ export const StreamLockedModal = (props: {
       const v2 = localStreamDetail as Stream;
       consoleOut('fetching treasury details...', '', 'blue');
       getTreasuryTypeByTreasuryId(
-        localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury as string,
+        localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury.toBase58(),
         localStreamDetail.version
       ).then(value => {
         consoleOut('streamTreasuryType:', value, 'crimson');

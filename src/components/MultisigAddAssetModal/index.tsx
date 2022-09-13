@@ -8,16 +8,16 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { consoleOut, isProd, isValidAddress } from '../../utils/ui';
+import { consoleOut, isProd, isValidAddress } from '../../middleware/ui';
 import { LoadingOutlined } from '@ant-design/icons';
-import { AccountTokenParsedInfo } from '../../models/token';
+import { AccountTokenParsedInfo } from "../../models/accounts";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { TokenListItem } from '../TokenListItem';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TransactionFees } from '@mean-dao/msp';
-import { shortenAddress } from '../../utils/utils';
+import { getAmountFromLamports, shortenAddress } from '../../middleware/utils';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
 export const MultisigAddAssetModal = (props: {
@@ -120,13 +120,8 @@ export const MultisigAddAssetModal = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

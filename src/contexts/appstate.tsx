@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { findATokenAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
+import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from "../middleware/utils";
 import {
   DAO_CORE_TEAM_WHITELIST,
   DDCA_FREQUENCY_OPTIONS,
@@ -21,17 +21,17 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices } from "../utils/api";
+import { getPrices } from "../middleware/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
-import { BANNED_TOKENS, MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
-import { NATIVE_SOL } from "../utils/tokens";
-import { MappedTransaction } from "../utils/history";
-import { consoleOut, isProd, msToTime } from "../utils/ui";
+import { BANNED_TOKENS, MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/tokens";
+import { NATIVE_SOL } from "../constants/tokens";
+import { MappedTransaction } from "../middleware/history";
+import { consoleOut, isProd, msToTime } from "../middleware/ui";
 import { appConfig } from "..";
 import { DdcaAccount } from "@mean-dao/ddca";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
@@ -39,22 +39,20 @@ import { TreasuryTypeOption } from "../models/treasuries";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
-import { AccountDetails } from "../models";
 import { openNotification } from "../components/Notifications";
-import { PerformanceCounter } from "../utils/perf-counter";
-import { TokenPrice } from "../models/token";
-import { ProgramAccounts } from "../utils/accounts";
+import { PerformanceCounter } from "../middleware/perf-counter";
+import { AccountDetails } from "../models/accounts";
+import { TokenPrice } from "../models/accounts";
+import { ProgramAccounts } from "../models/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
 import { MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from "@mean-dao/mean-multisig-sdk";
+import { BN } from "bn.js";
 
-const pricesOldPerformanceCounter = new PerformanceCounter();
-const pricesNewPerformanceCounter = new PerformanceCounter();
-const refreshStreamsPerformanceCounter = new PerformanceCounter();
+const pricesPerformanceCounter = new PerformanceCounter();
 const listStreamsV1PerformanceCounter = new PerformanceCounter();
 const listStreamsV2PerformanceCounter = new PerformanceCounter();
-const streamDetailPerformanceCounter = new PerformanceCounter();
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -498,7 +496,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
   const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   if (!streamProgramAddress) {
     setStreamProgramAddress(streamProgramAddressFromConfig);
@@ -541,8 +539,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     );
 
   }, [
-    connection,
     publicKey,
+    connection,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -809,7 +808,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             if (dock) {
               openNotification({
                 title: t('notifications.error-title'),
-                description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+                description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
                 type: "error"
               });
             }
@@ -817,7 +816,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         } else {
           openNotification({
             title: t('notifications.error-title'),
-            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
             type: "error"
           });
         }
@@ -825,7 +824,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         console.error('customStream', error);
         openNotification({
           title: t('notifications.error-title'),
-          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
           type: "error"
         });
       }
@@ -896,7 +895,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           })
           .catch(err => {
             console.error(err);
-            setStreamActivity(undefined);
+            setStreamActivity([]);
             setHasMoreStreamActivity(false);
           })
           .finally(() => setLoadingStreamActivity(false));
@@ -1013,10 +1012,10 @@ const AppStateProvider: React.FC = ({ children }) => {
   const getCoinPrices = useCallback(async () => {
 
     try {
-      pricesNewPerformanceCounter.start();
+      pricesPerformanceCounter.start();
       const newPrices = await getPrices();
-      pricesNewPerformanceCounter.stop();
-      consoleOut(`Fetched price list in ${pricesNewPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
+      pricesPerformanceCounter.stop();
+      consoleOut(`Fetched price list in ${pricesPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
       if (newPrices && newPrices.length > 0) {
         const pricesMap: any = {};
         newPrices.forEach(tp => pricesMap[tp.symbol] = tp.price);
@@ -1053,7 +1052,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setCoinPrices({ "NO-TOKEN-VALUE": 1 });
       }
     } catch (error) {
-      pricesOldPerformanceCounter.stop();
       setCoinPrices({ "NO-TOKEN-VALUE": 1 });
       updateEffectiveRate(0);
       consoleOut('New prices API error:', error, 'red');
@@ -1189,95 +1187,50 @@ const AppStateProvider: React.FC = ({ children }) => {
       let rawStreamsv2: Stream[] = [];
 
       // Reset all counters
-      refreshStreamsPerformanceCounter.reset();
       listStreamsV1PerformanceCounter.reset();
       listStreamsV2PerformanceCounter.reset();
-      streamDetailPerformanceCounter.reset();
-
-      refreshStreamsPerformanceCounter.start();
       listStreamsV2PerformanceCounter.start();
 
-      msp.listStreams({treasurer: userPk, beneficiary: userPk})
+      msp.listStreams({ treasurer: userPk, beneficiary: userPk })
         .then(streamsv2 => {
+          consoleOut('streamsv2 from AppSate:', streamsv2, 'blue');
           listStreamsV2PerformanceCounter.stop();
           streamAccumulator.push(...streamsv2);
           rawStreamsv2 = streamsv2;
-          rawStreamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1);
+          rawStreamsv2.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1);
           listStreamsV1PerformanceCounter.start();
-          ms.listStreams({treasurer: userPk, beneficiary: userPk})
+          ms.listStreams({ treasurer: userPk, beneficiary: userPk })
           .then(async streamsv1 => {
             listStreamsV1PerformanceCounter.stop();
             streamAccumulator.push(...streamsv1);
             rawStreamsv1 = streamsv1;
-            rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
-            streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
-            // Sort debugging block
-            // if (!isProd()) {
-            //   const debugTable: any[] = [];
-            //   streamAccumulator.forEach(item => debugTable.push({
-            //     createdBlockTime: item.createdBlockTime,
-            //     name: item.version < 2 ? item.streamName : item.name.trim(),
-            //   }));
-            //   console.table(debugTable);
-            // }
+            rawStreamsv1.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1)
+            streamAccumulator.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1)
+            // Start debugging block
+            if (!isProd()) {
+              const debugTable: any[] = [];
+              streamAccumulator.forEach(item => debugTable.push({
+                createdBlockTime: new BN(item.createdBlockTime).toNumber(),
+                name: item.version < 2 ? item.streamName : item.name.trim(),
+              }));
+              console.table(debugTable);
+            }
             // End of debugging block
             setStreamList(streamAccumulator);
             setStreamListv2(rawStreamsv2);
             setStreamListv1(rawStreamsv1);
-            consoleOut('Streams:', streamAccumulator, 'blue');
-            setDeletedStreams([]);
-            if (streamAccumulator.length) {
-              let item: Stream | StreamInfo | undefined;
-              if (reset) {
-                item = streamAccumulator[0];
-              } else {
-                if (highLightableStreamId) {
-                  const highLightableItem = streamAccumulator.find(i => i.id === highLightableStreamId);
-                  item = highLightableItem || streamAccumulator[0];
-                } else if (selectedStream) {
-                  const itemFromServer = streamAccumulator.find(i => i.id === selectedStream.id);
-                  item = itemFromServer || streamAccumulator[0];
-                } else {
-                  item = streamAccumulator[0];
-                }
+            consoleOut('Streams from AppSate:', streamAccumulator, 'blue');
+            if (streamDetail) {
+              const streamId = streamDetail.version < 2 ? (streamDetail as StreamInfo).id as string : (streamDetail as Stream).id.toBase58();
+              const item = streamAccumulator.find(s => {
+                const id = s.version < 2 ? (s as StreamInfo).id as string : (s as Stream).id.toBase58();
+                return id === streamId;
+              });
+              if (item) {
+                setStreamDetail(item);
               }
-              if (!item) {
-                item = Object.assign({}, streamAccumulator[0]);
-              }
-              consoleOut('selectedStream:', item, 'blue');
-
-              setStreamActivity([]);
-              setHasMoreStreamActivity(true);
-
-              const mspInstance: any = item && item.version < 2 ? ms : msp;
-              streamDetailPerformanceCounter.start();
-              mspInstance.getStream(new PublicKey(item?.id as string))
-              .then((detail: Stream | StreamInfo) => {
-                streamDetailPerformanceCounter.stop();
-                refreshStreamsPerformanceCounter.stop();
-                // if (!isProd()) {
-                //   consoleOut('listStreams performance counter:', '', 'crimson');
-                //   const results = [{
-                //     v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //     v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //     streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //     total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //   }];
-                //   console.table(results);
-                // }
-                if (detail) {
-                  updateStreamDetail(detail);
-                  setActiveStream(detail);
-                } else if (item) {
-                  updateStreamDetail(item);
-                  setActiveStream(item);
-                }
-              })
-            } else {
-              updateSelectedStream(undefined);
-              updateStreamDetail(undefined);
-              setActiveStream(undefined);
             }
+            setDeletedStreams([]);
           })
           .catch(err => {
             console.error(err);
@@ -1295,11 +1248,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     ms,
     msp,
     publicKey,
+    streamDetail,
     accountAddress,
     loadingStreams,
-    selectedStream,
     customStreamDocked,
-    highLightableStreamId,
   ]);
 
 
@@ -1344,7 +1296,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         const accountInfo = await connection.getAccountInfo(address.toPublicKey());
         if (!accountInfo) return 0;
         if (address === publicKey?.toBase58()) {
-          return accountInfo.lamports / LAMPORTS_PER_SOL;
+          return getAmountFromLamports(accountInfo.lamports);
         }
         const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
         return tokenAmount.uiAmount || 0;
@@ -1514,7 +1466,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     try {
       const allInfo = await multisigClient.getMultisigs(publicKey);
-      allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+      allInfo.sort((a: any, b: any) => new Date(b.createdOnUtc).getTime() - new Date(a.createdOnUtc).getTime());
       setMultisigAccounts(allInfo);
       consoleOut('multisigAccounts:', allInfo, 'darkorange');
       if (allInfo.length > 0) {

@@ -59,6 +59,7 @@ export const MEANFI_DOCS_URL = 'https://docs.meanfi.com/';
 export const MEANFI_SUPPORT_URL = 'https://help.meanfi.com/';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 export const FALLBACK_COIN_IMAGE = '/assets/coin-error.svg';
+export const MSP_FEE_TREASURY = '3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw';
 
 export const UNAUTHENTICATED_ROUTES = [
     '/stats',
@@ -225,6 +226,17 @@ export const BETA_TESTING_PROGRAM_WHITELIST = [
     'BZH9bWQWtDpoCZr4TJZ5wHy7UporeXpgEsZCEY52tNG6', // K7#4627
     'Ak8ir4C3XCCqcUVSt6fPdph1Y8YEiDnkPzTPFqtKimyz', // Drsamxy350#6255
 ];
+
+export const BIGNUMBER_FORMAT = {
+    prefix: '',
+    decimalSeparator: '.',
+    groupSeparator: ',',
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    fractionGroupSeparator: ' ',
+    fractionGroupSize: 0,
+    suffix: ''
+}
 
 // Date.UTC(year, month, day, hour, minute, second, millisecond)
 // REAL DATES

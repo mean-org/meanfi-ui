@@ -13,8 +13,8 @@ import {
 } from "recharts";
 
 import "./style.scss";
-import { MEAN_TOKEN } from "../../constants/token-list";
-import { getCoingeckoMarketChart } from "../../utils/api";
+import { MEAN_TOKEN } from "../../constants/tokens";
+import { getCoingeckoMarketChart } from "../../middleware/api";
 import { PriceGraphModel } from "../../models/price-graph";
 
 const dateFormat = "MMM Do, YYYY";

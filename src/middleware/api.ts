@@ -3,7 +3,7 @@ import { meanFiHeaders } from "../constants";
 import { Allocation } from "../models/common-types";
 import { getDefaultRpc, RpcConfig } from "../services/connections-hq";
 import { WhitelistClaimType } from "../models/enums";
-import { TokenPrice } from "../models/token";
+import { TokenPrice } from "../models/accounts";
 import { PriceGraphModel } from "../models/price-graph";
 import { MeanFiStatsModel } from "../models/meanfi-stats";
 
@@ -172,7 +172,7 @@ export const sendRecordClaimTxRequest = async (address: string, claimTxId: strin
 
 export const getMeanStats = async (): Promise<MeanFiStatsModel | null> => {
   try {
-    const path = `https://raw.githubusercontent.com/mean-dao/meanfi-stats/main/meanfi-stats.json`;
+    const path = `https://raw.githubusercontent.com/mean-dao/MEAN-stats/main/mean-stats.json`;
     const res = await fetch(path, { method: "GET" });
     // 400+ status codes are failed
     if (res.status >= 400) {
@@ -186,9 +186,9 @@ export const getMeanStats = async (): Promise<MeanFiStatsModel | null> => {
 }
 
 export const getCoingeckoMarketChart = async (
-  coinGeckoId: string = 'meanfi',
-  decimals: number = 6,
-  days: number = 30,
+  coinGeckoId = 'meanfi',
+  decimals = 6,
+  days = 30,
   interval: 'daily' | 'hourly' = 'daily'
 ): Promise<[PriceGraphModel[], PriceGraphModel[]] | []> => {
   try {
