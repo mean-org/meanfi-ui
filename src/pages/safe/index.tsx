@@ -15,7 +15,7 @@ import {
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
+import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +37,7 @@ import {
   delay
 } from '../../middleware/ui';
 
-import { MEAN_MULTISIG_ACCOUNT_LAMPORTS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
+import { MEAN_MULTISIG_ACCOUNT_LAMPORTS } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
@@ -125,11 +125,7 @@ export const SafeView = () => {
     setPrograms,
   } = useContext(AppStateContext);
   const {
-    fetchTxInfoStatus,
     confirmationHistory,
-    lastSentTxSignature,
-    lastSentTxOperationType,
-    clearTxConfirmationContext,
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
 
@@ -712,17 +708,14 @@ export const SafeView = () => {
     onMultisigCreated,
   ]);
 
-  const isCreatingMultisig = useCallback((): boolean => {
-
-    return (
-      fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.CreateMultisig
-    );
-
-  }, [
-    fetchTxInfoStatus,
-    lastSentTxOperationType,
-  ]);
+  // Determine if the CreateMultisig operation is in progress by searching
+  // into the confirmation history
+  const isCreatingMultisig = useCallback(() => {
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.operationType === OperationType.CreateMultisig && h.txInfoFetchStatus === "fetching");
+    }
+    return false;
+  }, [confirmationHistory]);
 
   // Modal visibility flags
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
@@ -2142,7 +2135,7 @@ export const SafeView = () => {
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.RejectTransaction,
-              finality: "confirmed",
+              finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
               loadingMessage: `Reject proposal: ${data.transaction.details.title}`,
@@ -2831,7 +2824,7 @@ export const SafeView = () => {
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.CancelTransaction,
-              finality: "confirmed",
+              finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
               loadingMessage: `Cancel proposal: ${data.transaction.details.title}`,
@@ -2964,6 +2957,7 @@ export const SafeView = () => {
         reloadMultisigs();
         break;
       case OperationType.ApproveTransaction:
+        reloadMultisigs();
         reloadSelectedProposal();
         break;
       case OperationType.RejectTransaction:
@@ -2990,18 +2984,10 @@ export const SafeView = () => {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
-
-    const reloadMultisigs = () => {
-      const refreshCta = document.getElementById("multisig-refresh-cta");
-      if (refreshCta) {
-        refreshCta.click();
-      }
-    };
-
-    consoleOut("onTxTimedout event executed:", item, 'crimson');
-    reloadMultisigs();
     // If we have the item, record failure and remove it from the list
     if (item) {
+      consoleOut("onTxTimedout event executed:", item, 'crimson');
+      reloadMultisigs();
       recordTxConfirmation(item.signature, item.operationType, false);
     }
   }, [
@@ -3379,57 +3365,6 @@ export const SafeView = () => {
   }, [
     width,
     isSmallUpScreen,
-  ]);
-
-  // Handle what to do when pending Tx confirmation reaches finality or on error
-  useEffect(() => {
-
-    if (!publicKey || !multisigClient || !selectedMultisig || fetchTxInfoStatus === "fetching") { return; }
-
-    if (lastSentTxOperationType) {
-      if (fetchTxInfoStatus === "fetched") {
-        if (lastSentTxOperationType === OperationType.CreateMultisig) {
-          setSelectedMultisig(undefined);   // Deselects the current multisig if creating a new one
-        }
-        setNeedRefreshTxs(true);
-        setNeedReloadPrograms(true);
-        clearTxConfirmationContext();
-        setNeedReloadMultisigAccounts(true);
-      } else if (fetchTxInfoStatus === "error") {
-        clearTxConfirmationContext();
-        openNotification({
-          type: "info",
-          duration: 5,
-          description: (
-            <>
-              <span className="mr-1">
-                {t('notifications.tx-not-confirmed')}
-              </span>
-              <div>
-                <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
-                <a className="secondary-link"
-                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}${getSolanaExplorerClusterParam()}`}
-                    target="_blank"
-                    rel="noopener noreferrer">
-                    {shortenAddress(lastSentTxSignature, 8)}
-                </a>
-              </div>
-            </>
-          )
-        });
-      }
-    }
-  }, [
-    publicKey,
-    multisigClient,
-    selectedMultisig,
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
-    setNeedReloadMultisigAccounts,
-    clearTxConfirmationContext,
-    setSelectedMultisig,
-    t,
   ]);
 
   // Keep account balance updated
@@ -3816,7 +3751,11 @@ export const SafeView = () => {
     );
   }, [connected, isCreatingMultisig, loadingMultisigTxPendingCount, multisigAccounts, multisigUsdValues, navigate, selectedMultisig, setMultisigSolBalance, setTotalSafeBalance, t]);
 
-  const onRefresLevel1Tabs = () => {
+  const onRefresProposals = () => {
+    setNeedRefreshTxs(true);
+  }
+
+  const onRefresMultisigDetailTabs = () => {
     setNeedRefreshTxs(true);
     setNeedReloadPrograms(true);
   }
@@ -3825,10 +3764,6 @@ export const SafeView = () => {
     const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}/proposals/${selectedProposal.id.toBase58()}?v=instruction`;
     navigate(url);
   }
-
-  // const goToAssetDetailsHandler = (selectedAsset: any) => {
-  //   setAssetSelected(selectedAsset);
-  // }
 
   const goToProgramDetailsHandler = (selectedProgram: any) => {
     const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}/programs/${selectedProgram.pubkey.toBase58()}?v=transactions`;
@@ -3952,7 +3887,10 @@ export const SafeView = () => {
               </div>
 
               <div className="inner-container">
-                <span id="refresh-selected-proposal-cta" onClick={() => refreshSelectedProposal()}></span>
+                <span id="refresh-selected-proposal-cta" onClick={() => {
+                  onRefresProposals();
+                  refreshSelectedProposal();
+                }}></span>
                 <div className="float-top-right mr-1 mt-1">
                   <span className="icon-button-container secondary-button">
                     <Tooltip placement="bottom" title="Refresh safes">
@@ -4001,7 +3939,7 @@ export const SafeView = () => {
                               onEditMultisigClick={onEditMultisigClick}
                               onNavigateAway={onNavigateAway}
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
-                              onRefreshRequested={onRefresLevel1Tabs}
+                              onRefreshRequested={onRefresMultisigDetailTabs}
                               proposalSelected={selectedProposal}
                               publicKey={publicKey}
                               selectedMultisig={selectedMultisig}
