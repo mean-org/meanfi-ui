@@ -6,10 +6,9 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TransactionStatus } from '../../../../models/enums';
 import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
-import { isError } from '../../../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming';
-import { formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber, shortenAddress, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
+import { formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
 import { useWallet } from '../../../../contexts/wallet';
 import { FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
@@ -157,11 +156,6 @@ export const VestingContractWithdrawFundsModal = (props: {
       setTokenAmount(toTokenAmountBn(newValue, selectedToken?.decimals || 6));
     }
   };
-
-  const refreshPage = () => {
-    handleClose();
-    window.location.reload();
-  }
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);

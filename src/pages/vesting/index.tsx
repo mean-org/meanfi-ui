@@ -60,6 +60,7 @@ import { PendingProposalsComponent } from './components/PendingProposalsComponen
 import { NATIVE_SOL } from '../../constants/tokens';
 import { VestingContractEditModal } from './components/VestingContractEditModal';
 import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from '../../middleware/accounts';
+import { TreasuryWithdrawParams } from '../../models/treasuries';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -2478,7 +2479,7 @@ export const VestingView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const treasuryWithdraw = async (data: any) => {
+    const treasuryWithdraw = async (data: TreasuryWithdrawParams) => {
 
       if (!msp) { return null; }
 
@@ -2566,11 +2567,11 @@ export const VestingView = () => {
       const price = token ? getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol) : 0;
 
       // Create a transaction
-      const payload = {
+      const payload: TreasuryWithdrawParams = {
         payer: publicKey.toBase58(),
         destination: destinationPk.toBase58(),
         treasury: treasuryPk.toBase58(),
-        amount: amount.toNumber()
+        amount: amount.toString()
       };
       consoleOut('payload:', payload);
 

@@ -106,7 +106,7 @@ export interface VestingContractEditOptions {
 
 export interface VestingContractWithdrawOptions {
     amount: string;
-    tokenAmount: any;
+    tokenAmount: BN;
     destinationAccount: string;
     associatedToken: TokenInfo | undefined;
     multisig: string;

@@ -25,6 +25,13 @@ export interface CloseStreamTransactionParams {
     closeTreasury: boolean;
 }
 
+export interface TreasuryWithdrawParams {
+    payer: string;
+    destination: string;
+    treasury: string;
+    amount: number | string;
+}
+
 export interface UserTreasuriesSummary {
     totalAmount: number;
     openAmount: number;
