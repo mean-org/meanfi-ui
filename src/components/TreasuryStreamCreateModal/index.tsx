@@ -516,15 +516,18 @@ export const TreasuryStreamCreateModal = (props: {
   const getPaymentRateAmount = useCallback(() => {
 
     let outStr = selectedToken
-      ? stringNumberFormat(
+      ? getAmountWithSymbol(
           paymentRateAmount,
+          selectedToken.address,
+          false,
+          splTokenList,
           friendlyDisplayDecimalPlaces(parseFloat(paymentRateAmount)) || selectedToken.decimals
         )
       : '-'
     outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
 
     return outStr;
-  }, [paymentRateAmount, paymentRateFrequency, selectedToken, t]);
+  }, [paymentRateAmount, paymentRateFrequency, selectedToken, splTokenList, t]);
 
   /////////////////////
   // Data management //

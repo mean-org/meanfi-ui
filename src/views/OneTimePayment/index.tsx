@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
-import { cutNumber, formatAmount, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount, toUiAmount } from "../../middleware/utils";
+import { cutNumber, formatAmount, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
@@ -268,6 +268,16 @@ export const OneTimePayment = (props: {
     }
 
   }, [selectedList]);
+
+  const getInputAmountBn = useCallback(() => {
+    if (!selectedToken || !fromCoinAmount) {
+      return new BN(0);
+    }
+
+    return parseFloat(fromCoinAmount) > 0
+      ? toTokenAmountBn(fromCoinAmount, selectedToken.decimals)
+      : new BN(0);
+  }, [fromCoinAmount, selectedToken]);
 
 
   /////////////////////
@@ -726,15 +736,18 @@ export const OneTimePayment = (props: {
   }
 
   const isSendAmountValid = (): boolean => {
-    return  connected &&
-            selectedToken &&
-            tokenBalanceBn.gtn(0) &&
-            nativeBalance >= getMinSolBlanceRequired() &&
-            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-            ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
-             (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gtn(parseFloat(fromCoinAmount))))
-      ? true
-      : false;
+    if (!selectedToken) { return false; }
+
+    const inputAmount = getInputAmountBn();
+
+    return connected &&
+           inputAmount.gtn(0) &&
+           tokenBalanceBn.gtn(0) &&
+           nativeBalance >= getMinSolBlanceRequired() &&
+           ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+            (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
+    ? true
+    : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -743,6 +756,7 @@ export const OneTimePayment = (props: {
 
   // Ui helpers
   const getTransactionStartButtonLabel = (): string => {
+    const inputAmount = getInputAmountBn();
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
@@ -751,10 +765,10 @@ export const OneTimePayment = (props: {
           ? 'Invalid recipient address'
           : !selectedToken || tokenBalanceBn.isZero()
             ? t('transactions.validation.no-balance')
-            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()
               ? t('transactions.validation.no-amount')
               : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
-                 (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.ltn(parseFloat(fromCoinAmount))))
+                (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.lt(inputAmount)))
                 ? t('transactions.validation.amount-high')
                 : !paymentStartDate
                   ? t('transactions.validation.no-valid-date')

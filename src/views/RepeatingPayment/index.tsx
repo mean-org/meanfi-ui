@@ -10,6 +10,7 @@ import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from ".
 import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   cutNumber,
+  displayAmountWithSymbol,
   formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
@@ -18,6 +19,7 @@ import {
   isValidNumber,
   shortenAddress,
   toTokenAmount,
+  toTokenAmountBn,
   toUiAmount,
 } from "../../middleware/utils";
 import { Identicon } from "../../components/Identicon";
@@ -27,7 +29,6 @@ import { EventType, OperationType, PaymentRateType, TransactionStatus } from "..
 import {
   consoleOut,
   disabledDate,
-  friendlyDisplayDecimalPlaces,
   getIntervalFromSeconds,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
@@ -419,18 +420,27 @@ export const RepeatingPayment = (props: {
   const getPaymentRateAmount = useCallback(() => {
 
     let outStr = selectedToken
-      ? getAmountWithSymbol(
-          paymentRateAmount,
+      ? displayAmountWithSymbol(
+          toTokenAmountBn(paymentRateAmount, selectedToken.decimals),
           selectedToken.address,
-          false,
-          splTokenList,
-          friendlyDisplayDecimalPlaces(parseFloat(paymentRateAmount)) || selectedToken.decimals
+          selectedToken.decimals,
+          splTokenList
         )
       : '-'
     outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
 
     return outStr;
   }, [paymentRateAmount, paymentRateFrequency, selectedToken, splTokenList, t]);
+
+  const getInputAmountBn = useCallback(() => {
+    if (!selectedToken || !fromCoinAmount) {
+      return new BN(0);
+    }
+
+    return parseFloat(fromCoinAmount) > 0
+      ? toTokenAmountBn(fromCoinAmount, selectedToken.decimals)
+      : new BN(0);
+  }, [fromCoinAmount, selectedToken]);
 
 
   /////////////////////
@@ -810,13 +820,16 @@ export const RepeatingPayment = (props: {
   }
 
   const isSendAmountValid = (): boolean => {
+    if (!selectedToken) { return false; }
+
+    const inputAmount = getInputAmountBn();
+
     return connected &&
-           selectedToken &&
+           inputAmount.gtn(0) &&
            tokenBalanceBn.gtn(0) &&
            nativeBalance >= getMinSolBlanceRequired() &&
-           fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
            ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
-            (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gtn(parseFloat(fromCoinAmount))))
+            (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
     ? true
     : false;
   }
@@ -858,6 +871,7 @@ export const RepeatingPayment = (props: {
   }
 
   const getTransactionStartButtonLabel = (): string => {
+    const inputAmount = getInputAmountBn();
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
@@ -866,10 +880,10 @@ export const RepeatingPayment = (props: {
           ? 'Invalid recipient address'
           : !selectedToken || tokenBalanceBn.isZero()
             ? t('transactions.validation.no-balance')
-            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()
               ? t('transactions.validation.no-amount')
               : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
-                 (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.ltn(parseFloat(fromCoinAmount))))
+                 (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.lt(inputAmount)))
                 ? t('transactions.validation.amount-high')
                 : !paymentStartDate
                   ? t('transactions.validation.no-valid-date')

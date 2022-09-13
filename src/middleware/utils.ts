@@ -455,7 +455,8 @@ export const toTokenAmount = (amount: number | string, decimals: number, asStrin
   const multiplier = new BigNumber(10 ** decimals);
   const value = new BigNumber(amount);
   if (asString) {
-    return value.multipliedBy(multiplier).toString();
+    const result = value.multipliedBy(multiplier).integerValue();
+    return result.toNumber().toLocaleString('fullwide', {useGrouping:false});
   }
   return value.multipliedBy(multiplier);
 }
@@ -468,7 +469,8 @@ export const toTokenAmountBn = (amount: number | string, decimals: number) => {
   const multiplier = new BigNumber(10 ** decimals);
   const value = new BigNumber(amount);
   const result = value.multipliedBy(multiplier).integerValue();
-  return new BN(result.toString());
+  const toLocale = result.toNumber().toLocaleString('fullwide', {useGrouping:false});
+  return new BN(toLocale);
 }
 
 export function cutNumber(amount: number, decimals: number) {
