@@ -403,8 +403,8 @@ export function WalletProvider({ children = null as any }) {
   useEffect(() => {
     if (wallet) {
       wallet.on("connect", (pk) => {
-        const newAddress = pk.toBase58();
-        consoleOut('New wallet address:', newAddress, 'crimson');
+        // const newAddress = pk.toBase58();
+        // consoleOut('New wallet address:', newAddress, 'crimson');
         if (wallet.publicKey) {
           setConnected(true);
           close();
@@ -412,7 +412,6 @@ export function WalletProvider({ children = null as any }) {
       });
 
       wallet.on("disconnect", () => {
-        consoleOut('Wallet event disconnect!', '', 'crimson');
         setConnected(false);
         if (!isUnauthenticatedRoute(location.pathname)) {
           navigate('/');
@@ -420,7 +419,6 @@ export function WalletProvider({ children = null as any }) {
       });
 
       wallet.on("error", (errorEvent) => {
-        consoleOut('Wallet event error:', errorEvent, 'crimson');
         if (wallet.connecting) {
           setConnected(false);
           wallet.removeAllListeners();
@@ -428,10 +426,6 @@ export function WalletProvider({ children = null as any }) {
           select();
         }
       });
-
-      wallet.on("readyStateChange", (state) => {
-        consoleOut('Wallet event readyStateChange:', state, 'crimson');
-      })
     }
 
     return () => {

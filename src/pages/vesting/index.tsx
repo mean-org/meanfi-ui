@@ -3676,6 +3676,8 @@ export const VestingView = () => {
       setPendingMultisigTxCount(item.pendingTxsAmount);
       consoleOut('selectedMultisig:', item, 'blue');
       consoleOut('pendingMultisigTxCount:', item.pendingTxsAmount, 'blue');
+    } else {
+      setSelectedMultisig(undefined);
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps

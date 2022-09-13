@@ -3490,6 +3490,8 @@ export const AccountsNewView = () => {
       setPendingMultisigTxCount(item.pendingTxsAmount);
       consoleOut('selectedMultisig:', item, 'blue');
       consoleOut('pendingMultisigTxCount:', item.pendingTxsAmount, 'blue');
+    } else {
+      setSelectedMultisig(undefined);
     }
 
   }, [accountAddress, isMultisigContext, multisigAccounts, setPendingMultisigTxCount, setSelectedMultisig]);

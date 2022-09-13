@@ -3045,6 +3045,8 @@ export const SafeView = () => {
           setNeedRefreshTxs(true);
           setSelectedMultisig(item);
         }
+      } else {
+        setSelectedMultisig(undefined);
       }
     })
 
@@ -3480,6 +3482,8 @@ export const SafeView = () => {
             setNeedRefreshTxs(true);
             setNeedReloadPrograms(true);
           }
+        } else {
+          setSelectedMultisig(undefined);
         }
       } else {
         if (multisigAccounts.length > 0) {
@@ -3488,6 +3492,8 @@ export const SafeView = () => {
           const url = `${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`;
           consoleOut('Redirecting to:', url, 'blue');
           navigate(url);
+        } else {
+          setSelectedMultisig(undefined);
         }
       }
 
