@@ -68,7 +68,6 @@ import {
   MultisigParticipant,
   MultisigTransaction,
   MultisigTransactionFees,
-  MultisigTransactionSummary,
   MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk';
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken, getTrancheDepositIx, getTrancheWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
@@ -151,23 +150,18 @@ export const SafeView = () => {
   const [needRefreshTxs, setNeedRefreshTxs] = useState(false);
   const [loadingProposals, setLoadingProposals] = useState(false);
   const [isProposalDetails, setIsProposalDetails] = useState(false);
-  const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
-  const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
   // Tx control
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-
   // Programs
   const [programSelected, setProgramSelected] = useState<any>();
   const [needReloadPrograms, setNeedReloadPrograms] = useState(false);
   const [loadingPrograms, setLoadingPrograms] = useState(false);
   const [isProgramDetails, setIsProgramDetails] = useState(false);
-
   // Other
-  const [minRequiredBalance, setMinRequiredBalance] = useState(0);
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
-  const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
+  // const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [operationPayload, setOperationPayload] = useState<any>(undefined);
@@ -189,6 +183,7 @@ export const SafeView = () => {
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
   const [queryParamV, setQueryParamV] = useState<string | null>(null);
   const [lastError, setLastError] = useState<TransactionStatusInfo | undefined>(undefined);
+
   const [isMultisigCreateSafeModalVisible, setIsMultisigCreateSafeModalVisible] = useState(false);
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
 
@@ -204,6 +199,14 @@ export const SafeView = () => {
   }), [
     connectionConfig.endpoint
   ]);
+
+  useEffect(() => {
+    let optionInQuery: string | null = null;
+    if (searchParams) {
+      optionInQuery = searchParams.get('v');
+    }
+    setQueryParamV(optionInQuery);
+  }, [searchParams]);
 
   useEffect(() => {
 
@@ -390,6 +393,7 @@ export const SafeView = () => {
     return false;
   }, [confirmationHistory]);
 
+  /*
   const onOpenMultisigModalClick = useCallback(() => {
     if (!multisigClient) { return; }
 
@@ -402,6 +406,7 @@ export const SafeView = () => {
     resetTransactionStatus();
     setIsMultisigCreateSafeModalVisible(true);
   },[multisigClient, resetTransactionStatus]);
+  */
 
   const onCreateMultisigClick = useCallback(() => {
 
@@ -438,6 +443,7 @@ export const SafeView = () => {
 
   },[resetTransactionStatus])
 
+  /*
   const onCloseCreateMultisigModal = useCallback(() => {
     setIsBusy(false);
     setIsEditMultisigModalVisible(false);
@@ -445,6 +451,7 @@ export const SafeView = () => {
   },[
     resetTransactionStatus
   ]);
+  */
 
   const onMultisigModified = useCallback(() => {
     setIsBusy(false);
@@ -540,8 +547,6 @@ export const SafeView = () => {
         consoleOut('multisigFee:', totalMultisigFee, 'blue');
         const minRequired = totalMultisigFee + transactionFees.rentExempt + transactionFees.networkFee;
         consoleOut('Min required balance:', minRequired, 'blue');
-
-        setMinRequiredBalance(minRequired);
 
         if (nativeBalance < minRequired) {
           setTransactionStatus({
@@ -856,8 +861,6 @@ export const SafeView = () => {
         consoleOut('multisigFee:', transactionFees.multisigFee, 'blue');
         const minRequired = transactionFees.multisigFee + transactionFees.rentExempt + transactionFees.networkFee;
         consoleOut('Min required balance:', minRequired, 'blue');
-
-        setMinRequiredBalance(minRequired);
 
         if (nativeBalance < minRequired) {
           setTransactionStatus({
@@ -1232,8 +1235,6 @@ export const SafeView = () => {
         consoleOut('multisigFee:', transactionFees.multisigFee, 'blue');
         const minRequired = transactionFees.multisigFee + transactionFees.rentExempt + transactionFees.networkFee;
         consoleOut('Min required balance:', minRequired, 'blue');
-
-        setMinRequiredBalance(minRequired);
 
         if (nativeBalance < minRequired) {
           setTransactionStatus({
@@ -1731,7 +1732,6 @@ export const SafeView = () => {
       consoleOut('multisigFee:', transactionFees.multisigFee, 'blue');
       const minRequired = transactionFees.multisigFee + transactionFees.rentExempt + transactionFees.networkFee;
       consoleOut('Min required balance:', minRequired, 'blue');
-      setMinRequiredBalance(minRequired);
 
       if (nativeBalance < minRequired) {
         const txStatusMsg = `Not enough balance ${
@@ -1948,8 +1948,8 @@ export const SafeView = () => {
     enqueueTransactionConfirmation,
     createCredixWithdrawTrancheIx,
     createCredixDepositTrancheIx,
-    createCredixWithdrawIx,
     resetTransactionStatus,
+    createCredixWithdrawIx,
     createCredixDepositIx,
     setTransactionStatus,
     createProposalIx,
@@ -2021,7 +2021,6 @@ export const SafeView = () => {
         const minRequired = 0.000005;
         consoleOut('nativeBalance:', nativeBalance, 'blue');
         consoleOut('Min required balance:', minRequired, 'blue');
-        setMinRequiredBalance(minRequired);
 
         if (nativeBalance < minRequired) {
           setTransactionStatus({
@@ -2226,6 +2225,7 @@ export const SafeView = () => {
                 transactionId: data.transaction.id
               }
             });
+            setIsBusy(false);
             resetTransactionStatus();
           } else { setIsBusy(false); }
         } else { 
@@ -2313,7 +2313,6 @@ export const SafeView = () => {
         const minRequired = 0.000005;
         consoleOut('nativeBalance:', nativeBalance, 'blue');
         consoleOut('Min required balance:', minRequired, 'blue');
-        setMinRequiredBalance(minRequired);
 
         if (nativeBalance < minRequired) {
           setTransactionStatus({
@@ -2518,6 +2517,7 @@ export const SafeView = () => {
                 transactionId: data.transaction.id
               }
             });
+            setIsBusy(false);
             resetTransactionStatus();
           } else { setIsBusy(false); }
         } else { 
@@ -2621,7 +2621,6 @@ export const SafeView = () => {
         const minRequired = 0.000005;
         consoleOut('nativeBalance:', nativeBalance, 'blue');
         consoleOut('Min required balance:', minRequired, 'blue');
-        setMinRequiredBalance(minRequired);
 
         if (nativeBalance < minRequired) {
           setTransactionStatus({
@@ -2998,7 +2997,6 @@ export const SafeView = () => {
         const minRequired = 0.000005;
         consoleOut('nativeBalance:', nativeBalance, 'blue');
         consoleOut('Min required balance:', minRequired, 'blue');
-        setMinRequiredBalance(minRequired);
 
         if (nativeBalance < minRequired) {
           setTransactionStatus({
@@ -3229,6 +3227,7 @@ export const SafeView = () => {
     setTransactionStatus,
   ]);
 
+  /*
   const parseSerumMultisigAccount = (info: any) => {
 
     return PublicKey
@@ -3265,6 +3264,7 @@ export const SafeView = () => {
         return undefined;
       });
   };
+  */
 
   const refreshSelectedProposal = useCallback(() => {
     consoleOut('running refreshSelectedProposal...', '', 'brown');
@@ -3328,16 +3328,13 @@ export const SafeView = () => {
         reloadMultisigs();
         break;
       case OperationType.ApproveTransaction:
-        setIsBusy(false);
         reloadSelectedProposal();
         break;
       case OperationType.RejectTransaction:
-        setIsBusy(false);
         reloadMultisigs();
         reloadSelectedProposal();
         break;
       case OperationType.ExecuteTransaction:
-        setIsBusy(false);
         reloadMultisigs();
         reloadSelectedProposal();
         break;
@@ -3410,50 +3407,26 @@ export const SafeView = () => {
     }
   }, [isProposalDetails]);
 
-  // SERUM ACCOUNTS
-  useEffect(() => {
+  const getMultisigList = useCallback((reset = false) => {
 
-    if (!connection || !publicKey || !multisigSerumClient) { return; }
-
-    const timeout = setTimeout(() => {
-      multisigSerumClient
-      .account
-      .multisig
-      .all()
-      .then(accs => {
-        const filteredSerumAccs = accs.filter((a: any) => {
-          if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) {
-            return true;
-          }
-          return false;
-        });
-
-        const parsedSerumAccs: MultisigInfo[] = [];
-
-        for (const acc of filteredSerumAccs) {
-          parseSerumMultisigAccount(acc)
-            .then((parsed: any) => {
-              if (parsed) {
-                parsedSerumAccs.push(parsed);
-              }
-            })
-            .catch((err: any) => console.error(err));
-        }
-
-        setSerumAccounts(parsedSerumAccs);
-      })
-      .catch((err: any) => console.error(err));
-    });
-
-    return () => {
-      clearTimeout(timeout);
+    if (!publicKey) {
+      return;
     }
 
-  }, [
-    connection,
-    multisigSerumClient, 
-    publicKey
-  ]);
+    refreshMultisigs(reset)
+    .then(item => {
+      if (item) {
+        if (reset) {
+          navigate(`${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`);
+        } else {
+          proposalLoadStatusRegister.clear();
+          setNeedRefreshTxs(true);
+          setSelectedMultisig(item);
+        }
+      }
+    })
+
+  }, [navigate, publicKey, refreshMultisigs, setSelectedMultisig]);
 
   const getMultisigVaults = useCallback(async (
     connection: Connection,
@@ -3493,204 +3466,6 @@ export const SafeView = () => {
       : 0;
 
   }, [coinPrices]);
-
-  useEffect(() => {
-    let optionInQuery: string | null = null;
-    if (searchParams) {
-      optionInQuery = searchParams.get('v');
-    }
-    setQueryParamV(optionInQuery);
-  }, [searchParams]);
-
-  // Calculates the USD value of the Multisig accounts assets
-  useEffect(() => {
-
-    if (!connection || !publicKey || !multisigAccounts.length) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      const allUsdValueMap = new Map();
-  
-      multisigAccounts.forEach(async(account) => {
-        
-        let usdValue = 0;
-        const solPrice = getPricePerToken(NATIVE_SOL);
-        const solBalance = getAmountFromLamports(account.balance);
-        const nativeSolUsdValue = solBalance * solPrice;  
-        const assets = await getMultisigVaults(connection, account.id);
-
-        for (const asset of assets) {
-          const token = getTokenByMintAddress(asset.mint.toBase58());
-          
-          if (token) {
-            const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-            if (!tokenPrice) {
-              continue;
-            }
-            BigNumber.config({
-              CRYPTO: true,
-              DECIMAL_PLACES: 16
-            });
-            const tokenBalance = toUiAmount(asset.amount, token.decimals);
-            const assetValue = new BigNumber(tokenBalance).multipliedBy(tokenPrice);
-            usdValue += assetValue.toNumber();
-          }
-        }
-
-        usdValue += nativeSolUsdValue;  
-        allUsdValueMap.set(account.authority.toBase58(), usdValue);  
-      });
-      
-      setMultisigUsdValues(allUsdValueMap);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    connection,
-    multisigAccounts,
-    getMultisigVaults, 
-    getPricePerToken, 
-    getTokenByMintAddress, 
-    getTokenPriceByAddress, 
-    getTokenPriceBySymbol
-  ])
-
-  const getMultisigList = useCallback((reset = false) => {
-
-    if (!publicKey) {
-      return;
-    }
-
-    refreshMultisigs(reset)
-    .then(item => {
-      if (item) {
-        if (reset) {
-          navigate(`${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`);
-        } else {
-          proposalLoadStatusRegister.clear();
-          setNeedRefreshTxs(true);
-          setSelectedMultisig(item);
-        }
-      }
-    })
-
-  }, [navigate, publicKey, refreshMultisigs, setSelectedMultisig]);
-
-  // Load/Unload multisig on wallet connect/disconnect
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        setNeedReloadMultisigAccounts(true);
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'green');
-        setMultisigAccounts([]);
-        setHighLightableMultisigId(undefined);
-        sethHighlightedMultisigTx(undefined);
-        setMultisigTransactionSummary(undefined);
-        setSelectedMultisig(undefined);
-        setNeedReloadMultisigAccounts(false);
-        consoleOut('User is disconnecting...', '', 'green');
-        setCanSubscribe(true);
-      }
-    }
-  }, [
-    connected,
-    publicKey,
-    previousWalletConnectState,
-    setNeedReloadMultisigAccounts,
-    setHighLightableMultisigId,
-    setMultisigAccounts,
-    setSelectedMultisig,
-    setCanSubscribe,
-    onTxConfirmed,
-    onTxTimedout,
-  ]);
-
-  // Detect when entering small screen mode
-  useEffect(() => {
-    if (isSmallUpScreen && width < 576) {
-      setIsSmallUpScreen(false);
-    }
-  }, [
-    width,
-    isSmallUpScreen,
-  ]);
-
-  // Handle what to do when pending Tx confirmation reaches finality or on error
-  useEffect(() => {
-
-    if (!publicKey || !multisigClient || !selectedMultisig || fetchTxInfoStatus === "fetching") { return; }
-
-    if (lastSentTxOperationType) {
-      if (fetchTxInfoStatus === "fetched") {
-        if (lastSentTxOperationType === OperationType.CreateMultisig) {
-          setSelectedMultisig(undefined);   // Deselects the current multisig if creating a new one
-        }
-        setNeedRefreshTxs(true);
-        setNeedReloadPrograms(true);
-        clearTxConfirmationContext();
-        setNeedReloadMultisigAccounts(true);
-        sethHighlightedMultisigTx(undefined);
-        setMultisigTransactionSummary(undefined);
-      } else if (fetchTxInfoStatus === "error") {
-        clearTxConfirmationContext();
-        openNotification({
-          type: "info",
-          duration: 5,
-          description: (
-            <>
-              <span className="mr-1">
-                {t('notifications.tx-not-confirmed')}
-              </span>
-              <div>
-                <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
-                <a className="secondary-link"
-                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}${getSolanaExplorerClusterParam()}`}
-                    target="_blank"
-                    rel="noopener noreferrer">
-                    {shortenAddress(lastSentTxSignature, 8)}
-                </a>
-              </div>
-            </>
-          )
-        });
-      }
-    }
-  }, [
-    publicKey,
-    multisigClient,
-    selectedMultisig,
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
-    setNeedReloadMultisigAccounts,
-    clearTxConfirmationContext,
-    setSelectedMultisig,
-    t,
-  ]);
-
-  // Keep account balance updated
-  useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshTokenBalance
-  ]);
 
   const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
 
@@ -3807,6 +3582,234 @@ export const SafeView = () => {
     connection, 
     multisigClient, 
     publicKey, 
+  ]);
+
+
+  /////////////////////
+  // Data management //
+  /////////////////////
+
+  // Automatically get a list of multisigs for the connected wallet
+  useEffect(() => {
+
+    if (!publicKey || !selectedMultisig) {
+      return;
+    }
+
+    setNeedRefreshTxs(true);
+
+  }, [publicKey, selectedMultisig]);
+
+  // SERUM ACCOUNTS
+  /*
+  useEffect(() => {
+
+    if (!connection || !publicKey || !multisigSerumClient) { return; }
+
+    const timeout = setTimeout(() => {
+      multisigSerumClient
+      .account
+      .multisig
+      .all()
+      .then(accs => {
+        const filteredSerumAccs = accs.filter((a: any) => {
+          if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) {
+            return true;
+          }
+          return false;
+        });
+
+        const parsedSerumAccs: MultisigInfo[] = [];
+
+        for (const acc of filteredSerumAccs) {
+          parseSerumMultisigAccount(acc)
+            .then((parsed: any) => {
+              if (parsed) {
+                parsedSerumAccs.push(parsed);
+              }
+            })
+            .catch((err: any) => console.error(err));
+        }
+
+        setSerumAccounts(parsedSerumAccs);
+      })
+      .catch((err: any) => console.error(err));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection,
+    multisigSerumClient, 
+    publicKey
+  ]);
+  */
+
+  // Calculates the USD value of the Multisig accounts assets
+  useEffect(() => {
+
+    if (!connection || !publicKey || !multisigAccounts.length) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const allUsdValueMap = new Map();
+  
+      multisigAccounts.forEach(async(account) => {
+        
+        let usdValue = 0;
+        const solPrice = getPricePerToken(NATIVE_SOL);
+        const solBalance = getAmountFromLamports(account.balance);
+        const nativeSolUsdValue = solBalance * solPrice;  
+        const assets = await getMultisigVaults(connection, account.id);
+
+        for (const asset of assets) {
+          const token = getTokenByMintAddress(asset.mint.toBase58());
+          
+          if (token) {
+            const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+            if (!tokenPrice) {
+              continue;
+            }
+            BigNumber.config({
+              CRYPTO: true,
+              DECIMAL_PLACES: 16
+            });
+            const tokenBalance = toUiAmount(asset.amount, token.decimals);
+            const assetValue = new BigNumber(tokenBalance).multipliedBy(tokenPrice);
+            usdValue += assetValue.toNumber();
+          }
+        }
+
+        usdValue += nativeSolUsdValue;  
+        allUsdValueMap.set(account.authority.toBase58(), usdValue);  
+      });
+      
+      setMultisigUsdValues(allUsdValueMap);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    publicKey,
+    connection,
+    multisigAccounts,
+    getMultisigVaults, 
+    getPricePerToken, 
+    getTokenByMintAddress, 
+    getTokenPriceByAddress, 
+    getTokenPriceBySymbol
+  ])
+
+  // Load/Unload multisig on wallet connect/disconnect
+  useEffect(() => {
+    if (previousWalletConnectState !== connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+        setNeedReloadMultisigAccounts(true);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        setMultisigAccounts([]);
+        setHighLightableMultisigId(undefined);
+        setSelectedMultisig(undefined);
+        setNeedReloadMultisigAccounts(false);
+        consoleOut('User is disconnecting...', '', 'green');
+        setCanSubscribe(true);
+      }
+    }
+  }, [
+    connected,
+    publicKey,
+    previousWalletConnectState,
+    setNeedReloadMultisigAccounts,
+    setHighLightableMultisigId,
+    setMultisigAccounts,
+    setSelectedMultisig,
+    setCanSubscribe,
+    onTxConfirmed,
+    onTxTimedout,
+  ]);
+
+  // Detect when entering small screen mode
+  useEffect(() => {
+    if (isSmallUpScreen && width < 576) {
+      setIsSmallUpScreen(false);
+    }
+  }, [
+    width,
+    isSmallUpScreen,
+  ]);
+
+  // Handle what to do when pending Tx confirmation reaches finality or on error
+  useEffect(() => {
+
+    if (!publicKey || !multisigClient || !selectedMultisig || fetchTxInfoStatus === "fetching") { return; }
+
+    if (lastSentTxOperationType) {
+      if (fetchTxInfoStatus === "fetched") {
+        if (lastSentTxOperationType === OperationType.CreateMultisig) {
+          setSelectedMultisig(undefined);   // Deselects the current multisig if creating a new one
+        }
+        setNeedRefreshTxs(true);
+        setNeedReloadPrograms(true);
+        clearTxConfirmationContext();
+        setNeedReloadMultisigAccounts(true);
+      } else if (fetchTxInfoStatus === "error") {
+        clearTxConfirmationContext();
+        openNotification({
+          type: "info",
+          duration: 5,
+          description: (
+            <>
+              <span className="mr-1">
+                {t('notifications.tx-not-confirmed')}
+              </span>
+              <div>
+                <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
+                <a className="secondary-link"
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}${getSolanaExplorerClusterParam()}`}
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    {shortenAddress(lastSentTxSignature, 8)}
+                </a>
+              </div>
+            </>
+          )
+        });
+      }
+    }
+  }, [
+    publicKey,
+    multisigClient,
+    selectedMultisig,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    setNeedReloadMultisigAccounts,
+    clearTxConfirmationContext,
+    setSelectedMultisig,
+    t,
+  ]);
+
+  // Keep account balance updated
+  useEffect(() => {
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAmountFromLamports(account?.lamports));
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
   ]);
 
   // Get Programs
@@ -4052,6 +4055,11 @@ export const SafeView = () => {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+
+  //////////////
+  //  Events  //
+  //////////////
 
   const onBackButtonClicked = () => {
     setDetailsPanelOpen(false);
