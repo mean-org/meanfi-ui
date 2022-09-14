@@ -658,7 +658,7 @@ export const StakingRewardsView = () => {
         <div className="flex-fixed-right">
           <div className="left static-data-field">
             {
-              formatThousands(meanStakingVaultBalance, meanToken?.decimals || 6)
+              formatThousands(meanStakingVaultBalance, meanToken?.decimals || 9)
             }
           </div>
           <div className="right">&nbsp;</div>
@@ -714,12 +714,12 @@ export const StakingRewardsView = () => {
         <div className="flex-fixed-right">
           <div className="left static-data-field">
             {
-              formatThousands(getTotalMeanAdded(), meanToken?.decimals || 6)
+              formatThousands(getTotalMeanAdded(), meanToken?.decimals || 9)
             }
           </div>
           <div className="right">&nbsp;</div>
         </div>
-        <span className="form-field-hint">User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 6) : '0'}</span>
+        <span className="form-field-hint">User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 9) : '0'}</span>
       </div>
     </>
   );

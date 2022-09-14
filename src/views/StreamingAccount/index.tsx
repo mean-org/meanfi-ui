@@ -413,7 +413,7 @@ export const StreamingAccountView = (props: {
   }, [streamingAccountSelected]);
 
   const getStreamingAccountActivityAssociatedToken = (item: VestingTreasuryActivity) => {
-    const amount = item.amount ? toUiAmount(new BN(item.amount), selectedToken?.decimals || 6) : 0;
+    const amount = item.amount ? toUiAmount(new BN(item.amount), selectedToken?.decimals || 9) : 0;
     let message = '';
     switch (item.action) {
         case VestingTreasuryActivityAction.TreasuryAddFunds:

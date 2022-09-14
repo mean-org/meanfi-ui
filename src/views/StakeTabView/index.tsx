@@ -679,7 +679,7 @@ export const StakeTabView = (props: {
               )}
               {selectedToken && meanBalance ? (
                 <div className="token-max simplelink" onClick={() => {
-                  const newAmount = meanBalance.toFixed(selectedToken?.decimals || 6);
+                  const newAmount = meanBalance.toFixed(selectedToken?.decimals || 9);
                   setFromCoinAmount(newAmount);
                   // Debouncing
                   fetchQuoteFromInput(newAmount);

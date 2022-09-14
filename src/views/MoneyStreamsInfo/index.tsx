@@ -487,7 +487,7 @@ export const MoneyStreamsInfoView = (props: {
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 6;
+        const decimals = token.decimals || 9;
         const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
@@ -575,7 +575,7 @@ export const MoneyStreamsInfoView = (props: {
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 6;
+        const decimals = token.decimals || 9;
         const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
@@ -1604,7 +1604,7 @@ export const MoneyStreamsInfoView = (props: {
 
     if (item) {
       let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
-      const decimals = token?.decimals || 6;
+      const decimals = token?.decimals || 9;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
@@ -1636,7 +1636,7 @@ export const MoneyStreamsInfoView = (props: {
 
     if (item && item.rateIntervalInSeconds === 0 && item.allocationAssigned > 0) {
       let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
-      const decimals = token?.decimals || 6;
+      const decimals = token?.decimals || 9;
 
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {

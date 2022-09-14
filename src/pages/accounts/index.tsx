@@ -2789,7 +2789,7 @@ export const AccountsNewView = () => {
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 6;
+        const decimals = token.decimals || 9;
         const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
@@ -2873,7 +2873,7 @@ export const AccountsNewView = () => {
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 6;
+        const decimals = token.decimals || 9;
         const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 

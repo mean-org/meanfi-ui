@@ -153,7 +153,7 @@ export const VestingContractWithdrawFundsModal = (props: {
       setWithdrawAmount(".");
     } else if (isValidNumber(newValue)) {
       setWithdrawAmount(newValue);
-      setTokenAmount(toTokenAmountBn(newValue, selectedToken?.decimals || 6));
+      setTokenAmount(toTokenAmountBn(newValue, selectedToken?.decimals || 9));
     }
   };
 
@@ -171,7 +171,7 @@ export const VestingContractWithdrawFundsModal = (props: {
 
   // Validation
   const isValidForm = (): boolean => {
-    const userBalance = toTokenAmountBn(tokenBalance, selectedToken?.decimals || 6);
+    const userBalance = toTokenAmountBn(tokenBalance, selectedToken?.decimals || 9);
     return  publicKey &&
             to &&
             isValidAddress(to) &&
@@ -438,7 +438,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                             className="token-max simplelink"
                             onClick={() => {
                               setWithdrawAmount(tokenBalance.toFixed(selectedToken.decimals));
-                              setTokenAmount(toTokenAmountBn(tokenBalance, selectedToken?.decimals || 6));
+                              setTokenAmount(toTokenAmountBn(tokenBalance, selectedToken?.decimals || 9));
                             }}>
                             MAX
                           </div>

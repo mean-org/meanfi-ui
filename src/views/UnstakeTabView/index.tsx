@@ -588,7 +588,7 @@ export const UnstakeTabView = (props: {
   ]);
 
   useEffect(() => {
-    const percentageFromCoinAmount = props.tokenBalance > 0 ? `${(props.tokenBalance*parseFloat(percentageValue)/100).toFixed(props.selectedToken?.decimals || 6)}` : '';
+    const percentageFromCoinAmount = props.tokenBalance > 0 ? `${(props.tokenBalance*parseFloat(percentageValue)/100).toFixed(props.selectedToken?.decimals || 9)}` : '';
 
     if (percentageValue) {
       setFromCoinAmount(percentageFromCoinAmount);

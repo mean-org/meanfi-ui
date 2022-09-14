@@ -236,7 +236,7 @@ export const TreasuryTransferFundsModal = (props: {
 
   // Validation
   const isValidForm = (): boolean => {
-    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
+    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 9);
     return  publicKey &&
             to &&
             isValidAddress(to) &&
@@ -254,7 +254,7 @@ export const TreasuryTransferFundsModal = (props: {
 
   // Validation if multisig
   const isValidFormMultisig = (): boolean => {
-    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
+    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 9);
     return  publicKey &&
             proposalTitle &&
             to &&
@@ -542,7 +542,7 @@ export const TreasuryTransferFundsModal = (props: {
                             className="token-max simplelink"
                             onClick={() => {
                               setTopupAmount(tokenBalance.toFixed(selectedToken.decimals));
-                              setTokenAmount(makeInteger(tokenBalance, selectedToken?.decimals || 6));
+                              setTokenAmount(makeInteger(tokenBalance, selectedToken?.decimals || 9));
                             }}>
                             MAX
                           </div>
@@ -652,7 +652,7 @@ export const TreasuryTransferFundsModal = (props: {
                   )}
                 </div>
               </div>
-              {/* {(parseFloat(topupAmount) > makeDecimal(unallocatedBalance, selectedToken?.decimals || 6)) && (
+              {/* {(parseFloat(topupAmount) > makeDecimal(unallocatedBalance, selectedToken?.decimals || 9)) && (
                 <span className="form-field-error">
                   {t('transactions.validation.invalid-amount')}
                 </span>
