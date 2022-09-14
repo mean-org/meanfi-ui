@@ -640,6 +640,15 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     },
     // Testnet tokens
     {
+        chainId: 101,
+        address: '58fPBSQdynbfwgsus8FUpsiXSRtBm6L5VUbuFuAxSAjw',
+        symbol: 'eKWAN',
+        name: 'eKWAN',
+        decimals: 9,
+        logoURI: 'https://3txtza3bmunfw5ckgetu7qtgobudm6ii5hyyid7vrprmzykzhfmq.arweave.net/3O88g2FlGlt0SjEnT8JmcGg2eQjp8YQP9YvizOFZOVk?ext=png',
+        tags: [],
+    },
+    {
         chainId: 102,
         address: 'CpMah17kQEL2wqyMKt3mZBdTnZbkbfx4nqmQMFDP5vwp',
         symbol: 'USDC',
