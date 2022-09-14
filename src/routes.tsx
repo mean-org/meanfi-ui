@@ -82,9 +82,7 @@ export function AppRoutes() {
                       <Route path="/multisig/:address/programs/:id" element={<SafeView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       {/* Playgraund route for POC and testing purposes */}
-                      {!isProd() && (
-                        <Route path="/playground" element={<PlaygroundView />} />
-                      )}
+                      <Route path="/playground" element={<PlaygroundView />} />
                       <Route path='*' element={<NotFoundView />} />
                     </Routes>
                   </AppLayout>

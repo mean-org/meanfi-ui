@@ -7,7 +7,6 @@ import {
   STREAMING_PAYMENT_CONTRACTS,
   FIVE_MINUTES_REFRESH_TIMEOUT,
   TRANSACTIONS_PER_PAGE,
-  BETA_TESTING_PROGRAM_WHITELIST,
   WRAPPED_SOL_MINT_ADDRESS,
   FORTY_SECONDS_REFRESH_TIMEOUT,
   FIVETY_SECONDS_REFRESH_TIMEOUT,
@@ -65,7 +64,6 @@ interface AppStateConfig {
   tpsAvg: number | null | undefined;
   refreshInterval: number;
   isWhitelisted: boolean;
-  isInBetaTestingProgram: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
@@ -232,7 +230,6 @@ const contextDefaultValues: AppStateConfig = {
   tpsAvg: undefined,
   refreshInterval: ONE_MINUTE_REFRESH_TIMEOUT,
   isWhitelisted: false,
-  isInBetaTestingProgram: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,
@@ -408,7 +405,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
-  const [isInBetaTestingProgram, setIsInBetaTestingProgram] = useState(contextDefaultValues.isInBetaTestingProgram);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
   const today = new Date().toLocaleDateString("en-US");
@@ -586,27 +582,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     applyTheme(theme);
     return () => {};
   }, [theme, updateTheme]);
-
-  // Update isInBetaTestingProgram
-  useEffect(() => {
-    const isUserInBetaTestingProgram = () => {
-      if (!publicKey) {
-        setIsWhitelisted(false);
-      } else {
-        const user = BETA_TESTING_PROGRAM_WHITELIST.some(a => a === publicKey.toBase58());
-        setIsInBetaTestingProgram(user);
-      }
-    }
-
-    isUserInBetaTestingProgram();
-    return () => {};
-  }, [
-    publicKey
-  ]);
-
-  useEffect(() => {
-    consoleOut('isInBetaTestingProgram:', isInBetaTestingProgram, 'blue');
-  }, [isInBetaTestingProgram]);
 
   // Update isWhitelisted
   useEffect(() => {
@@ -1573,7 +1548,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         tpsAvg,
         refreshInterval,
         isWhitelisted,
-        isInBetaTestingProgram,
         shouldLoadTokens,
         isDepositOptionsModalVisible,
         tokenList,

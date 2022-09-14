@@ -151,7 +151,7 @@ export const AppContextMenu = () => {
             <IconCodeBlock className="mean-svg-icons" />
             <Link to="/staking-rewards">Staking rewards</Link>
           </Menu.Item>
-          {!isProd() && (
+          {isWhitelisted && (
             <Menu.Item key="/playground">
               <IconCodeBlock className="mean-svg-icons" />
               <Link to="/playground">Playground</Link>

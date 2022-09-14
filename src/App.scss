@@ -2247,7 +2247,9 @@ em {
 .card-fill {
   height: 100%;
 }
-
+.flex-wrap {
+  flex-wrap: wrap;
+}
 .two-column-layout {
   display: flex;
   margin-bottom: 24px;
