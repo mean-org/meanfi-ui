@@ -18,7 +18,6 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import {
-  findATokenAddress,
   formatThousands,
   getAmountFromLamports,
   getSdkValue,
@@ -73,7 +72,7 @@ import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModa
 import { STAKING_ROUTE_BASE_PATH } from '../staking';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
-import { closeTokenAccount, fetchAccountTokens } from '../../middleware/accounts';
+import { closeTokenAccount, getUserAccountTokens } from '../../middleware/accounts';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
@@ -118,11 +117,8 @@ export const AccountsNewView = () => {
   const connectionConfig = useConnectionConfig();
   const {
     theme,
-    coinPrices,
-    userTokens,
     streamList,
-    pinnedTokens,
-    splTokenList,
+    tokensLoaded,
     streamListv1,
     streamListv2,
     streamDetail,
@@ -137,6 +133,8 @@ export const AccountsNewView = () => {
     multisigAccounts,
     shouldLoadTokens,
     transactionStatus,
+    userTokensResponse,
+    loadingTokenAccounts,
     streamProgramAddress,
     streamV2ProgramAddress,
     pendingMultisigTxCount,
@@ -174,8 +172,6 @@ export const AccountsNewView = () => {
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
   const [isPageLoaded, setIsPageLoaded] = useState(true);
-  const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(false);
-  const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
@@ -631,11 +627,6 @@ export const AccountsNewView = () => {
     return false;
   }
 
-  const updateAtaFlag = useCallback(async (token: UserTokenAccount): Promise<boolean> => {
-    const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(token.address));
-    return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
-  }, [accountAddress]);
-
   const refreshAssetBalance = useCallback(() => {
     if (!connection || !accountAddress || !selectedAsset || refreshingBalance || !accountTokens) { return; }
 
@@ -737,7 +728,6 @@ export const AccountsNewView = () => {
   const reloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
     setShouldLoadTokens(true);
-    setLoadingTokenAccounts(false);
     setDetailsPanelOpen(false);
     setAutoOpenDetailsPanel(true);
     reloadSwitch();
@@ -746,7 +736,6 @@ export const AccountsNewView = () => {
   const hardReloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling hardReloadTokensAndActivity...', '', 'orangered');
     setShouldLoadTokens(true);
-    setLoadingTokenAccounts(false);
     setDetailsPanelOpen(false);
     setSelectedAsset(accountTokens[0]);
     navigateToAsset(accountTokens[0]);
@@ -3097,313 +3086,23 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountAddress, address, publicKey]);
 
-  // Ensure tokens Load on entering /accounts
-  useEffect(() => {
-    if (!isPageLoaded || !publicKey || !accountAddress) { return; }
-
-    setIsPageLoaded(false);
-    setTransactions([]);
-
-    // setTimeout(() => {
-    //   if (!shouldLoadTokens) {
-    //     setShouldLoadTokens(true);
-    //   }
-    // }, 1000);
-  }, [
-    publicKey,
-    isPageLoaded,
-    accountAddress,
-    shouldLoadTokens,
-    setShouldLoadTokens,
-    setTransactions,
-  ]);
-
-  // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
-  // Also, do this after any Tx is completed in places where token balances were indeed changed)
+  // Process userTokensResponse from AppState to get a renderable list of tokens
   useEffect(() => {
 
-    if (!connection ||
-        !publicKey ||
-        !accountAddress ||
-        !shouldLoadTokens ||
-        !userTokens ||
-        userTokens.length === 0 ||
-        !splTokenList ||
-        splTokenList.length === 0 ||
-        !coinPrices ||
-        loadingTokenAccounts ||
-        isPageLoaded
-    ) {
-      return;
+    if (userTokensResponse) {
+      consoleOut('Processing userTokensResponse:', userTokensResponse, 'blue');
+      setMultisigSolBalance(userTokensResponse.nativeBalance);
+      setWsolBalance(userTokensResponse.wSolBalance);
+      setAccountTokens(userTokensResponse.accountTokens);
+      setUserOwnedTokenAccounts(userTokensResponse.userTokenAccouns);
+      setTokenAccountGroups(userTokensResponse.tokenAccountGroups);
+      if (userTokensResponse.selectedAsset) {
+        selectAsset(userTokensResponse.selectedAsset);
+      }
     }
 
-    const timeout = setTimeout(() => {
-      setLoadingTokenAccounts(true);
-      setShouldLoadTokens(false);
-      setTokensLoaded(false);
-
-      const meanTokensCopy = new Array<UserTokenAccount>();
-      const intersectedList = new Array<UserTokenAccount>();
-
-      const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
-      const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
-      const pk = new PublicKey(accountAddress);
-
-      // Fetch SOL balance.
-      connection.getBalance(pk)
-        .then(solBalance => {
-
-          const sol: UserTokenAccount = {
-            address: NATIVE_SOL.address,
-            balance: solBalance / LAMPORTS_PER_SOL,
-            chainId: 0,
-            decimals: NATIVE_SOL.decimals,
-            name: NATIVE_SOL.name,
-            symbol: NATIVE_SOL.symbol,
-            publicAddress: accountAddress,
-            tags: NATIVE_SOL.tags,
-            logoURI: NATIVE_SOL.logoURI,
-            valueInUsd: (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol('SOL')
-          };
-
-          setMultisigSolBalance(solBalance / LAMPORTS_PER_SOL);
-
-          fetchAccountTokens(connection, pk)
-            .then(accTks => {
-              if (accTks) {
-
-                consoleOut('fetched accountTokens:', accTks.map(i => {
-                  return {
-                    pubAddress: i.pubkey.toBase58(),
-                    mintAddress: i.parsedInfo.mint,
-                    balance: i.parsedInfo.tokenAmount.uiAmount || 0
-                  };
-                }), 'blue');
-
-                setUserOwnedTokenAccounts(accTks);
-
-                // Group the token accounts by mint.
-                const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
-                const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
-                accTks.forEach((ta) => {
-                  const key = ta.parsedInfo.mint;
-                  const info = getTokenByMintAddress(key);
-                  const updatedTa = Object.assign({}, ta, {
-                    description: info ? `${info.name} (${info.symbol})` : ''
-                  });
-                  if (groupedTokenAccounts.has(key)) {
-                    const current = groupedTokenAccounts.get(key) as AccountTokenParsedInfo[];
-                    current.push(updatedTa);
-                  } else {
-                    groupedTokenAccounts.set(key, [updatedTa]);
-                  }
-                });
-
-                // Keep only groups with more than 1 item
-                groupedTokenAccounts.forEach((item, key) => {
-                  if (item.length > 1) {
-                    tokenGroups.set(key, item);
-                  }
-                });
-
-                // Save groups for possible further merging
-                if (tokenGroups.size > 0) {
-                  consoleOut('This account owns duplicated tokens...', '', 'blue');
-                  consoleOut('tokenGroups:', tokenGroups, 'blue');
-                  setTokenAccountGroups(tokenGroups);
-                } else {
-                  setTokenAccountGroups(undefined);
-                }
-
-                // Build meanTokensCopy including the MeanFi pinned tokens
-                userTokensCopy.forEach(item => {
-                  meanTokensCopy.push(item);
-                });
-                // Now add all other items but excluding those in userTokens
-                splTokensCopy.forEach(item => {
-                  if (!userTokens.includes(item)) {
-                    meanTokensCopy.push(item);
-                  }
-                });
-
-                // Create a list containing tokens for the user owned token accounts
-                // Intersected output list
-                accTks.forEach(item => {
-                  // Loop through the user token accounts and add the token account to the list: intersectedList
-                  // If it is not already on the list (diferentiate token accounts of the same mint)
-
-                  const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-                  const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-
-                  if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-                    tokenFromMeanTokensCopy.owner = item.parsedInfo.owner;
-                    intersectedList.push(tokenFromMeanTokensCopy);
-                  }
-                });
-
-                intersectedList.unshift(sol);
-
-                // Update balances in the mean token list
-                accTks.forEach(item => {
-                  // Locate the token in intersectedList
-                  const tokenIndex = intersectedList.findIndex(i => i.address === item.parsedInfo.mint);
-                  if (tokenIndex !== -1) {
-                    const price = getTokenPriceByAddress(intersectedList[tokenIndex].address) || getTokenPriceBySymbol(intersectedList[tokenIndex].symbol);
-                    const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                    const valueInUSD = balance * price;
-                    // If we didn't already filled info for this associated token address
-                    if (!intersectedList[tokenIndex].publicAddress) {
-                      // Add it
-                      intersectedList[tokenIndex].publicAddress = item.pubkey.toBase58();
-                      intersectedList[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      intersectedList[tokenIndex].valueInUsd = valueInUSD;
-                    } else if (intersectedList[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
-                      // If we did and the publicAddress is different/new then duplicate this item with the new info
-                      const newItem = Object.assign({}, intersectedList[tokenIndex]) as UserTokenAccount;
-                      newItem.publicAddress = item.pubkey.toBase58();
-                      newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      newItem.valueInUsd = valueInUSD;
-                      intersectedList.splice(tokenIndex + 1, 0, newItem);
-                    }
-                  }
-                });
-
-                // Update displayIndex and isAta flag
-                intersectedList.forEach(async (item: UserTokenAccount, index: number) => {
-                  item.displayIndex = index;
-                  item.isAta = await updateAtaFlag(item);
-                });
-
-                // Sort by valueInUsd and then by token balance and then by token name
-                intersectedList.sort((a, b) => {
-                  if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
-                     return -1;
-                  } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
-                     return 1;
-                  } else {
-                    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
-                  }
-                });
-
-                const custom: UserTokenAccount[] = [];
-                // Build a list with all owned token accounts not already in intersectedList as custom tokens
-                accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
-                  if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
-                    const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                    const price = getTokenPriceByAddress(item.parsedInfo.mint);
-                    const valueInUsd = balance * price;
-                    const customToken: UserTokenAccount = {
-                      address: item.parsedInfo.mint,
-                      balance,
-                      chainId: 0,
-                      displayIndex: intersectedList.length + 1 + index,
-                      decimals: item.parsedInfo.tokenAmount.decimals,
-                      name: 'Custom account',
-                      symbol: shortenAddress(item.parsedInfo.mint),
-                      publicAddress: item.pubkey.toBase58(),
-                      tags: undefined,
-                      logoURI: undefined,
-                      valueInUsd
-                    };
-                    custom.push(customToken);
-                  }
-                });
-
-                // Sort by valueInUsd and then by token balance
-                custom.sort((a, b) => {
-                  if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
-                     return -1;
-                  } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
-                     return 1;
-                  } else {
-                    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
-                  }
-                });
-
-                // Finally add all owned token accounts as custom tokens
-                const finalList = intersectedList.concat(custom);
-
-                // Find Wrapped sol token account and update state with its balance
-                const wSol = finalList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
-                if (wSol) {
-                  setWsolBalance(wSol.balance || 0);
-                } else {
-                  setWsolBalance(0);
-                }
-
-                // Report in the console for debugging
-                // if (isLocal()) {
-                //   const tokenTable: any[] = [];
-                //   finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
-                //       pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
-                //       mintAddress: shortenAddress(item.address),
-                //       symbol: item.symbol,
-                //       decimals: item.decimals,
-                //       balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
-                //       price: getTokenPriceBySymbol(item.symbol),
-                //       valueInUSD: toUsCurrency(item.valueInUsd) || "$0.00"
-                //     })
-                //   );
-                //   console.table(tokenTable);
-                // }
-
-                // Update the state
-                setAccountTokens(finalList);
-
-              } else {
-                pinnedTokens.forEach((item, index) => {
-                  item.valueInUsd = 0;
-                });
-                setWsolBalance(0);
-                setAccountTokens(pinnedTokens);
-                selectAsset(pinnedTokens[0]);
-                consoleOut('No tokens found in account!', '', 'red');
-              }
-            })
-            .catch(error => {
-              console.error(error);
-              setWsolBalance(0);
-              setAccountTokens(pinnedTokens);
-              selectAsset(pinnedTokens[0], true);
-            })
-            .finally(() => {
-              setTokensLoaded(true);
-            });
-        })
-        .catch(error => {
-          console.error(error);
-        })
-        .finally(() => {
-          setTokensLoaded(true);
-        });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    connection,
-    coinPrices,
-    userTokens,
-    isPageLoaded,
-    pinnedTokens,
-    splTokenList,
-    pathParamAsset,
-    selectedAsset,
-    accountAddress,
-    shouldLoadTokens,
-    selectedCategory,
-    loadingTokenAccounts,
-    getTokenPriceByAddress,
-    getTokenByMintAddress,
-    getTokenPriceBySymbol,
-    setShouldLoadTokens,
-    navigateToAsset,
-    updateAtaFlag,
-    selectAsset,
-  ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userTokensResponse]);
 
   // Load the transactions when signaled
   useEffect(() => {
@@ -3557,10 +3256,6 @@ export const AccountsNewView = () => {
       // }
     } else {
       reloadTokensAndActivity();
-
-      // setShouldLoadTokens(true);
-      // setLoadingTokenAccounts(false);
-
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountAddress, accountTokens, pathParamAsset]);
@@ -3922,6 +3617,22 @@ export const AccountsNewView = () => {
     }
   }, [canSubscribe, isPageLoaded, onTxConfirmed, onTxTimedout]);
 
+  // Set page loaded on entering /accounts
+  useEffect(() => {
+    if (!isPageLoaded || !publicKey || !accountAddress) { return; }
+
+    setIsPageLoaded(false);
+    setTransactions([]);
+
+  }, [
+    publicKey,
+    isPageLoaded,
+    accountAddress,
+    shouldLoadTokens,
+    setShouldLoadTokens,
+    setTransactions,
+  ]);
+
   // Unsubscribe from events
   useEffect(() => {
     // Do unmounting stuff here
@@ -3932,8 +3643,6 @@ export const AccountsNewView = () => {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       consoleOut('Clearing accounts state...', '', 'purple');
       clearStateData();
-      // setSelectedAsset(undefined);
-      setTokensLoaded(false);
       setCanSubscribe(true);
       isWorkflowLocked = false;
     };

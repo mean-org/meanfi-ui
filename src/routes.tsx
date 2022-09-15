@@ -14,7 +14,6 @@ import {
   NotFoundView,
   PlaygroundView,
   SwapView,
-  TransfersView,
   StatsView,
   StakingRewardsView,
   AccountsNewView,
@@ -64,7 +63,6 @@ export function AppRoutes() {
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
                       )}
                       {/* Deprecated routes (still active) */}
-                      <Route path="/transfers" element={<TransfersView />} />
                       <Route path="/faucet" element={<FaucetView />} />
                       {/* IDO */}
                       <Route path="/ido" element={<IdoView />} />

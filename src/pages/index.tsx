@@ -13,5 +13,4 @@ export { StakingRewardsView } from './staking-rewards';
 export { StakingView } from './staking';
 export { StatsView } from './stats';
 export { SwapView } from './exchange';
-export { TransfersView } from './transfers';
 export { VestingView } from './vesting';

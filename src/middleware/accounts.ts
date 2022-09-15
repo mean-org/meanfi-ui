@@ -11,14 +11,15 @@ import {
   Transaction,
   TransactionInstruction
 } from "@solana/web3.js"
-import { AccountTokenParsedInfo, UserTokensResponse } from "../models/accounts";
+import { AccountTokenParsedInfo, TokenPrice, UserTokensResponse } from "../models/accounts";
 import { TokenAccountInfo } from "../models/accounts";
 import { consoleOut } from "./ui";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../constants";
-import { NATIVE_SOL } from "../constants/tokens";
+import { MEAN_TOKEN_LIST, NATIVE_SOL } from "../constants/tokens";
 import { AccountsDictionary } from "../models/accounts";
 import { UserTokenAccount } from "../models/transactions";
-import { getAmountFromLamports } from "./utils";
+import { findATokenAddress, getAmountFromLamports, shortenAddress } from "./utils";
+import { TokenInfo } from "@solana/spl-token-registry";
 
 export async function getMultipleAccounts(
   connection: Connection,
@@ -324,37 +325,55 @@ export async function fetchAccountTokens(
   }
 }
 
-// Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
-// Also, do this after any Tx is completed in places where token balances were indeed changed)
+// Fetch all the owned token accounts with balances, also build duplicated token groups for later merge
 export const getUserAccountTokens = async (
   connection: Connection,
   accountAddress: string,
+  coinPrices: TokenPrice[] | null,
   userTokens: UserTokenAccount[],
   splTokenList: UserTokenAccount[],
-  coinPrices: any,
+  pinnedTokens: UserTokenAccount[],
 ): Promise<UserTokensResponse | null> => {
 
-  if (!connection ||
-    !accountAddress ||
-    !userTokens ||
-    !splTokenList ||
-    !coinPrices) {
+  if (!connection || !accountAddress || !userTokens || !splTokenList || !coinPrices) {
     return null;
   }
 
-  const getPriceBySymbol = (symbol: string): number => {
-    if (!symbol) { return 0; }
-
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol] as number
-      : 0;
+  const getTokenByMintAddress = (address: string): TokenInfo | undefined => {
+    const tokenFromTokenList = splTokenList
+      ? splTokenList.find(t => t.address === address)
+      : MEAN_TOKEN_LIST.find(t => t.address === address);
+    if (tokenFromTokenList) {
+      return tokenFromTokenList;
+    }
+    return undefined;
   }
 
-  const payload: UserTokensResponse = {
+  const getPriceByAddressOrSymbol = (address: string, symbol = ''): number => {
+    if (!address || !coinPrices || coinPrices.length === 0) { return 0; }
+
+    let item: TokenPrice | undefined;
+    item = coinPrices.find(i => i.address === address);
+    if (!item && symbol) {
+      item = coinPrices.find(i => i.symbol === symbol);
+    }
+
+    return item ? (item.price || 0) : 0;
+
+  }
+
+  const updateAtaFlag = async (token: UserTokenAccount): Promise<boolean> => {
+    const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(token.address));
+    return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
+  }
+
+  const response: UserTokensResponse = {
     nativeBalance: 0,
     wSolBalance: 0,
     accountTokens: [],
-    selectedAsset: undefined
+    selectedAsset: undefined,
+    userTokenAccouns: undefined,
+    tokenAccountGroups: undefined
   };
 
   const meanTokensCopy = new Array<UserTokenAccount>();
@@ -363,8 +382,11 @@ export const getUserAccountTokens = async (
   const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
   const pk = new PublicKey(accountAddress);
 
+  consoleOut('Fetching user account tokens for:', accountAddress, 'blue');
+
   // Fetch SOL balance.
   const solBalance = await connection.getBalance(pk);
+  response.nativeBalance = getAmountFromLamports(solBalance);
   const sol: UserTokenAccount = {
     address: NATIVE_SOL.address,
     balance: getAmountFromLamports(solBalance),
@@ -375,269 +397,189 @@ export const getUserAccountTokens = async (
     publicAddress: accountAddress,
     tags: NATIVE_SOL.tags,
     logoURI: NATIVE_SOL.logoURI,
-    valueInUsd: getAmountFromLamports(solBalance) * getPriceBySymbol('SOL')
+    valueInUsd: getAmountFromLamports(solBalance) * getPriceByAddressOrSymbol(NATIVE_SOL.address, 'SOL')
   };
 
-  return payload;
-}
+  try {
+    const accTks = await fetchAccountTokens(connection, pk);
+    if (accTks) {
 
-/*
-  useEffect(() => {
-    const timeout = setTimeout(() => {
+      consoleOut('fetched accountTokens:', accTks.map(i => {
+        return {
+          decimals: i.parsedInfo.tokenAmount.decimals,
+          balance: i.parsedInfo.tokenAmount.uiAmount || 0,
+          pubAddress: i.pubkey.toBase58(),
+          mintAddress: i.parsedInfo.mint,
+        };
+      }), 'blue');
 
-      // Fetch SOL balance.
-      connection.getBalance(pk)
-        .then(solBalance => {
+      response.userTokenAccouns = accTks;
 
-          const sol: UserTokenAccount = {
-            address: NATIVE_SOL.address,
-            balance: solBalance / LAMPORTS_PER_SOL,
-            chainId: 0,
-            decimals: NATIVE_SOL.decimals,
-            name: NATIVE_SOL.name,
-            symbol: NATIVE_SOL.symbol,
-            publicAddress: accountAddress,
-            tags: NATIVE_SOL.tags,
-            logoURI: NATIVE_SOL.logoURI,
-            valueInUsd: (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol('SOL')
-          };
-
-          setMultisigSolBalance(solBalance / LAMPORTS_PER_SOL);
-
-          fetchAccountTokens(connection, pk)
-            .then(accTks => {
-              if (accTks) {
-
-                consoleOut('fetched accountTokens:', accTks.map(i => {
-                  return {
-                    pubAddress: i.pubkey.toBase58(),
-                    mintAddress: i.parsedInfo.mint,
-                    balance: i.parsedInfo.tokenAmount.uiAmount || 0
-                  };
-                }), 'blue');
-
-                setUserOwnedTokenAccounts(accTks);
-
-                // Group the token accounts by mint.
-                const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
-                const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
-                accTks.forEach((ta) => {
-                  const key = ta.parsedInfo.mint;
-                  const info = getTokenByMintAddress(key);
-                  const updatedTa = Object.assign({}, ta, {
-                    description: info ? `${info.name} (${info.symbol})` : ''
-                  });
-                  if (groupedTokenAccounts.has(key)) {
-                    const current = groupedTokenAccounts.get(key) as AccountTokenParsedInfo[];
-                    current.push(updatedTa);
-                  } else {
-                    groupedTokenAccounts.set(key, [updatedTa]);
-                  }
-                });
-
-                // Keep only groups with more than 1 item
-                groupedTokenAccounts.forEach((item, key) => {
-                  if (item.length > 1) {
-                    tokenGroups.set(key, item);
-                  }
-                });
-
-                // Save groups for possible further merging
-                if (tokenGroups.size > 0) {
-                  consoleOut('This account owns duplicated tokens...', '', 'blue');
-                  consoleOut('tokenGroups:', tokenGroups, 'blue');
-                  setTokenAccountGroups(tokenGroups);
-                } else {
-                  setTokenAccountGroups(undefined);
-                }
-
-                // Build meanTokensCopy including the MeanFi pinned tokens
-                userTokensCopy.forEach(item => {
-                  meanTokensCopy.push(item);
-                });
-                // Now add all other items but excluding those in userTokens
-                splTokensCopy.forEach(item => {
-                  if (!userTokens.includes(item)) {
-                    meanTokensCopy.push(item);
-                  }
-                });
-
-                // Create a list containing tokens for the user owned token accounts
-                // Intersected output list
-                accTks.forEach(item => {
-                  // Loop through the user token accounts and add the token account to the list: intersectedList
-                  // If it is not already on the list (diferentiate token accounts of the same mint)
-
-                  const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-                  const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-
-                  if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-                    tokenFromMeanTokensCopy.owner = item.parsedInfo.owner;
-                    intersectedList.push(tokenFromMeanTokensCopy);
-                  }
-                });
-
-                intersectedList.unshift(sol);
-
-                // Update balances in the mean token list
-                accTks.forEach(item => {
-                  // Locate the token in intersectedList
-                  const tokenIndex = intersectedList.findIndex(i => i.address === item.parsedInfo.mint);
-                  if (tokenIndex !== -1) {
-                    const price = getTokenPriceByAddress(intersectedList[tokenIndex].address) || getTokenPriceBySymbol(intersectedList[tokenIndex].symbol);
-                    const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                    const valueInUSD = balance * price;
-                    // If we didn't already filled info for this associated token address
-                    if (!intersectedList[tokenIndex].publicAddress) {
-                      // Add it
-                      intersectedList[tokenIndex].publicAddress = item.pubkey.toBase58();
-                      intersectedList[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      intersectedList[tokenIndex].valueInUsd = valueInUSD;
-                    } else if (intersectedList[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
-                      // If we did and the publicAddress is different/new then duplicate this item with the new info
-                      const newItem = Object.assign({}, intersectedList[tokenIndex]) as UserTokenAccount;
-                      newItem.publicAddress = item.pubkey.toBase58();
-                      newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      newItem.valueInUsd = valueInUSD;
-                      intersectedList.splice(tokenIndex + 1, 0, newItem);
-                    }
-                  }
-                });
-
-                // Update displayIndex and isAta flag
-                intersectedList.forEach(async (item: UserTokenAccount, index: number) => {
-                  item.displayIndex = index;
-                  item.isAta = await updateAtaFlag(item);
-                });
-
-                // Sort by valueInUsd and then by token balance and then by token name
-                intersectedList.sort((a, b) => {
-                  if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
-                     return -1;
-                  } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
-                     return 1;
-                  } else {
-                    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
-                  }
-                });
-
-                const custom: UserTokenAccount[] = [];
-                // Build a list with all owned token accounts not already in intersectedList as custom tokens
-                accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
-                  if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
-                    const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                    const price = getTokenPriceByAddress(item.parsedInfo.mint);
-                    const valueInUsd = balance * price;
-                    const customToken: UserTokenAccount = {
-                      address: item.parsedInfo.mint,
-                      balance,
-                      chainId: 0,
-                      displayIndex: intersectedList.length + 1 + index,
-                      decimals: item.parsedInfo.tokenAmount.decimals,
-                      name: 'Custom account',
-                      symbol: shortenAddress(item.parsedInfo.mint),
-                      publicAddress: item.pubkey.toBase58(),
-                      tags: undefined,
-                      logoURI: undefined,
-                      valueInUsd
-                    };
-                    custom.push(customToken);
-                  }
-                });
-
-                // Sort by valueInUsd and then by token balance
-                custom.sort((a, b) => {
-                  if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
-                     return -1;
-                  } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
-                     return 1;
-                  } else {
-                    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
-                  }
-                });
-
-                // Finally add all owned token accounts as custom tokens
-                const finalList = intersectedList.concat(custom);
-
-                // Find Wrapped sol token account and update state with its balance
-                const wSol = finalList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
-                if (wSol) {
-                  setWsolBalance(wSol.balance || 0);
-                } else {
-                  setWsolBalance(0);
-                }
-
-                // Report in the console for debugging
-                // if (isLocal()) {
-                //   const tokenTable: any[] = [];
-                //   finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
-                //       pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
-                //       mintAddress: shortenAddress(item.address),
-                //       symbol: item.symbol,
-                //       decimals: item.decimals,
-                //       balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
-                //       price: getTokenPriceBySymbol(item.symbol),
-                //       valueInUSD: toUsCurrency(item.valueInUsd) || "$0.00"
-                //     })
-                //   );
-                //   console.table(tokenTable);
-                // }
-
-                // Update the state
-                setAccountTokens(finalList);
-
-              } else {
-                pinnedTokens.forEach((item, index) => {
-                  item.valueInUsd = 0;
-                });
-                setWsolBalance(0);
-                setAccountTokens(pinnedTokens);
-                selectAsset(pinnedTokens[0]);
-                consoleOut('No tokens found in account!', '', 'red');
-              }
-            })
-            .catch(error => {
-              console.error(error);
-              setWsolBalance(0);
-              setAccountTokens(pinnedTokens);
-              selectAsset(pinnedTokens[0], true);
-            })
-            .finally(() => {
-              setTokensLoaded(true);
-            });
-        })
-        .catch(error => {
-          console.error(error);
-        })
-        .finally(() => {
-          setTokensLoaded(true);
+      // Group the token accounts by mint.
+      const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
+      const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
+      for (const ta of accTks) {
+        const key = ta.parsedInfo.mint;
+        const info = getTokenByMintAddress(key);
+        const updatedTa = Object.assign({}, ta, {
+          description: info ? `${info.name} (${info.symbol})` : ''
         });
-    });
+        if (groupedTokenAccounts.has(key)) {
+          const current = groupedTokenAccounts.get(key) as AccountTokenParsedInfo[];
+          current.push(updatedTa);
+        } else {
+          groupedTokenAccounts.set(key, [updatedTa]);
+        }
+      }
 
-    return () => {
-      clearTimeout(timeout);
+      // Keep only groups with more than 1 item
+      groupedTokenAccounts.forEach((item, key) => {
+        if (item.length > 1) {
+          tokenGroups.set(key, item);
+        }
+      });
+
+      // Save groups for possible further merging
+      if (tokenGroups.size > 0) {
+        consoleOut('This account owns duplicated tokens:', tokenGroups, 'blue');
+        response.tokenAccountGroups = tokenGroups;
+      } else {
+        response.tokenAccountGroups = undefined;
+      }
+
+      // Build meanTokensCopy including the MeanFi pinned tokens
+      userTokensCopy.forEach(item => {
+        meanTokensCopy.push(item);
+      });
+
+      // Now add all other items but excluding those in userTokens
+      splTokensCopy.forEach(item => {
+        if (!userTokens.includes(item)) {
+          meanTokensCopy.push(item);
+        }
+      });
+
+      // Create a list containing tokens for the user owned token accounts
+      // Intersected output list
+      accTks.forEach(item => {
+        // Loop through the user token accounts and add the token account to the list: intersectedList
+        // If it is not already on the list (diferentiate token accounts of the same mint)
+
+        const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+        const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+
+        if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+          tokenFromMeanTokensCopy.owner = item.parsedInfo.owner;
+          intersectedList.push(tokenFromMeanTokensCopy);
+        }
+      });
+
+      intersectedList.unshift(sol);
+
+      // Update balances in the mean token list
+      accTks.forEach(item => {
+        // Locate the token in intersectedList
+        const tokenIndex = intersectedList.findIndex(i => i.address === item.parsedInfo.mint);
+        if (tokenIndex !== -1) {
+          const price = getPriceByAddressOrSymbol(intersectedList[tokenIndex].address, intersectedList[tokenIndex].symbol);
+          const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+          const valueInUSD = balance * price;
+          // If we didn't already filled info for this associated token address
+          if (!intersectedList[tokenIndex].publicAddress) {
+            // Add it
+            intersectedList[tokenIndex].publicAddress = item.pubkey.toBase58();
+            intersectedList[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+            intersectedList[tokenIndex].valueInUsd = valueInUSD;
+          } else if (intersectedList[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
+            // If we did and the publicAddress is different/new then duplicate this item with the new info
+            const newItem = Object.assign({}, intersectedList[tokenIndex]) as UserTokenAccount;
+            newItem.publicAddress = item.pubkey.toBase58();
+            newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+            newItem.valueInUsd = valueInUSD;
+            intersectedList.splice(tokenIndex + 1, 0, newItem);
+          }
+        }
+      });
+
+      // Update displayIndex and isAta flag
+      let listIndex = 0;
+      for await (const item of intersectedList) {
+        item.displayIndex = listIndex;
+        item.isAta = await updateAtaFlag(item);
+        listIndex++;
+      }
+
+      // Sort by valueInUsd and then by token balance and then by token name
+      intersectedList.sort((a, b) => {
+        if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
+           return -1;
+        } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
+           return 1;
+        } else {
+          return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
+        }
+      });
+
+      const custom: UserTokenAccount[] = [];
+      // Build a list with all owned token accounts not already in intersectedList as custom tokens
+      accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
+        if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
+          const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+          const price = getPriceByAddressOrSymbol(item.parsedInfo.mint);
+          const valueInUsd = balance * price;
+          const customToken: UserTokenAccount = {
+            address: item.parsedInfo.mint,
+            balance,
+            chainId: 0,
+            displayIndex: intersectedList.length + 1 + index,
+            decimals: item.parsedInfo.tokenAmount.decimals,
+            name: 'Custom account',
+            symbol: shortenAddress(item.parsedInfo.mint),
+            publicAddress: item.pubkey.toBase58(),
+            tags: undefined,
+            logoURI: undefined,
+            valueInUsd
+          };
+          custom.push(customToken);
+        }
+      });
+
+      // Sort by valueInUsd and then by token balance
+      custom.sort((a, b) => {
+        if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
+           return -1;
+        } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
+           return 1;
+        } else {
+          return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
+        }
+      });
+
+      // Finally add all owned token accounts as custom tokens
+      const finalList = intersectedList.concat(custom);
+
+      // Find Wrapped sol token account and update state with its balance
+      const wSol = finalList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
+      response.wSolBalance = wSol ? wSol.balance || 0 : 0;
+
+      // Update the state
+      response.accountTokens = finalList;
+
+    } else {
+      pinnedTokens.forEach((item, index) => {
+        item.valueInUsd = 0;
+      });
+      response.wSolBalance = 0;
+      response.accountTokens = pinnedTokens;
+      response.selectedAsset = pinnedTokens[0];
+      consoleOut('No tokens found in account!', '', 'red');
     }
+  } catch (error) {
+    console.error(error);
+    response.wSolBalance = 0;
+    response.accountTokens = pinnedTokens;
+    response.selectedAsset = pinnedTokens[0];
+  }
 
-  }, [
-    publicKey,
-    connection,
-    coinPrices,
-    userTokens,
-    isPageLoaded,
-    pinnedTokens,
-    splTokenList,
-    pathParamAsset,
-    selectedAsset,
-    accountAddress,
-    shouldLoadTokens,
-    selectedCategory,
-    loadingTokenAccounts,
-    getTokenPriceByAddress,
-    getTokenByMintAddress,
-    getTokenPriceBySymbol,
-    setShouldLoadTokens,
-    navigateToAsset,
-    updateAtaFlag,
-    selectAsset,
-  ]);
-*/
+  return response;
+}
