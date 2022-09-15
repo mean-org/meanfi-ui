@@ -22,11 +22,18 @@ jobs:
           node-version: ${{env.NODE_VERSION}}
           cache: 'yarn' 
 
-        # Install Yarn
+      # Cache node modules
+      - name: Cache packages
+        uses: actions/cache@v3
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
+
+      # Install Yarn
       - name: Install packages
         run: yarn install
 
-        # Build react app
+      # Build react app
       - name: Generate build for ${{ env.APP_ENV }}
         run: npm run build:s3
         env:
