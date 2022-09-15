@@ -294,9 +294,13 @@ export const VestingContractCreateStreamModal = (props: {
 
         const releasePct = parseFloat(cliffReleasePercentage) || 0;
 
-        if (tokenAmount.gtn(0) && releasePct > 0) {
-            const cr = tokenAmount.muln(releasePct).divn(100);
-            const toStream = tokenAmount.sub(cr);
+        if (tokenAmount.gtn(0)) {
+            let toStream = tokenAmount;
+
+            if (releasePct > 0) {
+                const cr = tokenAmount.muln(releasePct).divn(100);
+                toStream = tokenAmount.sub(cr);
+            }
 
             const lpa = parseFloat(lockPeriodAmount);
             const ra = toStream.divn(lpa);
@@ -313,9 +317,12 @@ export const VestingContractCreateStreamModal = (props: {
 
         const releasePct = parseFloat(cliffReleasePercentage) || 0;
 
-        if (tokenAmount.gtn(0) && releasePct > 0) {
-            const cr = tokenAmount.muln(releasePct).divn(100);
-            const toStream = tokenAmount.sub(cr);
+        if (tokenAmount.gtn(0)) {
+            let toStream = tokenAmount;
+            if (releasePct > 0) {
+                const cr = tokenAmount.muln(releasePct).divn(100);
+                toStream = tokenAmount.sub(cr);
+            }
             setAmountToBeStreamedBn(toStream);
         }
 
