@@ -438,7 +438,7 @@ export const VestingView = () => {
       });
     };
 
-    await delay(4000);
+    await delay(item.completedMessageTimeout ? (item.completedMessageTimeout * 1000) : 4000);
     notification.open({
       type: "info",
       message: <span></span>,

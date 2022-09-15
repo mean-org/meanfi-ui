@@ -789,6 +789,7 @@ export const VestingContractStreamList = (props: {
                             loadingMessage: loadingMessage,
                             completedTitle: "Transaction confirmed",
                             completedMessage: confirmedMessage,
+                            completedMessageTimeout: multisigId ? 8 : 5,
                             extras: {
                                 vestingContractId: vestingContract.id as string,
                                 multisigId: multisigId
