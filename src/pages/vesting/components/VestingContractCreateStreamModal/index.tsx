@@ -379,14 +379,26 @@ export const VestingContractCreateStreamModal = (props: {
         if (!selectedToken) { return ''; }
         const cliff = getCliffReleaseAmount();
         const rate = getReleaseRate();
-        return `Create stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement.`;
+        let message = '';
+        if (cliff === '--') {
+            message = `Create stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}.`;
+        } else {
+            message = `Create stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement.`;
+        }
+        return message;
     }
 
     const getStreamTxConfirmedDescription = (multisig: string) => {
         if (!selectedToken) { return ''; }
         const cliff = getCliffReleaseAmount();
         const rate = getReleaseRate();
-        return `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
+        let message = '';
+        if (cliff === '--') {
+            message = `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} has been ${multisig ? 'proposed' : 'scheduled'}.`;
+        } else {
+            message = `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
+        }
+        return message;
     }
 
     const onStreamCreateClick = () => {

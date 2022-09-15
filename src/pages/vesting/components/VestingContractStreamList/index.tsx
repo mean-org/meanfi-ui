@@ -27,7 +27,7 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { displayAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../../../middleware/utils';
+import { displayAmountWithSymbol, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../../../middleware/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
@@ -473,6 +473,7 @@ export const VestingContractStreamList = (props: {
         let signedTransaction: Transaction;
         let signature: any;
         let encodedTx: string;
+        let multisigId = '';
         const transactionLog: any[] = [];
 
         setTransactionCancelled(false);
@@ -498,6 +499,8 @@ export const VestingContractStreamList = (props: {
 
             const treasury = vestingContract as Treasury;
             const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+            multisigId = multisig.authority.toBase58();
 
             if (!multisig) { return null; }
 
@@ -753,38 +756,42 @@ export const VestingContractStreamList = (props: {
                     const sent = await sendTx();
                     consoleOut('sent:', sent);
                     if (sent && !transactionCancelled) {
-                        const treasury = vestingContract as Treasury;
-                        const multisig = multisigAccounts
-                            ? multisigAccounts.find(m => m.authority.toBase58() === treasury.treasurer)
-                            : undefined;
                         consoleOut('Send Tx to confirmation queue:', signature);
-                        const message = `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of [${
-                            displayAmountWithSymbol(
-                                closeStreamOptions.vestedReturns,
-                                selectedToken.address,
-                                selectedToken.decimals,
-                                splTokenList
-                            )
-                        }] has been sent to [${shortenAddress(highlightedStream.beneficiary)}]. Unvested amount of [${
-                            displayAmountWithSymbol(
-                                closeStreamOptions.unvestedReturns,
-                                selectedToken.address,
-                                selectedToken.decimals,
-                                splTokenList
-                            )
-                        }] was returned to the vesting contract.`;
+                        const vestedReturns = getAmountWithSymbol(
+                            closeStreamOptions.vestedReturns,
+                            selectedToken.address,
+                            false,
+                            splTokenList,
+                            selectedToken.decimals,
+                            true
+                        );
+                        const unvestedReturns = getAmountWithSymbol(
+                            closeStreamOptions.unvestedReturns,
+                            selectedToken.address,
+                            false,
+                            splTokenList,
+                            selectedToken.decimals,
+                            true
+                        );
+                        const beneficiary = shortenAddress(highlightedStream.beneficiary);
+                        const loadingMessage = multisigId
+                            ? 'The Multisig proposal to close the vesting stream Dinero para mi sobrina is being confirmed.'
+                            : `Vesting stream ${highlightedStream.name} closure is pending confirmation`;
+                        const confirmedMessage = multisigId
+                            ? `The proposal to close the vesting stream ${highlightedStream.name} has been confirmed. Once approved by the Multisig signers, the vested amount of ${vestedReturns} will be sent to ${beneficiary} and the unvested amount of ${unvestedReturns} will be returned to the vesting contract.`
+                            : `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of ${vestedReturns} has been sent to ${beneficiary}. Unvested amount of ${unvestedReturns} was returned to the vesting contract.`;
                         enqueueTransactionConfirmation({
                             signature: signature,
                             operationType: OperationType.StreamClose,
                             finality: "confirmed",
                             txInfoFetchStatus: "fetching",
                             loadingTitle: "Confirming transaction",
-                            loadingMessage: `Vesting stream ${highlightedStream.name} closure is pending confirmation`,
+                            loadingMessage: loadingMessage,
                             completedTitle: "Transaction confirmed",
-                            completedMessage: message,
+                            completedMessage: confirmedMessage,
                             extras: {
                                 vestingContractId: vestingContract.id as string,
-                                multisigId: multisig ? multisig.authority.toBase58() : ''
+                                multisigId: multisigId
                             }
                         });
                         setIsBusy(false);

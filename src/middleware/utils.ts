@@ -209,6 +209,7 @@ export const getAmountWithSymbol = (
   onlyValue = false,
   tokenList?: TokenInfo[],
   tokenDecimals?: number,
+  friendlyDecimals = true
 ) => {
 
   let token: TokenInfo | undefined = undefined;
@@ -262,7 +263,11 @@ export const getAmountWithSymbol = (
     });
     const bigNumberAmount = typeof amount === "string"
       ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
-    const inputAmount = bigNumberAmount.toFormat(decimals);
+    const inputAmount = bigNumberAmount.toFormat(
+      friendlyDecimals
+        ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals)
+        : decimals
+    );
     if (token) {
       return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
     } else {
