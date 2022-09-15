@@ -57,7 +57,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from '../../middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from '../../middleware/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -3629,7 +3629,6 @@ export const AccountsNewView = () => {
     isPageLoaded,
     accountAddress,
     shouldLoadTokens,
-    setShouldLoadTokens,
     setTransactions,
   ]);
 
@@ -4150,18 +4149,20 @@ export const AccountsNewView = () => {
   const renderAssetsList = () => {
 
     const renderMessages = () => {
-      if (tokensLoaded) {
+      if (loadingTokenAccounts) {
+        return (
+          <div className="flex flex-center">
+            <Spin indicator={antIcon} />
+          </div>
+        );
+      } else if (tokensLoaded) {
         return (
           <div className="flex flex-center">
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
           </div>
         );
       } else {
-        return (
-          <div className="flex flex-center">
-            <Spin indicator={antIcon} />
-          </div>
-        );
+        return null;
       }
     }
 
@@ -4683,6 +4684,15 @@ export const AccountsNewView = () => {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span>loadingTokenAccounts:</span><span className="ml-1 font-extrabold">{loadingTokenAccounts ? 'true' : 'false'}</span>
+          <span className="ml-2">shouldLoadTokens:</span><span className="ml-1 font-extrabold">{shouldLoadTokens ? 'true' : 'false'}</span>
+          <span className="ml-2">tokensLoaded:</span><span className="ml-1 font-extrabold">{tokensLoaded ? 'true' : 'false'}</span>
+          <span className="ml-2">userTokensResponse:</span><span className="ml-1 font-extrabold">{userTokensResponse !== null ? 'true' : 'false'}</span>
+        </div>
+      )} */}
+
       {detailsPanelOpen && (
         <Button
           id="back-button"

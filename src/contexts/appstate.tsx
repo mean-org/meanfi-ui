@@ -1386,8 +1386,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         !splTokenList ||
         splTokenList.length === 0 ||
         !pinnedTokens ||
-        !priceList ||
-        loadingTokenAccounts
+        !priceList
     ) {
       return;
     }
