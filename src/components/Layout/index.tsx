@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./style.scss";
 import { gitInfo } from "../..";
@@ -25,7 +25,6 @@ import { openNotification } from "../Notifications";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
-import { getDefaultRpc } from "../../services/connections-hq";
 import { isUnauthenticatedRoute } from "../../middleware/utils";
 import { AccountDetails } from "../../models/accounts";
 
@@ -49,6 +48,7 @@ export const AppLayout = React.memo((props: any) => {
     setStreamList,
     setTpsAvg,
   } = useContext(AppStateContext);
+  const { endpoint } = useConnectionConfig();
   const { confirmationHistory, clearConfirmationHistory } = useContext(TxConfirmationContext);
   const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
@@ -70,6 +70,13 @@ export const AppLayout = React.memo((props: any) => {
     }
   })
 
+  const connection = useMemo(() => new Connection(endpoint, {
+    commitment: "confirmed",
+    disableRetryOnRateLimit: true
+  }), [
+    endpoint
+  ]);
+
   const handleTabClosingOrPageRefresh = () => {
     window.localStorage.removeItem('cachedRpc');
   }
@@ -77,7 +84,7 @@ export const AppLayout = React.memo((props: any) => {
   // Callback to fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
 
-    const connection = new Connection(getDefaultRpc().httpProvider);
+    // const connection = new Connection(getDefaultRpc().httpProvider);
 
     if (!connection) { return null; }
 
@@ -86,7 +93,7 @@ export const AppLayout = React.memo((props: any) => {
     }
 
     try {
-      const samples = await connection.getRecentPerformanceSamples(30);
+      const samples = await connection.getRecentPerformanceSamples(60);
 
       if (samples.length < 1) {
         // no samples to work with (node has no history).
@@ -105,10 +112,10 @@ export const AppLayout = React.memo((props: any) => {
       const averageTps = Math.round(tpsValues[0]);
       return averageTps;
     } catch (error) {
-      console.error(error);
+      consoleOut(`getRecentPerformanceSamples failed for rpc:`, endpoint, 'darkred');
       return null;
     }
-  }, []);
+  }, [connection, endpoint]);
 
   // Get Performance Samples on a timeout
   useEffect(() => {
