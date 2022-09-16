@@ -1345,28 +1345,32 @@ const AppStateProvider: React.FC = ({ children }) => {
       consoleOut('userTokenList:', userTokenList, 'purple');
       updateUserTokens(userTokenList);
       // Load the mainnet list
-      const res = await new TokenListProvider().resolve();
-      const mainnetList = res
-        .filterByChainId(101)
-        .excludeByTag("nft")
-        .getList() as UserTokenAccount[];
-      // Filter out the banned tokens
-      const filteredTokens = mainnetList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
-      // Sort the big list
-      const sortedMainnetList = filteredTokens.sort((a, b) => {
-        const nameA = a.symbol.toUpperCase();
-        const nameB = b.symbol.toUpperCase();
-        if (nameA < nameB) {
-          return -1;
-        }
-        if (nameA > nameB) {
-          return 1;
-        }
-        // names must be equal
-        return 0;
-      });
-
-      updateSplTokenList(sortedMainnetList);
+      try {
+        const res = await new TokenListProvider().resolve();
+        const mainnetList = res
+          .filterByChainId(101)
+          .excludeByTag("nft")
+          .getList() as UserTokenAccount[];
+        // Filter out the banned tokens
+        const filteredTokens = mainnetList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
+        // Sort the big list
+        const sortedMainnetList = filteredTokens.sort((a, b) => {
+          const nameA = a.symbol.toUpperCase();
+          const nameB = b.symbol.toUpperCase();
+          if (nameA < nameB) {
+            return -1;
+          }
+          if (nameA > nameB) {
+            return 1;
+          }
+          // names must be equal
+          return 0;
+        });
+  
+        updateSplTokenList(sortedMainnetList);
+      } catch (error) {
+        console.error('Could not load fallback token list');
+      }
     })();
 
     return () => { }
@@ -1383,8 +1387,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         !shouldLoadTokens ||
         !userTokens ||
         userTokens.length === 0 ||
-        !splTokenList ||
-        splTokenList.length === 0 ||
         !pinnedTokens ||
         pinnedTokens.length === 0 ||
         !priceList

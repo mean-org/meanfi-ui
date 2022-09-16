@@ -1112,9 +1112,9 @@ export const PlaygroundView = () => {
                 <div className="left position-relative">
                   <span className="recipient-field-wrapper">
                     <input
-                      id="stream-id-recipient-field"
+                      id="stream-id-for-playground"
                       className="general-text-input"
-                      autoComplete="off"
+                      autoComplete="on"
                       autoCorrect="off"
                       type="text"
                       onChange={handleStreamIdChange}

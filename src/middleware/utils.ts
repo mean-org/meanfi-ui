@@ -263,9 +263,9 @@ export const getAmountWithSymbol = (
     const bigNumberAmount = typeof amount === "string"
       ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
     const decimalPlaces = friendlyDecimals
-      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals)
+      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
       : decimals;
-    BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_UP });
+    BigNumber.set({ DECIMAL_PLACES: friendlyDecimals ? decimalPlaces : 20, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
     const inputAmount = bigNumberAmount.toFormat(decimalPlaces);
     if (token) {
       return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
@@ -335,9 +335,9 @@ export const displayAmountWithSymbol = (
       ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
     const value = bigNumberAmount.div(baseConvert);
     const decimalPlaces = friendlyDecimals
-      ? friendlyDisplayDecimalPlaces(value.toString(), decimals)
+      ? friendlyDisplayDecimalPlaces(value.toString(), decimals) || decimals
       : decimals;
-    BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_UP });
+    BigNumber.set({ DECIMAL_PLACES: friendlyDecimals ? decimalPlaces : 20, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
     const inputAmount = value.toFormat(decimalPlaces);
     if (token) {
       return `${inputAmount} ${token.symbol}`;
