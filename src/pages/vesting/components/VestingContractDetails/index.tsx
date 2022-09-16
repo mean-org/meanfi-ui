@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { StreamTemplate, Treasury } from '@mean-dao/msp';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
-import { makeDecimal, shortenAddress, toUiAmount } from '../../../../middleware/utils';
+import { formatThousands, makeDecimal, shortenAddress, toUiAmount } from '../../../../middleware/utils';
 import { Identicon } from '../../../../components/Identicon';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
@@ -24,7 +24,7 @@ import {
     stringNumberFormat,
 } from '../../../../middleware/ui';
 import { PaymentRateType } from '../../../../models/enums';
-import { Progress } from 'antd';
+import { Progress, Tooltip } from 'antd';
 import BigNumber from 'bignumber.js';
 
 export const VestingContractDetails = (props: {
@@ -54,7 +54,7 @@ export const VestingContractDetails = (props: {
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState(0);
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
     const [completedVestingPercentage, setCompletedVestingPercentage] = useState(0);
-    const [currentVestingAmount, setCurrentVestingAmount] = useState(new BN(0));
+    const [currentVestingAmount, setCurrentVestingAmount] = useState(new BigNumber(0));
 
     const isDateInTheFuture = useCallback((date: string): boolean => {
         const now = today.toUTCString();
@@ -68,16 +68,8 @@ export const VestingContractDetails = (props: {
 
     const getContractFinishDate = useCallback(() => {
         if (paymentStartDate && lockPeriodAmount && lockPeriodUnits) {
-            // Start date timestamp
-            // const sdTimestamp = toTimestamp(paymentStartDate);
-
             // Total length of vesting period in seconds
             const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
-
-            // consoleOut('lockPeriodAmount:', lockPeriodAmount, 'blue');
-            // consoleOut('lockPeriodUnits:', lockPeriodUnits, 'blue');
-            // consoleOut('lockPeriod:', lockPeriod, 'blue');
-
             // Final date = Start date + lockPeriod
             const ts = new Date(paymentStartDate).getTime();
             const finishDate = new Date((lockPeriod * 1000) + ts);
@@ -124,11 +116,12 @@ export const VestingContractDetails = (props: {
 
     const getCurrentVestedAmount = useCallback((log = false) => {
         if (!vestingContractFlowRate || !paymentStartDate) {
-            return new BN(0);
+            return new BigNumber(0);
         }
 
         if (isContractFinished()) {
-            return vestingContractFlowRate.streamableAmountBn as BN;
+            const streamableAmountBn = vestingContractFlowRate.streamableAmountBn as BN;
+            return new BigNumber(streamableAmountBn.toString());
         }
 
         let ratePerSecond = new BigNumber(0);
@@ -171,7 +164,7 @@ export const VestingContractDetails = (props: {
             consoleOut('vestedBn:', vestedBn.toString(), 'darkcyan');
         }
 
-        return new BN(vestedBn.toString());
+        return vestedBn.integerValue();
     }, [cliffReleasePercentage, isContractFinished, lockPeriodAmount, lockPeriodFrequency, lockPeriodUnits, paymentStartDate, t, vestingContractFlowRate]);
 
     // Display current vested amount in the console (once per load)
@@ -214,7 +207,7 @@ export const VestingContractDetails = (props: {
     // Set chart completed percentage
     useEffect(() => {
 
-        let vestedAmountBn = new BN(0);
+        let vestedAmountBn = new BigNumber(0);
         if (vestingContract && paymentStartDate && vestingContractFlowRate) {
 
             if (isDateInTheFuture(paymentStartDate)) {
@@ -222,7 +215,8 @@ export const VestingContractDetails = (props: {
                 setCompletedVestingPercentage(0);
                 return;
             } else if (isContractFinished()) {
-                setCurrentVestingAmount(vestingContractFlowRate.streamableAmountBn);
+                const streamableAmountBn = vestingContractFlowRate.streamableAmountBn.toString();
+                setCurrentVestingAmount(new BigNumber(streamableAmountBn.toString()));
                 setCompletedVestingPercentage(100);
                 return;
             }
@@ -233,7 +227,7 @@ export const VestingContractDetails = (props: {
                 setCompletedVestingPercentage(0);
             } else {
                 vestedAmountBn = getCurrentVestedAmount();
-                const pctVested = percentualBn(vestedAmountBn, vestingContractFlowRate.streamableAmountBn, true) as number;
+                const pctVested = percentualBn(vestedAmountBn.toString(), vestingContractFlowRate.streamableAmountBn, true) as number;
                 setCompletedVestingPercentage(pctVested > 100 ? 100 : pctVested);
             }
             setCurrentVestingAmount(vestedAmountBn);
@@ -341,7 +335,7 @@ export const VestingContractDetails = (props: {
                                         <div className="vested-amount">
                                             {
                                                 stringNumberFormat(
-                                                    toUiAmount(currentVestingAmount, selectedToken.decimals),
+                                                    toUiAmount(currentVestingAmount.toString(), selectedToken.decimals),
                                                     friendlyDisplayDecimalPlaces(currentVestingAmount.toString()) || selectedToken.decimals
                                                 )
                                             } {selectedToken.symbol} vested
@@ -351,20 +345,22 @@ export const VestingContractDetails = (props: {
                             )}
                             {!isDateInTheFuture(paymentStartDate) && vestingContract.totalStreams > 0 && (
                                 <div className="vesting-progress">
-                                    <Progress
-                                        percent={completedVestingPercentage}
-                                        showInfo={false}
-                                        status={completedVestingPercentage === 0
-                                                ? "normal"
-                                                : completedVestingPercentage === 100
-                                                    ? "success"
-                                                    : "active"
-                                        }
-                                        type="line"
-                                        className="vesting-list-progress-bar medium"
-                                        trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
-                                        style={{ width: 85 }}
-                                    />
+                                    <Tooltip placement="bottom" title={formatThousands(completedVestingPercentage, 2)}>
+                                        <Progress
+                                            percent={completedVestingPercentage}
+                                            showInfo={false}
+                                            status={completedVestingPercentage === 0
+                                                    ? "normal"
+                                                    : completedVestingPercentage === 100
+                                                        ? "success"
+                                                        : "active"
+                                            }
+                                            type="line"
+                                            className="vesting-list-progress-bar medium"
+                                            trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                            style={{ width: 85 }}
+                                        />
+                                    </Tooltip>
                                 </div>
                             )}
                         </div>

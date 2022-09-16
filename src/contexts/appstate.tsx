@@ -736,18 +736,18 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
-  // accountTokens
-
   const getTokenByMintAddress = useCallback((address: string): TokenInfo | undefined => {
-    const tokenFromTokenList = splTokenList && isProd()
-      ? splTokenList.find(t => t.address === address)
-      : MEAN_TOKEN_LIST.find(t => t.address === address);
-    if (tokenFromTokenList) {
-      return tokenFromTokenList;
+    let token = splTokenList && isProd()
+      ? tokenList.find(t => t.address === address)
+      : undefined;
+    if (!token) {
+      token = MEAN_TOKEN_LIST.find(t => t.address === address);
     }
-    const fromTokenAccounts = accountTokens.find(ta => ta.address === address);
-    return fromTokenAccounts || undefined;
-  }, [accountTokens, splTokenList]);
+    if (!token) {
+      token = accountTokens.find(t => t.address === address);
+    }
+    return token;
+  }, [accountTokens, splTokenList, tokenList]);
 
   const openStreamById = async (streamId: string, dock = false) => {
     try {

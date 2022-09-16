@@ -445,17 +445,23 @@ export const getSdkValue = (amount: number | string, asString = false) => {
   return asString ? value.toString() : value;
 }
 
-export const toUiAmount = (amount: number | BN, decimals: number) => {
+export const toUiAmount = (amount: number | string | BN, decimals: number) => {
   if (!amount || !decimals) { return '0'; }
+
+  const baseConvert = new BigNumber(10 ** decimals);
+  let value = new BigNumber(0);
+
   if (typeof amount === "number") {
     const value = amount / (10 ** decimals);
     return value.toFixed(decimals);
+  } else if (typeof amount === "string") {
+    const bigNumberAmount = new BigNumber(amount);
+    value = bigNumberAmount.dividedBy(baseConvert);
   } else {
-    const baseConvert = new BigNumber(10 ** decimals);
     const bigNumberAmount = new BigNumber((amount as BN).toString());
-    const value = bigNumberAmount.dividedBy(baseConvert);
-    return value.toFixed(decimals);
+    value = bigNumberAmount.dividedBy(baseConvert);
   }
+  return value.toFixed(decimals);
 }
 
 export const toUiAmountBn = (amount: number | BN, decimals: number, asBn = false) => {

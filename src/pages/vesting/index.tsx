@@ -348,7 +348,7 @@ export const VestingView = () => {
         const tokeninfo = await readAccountInfo(connection, address);
         if ((tokeninfo as any).data["parsed"]) {
           const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
-          unkToken.decimals = decimals || 0;
+          unkToken.decimals = decimals || 9;
           return unkToken as TokenInfo;
         } else {
           return unkToken as TokenInfo;

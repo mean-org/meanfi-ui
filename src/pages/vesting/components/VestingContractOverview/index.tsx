@@ -20,9 +20,9 @@ import {
     percentualBn,
     friendlyDisplayDecimalPlaces,
 } from '../../../../middleware/ui';
-import { makeDecimal, toUiAmount } from '../../../../middleware/utils';
+import { formatThousands, makeDecimal, toUiAmount } from '../../../../middleware/utils';
 import BN from 'bn.js';
-import { Alert, Progress } from 'antd';
+import { Alert, Progress, Tooltip } from 'antd';
 import { TokenIcon } from '../../../../components/TokenIcon';
 import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons';
 import { IconInfoCircle } from '../../../../Icons';
@@ -59,7 +59,7 @@ export const VestingContractOverview = (props: {
     const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
     const [isContractRunning, setIsContractRunning] = useState(false);
     const [completedVestingPercentage, setCompletedVestingPercentage] = useState(0);
-    const [currentVestingAmount, setCurrentVestingAmount] = useState(new BN(0));
+    const [currentVestingAmount, setCurrentVestingAmount] = useState(new BigNumber(0));
 
     /////////////////
     //  Callbacks  //
@@ -77,12 +77,11 @@ export const VestingContractOverview = (props: {
 
     const getContractFinishDate = useCallback(() => {
         if (paymentStartDate && lockPeriodAmount && lockPeriodUnits) {
-            // Start date timestamp
-            const sdTimestamp = toTimestamp(paymentStartDate);
             // Total length of vesting period in seconds
             const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
             // Final date = Start date + lockPeriod
-            const finishDate = new Date((sdTimestamp + lockPeriod) * 1000);
+            const ts = new Date(paymentStartDate).getTime();
+            const finishDate = new Date((lockPeriod * 1000) + ts);
             return finishDate;
         }
         return null;
@@ -99,11 +98,12 @@ export const VestingContractOverview = (props: {
 
     const getCurrentVestedAmount = useCallback((log = false) => {
         if (!vestingContractFlowRate || !paymentStartDate) {
-            return new BN(0);
+            return new BigNumber(0);
         }
 
         if (isContractFinished()) {
-            return vestingContractFlowRate.streamableAmountBn as BN;
+            const streamableAmountBn = vestingContractFlowRate.streamableAmountBn as BN;
+            return new BigNumber(streamableAmountBn.toString());
         }
 
         let ratePerSecond = new BigNumber(0);
@@ -146,7 +146,7 @@ export const VestingContractOverview = (props: {
             consoleOut('vestedBn:', vestedBn.toString(), 'purple');
         }
 
-        return new BN(vestedBn.toString());
+        return vestedBn.integerValue();
     }, [cliffReleasePercentage, isContractFinished, lockPeriodAmount, lockPeriodFrequency, lockPeriodUnits, paymentStartDate, t, vestingContractFlowRate]);
 
 
@@ -232,7 +232,7 @@ export const VestingContractOverview = (props: {
     // Set chart completed percentage
     useEffect(() => {
 
-        let vestedAmountBn = new BN(0);
+        let vestedAmountBn = new BigNumber(0);
         if (vestingContract && paymentStartDate && vestingContractFlowRate) {
 
             if (isDateInTheFuture(paymentStartDate)) {
@@ -240,7 +240,8 @@ export const VestingContractOverview = (props: {
                 setCompletedVestingPercentage(0);
                 return;
             } else if (isContractFinished()) {
-                setCurrentVestingAmount(vestingContractFlowRate.streamableAmountBn);
+                const streamableAmountBn = vestingContractFlowRate.streamableAmountBn.toString();
+                setCurrentVestingAmount(new BigNumber(streamableAmountBn.toString()));
                 setCompletedVestingPercentage(100);
                 return;
             }
@@ -251,7 +252,7 @@ export const VestingContractOverview = (props: {
                 setCompletedVestingPercentage(0);
             } else {
                 vestedAmountBn = getCurrentVestedAmount();
-                const pctVested = percentualBn(vestedAmountBn, vestingContractFlowRate.streamableAmountBn, true) as number;
+                const pctVested = percentualBn(vestedAmountBn.toString(), vestingContractFlowRate.streamableAmountBn, true) as number;
                 setCompletedVestingPercentage(pctVested > 100 ? 100 : pctVested);
             }
             setCurrentVestingAmount(vestedAmountBn);
@@ -303,7 +304,7 @@ export const VestingContractOverview = (props: {
                             <span className="font-size-100 font-bold fg-secondary-75 pl-2">
                                 {
                                     stringNumberFormat(
-                                        toUiAmount(currentVestingAmount, selectedToken.decimals),
+                                        toUiAmount(currentVestingAmount.toString(), selectedToken.decimals),
                                         friendlyDisplayDecimalPlaces(currentVestingAmount.toString()) || selectedToken.decimals
                                     )
                                 } of {
@@ -316,20 +317,22 @@ export const VestingContractOverview = (props: {
                         </div>
                         <div className="flex-fixed-right">
                             <div className="left mr-1">
-                                <Progress
-                                    percent={completedVestingPercentage}
-                                    showInfo={false}
-                                    status={completedVestingPercentage === 0
-                                            ? "normal"
-                                            : completedVestingPercentage === 100
-                                                ? "success"
-                                                : "active"
-                                    }
-                                    type="line"
-                                    className="vesting-list-progress-bar large"
-                                    trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
-                                    style={{ width: "100%" }}
-                                />
+                                <Tooltip placement="bottom" title={formatThousands(completedVestingPercentage, 2)}>
+                                    <Progress
+                                        percent={completedVestingPercentage}
+                                        showInfo={false}
+                                        status={completedVestingPercentage === 0
+                                                ? "normal"
+                                                : completedVestingPercentage === 100
+                                                    ? "success"
+                                                    : "active"
+                                        }
+                                        type="line"
+                                        className="vesting-list-progress-bar large"
+                                        trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                        style={{ width: "100%" }}
+                                    />
+                                </Tooltip>
                             </div>
                             <div className="right progress-status-icon">
                                 {isContractFinished() ? (
