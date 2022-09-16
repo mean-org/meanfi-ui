@@ -18,11 +18,10 @@ export const NUM_RETRIES = 3;
 export const RELOAD_TIMER = 60;
 export const GET_RPC_API_ENDPOINT = '/meanfi-rpcs';
 
-
 export const DEFAULT_RPCS: RpcConfig[] = [
   {
     cluster: "mainnet-beta",
-    httpProvider: "https://ssc-dao.genesysgo.net/", // Setting the default (fallback endpoint) to genesysgo
+    httpProvider: clusterApiUrl("mainnet-beta"),
     networkId: ENV.MainnetBeta,
     network: 'Mainnet Beta',
     id: 0

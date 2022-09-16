@@ -2487,6 +2487,7 @@ export const MoneyStreamsOutgoingView = (props: {
   // Data management //
   /////////////////////
 
+  /*
   // Get a fresh copy of the stream
   useEffect(() => {
     if (!msp || !inputStreamId) { return; }
@@ -2505,6 +2506,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [msp, inputStreamId]);
+  */
 
   // Automatically update all token balances (in token list)
   useEffect(() => {

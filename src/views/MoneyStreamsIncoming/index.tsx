@@ -1260,6 +1260,7 @@ export const MoneyStreamsIncomingView = (props: {
   // Data management //
   /////////////////////
 
+  /*
   // Get a fresh copy of the stream
   useEffect(() => {
     if (!msp || !inputStreamId) { return; }
@@ -1278,6 +1279,7 @@ export const MoneyStreamsIncomingView = (props: {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [msp, inputStreamId]);
+  */
 
   // Refresh stream data
   useEffect(() => {
