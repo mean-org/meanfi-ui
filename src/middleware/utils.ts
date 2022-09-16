@@ -209,7 +209,7 @@ export const getAmountWithSymbol = (
   onlyValue = false,
   tokenList?: TokenInfo[],
   tokenDecimals?: number,
-  friendlyDecimals = true
+  friendlyDecimals = false
 ) => {
 
   let token: TokenInfo | undefined = undefined;
@@ -255,18 +255,22 @@ export const getAmountWithSymbol = (
     }
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
+    let inputAmount = '';
     const decimals = token ? token.decimals : 9;
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,
+      DECIMAL_PLACES: 20
     });
     const bigNumberAmount = typeof amount === "string"
       ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
     const decimalPlaces = friendlyDecimals
       ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
       : decimals;
-    BigNumber.set({ DECIMAL_PLACES: friendlyDecimals ? decimalPlaces : 20, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
-    const inputAmount = bigNumberAmount.toFormat(decimalPlaces);
+    if (friendlyDecimals) {
+      BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
+    }
+    inputAmount = bigNumberAmount.toFormat(decimalPlaces);
     if (token) {
       return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
     } else {
@@ -280,7 +284,7 @@ export const displayAmountWithSymbol = (
   address: string,
   tokenDecimals?: number,
   tokenList?: TokenInfo[],
-  friendlyDecimals = true
+  friendlyDecimals = false
 ) => {
 
   let token: TokenInfo | undefined = undefined;
@@ -325,10 +329,12 @@ export const displayAmountWithSymbol = (
     }
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
+    let inputAmount = '';
     const decimals = token ? token.decimals : 9;
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,
+      DECIMAL_PLACES: 20
     });
     const baseConvert = new BigNumber(10 ** decimals);
     const bigNumberAmount = typeof amount === "string"
@@ -337,8 +343,10 @@ export const displayAmountWithSymbol = (
     const decimalPlaces = friendlyDecimals
       ? friendlyDisplayDecimalPlaces(value.toString(), decimals) || decimals
       : decimals;
-    BigNumber.set({ DECIMAL_PLACES: friendlyDecimals ? decimalPlaces : 20, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
-    const inputAmount = value.toFormat(decimalPlaces);
+    if (friendlyDecimals) {
+      BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
+    }
+    inputAmount = value.toFormat(decimalPlaces);
     if (token) {
       return `${inputAmount} ${token.symbol}`;
     } else {

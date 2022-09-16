@@ -45,12 +45,15 @@ export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'blac
 }
 
 export const friendlyDisplayDecimalPlaces = (amount: number | string, decimals?: number) => {
+    if (!decimals) { return undefined; }
+
     if (typeof amount === "string") {
-        const value = new BigNumber(amount);
-        if (value.isLessThan(1)) {
+
+        const baseConvert = new BigNumber(10 ** decimals);
+        const bigNumberAmount = new BigNumber(amount);
+        const value = bigNumberAmount.div(baseConvert);
+        if (value.isLessThan(1000)) {
             return decimals || undefined;
-        } else if (value.isLessThan(1000)) {
-            return 4;
         } else if (value.isGreaterThanOrEqualTo(1000) && value.isLessThan(100000)) {
             return 3;
         } else {
@@ -58,10 +61,8 @@ export const friendlyDisplayDecimalPlaces = (amount: number | string, decimals?:
         }
     } else {
         const value = Math.abs(amount);
-        if (value < 1) {
+        if (value < 1000) {
             return decimals || undefined;
-        } else if (value < 1000) {
-            return 4;
         } else if (value >= 1000 && value < 100000) {
             return 3;
         } else {

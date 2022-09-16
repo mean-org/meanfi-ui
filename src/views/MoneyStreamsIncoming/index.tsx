@@ -1365,14 +1365,20 @@ export const MoneyStreamsIncomingView = (props: {
       <>
         <span className="info-data large mr-1">
           {
-            displayAmountWithSymbol(
-              isNewStream()
-                ? v2.withdrawableAmount
-                : v1.escrowVestedAmount,
-              workingToken.address,
-              workingToken.decimals,
-              splTokenList,
-            )
+            isNewStream()
+              ? displayAmountWithSymbol(
+                  v2.withdrawableAmount,
+                  workingToken.address,
+                  workingToken.decimals,
+                  splTokenList,
+                )
+              : getAmountWithSymbol(
+                  v1.escrowVestedAmount,
+                  workingToken.address,
+                  false,
+                  splTokenList,
+                  workingToken.decimals,
+                )
           }
         </span>
         <span className="info-icon">
