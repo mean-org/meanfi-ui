@@ -5684,6 +5684,10 @@ main section {
   &.underline-on-hover:hover {
     text-decoration: underline !important;
   }
+  &.disabled {
+    color: var(--color-smoke) !important;
+    pointer-events: none;
+  }
 }
 .primary-link {
   color: var(--color-primary) !important;

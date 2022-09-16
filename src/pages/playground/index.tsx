@@ -47,7 +47,7 @@ import { TextInput } from "../../components/TextInput";
 import { useNativeAccount } from "../../contexts/accounts";
 import { NATIVE_SOL } from "../../constants/tokens";
 import { getStreamForDebug } from "../../middleware/stream-debug-middleware";
-import { MSP } from "@mean-dao/msp";
+import { MSP, Stream } from "@mean-dao/msp";
 import { appConfig } from "../..";
 import ReactJson from "react-json-view";
 import { fetchAccountTokens } from "../../middleware/accounts";
@@ -59,9 +59,12 @@ import BN from "bn.js";
 import { MultisigAsset } from "../../models/multisig";
 import BigNumber from "bignumber.js";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
-import { RightInfoDetails } from "../../components/RightInfoDetails";
+import { getReadableStream } from "../../middleware/streams";
+import { readAccountInfo as getAccountInfo } from "../../middleware/accounts";
+import { VestingContractStreamDetailModal } from "../vesting/components/VestingContractStreamDetailModal";
 
 type TabOption = "first-tab" | "test-stream" | "account-info" | "multisig-tab" | "demo-notifications" | "misc-tab" | undefined;
+type StreamViewerOption = "treasurer" | "beneficiary";
 
 const CRYPTO_VALUES: number[] = [
   0.0004, 0.000003, 0.00000012345678, 1200.5, 1500.000009, 100500.000009226,
@@ -109,7 +112,7 @@ export const PlaygroundView = () => {
   const [canFetchTokenAccounts, setCanFetchTokenAccounts] = useState<boolean>(splTokenList ? true : false);
   const [streamId, setStreamId] = useState<string>("");
   const [streamRawData, setStreamRawData] = useState();
-  const [streamParsedData, setStreamParsedData] = useState();
+  const [streamParsedData, setStreamParsedData] = useState<Stream | undefined>(undefined);
   const [displayStreamData, setDisplayStreamData] = useState<boolean>(false);
   const [targetAddress, setTargetAddress] = useState<string>('');
   // Multisig
@@ -120,6 +123,7 @@ export const PlaygroundView = () => {
   const [multisigAssets, setMultisigAssets] = useState<MultisigAsset[]>([]);
   const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
   const [totalSafeBalance, setTotalSafeBalance] = useState<number | undefined>(undefined);
+  const [streamViewerAddress, setStreamViewerAddress] = useState('');
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
   const streamV2ProgramAddressFromConfig = useMemo(() => appConfig.getConfig().streamV2ProgramAddress, []);
@@ -164,13 +168,18 @@ export const PlaygroundView = () => {
     const streamPK = new PublicKey(id);
 
     getStreamForDebug(streamPK, msp).then(value => {
-      consoleOut("raw stream data payload:", value);
+      consoleOut('raw stream data payload:', value, 'blue');
       setStreamRawData(value);
     });
 
     msp.getStream(streamPK).then(value => {
-      consoleOut("parsed stream data payload:", value);
-      setStreamParsedData(value);
+      if (value) {
+        consoleOut('parsed stream data payload:', value, 'blue');
+        setStreamParsedData(value);
+        if (value.version >= 2) {
+          consoleOut('Humanized stream data:', getReadableStream(value), 'blue');
+        }
+      }
     });
 
     setDisplayStreamData(true);
@@ -426,7 +435,7 @@ export const PlaygroundView = () => {
   // }, [splTokenList]);
 
   const notificationTwo = () => {
-    consoleOut("Notification is closing...");
+    consoleOut('Notification is closing...');
     openNotification({
       type: "info",
       description: t(
@@ -589,6 +598,54 @@ export const PlaygroundView = () => {
     selectedMultisig, 
     multisigSolBalance
   ]);
+
+  const getTokenOrCustomToken = useCallback(async (address: string) => {
+
+    const token = getTokenByMintAddress(address);
+
+    const unkToken = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: 6,
+      symbol: `[${shortenAddress(address)}]`,
+    };
+
+    if (token) {
+      return token;
+    } else {
+      try {
+        const tokeninfo = await getAccountInfo(connection, address);
+        if ((tokeninfo as any).data["parsed"]) {
+          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+          unkToken.decimals = decimals || 9;
+          return unkToken as TokenInfo;
+        } else {
+          return unkToken as TokenInfo;
+        }
+      } catch (error) {
+        console.error('Could not get token info, assuming decimals = 9');
+        return unkToken as TokenInfo;
+      }
+    }
+  }, [connection, getTokenByMintAddress]);
+
+  // Stream detail modal
+  const [isStreamDetailModalVisible, setIsStreamDetailModalVisibility] = useState(false);
+  const showStreamDetailModal = useCallback((option: StreamViewerOption) => {
+    if (streamParsedData) {
+      if (option === "treasurer") {
+        setStreamViewerAddress(streamParsedData.treasurer.toBase58());
+      } else {
+        setStreamViewerAddress(streamParsedData.beneficiary.toBase58());
+      }
+      setIsStreamDetailModalVisibility(true);
+    }
+  }, [streamParsedData]);
+  const closeStreamDetailModal = useCallback(() => {
+    setIsStreamDetailModalVisibility(false);
+  }, []);
+
 
   /////////////////////
   // Data management //
@@ -794,7 +851,7 @@ export const PlaygroundView = () => {
             modifiedResults.push(item);
           });
           setMultisigAssets(modifiedResults);  
-          consoleOut("Multisig assets", modifiedResults, "blue");
+          consoleOut('Multisig assets', modifiedResults, 'blue');
         })
         .catch(err => {
           console.error(err);
@@ -867,6 +924,22 @@ export const PlaygroundView = () => {
     setTotalSafeBalance(usdValue);
 
   }, [connection, getPricePerToken, getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, multisigAssets, publicKey, selectedMultisig]);
+
+  // Set selected token to the stream associated token as soon as the stream is available or changes
+  useEffect(() => {
+    if (!publicKey || !streamParsedData) { return; }
+
+    const associatedToken = streamParsedData.associatedToken.toBase58();
+
+    if (associatedToken && (!selectedToken || selectedToken.address !== associatedToken)) {
+      getTokenOrCustomToken(associatedToken)
+      .then(token => {
+        consoleOut('getTokenOrCustomToken (PlaygroundView) ->', token, 'blue');
+        setSelectedToken(token);
+      });
+    }
+  }, [getTokenOrCustomToken, publicKey, streamParsedData, selectedToken]);
+
 
   ///////////////
   // Rendering //
@@ -1022,6 +1095,13 @@ export const PlaygroundView = () => {
         <div className="flex-fixed-right mt-4">
           <div className="left">
             <div className="form-label">Inspect stream</div>
+          </div>
+          <div className="right">
+            <span className={`simplelink ${streamParsedData ? 'underline-on-hover' : 'disabled'}`}
+              onClick={() => showStreamDetailModal("treasurer")}>View as treasurer</span>
+            <span className="mx-2">|</span>
+            <span className={`simplelink ${streamParsedData ? 'underline-on-hover' : 'disabled'}`}
+              onClick={() => showStreamDetailModal("beneficiary")}>View as beneficiary</span>
           </div>
         </div>
 
@@ -1806,7 +1886,7 @@ export const PlaygroundView = () => {
               onScanAssetAddress(t);
             }, 100);
 
-            consoleOut("token selected:", t.symbol, 'blue');
+            consoleOut('token selected:', t.symbol, 'blue');
             setEffectiveRate(getTokenPriceBySymbol(t.symbol));
             onCloseTokenSelector();
           };
@@ -1865,7 +1945,7 @@ export const PlaygroundView = () => {
                 symbol: '',
               };
               setSelectedToken(uknwnToken);
-              consoleOut("token selected:", uknwnToken, 'blue');
+              consoleOut('token selected:', uknwnToken, 'blue');
               setEffectiveRate(0);
               onCloseTokenSelector();
             }}
@@ -1917,6 +1997,17 @@ export const PlaygroundView = () => {
       </section>
 
       <PreFooter />
+
+      {isStreamDetailModalVisible && streamParsedData && (
+        <VestingContractStreamDetailModal
+          accountAddress={streamViewerAddress}
+          handleClose={closeStreamDetailModal}
+          highlightedStream={streamParsedData}
+          isVisible={isStreamDetailModalVisible}
+          msp={msp}
+          selectedToken={selectedToken}
+        />
+      )}
 
       {/* Token selection modal */}
       {isTokenSelectorModalVisible && (
