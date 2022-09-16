@@ -219,8 +219,10 @@ export const getAmountWithSymbol = (
     } else {
       token = tokenList && isProd()
         ? tokenList.find(t => t.address === address)
-        : MEAN_TOKEN_LIST.find(t => t.address === address);
-
+        : undefined;
+      if (!token) {
+        token = MEAN_TOKEN_LIST.find(t => t.address === address);
+      }
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
           symbol: 'SOL'
@@ -294,8 +296,10 @@ export const displayAmountWithSymbol = (
     } else {
       token = tokenList && isProd()
         ? tokenList.find(t => t.address === address)
-        : MEAN_TOKEN_LIST.find(t => t.address === address);
-
+        : undefined;
+      if (!token) {
+        token = MEAN_TOKEN_LIST.find(t => t.address === address);
+      }
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
           symbol: 'SOL'
@@ -361,6 +365,7 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   onlyValue = false,
   tokenList?: TokenInfo[]
 ): string => {
+
   let token: TokenInfo | undefined = undefined;
   if (address) {
     if (address === NATIVE_SOL.address) {
@@ -368,7 +373,15 @@ export const getTokenAmountAndSymbolByTokenAddress = (
     } else {
       token = tokenList && isProd()
         ? tokenList.find(t => t.address === address)
-        : MEAN_TOKEN_LIST.find(t => t.address === address);
+        : undefined;
+      if (!token) {
+        token = MEAN_TOKEN_LIST.find(t => t.address === address);
+      }
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
     }
   }
   const inputAmount = amount || 0;
