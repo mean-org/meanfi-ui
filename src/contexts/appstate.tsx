@@ -1342,7 +1342,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       updateTokenlist(list.filter(t => t.address !== NATIVE_SOL.address) as TokenInfo[]);
       // Update the list
       const userTokenList = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
-      consoleOut('userTokenList:', userTokenList, 'purple');
       updateUserTokens(userTokenList);
       // Load the mainnet list
       try {

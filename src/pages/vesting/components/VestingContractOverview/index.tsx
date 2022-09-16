@@ -27,6 +27,7 @@ import { TokenIcon } from '../../../../components/TokenIcon';
 import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons';
 import { IconInfoCircle } from '../../../../Icons';
 import { VestingFlowRateInfo } from '../../../../models/vesting';
+import BigNumber from 'bignumber.js';
 
 export const VestingContractOverview = (props: {
     availableStreamingBalance: number | BN;
@@ -105,44 +106,47 @@ export const VestingContractOverview = (props: {
             return vestingContractFlowRate.streamableAmountBn as BN;
         }
 
-        let ratePerSecond = new BN(0);
-        let vestedBn = new BN(0);
-        let releasedBn = new BN(0);
-        let streamableBn = new BN(0);
+        let ratePerSecond = new BigNumber(0);
+        let vestedBn = new BigNumber(0);
+        let streamableBn = new BigNumber(0);
+        let releasedBn = new BigNumber(0);
         const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
-        const elapsed = Math.round(Math.abs(getTimeEllapsed(paymentStartDate).total) / 1000);
+        const lockPeriodBn = new BigNumber(lockPeriod);
+        const elapsedSeconds = Math.round(Math.abs(getTimeEllapsed(paymentStartDate).total) / 1000);
+        const elapsedSecondsBn = new BigNumber(elapsedSeconds);
 
         if (cliffReleasePercentage > 0) {
-            releasedBn = percentageBn(cliffReleasePercentage, vestingContractFlowRate.streamableAmountBn) as BN;
-            streamableBn = vestingContractFlowRate.streamableAmountBn.sub(releasedBn);
+            const clPctgBn = percentageBn(cliffReleasePercentage, vestingContractFlowRate.streamableAmountBn) as BN;
+            releasedBn = new BigNumber(clPctgBn.toString());
+            streamableBn = new BigNumber(vestingContractFlowRate.streamableAmountBn.toString()).minus(releasedBn);
         } else {
-            streamableBn = vestingContractFlowRate.streamableAmountBn;
+            streamableBn = new BigNumber(vestingContractFlowRate.streamableAmountBn.toString());
         }
 
-        ratePerSecond = streamableBn.divn(lockPeriod);
+        ratePerSecond = streamableBn.dividedBy(lockPeriodBn);
 
         if (log) {
             consoleOut('lockPeriodAmount:', lockPeriodAmount, 'purple');
             consoleOut('lockPeriodUnits:', lockPeriodUnits, 'purple');
             consoleOut('lockPeriod (s):', `${lockPeriod} (${lockPeriodAmount} ${getLockPeriodOptionLabelByAmount(lockPeriodFrequency, parseFloat(lockPeriodAmount), t)})`, 'purple');
-            consoleOut('elapsed:', elapsed, 'purple');
+            consoleOut('elapsed:', elapsedSeconds, 'purple');
             consoleOut('cliffReleasePercentage:', cliffReleasePercentage, 'purple');
             consoleOut('releasedBn:', releasedBn.toString(), 'purple');
             consoleOut('streamableAmountBn:', vestingContractFlowRate.streamableAmountBn.toString(), 'purple');
             consoleOut('ratePerSecond:', ratePerSecond.toString(), 'purple');
         }
 
-        if (cliffReleasePercentage > 0 && releasedBn.gtn(0) && ratePerSecond.gtn(0)) {
-            vestedBn = ratePerSecond.muln(elapsed).add(releasedBn);
+        if (cliffReleasePercentage > 0 && releasedBn.gt(0) && ratePerSecond.gt(0)) {
+            vestedBn = ratePerSecond.multipliedBy(elapsedSecondsBn).plus(releasedBn);
         } else {
-            vestedBn = ratePerSecond.muln(elapsed);
+            vestedBn = ratePerSecond.multipliedBy(elapsedSecondsBn);
         }
 
         if (log) {
             consoleOut('vestedBn:', vestedBn.toString(), 'purple');
         }
 
-        return vestedBn;
+        return new BN(vestedBn.toString());
     }, [cliffReleasePercentage, isContractFinished, lockPeriodAmount, lockPeriodFrequency, lockPeriodUnits, paymentStartDate, t, vestingContractFlowRate]);
 
 

@@ -193,7 +193,7 @@ export async function closeTokenAccount(
 
   const info = (accountInfo as any).data["parsed"]["info"] as TokenAccountInfo;
 
-  consoleOut('---- Parsed info ----', '', 'purple');
+  consoleOut('---- Parsed info ----', '', 'orange');
   consoleOut('tokenPubkey:', tokenPubkey.toBase58(), 'orange');
   consoleOut('mint:', info.mint, 'orange');
   consoleOut('owner:', info.owner, 'orange');

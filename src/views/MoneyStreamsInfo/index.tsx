@@ -26,7 +26,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigTransactionFees, MULTISIG_ACTIONS } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, stringNumberFormat, toUsCurrency } from "../../middleware/ui";
+import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../middleware/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import {
   cutNumber,
@@ -1588,29 +1588,34 @@ export const MoneyStreamsInfoView = (props: {
   }, [accountAddress, publicKey]);
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
-    let value = '';
+    let associatedToken = '';
 
-    if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
-      const decimals = token?.decimals || 9;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-
-      const rateAmount = getRateAmountBn(item, decimals);
-      value += stringNumberFormat(
-        toUiAmount(rateAmount, decimals),
-        friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
-      )
-
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
+    if (item.version < 2) {
+      associatedToken = (item as StreamInfo).associatedToken as string;
+    } else {
+      associatedToken = (item as Stream).associatedToken.toBase58();
     }
-    return value;
-  }, [getRateAmountBn, getTokenByMintAddress]);
+
+    let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
+    const decimals = token?.decimals || 9;
+
+    if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+      token = Object.assign({}, token, {
+        symbol: 'SOL'
+      }) as TokenInfo;
+    }
+
+    const rateAmount = getRateAmountBn(item, decimals);
+    const rate = displayAmountWithSymbol(
+      rateAmount,
+      associatedToken,
+      decimals,
+      splTokenList,
+      true
+    )
+
+    return rate;
+  }, [getRateAmountBn, getTokenByMintAddress, splTokenList]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
@@ -1641,9 +1646,13 @@ export const MoneyStreamsInfoView = (props: {
         );
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
-        value += stringNumberFormat(
+        value += getAmountWithSymbol(
           toUiAmount(allocationAssigned, decimals),
-          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || decimals
+          associatedToken,
+          true,
+          splTokenList,
+          decimals,
+          true
         )
       }
       value += ' ';
@@ -1651,7 +1660,7 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     return value;
-  }, [getTokenByMintAddress]);
+  }, [getTokenByMintAddress, splTokenList]);
 
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';
