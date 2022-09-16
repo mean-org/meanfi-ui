@@ -281,7 +281,7 @@ const contextDefaultValues: AppStateConfig = {
   diagnosisInfo: undefined,
   // Accounts
   shouldLoadTokens: true,
-  loadingTokenAccounts: false,
+  loadingTokenAccounts: true,
   userTokensResponse: null,
   tokensLoaded: false,
   splTokenList: [],
@@ -481,11 +481,11 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
 
+  const [tokensLoaded, setTokensLoaded] = useState(contextDefaultValues.tokensLoaded);
   const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
-  const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(false);
-  const [tokensLoaded, setTokensLoaded] = useState(false);
-  const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
+  const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(contextDefaultValues.loadingTokenAccounts);
   const [userTokensResponse, setUserTokensResponse] = useState<UserTokensResponse | null>(contextDefaultValues.userTokensResponse);
+  const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
 
   const isDowngradedPerformance = useMemo(() => {
     return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
@@ -1386,6 +1386,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         !splTokenList ||
         splTokenList.length === 0 ||
         !pinnedTokens ||
+        pinnedTokens.length === 0 ||
         !priceList
     ) {
       return;
@@ -1417,8 +1418,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     return () => {}
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connection, loadingTokenAccounts, pinnedTokens, priceList, publicKey, shouldLoadTokens, splTokenList, userTokens]);
+  }, [accountAddress, connection, pinnedTokens, priceList, publicKey, shouldLoadTokens, splTokenList, userTokens]);
 
   ///////////////////////
   // Multisig accounts //

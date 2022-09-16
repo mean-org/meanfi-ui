@@ -255,19 +255,18 @@ export const getAmountWithSymbol = (
     }
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
-    const decimals = token ? token.decimals : 6;
+    const decimals = token ? token.decimals : 9;
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,
-      DECIMAL_PLACES: decimals
     });
     const bigNumberAmount = typeof amount === "string"
       ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
-    const inputAmount = bigNumberAmount.toFormat(
-      friendlyDecimals
-        ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals)
-        : decimals
-    );
+    const decimalPlaces = friendlyDecimals
+      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals)
+      : decimals;
+    BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_UP });
+    const inputAmount = bigNumberAmount.toFormat(decimalPlaces);
     if (token) {
       return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
     } else {
@@ -326,21 +325,20 @@ export const displayAmountWithSymbol = (
     }
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
-    const decimals = token ? token.decimals : 6;
+    const decimals = token ? token.decimals : 9;
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,
-      DECIMAL_PLACES: decimals
     });
     const baseConvert = new BigNumber(10 ** decimals);
     const bigNumberAmount = typeof amount === "string"
       ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
     const value = bigNumberAmount.div(baseConvert);
-    const inputAmount = value.toFormat(
-      friendlyDecimals
-        ? friendlyDisplayDecimalPlaces(value.toString(), decimals)
-        : decimals
-    );
+    const decimalPlaces = friendlyDecimals
+      ? friendlyDisplayDecimalPlaces(value.toString(), decimals)
+      : decimals;
+    BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_UP });
+    const inputAmount = value.toFormat(decimalPlaces);
     if (token) {
       return `${inputAmount} ${token.symbol}`;
     } else {

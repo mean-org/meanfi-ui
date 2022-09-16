@@ -39,6 +39,7 @@ import { useSearchParams } from "react-router-dom";
 import { readAccountInfo } from "../../middleware/accounts";
 import { appConfig } from '../..';
 import BN from "bn.js";
+import { getReadableStream } from "../../middleware/streams";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -143,6 +144,14 @@ export const MoneyStreamsIncomingView = (props: {
     connection,
     multisigAddressPK
   ]);
+
+  const inputStreamId = useMemo(() => {
+    if (streamSelected && streamSelected.id) {
+      return streamSelected.version < 2 ? new PublicKey((streamSelected as StreamInfo).id as string) : (streamSelected as Stream).id;
+    }
+    return undefined;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streamSelected?.id]);
 
   /////////////////
   //  Callbacks  //
@@ -1250,6 +1259,25 @@ export const MoneyStreamsIncomingView = (props: {
   /////////////////////
   // Data management //
   /////////////////////
+
+  // Get a fresh copy of the stream
+  useEffect(() => {
+    if (!msp || !inputStreamId) { return; }
+
+    consoleOut('Lets fetch stream details for:', inputStreamId.toBase58(), 'blue');
+    msp.getStream(inputStreamId)
+      .then((detail: Stream | StreamInfo) => {
+        if (detail) {
+          consoleOut('streamDetail:', getReadableStream(detail), 'blue');
+          setStreamDetail(detail);
+        }
+      })
+      .catch((error: any) => {
+        console.error(error);
+      });
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [msp, inputStreamId]);
 
   // Refresh stream data
   useEffect(() => {

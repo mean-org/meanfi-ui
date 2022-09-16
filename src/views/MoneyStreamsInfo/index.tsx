@@ -448,8 +448,6 @@ export const MoneyStreamsInfoView = (props: {
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
-    // consoleOut('=========== Block start ===========', '', 'orange');
-
     for (const stream of updatedStreamsv1) {
 
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
@@ -499,10 +497,6 @@ export const MoneyStreamsInfoView = (props: {
 
     resume['totalAmount'] += updatedStreamsv2.length;
 
-    // consoleOut('totalNet in incoming streams:', resume['totalNet'], 'blue');
-    // consoleOut('=========== Block ends ===========', '', 'orange');
-
-    // Update state
     setIncomingStreamsSummary(resume);
 
     return resume;
@@ -535,8 +529,6 @@ export const MoneyStreamsInfoView = (props: {
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-
-    // consoleOut('=========== Block start ===========', '', 'orange');
 
     for (const stream of updatedStreamsv1) {
 
@@ -587,10 +579,6 @@ export const MoneyStreamsInfoView = (props: {
 
     resume['totalAmount'] += updatedStreamsv2.length;
 
-    // consoleOut('totalNet in outgoing streams:', resume['totalNet'], 'blue');
-    // consoleOut('=========== Block ends ===========', '', 'orange');
-
-    // Update state
     setOutgoingStreamsSummary(resume);
     return resume;
   }, [
@@ -1962,13 +1950,10 @@ export const MoneyStreamsInfoView = (props: {
 
     consoleOut('outgoing streams:', sortedOutgoingStreamsList, 'crimson');
     setOutgoingStreamList(sortedOutgoingStreamsList);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     streamList,
-    getTokenByMintAddress,
-    getTokenPriceBySymbol,
-    getTokenPriceByAddress,
-    getQueryAccountType,
     isInboundStream,
   ]);
 

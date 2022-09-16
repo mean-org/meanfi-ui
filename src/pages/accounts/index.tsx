@@ -57,7 +57,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from '../../middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, isProd, kFormatter, toUsCurrency } from '../../middleware/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -72,7 +72,7 @@ import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModa
 import { STAKING_ROUTE_BASE_PATH } from '../staking';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
-import { closeTokenAccount, getUserAccountTokens } from '../../middleware/accounts';
+import { closeTokenAccount } from '../../middleware/accounts';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
@@ -3479,8 +3479,6 @@ export const AccountsNewView = () => {
     if (publicKey && streamList && streamList.length > 0 &&
         pathParamStreamId && (!streamDetail || !inPath(streamDetail, pathParamStreamId))) {
       const item = streamList.find(s => s.id && (s.id as PublicKey).toString() === pathParamStreamId);
-      consoleOut('streamList:', streamList, 'darkgreen');
-      consoleOut('item:', item, 'darkgreen');
       if (item) {
         setStreamDetail(item);
         setActiveStream(item);
@@ -4684,14 +4682,15 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {(isLocal() || (!isProd() && isWhitelisted)) && (
         <div className="debug-bar">
           <span>loadingTokenAccounts:</span><span className="ml-1 font-extrabold">{loadingTokenAccounts ? 'true' : 'false'}</span>
           <span className="ml-2">shouldLoadTokens:</span><span className="ml-1 font-extrabold">{shouldLoadTokens ? 'true' : 'false'}</span>
           <span className="ml-2">tokensLoaded:</span><span className="ml-1 font-extrabold">{tokensLoaded ? 'true' : 'false'}</span>
           <span className="ml-2">userTokensResponse:</span><span className="ml-1 font-extrabold">{userTokensResponse !== null ? 'true' : 'false'}</span>
+          <span className="ml-2">accountAddress:</span><span className="ml-1 font-extrabold">{accountAddress ? shortenAddress(accountAddress) : '-'}</span>
         </div>
-      )} */}
+      )}
 
       {detailsPanelOpen && (
         <Button
