@@ -797,12 +797,12 @@ export const getTodayPercentualBetweenTwoDates = (starDate: string, endDate: str
     return percentual(todayPartial, delta);
 }
 
-export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number) => {
+export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number, relative = false) => {
     const start = toTimestamp(starDate);
     const end = toTimestamp(endDate);
     const delta = Math.abs(end - start);
     const pctTs = percentage(percent, delta);
-    return start + pctTs;
+    return relative ? pctTs : start + pctTs;
 }
 
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {

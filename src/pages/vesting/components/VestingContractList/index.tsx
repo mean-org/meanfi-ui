@@ -7,19 +7,9 @@ import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { formatThousands, getSdkValue, makeDecimal } from '../../../../middleware/utils';
 import { PublicKey } from '@solana/web3.js';
-import { delay, getPaymentIntervalFromSeconds, getReadableDate, getTodayPercentualBetweenTwoDates, isProd } from '../../../../middleware/ui';
+import { delay, getPercentualTsBetweenTwoDates, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../middleware/ui';
 import { IconLoading } from '../../../../Icons';
 import BN from 'bn.js';
-import { PaymentRateType } from '../../../../models/enums';
-
-type TemplateValues = {
-    cliffReleasePercentage: number;
-    paymentStartDate: string;
-    lockPeriodAmount: string;
-    lockPeriodUnits: number;
-    lockPeriodFrequency: PaymentRateType;
-    rateIntervalInSeconds: number;
-};
 
 export const VestingContractList = (props: {
     loadingVestingAccounts: boolean;
@@ -44,24 +34,6 @@ export const VestingContractList = (props: {
     const [vcTemplates, setVcTemplates] = useState<any>({});
     const [vcCompleteness, setVcCompleteness] = useState<any>({});
     const [loadingTemplates, setLoadingTemplates] = useState(false);
-
-    const getContractTemplateValues = useCallback((template: StreamTemplate) => {
-        const cliffReleasePercentage = makeDecimal(new BN(template.cliffVestPercent), 4);
-        const paymentStartDate = template.startUtc.toString();
-        const lockPeriodAmount = template.durationNumberOfUnits.toString();
-        const rateIntervalInSeconds = new BN(template.rateIntervalInSeconds).toNumber();
-        const lockPeriodUnits = (rateIntervalInSeconds);
-        const lockPeriodFrequency = getPaymentIntervalFromSeconds(rateIntervalInSeconds);
-        const value: TemplateValues = {
-            cliffReleasePercentage,
-            paymentStartDate,
-            lockPeriodAmount,
-            lockPeriodUnits,
-            lockPeriodFrequency,
-            rateIntervalInSeconds
-        };
-        return value;
-    }, []);
 
     const isStartDateFuture = useCallback((date: string): boolean => {
         const now = today.toUTCString();
@@ -173,8 +145,13 @@ export const VestingContractList = (props: {
                     const todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
                     const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
                     if (cliffPercent > 0) {
-                        completedVestingPercentage = todayPct > cliffPercent
-                            ? todayPct > 100 ? 100 : todayPct
+                        const cliffStartSeconds = getPercentualTsBetweenTwoDates(startDate, finishDate, cliffPercent, true);
+                        const end = toTimestamp(finishDate);
+                        const shiftedEndDate = new Date((end - cliffStartSeconds)  * 1000).toUTCString();
+                        const todayPctEndDateShifted = getTodayPercentualBetweenTwoDates(startDate, shiftedEndDate);
+                        const effectivePercentage = cliffPercent + todayPctEndDateShifted
+                        completedVestingPercentage = effectivePercentage > cliffPercent
+                            ? effectivePercentage > 100 ? 100 : effectivePercentage
                             : cliffPercent;
                     } else {
                         completedVestingPercentage = todayPct > 100 ? 100 : todayPct;
@@ -187,7 +164,7 @@ export const VestingContractList = (props: {
         }
         setVcCompleteness(completedPercentages);
 
-    }, [getContractFinishDate, getContractTemplateValues, isStartDateFuture, loadingTemplates, loadingVestingAccounts, streamingAccounts, vcTemplates]);
+    }, [getContractFinishDate, isStartDateFuture, loadingTemplates, loadingVestingAccounts, streamingAccounts, vcTemplates]);
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
         event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -229,22 +206,24 @@ export const VestingContractList = (props: {
                                             {
                                                 isStartDateFuture(vcTemplates[item.id as string].startUtc)
                                                     ? `Contract starts on ${getReadableDate(vcTemplates[item.id as string].startUtc, true)}`
-                                                    : <Progress
-                                                        percent={vcCompleteness[item.id as string] || 0}
-                                                        showInfo={false}
-                                                        status={
-                                                            vcCompleteness[item.id as string] === 0
-                                                                ? "normal"
-                                                                : vcCompleteness[item.id as string] < 100
-                                                                    ? "active"
-                                                                    : "success"
-                                                        }
-                                                        size="small"
-                                                        type="line"
-                                                        className="vesting-list-progress-bar small"
-                                                        trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
-                                                        style={{ width: 200 }}
+                                                    : (
+                                                        <Progress
+                                                            percent={vcCompleteness[item.id as string] || 0}
+                                                            showInfo={false}
+                                                            status={
+                                                                vcCompleteness[item.id as string] === 0
+                                                                    ? "normal"
+                                                                    : vcCompleteness[item.id as string] < 100
+                                                                        ? "active"
+                                                                        : "success"
+                                                            }
+                                                            size="small"
+                                                            type="line"
+                                                            className="vesting-list-progress-bar small"
+                                                            trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                                            style={{ width: 200 }}
                                                         />
+                                                    )
                                             }
                                         </span>
                                     ) : (
