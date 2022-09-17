@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { StreamTemplate, Treasury } from '@mean-dao/msp';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
-import { makeDecimal, shortenAddress, toUiAmount } from '../../../../middleware/utils';
+import { formatThousands, makeDecimal, shortenAddress, toUiAmount } from '../../../../middleware/utils';
 import { Identicon } from '../../../../components/Identicon';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
@@ -24,7 +24,7 @@ import {
     stringNumberFormat,
 } from '../../../../middleware/ui';
 import { PaymentRateType } from '../../../../models/enums';
-import { Progress } from 'antd';
+import { Progress, Tooltip } from 'antd';
 import BigNumber from 'bignumber.js';
 
 export const VestingContractDetails = (props: {
@@ -45,6 +45,7 @@ export const VestingContractDetails = (props: {
     } = props;
     const {
         theme,
+        isWhitelisted,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
     const [today, setToday] = useState(new Date());
@@ -345,20 +346,22 @@ export const VestingContractDetails = (props: {
                             )}
                             {!isDateInTheFuture(paymentStartDate) && vestingContract.totalStreams > 0 && (
                                 <div className="vesting-progress">
-                                    <Progress
-                                        percent={completedVestingPercentage}
-                                        showInfo={false}
-                                        status={completedVestingPercentage === 0
-                                                ? "normal"
-                                                : completedVestingPercentage === 100
-                                                    ? "success"
-                                                    : "active"
-                                        }
-                                        type="line"
-                                        className="vesting-list-progress-bar medium"
-                                        trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
-                                        style={{ width: 85 }}
-                                    />
+                                    <Tooltip placement="bottom" title={isWhitelisted ? `${formatThousands(completedVestingPercentage, 2)}%` : ''}>
+                                        <Progress
+                                            percent={completedVestingPercentage}
+                                            showInfo={false}
+                                            status={completedVestingPercentage === 0
+                                                    ? "normal"
+                                                    : completedVestingPercentage === 100
+                                                        ? "success"
+                                                        : "active"
+                                            }
+                                            type="line"
+                                            className="vesting-list-progress-bar medium"
+                                            trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                            style={{ width: 85 }}
+                                        />
+                                    </Tooltip>
                                 </div>
                             )}
                         </div>

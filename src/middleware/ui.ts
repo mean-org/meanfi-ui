@@ -793,8 +793,8 @@ export const getTodayPercentualBetweenTwoDates = (starDate: string, endDate: str
     const end = toTimestamp(endDate);
     const delta = Math.abs(end - start);
     const today = toTimestamp();
-    const todayPartial = Math.abs(today - start);
-    return percentual(todayPartial, delta);
+    const todayPartial = today - start < 0 ? 0 : today - start;
+    return todayPartial ? percentual(todayPartial, delta) : todayPartial;
 }
 
 export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number, relative = false) => {

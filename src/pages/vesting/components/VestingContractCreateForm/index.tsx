@@ -4,7 +4,7 @@ import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/c
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
-import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
+import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isProd, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
 import { PaymentRateTypeOption } from "../../../../models/PaymentRateTypeOption";
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
@@ -71,6 +71,7 @@ export const VestingContractCreateForm = (props: {
     const connection = useConnection();
     const { connected, publicKey } = useWallet();
     const {
+        isWhitelisted,
         loadingPrices,
         lockPeriodAmount,
         paymentStartDate,
@@ -205,12 +206,25 @@ export const VestingContractCreateForm = (props: {
         setIsFeePaidByTreasurer(e.target.checked);
     }
 
+    const get30MinsAhead = useCallback(() => {
+        if (!isProd() && isWhitelisted) {
+            return moment().add(30, 'm');
+        } else {
+            return moment();
+        }
+    }, [isWhitelisted]);
+
     const getOneDayAhead = useCallback(() => {
-        const time =  moment().format(timeFormat);
-        setContractTime(time);
-        const date = addDays(new Date(), 1).toLocaleDateString("en-US");
-        setPaymentStartDate(date);
-    }, [setPaymentStartDate]);
+        if (!isProd() && isWhitelisted) {
+            const time =  get30MinsAhead().format(timeFormat);
+            setContractTime(time);
+        } else {
+            const time =  moment().format(timeFormat);
+            setContractTime(time);
+            const date = addDays(new Date(), 1).toLocaleDateString("en-US");
+            setPaymentStartDate(date);
+        }
+    }, [get30MinsAhead, isWhitelisted, setPaymentStartDate]);
 
     /////////////////////
     // Data management //
@@ -1073,7 +1087,7 @@ export const VestingContractCreateForm = (props: {
                             <div className="right">
                                 <div className="well time-picker">
                                     <TimePicker
-                                        defaultValue={moment()}
+                                        defaultValue={get30MinsAhead()}
                                         bordered={false}
                                         allowClear={false}
                                         size="middle"

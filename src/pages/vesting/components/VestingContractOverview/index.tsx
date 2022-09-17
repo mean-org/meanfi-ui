@@ -19,9 +19,9 @@ import {
     percentualBn,
     friendlyDisplayDecimalPlaces,
 } from '../../../../middleware/ui';
-import { makeDecimal, toUiAmount } from '../../../../middleware/utils';
+import { formatThousands, makeDecimal, toUiAmount } from '../../../../middleware/utils';
 import BN from 'bn.js';
-import { Alert, Progress } from 'antd';
+import { Alert, Progress, Tooltip } from 'antd';
 import { TokenIcon } from '../../../../components/TokenIcon';
 import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons';
 import { IconInfoCircle } from '../../../../Icons';
@@ -47,6 +47,7 @@ export const VestingContractOverview = (props: {
     const { t } = useTranslation('common');
     const {
         theme,
+        isWhitelisted,
     } = useContext(AppStateContext);
     const [today, setToday] = useState(new Date());
     const [startRemainingTime, setStartRemainingTime] = useState('');
@@ -316,20 +317,22 @@ export const VestingContractOverview = (props: {
                         </div>
                         <div className="flex-fixed-right">
                             <div className="left mr-1">
-                                <Progress
-                                    percent={completedVestingPercentage}
-                                    showInfo={false}
-                                    status={completedVestingPercentage === 0
-                                            ? "normal"
-                                            : completedVestingPercentage === 100
-                                                ? "success"
-                                                : "active"
-                                    }
-                                    type="line"
-                                    className="vesting-list-progress-bar large"
-                                    trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
-                                    style={{ width: "100%" }}
-                                />
+                                <Tooltip placement="bottom" title={isWhitelisted ? `${formatThousands(completedVestingPercentage, 2)}%` : ''}>
+                                    <Progress
+                                        percent={completedVestingPercentage}
+                                        showInfo={false}
+                                        status={completedVestingPercentage === 0
+                                                ? "normal"
+                                                : completedVestingPercentage === 100
+                                                    ? "success"
+                                                    : "active"
+                                        }
+                                        type="line"
+                                        className="vesting-list-progress-bar large"
+                                        trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                        style={{ width: "100%" }}
+                                    />
+                                </Tooltip>
                             </div>
                             <div className="right progress-status-icon">
                                 {isContractFinished() ? (
@@ -343,7 +346,7 @@ export const VestingContractOverview = (props: {
                 )}
             </>
         );
-    }, [completedVestingPercentage, currentVestingAmount, isContractFinished, selectedToken, theme, vestingContract, vestingContractFlowRate]);
+    }, [completedVestingPercentage, currentVestingAmount, isContractFinished, isWhitelisted, selectedToken, theme, vestingContract, vestingContractFlowRate]);
 
     const getRelativeFinishDate = () => {
         const finishDate = getContractFinishDate();

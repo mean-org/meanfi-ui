@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Empty, Progress } from 'antd';
+import { Empty, Progress, Tooltip } from 'antd';
 import { MSP, StreamTemplate, Treasury } from '@mean-dao/msp';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../../../components/Identicon';
@@ -7,7 +7,7 @@ import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { formatThousands, getSdkValue, makeDecimal } from '../../../../middleware/utils';
 import { PublicKey } from '@solana/web3.js';
-import { delay, getPercentualTsBetweenTwoDates, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../middleware/ui';
+import { consoleOut, delay, getPercentualTsBetweenTwoDates, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../middleware/ui';
 import { IconLoading } from '../../../../Icons';
 import BN from 'bn.js';
 
@@ -28,6 +28,7 @@ export const VestingContractList = (props: {
     const { t } = useTranslation('common');
     const {
         theme,
+        isWhitelisted,
         getTokenByMintAddress,
     } = useContext(AppStateContext);
     const [today, setToday] = useState(new Date());
@@ -141,18 +142,15 @@ export const VestingContractList = (props: {
                 } else if (isStartDateFuture(startDate)) {
                     completedVestingPercentage = 0;
                 } else {
+                    let todayPct = 0;
                     const finishDate = getContractFinishDate(streamTemplate).toUTCString();
-                    const todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
+                    todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
                     const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
                     if (cliffPercent > 0) {
-                        const cliffStartSeconds = getPercentualTsBetweenTwoDates(startDate, finishDate, cliffPercent, true);
-                        const end = toTimestamp(finishDate);
-                        const shiftedEndDate = new Date((end - cliffStartSeconds)  * 1000).toUTCString();
-                        const todayPctEndDateShifted = getTodayPercentualBetweenTwoDates(startDate, shiftedEndDate);
-                        const effectivePercentage = cliffPercent + todayPctEndDateShifted
-                        completedVestingPercentage = effectivePercentage > cliffPercent
-                            ? effectivePercentage > 100 ? 100 : effectivePercentage
-                            : cliffPercent;
+                        // visualCompletionPct = ((100 - cliffPercent) * completionPct) + cliffPercent
+                        const completionWithOutCliifReminder = (100 - cliffPercent) * todayPct;
+                        const visualCompletionPct = (completionWithOutCliifReminder / 100) + cliffPercent;
+                        completedVestingPercentage = visualCompletionPct > 100 ? 100 : visualCompletionPct;
                     } else {
                         completedVestingPercentage = todayPct > 100 ? 100 : todayPct;
                     }
@@ -207,22 +205,24 @@ export const VestingContractList = (props: {
                                                 isStartDateFuture(vcTemplates[item.id as string].startUtc)
                                                     ? `Contract starts on ${getReadableDate(vcTemplates[item.id as string].startUtc, true)}`
                                                     : (
-                                                        <Progress
-                                                            percent={vcCompleteness[item.id as string] || 0}
-                                                            showInfo={false}
-                                                            status={
-                                                                vcCompleteness[item.id as string] === 0
-                                                                    ? "normal"
-                                                                    : vcCompleteness[item.id as string] < 100
-                                                                        ? "active"
-                                                                        : "success"
-                                                            }
-                                                            size="small"
-                                                            type="line"
-                                                            className="vesting-list-progress-bar small"
-                                                            trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
-                                                            style={{ width: 200 }}
-                                                        />
+                                                        <Tooltip placement="bottom" title={isWhitelisted ? `${formatThousands(vcCompleteness[item.id as string] || 0, 2)}%` : ''}>
+                                                            <Progress
+                                                                percent={vcCompleteness[item.id as string] || 0}
+                                                                showInfo={false}
+                                                                status={
+                                                                    vcCompleteness[item.id as string] === 0
+                                                                        ? "normal"
+                                                                        : vcCompleteness[item.id as string] < 100
+                                                                            ? "active"
+                                                                            : "success"
+                                                                }
+                                                                size="small"
+                                                                type="line"
+                                                                className="vesting-list-progress-bar small"
+                                                                trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                                                style={{ width: 200 }}
+                                                            />
+                                                        </Tooltip>
                                                     )
                                             }
                                         </span>
