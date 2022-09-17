@@ -5,10 +5,21 @@ import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../../../components/Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { formatThousands, getSdkValue } from '../../../../middleware/utils';
+import { formatThousands, getSdkValue, makeDecimal } from '../../../../middleware/utils';
 import { PublicKey } from '@solana/web3.js';
-import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../middleware/ui';
+import { delay, getPaymentIntervalFromSeconds, getReadableDate, getTodayPercentualBetweenTwoDates, isProd } from '../../../../middleware/ui';
 import { IconLoading } from '../../../../Icons';
+import BN from 'bn.js';
+import { PaymentRateType } from '../../../../models/enums';
+
+type TemplateValues = {
+    cliffReleasePercentage: number;
+    paymentStartDate: string;
+    lockPeriodAmount: string;
+    lockPeriodUnits: number;
+    lockPeriodFrequency: PaymentRateType;
+    rateIntervalInSeconds: number;
+};
 
 export const VestingContractList = (props: {
     loadingVestingAccounts: boolean;
@@ -34,6 +45,24 @@ export const VestingContractList = (props: {
     const [vcCompleteness, setVcCompleteness] = useState<any>({});
     const [loadingTemplates, setLoadingTemplates] = useState(false);
 
+    const getContractTemplateValues = useCallback((template: StreamTemplate) => {
+        const cliffReleasePercentage = makeDecimal(new BN(template.cliffVestPercent), 4);
+        const paymentStartDate = template.startUtc.toString();
+        const lockPeriodAmount = template.durationNumberOfUnits.toString();
+        const rateIntervalInSeconds = new BN(template.rateIntervalInSeconds).toNumber();
+        const lockPeriodUnits = (rateIntervalInSeconds);
+        const lockPeriodFrequency = getPaymentIntervalFromSeconds(rateIntervalInSeconds);
+        const value: TemplateValues = {
+            cliffReleasePercentage,
+            paymentStartDate,
+            lockPeriodAmount,
+            lockPeriodUnits,
+            lockPeriodFrequency,
+            rateIntervalInSeconds
+        };
+        return value;
+    }, []);
+
     const isStartDateFuture = useCallback((date: string): boolean => {
         const now = today.toUTCString();
         const nowUtc = new Date(now);
@@ -44,7 +73,16 @@ export const VestingContractList = (props: {
         return false;
     }, [today]);
 
-    // Set template data
+    const getContractFinishDate = useCallback((templateValues: StreamTemplate) => {
+        // Total length of vesting period in seconds
+        const lockPeriod = templateValues.rateIntervalInSeconds * templateValues.durationNumberOfUnits;
+        // Final date = Start date + lockPeriod
+        const ts = new Date(templateValues.startUtc).getTime();
+        const finishDate = new Date((lockPeriod * 1000) + ts);
+        return finishDate;
+    }, []);
+
+    // Set template data map
     useEffect(() => {
 
         if (!msp || loadingVestingAccounts || !streamingAccounts || loadingTemplates) { return; }
@@ -106,6 +144,7 @@ export const VestingContractList = (props: {
 
     });
 
+    // Set chart completed percentages
     useEffect(() => {
         if (loadingVestingAccounts || loadingTemplates || !streamingAccounts || !vcTemplates) { return; }
 
@@ -114,26 +153,32 @@ export const VestingContractList = (props: {
             let streamTemplate: StreamTemplate | undefined = undefined;
             let startDate: string | undefined = undefined;
 
+            // get the contract template from the map if the item exists
             if (vcTemplates && vcTemplates[contract.id as string] && vcTemplates[contract.id as string].startUtc) {
                 streamTemplate = vcTemplates[contract.id as string];
+                // Set a start date for the contract
                 const localDate = new Date(vcTemplates[contract.id as string].startUtc);
                 startDate = localDate.toUTCString();
             }
 
             let completedVestingPercentage = 0;
             if (contract && streamTemplate && startDate) {
+
                 if (contract.totalStreams === 0) {
                     completedVestingPercentage = 0;
                 } else if (isStartDateFuture(startDate)) {
                     completedVestingPercentage = 0;
                 } else {
-                    const lockPeriodAmount = streamTemplate.durationNumberOfUnits;
-                    const lockPeriodUnits = streamTemplate.rateIntervalInSeconds;
-                    const lockPeriod = lockPeriodAmount * lockPeriodUnits;
-                    const sdTimestamp = toTimestamp(startDate);
-                    const finishDate = new Date((sdTimestamp + lockPeriod) * 1000).toUTCString();
+                    const finishDate = getContractFinishDate(streamTemplate).toUTCString();
                     const todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
-                    completedVestingPercentage = todayPct > 100 ? 100 : todayPct;
+                    const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
+                    if (cliffPercent > 0) {
+                        completedVestingPercentage = todayPct > cliffPercent
+                            ? todayPct > 100 ? 100 : todayPct
+                            : cliffPercent;
+                    } else {
+                        completedVestingPercentage = todayPct > 100 ? 100 : todayPct;
+                    }
                 }
             } else {
                 completedVestingPercentage = 0;
@@ -142,7 +187,7 @@ export const VestingContractList = (props: {
         }
         setVcCompleteness(completedPercentages);
 
-    }, [isStartDateFuture, loadingTemplates, loadingVestingAccounts, streamingAccounts, today, vcTemplates]);
+    }, [getContractFinishDate, getContractTemplateValues, isStartDateFuture, loadingTemplates, loadingVestingAccounts, streamingAccounts, vcTemplates]);
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
         event.currentTarget.src = FALLBACK_COIN_IMAGE;
