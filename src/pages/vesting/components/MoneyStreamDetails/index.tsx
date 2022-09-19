@@ -528,30 +528,15 @@ export const MoneyStreamDetails = (props: {
     );
   };
 
-  // Tabs
-  const tabs = [
-    {
-      id: "details",
-      name: "Details",
-      render: renderDetails()
-    },
-    {
-      id: "activity",
-      name: "Activity",
-      render: renderActivities()
-    }
-  ];
-
   const renderTabset = () => {
     return (
       <Tabs activeKey={tabOption} onChange={onTabChanged} className="neutral">
-        {tabs.map(item => {
-          return (
-            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
-              {item.render}
-            </TabPane>
-          );
-        })}
+        <TabPane tab="Details" key="details" tabKey="details">
+          {renderDetails()}
+        </TabPane>
+        <TabPane tab="Activity" key="activity" tabKey="activity">
+          {renderActivities()}
+        </TabPane>
       </Tabs>
     );
   }
@@ -626,7 +611,7 @@ export const MoneyStreamDetails = (props: {
 
         {stream && renderStreamBalance(stream)}
 
-        {tabs && renderTabset()}
+        {renderTabset()}
 
       </div>
     </>
