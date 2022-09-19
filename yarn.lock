@@ -2009,10 +2009,10 @@
     prompt-sync "^4.2.0"
     yaml "^1.10.2"
 
-"@mean-dao/msp@3.0.0-alpha.17":
-  version "3.0.0-alpha.17"
-  resolved "https://registry.yarnpkg.com/@mean-dao/msp/-/msp-3.0.0-alpha.17.tgz#30b047fb1b0c5ff92187177fe651d50c3d77e809"
-  integrity sha512-FMzzIHRtJrSAx4TmbQxctmLVXsdWohGnTcOGNnMfCzBLfAVuClP9Qel0IzvCnIyAuXs5C53Uu0fMzZnftfNYyA==
+"@mean-dao/msp@3.0.0-alpha.18":
+  version "3.0.0-alpha.18"
+  resolved "https://registry.yarnpkg.com/@mean-dao/msp/-/msp-3.0.0-alpha.18.tgz#9ead6d6a3df4389ea4a22e763f27102230ccd1e9"
+  integrity sha512-9Jy5uMzxyxg+ESAG2S8mSPtVqSt9oaqwpPSzOjpkdHiNnepV1WbrnJuPtX9sPAla7L5lTWxJ+n+Bld6zK7vJPw==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@solana/spl-token" "^0.1.8"
@@ -2020,10 +2020,10 @@
     bignumber.js "^9.1.0"
     bn.js "^5.2.0"
 
-"@mean-dao/staking@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@mean-dao/staking/-/staking-1.0.0.tgz#dcba50b50446a97b2f210edbb75af1c16364beec"
-  integrity sha512-umVNskztDt9Y1jTcCX26y58NIZNo6Vceu7nrtFt/OHCRrzgwU7cXrDItRndtooFUoPiRk8aKVZpvSdsDUXQFZw==
+"@mean-dao/staking@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@mean-dao/staking/-/staking-1.1.0.tgz#99b5b657d72d6bf01b0b0a9496ff980579eada8d"
+  integrity sha512-KIuLDvyzTfwsdnyTowNvBoe1W7rBQCNCxjIMahLmxoTOST3x6sFVnTz3Rr9iOgmq4yhs8aMj4GD4GZsaViIb1w==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@solana/spl-token" "^0.1.8"

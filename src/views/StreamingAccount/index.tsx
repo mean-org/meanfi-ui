@@ -568,7 +568,7 @@ export const StreamingAccountView = (props: {
         }
       } else {
         switch (v2.status) {
-          case STREAM_STATUS.Schedule:
+          case STREAM_STATUS.Scheduled:
             return t('streams.status.status-scheduled');
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
@@ -633,7 +633,7 @@ export const StreamingAccountView = (props: {
         }
       } else {
         switch (v2.status) {
-          case STREAM_STATUS.Schedule:
+          case STREAM_STATUS.Scheduled:
             return `starts on ${getShortDate(v2.startUtc)}`;
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {

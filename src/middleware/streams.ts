@@ -32,7 +32,7 @@ export const getStreamTitle = (item: Stream | StreamInfo, trans?: any): string =
         return `${v2.name}`;
       }
 
-      if (v2.status === STREAM_STATUS.Schedule) {
+      if (v2.status === STREAM_STATUS.Scheduled) {
         title = `${trans ? trans('streams.stream-list.title-scheduled-from') : "Scheduled stream from"} (${shortenAddress(`${v2.treasurer}`)})`;
       } else if (v2.status === STREAM_STATUS.Paused) {
         title = `${trans ? trans('streams.stream-list.title-paused-from') : "Paused stream from"} (${shortenAddress(`${v2.treasurer}`)})`;

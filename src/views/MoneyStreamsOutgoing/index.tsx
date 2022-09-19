@@ -2633,7 +2633,7 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     } else {
       switch (v2.status) {
-        case STREAM_STATUS.Schedule:
+        case STREAM_STATUS.Scheduled:
           return "scheduled";
         case STREAM_STATUS.Paused:
           if (v2.isManuallyPaused) {

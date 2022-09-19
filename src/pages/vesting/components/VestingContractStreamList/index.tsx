@@ -250,7 +250,7 @@ export const VestingContractStreamList = (props: {
                 return `${item.name}`;
             }
             if (isInbound) {
-                if (item.status === STREAM_STATUS.Schedule) {
+                if (item.status === STREAM_STATUS.Scheduled) {
                     title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${item.treasurer}`)})`;
                 } else if (item.status === STREAM_STATUS.Paused) {
                     title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${item.treasurer}`)})`;
@@ -258,7 +258,7 @@ export const VestingContractStreamList = (props: {
                     title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${item.treasurer}`)})`;
                 }
             } else {
-                if (item.status === STREAM_STATUS.Schedule) {
+                if (item.status === STREAM_STATUS.Scheduled) {
                     title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${item.beneficiary}`)})`;
                 } else if (item.status === STREAM_STATUS.Paused) {
                     title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${item.beneficiary}`)})`;
@@ -301,7 +301,7 @@ export const VestingContractStreamList = (props: {
             }
 
             if (isInbound) {
-                if (item.status === STREAM_STATUS.Schedule) {
+                if (item.status === STREAM_STATUS.Scheduled) {
                     title = t('streams.stream-list.subtitle-scheduled-inbound', {
                         rate: rateAmount
                     });
@@ -311,7 +311,7 @@ export const VestingContractStreamList = (props: {
                     });
                 }
             } else {
-                if (item.status === STREAM_STATUS.Schedule) {
+                if (item.status === STREAM_STATUS.Scheduled) {
                     title = t('streams.stream-list.subtitle-scheduled-outbound', {
                         rate: rateAmount
                     });
@@ -334,7 +334,7 @@ export const VestingContractStreamList = (props: {
 
         if (item) {
             switch (item.status) {
-                case STREAM_STATUS.Schedule:
+                case STREAM_STATUS.Scheduled:
                     bgClass = 'bg-purple';
                     content = t('streams.status.status-scheduled');
                     break;
@@ -363,7 +363,7 @@ export const VestingContractStreamList = (props: {
     const getStreamStatusSubtitle = useCallback((item: Stream) => {
         if (item) {
             switch (item.status) {
-                case STREAM_STATUS.Schedule:
+                case STREAM_STATUS.Scheduled:
                     return t('streams.status.scheduled', { date: getShortDate(item.startUtc) });
                 case STREAM_STATUS.Paused:
                     if (item.isManuallyPaused) {

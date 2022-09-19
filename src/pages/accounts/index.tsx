@@ -57,7 +57,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, isProd, kFormatter, toUsCurrency } from '../../middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from '../../middleware/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -4682,7 +4682,7 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {(isLocal() || (!isProd() && isWhitelisted)) && (
+      {/* {(isLocal() || (!isProd() && isWhitelisted)) && (
         <div className="debug-bar">
           <span>loadingTokenAccounts:</span><span className="ml-1 font-extrabold">{loadingTokenAccounts ? 'true' : 'false'}</span>
           <span className="ml-2">shouldLoadTokens:</span><span className="ml-1 font-extrabold">{shouldLoadTokens ? 'true' : 'false'}</span>
@@ -4690,7 +4690,7 @@ export const AccountsNewView = () => {
           <span className="ml-2">userTokensResponse:</span><span className="ml-1 font-extrabold">{userTokensResponse !== null ? 'true' : 'false'}</span>
           <span className="ml-2">accountAddress:</span><span className="ml-1 font-extrabold">{accountAddress ? shortenAddress(accountAddress) : '-'}</span>
         </div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button
