@@ -814,10 +814,8 @@ export const VestingContractCreateStreamModal = (props: {
                             <span className="ml-1">
                                 {
                                     paymentStartDate
-                                    ? isStartDateFuture(paymentStartDate)
                                         ? getReadableDate(paymentStartDate, true)
-                                        : t('vesting.create-stream.start-immediately')
-                                    : '--'
+                                        : '--'
                                 }
                             </span>
                         </Col>

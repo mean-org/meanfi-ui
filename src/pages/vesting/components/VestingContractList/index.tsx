@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Empty, Progress, Tooltip } from 'antd';
+import { Empty, Progress } from 'antd';
 import { MSP, StreamTemplate, Treasury } from '@mean-dao/msp';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../../../components/Identicon';
@@ -7,7 +7,7 @@ import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { formatThousands, getSdkValue, makeDecimal } from '../../../../middleware/utils';
 import { PublicKey } from '@solana/web3.js';
-import { consoleOut, delay, getPercentualTsBetweenTwoDates, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../middleware/ui';
+import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd } from '../../../../middleware/ui';
 import { IconLoading } from '../../../../Icons';
 import BN from 'bn.js';
 
@@ -28,7 +28,6 @@ export const VestingContractList = (props: {
     const { t } = useTranslation('common');
     const {
         theme,
-        isWhitelisted,
         getTokenByMintAddress,
     } = useContext(AppStateContext);
     const [today, setToday] = useState(new Date());
@@ -205,24 +204,22 @@ export const VestingContractList = (props: {
                                                 isStartDateFuture(vcTemplates[item.id as string].startUtc)
                                                     ? `Contract starts on ${getReadableDate(vcTemplates[item.id as string].startUtc, true)}`
                                                     : (
-                                                        <Tooltip placement="bottom" title={isWhitelisted ? `${formatThousands(vcCompleteness[item.id as string] || 0, 2)}%` : ''}>
-                                                            <Progress
-                                                                percent={vcCompleteness[item.id as string] || 0}
-                                                                showInfo={false}
-                                                                status={
-                                                                    vcCompleteness[item.id as string] === 0
-                                                                        ? "normal"
-                                                                        : vcCompleteness[item.id as string] < 100
-                                                                            ? "active"
-                                                                            : "success"
-                                                                }
-                                                                size="small"
-                                                                type="line"
-                                                                className="vesting-list-progress-bar small"
-                                                                trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
-                                                                style={{ width: 200 }}
-                                                            />
-                                                        </Tooltip>
+                                                        <Progress
+                                                            percent={vcCompleteness[item.id as string] || 0}
+                                                            showInfo={false}
+                                                            status={
+                                                                vcCompleteness[item.id as string] === 0
+                                                                    ? "normal"
+                                                                    : vcCompleteness[item.id as string] < 100
+                                                                        ? "active"
+                                                                        : "success"
+                                                            }
+                                                            size="small"
+                                                            type="line"
+                                                            className="vesting-list-progress-bar small"
+                                                            trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                                            style={{ width: 200 }}
+                                                        />
                                                     )
                                             }
                                         </span>

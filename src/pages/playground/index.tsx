@@ -2006,6 +2006,7 @@ export const PlaygroundView = () => {
           isVisible={isStreamDetailModalVisible}
           msp={msp}
           selectedToken={selectedToken}
+          isDebugging={true}
         />
       )}
 
