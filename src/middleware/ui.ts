@@ -52,8 +52,10 @@ export const friendlyDisplayDecimalPlaces = (amount: number | string, decimals?:
         const baseConvert = new BigNumber(10 ** decimals);
         const bigNumberAmount = new BigNumber(amount);
         const value = bigNumberAmount.div(baseConvert);
-        if (value.isLessThan(1000)) {
+        if (value.isLessThan(100)) {
             return decimals || undefined;
+        } else if (value.isGreaterThanOrEqualTo(100) && value.isLessThan(1000)) {
+            return 4;
         } else if (value.isGreaterThanOrEqualTo(1000) && value.isLessThan(100000)) {
             return 3;
         } else {

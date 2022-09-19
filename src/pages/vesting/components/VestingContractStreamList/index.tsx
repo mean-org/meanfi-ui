@@ -13,21 +13,19 @@ import {
 import {
     consoleOut,
     copyText,
-    friendlyDisplayDecimalPlaces,
     getIntervalFromSeconds,
     getShortDate,
     getTimeToNow,
     getTransactionModalTitle,
     getTransactionOperationDescription,
     getTransactionStatusForLogs,
-    stringNumberFormat,
     toTimestamp
 } from '../../../../middleware/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../../../middleware/utils';
+import { displayAmountWithSymbol, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from '../../../../middleware/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
@@ -181,38 +179,39 @@ export const VestingContractStreamList = (props: {
         if (!selectedToken) {
             return '';
         }
-        let value = '';
 
         const rateAmount = new BN(item.rateAmount);
 
-        value += stringNumberFormat(
-            toUiAmount(rateAmount, selectedToken.decimals),
-            friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
-        )
-
-        value += ' ';
-        value += selectedToken.symbol || `[${shortenAddress(item.associatedToken)}]`;
+        const value = displayAmountWithSymbol(
+            rateAmount,
+            selectedToken.address,
+            selectedToken.decimals,
+            splTokenList,
+            true,
+            true
+        );
 
         return value;
-    }, [selectedToken]);
+    }, [selectedToken, splTokenList]);
 
     const getDepositAmountDisplay = useCallback((item: Stream): string => {
         if (!selectedToken) {
             return '';
         }
-        let value = '';
 
         const allocationAssigned = new BN(item.allocationAssigned);
-        value += stringNumberFormat(
-            toUiAmount(allocationAssigned, selectedToken.decimals),
-            friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
-        )
 
-        value += ' ';
-        value += selectedToken.symbol || `[${shortenAddress(item.associatedToken)}]`;
+        const value = displayAmountWithSymbol(
+            allocationAssigned,
+            selectedToken.address,
+            selectedToken.decimals,
+            splTokenList,
+            true,
+            true
+        );
 
         return value;
-    }, [selectedToken]);
+    }, [selectedToken, splTokenList]);
 
     const getNoStreamsMessage = useCallback(() => {
         if (vestingContract && streamTemplate) {
@@ -225,22 +224,6 @@ export const VestingContractStreamList = (props: {
 
         return t('vesting.vesting-account-streams.no-streams');
     }, [isDateInTheFuture, streamTemplate, t, vestingContract]);
-
-    // const getStreamTypeIcon = useCallback((item: Stream) => {
-    //     if (isInboundStream(item)) {
-    //         return (
-    //             <span className="stream-type incoming">
-    //                 <ArrowDownOutlined />
-    //             </span>
-    //         );
-    //     } else {
-    //         return (
-    //             <span className="stream-type outgoing">
-    //                 <ArrowUpOutlined />
-    //             </span>
-    //         );
-    //     }
-    // }, [isInboundStream]);
 
     const getStreamTitle = (item: Stream): string => {
         let title = '';
@@ -491,7 +474,7 @@ export const VestingContractStreamList = (props: {
                     new PublicKey(data.payer),              // destination
                     new PublicKey(data.stream),             // stream,
                     data.closeTreasury,                     // closeTreasury
-                    true                                    // TODO: Define if the user can determine this
+                    true
                 );
             }
 
@@ -506,7 +489,7 @@ export const VestingContractStreamList = (props: {
 
             const closeStream = await msp.closeStream(
                 new PublicKey(data.payer),              // payer
-                new PublicKey(data.payer),              // TODO: This should come from the UI 
+                new PublicKey(data.payer),              // destination 
                 new PublicKey(data.stream),             // stream,
                 data.closeTreasury,                     // closeTreasury
                 false

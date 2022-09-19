@@ -3,8 +3,8 @@ import BN from 'bn.js';
 import './style.scss';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { Stream, STREAM_STATUS, StreamActivity, MSP } from '@mean-dao/msp';
-import { displayAmountWithSymbol, shortenAddress, toUiAmount } from '../../../../middleware/utils';
-import { friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates, stringNumberFormat } from '../../../../middleware/ui';
+import { displayAmountWithSymbol, shortenAddress } from '../../../../middleware/utils';
+import { getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../middleware/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
@@ -111,38 +111,38 @@ export const MoneyStreamDetails = (props: {
     if (!selectedToken) {
       return '';
     }
-    let value = '';
 
     const rateAmount = new BN(item.rateAmount);
 
-    value += stringNumberFormat(
-      toUiAmount(rateAmount, selectedToken.decimals),
-      friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
-    )
-
-    value += ' ';
-    value += selectedToken.symbol || `[${shortenAddress(item.associatedToken)}]`;
+    const value = displayAmountWithSymbol(
+      rateAmount,
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
+      true,
+      true
+    );
 
     return value;
-  }, [selectedToken]);
+  }, [selectedToken, splTokenList]);
 
   const getDepositAmountDisplay = useCallback((item: Stream): string => {
     if (!selectedToken) {
       return '';
     }
-    let value = '';
 
     const allocationAssigned = new BN(item.allocationAssigned);
-    value += stringNumberFormat(
-      toUiAmount(allocationAssigned, selectedToken.decimals),
-      friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
-    )
-
-    value += ' ';
-    value += selectedToken.symbol || `[${shortenAddress(item.associatedToken)}]`;
+    const value = displayAmountWithSymbol(
+      allocationAssigned,
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
+      true,
+      true
+    );
 
     return value;
-  }, [selectedToken]);
+  }, [selectedToken, splTokenList]);
 
   const getStreamSubtitle = useCallback((item: Stream) => {
     let title = '';
@@ -420,14 +420,17 @@ export const MoneyStreamDetails = (props: {
                   </div>
                   <div className="rate-cell">
                     <div className="rate-amount">
-                      { selectedToken
-                        ? displayAmountWithSymbol(
-                            new BN(item.amount),
-                            item.mint,
-                            selectedToken.decimals,
-                            splTokenList,
-                          )
-                        : '--'
+                      {
+                        selectedToken
+                          ? displayAmountWithSymbol(
+                              new BN(item.amount),
+                              item.mint,
+                              selectedToken.decimals,
+                              splTokenList,
+                              true,
+                              true
+                            )
+                          : '--'
                       }
                     </div>
                     <div className="interval">{getShortDate(item.utcDate as string, true)}</div>

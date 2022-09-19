@@ -14,12 +14,10 @@ import {
     getlllDate,
     relativeTimeFromDates,
     consoleOut,
-    stringNumberFormat,
     percentageBn,
     percentualBn,
-    friendlyDisplayDecimalPlaces,
 } from '../../../../middleware/ui';
-import { makeDecimal, toUiAmount } from '../../../../middleware/utils';
+import { displayAmountWithSymbol, makeDecimal } from '../../../../middleware/utils';
 import BN from 'bn.js';
 import { Alert, Progress } from 'antd';
 import { TokenIcon } from '../../../../components/TokenIcon';
@@ -47,7 +45,7 @@ export const VestingContractOverview = (props: {
     const { t } = useTranslation('common');
     const {
         theme,
-        isWhitelisted,
+        splTokenList,
     } = useContext(AppStateContext);
     const [today, setToday] = useState(new Date());
     const [startRemainingTime, setStartRemainingTime] = useState('');
@@ -303,16 +301,24 @@ export const VestingContractOverview = (props: {
                             />
                             <span className="font-size-100 font-bold fg-secondary-75 pl-2">
                                 {
-                                    stringNumberFormat(
-                                        toUiAmount(currentVestingAmount.toString(), selectedToken.decimals),
-                                        friendlyDisplayDecimalPlaces(currentVestingAmount.toString()) || selectedToken.decimals
+                                    displayAmountWithSymbol(
+                                        currentVestingAmount.toString(),
+                                        selectedToken.address,
+                                        selectedToken.decimals,
+                                        splTokenList,
+                                        true,
+                                        false
                                     )
                                 } of {
-                                    stringNumberFormat(
-                                        toUiAmount(vestingContractFlowRate.streamableAmountBn, selectedToken.decimals),
-                                        friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmountBn.toString()) || selectedToken.decimals
+                                    displayAmountWithSymbol(
+                                        vestingContractFlowRate.streamableAmountBn,
+                                        selectedToken.address,
+                                        selectedToken.decimals,
+                                        splTokenList,
+                                        true,
+                                        true
                                     )
-                                } {selectedToken.symbol} vested
+                                } vested
                             </span>
                         </div>
                         <div className="flex-fixed-right">
@@ -344,7 +350,7 @@ export const VestingContractOverview = (props: {
                 )}
             </>
         );
-    }, [completedVestingPercentage, currentVestingAmount, isContractFinished, selectedToken, theme, vestingContract, vestingContractFlowRate]);
+    }, [completedVestingPercentage, currentVestingAmount, isContractFinished, selectedToken, splTokenList, theme, vestingContract, vestingContractFlowRate]);
 
     const getRelativeFinishDate = () => {
         const finishDate = getContractFinishDate();
@@ -386,15 +392,18 @@ export const VestingContractOverview = (props: {
                                 Unallocated tokens
                             </div>
                             <div className="font-size-100 fg-secondary-50">
-                                {selectedToken ? (
-                                    <>
-                                        {`${stringNumberFormat(
-                                                toUiAmount(availableStreamingBalance, selectedToken.decimals),
-                                                4,
-                                            )} ${selectedToken.symbol}`
-                                        }
-                                    </>
-                                ) : '--'}
+                                {
+                                    selectedToken
+                                        ? displayAmountWithSymbol(
+                                            availableStreamingBalance,
+                                            selectedToken.address,
+                                            selectedToken.decimals,
+                                            splTokenList,
+                                            true,
+                                            true
+                                        )
+                                        : '--'
+                                }
                             </div>
                         </div>
                     </div>

@@ -286,7 +286,8 @@ export const displayAmountWithSymbol = (
   address: string,
   tokenDecimals?: number,
   tokenList?: TokenInfo[],
-  friendlyDecimals = false
+  friendlyDecimals = false,
+  showSymbol = true,
 ) => {
 
   let token: TokenInfo | undefined = undefined;
@@ -345,16 +346,16 @@ export const displayAmountWithSymbol = (
       ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
     const value = bigNumberAmount.div(baseConvert);
     const decimalPlaces = friendlyDecimals
-      ? friendlyDisplayDecimalPlaces(value.toString(), decimals) || decimals
+      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
       : decimals;
     if (friendlyDecimals) {
       BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
     }
     inputAmount = value.toFormat(decimalPlaces);
     if (token) {
-      return `${inputAmount} ${token.symbol}`;
+      return showSymbol ? `${inputAmount} ${token.symbol}` : inputAmount;
     } else {
-      return `${inputAmount} [${shortenAddress(address, 4)}]`;
+      return showSymbol ? `${inputAmount} [${shortenAddress(address, 4)}]` : inputAmount;
     }
   }
 }

@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { StreamTemplate, Treasury } from '@mean-dao/msp';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
-import { makeDecimal, shortenAddress, toUiAmount } from '../../../../middleware/utils';
+import { displayAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../middleware/utils';
 import { Identicon } from '../../../../components/Identicon';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
@@ -13,7 +13,6 @@ import BN from 'bn.js';
 import { IconLoading } from '../../../../Icons';
 import {
     consoleOut,
-    friendlyDisplayDecimalPlaces,
     getIntervalFromSeconds,
     getLockPeriodOptionLabelByAmount,
     getPaymentIntervalFromSeconds,
@@ -21,7 +20,6 @@ import {
     getTimeEllapsed,
     percentageBn,
     percentualBn,
-    stringNumberFormat,
 } from '../../../../middleware/ui';
 import { PaymentRateType } from '../../../../models/enums';
 import { Progress } from 'antd';
@@ -45,6 +43,7 @@ export const VestingContractDetails = (props: {
     } = props;
     const {
         theme,
+        splTokenList,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
     const [today, setToday] = useState(new Date());
@@ -282,11 +281,15 @@ export const VestingContractDetails = (props: {
                             <>
                                 {vestingContractFlowRate.amountBn.gtn(0) && (
                                     <span className="mr-1">Sending {
-                                        stringNumberFormat(
-                                            toUiAmount(vestingContractFlowRate.amountBn, selectedToken.decimals),
-                                            friendlyDisplayDecimalPlaces(vestingContractFlowRate.amountBn.toString()) || selectedToken.decimals
+                                        displayAmountWithSymbol(
+                                            vestingContractFlowRate.amountBn,
+                                            selectedToken.address,
+                                            selectedToken.decimals,
+                                            splTokenList,
+                                            true,
+                                            true
                                         )
-                                    } {selectedToken.symbol} {getIntervalFromSeconds(vestingContractFlowRate.durationUnit)}</span>
+                                    } {getIntervalFromSeconds(vestingContractFlowRate.durationUnit)}</span>
                                 )}
                             </>
                         ) : null}
@@ -325,20 +328,26 @@ export const VestingContractDetails = (props: {
                                     {isDateInTheFuture(paymentStartDate) ? (
                                         <div className="vested-amount">
                                             {
-                                                stringNumberFormat(
-                                                    toUiAmount(vestingContractFlowRate.streamableAmountBn, selectedToken.decimals),
-                                                    friendlyDisplayDecimalPlaces(vestingContractFlowRate.streamableAmountBn.toString()) || selectedToken.decimals
+                                                displayAmountWithSymbol(
+                                                    vestingContractFlowRate.streamableAmountBn,
+                                                    selectedToken.address,
+                                                    selectedToken.decimals,
+                                                    splTokenList,
+                                                    true
                                                 )
-                                            } {selectedToken.symbol} to be vested
+                                            } to be vested
                                         </div>
                                     ) : (
                                         <div className="vested-amount">
                                             {
-                                                stringNumberFormat(
-                                                    toUiAmount(currentVestingAmount.toString(), selectedToken.decimals),
-                                                    friendlyDisplayDecimalPlaces(currentVestingAmount.toString()) || selectedToken.decimals
+                                                displayAmountWithSymbol(
+                                                    currentVestingAmount.toString(),
+                                                    selectedToken.address,
+                                                    selectedToken.decimals,
+                                                    splTokenList,
+                                                    true
                                                 )
-                                            } {selectedToken.symbol} vested
+                                            } vested
                                         </div>
                                     )}
                                 </>
