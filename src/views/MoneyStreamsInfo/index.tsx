@@ -26,7 +26,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigTransactionFees, MULTISIG_ACTIONS } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../middleware/ui";
+import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../middleware/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import {
   cutNumber,
@@ -54,7 +54,7 @@ import { StreamsSummary } from "../../models/streams";
 import { Identicon } from "../../components/Identicon";
 import { openNotification } from "../../components/Notifications";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES } from "../../constants";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { TreasuryTopupParams } from "../../models/common-types";
 import useWindowSize from "../../hooks/useWindowResize";
@@ -66,8 +66,6 @@ import BigNumber from "bignumber.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { appConfig } from '../..';
 import { ZERO_FEES } from "../../models/multisig";
-
-const { TabPane } = Tabs;
 
 export const MoneyStreamsInfoView = (props: {
   accountAddress: string;
@@ -2801,44 +2799,41 @@ export const MoneyStreamsInfoView = (props: {
   // Tabs
   const tabs = [
     {
-      id: "summary",
-      name: "Summary",
-      render: renderSummary
+      key: "summary",
+      label: "Summary",
+      children: renderSummary
     },
     {
-      id: "streaming-accounts",
-      name: `Accounts ${(!loadingTreasuries && !loadingStreams) 
+      key: "streaming-accounts",
+      label: `Accounts ${(!loadingTreasuries && !loadingStreams) 
         ? `(${streamingAccountsAmount && streamingAccountsAmount >= 0 && streamingAccountsAmount})` 
         : ""}`,
-      render: renderListOfStreamingAccounts
+      children: renderListOfStreamingAccounts
     },
     {
-      id: "incoming",
-      name: `Incoming ${(!loadingTreasuries && !loadingStreams) 
+      key: "incoming",
+      label: `Incoming ${(!loadingTreasuries && !loadingStreams) 
         ? `(${incomingAmount && incomingAmount >= 0 && incomingAmount})` 
         : ""}`,
-      render: renderListOfIncomingStreams
+      children: renderListOfIncomingStreams
     },
     {
-      id: "outgoing",
-      name: `Outgoing ${!loadingStreams
+      key: "outgoing",
+      label: `Outgoing ${!loadingStreams
         ? `(${outgoingAmount && outgoingAmount >= 0 && outgoingAmount})` 
         : ""}`,
-      render: renderListOfOutgoingStreams
+      children: renderListOfOutgoingStreams
     },
   ];
 
   const renderTabset = () => {
     return (
-      <Tabs activeKey={selectedTab} onChange={onTabChange} className="neutral">
-        {tabs.map(item => {
-          return (
-            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
-              {item.render}
-            </TabPane>
-          );
-        })}
-      </Tabs>
+      <Tabs
+        items={tabs}
+        activeKey={selectedTab}
+        onChange={onTabChange}
+        className="neutral"
+      />
     );
   }
 

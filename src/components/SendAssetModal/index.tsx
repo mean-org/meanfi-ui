@@ -6,7 +6,6 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { UserTokenAccount } from '../../models/transactions';
 import { useLocation } from 'react-router-dom';
 
-const { TabPane } = Tabs;
 type TransfersTabOption = "one-time" | "recurring";
 
 export const SendAssetModal = (props: {
@@ -26,6 +25,19 @@ export const SendAssetModal = (props: {
     }
   }, [isVisible, selectedToken]);
 
+  const tabs = [
+    {
+      key: "one-time",
+      label: t('swap.tabset.one-time'),
+      children: (<OneTimePayment inModal={true} transferCompleted={props.handleClose} token={token} tokenChanged={(t: TokenInfo) => setToken(t)} />)
+    },
+    {
+      key: "recurring",
+      label: t('swap.tabset.recurring'),
+      children: (<RepeatingPayment inModal={true} transferCompleted={props.handleClose} token={token} tokenChanged={(t: TokenInfo) => setToken(t)} />)
+    }
+  ];
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -42,14 +54,12 @@ export const SendAssetModal = (props: {
         {location.pathname.endsWith('/streams') ? (
           <RepeatingPayment inModal={true} transferCompleted={props.handleClose} token={token} tokenChanged={(t: TokenInfo) => setToken(t)} />
         ) : (
-          <Tabs className="shift-up-2" defaultActiveKey={selected} centered>
-            <TabPane tab={t('swap.tabset.one-time')} key={"one-time"}>
-              <OneTimePayment inModal={true} transferCompleted={props.handleClose} token={token} tokenChanged={(t: TokenInfo) => setToken(t)} />
-            </TabPane>
-            <TabPane tab={t('swap.tabset.recurring')} key={"recurring"}>
-              <RepeatingPayment inModal={true} transferCompleted={props.handleClose} token={token} tokenChanged={(t: TokenInfo) => setToken(t)} />
-            </TabPane>
-          </Tabs>
+          <Tabs
+            items={tabs}
+            className="shift-up-2"
+            defaultActiveKey={selected}
+            centered
+          />
         )}
     </Modal>
   );

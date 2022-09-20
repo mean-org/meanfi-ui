@@ -1591,7 +1591,7 @@ export const VestingContractStreamList = (props: {
             <Dropdown
                 overlay={menu}
                 trigger={["click"]}
-                onVisibleChange={(visibleChange: any) => {
+                onOpenChange={(visibleChange: any) => {
                     if (visibleChange) {
                         sethHighlightedStream(item);
                         setHighLightableStreamId(item.id.toBase58());

@@ -72,8 +72,6 @@ import BN from "bn.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { ZERO_FEES } from "../../models/multisig";
 
-const { TabPane } = Tabs;
-
 export const StreamingAccountView = (props: {
   multisigAccounts: MultisigInfo[] | undefined;
   onSendFromStreamingAccountDetails?: any;
@@ -1839,7 +1837,7 @@ export const StreamingAccountView = (props: {
 
       const closeTreasury = await msp.closeTreasury(
         publicKey,                                  // payer
-        multisig.authority,                         // TODO: This should come from the UI        
+        multisig.authority,                         // destination
         new PublicKey(data.treasury),               // treasury
         false                                       // autoWsol
       );
@@ -2863,14 +2861,14 @@ export const StreamingAccountView = (props: {
   // Tabs
   const tabs = [
     {
-      id: "streams",
-      name: "Streams",
-      render: renderStreamingAccountStreams()
+      key: "streams",
+      label: "Streams",
+      children: renderStreamingAccountStreams()
     },
     {
-      id: "activity",
-      name: "Activity",
-      render: renderStreamingAccountActivity
+      key: "activity",
+      label: "Activity",
+      children: renderStreamingAccountActivity
     }
   ];
 
@@ -2885,15 +2883,12 @@ export const StreamingAccountView = (props: {
   const renderTabset = () => {
     const option = getQueryTabOption() || 'streams'
     return (
-      <Tabs activeKey={option} onChange={navigateToTab} className="neutral">
-        {tabs.map(item => {
-          return (
-            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
-              {item.render}
-            </TabPane>
-          );
-        })}
-      </Tabs>
+      <Tabs
+        items={tabs}
+        activeKey={option}
+        onChange={navigateToTab}
+        className="neutral"
+      />
     );
   }
 

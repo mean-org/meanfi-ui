@@ -7,8 +7,8 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { MSP, Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, shortenAddress, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates, stringNumberFormat } from "../../middleware/ui";
+import { displayAmountWithSymbol, getAmountWithSymbol, shortenAddress, toTokenAmountBn } from "../../middleware/utils";
+import { consoleOut, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../middleware/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
@@ -26,8 +26,6 @@ import { getCategoryLabelByValue } from "../../models/enums";
 import { PublicKey } from "@solana/web3.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { MoneyStreaming } from "@mean-dao/money-streaming";
-
-const { TabPane } = Tabs;
 
 export const MoneyStreamDetails = (props: {
   accountAddress: string;
@@ -808,28 +806,25 @@ export const MoneyStreamDetails = (props: {
   // Tabs
   const tabs = [
     {
-      id: "details",
-      name: "Details",
-      render: renderDetails
+      key: "details",
+      label: "Details",
+      children: renderDetails
     },
     {
-      id: "activity",
-      name: "Activity",
-      render: stream && renderActivities()
+      key: "activity",
+      label: "Activity",
+      children: stream && renderActivities()
     }
   ];
 
   const renderTabset = () => {
     return (
-      <Tabs activeKey={tabOption} onChange={navigateToTab} className="neutral">
-        {tabs.map(item => {
-          return (
-            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
-              {item.render}
-            </TabPane>
-          );
-        })}
-      </Tabs>
+      <Tabs
+        items={tabs}
+        activeKey={tabOption}
+        onChange={navigateToTab}
+        className="neutral"
+      />
     );
   }
 
