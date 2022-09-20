@@ -203,14 +203,24 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
+/**
+ * Converts a number or string representation of an amount to a formatted amount string ready to display optionally including the token symbol.
+ * @param {number | string} amount - The token amount to be displayed as UI amount.
+ * @param {string} address - The mint address of the token corresponding to the token amount.
+ * @param {boolean} onlyValue - Flag to only obtain the value but not the token symbol. Default is false.
+ * @param {TokenInfo[]} tokenList - A token list where to look for the token meta (symbol and decimals).
+ * @param {number} tokenDecimals - The token decimals if known beforehand. Can be inferred if found in tokenList but it works better by providing it.
+ * @param {boolean} friendlyDecimals - Flag to indicate to reduce the amount of decimals to display when possible based on the amount. Default is false.
+ * @returns {string} - The formatted value including the token symbol if indicated.
+ */
 export const getAmountWithSymbol = (
-  amount: number | string | BN,
+  amount: number | string,
   address: string,
   onlyValue = false,
   tokenList?: TokenInfo[],
   tokenDecimals?: number,
   friendlyDecimals = false
-) => {
+): string => {
 
   let token: TokenInfo | undefined = undefined;
   if (address) {
@@ -281,6 +291,16 @@ export const getAmountWithSymbol = (
   }
 }
 
+/**
+ * Converts a token amount in a UI readable format ready to display optionally including the token symbol. This method does essentially the same of getAmountWithSymbol witht the difference that the amount provided should be legitimally a token amount and providing token details it is converted to UI amount.
+ * @param {number | string | BN} amount - The token amount to be displayed as UI amount.
+ * @param {string} address - The mint address of the token corresponding to the token amount.
+ * @param {number} tokenDecimals - The token decimals if known beforehand. Can be inferred if found in tokenList but it works better by providing it.
+ * @param {TokenInfo[]} tokenList - A token list where to look for the token meta (symbol and decimals).
+ * @param {boolean} friendlyDecimals - Flag to indicate to reduce the amount of decimals to display when possible based on the amount. Default is false.
+ * @param {boolean} showSymbol - Flag to indicate adding the token symbol to the resulting value. Default is true.
+ * @returns {string} - The formatted value including the token symbol if indicated.
+ */
 export const displayAmountWithSymbol = (
   amount: number | string | BN,
   address: string,
@@ -288,7 +308,7 @@ export const displayAmountWithSymbol = (
   tokenList?: TokenInfo[],
   friendlyDecimals = false,
   showSymbol = true,
-) => {
+): string => {
 
   let token: TokenInfo | undefined = undefined;
   if (address) {
@@ -326,7 +346,10 @@ export const displayAmountWithSymbol = (
       const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
       const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
-      const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
+      const decimalPlaces = friendlyDecimals
+        ? friendlyDisplayDecimalPlaces(parseFloat(formatted2), decimals) || decimals
+        : decimals;
+      const toLocale = formatThousands(parseFloat(formatted2), decimalPlaces, decimalPlaces);
       return `${toLocale} ${token.symbol}`;
     } else if (address && !token) {
       const formatted = formatThousands(inputAmount, 5, 5);

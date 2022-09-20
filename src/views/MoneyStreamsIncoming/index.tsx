@@ -39,7 +39,6 @@ import { useSearchParams } from "react-router-dom";
 import { readAccountInfo } from "../../middleware/accounts";
 import { appConfig } from '../..';
 import BN from "bn.js";
-import { getReadableStream } from "../../middleware/streams";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

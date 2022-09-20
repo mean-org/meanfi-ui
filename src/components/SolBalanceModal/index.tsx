@@ -4,9 +4,8 @@ import { QRCodeSVG } from "qrcode.react";
 import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { IconLoading } from "../../Icons";
-import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { NATIVE_SOL } from "../../constants/tokens";
-import { displayAmountWithSymbol, getAmountFromLamports, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, toUiAmount } from "../../middleware/utils";
+import { displayAmountWithSymbol, getAmountFromLamports, getAmountWithSymbol, toUiAmount } from "../../middleware/utils";
 import { AddressDisplay } from "../AddressDisplay";
 
 export const SolBalanceModal = (props: {

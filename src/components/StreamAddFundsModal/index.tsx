@@ -528,7 +528,7 @@ export const StreamAddFundsModal = (props: {
                       <span>
                         {
                           getAmountWithSymbol(
-                            unallocatedBalance,
+                            unallocatedBalance.toString(),
                             selectedToken.address,
                             true,
                             splTokenList,

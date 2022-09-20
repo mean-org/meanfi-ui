@@ -14,7 +14,6 @@ import {
 } from '../../../../middleware/utils';
 import {
   consoleOut,
-  friendlyDisplayDecimalPlaces,
   getTransactionOperationDescription,
   toUsCurrency
 } from '../../../../middleware/ui';
