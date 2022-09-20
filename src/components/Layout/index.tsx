@@ -469,7 +469,7 @@ export const AppLayout = React.memo((props: any) => {
           width={360}
           onClose={hideDrawer}
           className="recent-events"
-          visible={isDrawerVisible}>
+          open={isDrawerVisible}>
           {confirmationHistory && confirmationHistory.length > 0 ? (
             <TransactionConfirmationHistory confirmationHistory={confirmationHistory} />
           ) : (

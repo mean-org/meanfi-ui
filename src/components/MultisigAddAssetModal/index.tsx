@@ -412,7 +412,7 @@ export const MultisigAddAssetModal = (props: {
         placement="bottom"
         closable={true}
         onClose={onCloseTokenSelector}
-        visible={isTokenSelectorVisible}
+        open={isTokenSelectorVisible}
         getContainer={false}
         style={{ position: 'absolute' }}>
         {renderTokenSelectorInner}
