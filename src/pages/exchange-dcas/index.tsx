@@ -21,7 +21,7 @@ import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'a
 import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { Identicon } from '../../components/Identicon';
 import "./style.scss";
-import { formatThousands, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, useLocalStorageState } from '../../middleware/utils';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, useLocalStorageState } from '../../middleware/utils';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
@@ -259,9 +259,9 @@ export const ExchangeDcasView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
@@ -543,9 +543,9 @@ export const ExchangeDcasView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(balance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(balance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('DDCA withdraw transaction failed', { transcript: transactionLog });
@@ -987,7 +987,7 @@ export const ExchangeDcasView = () => {
 
   const getRecurringBuyTitle = (item: DdcaAccount) => {
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
-    return `Buy ${getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint, false, splTokenList)} worth of ${toToken?.symbol}`;
+    return `Buy ${getAmountWithSymbol(item.amountPerSwap, item.fromMint, false, splTokenList)} worth of ${toToken?.symbol}`;
   }
 
   const getRecurringBuySubTitle = (item: DdcaAccount) => {
@@ -1078,7 +1078,7 @@ export const ExchangeDcasView = () => {
             <Identicon address={ddcaDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
           )}
         </span>
-        <span className="info-data ml-1">{getTokenAmountAndSymbolByTokenAddress(amount, token.address, false, splTokenList)}</span>
+        <span className="info-data ml-1">{getAmountWithSymbol(amount, token.address, false, splTokenList)}</span>
       </>
     );
   }
@@ -1088,7 +1088,7 @@ export const ExchangeDcasView = () => {
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
 
     return (
-      <span>{t("ddcas.exchange-dcas.detail-panel-word-one")} <strong>{getTokenAmountAndSymbolByTokenAddress(
+      <span>{t("ddcas.exchange-dcas.detail-panel-word-one")} <strong>{getAmountWithSymbol(
           item.amountPerSwap,
           item.fromMint,
           false,
@@ -1122,18 +1122,18 @@ export const ExchangeDcasView = () => {
     switch (item.action) {
       case "deposited":
         result = t('ddcas.activity.action-deposit', {
-          fromAmount: getTokenAmountAndSymbolByTokenAddress(item.fromAmount || 0, item.fromMint || '', false, splTokenList)
+          fromAmount: getAmountWithSymbol(item.fromAmount || 0, item.fromMint || '', false, splTokenList)
         });
         break;
       case "withdrew":
         result = t('ddcas.activity.action-withdraw', {
-          toAmount: getTokenAmountAndSymbolByTokenAddress(item.toAmount || 0, item.toMint || '', false, splTokenList)
+          toAmount: getAmountWithSymbol(item.toAmount || 0, item.toMint || '', false, splTokenList)
         });
         break;
       case "exchanged":
         result = t('ddcas.activity.action-exchange', {
-          fromAmount: getTokenAmountAndSymbolByTokenAddress(item.fromAmount || 0, item.fromMint || '', false, splTokenList),
-          toAmount: getTokenAmountAndSymbolByTokenAddress(item.toAmount || 0, item.toMint || '', false, splTokenList)
+          fromAmount: getAmountWithSymbol(item.fromAmount || 0, item.fromMint || '', false, splTokenList),
+          toAmount: getAmountWithSymbol(item.toAmount || 0, item.toMint || '', false, splTokenList)
         });
         break;
       default:
@@ -1145,9 +1145,9 @@ export const ExchangeDcasView = () => {
 
   const getOfflineActivityTitle = (item: DdcaDetails): string => {
     const result = `Exchanged ${
-      getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint, false, splTokenList)
+      getAmountWithSymbol(item.amountPerSwap, item.fromMint, false, splTokenList)
     } for ${
-      getTokenAmountAndSymbolByTokenAddress(item.toBalance, item.toMint, false, splTokenList)
+      getAmountWithSymbol(item.toBalance, item.toMint, false, splTokenList)
     }`;
     return result;
   }
@@ -1262,7 +1262,7 @@ export const ExchangeDcasView = () => {
               <div className="mb-3">
                 <div className="info-label">
                   {
-                    t("ddcas.exchange-dcas.exchanged-for")} {getToken(ddcaDetails.fromMint)?.symbol} ≈ {getTokenAmountAndSymbolByTokenAddress(
+                    t("ddcas.exchange-dcas.exchanged-for")} {getToken(ddcaDetails.fromMint)?.symbol} ≈ {getAmountWithSymbol(
                       ddcaDetails.swapAvgRate,
                       ddcaDetails.toMint,
                       false,
@@ -1273,7 +1273,7 @@ export const ExchangeDcasView = () => {
                 <div className="transaction-detail-row">
                   {getTokenIcon(ddcaDetails.toMint)}
                   <span className="info-data large">
-                    {getTokenAmountAndSymbolByTokenAddress(
+                    {getAmountWithSymbol(
                       ddcaDetails.toBalance,
                       ddcaDetails.toMint,
                       false,
@@ -1383,7 +1383,7 @@ export const ExchangeDcasView = () => {
                         </div>
                         <div className="std-table-cell responsive-cell">
                           <span className="align-middle">
-                            {t('ddcas.exchange-dcas.deposited')} {getTokenAmountAndSymbolByTokenAddress(ddcaDetails.totalDepositsAmount, ddcaDetails.fromMint, false, splTokenList)}
+                            {t('ddcas.exchange-dcas.deposited')} {getAmountWithSymbol(ddcaDetails.totalDepositsAmount, ddcaDetails.fromMint, false, splTokenList)}
                           </span>
                         </div>
                         <div className="std-table-cell fixed-width-150">
@@ -1618,12 +1618,12 @@ export const ExchangeDcasView = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: `${getAmountWithSymbol(
                       nativeBalance,
                       NATIVE_SOL_MINT.toBase58(),
                       true
                     )} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: `${getAmountWithSymbol(
                       ddcaTxFees.maxBlockchainFee,
                       NATIVE_SOL_MINT.toBase58(),
                       true
@@ -1666,7 +1666,7 @@ export const ExchangeDcasView = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getTokenAmountAndSymbolByTokenAddress(withdrawFundsAmount, ddcaDetails?.toMint as string, false, splTokenList)}</h5>
+              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, ddcaDetails?.toMint as string, false, splTokenList)}</h5>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                 <div className="indication">{t('transactions.status.instructions')}</div>
               )}
@@ -1691,11 +1691,11 @@ export const ExchangeDcasView = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         ddcaTxFees.maxBlockchainFee,
                         NATIVE_SOL_MINT.toBase58()
                       )

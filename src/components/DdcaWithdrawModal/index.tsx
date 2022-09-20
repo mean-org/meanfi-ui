@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import {
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   getTokenDecimals,
   getTokenSymbol,
   isValidNumber
@@ -233,11 +233,11 @@ export const DdcaWithdrawModal = (props: {
         <div className="p-2 mb-2">
           {isValidInput() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
-            `~${getTokenAmountAndSymbolByTokenAddress((feeAmount as number), props.ddcaDetails.toMint as string)}`
+            `~${getAmountWithSymbol((feeAmount as number), props.ddcaDetails.toMint as string)}`
           )}
           {isValidInput() && infoRow(
             t('transactions.transaction-info.you-receive') + ':',
-            `~${getTokenAmountAndSymbolByTokenAddress(parseFloat(withdrawAmountInput) - (feeAmount as number), props.ddcaDetails.toMint as string)}`
+            `~${getAmountWithSymbol(parseFloat(withdrawAmountInput) - (feeAmount as number), props.ddcaDetails.toMint as string)}`
           )}
         </div>
       )}

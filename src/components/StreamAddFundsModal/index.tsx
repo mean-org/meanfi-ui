@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { cutNumber, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, isValidNumber, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../middleware/utils';
+import { cutNumber, getAmountWithSymbol, isValidNumber, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
@@ -514,7 +514,7 @@ export const StreamAddFundsModal = (props: {
                 {treasuryDetails && treasuryDetails.autoClose ? (
                   <span>
                     {`${selectedToken && selectFromTokenBalance()
-                      ? getTokenAmountAndSymbolByTokenAddress(
+                      ? getAmountWithSymbol(
                           selectFromTokenBalance(),
                           selectedToken?.address,
                           true

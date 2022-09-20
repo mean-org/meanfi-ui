@@ -25,7 +25,7 @@ import { useLocation } from 'react-router-dom';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { formatThousands, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress } from '../../middleware/utils';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol } from '../../middleware/utils';
 import { CUSTOM_USDC_TEST_IDO_DEVNET, MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { PartnerImage } from '../../models/common-types';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
@@ -247,35 +247,6 @@ export const IdoLiveView = () => {
     connectionConfig.endpoint,
     idoEngineInitStatus
   ]);
-
-  // Get list of idos
-  /*
-  useEffect(() => {
-
-    if (!idoClient) { return; }
-
-    const getIdos = async () => {
-      try {
-        const idos = await idoClient.listIdos();
-        if (idos && idos.length > 0) {
-          setIdoList(idos);
-        } else {
-          setIdoList(undefined);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    if (!idoList) {
-      getIdos();
-    }
-  }, [
-    publicKey,
-    idoClient,
-    idoList
-  ]);
-  */
 
   // Fetches the IDO status
   const refreshIdoData = useCallback(async () => {
@@ -900,7 +871,7 @@ export const IdoLiveView = () => {
                             )}
                             {infoRow(
                               'USDC Contributed',
-                              getTokenAmountAndSymbolByTokenAddress(
+                              getAmountWithSymbol(
                                 idoStatus.gaTotalUsdcContributed,
                                 selectedToken.address,
                                 true
@@ -908,7 +879,7 @@ export const IdoLiveView = () => {
                             )}
                             {infoRow(
                               'MEAN tokens sold',
-                              getTokenAmountAndSymbolByTokenAddress(
+                              getAmountWithSymbol(
                                 idoStatus.finalMeanPurchasedAmount,
                                 '',
                                 true
@@ -917,7 +888,7 @@ export const IdoLiveView = () => {
                             {infoRow(
                               'Final token price',
                               idoStatus.finalMeanPrice
-                                ? getTokenAmountAndSymbolByTokenAddress(
+                                ? getAmountWithSymbol(
                                     idoStatus.finalMeanPrice,
                                     selectedToken.address
                                   )

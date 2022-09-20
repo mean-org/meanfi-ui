@@ -11,7 +11,7 @@ import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress 
 import { isError } from '../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../middleware/utils';
+import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TokenDisplay } from '../TokenDisplay';
@@ -56,7 +56,6 @@ export const TreasuryCreateModal = (props: {
     userTokens,
     splTokenList,
     transactionStatus,
-    getTokenPriceBySymbol,
     setTransactionStatus,
   } = useContext(AppStateContext);
   const connection = useConnection();
@@ -72,14 +71,6 @@ export const TreasuryCreateModal = (props: {
   const [userBalances, setUserBalances] = useState<any>();
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   const [workingTokenBalance, setWorkingTokenBalance] = useState<number>(0);
-
-  const getTokenPrice = useCallback((amount: number) => {
-    if (!workingToken) {
-      return 0;
-    }
-
-    return amount * getTokenPriceBySymbol(workingToken.symbol);
-  }, [workingToken, getTokenPriceBySymbol]);
 
   const autoFocusInput = useCallback(() => {
     const input = document.getElementById("token-search-streaming-account");
@@ -588,7 +579,7 @@ export const TreasuryCreateModal = (props: {
                     <span>{t('add-funds.label-right')}:</span>
                     <span>
                       {`${workingTokenBalance && workingToken
-                          ? getTokenAmountAndSymbolByTokenAddress(
+                          ? getAmountWithSymbol(
                               workingTokenBalance,
                               workingToken.address,
                               true
@@ -680,11 +671,11 @@ export const TreasuryCreateModal = (props: {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../middleware/utils';
+import { getAmountWithSymbol } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 
@@ -63,7 +63,7 @@ export const DdcaCloseModal = (props: {
           <div className="p-2 mb-2">
             {infoRow(
               'Amount left:',
-              getTokenAmountAndSymbolByTokenAddress(props.ddcaDetails.fromBalance, props.ddcaDetails.fromMint)
+              getAmountWithSymbol(props.ddcaDetails.fromBalance, props.ddcaDetails.fromMint)
             )}
           </div>
         )}

@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../middleware/utils';
+import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { TransactionStatus } from '../../models/enums';
 import { isError } from '../../middleware/transactions';
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
@@ -117,7 +117,7 @@ export const MultisigVaultDeleteModal = (props: {
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
-            {getTokenAmountAndSymbolByTokenAddress(
+            {getAmountWithSymbol(
               item.balance || 0,
               token ? token.address as string : '',
               true

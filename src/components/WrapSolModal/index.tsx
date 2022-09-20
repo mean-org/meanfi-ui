@@ -13,7 +13,7 @@ import { PublicKey, Transaction } from '@solana/web3.js';
 import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from '../../middleware/ui';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
-import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../middleware/utils';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, isValidNumber } from '../../middleware/utils';
 import { TokenDisplay } from '../TokenDisplay';
 import { LoadingOutlined } from '@ant-design/icons';
 
@@ -508,7 +508,7 @@ export const WrapSolModal = (props: {
               `${
                 wrapAmount
                   ? "~" +
-                    getTokenAmountAndSymbolByTokenAddress(
+                    getAmountWithSymbol(
                       parseFloat(wrapAmount) >=
                         (MIN_SOL_BALANCE_REQUIRED as number)
                         ? parseFloat(wrapAmount)
@@ -518,19 +518,6 @@ export const WrapSolModal = (props: {
                     )
                   : "0"
               }`
-              // `${
-              //   wrapFees
-              //     ? "~" +
-              //       getTokenAmountAndSymbolByTokenAddress(
-              //         parseFloat(wrapAmount) >=
-              //           (wrapFees.blockchainFee as number)
-              //           ? parseFloat(wrapAmount)
-              //           : 0,
-              //         WRAPPED_SOL_MINT_ADDRESS,
-              //         false
-              //       )
-              //     : "0"
-              // }`
             )
           }
         </div>

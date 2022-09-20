@@ -12,7 +12,7 @@ import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { addDays, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../middleware/utils";
+import { addDays, getAmountWithSymbol, shortenAddress } from "../../middleware/utils";
 import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { getCoolOffPeriodOptionLabel, getTransactionOperationDescription, isValidAddress } from "../../middleware/ui";
 import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
@@ -751,11 +751,11 @@ export const MultisigCreateSafeModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       transactionFees.networkFee + transactionFees.multisigFee + transactionFees.rentExempt,
                       NATIVE_SOL_MINT.toBase58()
                     )})

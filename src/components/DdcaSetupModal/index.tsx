@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { DcaInterval } from '../../models/ddca-models';
 import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from '../../middleware/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../middleware/utils';
+import { getAmountWithSymbol, getTxIxResume } from '../../middleware/utils';
 import "./style.scss";
 import { SliderMarks } from 'antd/lib/slider';
 import { InfoIcon } from '../InfoIcon';
@@ -23,21 +23,37 @@ import { IconShieldSolid } from '../../Icons/IconShieldSolid';
 import { openNotification } from '../Notifications';
 
 export const DdcaSetupModal = (props: {
-  endpoint: string;
   connection: Connection;
+  ddcaTxFees: TransactionFees;
+  endpoint: string;
   fromToken: TokenInfo | undefined;
-  fromTokenBalance: number;
   fromTokenAmount: number;
-  toToken: TokenInfo | undefined;
+  fromTokenBalance: number;
   handleClose: any;
   handleOk: any;
-  onAfterClose: any;
-  isVisible: boolean;
-  userBalance: number;
-  ddcaTxFees: TransactionFees;
-  slippage: number;
   hlaInfo: HlaInfo;
+  isVisible: boolean;
+  onAfterClose: any;
+  slippage: number;
+  toToken: TokenInfo | undefined;
+  userBalance: number;
 }) => {
+  const {
+   connection,
+   ddcaTxFees,
+   endpoint,
+   fromToken,
+   fromTokenAmount,
+   fromTokenBalance,
+   handleClose,
+   handleOk,
+   hlaInfo,
+   isVisible,
+   onAfterClose,
+   slippage,
+   toToken,
+   userBalance,
+  } = props;
   const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
   // Transaction control
@@ -63,29 +79,29 @@ export const DdcaSetupModal = (props: {
   const [lockedFromTokenBalance, setLockedFromTokenBalance] = useState<number | undefined>(undefined);
 
   const getGasFeeAmount = useCallback((): number => {
-    return props.ddcaTxFees.maxBlockchainFee + (props.ddcaTxFees.maxFeePerSwap * (lockedSliderValue + 1));
+    return ddcaTxFees.maxBlockchainFee + (ddcaTxFees.maxFeePerSwap * (lockedSliderValue + 1));
   }, [
     lockedSliderValue,
-    props.ddcaTxFees.maxFeePerSwap,
-    props.ddcaTxFees.maxBlockchainFee,
+    ddcaTxFees.maxFeePerSwap,
+    ddcaTxFees.maxBlockchainFee,
   ]);
 
   const hasEnoughNativeBalanceForFees = (): boolean => {
-    return props.userBalance >= getGasFeeAmount() ? true : false;
+    return userBalance >= getGasFeeAmount() ? true : false;
   }
 
-  const getTotalSolAmount = useCallback((): number => {
-    const depositAmount = props.fromTokenAmount * (lockedSliderValue + 1);
+  const getTotalSolAmountNeeded = useCallback((): number => {
+    const depositAmount = fromTokenAmount * (lockedSliderValue + 1);
     return depositAmount + getGasFeeAmount();
   }, [
     lockedSliderValue,
-    props.fromTokenAmount,
+    fromTokenAmount,
     getGasFeeAmount,
   ]);
 
   const isNative = useCallback((): boolean => {
-    return props.fromToken && props.fromToken.symbol === 'SOL' ? true : false;
-  }, [props.fromToken]);
+    return fromToken && fromToken.symbol === 'SOL' ? true : false;
+  }, [fromToken]);
 
   const getInterval = useCallback((): number => {
     switch (ddcaOption?.dcaInterval) {
@@ -154,16 +170,16 @@ export const DdcaSetupModal = (props: {
     // Buy 100 USDC worth of SOL every week ,for 6 weeks, starting today.
     // Buy {{fromTokenAmount}} worth of {{toTokenSymbol}} {{recurrencePeriod}} for {{totalPeriod}}, starting today.
     return `<span>${t('ddca-setup-modal.headline', {
-      fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(props.fromTokenAmount, props.fromToken?.address as string),
-      toTokenSymbol: props.toToken?.symbol,
+      fromTokenAmount: getAmountWithSymbol(fromTokenAmount, fromToken?.address as string),
+      toTokenSymbol: toToken?.symbol,
       recurrencePeriod: getRecurrencePeriod(),
       totalPeriod: getTotalPeriod(lockedSliderValue)
     })}</span>`;
   }, [
     lockedSliderValue,
-    props.fromTokenAmount,
-    props.toToken?.symbol,
-    props.fromToken?.address,
+    fromTokenAmount,
+    toToken?.symbol,
+    fromToken?.address,
     getRecurrencePeriod,
     getTotalPeriod,
     t,
@@ -183,21 +199,21 @@ export const DdcaSetupModal = (props: {
   }
 
   const hasEnoughFromTokenBalance = (): boolean => {
-    return (lockedFromTokenBalance || 0) > props.fromTokenAmount * (lockedSliderValue + 1);
+    return (lockedFromTokenBalance || 0) > fromTokenAmount * (lockedSliderValue + 1);
   }
 
   //////////////////////////
   //   Data Preparation   //
   //////////////////////////
 
-  // Set lockedFromTokenBalance from injected props.fromTokenBalance once por modal open
+  // Set lockedFromTokenBalance from injected fromTokenBalance once por modal open
   useEffect(() => {
     if (!lockedFromTokenBalance) {
-      setLockedFromTokenBalance(props.fromTokenBalance);
+      setLockedFromTokenBalance(fromTokenBalance);
     }
   }, [
     lockedFromTokenBalance,
-    props.fromTokenBalance
+    fromTokenBalance
   ]);
 
   /**
@@ -213,7 +229,7 @@ export const DdcaSetupModal = (props: {
    * Set minimum required and valid flag
   */
   useEffect(() => {
-    if (ddcaOption && props.fromTokenAmount && lockedFromTokenBalance) {
+    if (ddcaOption && fromTokenAmount && lockedFromTokenBalance) {
       const maxRangeFromSelection =
         ddcaOption.dcaInterval === DcaInterval.RepeatingDaily
           ? 365
@@ -222,7 +238,7 @@ export const DdcaSetupModal = (props: {
           : ddcaOption.dcaInterval === DcaInterval.RepeatingTwiceMonth
           ? 26
           : 12;
-      const maxRangeFromBalance = Math.floor(lockedFromTokenBalance / props.fromTokenAmount);
+      const maxRangeFromBalance = Math.floor(lockedFromTokenBalance / fromTokenAmount);
       const minRangeSelectable = 3;
       const maxRangeSelectable =
         maxRangeFromBalance <= maxRangeFromSelection
@@ -239,31 +255,31 @@ export const DdcaSetupModal = (props: {
       setMarks(marks);
 
       // Set minimum required and valid flag
-      const minimumRequired = props.fromTokenAmount * (minRangeSelectable + 1);
+      const minimumRequired = fromTokenAmount * (minRangeSelectable + 1);
       const isOpValid = minimumRequired < lockedFromTokenBalance ? true : false;
 
       // Set the slider position
       const sliderPosition = isOpValid ? initialValue : minRangeSelectable;
       setRecurrencePeriod(sliderPosition);
 
-      consoleOut('HLA INFO', props.hlaInfo, 'blue');
-      consoleOut('remainingAccounts', props.hlaInfo.remainingAccounts.map(a => a.pubkey.toBase58()), 'blue');
+      consoleOut('HLA INFO', hlaInfo, 'blue');
+      consoleOut('remainingAccounts', hlaInfo.remainingAccounts.map(a => a.pubkey.toBase58()), 'blue');
     }
   }, [
     ddcaOption,
-    props.fromTokenAmount,
+    fromTokenAmount,
     lockedFromTokenBalance,
-    props.hlaInfo,
+    hlaInfo,
     getTotalPeriod
   ]);
 
   // Set lockedSliderValue once when the modal is openes but we have a recurrencePeriod > 0
   useEffect(() => {
-    if (props.isVisible && recurrencePeriod) {
+    if (isVisible && recurrencePeriod) {
       setLockedSliderValue(recurrencePeriod);
     }
   }, [
-    props.isVisible,
+    isVisible,
     recurrencePeriod,
   ]);
 
@@ -289,18 +305,18 @@ export const DdcaSetupModal = (props: {
   const onFinishedSwapTx = () => {
     setIsBusy(false);
     setSwapExecuted(true);
-    props.handleOk();
+    handleOk();
   }
 
   const onOperationCancel = (shouldReload = false) => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
-    props.handleClose(shouldReload);
+    handleClose(shouldReload);
   }
 
   const onOperationSuccess = () => {
-    props.handleOk();
+    handleOk();
   }
 
   // Create vault and deposit
@@ -320,7 +336,7 @@ export const DdcaSetupModal = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const ddcaClient = new DdcaClient(props.endpoint, wallet, { commitment: "confirmed" })
+    const ddcaClient = new DdcaClient(endpoint, wallet, { commitment: "confirmed" })
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -332,9 +348,9 @@ export const DdcaSetupModal = (props: {
 
         const payload = {
           ownerAccountAddress: publicKey,
-          amountPerSwap: props.fromTokenAmount,
-          fromMint: new PublicKey(props.fromToken?.address as string),
-          toMint: new PublicKey(props.toToken?.address as string),
+          amountPerSwap: fromTokenAmount,
+          fromMint: new PublicKey(fromToken?.address as string),
+          toMint: new PublicKey(toToken?.address as string),
           intervalinSeconds: getInterval(),
           totalSwaps: recurrencePeriod + 1
         }
@@ -461,7 +477,7 @@ export const DdcaSetupModal = (props: {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await props.connection
+        return await connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -506,7 +522,7 @@ export const DdcaSetupModal = (props: {
 
     const confirmTx = async (): Promise<boolean> => {
 
-      return await props.connection
+      return await connection
         .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
@@ -582,7 +598,7 @@ export const DdcaSetupModal = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const ddcaClient = new DdcaClient(props.endpoint, wallet, { commitment: "confirmed" })
+    const ddcaClient = new DdcaClient(endpoint, wallet, { commitment: "confirmed" })
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && publicKey && ddcaAccountPda) {
@@ -594,7 +610,7 @@ export const DdcaSetupModal = (props: {
 
         const swapPayload = {
           ddcaAccountPda: ddcaAccountPda,
-          hlaInfo: props.hlaInfo
+          hlaInfo: hlaInfo
         };
 
         consoleOut('ddca swap params:', swapPayload, 'brown');
@@ -608,7 +624,7 @@ export const DdcaSetupModal = (props: {
         // Create a transaction
         return await ddcaClient.createWakeAndSwapTx(
           ddcaAccountPda,
-          props.hlaInfo
+          hlaInfo
         )
         .then(value => {
           consoleOut('createWakeAndSwapTx returned transaction:', value);
@@ -712,7 +728,7 @@ export const DdcaSetupModal = (props: {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await props.connection
+        return await connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
@@ -786,6 +802,32 @@ export const DdcaSetupModal = (props: {
     consoleOut('close confirmation cancelled');
   }
 
+  ////////////////
+  // Validation //
+  ////////////////
+
+  const isDdcaValid = () => {
+    return isProd() &&
+           ((isNative() && userBalance > getTotalSolAmountNeeded()) ||
+           (!isNative() && hasEnoughFromTokenBalance()))
+      ? true
+      : false;
+  }
+
+  const getMainCtaLabel = () => {
+    return vaultCreated
+      ? t('ddca-setup-modal.cta-label-vault-created')
+      : isNative()
+        ? getTotalSolAmountNeeded() > userBalance
+            ? `Need at least ${getAmountWithSymbol(getTotalSolAmountNeeded(), NATIVE_SOL_MINT.toBase58())}`
+            : t('ddca-setup-modal.cta-label-deposit')
+        : !hasEnoughFromTokenBalance()
+          ? t('transactions.validation.amount-low')
+          : !hasEnoughNativeBalanceForFees()
+              ? `Need at least ${getAmountWithSymbol(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
+              : t('ddca-setup-modal.cta-label-deposit');
+  }
+
   ///////////////////
   //   Rendering   //
   ///////////////////
@@ -822,7 +864,7 @@ export const DdcaSetupModal = (props: {
       }
       footer={null}
       maskClosable={false}
-      visible={props.isVisible}
+      visible={isVisible}
       onCancel={(e: any) => {
         if (!vaultCreated) {
           e.preventDefault();
@@ -830,7 +872,7 @@ export const DdcaSetupModal = (props: {
           onOperationCancel();
         }
       }}
-      afterClose={props.onAfterClose}
+      afterClose={onAfterClose}
       width={480}>
       <div className="mb-3">
         <div className="ddca-setup-heading" dangerouslySetInnerHTML={{ __html: getModalHeadline() }}></div>
@@ -854,9 +896,9 @@ export const DdcaSetupModal = (props: {
           <li>
             {
               t('ddca-setup-modal.help.help-item-01', {
-                fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
-                  props.fromTokenAmount * (lockedSliderValue + 1),
-                  props.fromToken?.address as string)
+                fromTokenAmount: getAmountWithSymbol(
+                  fromTokenAmount * (lockedSliderValue + 1),
+                  fromToken?.address as string)
               })
             }
           </li>
@@ -870,7 +912,7 @@ export const DdcaSetupModal = (props: {
           <li>
             {
               t('ddca-setup-modal.help.help-item-03', {
-                toTokenSymbol: props.toToken?.symbol,
+                toTokenSymbol: toToken?.symbol,
               })
             }
           </li>
@@ -912,25 +954,12 @@ export const DdcaSetupModal = (props: {
             type="primary"
             shape="round"
             size="large"
-            disabled={!isProd() ||
-              (isNative() && props.userBalance < getTotalSolAmount()) ||
-              (!isNative() && !hasEnoughFromTokenBalance())
-            }
+            disabled={!isDdcaValid()}
             onClick={() => onCreateVaultTxStart()}>
             {
               !vaultCreated && isBusy
                 ? t('ddca-setup-modal.cta-label-depositing')
-                : vaultCreated
-                ? t('ddca-setup-modal.cta-label-vault-created')
-                : isNative()
-                  ? getTotalSolAmount() > props.userBalance
-                      ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getTotalSolAmount(), NATIVE_SOL_MINT.toBase58())}`
-                      : t('ddca-setup-modal.cta-label-deposit')
-                  : !hasEnoughFromTokenBalance()
-                    ? t('transactions.validation.amount-low')
-                    : !hasEnoughNativeBalanceForFees()
-                        ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
-                        : t('ddca-setup-modal.cta-label-deposit')
+                : getMainCtaLabel()
             }
           </Button>
         </div>

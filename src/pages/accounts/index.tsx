@@ -21,7 +21,7 @@ import {
   formatThousands,
   getAmountFromLamports,
   getSdkValue,
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   getTxIxResume,
   openLinkInNewTab,
   shortenAddress,
@@ -1276,9 +1276,9 @@ export const AccountsNewView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 transactionAssetFees.blockchainFee + transactionAssetFees.mspFlatFee, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -1666,9 +1666,9 @@ export const AccountsNewView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 minRequiredBalance, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -1993,9 +1993,9 @@ export const AccountsNewView = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(
+            getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee, 
               NATIVE_SOL_MINT.toBase58()
             )
@@ -2345,9 +2345,9 @@ export const AccountsNewView = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(
+            getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee, 
               NATIVE_SOL_MINT.toBase58()
             )

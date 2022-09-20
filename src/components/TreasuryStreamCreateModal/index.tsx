@@ -6,9 +6,8 @@ import { AppStateContext } from '../../contexts/appstate';
 import {
   displayAmountWithSymbol,
   formatThousands,
-  getAmountWithSymbol,
   getSdkValue,
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   isValidNumber,
   shortenAddress,
   toTokenAmount,
@@ -1270,9 +1269,9 @@ export const TreasuryStreamCreateModal = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
@@ -1944,32 +1943,6 @@ export const TreasuryStreamCreateModal = (props: {
                               fullTokenInfo={selectedToken}
                             />
                           )}
-
-                          {/* {(selectedToken && tokenList) && (
-                            <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
-                              {tokenList.map((option) => {
-                                if (option.address === NATIVE_SOL.address) {
-                                  return null;
-                                }
-                                return (
-                                  <Option key={option.address} value={option.address}>
-                                    <div className="option-container">
-                                      <TokenDisplay onClick={() => {}}
-                                        mintAddress={option.address}
-                                        name={option.name}
-                                        showCaretDown={workingAssociatedToken ? false : true}
-                                      />
-                                      <div className="balance">
-                                        {userBalances && userBalances[option.address] > 0 && (
-                                          <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </Option>
-                                );
-                              })}
-                            </Select>
-                          )} */}
                           {
                             selectedToken && unallocatedBalance ? (
                               <div
@@ -2224,7 +2197,7 @@ export const TreasuryStreamCreateModal = (props: {
                                       />
                                       <div className="balance">
                                         {userBalances && userBalances[option.address] > 0 && (
-                                          <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
+                                          <span>{getAmountWithSymbol(userBalances[option.address], option.address, true)}</span>
                                         )}
                                       </div>
                                     </div>

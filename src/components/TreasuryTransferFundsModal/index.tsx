@@ -9,7 +9,18 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCur
 import { isError } from '../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
-import { displayAmountWithSymbol, formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeInteger, shortenAddress, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../middleware/utils';
+import {
+  displayAmountWithSymbol,
+  formatThousands,
+  getSdkValue,
+  getAmountWithSymbol,
+  isValidNumber,
+  makeInteger,
+  shortenAddress,
+  toTokenAmount,
+  toTokenAmountBn,
+  toUiAmount
+} from '../../middleware/utils';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
@@ -602,7 +613,7 @@ export const TreasuryTransferFundsModal = (props: {
                   {treasuryDetails && treasuryDetails.autoClose ? (
                     <span>
                       {`${tokenBalance && selectedToken
-                        ? getTokenAmountAndSymbolByTokenAddress(
+                        ? getAmountWithSymbol(
                             tokenBalance,
                             selectedToken?.address,
                             true
@@ -626,7 +637,7 @@ export const TreasuryTransferFundsModal = (props: {
                       ) : tokenBalance && selectedToken ? (
                         <span>
                           {
-                            getTokenAmountAndSymbolByTokenAddress(
+                            getAmountWithSymbol(
                               tokenBalance,
                               selectedToken.address,
                               true
@@ -715,11 +726,11 @@ export const TreasuryTransferFundsModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       minRequiredBalance,
                       NATIVE_SOL_MINT.toBase58()
                     )})
