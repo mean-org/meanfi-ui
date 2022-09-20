@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../../../middleware/transactions';
 import { TransactionStatus } from '../../../../models/enums';
-import { displayAmountWithSymbol, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress } from '../../../../middleware/utils';
+import { displayAmountWithSymbol, getAmountWithSymbol } from '../../../../middleware/utils';
 import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { Treasury } from '@mean-dao/msp';
@@ -225,11 +225,11 @@ export const VestingContractCloseModal = (props: {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})

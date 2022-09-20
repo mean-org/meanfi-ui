@@ -86,11 +86,11 @@ export const RejectCancelModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {/* {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

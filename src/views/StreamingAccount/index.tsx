@@ -46,13 +46,12 @@ import {
   findATokenAddress,
   formatThousands,
   displayAmountWithSymbol,
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   getTxIxResume,
   makeInteger,
   openLinkInNewTab,
   shortenAddress,
   toUiAmount,
-  getAmountWithSymbol,
   toTokenAmountBn,
   getAmountFromLamports,
 } from "../../middleware/utils";
@@ -887,9 +886,9 @@ export const StreamingAccountView = (props: {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
             customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
@@ -1084,9 +1083,9 @@ export const StreamingAccountView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
@@ -1457,9 +1456,9 @@ export const StreamingAccountView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Treasury withdraw transaction failed', { transcript: transactionLog });
@@ -1758,9 +1757,9 @@ export const StreamingAccountView = (props: {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
             customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
@@ -1911,9 +1910,9 @@ export const StreamingAccountView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
@@ -2244,9 +2243,9 @@ export const StreamingAccountView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });

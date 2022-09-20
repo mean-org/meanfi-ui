@@ -23,7 +23,7 @@ import {
 } from '@mean-dao/msp';
 import "./style.scss";
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { findATokenAddress, formatThousands, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../middleware/utils';
+import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from '../../middleware/utils';
 import { openNotification } from '../../components/Notifications';
 import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, MSP_FEE_TREASURY, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { VestingContractList } from './components/VestingContractList';
@@ -1087,9 +1087,9 @@ export const VestingView = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Create vesting account transaction failed', { transcript: transactionLog });
@@ -1469,9 +1469,9 @@ export const VestingView = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Close Vesting Contract transaction failed', { transcript: transactionLog });
@@ -1860,9 +1860,9 @@ export const VestingView = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
@@ -2260,9 +2260,9 @@ export const VestingView = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Create Vesting Stream transaction failed', { transcript: transactionLog });
@@ -2619,9 +2619,9 @@ export const VestingView = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
@@ -2947,9 +2947,9 @@ export const VestingView = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });

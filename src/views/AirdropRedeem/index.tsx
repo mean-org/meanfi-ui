@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, toTokenAmount } from '../../middleware/utils';
+import { getAmountWithSymbol, getTxIxResume, toTokenAmount } from '../../middleware/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
@@ -129,7 +129,7 @@ export const AirdropRedeem = (props: {
         : userAllocation.isAirdropCompleted
           ? 'Airdrop has completed'
           : props.nativeBalance < transactionFee.blockchainFee + transactionFee.mspFlatFee
-            ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())}`
+            ? `Need at least ${getAmountWithSymbol(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())}`
             : isError(transactionStatus.currentOperation)
               ? 'Retry operation'
               : 'Claim now'
@@ -209,9 +209,9 @@ export const AirdropRedeem = (props: {
         consoleOut('nativeBalance:', props.nativeBalance, 'blue');
         if (props.nativeBalance < transactionFee.blockchainFee + transactionFee.mspFlatFee) {
           const noBalanceMessage = `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(props.nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(props.nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`;
           openNotification({
             title: 'Not enough SOL balance',

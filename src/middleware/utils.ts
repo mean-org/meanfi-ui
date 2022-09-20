@@ -383,56 +383,6 @@ export const displayAmountWithSymbol = (
   }
 }
 
-export const getTokenAmountAndSymbolByTokenAddress = (
-  amount: number,
-  address: string,
-  onlyValue = false,
-  tokenList?: TokenInfo[]
-): string => {
-
-  let token: TokenInfo | undefined = undefined;
-  if (address) {
-    if (address === NATIVE_SOL.address) {
-      token = NATIVE_SOL as TokenInfo;
-    } else {
-      token = tokenList && isProd()
-        ? tokenList.find(t => t.address === address)
-        : undefined;
-      if (!token) {
-        token = MEAN_TOKEN_LIST.find(t => t.address === address);
-      }
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-    }
-  }
-  const inputAmount = amount || 0;
-  if (token) {
-    const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
-    const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
-    const formatted2 = formatted.toFixed(token.decimals);
-    const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
-    if (onlyValue) { return toLocale; }
-    return `${toLocale} ${token.symbol}`;
-  } else if (address && !token) {
-    // TODO: Fair assumption but we should be able to work with either an address or a TokenInfo param
-    const unkToken: TokenInfo = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: shortenAddress(address),
-    };
-    const formatted = getFormattedNumberToLocale(formatAmount(inputAmount, unkToken.decimals));
-    return onlyValue
-      ? maxTrailingZeroes(formatted, 2)
-      : `${maxTrailingZeroes(formatted, 2)} [${shortenAddress(address, 4)}]`;
-  }
-  return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
-}
-
 export function getTxIxResume(tx: Transaction) {
   const programIds: string[] = [];
   tx.instructions.forEach(t => {

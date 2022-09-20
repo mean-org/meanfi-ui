@@ -34,7 +34,6 @@ import {
   formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
-  getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   shortenAddress,
   toTokenAmountBn,
@@ -747,9 +746,9 @@ export const MoneyStreamsInfoView = (props: {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
             customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
@@ -946,9 +945,9 @@ export const MoneyStreamsInfoView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
@@ -1368,9 +1367,9 @@ export const MoneyStreamsInfoView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Create streaming account transaction failed', { transcript: transactionLog });

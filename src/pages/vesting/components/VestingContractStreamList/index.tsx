@@ -25,7 +25,7 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { displayAmountWithSymbol, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from '../../../../middleware/utils';
+import { displayAmountWithSymbol, getAmountWithSymbol, getTxIxResume, shortenAddress } from '../../../../middleware/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
@@ -579,8 +579,8 @@ export const VestingContractStreamList = (props: {
                 });
                 transactionLog.push({
                     action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-                    result: `Not enough balance (${getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-                        }) to pay for network fees (${getTokenAmountAndSymbolByTokenAddress(minRequiredBalance, NATIVE_SOL_MINT.toBase58())
+                    result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+                        }) to pay for network fees (${getAmountWithSymbol(minRequiredBalance, NATIVE_SOL_MINT.toBase58())
                         })`
                 });
                 customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
@@ -930,8 +930,8 @@ export const VestingContractStreamList = (props: {
                 });
                 transactionLog.push({
                     action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-                    result: `Not enough balance (${getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-                        }) to pay for network fees (${getTokenAmountAndSymbolByTokenAddress(minRequiredBalance, NATIVE_SOL_MINT.toBase58())
+                    result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+                        }) to pay for network fees (${getAmountWithSymbol(minRequiredBalance, NATIVE_SOL_MINT.toBase58())
                         })`
                 });
                 customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
@@ -1256,8 +1256,8 @@ export const VestingContractStreamList = (props: {
                 });
                 transactionLog.push({
                     action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-                    result: `Not enough balance (${getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-                        }) to pay for network fees (${getTokenAmountAndSymbolByTokenAddress(minRequiredBalance, NATIVE_SOL_MINT.toBase58())
+                    result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+                        }) to pay for network fees (${getAmountWithSymbol(minRequiredBalance, NATIVE_SOL_MINT.toBase58())
                         })`
                 });
                 customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
@@ -1781,11 +1781,11 @@ export const VestingContractStreamList = (props: {
                             {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                                 <h4 className="mb-4">
                                     {t('transactions.status.tx-start-failure', {
-                                        accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                                        accountBalance: getAmountWithSymbol(
                                             nativeBalance,
                                             NATIVE_SOL_MINT.toBase58()
                                         ),
-                                        feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                                        feeAmount: getAmountWithSymbol(
                                             minRequiredBalance,
                                             NATIVE_SOL_MINT.toBase58()
                                         )
