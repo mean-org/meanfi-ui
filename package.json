@@ -78,7 +78,7 @@
     "@solflare-wallet/sdk": "^1.0.12",
     "@transak/transak-sdk": "^1.0",
     "anchor-0-20-1": "npm:@project-serum/anchor@^0.20.1",
-    "antd": "^4.23",
+    "antd": "^4.22",
     "bignumber.js": "^9.1.0",
     "bn.js": "^5.2.0",
     "borsh": "^0.7",
