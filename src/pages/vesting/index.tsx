@@ -326,7 +326,7 @@ export const VestingView = () => {
   ]);
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
-    return await calculateActionFees(connection, action);
+    return calculateActionFees(connection, action);
   }, [connection]);
 
   const getTokenOrCustomToken = useCallback(async (address: string) => {
@@ -686,7 +686,7 @@ export const VestingView = () => {
 
     const pk = new PublicKey(account);
 
-    return await msp.listTreasuries(pk, true, Category.vesting);
+    return msp.listTreasuries(pk, true, Category.vesting);
 
   }, [msp]);
 
@@ -921,7 +921,7 @@ export const VestingView = () => {
 
       if (!data.multisig) {
         consoleOut('received data:', data, 'blue');
-        return await msp.createVestingTreasury(
+        return msp.createVestingTreasury(
           new PublicKey(data.treasurer),                        // payer
           new PublicKey(data.treasurer),                        // treasurer
           data.label,                                           // label
@@ -1139,7 +1139,7 @@ export const VestingView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -1200,7 +1200,7 @@ export const VestingView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -1363,7 +1363,7 @@ export const VestingView = () => {
       if (!msp) { return null; }
 
       if (!isMultisigTreasury()) {
-        return await msp.closeTreasury(
+        return msp.closeTreasury(
           new PublicKey(data.treasurer),              // treasurer
           new PublicKey(data.treasurer),              // treasurer
           new PublicKey(data.treasury),               // treasury
@@ -1373,7 +1373,7 @@ export const VestingView = () => {
 
       if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      const treasury = selectedVestingContract as Treasury;
+      const treasury = selectedVestingContract;
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
@@ -1515,7 +1515,7 @@ export const VestingView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -1576,7 +1576,7 @@ export const VestingView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -1710,7 +1710,7 @@ export const VestingView = () => {
 
       if (!isMultisigTreasury() || !params.fundFromSafe) {
         if (data.stream === '') {
-          return await msp.addFunds(
+          return msp.addFunds(
             new PublicKey(data.payer),                    // payer
             new PublicKey(data.contributor),              // contributor
             new PublicKey(data.treasury),                 // treasury
@@ -1719,7 +1719,7 @@ export const VestingView = () => {
           );
         }
 
-        return await msp.allocate(
+        return msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(data.contributor),             // treasurer
           new PublicKey(data.treasury),                // treasury
@@ -1730,7 +1730,7 @@ export const VestingView = () => {
 
       if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      const treasury = selectedVestingContract as Treasury;
+      const treasury = selectedVestingContract;
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
@@ -1906,7 +1906,7 @@ export const VestingView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -1967,7 +1967,7 @@ export const VestingView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -2111,7 +2111,7 @@ export const VestingView = () => {
       consoleOut('createVestingStream received data:', data, 'blue');
 
       if (!data.multisig) {
-        return await msp.createStreamWithTemplate(
+        return msp.createStreamWithTemplate(
           publicKey,                                                                // payer
           publicKey,                                                                // treasurer
           new PublicKey(data.treasury),                                             // treasury
@@ -2304,7 +2304,7 @@ export const VestingView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -2365,7 +2365,7 @@ export const VestingView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -2484,7 +2484,7 @@ export const VestingView = () => {
       if (!msp) { return null; }
 
       if (!isMultisigTreasury()) {
-        return await msp.treasuryWithdraw(
+        return msp.treasuryWithdraw(
           new PublicKey(data.payer),              // payer
           new PublicKey(data.destination),        // treasurer
           new PublicKey(data.treasury),           // treasury
@@ -2665,7 +2665,7 @@ export const VestingView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -2726,7 +2726,7 @@ export const VestingView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -2872,23 +2872,6 @@ export const VestingView = () => {
       return tx;
     };
 
-    const refreshTreasuryData = async (data: any) => {
-
-      if (!publicKey || !selectedVestingContract || !msp) { return null; }
-
-      const v2 = selectedVestingContract as Treasury;
-      const isNewTreasury = v2.version >= 2 ? true : false;
-
-      if (!isNewTreasury) {
-        return await refreshBalance(new PublicKey(data.treasury));
-      }
-
-      return await msp.refreshTreasuryData(
-        new PublicKey(publicKey),
-        new PublicKey(data.treasury)
-      );
-    }
-
     const createTx = async (): Promise<boolean> => {
 
       if (!publicKey || !selectedVestingContract) {
@@ -2957,7 +2940,7 @@ export const VestingView = () => {
       }
 
       // Create a transaction
-      const result = await refreshTreasuryData(data)
+      const result = await refreshBalance(new PublicKey(data.treasury))
         .then(value => {
           if (!value) { return false; }
           consoleOut('refreshBalance returned transaction:', value);
@@ -2992,7 +2975,7 @@ export const VestingView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -3053,7 +3036,7 @@ export const VestingView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -3294,7 +3277,6 @@ export const VestingView = () => {
   // Build CTAs
   useEffect(() => {
 
-    // const numMaxCtas = isXsDevice ? 2 : 3;
     const numMaxCtas = 2;
     const actions: MetaInfoCta[] = [];
     let ctaItems = 0;
@@ -3521,8 +3503,8 @@ export const VestingView = () => {
       }
 
       setLoadingVestingContractFlowRate(true);
-      consoleOut('calling getVestingFlowRate:', selectedVestingContract.id as string, 'blue');
-      const treasuryPk = new PublicKey(selectedVestingContract.id as string);
+      consoleOut('calling getVestingFlowRate:', selectedVestingContract.id, 'blue');
+      const treasuryPk = new PublicKey(selectedVestingContract.id);
       msp.getVestingFlowRate(treasuryPk)
       .then(value => {
         if (!vestingFlowRatesCache.get(selectedVestingContract.id as string)) {
@@ -3611,7 +3593,7 @@ export const VestingView = () => {
         accountDetailTab === "streams") {
       setSignalRefreshTreasuryStreams(false);
       consoleOut('calling getTreasuryStreams...', '', 'blue');
-      const treasuryPk = new PublicKey(selectedVestingContract.id as string);
+      const treasuryPk = new PublicKey(selectedVestingContract.id);
       getTreasuryStreams(treasuryPk);
     }
   }, [
@@ -4375,7 +4357,7 @@ export const VestingView = () => {
             isBusy={isBusy}
             isVisible={isVestingContractCloseModalOpen}
             nativeBalance={nativeBalance}
-            selectedMultisig={selectedMultisig}
+            selectedMultisig={isMultisigContext ? selectedMultisig : undefined}
             transactionFees={transactionFees}
             treasuryBalance={treasuryEffectiveBalance}
             vestingContract={selectedVestingContract}

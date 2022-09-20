@@ -74,14 +74,12 @@ export const VestingContractCreateForm = (props: {
         isWhitelisted,
         loadingPrices,
         lockPeriodAmount,
-        paymentStartDate,
         transactionStatus,
         lockPeriodFrequency,
         pendingMultisigTxCount,
         setLockPeriodFrequency,
         getTokenPriceBySymbol,
         setLockPeriodAmount,
-        setPaymentStartDate,
         setEffectiveRate,
         refreshPrices,
     } = useContext(AppStateContext);
@@ -102,6 +100,7 @@ export const VestingContractCreateForm = (props: {
     const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
     const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption>(VESTING_ACCOUNT_TYPE_OPTIONS[0]);
     const [contractTime, setContractTime] = useState<string | undefined>(undefined);
+    const [paymentStartDate, setPaymentStartDate] = useState<string | undefined>(undefined);
     const [proposalTitle, setProposalTitle] = useState("");
 
     const getFeeAmount = useCallback(() => {
@@ -230,6 +229,14 @@ export const VestingContractCreateForm = (props: {
     // Data management //
     /////////////////////
 
+    // Set an initial date for creating a contract
+    useEffect(() => {
+        if (!paymentStartDate) {
+            const today = new Date().toLocaleDateString("en-US");
+            setPaymentStartDate(today);
+        }
+    }, [paymentStartDate, setPaymentStartDate]);
+
     // Set an initial time for creating a contract
     useEffect(() => {
         if (contractTime === undefined) {
@@ -312,6 +319,16 @@ export const VestingContractCreateForm = (props: {
             window.removeEventListener('resize', resizeListener);
         }
     }, []);
+
+    // Do unmounting stuff here
+    useEffect(() => {
+        return () => {
+            setContractTime(undefined);
+            setPaymentStartDate('');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
 
     ////////////////////////////////////
     // Events, actions and Validation //

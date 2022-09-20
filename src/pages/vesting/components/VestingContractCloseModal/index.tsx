@@ -1,7 +1,7 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { getTransactionOperationDescription } from '../../../../middleware/ui';
+import { consoleOut, getTransactionOperationDescription } from '../../../../middleware/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../../../middleware/transactions';
@@ -13,7 +13,6 @@ import { Treasury } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
-import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../../../../components/InputMean';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
@@ -48,21 +47,9 @@ export const VestingContractCloseModal = (props: {
     transactionStatus,
     getTokenByMintAddress
   } = useContext(AppStateContext);
-  const [searchParams] = useSearchParams();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [proposalTitle, setProposalTitle] = useState("");
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
 
   const getAvailableStreamingBalance = useCallback((item: Treasury) => {
 
@@ -86,8 +73,6 @@ export const VestingContractCloseModal = (props: {
 
     return false;
   }
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   // Preset fee amount
   useEffect(() => {
@@ -124,13 +109,13 @@ export const VestingContractCloseModal = (props: {
   }
 
   const isValidForm = (): boolean => {
-    return !selectedMultisig || (param === "multisig" && selectedMultisig && proposalTitle)
+    return !selectedMultisig || (selectedMultisig && proposalTitle)
       ? true
       : false;
   }
 
   const getTransactionStartButtonLabel = () => {
-    return param === "multisig" && selectedMultisig
+    return selectedMultisig
       ? !proposalTitle
         ? 'Add a proposal title'
         : 'Sign proposal'
@@ -197,7 +182,7 @@ export const VestingContractCloseModal = (props: {
               </div>
 
               {/* Proposal title */}
-              {canClose() && param === "multisig" && selectedMultisig && (
+              {canClose() && selectedMultisig && (
                 <div className="mb-3 mt-3">
                   <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
                   <InputMean
