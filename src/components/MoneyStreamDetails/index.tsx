@@ -140,26 +140,18 @@ export const MoneyStreamDetails = (props: {
       return '';
     }
 
-    let value = '';
-    let associatedToken = '';
-
-    if (item.version < 2) {
-      associatedToken = (item as StreamInfo).associatedToken as string;
-    } else {
-      associatedToken = (item as Stream).associatedToken.toBase58();
-    }
-
     const rateAmount = getRateAmountBn(item);
-    value += stringNumberFormat(
-      toUiAmount(rateAmount, selectedToken.decimals),
-      friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
-    )
-
-    value += ' ';
-    value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken).toString()}]`;
+    const value = displayAmountWithSymbol(
+      rateAmount,
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
+      true,
+      true
+    );
 
     return value;
-  }, [getRateAmountBn, selectedToken]);
+  }, [getRateAmountBn, selectedToken, splTokenList]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     if (!selectedToken) {
@@ -167,36 +159,33 @@ export const MoneyStreamDetails = (props: {
     }
 
     let value = '';
-    let associatedToken = '';
-
-    if (item.version < 2) {
-      associatedToken = (item as StreamInfo).associatedToken as string;
-    } else {
-      associatedToken = (item as Stream).associatedToken.toBase58();
-    }
 
     if (item.rateIntervalInSeconds === 0) {
       if (item.version < 2) {
         const allocationAssigned = item.allocationAssigned as number;
-        value += formatThousands(
+        value += getAmountWithSymbol(
           allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, selectedToken.decimals),
-          2
+          selectedToken.address,
+          false,
+          splTokenList,
+          selectedToken.decimals,
+          true
         );
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
-        value += stringNumberFormat(
-          toUiAmount(allocationAssigned, selectedToken.decimals),
-          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
-        )
+        value += displayAmountWithSymbol(
+          allocationAssigned,
+          selectedToken.address,
+          selectedToken.decimals,
+          splTokenList,
+          true,
+          true
+        );
       }
-
-      value += ' ';
-      value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken)}]`;
     }
 
     return value;
-  }, [selectedToken]);
+  }, [selectedToken, splTokenList]);
 
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';

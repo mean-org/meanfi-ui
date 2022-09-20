@@ -1595,14 +1595,8 @@ export const MoneyStreamsInfoView = (props: {
       associatedToken = (item as Stream).associatedToken.toBase58();
     }
 
-    let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
+    const token = getTokenByMintAddress(associatedToken);
     const decimals = token?.decimals || 9;
-
-    if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-      token = Object.assign({}, token, {
-        symbol: 'SOL'
-      }) as TokenInfo;
-    }
 
     const rateAmount = getRateAmountBn(item, decimals);
     const rate = displayAmountWithSymbol(
@@ -1610,8 +1604,9 @@ export const MoneyStreamsInfoView = (props: {
       associatedToken,
       decimals,
       splTokenList,
+      true,
       true
-    )
+    );
 
     return rate;
   }, [getRateAmountBn, getTokenByMintAddress, splTokenList]);
@@ -1627,31 +1622,28 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     if (item && item.rateIntervalInSeconds === 0 && item.allocationAssigned > 0) {
-      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
+      const token = getTokenByMintAddress(associatedToken);
       const decimals = token?.decimals || 9;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
 
       if (item.version < 2) {
         const allocationAssigned = new BN(item.allocationAssigned).toNumber();
-        value += formatThousands(
-          allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
-          2
-        );
-      } else {
-        const allocationAssigned = new BN(item.allocationAssigned);
         value += getAmountWithSymbol(
-          toUiAmount(allocationAssigned, decimals),
+          allocationAssigned,
           associatedToken,
           true,
           splTokenList,
           decimals,
           true
+        );
+      } else {
+        const allocationAssigned = new BN(item.allocationAssigned);
+        value += displayAmountWithSymbol(
+          allocationAssigned,
+          associatedToken,
+          decimals,
+          splTokenList,
+          true,
+          false
         )
       }
       value += ' ';

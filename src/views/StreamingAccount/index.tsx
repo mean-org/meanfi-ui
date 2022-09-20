@@ -35,12 +35,10 @@ import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink
 import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
-  friendlyDisplayDecimalPlaces,
   getIntervalFromSeconds,
   getShortDate,
   getTransactionStatusForLogs,
   isProd,
-  stringNumberFormat,
 } from "../../middleware/ui";
 import {
   findATokenAddress,
@@ -51,7 +49,6 @@ import {
   makeInteger,
   openLinkInNewTab,
   shortenAddress,
-  toUiAmount,
   toTokenAmountBn,
   getAmountFromLamports,
 } from "../../middleware/utils";
@@ -412,8 +409,21 @@ export const StreamingAccountView = (props: {
   }, [streamingAccountSelected]);
 
   const getStreamingAccountActivityAssociatedToken = (item: VestingTreasuryActivity) => {
-    const amount = item.amount ? toUiAmount(new BN(item.amount), selectedToken?.decimals || 9) : 0;
     let message = '';
+
+    if (!selectedToken) {
+      return message;
+    }
+
+    const amount = displayAmountWithSymbol(
+      new BN(item.amount || 0),
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
+      true,
+      false
+    );
+
     switch (item.action) {
         case VestingTreasuryActivityAction.TreasuryAddFunds:
         case VestingTreasuryActivityAction.TreasuryWithdraw:
@@ -425,7 +435,7 @@ export const StreamingAccountView = (props: {
             message += `${amount} ${selectedToken?.symbol}`;
             break;
         default:
-            message = '';
+            message += '--';
             break;
     }
     return message;
@@ -474,26 +484,18 @@ export const StreamingAccountView = (props: {
       return '';
     }
 
-    let value = '';
-    let associatedToken = '';
-
-    if (item.version < 2) {
-      associatedToken = (item as StreamInfo).associatedToken as string;
-    } else {
-      associatedToken = (item as Stream).associatedToken.toBase58();
-    }
-
     const rateAmount = getRateAmountBn(item);
-    value += stringNumberFormat(
-      toUiAmount(rateAmount, selectedToken.decimals),
-      friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
-    )
-
-    value += ' ';
-    value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken).toString()}]`;
+    const value = displayAmountWithSymbol(
+      rateAmount,
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
+      true,
+      true
+    );
 
     return value;
-  }, [getRateAmountBn, selectedToken]);
+  }, [getRateAmountBn, selectedToken, splTokenList]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     if (!selectedToken) {
@@ -512,17 +514,24 @@ export const StreamingAccountView = (props: {
     if (item.rateIntervalInSeconds === 0) {
       if (item.version < 2) {
         const allocationAssigned = new BN(item.allocationAssigned).toNumber();
-        value += formatThousands(
+        value += getAmountWithSymbol(
           allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, selectedToken.decimals),
-          2
+          selectedToken.address,
+          true,
+          splTokenList,
+          selectedToken.decimals,
+          true
         );
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
-        value += stringNumberFormat(
-          toUiAmount(allocationAssigned, selectedToken.decimals),
-          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
-        )
+        value += displayAmountWithSymbol(
+          allocationAssigned,
+          selectedToken.address,
+          selectedToken.decimals,
+          splTokenList,
+          true,
+          false
+        );
       }
 
       value += ' ';
@@ -530,7 +539,7 @@ export const StreamingAccountView = (props: {
     }
 
     return value;
-  }, [selectedToken]);
+  }, [selectedToken, splTokenList]);
 
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';
@@ -2660,22 +2669,22 @@ export const StreamingAccountView = (props: {
             message += "Refresh streaming account data";
             break;
         case VestingTreasuryActivityAction.StreamCreate:
-            message += `Create stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Create stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamAllocateFunds:
-            message += `Topped up stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Topped up stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamWithdraw:
-            message += `Withdraw funds from stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Withdraw funds from stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamClose:
-            message += `Close stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Close stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamPause:
-            message += `Pause stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Pause stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamResume:
-            message += `Resume stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Resume stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         default:
             message += '--';
