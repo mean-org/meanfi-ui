@@ -1,16 +1,16 @@
-import React, { useContext, useState } from 'react';
-import { Button, Modal, Spin } from "antd";
-import { useTranslation } from 'react-i18next';
-import { useWallet } from '../../contexts/wallet';
-import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatus } from '../../models/enums';
-import { consoleOut, friendlyDisplayDecimalPlaces, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../middleware/ui';
 import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
-import { AccountTokenParsedInfo } from "../../models/accounts";
-import { formatThousands, getTxIxResume, shortenAddress } from '../../middleware/utils';
-import { createTokenMergeTx } from '../../middleware/accounts';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Modal, Spin } from "antd";
+import { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { customLogger } from '../..';
+import { AppStateContext } from '../../contexts/appstate';
+import { useWallet } from '../../contexts/wallet';
+import { createTokenMergeTx } from '../../middleware/accounts';
+import { consoleOut, friendlyDisplayDecimalPlaces, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../middleware/ui';
+import { formatThousands, getTxIxResume, shortenAddress } from '../../middleware/utils';
+import { AccountTokenParsedInfo } from "../../models/accounts";
+import { TransactionStatus } from '../../models/enums';
 import { UserTokenAccount } from '../../models/transactions';
 import { TokenDisplay } from '../TokenDisplay';
 

@@ -1,21 +1,20 @@
-import React, { useCallback, useContext, useEffect, useMemo } from 'react';
-import { useState } from 'react';
-import { Button, Col, Modal, Progress, Row } from 'antd';
-import { findATokenAddress, getAmountWithSymbol, getTxIxResume, shortenAddress } from '../../middleware/utils';
-import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from '../../middleware/ui';
-import { useTranslation } from 'react-i18next';
+import { LoadingOutlined } from '@ant-design/icons';
 import { DdcaClient, DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { useWallet } from '../../contexts/wallet';
+import { Button, Col, Modal, Progress, Row } from 'antd';
 import Slider, { SliderMarks } from 'antd/lib/slider';
-import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '../../middleware/ids';
-import { LoadingOutlined } from '@ant-design/icons';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { customLogger } from '../..';
 import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { AppStateContext } from '../../contexts/appstate';
-import { OperationType, TransactionStatus } from '../../models/enums';
-import { customLogger } from '../..';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { useWallet } from '../../contexts/wallet';
 import { getTokenAccountBalanceByAddress } from '../../middleware/accounts';
+import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '../../middleware/ids';
+import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from '../../middleware/ui';
+import { findATokenAddress, getAmountWithSymbol, getTxIxResume, shortenAddress } from '../../middleware/utils';
+import { OperationType, TransactionStatus } from '../../models/enums';
 
 export const DdcaAddFundsModal = (props: {
   connection: Connection;

@@ -1,9 +1,8 @@
-import React from 'react';
-import { useCallback, useEffect, useState } from 'react';
-import { Modal, Button, Row, Col } from 'antd';
-import { getAmountWithSymbol } from '../../middleware/utils';
-import { useTranslation } from 'react-i18next';
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
+import { Button, Col, Modal, Row } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getAmountWithSymbol } from '../../middleware/utils';
 
 export const DdcaCloseModal = (props: {
   handleClose: any;

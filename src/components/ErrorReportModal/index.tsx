@@ -1,8 +1,8 @@
-import React, { useCallback, useContext } from 'react';
-import { Button, Modal } from "antd";
 import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { AppStateContext } from '../../contexts/appstate';
+import { Button, Modal } from "antd";
+import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AppStateContext } from '../../contexts/appstate';
 import { copyText, getTransactionOperationDescription } from '../../middleware/ui';
 import { shortenAddress } from '../../middleware/utils';
 import { openNotification } from '../Notifications';

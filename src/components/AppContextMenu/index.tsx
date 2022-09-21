@@ -1,6 +1,12 @@
-import React from 'react';
-import { Button, Dropdown, Menu } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
+import { Button, Dropdown, Menu } from "antd";
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { useCallback, useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from 'react-router-dom';
+import { LANGUAGES, MEANFI_SUPPORT_URL, MEAN_DAO_GITBOOKS_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_FINANCE_DISCORD_URL } from "../../constants";
+import { AppStateContext } from "../../contexts/appstate";
+import { useWallet } from "../../contexts/wallet";
 import {
   IconBookOpen,
   IconChat,
@@ -8,18 +14,11 @@ import {
   IconLiveHelp,
   IconMoon,
   IconSettings,
-  IconShareBox,
+  IconShareBox
 } from "../../Icons";
-import { useWallet } from "../../contexts/wallet";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { AppStateContext } from "../../contexts/appstate";
-import { MEAN_FINANCE_DISCORD_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_DAO_GITBOOKS_URL, LANGUAGES, MEANFI_SUPPORT_URL } from "../../constants";
-import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "../LanguageSelector";
-import { ReferFriendModal } from '../ReferFriendModal';
-import { Link } from 'react-router-dom';
 import { openNotification } from '../Notifications';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { ReferFriendModal } from '../ReferFriendModal';
 
 export const AppContextMenu = () => {
 
