@@ -636,6 +636,7 @@ export const VestingView = () => {
       if (param && param === "multisig") {
         url += '?account-type=multisig';
       }
+      consoleOut('Navigating to contract:', url, 'orange');
       navigate(url);
     }
   }, [accountAddress, accountDetailTab, getQueryAccountType, navigate]);
@@ -721,7 +722,10 @@ export const VestingView = () => {
       .catch(error => {
         console.error(error);
       })
-      .finally(() => setLoadingTreasuries(false));
+      .finally(() => {
+        setLoadingTreasuries(false);
+        setTreasuriesLoaded(true);
+      });
 
   }, [accountAddress, connection, getAllUserV2Accounts, msp, navigateToVestingContract, publicKey, vestingContractAddress]);
 
@@ -3420,54 +3424,48 @@ export const VestingView = () => {
     if (!publicKey || !accountAddress || treasuriesLoaded) { return; }
 
     consoleOut('Calling refreshVestingContracts...', '', 'blue');
-    setTreasuriesLoaded(true);
-    refreshVestingContracts(true);
+    refreshVestingContracts(false);
 
   }, [accountAddress, publicKey, refreshVestingContracts, treasuriesLoaded]);
 
   // Set a vesting contract if passed-in via url if found in list of vesting contracts
   // If not found or not provided, will pick the first one available via redirect
   useEffect(() => {
+    if (!treasuriesLoaded || !publicKey || !address) { return; }
+
     const hasNoVestingAccounts = () => treasuriesLoaded && treasuryList && treasuryList.length === 0 ? true : false;
 
-    if (publicKey && accountAddress) {
-      if (treasuryList && treasuryList.length > 0) {
-        let item: Treasury | undefined = undefined;
-        if (vestingContractAddress) {
-          item = treasuryList.find(i => i.id === vestingContractAddress);
+    if (!vestingContract && treasuryList && treasuryList.length > 0) {
+      navigateToVestingContract(treasuryList[0].id as string);
+    } else if (vestingContract && treasuryList && treasuryList.length > 0) {
+      const item = treasuryList.find(i => i.id === vestingContract);
+      if (item) {
+        setSelectedVestingContract(item);
+        setSignalRefreshTreasuryStreams(true);
+        // Clear previous data related to stream activity
+        setContractActivity([]);
+        setHasMoreContractActivity(true);
+        consoleOut('selectedVestingContract:', item, 'blue');
+        if (autoOpenDetailsPanel) {
+          setDetailsPanelOpen(true);
         }
-        if (item) {
-          setSelectedVestingContract(item);
-          setSignalRefreshTreasuryStreams(true);
-          // Clear previous data related to stream activity
-          setContractActivity([]);
-          setHasMoreContractActivity(true);
-          consoleOut('selectedVestingContract:', item, 'blue');
-          if (autoOpenDetailsPanel) {
-            setDetailsPanelOpen(true);
-          }
-        } else {
-          // /vesting/:address/contracts/:vestingContract
-          const contractId = treasuryList[0].id.toString();
-          const param = getQueryAccountType();
-          let url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
-          if (param) {
-            url += `?account-type=${param}`;
-          }
-          navigate(url);
-        }
-      } else if (vestingContractAddress && hasNoVestingAccounts()) {
-        const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts`;
-        navigate(url);
+      } else {
+        navigateToVestingContract(treasuryList[0].id as string);
       }
+    } else if (vestingContract && hasNoVestingAccounts()) {
+      const url = `${VESTING_ROUTE_BASE_PATH}/${address}/contracts`;
+      consoleOut('Contract provided but not items found:', url, 'orange');
+      navigate(url);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    address,
     publicKey,
     treasuryList,
-    accountAddress,
+    vestingContract,
+    treasuriesLoaded,
     autoOpenDetailsPanel,
-    vestingContractAddress,
+    navigateToVestingContract,
+    navigate
   ]);
 
   // Set selected token with the vesting contract associated token as soon as the VC is available
@@ -3571,6 +3569,7 @@ export const VestingView = () => {
   }, [connection, publicKey, selectedVestingContract]);
 
   // Set a tab if none already set
+  /*
   useEffect(() => {
     if (publicKey && accountAddress && vestingContractAddress && !accountDetailTab) {
       // /vesting/:address/contracts/:vestingContract/:activeTab
@@ -3582,6 +3581,7 @@ export const VestingView = () => {
       navigate(url);
     }
   }, [accountAddress, accountDetailTab, getQueryAccountType, navigate, publicKey, vestingContractAddress]);
+  */
 
   // Reload streams whenever the selected vesting contract changes
   useEffect(() => {

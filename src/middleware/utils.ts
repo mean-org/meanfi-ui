@@ -210,7 +210,7 @@ export const getTokenDecimals = (address: string): number => {
  * @param {boolean} onlyValue - Flag to only obtain the value but not the token symbol. Default is false.
  * @param {TokenInfo[]} tokenList - A token list where to look for the token meta (symbol and decimals).
  * @param {number} tokenDecimals - The token decimals if known beforehand. Can be inferred if found in tokenList but it works better by providing it.
- * @param {boolean} friendlyDecimals - Flag to indicate to reduce the amount of decimals to display when possible based on the amount. Default is false.
+ * @param {boolean} friendlyDecimals - Flag to indicate to reduce the amount of decimals to display when possible based on the amount. Default is true.
  * @returns {string} - The formatted value including the token symbol if indicated.
  */
 export const getAmountWithSymbol = (
@@ -219,7 +219,7 @@ export const getAmountWithSymbol = (
   onlyValue = false,
   tokenList?: TokenInfo[],
   tokenDecimals?: number,
-  friendlyDecimals = false
+  friendlyDecimals = true
 ): string => {
 
   let token: TokenInfo | undefined = undefined;
@@ -297,7 +297,7 @@ export const getAmountWithSymbol = (
  * @param {string} address - The mint address of the token corresponding to the token amount.
  * @param {number} tokenDecimals - The token decimals if known beforehand. Can be inferred if found in tokenList but it works better by providing it.
  * @param {TokenInfo[]} tokenList - A token list where to look for the token meta (symbol and decimals).
- * @param {boolean} friendlyDecimals - Flag to indicate to reduce the amount of decimals to display when possible based on the amount. Default is false.
+ * @param {boolean} friendlyDecimals - Flag to indicate to reduce the amount of decimals to display when possible based on the amount. Default is true.
  * @param {boolean} showSymbol - Flag to indicate adding the token symbol to the resulting value. Default is true.
  * @returns {string} - The formatted value including the token symbol if indicated.
  */
@@ -306,7 +306,7 @@ export const displayAmountWithSymbol = (
   address: string,
   tokenDecimals?: number,
   tokenList?: TokenInfo[],
-  friendlyDecimals = false,
+  friendlyDecimals = true,
   showSymbol = true,
 ): string => {
 
@@ -358,7 +358,10 @@ export const displayAmountWithSymbol = (
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
     let inputAmount = '';
-    const decimals = token ? token.decimals : 9;
+    let decimals = 9;
+    if (token) {
+      decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
+    }
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,
