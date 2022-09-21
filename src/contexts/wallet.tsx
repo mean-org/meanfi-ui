@@ -302,6 +302,7 @@ const WalletContext = React.createContext<{
   autoConnect: boolean;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
   resetWalletProvider: () => void;
+  isSelectingWallet: boolean;
 }>({
   wallet: undefined,
   connected: false,
@@ -310,6 +311,7 @@ const WalletContext = React.createContext<{
   autoConnect: true,
   provider: undefined,
   resetWalletProvider: () => {},
+  isSelectingWallet: false,
 });
 
 export function WalletProvider({ children = null as any }) {
@@ -321,7 +323,7 @@ export function WalletProvider({ children = null as any }) {
   const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isSelectingWallet, setIsModalVisible] = useState(false);
   const select = useCallback(() => {
     setIsModalVisible(true);
   }, []);
@@ -478,13 +480,14 @@ export function WalletProvider({ children = null as any }) {
         provider,
         autoConnect,
         resetWalletProvider,
+        isSelectingWallet
       }}>
       {children}
       <Modal
         centered
         className="mean-modal simple-modal"
         title={<div className="modal-title">{t(`wallet-selector.primary-action`)}</div>}
-        visible={isModalVisible}
+        open={isSelectingWallet}
         footer={null}
         maskClosable={connected}
         closable={connected}
@@ -578,7 +581,7 @@ export function WalletProvider({ children = null as any }) {
 }
 
 export function useWallet() {
-  const { wallet, connected, connecting, provider, autoConnect, resetWalletProvider, select } = useContext(WalletContext);
+  const { wallet, connected, connecting, provider, autoConnect, resetWalletProvider, select, isSelectingWallet } = useContext(WalletContext);
 
   return {
     wallet,
@@ -600,5 +603,6 @@ export function useWallet() {
       consoleOut(`Disconnecting provider...`, '', 'blue');
       wallet?.disconnect();
     },
+    isSelectingWallet
   };
 }

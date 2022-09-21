@@ -59,6 +59,9 @@ export interface TransactionStatusInfo {
 }
 
 interface AppStateConfig {
+  // Account selection
+  isSelectingAccount: boolean;
+  // General
   theme: string | undefined;
   tpsAvg: number | null | undefined;
   refreshInterval: number;
@@ -109,7 +112,7 @@ interface AppStateConfig {
   hasMoreStreamActivity: boolean;
   customStreamDocked: boolean;
   diagnosisInfo: AccountDetails | undefined;
-  // Accounts
+  // Accounts page
   shouldLoadTokens: boolean;
   loadingTokenAccounts: boolean;
   userTokensResponse: UserTokensResponse | null;
@@ -145,6 +148,10 @@ interface AppStateConfig {
   stakingMultiplier: number;
   // Routes
   previousRoute: string;
+  // Account selection
+  setIsSelectingAccount: (state: boolean) => void;
+  getAssetsByAccount: (address: string) => Promise<UserTokensResponse | null> | null;
+  // General
   setTheme: (name: string) => void;
   setTpsAvg: (value: number | null | undefined) => void;
   showDepositOptionsModal: () => void;
@@ -195,7 +202,7 @@ interface AppStateConfig {
   getStreamActivity: (streamId: string, version: number, clearHistory?: boolean) => void;
   setCustomStreamDocked: (state: boolean) => void;
   setDiagnosisInfo: (info: AccountDetails | undefined) => void;
-  // Accounts
+  // Accounts page
   setShouldLoadTokens: (state: boolean) => void;
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
@@ -226,8 +233,11 @@ interface AppStateConfig {
 }
 
 const contextDefaultValues: AppStateConfig = {
+  // Account selection
+  isSelectingAccount: true,
+  // General
   theme: undefined,
-  tpsAvg: undefined,
+  tpsAvg: undefined,  // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
   refreshInterval: ONE_MINUTE_REFRESH_TIMEOUT,
   isWhitelisted: false,
   isDepositOptionsModalVisible: false,
@@ -279,7 +289,7 @@ const contextDefaultValues: AppStateConfig = {
   hasMoreStreamActivity: true,
   customStreamDocked: false,
   diagnosisInfo: undefined,
-  // Accounts
+  // Accounts page
   shouldLoadTokens: true,
   loadingTokenAccounts: true,
   userTokensResponse: null,
@@ -315,6 +325,10 @@ const contextDefaultValues: AppStateConfig = {
   stakingMultiplier: 1,
   // Routes
   previousRoute: '',
+  // Account selection
+  setIsSelectingAccount: () => {},
+  getAssetsByAccount: () => null,
+  // General
   setTheme: () => {},
   setTpsAvg: () => {},
   showDepositOptionsModal: () => {},
@@ -365,7 +379,7 @@ const contextDefaultValues: AppStateConfig = {
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
   setDiagnosisInfo: () => { },
-  // Accounts
+  // Accounts page
   setShouldLoadTokens: () => {},
   setTransactions: () => {},
   setSelectedAsset: () => {},
@@ -405,6 +419,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   const { publicKey, connected } = useWallet();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
+  // Account selection
+  const [isSelectingAccount, updateIsSelectingAccount] = useState<boolean>(contextDefaultValues.isSelectingAccount);
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
@@ -546,6 +562,10 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setTheme = (name: string) => {
     updateTheme(name);
+  }
+
+  const setIsSelectingAccount = (state: boolean) => {
+    updateIsSelectingAccount(state);
   }
 
   /**
@@ -1421,6 +1441,45 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   }, [accountAddress, connection, pinnedTokens, priceList, publicKey, shouldLoadTokens, splTokenList, userTokens]);
 
+  // Same as above but on demand
+  const getAssetsByAccount = useCallback((account: string) => {
+
+    if (!connection ||
+        !publicKey ||
+        !account ||
+        !userTokens ||
+        userTokens.length === 0 ||
+        !pinnedTokens ||
+        pinnedTokens.length === 0 ||
+        !priceList
+    ) {
+      return null;
+    }
+
+    setLoadingTokenAccounts(true);
+    setTokensLoaded(false);
+
+    return getUserAccountTokens(
+      connection,
+      account,
+      priceList,
+      userTokens,
+      splTokenList,
+      pinnedTokens
+    ).then(response => {
+      if (response) {
+        return response;
+      } else {
+        return null;
+      }
+    }).finally(() => {
+      setLoadingTokenAccounts(false);
+      setTokensLoaded(true);
+      return null;
+    });
+
+  }, [connection, pinnedTokens, priceList, publicKey, splTokenList, userTokens]);
+
   ///////////////////////
   // Multisig accounts //
   ///////////////////////
@@ -1546,6 +1605,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   return (
     <AppStateContext.Provider
       value={{
+        isSelectingAccount,
         theme,
         tpsAvg,
         refreshInterval,
@@ -1627,6 +1687,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         unstakeStartDate,
         stakingMultiplier,
         previousRoute,
+        setIsSelectingAccount,
+        getAssetsByAccount,
         setTheme,
         setTpsAvg,
         setShouldLoadTokens,

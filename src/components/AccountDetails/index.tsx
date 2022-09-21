@@ -26,6 +26,7 @@ export const AccountDetails = () => {
     diagnosisInfo,
     setStreamList,
     setSelectedStream,
+    setIsSelectingAccount,
   } = useContext(AppStateContext);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -34,13 +35,13 @@ export const AccountDetails = () => {
   const { wallet, provider, select, disconnect, resetWalletProvider } = useWallet();
 
   const switchWallet = useCallback(() => {
-    close();
     setTimeout(() => {
+      setIsSelectingAccount(true);
       select();
     }, 500);
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletChange);
-  }, [close, select]);
+  }, [select, setIsSelectingAccount]);
 
   const onCopyAddress = () => {
     if (copyText(wallet?.publicKey)) {
@@ -83,10 +84,9 @@ export const AccountDetails = () => {
     setStreamList(undefined);
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
-    close();
     disconnect();
     resetWalletProvider();
-  }, [close, disconnect, resetWalletProvider, setSelectedStream, setStreamList]);
+  }, [disconnect, resetWalletProvider, setSelectedStream, setStreamList]);
 
   if (!wallet?.publicKey) {
     return null;

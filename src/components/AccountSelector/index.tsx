@@ -1,84 +1,176 @@
 import "./style.scss";
-import { IconSafe, IconWallet } from "../../Icons";
-import { AccountSelectorItem } from "../AccountSelectorItem";
+import { IconLoading, IconSafe, IconWallet } from "../../Icons";
 import { useWallet } from "../../contexts/wallet";
-import { shortenAddress } from "../../middleware/utils";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../../contexts/appstate";
-import { toUsCurrency } from "../../middleware/ui";
-import { Identicon } from "../Identicon";
+import { Spin } from "antd";
+import { useTranslation } from "react-i18next";
+// import { useLocation, useNavigate } from "react-router-dom";
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { consoleOut, toUsCurrency } from "../../middleware/ui";
+import { UserTokenAccount } from "../../models/transactions";
+import { shortenAddress } from "../../middleware/utils";
 
 export const AccountSelector = () => {
   const {
+    tokensLoaded,
+    loadingPrices,
     multisigAccounts,
+    loadingTokenAccounts,
+    loadingMultisigAccounts,
+    // getTokenPriceByAddress,
+    // getTokenPriceBySymbol,
+    setIsSelectingAccount,
+    setShouldLoadTokens,
+    getAssetsByAccount,
+    setAccountAddress,
   } = useContext(AppStateContext);
+  // const location = useLocation();
+  // const navigate = useNavigate();
+  const { publicKey, provider } = useWallet();
+  const { t } = useTranslation("common");
+  const [accountTokens, setAccountTokens] = useState<UserTokenAccount[] | undefined>(undefined);
+  const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
 
-  const { wallet } = useWallet();
-  
-  const walletAccountPublicKey = wallet && wallet.publicKey ? wallet.publicKey.toBase58() : "";
-  const walletAccountIcon = wallet ? wallet.icon : "";
-  const walletAccountAddress = shortenAddress(walletAccountPublicKey as string, 8);
+  // Calculates total value of assets
+  useEffect(() => {
+    if (tokensLoaded && accountTokens) {
+      let sumMeanTokens = 0;
+      accountTokens.forEach((asset: UserTokenAccount, index: number) => {
+        sumMeanTokens += asset.valueInUsd || 0;
+      });
+      setTotalTokenAccountsValue(sumMeanTokens);
+    }
+  }, [accountTokens, tokensLoaded]);
+
+  // Process userTokensResponse from AppState to get a renderable list of tokens
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (accountTokens === undefined) {
+      consoleOut('Refreshing use account info...', '', 'blue');
+      (async () => {
+        try {
+          // Try fetching tokens manually
+          const result = await getAssetsByAccount(publicKey.toBase58());
+          if (result) {
+            consoleOut('userTokensResponse:', result, 'blue');
+            setAccountTokens(result.accountTokens);
+          } else {
+            // try queueing it to be done automatically by the state
+            setShouldLoadTokens(true);
+            setAccountAddress(publicKey.toBase58());
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      })();
+    }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountTokens, publicKey]);
+
+  const onNativeAccountSelected = () => {
+    if (publicKey) {
+      setAccountAddress(publicKey.toBase58());
+    }
+    setIsSelectingAccount(false);
+  }
+
+  const onMultisigAccountSelected = (item: MultisigInfo) => {
+    setAccountAddress(item.authority.toBase58());
+    setIsSelectingAccount(false);
+  }
+
+  const renderAssetsValue = () => {
+    return totalTokenAccountsValue
+      ? toUsCurrency(totalTokenAccountsValue)
+      : '$0.00';
+  }
 
   return (
     <div className="account-selector">
-      <div className="boxed-area">
-        <h2>Select Account</h2>
-        <div className="wallet-account left mb-2">
-          <div className="account-title fg-secondary-40">
-            <IconWallet className="mean-svg-icons fg-secondary-40 mr-1" />
-            <span className="m-0">Wallet Account</span>
+      <div className="account-group-heading">
+        <div className="flex-row justify-content-start align-items-center">
+          <IconWallet className="mean-svg-icons" style={{ width: 28, height: 28 }} />
+          <span className="ml-2">Wallet Account</span>
+        </div>
+      </div>
+      <div className="accounts-list">
+        <div className="transaction-list-row" onClick={onNativeAccountSelected}>
+          <div className="icon-cell">
+            <span>
+              {provider && (
+                <img src={provider.icon} alt={provider.name} width="30" className="wallet-provider-icon" />
+              )}
+            </span>
           </div>
-          <div className="account-content">
-            <AccountSelectorItem
-              id={walletAccountPublicKey}
-              src={walletAccountIcon}
-              title={walletAccountAddress}
-              subtitle="Personal account"
-              amount="$34.01"
-              resume="balance"
-            />
+          <div className="description-cell">
+            <div className="title text-truncate">
+              {publicKey ? shortenAddress(publicKey, 6) : '--'}
+            </div>
+            <div className="subtitle text-truncate">
+              Personal account
+            </div>
+          </div>
+          <div className="rate-cell">
+            <div className="rate-amount">
+              {loadingPrices || loadingTokenAccounts ? (
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              ) : renderAssetsValue()}
+            </div>
+            <div className="interval">
+              balance
+            </div>
           </div>
         </div>
-        <div className="safe-account right">
-          <div className="account-title fg-secondary-40">
-            <IconSafe className="mean-svg-icons fg-secondary-40 mr-1" />
-            <span className="m-0">Super Safe</span>
-          </div>
-          <div className="account-content">
-            {multisigAccounts.length > 0 && (
-              multisigAccounts.map((item, index) => {
-
-                const safeAccountAddress = shortenAddress(item.authority.toBase58() as string, 8);
-                const safeAccountBalance = toUsCurrency(item.balance);
-                const img = <>
-                  {(item.version === 0) ? (
-                    <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />
-                  ) : (item.version === 2) ? (
-                    <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" alt="Meanfi Multisig" width={30} height={30} />
-                  ) : (
-                    <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
-                  )}
-                </>
-
-                return (
-                  <div 
-                    key={`${index + 50}`}
-                    id={item.authority.toBase58()}
-                      >
-                    <AccountSelectorItem
-                      id={item.authority.toBase58()}
-                      img={img}
-                      title={item.label}
-                      subtitle={safeAccountAddress}
-                      amount={safeAccountBalance}
-                      resume="safe balance"
-                    />
+      </div>
+      <div className="account-group-heading">
+        <div className="flex-row justify-content-start align-items-center">
+          <IconSafe className="mean-svg-icons" style={{ width: 24, height: 24 }} />
+          <span className="ml-2">Super Safe</span>
+        </div>
+      </div>
+      <div className="accounts-list">
+        <Spin spinning={loadingMultisigAccounts}>
+          {(multisigAccounts && multisigAccounts.length > 0) ? (
+            multisigAccounts.map((item, index) => {
+              return (
+                <div key={`account-${index}`} className="transaction-list-row" onClick={() => onMultisigAccountSelected(item)}>
+                  <div className="icon-cell">
+                    <span>xOx</span>
                   </div>
-                )
-              })
-            )}
-          </div>
-        </div>
+                  <div className="description-cell">
+                    <div className="title text-truncate">
+                      Title
+                    </div>
+                    <div className="subtitle text-truncate">
+                      Subtitle
+                    </div>
+                  </div>
+                  <div className="rate-cell">
+                    <div className="rate-amount">
+                      1 st line
+                    </div>
+                    <div className="interval">
+                      2 nd line
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <>
+              {loadingMultisigAccounts ? (
+                <p>{t('streams.stream-activity.loading-activity')}</p>
+              ) : (
+                <>
+                  <p>{t('streams.stream-activity.no-activity')}</p>
+                </>
+              )}
+            </>
+          )}
+        </Spin>
       </div>
     </div>
   )

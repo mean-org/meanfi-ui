@@ -9,7 +9,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { consoleOut, isProd, isValidAddress } from "../../middleware/ui";
+import { consoleOut, isLocal, isProd, isValidAddress } from "../../middleware/ui";
 import ReactGA from 'react-ga';
 // import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
@@ -25,8 +25,9 @@ import { openNotification } from "../Notifications";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
-import { isUnauthenticatedRoute } from "../../middleware/utils";
+import { isUnauthenticatedRoute, shortenAddress } from "../../middleware/utils";
 import { AccountDetails } from "../../models/accounts";
+import { AccountSelectorModal } from "../AccountSelectorModal";
 
 const { Header, Content, Footer } = Layout;
 
@@ -37,9 +38,12 @@ export const AppLayout = React.memo((props: any) => {
     theme,
     tpsAvg,
     previousRoute,
+    accountAddress,
+    isSelectingAccount,
     previousWalletConnectState,
     setPreviousWalletConnectState,
     setNeedReloadMultisigAccounts,
+    setIsSelectingAccount,
     setShouldLoadTokens,
     refreshTokenBalance,
     setDiagnosisInfo,
@@ -52,13 +56,12 @@ export const AppLayout = React.memo((props: any) => {
   const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { wallet, provider, connected, publicKey, connecting, select } = useWallet();
+  const { wallet, provider, connected, publicKey, connecting, select, isSelectingWallet } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
   const [language, setLanguage] = useState("");
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
-  // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
   const [needRefresh, setNeedRefresh] = useState(true);
 
   // Clear cachedRpc on App destroy (window is being reloaded)
@@ -433,6 +436,24 @@ export const AppLayout = React.memo((props: any) => {
   ]);
 
   if ((wallet && connected) || isUnauthenticatedRoute(location.pathname)) {
+
+    if (wallet && connected && isSelectingAccount && !isUnauthenticatedRoute(location.pathname) && !isSelectingWallet) {
+      return (
+        <>
+          {isLocal() && (
+            <div className="debug-bar">
+              <span>isSelectingAccount:</span><span className="ml-1 font-extrabold">{isSelectingAccount ? 'true' : 'false'}</span>
+              <span className="ml-2">accountAddress:</span><span className="ml-1 font-extrabold">{accountAddress ? shortenAddress(accountAddress) : '-'}</span>
+            </div>
+          )}
+          <AccountSelectorModal
+            isVisible={isSelectingAccount}
+          />
+        </>
+      );
+    }
+
+    // Render layout
     return (
       <>
         <div className="App">
@@ -485,6 +506,7 @@ export const AppLayout = React.memo((props: any) => {
   } else {
 
     if (!wallet && !connected && !connecting) {
+      setIsSelectingAccount(true);
       select();
     }
 
