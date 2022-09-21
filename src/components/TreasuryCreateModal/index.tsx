@@ -509,7 +509,7 @@ export const TreasuryCreateModal = (props: {
         title={<div className="modal-title">{param === "multisig" ? "Propose streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
         maskClosable={false}
         footer={null}
-        visible={isVisible}
+        open={isVisible}
         onOk={onAcceptModal}
         onCancel={onCloseModal}
         afterClose={onAfterClose}

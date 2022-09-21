@@ -1688,7 +1688,7 @@ export const TreasuryStreamCreateModal = (props: {
       }
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
       width={480}>

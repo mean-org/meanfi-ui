@@ -51,7 +51,7 @@ export const DdcaCloseModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('ddcas.close-ddca.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={400}>

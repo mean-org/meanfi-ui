@@ -298,7 +298,7 @@ export const AccountsMergeModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('assets.merge-accounts-link')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onCancel={props.handleClose}
       width={400}>
 

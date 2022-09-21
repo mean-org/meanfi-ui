@@ -431,7 +431,7 @@ export const WrapSolModal = (props: {
       className="mean-modal unpadded-content simple-modal"
       title={<div className="modal-title">Wrap SOL</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={400}>

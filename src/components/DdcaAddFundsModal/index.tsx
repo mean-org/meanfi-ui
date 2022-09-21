@@ -545,7 +545,7 @@ export const DdcaAddFundsModal = (props: {
       title={<div className="modal-title">{t('ddcas.add-funds.modal-title')}</div>}
       footer={null}
       maskClosable={false}
-      visible={isVisible}
+      open={isVisible}
       onCancel={handleClose}
       width={480}>
       <div className="mb-3">

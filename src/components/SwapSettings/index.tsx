@@ -80,7 +80,7 @@ export const SwapSettings = (props: {
         placement={isSmScreen() ? "bottomRight" : 'bottom'}
         title={titleContent}
         content={bodyContent}
-        visible={popoverVisible}
+        open={popoverVisible}
         onOpenChange={handlePopoverVisibleChange}
         trigger="click">
         <Button

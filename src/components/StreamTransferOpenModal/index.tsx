@@ -143,7 +143,7 @@ export const StreamTransferOpenModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{queryAccountType === "multisig" ? "Propose transfer stream" : t('transfer-stream.modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={onCloseModal}
       width={480}>
 

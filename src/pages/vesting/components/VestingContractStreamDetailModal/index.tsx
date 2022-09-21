@@ -128,7 +128,7 @@ export const VestingContractStreamDetailModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">View vesting stream</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={handleClose}
       width={480}>
 

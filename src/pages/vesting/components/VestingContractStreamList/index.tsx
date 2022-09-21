@@ -1737,7 +1737,7 @@ export const VestingContractStreamList = (props: {
             <Modal
                 className="mean-modal no-full-screen"
                 maskClosable={false}
-                visible={isTransactionExecutionModalVisible}
+                open={isTransactionExecutionModalVisible}
                 title={getTransactionModalTitle(transactionStatus, isBusy, t)}
                 onCancel={hideTransactionExecutionModal}
                 width={360}

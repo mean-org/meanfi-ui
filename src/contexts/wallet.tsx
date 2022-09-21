@@ -484,7 +484,7 @@ export function WalletProvider({ children = null as any }) {
         centered
         className="mean-modal simple-modal"
         title={<div className="modal-title">{t(`wallet-selector.primary-action`)}</div>}
-        visible={isModalVisible}
+        open={isModalVisible}
         footer={null}
         maskClosable={connected}
         closable={connected}

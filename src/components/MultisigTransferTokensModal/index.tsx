@@ -559,7 +559,7 @@ export const MultisigTransferTokensModal = (props: {
         title={<div className="modal-title">{t('multisig.transfer-tokens.modal-title')}</div>}
         maskClosable={false}
         footer={null}
-        visible={isVisible}
+        open={isVisible}
         onOk={onAcceptModal}
         onCancel={onCloseModal}
         width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>

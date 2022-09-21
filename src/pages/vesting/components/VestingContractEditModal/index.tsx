@@ -294,7 +294,7 @@ export const VestingContractEditModal = (props: {
       className="mean-modal simple-modal unpadded-content"
       title={<div className="modal-title">Create Vesting Contract</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={handleClose}
       width={480}>
 

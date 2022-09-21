@@ -125,7 +125,7 @@ export const StreamPauseModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('streams.pause-stream-modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={400}>

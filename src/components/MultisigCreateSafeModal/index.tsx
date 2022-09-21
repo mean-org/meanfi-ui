@@ -269,7 +269,7 @@ export const MultisigCreateSafeModal = (props: {
       title={<div className="modal-title">{currentStep === 0 ? "Create multisig safe" : "Add safe"}</div>}
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>

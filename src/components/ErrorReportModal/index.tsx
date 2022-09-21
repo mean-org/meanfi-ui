@@ -46,7 +46,7 @@ export const ErrorReportModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{title}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={handleClose}
       width={360}>
       <div className="transaction-progress p-0 shift-up-1">

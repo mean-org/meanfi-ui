@@ -149,7 +149,7 @@ export const DdcaWithdrawModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{t('withdraw-funds.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptWithdrawal}
       onCancel={onCloseModal}
       width={480}>

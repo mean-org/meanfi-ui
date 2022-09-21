@@ -416,7 +416,7 @@ export const AccountsCloseAssetModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">Close Token Account</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={370}>

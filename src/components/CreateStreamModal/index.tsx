@@ -23,7 +23,7 @@ export const CreateStreamModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">Create outgoing stream</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={480}>

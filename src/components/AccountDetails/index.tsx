@@ -166,7 +166,7 @@ export const AccountDetails = () => {
 
       <Modal
         className="mean-modal simple-modal"
-        visible={isModalVisible}
+        open={isModalVisible}
         title={<div className="modal-title">{t('account-area.diagnosis-info')}</div>}
         onCancel={close}
         width={450}

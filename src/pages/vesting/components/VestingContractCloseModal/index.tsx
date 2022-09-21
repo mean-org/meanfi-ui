@@ -128,7 +128,7 @@ export const VestingContractCloseModal = (props: {
       title={<div className="modal-title">{t('vesting.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={handleClose}
       width={360}>
 

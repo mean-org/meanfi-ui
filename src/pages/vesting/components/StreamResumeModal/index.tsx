@@ -125,7 +125,7 @@ export const StreamResumeModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('streams.resume-stream-modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={400}>

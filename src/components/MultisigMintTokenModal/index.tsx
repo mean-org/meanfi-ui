@@ -137,7 +137,7 @@ export const MultisigMintTokenModal = (props: {
       title={<div className="modal-title">{t('multisig.mint-tokens.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}

@@ -591,7 +591,7 @@ export const VestingContractCreateStreamModal = (props: {
             className="mean-modal simple-modal unpadded-content"
             title={<div className="modal-title">{t('vesting.create-stream.modal-title')}</div>}
             footer={null}
-            visible={isVisible}
+            open={isVisible}
             onCancel={handleClose}
             width={480}>
 

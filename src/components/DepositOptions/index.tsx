@@ -184,7 +184,7 @@ export const DepositOptions = (props: {
         </>
       }
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={props.handleClose}
       onCancel={props.handleClose}
       afterClose={closePanels}

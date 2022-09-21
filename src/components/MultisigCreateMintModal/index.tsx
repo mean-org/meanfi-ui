@@ -78,7 +78,7 @@ export const MultisigCreateMintModal = (props: {
       title={<div className="modal-title">{t('multisig.multisig-mints.create-mint-modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       width={400}>

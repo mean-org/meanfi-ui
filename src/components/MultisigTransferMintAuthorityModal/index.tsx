@@ -130,7 +130,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
       title={<div className="modal-title">{t('multisig.multisig-mints.change-mint-authority-modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>

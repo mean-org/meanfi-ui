@@ -141,7 +141,7 @@ export const MultisigUpgradeIDLModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">Upgrade IDL</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}

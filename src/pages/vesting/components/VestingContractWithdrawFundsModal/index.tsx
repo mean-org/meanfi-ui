@@ -371,7 +371,7 @@ export const VestingContractWithdrawFundsModal = (props: {
       title={<div className="modal-title">{t('vesting.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={onAcceptWithdrawTreasuryFunds}
       onCancel={onCloseModal}
       afterClose={() => {

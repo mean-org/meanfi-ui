@@ -619,7 +619,7 @@ export const AccountsInitAtaModal = (props: {
       className="mean-modal simple-modal unpadded-content exchange-modal"
       title={<div className="modal-title">Add Asset</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={370}>

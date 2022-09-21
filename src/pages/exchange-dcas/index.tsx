@@ -1583,7 +1583,7 @@ export const ExchangeDcasView = () => {
         className="mean-modal no-full-screen"
         maskClosable={false}
         afterClose={onAfterCloseDdcaTransactionModalClosed}
-        visible={isCloseDdcaTransactionModalVisible}
+        open={isCloseDdcaTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideCloseDdcaTransactionModal}
         width={330}
@@ -1656,7 +1656,7 @@ export const ExchangeDcasView = () => {
         className="mean-modal no-full-screen"
         maskClosable={false}
         afterClose={onAfterWithdrawTransactionModalClosed}
-        visible={isWithdrawTransactionModalVisible}
+        open={isWithdrawTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideWithdrawTransactionModal}
         width={330}

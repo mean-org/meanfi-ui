@@ -83,7 +83,7 @@ export const TreasuryOpenModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{t('treasuries.open-treasury.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptTreasuryId}
       onCancel={props.handleClose}
       width={480}>

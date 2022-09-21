@@ -33,7 +33,7 @@ export const ReceiveSplOrSolModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">Receive {tokenSymbol || 'Funds'}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={360}>

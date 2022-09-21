@@ -864,7 +864,7 @@ export const DdcaSetupModal = (props: {
       }
       footer={null}
       maskClosable={false}
-      visible={isVisible}
+      open={isVisible}
       onCancel={(e: any) => {
         if (!vaultCreated) {
           e.preventDefault();

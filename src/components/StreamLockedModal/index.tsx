@@ -93,7 +93,7 @@ export const StreamLockedModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t("streams.locked-stream-modal-title")}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onCancel={props.handleClose}
       width={400}>
 

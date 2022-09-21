@@ -47,7 +47,7 @@ export const SendAssetModal = (props: {
           : t("transfers.send-asset-modal-title")
       }</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={480}>

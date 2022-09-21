@@ -232,7 +232,7 @@ export const StreamCloseModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('close-stream.modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={400}>

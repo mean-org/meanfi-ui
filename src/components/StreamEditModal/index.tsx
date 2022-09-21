@@ -256,7 +256,7 @@ export const StreamEditModal = (props: {
         className="mean-modal simple-modal"
         title={<div className="modal-title">{t('streams.edit-stream.modal-title')}</div>}
         footer={null}
-        visible={props.isVisible}
+        open={props.isVisible}
         onOk={onAcceptModal}
         onCancel={onCloseModal}
         afterClose={onAfterClose}
@@ -419,7 +419,7 @@ export const StreamEditModal = (props: {
       {isTokenSelectorModalVisible && (
         <Modal
           className="mean-modal unpadded-content"
-          visible={isTokenSelectorModalVisible}
+          open={isTokenSelectorModalVisible}
           title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
           onCancel={onCloseTokenSelector}
           width={450}

@@ -341,7 +341,7 @@ export const StreamCloseModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{param === "multisig" ? "Propose close stream" : t('close-stream.modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={onCloseModal}
       width={400}>
 
