@@ -417,22 +417,16 @@ export const VestingContractStreamList = (props: {
     const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
     const showCloseStreamModal = useCallback(() => {
         resetTransactionStatus();
+
         if (vestingContract) {
-            const v2 = vestingContract as Treasury;
-            if (v2.version && v2.version >= 2) {
-                getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
-                    setTransactionFees(value);
-                    consoleOut('transactionFees:', value, 'orange');
-                });
-            } else {
-                getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
-                    setTransactionFees(value);
-                    consoleOut('transactionFees:', value, 'orange');
-                });
-            }
+            getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
+                setTransactionFees(value);
+                consoleOut('transactionFees:', value, 'orange');
+            });
             setIsCloseStreamModalVisibility(true);
         }
     }, [getTransactionFees, resetTransactionStatus, vestingContract]);
+
     const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
     const onAcceptCloseStream = (options: VestingContractCloseStreamOptions) => {
         hideCloseStreamModal();
@@ -1575,7 +1569,11 @@ export const VestingContractStreamList = (props: {
                 <Menu.Item key="5" onClick={() => copyAddressToClipboard(item.id)}>
                     <span className="menu-item-text">{t('vesting.close-account.option-copy-stream-id')}</span>
                 </Menu.Item>
-                <Menu.Item key="6" onClick={showVestingContractStreamDetailModal}>
+                <Menu.Item key="6" onClick={() => {
+                    sethHighlightedStream(item);
+                    setHighLightableStreamId(item.id.toBase58());
+                    showVestingContractStreamDetailModal();
+                }}>
                     <span className="menu-item-text">{t('vesting.close-account.option-show-stream')}</span>
                 </Menu.Item>
                 <Menu.Item key="7">
@@ -1591,7 +1589,7 @@ export const VestingContractStreamList = (props: {
             <Dropdown
                 overlay={menu}
                 trigger={["click"]}
-                onOpenChange={(visibleChange: any) => {
+                onVisibleChange={(visibleChange: any) => {
                     if (visibleChange) {
                         sethHighlightedStream(item);
                         setHighLightableStreamId(item.id.toBase58());

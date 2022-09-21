@@ -2851,6 +2851,7 @@ export const MoneyStreamsOutgoingView = (props: {
       {isCloseStreamModalVisible && (
         <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
+          selectedToken={workingToken}
           transactionFees={transactionFees}
           streamDetail={streamSelected}
           mspClient={

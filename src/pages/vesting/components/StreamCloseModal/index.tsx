@@ -219,8 +219,8 @@ export const StreamCloseModal = (props: {
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={12} className="text-right pr-1">{caption}</Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
+        <Col span={10} className="text-right pr-1">{caption}</Col>
+        <Col span={14} className="text-left pl-1 fg-secondary-70">{value}</Col>
       </Row>
     );
   }
