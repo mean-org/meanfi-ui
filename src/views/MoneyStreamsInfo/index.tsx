@@ -66,6 +66,7 @@ import BigNumber from "bignumber.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { appConfig } from '../..';
 import { ZERO_FEES } from "../../models/multisig";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 export const MoneyStreamsInfoView = (props: {
   accountAddress: string;
@@ -2837,24 +2838,30 @@ export const MoneyStreamsInfoView = (props: {
     );
   }
 
-  // Dropdown (three dots button) inside outgoing stream list
-  const menu = (
-    <Menu>
-      {param === "multisig" ? (
-        <Menu.Item key="00" onClick={() => {
-          param === "multisig"
-            ? showCreateStreamModal()
-            : showCreateMoneyStreamModal()
-        }}>
-          <span className="menu-item-text">Create stream</span>
-        </Menu.Item>
-      ) : (
-        <Menu.Item key="00" onClick={showOpenStreamModal}>
-          <span className="menu-item-text">Find stream</span>
-        </Menu.Item>
-      )}
-    </Menu>
-  );
+  const renderDropdownMenu = useCallback(() => {
+    const items: ItemType[] = [];
+    if (param === "multisig") {
+      items.push({
+        key: '01-create-stream',
+        label: (
+          <div onClick={showCreateStreamModal}>
+            <span className="menu-item-text">Create stream</span>
+          </div>
+        )
+      });
+    } else {
+      items.push({
+        key: '02-find-stream',
+        label: (
+          <div onClick={showOpenStreamModal}>
+            <span className="menu-item-text">Find stream</span>
+          </div>
+        )
+      });
+    }
+
+    return <Menu items={items} />;
+  }, [param, showCreateStreamModal, showOpenStreamModal]);
 
   return (
     <>
@@ -2942,7 +2949,7 @@ export const MoneyStreamsInfoView = (props: {
           {isXsDevice && (
             <Col xs={4} sm={6} md={4} lg={6}>
               <Dropdown className="options-dropdown"
-                overlay={menu}
+                overlay={renderDropdownMenu()}
                 placement="bottomRight"
                 trigger={["click"]}>
                 <span className="icon-button-container ml-1">

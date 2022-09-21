@@ -65,6 +65,7 @@ import { AccountTokenParsedInfo } from "../../models/accounts";
 import { RecipientAddressInfo } from '../../models/common-types';
 import BN from 'bn.js';
 import { fetchAccountTokens } from '../../middleware/accounts';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -1269,19 +1270,16 @@ export const RepeatingPayment = (props: {
   //   );
   // }
 
-  const paymentRateOptionsMenu = (
-    <Menu>
-      {getOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handlePaymentRateOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
+  const paymentRateOptionsMenu = () => {
+    const items: ItemType[] = getOptionsFromEnum(PaymentRateType).map((item, index) => {
+      return {
+        key: `option-${index}`,
+        label: (<span onClick={() => handlePaymentRateOptionChange(item.value)}>{item.text}</span>)
+      };
+    });
+
+    return <Menu items={items} />;
+  }
 
   const renderTokenList = (
     <>
@@ -1512,7 +1510,7 @@ export const RepeatingPayment = (props: {
               <div className="flex-fixed-left">
                 <div className="left">
                   <Dropdown
-                    overlay={paymentRateOptionsMenu}
+                    overlay={paymentRateOptionsMenu()}
                     trigger={["click"]}>
                     <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                       <div className="left">

@@ -61,6 +61,7 @@ import { NATIVE_SOL } from '../../constants/tokens';
 import { VestingContractEditModal } from './components/VestingContractEditModal';
 import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from '../../middleware/accounts';
 import { TreasuryWithdrawParams } from '../../models/treasuries';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -3831,21 +3832,17 @@ export const VestingView = () => {
   ///////////////
 
   const renderMetaInfoMenuItems = () => {
-    const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
-    return (
-      <Menu>
-        {items.map((item: MetaInfoCta, index: number) => {
-          return (
-            <Menu.Item
-              key={`${index + 44}-${item.uiComponentId}`}
-              disabled={item.disabled}
-              onClick={item.callBack}>
-              <span className="menu-item-text">{item.caption}</span>
-            </Menu.Item>
-          );
-        })}
-      </Menu>
-    );
+    const ctas = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
+    const items: ItemType[] = ctas.map((item: MetaInfoCta, index: number) => {
+      return {
+        key: `${index + 44}-${item.uiComponentId}`,
+        label: (
+          <span className="menu-item-text" onClick={item.callBack}>{item.caption}</span>
+        ),
+        disabled: item.disabled
+      }
+    });
+    return <Menu items={items} />;
   }
 
   const renderMetaInfoCtaRow = () => {

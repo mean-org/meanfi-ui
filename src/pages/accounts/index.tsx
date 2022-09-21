@@ -90,6 +90,8 @@ import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/
 import notification from 'antd/lib/notification';
 import { SolBalanceModal } from '../../components/SolBalanceModal';
 import BigNumber from 'bignumber.js';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { MetaInfoCta } from '../../models/common-types';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -4312,46 +4314,55 @@ export const AccountsNewView = () => {
     } else return null;
   };
 
-  const assetListOptions = (
-    <Menu>
-      <Menu.Item key="10" onClick={showSuggestAssetModal}>
-        <IconLightBulb className="mean-svg-icons" />
-        <span className="menu-item-text">Suggest an asset</span>
-      </Menu.Item>
-      {(accountTokens && accountTokens.length > 0) && (
-        <>
-          {hideLowBalances ? (
-            <Menu.Item key="11" onClick={() => toggleHideLowBalances(false)}>
+  const getAssetListOptions = () => {
+    const items: ItemType[] = [];
+    items.push({
+      key: '01-suggest-asset',
+      label: (
+        <div onClick={showSuggestAssetModal}>
+          <IconLightBulb className="mean-svg-icons" />
+          <span className="menu-item-text">Suggest an asset</span>
+        </div>
+      )
+    });
+    if (accountTokens && accountTokens.length > 0) {
+      if (hideLowBalances) {
+        items.push({
+          key: '02-show-low-balances',
+          label: (
+            <div onClick={() => toggleHideLowBalances(false)}>
               <IconEyeOn className="mean-svg-icons" />
               <span className="menu-item-text">Show low balances</span>
-            </Menu.Item>
-          ) : (
-            <Menu.Item key="12" onClick={() => toggleHideLowBalances(true)}>
+            </div>
+          )
+        });
+      } else {
+        items.push({
+          key: '03-hide-low-balances',
+          label: (
+            <div onClick={() => toggleHideLowBalances(true)}>
               <IconEyeOff className="mean-svg-icons" />
               <span className="menu-item-text">Hide low balances</span>
-            </Menu.Item>
-          )}
-        </>
-      )}
-    </Menu>
-  );
+            </div>
+          )
+        });
+      }
+    }
+    return <Menu items={items} />;
+  }
 
   const renderUserAccountAssetMenu = () => {
-    const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
-    return (
-      <Menu>
-        {items.map(item => {
-          return (
-            <Menu.Item
-              key={item.uiComponentId}
-              disabled={item.disabled}
-              onClick={item.callBack}>
-              <span className="menu-item-text">{item.caption}</span>
-            </Menu.Item>
-          );
-        })}
-      </Menu>
-    );
+    const ctas = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
+    const items: ItemType[] = ctas.map((item: MetaInfoCta, index: number) => {
+      return {
+        key: `${index + 44}-${item.uiComponentId}`,
+        label: (
+          <span className="menu-item-text" onClick={item.callBack}>{item.caption}</span>
+        ),
+        disabled: item.disabled
+      }
+    });
+    return <Menu items={items} />;
   }
 
   const isDeleteAssetValid = () => {
@@ -4857,7 +4868,7 @@ export const AccountsNewView = () => {
                         )}
                       </div>
                       <Dropdown className="options-dropdown"
-                        overlay={assetListOptions}
+                        overlay={getAssetListOptions()}
                         placement="bottomRight"
                         trigger={["click"]}>
                         <span className="icon-button-container">

@@ -18,6 +18,7 @@ import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from "@mean-dao/msp";
 import { NATIVE_SOL } from "../../constants/tokens";
 import { CUSTOM_TOKEN_NAME } from "../../constants";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 export const StreamEditModal = (props: {
   handleClose: any;
@@ -205,19 +206,16 @@ export const StreamEditModal = (props: {
     setPaymentRateFrequency(val);
   }
 
-  const paymentRateOptionsMenu = (
-    <Menu>
-      {getOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handlePaymentRateOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
+  const paymentRateOptionsMenu = () => {
+    const items: ItemType[] = getOptionsFromEnum(PaymentRateType).map((item, index) => {
+      return {
+        key: `option-${index}`,
+        label: (<span onClick={() => handlePaymentRateOptionChange(item.value)}>{item.text}</span>)
+      };
+    });
+
+    return <Menu items={items} />;
+  }
 
   const renderTokenList = (
     <>
@@ -346,7 +344,7 @@ export const StreamEditModal = (props: {
               <div className="form-label">{t('streams.edit-stream.frequency-input-label')}</div>
               <div className="well">
                 <Dropdown
-                  overlay={paymentRateOptionsMenu}
+                  overlay={paymentRateOptionsMenu()}
                   trigger={["click"]}>
                   <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                     <div className="left">

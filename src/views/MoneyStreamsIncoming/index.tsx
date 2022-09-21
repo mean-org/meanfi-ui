@@ -39,6 +39,7 @@ import { useSearchParams } from "react-router-dom";
 import { readAccountInfo } from "../../middleware/accounts";
 import { appConfig } from '../..';
 import BN from "bn.js";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1399,20 +1400,27 @@ export const MoneyStreamsIncomingView = (props: {
     },
   ];
 
-  // Dropdown (three dots button)
   const renderDropdownMenu = useCallback(() => {
-    return (
-      <Menu>
-        <Menu.Item key="msi-00" onClick={showTransferStreamModal}>
+    const items: ItemType[] = [];
+    items.push({
+      key: '01-transfer-ownership',
+      label: (
+        <div onClick={showTransferStreamModal}>
           <span className="menu-item-text">Transfer ownership</span>
-        </Menu.Item>
-        <Menu.Item key="msi-02">
-          <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-            <span className="menu-item-text">{t('account-area.explorer-link')}</span>
-          </a>
-        </Menu.Item>
-      </Menu>
-    );
+        </div>
+      )
+    });
+    items.push({
+      key: '02-explorer-link',
+      label: (
+        <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`}
+           target="_blank" rel="noopener noreferrer">
+          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
+        </a>
+      )
+    });
+
+    return <Menu items={items} />;
   }, [showTransferStreamModal, streamSelected, t]);
 
   // Buttons

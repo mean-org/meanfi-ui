@@ -16,6 +16,7 @@ import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../middlew
 import { getAmountFromLamports, shortenAddress } from "../../../../../middleware/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
 import { VESTING_ROUTE_BASE_PATH } from "../../../../vesting";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 const { TabPane } = Tabs;
 
@@ -213,22 +214,37 @@ export const SafeInfo = (props: {
     setSearchParams({v: tab as string});
   }
 
-  // Dropdown (three dots button)
-  const menu = (
-    <Menu>
-      <Menu.Item key="ms-00" onClick={onEditMultisigClick}>
-        <span className="menu-item-text">Edit safe</span>
-      </Menu.Item>
-      {isUnderDevelopment() && (
-        <Menu.Item key="ms-01" onClick={() => {}}>
-          <span className="menu-item-text">Delete safe</span>
-        </Menu.Item>
-      )}
-      <Menu.Item key="ms-02" onClick={onRefreshTabsInfo}>
-        <span className="menu-item-text">Refresh</span>
-      </Menu.Item>
-    </Menu>
-  );
+  const renderDropdownMenu = useCallback(() => {
+    const items: ItemType[] = [];
+    items.push({
+      key: '01-edit-safe',
+      label: (
+        <div onClick={() => onEditMultisigClick()}>
+          <span className="menu-item-text">Edit safe</span>
+        </div>
+      )
+    });
+    if (isUnderDevelopment()) {
+      items.push({
+        key: '02-delete-safe',
+        label: (
+          <div onClick={() => consoleOut('Not implemented yet', '', 'red')}>
+            <span className="menu-item-text">Delete safe</span>
+          </div>
+        )
+      });
+    }
+    items.push({
+      key: '03-refresh',
+      label: (
+        <div onClick={() => onRefreshTabsInfo()}>
+          <span className="menu-item-text">Refresh</span>
+        </div>
+      )
+    });
+
+    return <Menu items={items} />;
+  }, [isUnderDevelopment, onEditMultisigClick, onRefreshTabsInfo]);
 
   const renderTabset = () => {
     if (tabs && tabs.length > 0) {
@@ -328,7 +344,7 @@ export const SafeInfo = (props: {
         
         <Col xs={4} sm={6} md={4} lg={6}>
           <Dropdown
-            overlay={menu}
+            overlay={renderDropdownMenu()}
             placement="bottomRight"
             trigger={["click"]}>
             <span className="ellipsis-icon icon-button-container mr-1">

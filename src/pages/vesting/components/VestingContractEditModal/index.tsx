@@ -20,6 +20,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { isError } from '../../../../middleware/transactions';
 import { VestingContractEditOptions } from '../../../../models/vesting';
 import BN from 'bn.js';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const timeFormat="hh:mm A"
 
@@ -242,19 +243,16 @@ export const VestingContractEditModal = (props: {
   // Rendering //
   ///////////////
 
-  const lockPeriodOptionsMenu = (
-    <Menu>
-      {getLockPeriodOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handleLockPeriodOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
+  const lockPeriodOptionsMenu = () => {
+    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+      return {
+        key: `option-${index}`,
+        label: (<span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>)
+      };
+    });
+
+    return <Menu items={items} />;
+  }
 
   const renderDatePickerExtraPanel = () => {
     return (
@@ -337,7 +335,7 @@ export const VestingContractEditModal = (props: {
             <div className="right">
               <div className="well">
                 <Dropdown
-                  overlay={lockPeriodOptionsMenu}
+                  overlay={lockPeriodOptionsMenu()}
                   trigger={["click"]}>
                   <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                     <div className="left">

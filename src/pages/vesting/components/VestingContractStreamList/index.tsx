@@ -49,6 +49,7 @@ import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
 import { AppUsageEvent, SegmentStreamCloseData, SegmentStreamStatusChangeActionData } from '../../../../middleware/segment-service';
 import { segmentAnalytics } from '../../../../App';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1536,61 +1537,90 @@ export const VestingContractStreamList = (props: {
         if (!vestingContract) { return null; }
 
         const isNewTreasury = item.version && item.version >= 2 ? true : false;
+        const items: ItemType[] = [];
 
-        const menu = (
-            <Menu>
-                {(isNewTreasury && vestingContract.treasuryType === TreasuryType.Open) && (
-                    <>
-                        {item.status === STREAM_STATUS.Paused
-                            ? (
-                                <>
-                                    {item.fundsLeftInStream.gtn(0) && (
-                                        <Menu.Item key="1" onClick={showResumeStreamModal}>
-                                            <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
-                                        </Menu.Item>
-                                    )}
-                                </>
-                            ) : item.status === STREAM_STATUS.Running ? (
-                                <Menu.Item key="2" onClick={showPauseStreamModal}>
-                                    <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
-                                </Menu.Item>
-                            ) : null
-                        }
-                        <Menu.Item key="3" onClick={showAddFundsModal}>
-                            <span className="menu-item-text">{t('streams.stream-detail.add-funds-cta')}</span>
-                        </Menu.Item>
-                    </>
-                )}
-                {(vestingContract.treasuryType === TreasuryType.Open ||
-                 (vestingContract.treasuryType === TreasuryType.Lock && item.status !== STREAM_STATUS.Running)) && (
-                    <Menu.Item key="4" onClick={showCloseStreamModal}>
+        if (isNewTreasury && vestingContract.treasuryType === TreasuryType.Open) {
+            if (item.status === STREAM_STATUS.Paused && item.fundsLeftInStream.gtn(0)) {
+                items.push({
+                    key: '01-resume-stream',
+                    label: (
+                        <div onClick={showResumeStreamModal}>
+                            <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
+                        </div>
+                    )
+                });
+            } else if (item.status === STREAM_STATUS.Running) {
+                items.push({
+                    key: '02-pause-stream',
+                    label: (
+                        <div onClick={showPauseStreamModal}>
+                            <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
+                        </div>
+                    )
+                });
+            }
+            items.push({
+                key: '03-add-funds',
+                label: (
+                    <div onClick={showAddFundsModal}>
+                        <span className="menu-item-text">{t('streams.stream-detail.add-funds-cta')}</span>
+                    </div>
+                )
+            });
+        }
+        if ((vestingContract.treasuryType === TreasuryType.Open ||
+            (vestingContract.treasuryType === TreasuryType.Lock && item.status !== STREAM_STATUS.Running))) {
+            //
+            items.push({
+                key: '04-close-stream',
+                label: (
+                    <div onClick={showCloseStreamModal}>
                         <span className="menu-item-text">{t('vesting.close-account.option-close-stream')}</span>
-                    </Menu.Item>
-                )}
-                <Menu.Item key="5" onClick={() => copyAddressToClipboard(item.id)}>
+                    </div>
+                )
+            });
+        }
+        items.push({
+            key: '05-copy-streamid',
+            label: (
+                <div onClick={() => copyAddressToClipboard(item.id)}>
                     <span className="menu-item-text">{t('vesting.close-account.option-copy-stream-id')}</span>
-                </Menu.Item>
-                <Menu.Item key="6" onClick={() => {
+                </div>
+            )
+        });
+
+        items.push({
+            key: '06-show-stream',
+            label: (
+                <div onClick={() => {
                     sethHighlightedStream(item);
                     setHighLightableStreamId(item.id.toBase58());
                     showVestingContractStreamDetailModal();
                 }}>
                     <span className="menu-item-text">{t('vesting.close-account.option-show-stream')}</span>
-                </Menu.Item>
-                <Menu.Item key="7">
-                    <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
-                        target="_blank" rel="noopener noreferrer">
-                        <span className="menu-item-text">{t('treasuries.treasury-streams.option-explorer-link')}</span>
-                    </a>
-                </Menu.Item>
-            </Menu>
+                </div>
+            )
+        });
+
+        items.push({
+            key: '07-explorer',
+            label: (
+                <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
+                    target="_blank" rel="noopener noreferrer">
+                    <span className="menu-item-text">{t('treasuries.treasury-streams.option-explorer-link')}</span>
+                </a>
+            )
+        });
+
+        const menu = (
+            <Menu items={items} />
         );
 
         return (
             <Dropdown
                 overlay={menu}
                 trigger={["click"]}
-                onVisibleChange={(visibleChange: any) => {
+                onOpenChange={(visibleChange: any) => {
                     if (visibleChange) {
                         sethHighlightedStream(item);
                         setHighLightableStreamId(item.id.toBase58());

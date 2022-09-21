@@ -44,6 +44,7 @@ import { DdcaWithdrawModal } from '../../components/DdcaWithdrawModal';
 import { DdcaAddFundsModal } from '../../components/DdcaAddFundsModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { openNotification } from '../../components/Notifications';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1191,21 +1192,30 @@ export const ExchangeDcasView = () => {
     setAutoOpenDetailsPanel(false);
   }
 
-  const menu = (
-    <Menu>
-      {/*
-        *     If exchangeFor is > 0 -> Withdraw is visible
-      */}
-      {(ddcaDetails && ddcaDetails.toBalance > 0) && (
-        <Menu.Item key="1" onClick={showWithdrawModal}>
-          <span className="menu-item-text">{t("ddcas.exchange-dcas.withdraw")}</span>
-        </Menu.Item>
-      )}
-      <Menu.Item key="2" onClick={showCloseDdcaModal}>
-        <span className="menu-item-text">{t("ddcas.exchange-dcas.cancel-withdraw-everything")}</span>
-      </Menu.Item>
-    </Menu>
-  );
+  // If exchangeFor is > 0 -> Withdraw is visible
+  const getMenuOptions = () => {
+    const items: ItemType[] = [];
+    if (ddcaDetails && ddcaDetails.toBalance > 0) {
+      items.push({
+        key: '01-withdraw',
+        label: (
+          <div onClick={showWithdrawModal}>
+            <span className="menu-item-text">{t("ddcas.exchange-dcas.withdraw")}</span>
+          </div>
+        )
+      });
+    }
+    items.push({
+      key: '02-cancel-withdraw',
+      label: (
+        <div onClick={showCloseDdcaModal}>
+          <span className="menu-item-text">{t("ddcas.exchange-dcas.cancel-withdraw-everything")}</span>
+        </div>
+      )
+    });
+
+    return <Menu items={items} />;
+  }
 
   const renderRecurringBuy = (
     <>
@@ -1330,7 +1340,7 @@ export const ExchangeDcasView = () => {
                 }
               </Button>
               {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && fetchTxInfoStatus !== "fetching") && (
-                <Dropdown overlay={menu} trigger={["click"]}>
+                <Dropdown overlay={getMenuOptions()} trigger={["click"]}>
                   <Button
                     shape="round"
                     type="text"

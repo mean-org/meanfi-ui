@@ -34,6 +34,7 @@ import { Identicon } from '../../../../components/Identicon';
 import { InputMean } from '../../../../components/InputMean';
 import { BN } from 'bn.js';
 import BigNumber from 'bignumber.js';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const timeFormat="hh:mm A"
 
@@ -627,33 +628,27 @@ export const VestingContractCreateForm = (props: {
     // Rendering //
     ///////////////
 
-    const lockPeriodOptionsMenu = (
-        <Menu>
-            {getLockPeriodOptionsFromEnum(PaymentRateType).map((item) => {
-                return (
-                    <Menu.Item
-                        key={item.key}
-                        onClick={() => handleLockPeriodOptionChange(item.value)}>
-                        {item.text}
-                    </Menu.Item>
-                );
-            })}
-        </Menu>
-    );
+    const lockPeriodOptionsMenu = () => {
+        const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+            return {
+                key: `option-${index}`,
+                label: (<span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>)
+            };
+        });
 
-    const vestingCategoriesMenu = (
-        <Menu>
-            {VESTING_CATEGORIES.map(item => {
-                return (
-                    <Menu.Item
-                        key={`${slugify(item.label)}-${item.value}`}
-                        onClick={() => setVestingCategory(item)}>
-                        {item.label}
-                    </Menu.Item>
-                );
-            })}
-        </Menu>
-    );
+        return <Menu items={items} />;
+    }
+
+    const vestingCategoriesMenu = () => {
+        const items: ItemType[] = VESTING_CATEGORIES.map((item, index) => {
+            return {
+                key: `${slugify(item.label)}-${item.value}`,
+                label: (<span onClick={() => setVestingCategory(item)}>{item.label}</span>)
+            };
+        });
+
+        return <Menu items={items} />;
+    }
 
     const renderTokenList = (
         <>
@@ -1004,7 +999,7 @@ export const VestingContractCreateForm = (props: {
                         />
                         <div className="well">
                             <Dropdown
-                                overlay={vestingCategoriesMenu}
+                                overlay={vestingCategoriesMenu()}
                                 trigger={["click"]}>
                                 <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                                     <div className="left">

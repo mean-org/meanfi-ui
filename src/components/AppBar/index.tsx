@@ -128,26 +128,36 @@ export const AppBar = (props: {
   }, [isMenuOpen]);
 
   const mainNav = (
-    <Menu selectedKeys={selectedItems} mode="horizontal">
-      <Menu.Item key="accounts">
-        <Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>
-      </Menu.Item>
-      <Menu.Item key="exchange">
-        <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
-      </Menu.Item>
-      <Menu.Item key="staking">
-        <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>
-      </Menu.Item>
-      <Menu.Item key="vesting">
-        <Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>
-      </Menu.Item>
-      <Menu.Item key="multisig">
-        <Link to="/multisig">{t('ui-menus.main-menu.multisig')}</Link>
-      </Menu.Item>
-      <Menu.Item key="stats">
-        <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
-      </Menu.Item>
-    </Menu>
+    <Menu
+      selectedKeys={selectedItems}
+      mode="horizontal"
+      items={[
+        {
+          key: 'accounts',
+          label: (<Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>),
+        },
+        {
+          key: 'exchange',
+          label: (<Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>),
+        },
+        {
+          key: 'staking',
+          label: (<Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>),
+        },
+        {
+          key: 'vesting',
+          label: (<Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>),
+        },
+        {
+          key: 'multisig',
+          label: (<Link to="/multisig">{t('ui-menus.main-menu.multisig')}</Link>),
+        },
+        {
+          key: 'stats',
+          label: (<Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>),
+        },
+      ]}
+    />
   );
 
   if (props.menuType === 'desktop' ) {
