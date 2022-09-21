@@ -19,6 +19,7 @@ export const StreamCloseModal = (props: {
   content: JSX.Element;
   handleClose: any;
   handleOk: any;
+  hasContractFinished: boolean;
   isVisible: boolean;
   mspClient: MSP | undefined;
   selectedToken: TokenInfo | undefined;
@@ -30,6 +31,7 @@ export const StreamCloseModal = (props: {
     content,
     handleClose,
     handleOk,
+    hasContractFinished,
     isVisible,
     mspClient,
     selectedToken,
@@ -266,7 +268,7 @@ export const StreamCloseModal = (props: {
           {localStreamDetail && selectedToken && (
             <>
               <div className="p-2 mb-2">
-                {infoRow(
+                {hasContractFinished && infoRow(
                   t('close-stream.return-vested-amount') + ':',
                   getAmountWithSymbol(
                     getWithdrawableAmount(),

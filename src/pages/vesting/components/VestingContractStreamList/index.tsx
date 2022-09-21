@@ -740,7 +740,6 @@ export const VestingContractStreamList = (props: {
                             false,
                             splTokenList,
                             selectedToken.decimals,
-                            true
                         );
                         const unvestedReturns = getAmountWithSymbol(
                             closeStreamOptions.unvestedReturns,
@@ -748,14 +747,16 @@ export const VestingContractStreamList = (props: {
                             false,
                             splTokenList,
                             selectedToken.decimals,
-                            true
                         );
                         const beneficiary = shortenAddress(highlightedStream.beneficiary);
                         const loadingMessage = multisigId
                             ? 'The Multisig proposal to close the vesting stream Dinero para mi sobrina is being confirmed.'
                             : `Vesting stream ${highlightedStream.name} closure is pending confirmation`;
+                        const confirmedMultisigMessage = isDateInTheFuture(paymentStartDate)
+                            ? `The proposal to close the vesting stream has been confirmed. Once approved, the unvested amount of ${unvestedReturns} will be returned to the vesting contract.`
+                            : `The proposal to close the vesting stream has been confirmed. Once approved, the vested amount of ${vestedReturns} will be sent to ${beneficiary} and the stream will be closed.`;
                         const confirmedMessage = multisigId
-                            ? `The proposal to close the vesting stream ${highlightedStream.name} has been confirmed. Once approved by the Multisig signers, the vested amount of ${vestedReturns} will be sent to ${beneficiary} and the unvested amount of ${unvestedReturns} will be returned to the vesting contract.`
+                            ? confirmedMultisigMessage
                             : `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of ${vestedReturns} has been sent to ${beneficiary}. Unvested amount of ${unvestedReturns} was returned to the vesting contract.`;
                         enqueueTransactionConfirmation({
                             signature: signature,
@@ -1697,15 +1698,16 @@ export const VestingContractStreamList = (props: {
 
             {isCloseStreamModalVisible && (
                 <StreamCloseModal
-                    isVisible={isCloseStreamModalVisible}
-                    selectedToken={selectedToken}
-                    transactionFees={transactionFees}
-                    streamDetail={highlightedStream}
-                    handleOk={(options: VestingContractCloseStreamOptions) => onAcceptCloseStream(options)}
-                    handleClose={hideCloseStreamModal}
-                    content={getStreamClosureMessage()}
-                    mspClient={msp}
                     canCloseTreasury={treasuryStreams.length === 1 ? true : false}
+                    content={getStreamClosureMessage()}
+                    handleClose={hideCloseStreamModal}
+                    handleOk={(options: VestingContractCloseStreamOptions) => onAcceptCloseStream(options)}
+                    hasContractFinished={isContractFinished()}
+                    isVisible={isCloseStreamModalVisible}
+                    mspClient={msp}
+                    selectedToken={selectedToken}
+                    streamDetail={highlightedStream}
+                    transactionFees={transactionFees}
                 />
             )}
 
