@@ -59,7 +59,7 @@ export const MultisigOwnersSigned = (props: {
         placement="topRight"
         title={titleContent}
         content={bodyContent}
-        visible={popoverVisible}
+        open={popoverVisible}
         onOpenChange={handlePopoverVisibleChange}
         trigger="click">
         {props.className ? (

@@ -134,7 +134,7 @@ export const MultisigVaultDeleteModal = (props: {
       title={<div className="modal-title">Propose asset deletion</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptDeleteVault}
       onCancel={onCloseModal}
       afterClose={onAfterClose}

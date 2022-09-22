@@ -501,7 +501,7 @@ export const ProposalSummaryModal = (props: {
       className="mean-modal simple-modal proposal-summary-modal"
       title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
       maskClosable={false}
-      visible={isVisible}
+      open={isVisible}
       closable={true}
       onOk={onAcceptModal}
       onCancel={onCloseModal}

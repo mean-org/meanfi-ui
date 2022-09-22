@@ -381,7 +381,7 @@ export const MultisigProposalModal = (props: {
       title={<div className="modal-title">New proposal</div>}
       maskClosable={false}
       footer={null}
-      visible={isModalVisible}
+      open={isModalVisible}
       // onOk={onAcceptModal}
       onCancel={onCloseModal}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>

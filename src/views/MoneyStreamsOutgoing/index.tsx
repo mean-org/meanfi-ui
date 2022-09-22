@@ -43,7 +43,7 @@ import { title } from "process";
 import { appConfig } from '../..';
 import { fetchAccountTokens, readAccountInfo } from "../../middleware/accounts";
 import { NATIVE_SOL } from "../../constants/tokens";
-import { getReadableStream } from "../../middleware/streams";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -142,14 +142,6 @@ export const MoneyStreamsOutgoingView = (props: {
     connection,
     multisigAddressPK,
   ]);
-
-  const inputStreamId = useMemo(() => {
-    if (streamSelected && streamSelected.id) {
-      return streamSelected.version < 2 ? new PublicKey((streamSelected as StreamInfo).id as string) : (streamSelected as Stream).id;
-    }
-    return undefined;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streamSelected?.id]);
 
   /////////////////
   //  Callbacks  //
@@ -2050,7 +2042,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const closeStream = await msp.closeStream(
         new PublicKey(data.payer),              // payer
-        new PublicKey(data.payer),              // TODO: This should come from the UI
+        new PublicKey(data.payer),              // destination
         new PublicKey(data.stream),             // stream,
         data.closeTreasury,                     // closeTreasury
         false
@@ -2487,27 +2479,6 @@ export const MoneyStreamsOutgoingView = (props: {
   // Data management //
   /////////////////////
 
-  /*
-  // Get a fresh copy of the stream
-  useEffect(() => {
-    if (!msp || !inputStreamId) { return; }
-
-    consoleOut('Lets fetch stream details for:', inputStreamId.toBase58(), 'blue');
-    msp.getStream(inputStreamId)
-      .then((detail: Stream | StreamInfo) => {
-        if (detail) {
-          consoleOut('streamDetail:', getReadableStream(detail), 'blue');
-          setStreamDetail(detail);
-        }
-      })
-      .catch((error: any) => {
-        console.error(error);
-      });
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [msp, inputStreamId]);
-  */
-
   // Automatically update all token balances (in token list)
   useEffect(() => {
 
@@ -2686,22 +2657,30 @@ export const MoneyStreamsOutgoingView = (props: {
     },
   ];
 
-  // Dropdown (three dots button)
   const renderDropdownMenu = useCallback(() => {
-    return (
-      <Menu>
-        {(getTreasuryType() === "open" || (getTreasuryType() === "locked" && streamSelected && getStreamStatus(streamSelected) !== "stopped")) && (
-          <Menu.Item key="mso-00" disabled={isBusy || hasStreamPendingTx()} onClick={showCloseStreamModal}>
+    const items: ItemType[] = [];
+    if (getTreasuryType() === "open" || (getTreasuryType() === "locked" && streamSelected && getStreamStatus(streamSelected) !== "running")) {
+      items.push({
+        key: '01-close-stream',
+        label: (
+          <div onClick={showCloseStreamModal}>
             <span className="menu-item-text">Close stream</span>
-          </Menu.Item>
-        )}
-        <Menu.Item key="mso-02">
-          <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-            <span className="menu-item-text">{t('account-area.explorer-link')}</span>
-          </a>
-        </Menu.Item>
-      </Menu>
-    );
+          </div>
+        ),
+        disabled: isBusy || hasStreamPendingTx()
+      });
+    }
+    items.push({
+      key: '02-explorer-link',
+      label: (
+        <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`}
+           target="_blank" rel="noopener noreferrer">
+          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
+        </a>
+      )
+    });
+
+    return <Menu items={items} />;
   }, [getStreamStatus, getTreasuryType, hasStreamPendingTx, isBusy, showCloseStreamModal, streamSelected, t]);
 
   // Buttons
@@ -2851,6 +2830,7 @@ export const MoneyStreamsOutgoingView = (props: {
       {isCloseStreamModalVisible && (
         <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
+          selectedToken={workingToken}
           transactionFees={transactionFees}
           streamDetail={streamSelected}
           mspClient={
@@ -2871,7 +2851,7 @@ export const MoneyStreamsOutgoingView = (props: {
         className="mean-modal no-full-screen"
         maskClosable={false}
         afterClose={onAfterAddFundsTransactionModalClosed}
-        visible={isAddFundsTransactionModalVisible}
+        open={isAddFundsTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideAddFundsTransactionModal}
         width={330}
@@ -2952,7 +2932,7 @@ export const MoneyStreamsOutgoingView = (props: {
         className="mean-modal no-full-screen"
         maskClosable={false}
         afterClose={onCloseStreamTransactionFinished}
-        visible={isCloseStreamTransactionModalVisible}
+        open={isCloseStreamTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={onCloseStreamTransactionFinished}
         width={330}
@@ -3022,7 +3002,7 @@ export const MoneyStreamsOutgoingView = (props: {
       <Modal
         className="mean-modal no-full-screen"
         maskClosable={false}
-        visible={isTransactionExecutionModalVisible}
+        open={isTransactionExecutionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideTransactionExecutionModal}
         width={360}

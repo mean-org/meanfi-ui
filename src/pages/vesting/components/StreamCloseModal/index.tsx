@@ -19,6 +19,7 @@ export const StreamCloseModal = (props: {
   content: JSX.Element;
   handleClose: any;
   handleOk: any;
+  hasContractFinished: boolean;
   isVisible: boolean;
   mspClient: MSP | undefined;
   selectedToken: TokenInfo | undefined;
@@ -30,6 +31,7 @@ export const StreamCloseModal = (props: {
     content,
     handleClose,
     handleOk,
+    hasContractFinished,
     isVisible,
     mspClient,
     selectedToken,
@@ -219,8 +221,8 @@ export const StreamCloseModal = (props: {
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={12} className="text-right pr-1">{caption}</Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
+        <Col span={10} className="text-right pr-1">{caption}</Col>
+        <Col span={14} className="text-left pl-1 fg-secondary-70">{value}</Col>
       </Row>
     );
   }
@@ -230,7 +232,7 @@ export const StreamCloseModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('close-stream.modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={400}>
@@ -266,7 +268,7 @@ export const StreamCloseModal = (props: {
           {localStreamDetail && selectedToken && (
             <>
               <div className="p-2 mb-2">
-                {infoRow(
+                {hasContractFinished && infoRow(
                   t('close-stream.return-vested-amount') + ':',
                   getAmountWithSymbol(
                     getWithdrawableAmount(),

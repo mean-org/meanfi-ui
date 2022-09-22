@@ -36,7 +36,7 @@ export const SolBalanceModal = (props: {
       className="mean-modal simple-modal unpadded-content"
       title={<div className="modal-title">SOL Balance</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={360}>

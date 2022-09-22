@@ -197,7 +197,7 @@ export const StreamPauseModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{param === "multisig" ? "Propose pause stream" : t('streams.pause-stream-modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onCancel={onCloseModal}
       width={400}>
 

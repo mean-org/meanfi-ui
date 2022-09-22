@@ -202,7 +202,7 @@ export const MultisigEditSafeModal = (props: {
       title={<div className="modal-title">Propose edit safe</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}

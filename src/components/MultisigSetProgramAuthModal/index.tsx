@@ -142,7 +142,7 @@ export const MultisigSetProgramAuthModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('multisig.set-program-authority.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}

@@ -39,6 +39,7 @@ import { useSearchParams } from "react-router-dom";
 import { readAccountInfo } from "../../middleware/accounts";
 import { appConfig } from '../..';
 import BN from "bn.js";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -143,14 +144,6 @@ export const MoneyStreamsIncomingView = (props: {
     connection,
     multisigAddressPK
   ]);
-
-  const inputStreamId = useMemo(() => {
-    if (streamSelected && streamSelected.id) {
-      return streamSelected.version < 2 ? new PublicKey((streamSelected as StreamInfo).id as string) : (streamSelected as Stream).id;
-    }
-    return undefined;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streamSelected?.id]);
 
   /////////////////
   //  Callbacks  //
@@ -1259,27 +1252,6 @@ export const MoneyStreamsIncomingView = (props: {
   // Data management //
   /////////////////////
 
-  /*
-  // Get a fresh copy of the stream
-  useEffect(() => {
-    if (!msp || !inputStreamId) { return; }
-
-    consoleOut('Lets fetch stream details for:', inputStreamId.toBase58(), 'blue');
-    msp.getStream(inputStreamId)
-      .then((detail: Stream | StreamInfo) => {
-        if (detail) {
-          consoleOut('streamDetail:', getReadableStream(detail), 'blue');
-          setStreamDetail(detail);
-        }
-      })
-      .catch((error: any) => {
-        console.error(error);
-      });
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [msp, inputStreamId]);
-  */
-
   // Refresh stream data
   useEffect(() => {
     if (!ms || !msp || !streamSelected) { return; }
@@ -1399,20 +1371,27 @@ export const MoneyStreamsIncomingView = (props: {
     },
   ];
 
-  // Dropdown (three dots button)
   const renderDropdownMenu = useCallback(() => {
-    return (
-      <Menu>
-        <Menu.Item key="msi-00" onClick={showTransferStreamModal}>
+    const items: ItemType[] = [];
+    items.push({
+      key: '01-transfer-ownership',
+      label: (
+        <div onClick={showTransferStreamModal}>
           <span className="menu-item-text">Transfer ownership</span>
-        </Menu.Item>
-        <Menu.Item key="msi-02">
-          <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-            <span className="menu-item-text">{t('account-area.explorer-link')}</span>
-          </a>
-        </Menu.Item>
-      </Menu>
-    );
+        </div>
+      )
+    });
+    items.push({
+      key: '02-explorer-link',
+      label: (
+        <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`}
+           target="_blank" rel="noopener noreferrer">
+          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
+        </a>
+      )
+    });
+
+    return <Menu items={items} />;
   }, [showTransferStreamModal, streamSelected, t]);
 
   // Buttons
@@ -1509,7 +1488,7 @@ export const MoneyStreamsIncomingView = (props: {
         className="mean-modal no-full-screen"
         maskClosable={false}
         afterClose={onAfterWithdrawFundsTransactionModalClosed}
-        visible={isWithdrawFundsTransactionModalVisible}
+        open={isWithdrawFundsTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideWithdrawFundsTransactionModal}
         width={330}
@@ -1590,7 +1569,7 @@ export const MoneyStreamsIncomingView = (props: {
         className="mean-modal no-full-screen"
         maskClosable={false}
         afterClose={onAfterTransferStreamTransactionModalClosed}
-        visible={isTransferStreamTransactionModalVisible}
+        open={isTransferStreamTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideTransferStreamTransactionModal}
         width={330}

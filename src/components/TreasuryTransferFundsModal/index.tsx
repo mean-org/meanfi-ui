@@ -471,7 +471,7 @@ export const TreasuryTransferFundsModal = (props: {
       title={<div className="modal-title">{param === "multisig" ? "Propose withdrawal" : t('treasuries.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={onAcceptWithdrawTreasuryFunds}
       onCancel={onCloseModal}
       afterClose={() => {

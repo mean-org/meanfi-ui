@@ -62,7 +62,7 @@ export const MultisigOwnersView = (props: {
         placement="bottom"
         title={titleContent}
         content={bodyContent}
-        visible={popoverVisible}
+        open={popoverVisible}
         onOpenChange={handlePopoverVisibleChange}
         trigger="click">
         {props.className ? (

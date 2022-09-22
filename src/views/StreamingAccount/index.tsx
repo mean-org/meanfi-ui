@@ -71,6 +71,7 @@ import { AddFundsParams } from "../../models/vesting";
 import BN from "bn.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { ZERO_FEES } from "../../models/multisig";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 export const StreamingAccountView = (props: {
   multisigAccounts: MultisigInfo[] | undefined;
@@ -2691,32 +2692,52 @@ export const StreamingAccountView = (props: {
     return message;
   }
 
-  // Dropdown (three dots button)
-  const menu = (
-    <Menu>
-      {isXsDevice && (
-        <Menu.Item key="ms-00" onClick={showCreateStreamModal} disabled={
-          hasStreamingAccountPendingTx() ||
-          !streamingAccountSelected || getTreasuryUnallocatedBalance(streamingAccountSelected, selectedToken).ltn(0)
-          }>
-          <span className="menu-item-text">Create stream</span>
-        </Menu.Item>
-      )}
-      <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={hasStreamingAccountPendingTx() || (streamingAccountStreams && streamingAccountStreams.length > 0) || !isTreasurer()}>
-        <span className="menu-item-text">Close account</span>
-      </Menu.Item>
-      {streamingAccountSelected && (
-        <Menu.Item key="ms-01" onClick={() => onExecuteRefreshTreasuryBalance()}>
-          <span className="menu-item-text">Refresh account data</span>
-        </Menu.Item>
-      )}
-      {isMultisigTreasury() && (
-        <Menu.Item key="ms-02" disabled={!isTreasurer()} onClick={showSolBalanceModal}>
-          <span className="menu-item-text">SOL balance</span>
-        </Menu.Item>
-      )}
-    </Menu>
-  );
+  const renderDropdownMenu = useCallback(() => {
+    const items: ItemType[] = [];
+    if (isXsDevice) {
+      items.push({
+        key: '00-create-stream',
+        label: (
+          <div onClick={showCreateStreamModal}>
+            <span className="menu-item-text">Create stream</span>
+          </div>
+        ),
+        disabled: hasStreamingAccountPendingTx() || !streamingAccountSelected || getTreasuryUnallocatedBalance(streamingAccountSelected, selectedToken).ltn(0)
+      });
+    }
+    items.push({
+      key: '01-close-account',
+      label: (
+        <div onClick={showCloseTreasuryModal}>
+          <span className="menu-item-text">Close account</span>
+        </div>
+      ),
+      disabled: hasStreamingAccountPendingTx() || (streamingAccountStreams && streamingAccountStreams.length > 0) || !isTreasurer()
+    });
+    if (streamingAccountSelected) {
+      items.push({
+        key: '02-refresh-account',
+        label: (
+          <div onClick={() => onExecuteRefreshTreasuryBalance()}>
+            <span className="menu-item-text">Refresh account data</span>
+          </div>
+        )
+      });
+    }
+    if (isMultisigTreasury()) {
+      items.push({
+        key: '03-sol-balance',
+        label: (
+          <div onClick={() => showSolBalanceModal()}>
+            <span className="menu-item-text">SOL balance</span>
+          </div>
+        ),
+        disabled: !isTreasurer()
+      });
+    }
+
+    return <Menu items={items} />;
+  }, [getTreasuryUnallocatedBalance, hasStreamingAccountPendingTx, isMultisigTreasury, isTreasurer, isXsDevice, onExecuteRefreshTreasuryBalance, selectedToken, showCloseTreasuryModal, showCreateStreamModal, showSolBalanceModal, streamingAccountSelected, streamingAccountStreams]);
 
   const renderStreamingAccountStreams = () => {
     const sortedStreamingAccountsStreamsList = streamingAccountStreams && streamingAccountStreams.sort((a, b) => {
@@ -3013,7 +3034,7 @@ export const StreamingAccountView = (props: {
 
           <Col xs={4} sm={6} md={4} lg={6}>
             <Dropdown
-              overlay={menu}
+              overlay={renderDropdownMenu()}
               placement="bottomRight"
               trigger={["click"]}>
               <span className="ellipsis-icon icon-button-container mr-1">

@@ -1,15 +1,14 @@
-import React from 'react';
+import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
+import { Button, Col, Modal, Row } from "antd";
 import { useEffect, useState } from "react";
-import { Modal, Button, Row, Col } from "antd";
+import { useTranslation } from "react-i18next";
+import { percentage } from "../../middleware/ui";
 import {
   getAmountWithSymbol,
   getTokenDecimals,
   getTokenSymbol,
   isValidNumber
 } from "../../middleware/utils";
-import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
-import { percentage } from "../../middleware/ui";
-import { useTranslation } from "react-i18next";
 
 export const DdcaWithdrawModal = (props: {
   ddcaDetails: DdcaDetails | undefined;
@@ -149,7 +148,7 @@ export const DdcaWithdrawModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{t('withdraw-funds.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptWithdrawal}
       onCancel={onCloseModal}
       width={480}>

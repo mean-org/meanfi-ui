@@ -1,26 +1,25 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Modal, Popconfirm, Slider } from "antd";
-import { useContext } from "react";
-import { AppStateContext } from "../../contexts/appstate";
-import { useTranslation } from "react-i18next";
-import { DcaInterval } from '../../models/ddca-models';
-import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from '../../middleware/ui';
-import { TokenInfo } from '@solana/spl-token-registry';
-import { getAmountWithSymbol, getTxIxResume } from '../../middleware/utils';
-import "./style.scss";
-import { SliderMarks } from 'antd/lib/slider';
-import { InfoIcon } from '../InfoIcon';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { useWallet } from '../../contexts/wallet';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { OperationType, TransactionStatus } from '../../models/enums';
-import { customLogger } from '../..';
-import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
 import { CloseOutlined, LoadingOutlined } from '@ant-design/icons';
+import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
 import { HlaInfo } from '@mean-dao/hybrid-liquidity-ag/lib/types';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Modal, Popconfirm, Slider } from "antd";
+import { SliderMarks } from 'antd/lib/slider';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from "react-i18next";
+import { customLogger } from '../..';
+import { AppStateContext } from "../../contexts/appstate";
 import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { useWallet } from '../../contexts/wallet';
 import { IconShieldSolid } from '../../Icons/IconShieldSolid';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
+import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from '../../middleware/ui';
+import { getAmountWithSymbol, getTxIxResume } from '../../middleware/utils';
+import { DcaInterval } from '../../models/ddca-models';
+import { OperationType, TransactionStatus } from '../../models/enums';
+import { InfoIcon } from '../InfoIcon';
 import { openNotification } from '../Notifications';
+import "./style.scss";
 
 export const DdcaSetupModal = (props: {
   connection: Connection;
@@ -864,7 +863,7 @@ export const DdcaSetupModal = (props: {
       }
       footer={null}
       maskClosable={false}
-      visible={isVisible}
+      open={isVisible}
       onCancel={(e: any) => {
         if (!vaultCreated) {
           e.preventDefault();

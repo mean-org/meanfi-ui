@@ -698,7 +698,7 @@ export const TreasuryAddFundsModal = (props: {
       }
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={onAcceptModal}
       onCancel={handleClose}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>

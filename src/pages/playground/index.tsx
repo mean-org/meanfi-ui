@@ -2014,7 +2014,7 @@ export const PlaygroundView = () => {
       {isTokenSelectorModalVisible && (
         <Modal
           className="mean-modal unpadded-content"
-          visible={isTokenSelectorModalVisible}
+          open={isTokenSelectorModalVisible}
           title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
           onCancel={onCloseTokenSelector}
           width={450}

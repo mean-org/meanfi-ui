@@ -27,7 +27,7 @@ export const AccountsSuggestAssetModal = (props: {
         </div>
       }
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={320}>

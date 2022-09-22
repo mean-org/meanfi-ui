@@ -396,7 +396,7 @@ export const StreamAddFundsModal = (props: {
       title={<div className="modal-title">{t('streams.add-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={onAcceptTopup}
       onCancel={handleClose}
       afterClose={() => {

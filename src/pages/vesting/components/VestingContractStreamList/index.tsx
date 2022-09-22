@@ -49,6 +49,7 @@ import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
 import { AppUsageEvent, SegmentStreamCloseData, SegmentStreamStatusChangeActionData } from '../../../../middleware/segment-service';
 import { segmentAnalytics } from '../../../../App';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -417,22 +418,16 @@ export const VestingContractStreamList = (props: {
     const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
     const showCloseStreamModal = useCallback(() => {
         resetTransactionStatus();
+
         if (vestingContract) {
-            const v2 = vestingContract as Treasury;
-            if (v2.version && v2.version >= 2) {
-                getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
-                    setTransactionFees(value);
-                    consoleOut('transactionFees:', value, 'orange');
-                });
-            } else {
-                getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
-                    setTransactionFees(value);
-                    consoleOut('transactionFees:', value, 'orange');
-                });
-            }
+            getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
+                setTransactionFees(value);
+                consoleOut('transactionFees:', value, 'orange');
+            });
             setIsCloseStreamModalVisibility(true);
         }
     }, [getTransactionFees, resetTransactionStatus, vestingContract]);
+
     const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
     const onAcceptCloseStream = (options: VestingContractCloseStreamOptions) => {
         hideCloseStreamModal();
@@ -746,7 +741,6 @@ export const VestingContractStreamList = (props: {
                             false,
                             splTokenList,
                             selectedToken.decimals,
-                            true
                         );
                         const unvestedReturns = getAmountWithSymbol(
                             closeStreamOptions.unvestedReturns,
@@ -754,14 +748,16 @@ export const VestingContractStreamList = (props: {
                             false,
                             splTokenList,
                             selectedToken.decimals,
-                            true
                         );
                         const beneficiary = shortenAddress(highlightedStream.beneficiary);
                         const loadingMessage = multisigId
                             ? 'The Multisig proposal to close the vesting stream Dinero para mi sobrina is being confirmed.'
                             : `Vesting stream ${highlightedStream.name} closure is pending confirmation`;
+                        const confirmedMultisigMessage = isDateInTheFuture(paymentStartDate)
+                            ? `The proposal to close the vesting stream has been confirmed. Once approved, the unvested amount of ${unvestedReturns} will be returned to the vesting contract.`
+                            : `The proposal to close the vesting stream has been confirmed. Once approved, the vested amount of ${vestedReturns} will be sent to ${beneficiary} and the stream will be closed.`;
                         const confirmedMessage = multisigId
-                            ? `The proposal to close the vesting stream ${highlightedStream.name} has been confirmed. Once approved by the Multisig signers, the vested amount of ${vestedReturns} will be sent to ${beneficiary} and the unvested amount of ${unvestedReturns} will be returned to the vesting contract.`
+                            ? confirmedMultisigMessage
                             : `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of ${vestedReturns} has been sent to ${beneficiary}. Unvested amount of ${unvestedReturns} was returned to the vesting contract.`;
                         enqueueTransactionConfirmation({
                             signature: signature,
@@ -1541,50 +1537,83 @@ export const VestingContractStreamList = (props: {
         if (!vestingContract) { return null; }
 
         const isNewTreasury = item.version && item.version >= 2 ? true : false;
+        const items: ItemType[] = [];
+
+        if (isNewTreasury && vestingContract.treasuryType === TreasuryType.Open) {
+            if (item.status === STREAM_STATUS.Paused && item.fundsLeftInStream.gtn(0)) {
+                items.push({
+                    key: '01-resume-stream',
+                    label: (
+                        <div onClick={showResumeStreamModal}>
+                            <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
+                        </div>
+                    )
+                });
+            } else if (item.status === STREAM_STATUS.Running) {
+                items.push({
+                    key: '02-pause-stream',
+                    label: (
+                        <div onClick={showPauseStreamModal}>
+                            <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
+                        </div>
+                    )
+                });
+            }
+            items.push({
+                key: '03-add-funds',
+                label: (
+                    <div onClick={showAddFundsModal}>
+                        <span className="menu-item-text">{t('streams.stream-detail.add-funds-cta')}</span>
+                    </div>
+                )
+            });
+        }
+        if ((vestingContract.treasuryType === TreasuryType.Open ||
+            (vestingContract.treasuryType === TreasuryType.Lock && item.status !== STREAM_STATUS.Running))) {
+            //
+            items.push({
+                key: '04-close-stream',
+                label: (
+                    <div onClick={showCloseStreamModal}>
+                        <span className="menu-item-text">{t('vesting.close-account.option-close-stream')}</span>
+                    </div>
+                )
+            });
+        }
+        items.push({
+            key: '05-copy-streamid',
+            label: (
+                <div onClick={() => copyAddressToClipboard(item.id)}>
+                    <span className="menu-item-text">{t('vesting.close-account.option-copy-stream-id')}</span>
+                </div>
+            )
+        });
+
+        items.push({
+            key: '06-show-stream',
+            label: (
+                <div onClick={() => {
+                    sethHighlightedStream(item);
+                    setHighLightableStreamId(item.id.toBase58());
+                    showVestingContractStreamDetailModal();
+                }}>
+                    <span className="menu-item-text">{t('vesting.close-account.option-show-stream')}</span>
+                </div>
+            )
+        });
+
+        items.push({
+            key: '07-explorer',
+            label: (
+                <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
+                    target="_blank" rel="noopener noreferrer">
+                    <span className="menu-item-text">{t('treasuries.treasury-streams.option-explorer-link')}</span>
+                </a>
+            )
+        });
 
         const menu = (
-            <Menu>
-                {(isNewTreasury && vestingContract.treasuryType === TreasuryType.Open) && (
-                    <>
-                        {item.status === STREAM_STATUS.Paused
-                            ? (
-                                <>
-                                    {item.fundsLeftInStream.gtn(0) && (
-                                        <Menu.Item key="1" onClick={showResumeStreamModal}>
-                                            <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
-                                        </Menu.Item>
-                                    )}
-                                </>
-                            ) : item.status === STREAM_STATUS.Running ? (
-                                <Menu.Item key="2" onClick={showPauseStreamModal}>
-                                    <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
-                                </Menu.Item>
-                            ) : null
-                        }
-                        <Menu.Item key="3" onClick={showAddFundsModal}>
-                            <span className="menu-item-text">{t('streams.stream-detail.add-funds-cta')}</span>
-                        </Menu.Item>
-                    </>
-                )}
-                {(vestingContract.treasuryType === TreasuryType.Open ||
-                 (vestingContract.treasuryType === TreasuryType.Lock && item.status !== STREAM_STATUS.Running)) && (
-                    <Menu.Item key="4" onClick={showCloseStreamModal}>
-                        <span className="menu-item-text">{t('vesting.close-account.option-close-stream')}</span>
-                    </Menu.Item>
-                )}
-                <Menu.Item key="5" onClick={() => copyAddressToClipboard(item.id)}>
-                    <span className="menu-item-text">{t('vesting.close-account.option-copy-stream-id')}</span>
-                </Menu.Item>
-                <Menu.Item key="6" onClick={showVestingContractStreamDetailModal}>
-                    <span className="menu-item-text">{t('vesting.close-account.option-show-stream')}</span>
-                </Menu.Item>
-                <Menu.Item key="7">
-                    <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
-                        target="_blank" rel="noopener noreferrer">
-                        <span className="menu-item-text">{t('treasuries.treasury-streams.option-explorer-link')}</span>
-                    </a>
-                </Menu.Item>
-            </Menu>
+            <Menu items={items} />
         );
 
         return (
@@ -1699,15 +1728,16 @@ export const VestingContractStreamList = (props: {
 
             {isCloseStreamModalVisible && (
                 <StreamCloseModal
-                    isVisible={isCloseStreamModalVisible}
-                    selectedToken={selectedToken}
-                    transactionFees={transactionFees}
-                    streamDetail={highlightedStream}
-                    handleOk={(options: VestingContractCloseStreamOptions) => onAcceptCloseStream(options)}
-                    handleClose={hideCloseStreamModal}
-                    content={getStreamClosureMessage()}
-                    mspClient={msp}
                     canCloseTreasury={treasuryStreams.length === 1 ? true : false}
+                    content={getStreamClosureMessage()}
+                    handleClose={hideCloseStreamModal}
+                    handleOk={(options: VestingContractCloseStreamOptions) => onAcceptCloseStream(options)}
+                    hasContractFinished={isContractFinished()}
+                    isVisible={isCloseStreamModalVisible}
+                    mspClient={msp}
+                    selectedToken={selectedToken}
+                    streamDetail={highlightedStream}
+                    transactionFees={transactionFees}
                 />
             )}
 
@@ -1737,7 +1767,7 @@ export const VestingContractStreamList = (props: {
             <Modal
                 className="mean-modal no-full-screen"
                 maskClosable={false}
-                visible={isTransactionExecutionModalVisible}
+                open={isTransactionExecutionModalVisible}
                 title={getTransactionModalTitle(transactionStatus, isBusy, t)}
                 onCancel={hideTransactionExecutionModal}
                 width={360}

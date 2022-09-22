@@ -64,7 +64,7 @@ export const ExchangeAssetModal = (props: {
       className="mean-modal simple-modal exchange-modal"
       title={<div className="modal-title">Exchange Asset</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={480}>

@@ -55,6 +55,7 @@ import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
 import { CreateStreamParams } from '../../models/streams';
 import { readAccountInfo } from '../../middleware/accounts';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const { Option } = Select;
 
@@ -1555,33 +1556,27 @@ export const TreasuryStreamCreateModal = (props: {
     event.currentTarget.className = "error";
   };
 
-  const paymentRateOptionsMenu = (
-    <Menu>
-      {getOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handlePaymentRateOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
+  const paymentRateOptionsMenu = () => {
+    const items: ItemType[] = getOptionsFromEnum(PaymentRateType).map((item, index) => {
+      return {
+        key: `option-${index}`,
+        label: (<span onClick={() => handlePaymentRateOptionChange(item.value)}>{item.text}</span>)
+      };
+    });
 
-  const lockPeriodOptionsMenu = (
-    <Menu>
-      {getLockPeriodOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handleLockPeriodOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
+    return <Menu items={items} />;
+  }
+
+  const lockPeriodOptionsMenu = () => {
+    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+      return {
+        key: `option-${index}`,
+        label: (<span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>)
+      };
+    });
+
+    return <Menu items={items} />;
+  }
 
   const getStreamingAccountIcon = (item: Treasury | TreasuryInfo | undefined) => {
     if (!item) { return null; }
@@ -1688,7 +1683,7 @@ export const TreasuryStreamCreateModal = (props: {
       }
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
       width={480}>

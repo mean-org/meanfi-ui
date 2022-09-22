@@ -194,7 +194,7 @@ export const TreasuryCloseModal = (props: {
       title={<div className="modal-title">{param === "multisig" ? "Propose close account" : t('treasuries.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onCancel={props.handleClose}
       width={380}>
 

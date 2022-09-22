@@ -377,7 +377,7 @@ export const StreamWithdrawModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{param === "multisig" ? "Propose withdraw funds" : t('withdraw-funds.modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={onAcceptWithdrawal}
       onCancel={onCloseModal}
       width={480}>

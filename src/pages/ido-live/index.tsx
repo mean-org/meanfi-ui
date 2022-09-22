@@ -807,26 +807,6 @@ export const IdoLiveView = () => {
     </>
   );
 
-  // const idoItemsMenu = (
-  //   <>
-  //     {idoList && idoList.length > 0 ? (
-  //       <Menu>
-  //         {idoList.map((item: IdoDetails, index: number) => {
-  //           return (
-  //             <Menu.Item
-  //               key={`${index}`}
-  //               onClick={() => {
-  //                 consoleOut('Selected IDO address:', item.idoAddress, 'blue');
-  //               }}>
-  //               {item.idoAddress}
-  //             </Menu.Item>
-  //           );
-  //         })}
-  //       </Menu>
-  //     ) : null}
-  //   </>
-  // );
-
   return (
     <>
       {/* <div className={`ido-overlay ${regionLimitationAcknowledged && idoFinishedFireworks ? 'active' : '' }`}>

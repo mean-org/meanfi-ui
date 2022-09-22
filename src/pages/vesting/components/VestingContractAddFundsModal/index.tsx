@@ -454,7 +454,7 @@ export const VestingContractAddFundsModal = (props: {
       }
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}

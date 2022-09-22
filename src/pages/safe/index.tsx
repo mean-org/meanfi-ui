@@ -1697,7 +1697,7 @@ export const SafeView = () => {
             return true;
           })
           .catch(error => {
-            console.error('mint tokens error:', error);
+            console.error('approveTx error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure
@@ -1989,7 +1989,7 @@ export const SafeView = () => {
             return true;
           })
           .catch(error => {
-            console.error('mint tokens error:', error);
+            console.error('rejectTx error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure

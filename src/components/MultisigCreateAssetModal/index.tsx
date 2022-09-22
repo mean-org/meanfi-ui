@@ -199,7 +199,7 @@ export const MultisigCreateAssetModal = (props: {
       title={<div className="modal-title">{t('multisig.create-asset.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
