@@ -3,7 +3,7 @@ import { Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Col, Row, Spin, Tabs } from 'antd';
 import BN from 'bn.js';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { Identicon } from '../../../../components/Identicon';
@@ -16,7 +16,6 @@ import { getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, re
 import { displayAmountWithSymbol, shortenAddress } from '../../../../middleware/utils';
 import './style.scss';
 
-const { TabPane } = Tabs;
 export type StreamDetailTab = "details" | "activity";
 
 export const MoneyStreamDetails = (props: {
@@ -253,7 +252,7 @@ export const MoneyStreamDetails = (props: {
     event.currentTarget.className = "error";
   };
 
-  const getActivityIcon = (item: StreamActivity) => {
+  const getActivityIcon = useCallback((item: StreamActivity) => {
     if (isInboundStream) {
       if (item.action === 'withdrew') {
         return (
@@ -275,16 +274,16 @@ export const MoneyStreamDetails = (props: {
         );
       }
     }
-  }
+  }, [isInboundStream]);
 
-  const getActivityAction = (item: StreamActivity): string => {
+  const getActivityAction = useCallback((item: StreamActivity): string => {
     const actionText = item.action === 'deposited'
       ? t('streams.stream-activity.action-deposit')
       : t('streams.stream-activity.action-withdraw');
     return actionText;
-  }
+  }, [t]);
 
-  const renderReceivingFrom = () => {
+  const renderReceivingFrom = useCallback(() => {
     if (!stream) { return null; }
 
     return (
@@ -294,9 +293,9 @@ export const MoneyStreamDetails = (props: {
         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
       />
     )
-  }
+  }, [publicKey, stream]);
 
-  const renderPaymentRate = () => {
+  const renderPaymentRate = useCallback(() => {
     if (!stream || !selectedToken) { return '--'; }
 
     const rateAmountBN = new BN(stream.rateAmount);
@@ -307,9 +306,9 @@ export const MoneyStreamDetails = (props: {
     }
 
     return rateAmount;
-  }
+  }, [getDepositAmountDisplay, getRateAmountDisplay, selectedToken, stream, t]);
 
-  const renderReservedAllocation = () => {
+  const renderReservedAllocation = useCallback(() => {
     if (!stream || !selectedToken) { return '--'; }
 
     return (
@@ -324,9 +323,9 @@ export const MoneyStreamDetails = (props: {
         }
       </>
     )
-  }
+  }, [selectedToken, splTokenList, stream]);
 
-  const renderFundsLeftInAccount = () => {
+  const renderFundsLeftInAccount = useCallback(() => {
     if (!stream || !selectedToken) { return '--'; }
 
     return (
@@ -341,9 +340,9 @@ export const MoneyStreamDetails = (props: {
         }
       </>
     )
-  }
+  }, [selectedToken, splTokenList, stream]);
 
-  const renderFundsSendToRecipient = () => {
+  const renderFundsSendToRecipient = useCallback(() => {
     if (!stream || !selectedToken) { return '--'; }
 
     return (
@@ -358,9 +357,9 @@ export const MoneyStreamDetails = (props: {
         }
       </>
     )
-  }
+  }, [selectedToken, splTokenList, stream]);
 
-  const renderStreamId = () => {
+  const renderStreamId = useCallback(() => {
     if (!stream) { return null; }
 
     return (
@@ -373,9 +372,9 @@ export const MoneyStreamDetails = (props: {
         />
       </>
     )
-  }
+  }, [stream]);
 
-  const renderSendingTo = () => {
+  const renderSendingTo = useCallback(() => {
     if (!stream) { return null; }
 
     return (
@@ -386,9 +385,9 @@ export const MoneyStreamDetails = (props: {
         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
       />
     )
-  }
+  }, [publicKey, stream]);
 
-  const renderCliffVestAmount = () => {
+  const renderCliffVestAmount = useCallback(() => {
     if (!stream || !selectedToken) { return null; }
 
     return displayAmountWithSymbol(
@@ -397,9 +396,9 @@ export const MoneyStreamDetails = (props: {
       selectedToken.decimals,
       splTokenList,
     );
-  }
+  }, [selectedToken, splTokenList, stream]);
 
-  const renderActivities = () => {
+  const renderActivities = useCallback(() => {
     return (
       <div className="stream-activity-list">
         <Spin spinning={loadingStreamActivity}>
@@ -462,10 +461,10 @@ export const MoneyStreamDetails = (props: {
         )}
       </div>
     );
-  }
+  }, [getActivityAction, getActivityIcon, hasMoreStreamActivity, loadingStreamActivity, onLoadMoreActivities, selectedToken, splTokenList, streamActivity, t]);
 
   // Tab details
-  const detailsData = [
+  const detailsData = useMemo(() => [
     {
       label: stream ? isStartDateFuture(stream.startUtc) ? "Starting on:" : "Started on:" : "--",
       value: stream ? getReadableDate(stream.startUtc, true) : "--"
@@ -510,9 +509,21 @@ export const MoneyStreamDetails = (props: {
       label: "Stream id:",
       value: renderStreamId()
     },
-  ];
+  ], [
+    stream,
+    isInboundStream,
+    isStartDateFuture,
+    renderCliffVestAmount,
+    renderFundsLeftInAccount,
+    renderFundsSendToRecipient,
+    renderPaymentRate,
+    renderReceivingFrom,
+    renderReservedAllocation,
+    renderSendingTo,
+    renderStreamId,
+  ]);
 
-  const renderDetails = () => {
+  const renderDetails = useCallback(() => {
     return (
       <>
         {detailsData.map((detail: any, index: number) => (
@@ -527,20 +538,30 @@ export const MoneyStreamDetails = (props: {
         ))}
       </>
     );
-  };
+  }, [detailsData]);
 
-  const renderTabset = () => {
+  const renderTabset = useCallback(() => {
+    const items = [];
+    items.push({
+      key: "details",
+      label: "Details",
+      children: renderDetails()
+    });
+    items.push({
+      key: "activity",
+      label: "Activity",
+      children: renderActivities()
+    });
+
     return (
-      <Tabs activeKey={tabOption} onChange={onTabChanged} className="neutral">
-        <TabPane tab="Details" key="details" tabKey="details">
-          {renderDetails()}
-        </TabPane>
-        <TabPane tab="Activity" key="activity" tabKey="activity">
-          {renderActivities()}
-        </TabPane>
-      </Tabs>
+      <Tabs
+        items={items}
+        activeKey={tabOption}
+        onChange={onTabChanged}
+        className="neutral"
+      />
     );
-  }
+  }, [onTabChanged, renderActivities, renderDetails, tabOption]);
 
   const renderStream = (item: Stream) => {
     if (!selectedToken) { return null; }

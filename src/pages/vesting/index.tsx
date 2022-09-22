@@ -58,7 +58,6 @@ import { VestingContractStreamList } from './components/VestingContractStreamLis
 import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
 import "./style.scss";
 
-const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingAccountDetailTab = "overview" | "streams" | "activity" | undefined;
 let isWorkflowLocked = false;
@@ -3788,10 +3787,10 @@ export const VestingView = () => {
     navigate(url);
   }, [accountAddress, inspectedAccountType, navigate, vestingContractAddress]);
 
-  const loadMoreActivity = () => {
+  const loadMoreActivity = useCallback(() => {
     if (!vestingContractAddress) { return; }
     getContractActivity(vestingContractAddress);
-  }
+  }, [getContractActivity, vestingContractAddress]);
 
   const reloadVestingContracts = (manual = false) => {
     if (manual) {
@@ -3877,59 +3876,102 @@ export const VestingView = () => {
     );
   };
 
-  const renderTabset = () => {
+  const renderTabset = useCallback(() => {
     if (!selectedVestingContract) { return (<span>&nbsp;</span>) }
+
+    const items = [];
+    items.push({
+      key: "overview",
+      label: "Overview",
+      children: (
+        <VestingContractOverview
+          availableStreamingBalance={availableStreamingBalance}
+          isXsDevice={isXsDevice}
+          selectedToken={workingToken}
+          streamTemplate={streamTemplate}
+          vestingContract={selectedVestingContract}
+          vestingContractFlowRate={vestingContractFlowRate}
+        />
+      )
+    });
+    items.push({
+      key: "streams",
+      label: selectedVestingContract.totalStreams > 0 ? `Streams (${selectedVestingContract.totalStreams})` : 'Streams',
+      children: (
+        <VestingContractStreamList
+          accountAddress={accountAddress}
+          isMultisigTreasury={isMultisigTreasury()}
+          loadingTreasuryStreams={loadingTreasuryStreams}
+          minRequiredBalance={minRequiredBalance}
+          msp={msp}
+          selectedMultisig={selectedMultisig}
+          selectedToken={workingToken}
+          multisigAccounts={multisigAccounts}
+          multisigClient={multisigClient}
+          nativeBalance={nativeBalance}
+          streamTemplate={streamTemplate}
+          treasuryStreams={treasuryStreams}
+          userBalances={userBalances}
+          vestingContract={selectedVestingContract}
+          onReloadTokenBalances={(option: string) => {
+            consoleOut('setting balances source to:', option, 'blue');
+            if (option === "safe" && selectedMultisig) {
+              setBalancesSource(selectedMultisig.authority.toBase58());
+            } else {
+              setBalancesSource('');
+            }
+          }}
+        />
+      )
+    });
+    items.push({
+      key: "activity",
+      label: "Activity",
+      children: (
+        <VestingContractActivity
+          contractActivity={contractActivity}
+          hasMoreStreamActivity={hasMoreContractActivity}
+          loadingStreamActivity={loadingContractActivity}
+          onLoadMoreActivities={loadMoreActivity}
+          selectedToken={workingToken}
+          vestingContract={selectedVestingContract}
+        />
+      )
+    });
+
     return (
-      <Tabs activeKey={accountDetailTab} onChange={onTabChange} className="neutral stretch-content">
-        <TabPane tab="Overview" key={"overview"}>
-          <VestingContractOverview
-            availableStreamingBalance={availableStreamingBalance}
-            isXsDevice={isXsDevice}
-            selectedToken={workingToken}
-            streamTemplate={streamTemplate}
-            vestingContract={selectedVestingContract}
-            vestingContractFlowRate={vestingContractFlowRate}
-          />
-        </TabPane>
-        <TabPane tab={`Streams (${selectedVestingContract.totalStreams})`} key={"streams"}>
-          <VestingContractStreamList
-            accountAddress={accountAddress}
-            isMultisigTreasury={isMultisigTreasury()}
-            loadingTreasuryStreams={loadingTreasuryStreams}
-            minRequiredBalance={minRequiredBalance}
-            msp={msp}
-            selectedMultisig={selectedMultisig}
-            selectedToken={workingToken}
-            multisigAccounts={multisigAccounts}
-            multisigClient={multisigClient}
-            nativeBalance={nativeBalance}
-            streamTemplate={streamTemplate}
-            treasuryStreams={treasuryStreams}
-            userBalances={userBalances}
-            vestingContract={selectedVestingContract}
-            onReloadTokenBalances={(option: string) => {
-              consoleOut('setting balances source to:', option, 'blue');
-              if (option === "safe" && selectedMultisig) {
-                setBalancesSource(selectedMultisig.authority.toBase58());
-              } else {
-                setBalancesSource('');
-              }
-            }}
-          />
-        </TabPane>
-        <TabPane tab="Activity" key={"activity"}>
-          <VestingContractActivity
-            contractActivity={contractActivity}
-            hasMoreStreamActivity={hasMoreContractActivity}
-            loadingStreamActivity={loadingContractActivity}
-            onLoadMoreActivities={loadMoreActivity}
-            selectedToken={workingToken}
-            vestingContract={selectedVestingContract}
-          />
-        </TabPane>
-      </Tabs>
+      <Tabs
+        items={items}
+        activeKey={accountDetailTab}
+        onChange={onTabChange}
+        className="neutral stretch-content"
+      />
     );
-  }
+  }, [
+    msp,
+    isXsDevice,
+    workingToken,
+    userBalances,
+    nativeBalance,
+    streamTemplate,
+    accountAddress,
+    multisigClient,
+    treasuryStreams,
+    accountDetailTab,
+    contractActivity,
+    selectedMultisig,
+    multisigAccounts,
+    minRequiredBalance,
+    loadingTreasuryStreams,
+    hasMoreContractActivity,
+    loadingContractActivity,
+    selectedVestingContract,
+    vestingContractFlowRate,
+    availableStreamingBalance,
+    isMultisigTreasury,
+    loadMoreActivity,
+    onTabChange,
+  ]);
 
   const loader = (
     <>
