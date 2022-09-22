@@ -1,20 +1,20 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import BN from 'bn.js';
-import './style.scss';
-import { Col, Row, Spin, Tabs } from 'antd';
-import { Stream, STREAM_STATUS, StreamActivity, MSP } from '@mean-dao/msp';
-import { displayAmountWithSymbol, shortenAddress } from '../../../../middleware/utils';
-import { getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../middleware/ui';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { useTranslation } from 'react-i18next';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
-import { TokenInfo } from '@solana/spl-token-registry';
-import { useWallet } from '../../../../contexts/wallet';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
+import { Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { Col, Row, Spin, Tabs } from 'antd';
+import BN from 'bn.js';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
-import { IconExternalLink } from '../../../../Icons';
 import { Identicon } from '../../../../components/Identicon';
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
+import { AppStateContext } from '../../../../contexts/appstate';
+import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
+import { useWallet } from '../../../../contexts/wallet';
+import { IconExternalLink } from '../../../../Icons';
+import { getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../middleware/ui';
+import { displayAmountWithSymbol, shortenAddress } from '../../../../middleware/utils';
+import './style.scss';
 
 const { TabPane } = Tabs;
 export type StreamDetailTab = "details" | "activity";
@@ -24,7 +24,6 @@ export const MoneyStreamDetails = (props: {
   highlightedStream: Stream | undefined;
   isInboundStream: boolean;
   loadingStreamActivity: boolean;
-  msp?: MSP;
   onLoadMoreActivities: any;
   selectedToken: TokenInfo | undefined;
   stream: Stream | undefined;
@@ -35,7 +34,6 @@ export const MoneyStreamDetails = (props: {
     highlightedStream,
     isInboundStream,
     loadingStreamActivity,
-    msp,
     onLoadMoreActivities,
     selectedToken,
     stream,

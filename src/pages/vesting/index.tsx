@@ -1,67 +1,62 @@
-import { useEffect, useState, useContext, useCallback, useMemo, useRef } from 'react';
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useTranslation } from "react-i18next";
-import { AppStateContext } from "../../contexts/appstate";
-import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
-import { PreFooter } from "../../components/PreFooter";
-import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
-import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isDev, isLocal, isProd, toTimestamp } from '../../middleware/ui';
-import { useWallet } from '../../contexts/wallet';
-import { useConnectionConfig } from '../../contexts/connection';
-import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import {
-  calculateActionFees,
-  MSP,
-  MSP_ACTIONS,
-  Stream,
-  TransactionFees,
-  Treasury,
-  StreamTemplate,
-  Category,
-  TreasuryType,
-  VestingTreasuryActivity,
-} from '@mean-dao/msp';
-import "./style.scss";
 import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
-import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from '../../middleware/utils';
-import { openNotification } from '../../components/Notifications';
-import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, MSP_FEE_TREASURY, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { VestingContractList } from './components/VestingContractList';
-import { VestingContractDetails } from './components/VestingContractDetails';
-import useWindowSize from '../../hooks/useWindowResize';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
+import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
+import {
+  calculateActionFees, Category, MSP,
+  MSP_ACTIONS,
+  Stream, StreamTemplate, TransactionFees,
+  Treasury, TreasuryType,
+  VestingTreasuryActivity
+} from '@mean-dao/msp';
+import { AccountLayout, u64 } from '@solana/spl-token';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { BN } from 'bn.js';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
+import { useTranslation } from "react-i18next";
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { appConfig, customLogger } from '../..';
+import { segmentAnalytics } from '../../App';
+import { openNotification } from '../../components/Notifications';
+import { PreFooter } from "../../components/PreFooter";
+import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, MSP_FEE_TREASURY, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { NATIVE_SOL } from '../../constants/tokens';
+import { useNativeAccount } from '../../contexts/accounts';
+import { AppStateContext } from "../../contexts/appstate";
+import { useConnectionConfig } from '../../contexts/connection';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
+import { useWallet } from '../../contexts/wallet';
+import useWindowSize from '../../hooks/useWindowResize';
+import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
+import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from '../../middleware/accounts';
+import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../middleware/ids';
+import { AppUsageEvent, SegmentRefreshAccountBalanceData, SegmentStreamAddFundsData, SegmentStreamCreateData, SegmentVestingContractCloseData, SegmentVestingContractCreateData, SegmentVestingContractWithdrawData } from '../../middleware/segment-service';
+import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isDev, isLocal, isProd, toTimestamp } from '../../middleware/ui';
+import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from '../../middleware/utils';
 import { MetaInfoCta } from '../../models/common-types';
 import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
-import { VestingContractCreateForm } from './components/VestingContractCreateForm';
-import { TokenInfo } from '@solana/spl-token-registry';
-import { VestingContractCreateModal } from './components/VestingContractCreateModal';
-import { VestingContractOverview } from './components/VestingContractOverview';
-import { CreateVestingStreamParams, CreateVestingTreasuryParams, getCategoryLabelByValue, AddFundsParams, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
-import { VestingContractStreamList } from './components/VestingContractStreamList';
-import { useNativeAccount } from '../../contexts/accounts';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../middleware/ids';
-import { appConfig, customLogger } from '../..';
+import { ZERO_FEES } from '../../models/multisig';
+import { TreasuryWithdrawParams } from '../../models/treasuries';
+import { AddFundsParams, CreateVestingStreamParams, CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { InspectedAccountType } from '../accounts';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { VestingContractSolBalanceModal } from './components/VestingContractSolBalanceModal';
+import { PendingProposalsComponent } from './components/PendingProposalsComponent';
+import { VestingContractActivity } from './components/VestingContractActivity';
 import { VestingContractAddFundsModal } from './components/VestingContractAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
-import { segmentAnalytics } from '../../App';
-import { AppUsageEvent, SegmentRefreshAccountBalanceData, SegmentStreamAddFundsData, SegmentStreamCreateData, SegmentVestingContractCloseData, SegmentVestingContractCreateData, SegmentVestingContractWithdrawData } from '../../middleware/segment-service';
-import { ZERO_FEES } from '../../models/multisig';
+import { VestingContractCreateForm } from './components/VestingContractCreateForm';
+import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractCreateStreamModal } from './components/VestingContractCreateStreamModal';
-import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
-import { VestingContractActivity } from './components/VestingContractActivity';
-import { AccountLayout, u64 } from '@solana/spl-token';
-import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
-import { BN } from 'bn.js';
-import { PendingProposalsComponent } from './components/PendingProposalsComponent';
-import { NATIVE_SOL } from '../../constants/tokens';
+import { VestingContractDetails } from './components/VestingContractDetails';
 import { VestingContractEditModal } from './components/VestingContractEditModal';
-import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from '../../middleware/accounts';
-import { TreasuryWithdrawParams } from '../../models/treasuries';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { VestingContractList } from './components/VestingContractList';
+import { VestingContractOverview } from './components/VestingContractOverview';
+import { VestingContractSolBalanceModal } from './components/VestingContractSolBalanceModal';
+import { VestingContractStreamList } from './components/VestingContractStreamList';
+import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
+import "./style.scss";
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -271,15 +266,11 @@ export const VestingView = () => {
   ]);
 
   const isMultisigContext = useMemo(() => {
-    let accountTypeInQuery: string | null = null;
-    if (address && searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery && accountTypeInQuery === "multisig") {
-        return true;
-      }
+    if (address && inspectedAccountType && inspectedAccountType === "multisig") {
+      return true;
     }
     return false;
-  }, [address, searchParams]);
+  }, [address, inspectedAccountType]);
 
   const selectedVestingContractRef = useRef(selectedVestingContract);
   useEffect(() => {
@@ -303,17 +294,6 @@ export const VestingView = () => {
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
   };
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -633,14 +613,13 @@ export const VestingView = () => {
       if (accountDetailTab) {
         url += `/${accountDetailTab}`
       }
-      const param = getQueryAccountType();
-      if (param && param === "multisig") {
+      if (inspectedAccountType && inspectedAccountType === "multisig") {
         url += '?account-type=multisig';
       }
       consoleOut('Navigating to contract:', url, 'orange');
       navigate(url);
     }
-  }, [accountAddress, accountDetailTab, getQueryAccountType, navigate]);
+  }, [accountAddress, accountDetailTab, inspectedAccountType, navigate]);
 
   const getContractFinishDate = useCallback(() => {
     if (streamTemplate) {
@@ -790,21 +769,21 @@ export const VestingView = () => {
 
     const contextAddress = new PublicKey(accountAddress);
     const treasurer = new PublicKey(treasuryInfo.treasurer as string);
-    const isMultisigContext = getQueryAccountType() === "multisig" && accountAddress && treasuryInfo.treasurer ? true : false;
+    const isMultisigTreasury = inspectedAccountType === "multisig" && accountAddress && treasuryInfo.treasurer ? true : false;
 
-    if (isMultisigContext && treasurer.equals(contextAddress) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
+    if (isMultisigTreasury && treasurer.equals(contextAddress) && multisigAccounts && multisigAccounts.find(m => m.authority.equals(treasurer))) {
       return true;
     }
 
     return false;
 
-  }, [accountAddress, getQueryAccountType, multisigAccounts, publicKey, selectedVestingContract]);
+  }, [accountAddress, inspectedAccountType, multisigAccounts, publicKey, selectedVestingContract]);
 
   const getMultisigIdFromContext = useCallback(() => {
 
     if (!multisigAccounts || !selectedMultisig || !accountAddress) { return ''; }
 
-    if (getQueryAccountType() === "multisig") {
+    if (inspectedAccountType === "multisig") {
       const multisig = multisigAccounts.find(t => t.authority.toBase58() === accountAddress);
       if (multisig) {
         return multisig.authority.toBase58();
@@ -813,7 +792,7 @@ export const VestingView = () => {
 
     return '';
 
-  }, [accountAddress, getQueryAccountType, multisigAccounts, selectedMultisig])
+  }, [accountAddress, inspectedAccountType, multisigAccounts, selectedMultisig])
 
   const getContractActivity = useCallback((streamId: string, clearHistory = false) => {
     if (!streamId || !msp || loadingContractActivity) {
@@ -1372,7 +1351,7 @@ export const VestingView = () => {
           new PublicKey(data.treasurer),              // treasurer
           new PublicKey(data.treasurer),              // treasurer
           new PublicKey(data.treasury),               // treasury
-          true                                        // TODO: Define if the user can determine this
+          true                                        // autoWSol
         );
       }
 
@@ -1386,7 +1365,7 @@ export const VestingView = () => {
 
       const closeTreasury = await msp.closeTreasury(
         publicKey,                                  // payer
-        multisig.authority,                         // TODO: This should come from the UI        
+        multisig.authority,                         // destination
         new PublicKey(data.treasury),               // treasury
         false
       );
@@ -3570,19 +3549,16 @@ export const VestingView = () => {
   }, [connection, publicKey, selectedVestingContract]);
 
   // Set a tab if none already set
-  /*
   useEffect(() => {
     if (publicKey && accountAddress && vestingContractAddress && !accountDetailTab) {
       // /vesting/:address/contracts/:vestingContract/:activeTab
-      const param = getQueryAccountType();
       let url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${vestingContractAddress}/overview`;
-      if (param) {
-        url += `?account-type=${param}`;
+      if (inspectedAccountType) {
+        url += `?account-type=${inspectedAccountType}`;
       }
       navigate(url);
     }
-  }, [accountAddress, accountDetailTab, getQueryAccountType, navigate, publicKey, vestingContractAddress]);
-  */
+  }, [accountAddress, accountDetailTab, inspectedAccountType, navigate, publicKey, vestingContractAddress]);
 
   // Reload streams whenever the selected vesting contract changes
   useEffect(() => {
@@ -3677,20 +3653,20 @@ export const VestingView = () => {
   // Get fees for multisig actions
   useEffect(() => {
 
-    if (!multisigClient || !accountAddress || getQueryAccountType() !== "multisig") { return; }
+    if (!multisigClient || !accountAddress || inspectedAccountType !== "multisig") { return; }
 
     getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
     .then(value => {
       setMultisigTxFees(value);
       consoleOut('Multisig transaction fees:', value, 'orange');
     });
-  }, [accountAddress, getQueryAccountType, multisigClient]);
+  }, [accountAddress, inspectedAccountType, multisigClient]);
 
   // Get min balance required for multisig actions
   useEffect(() => {
     if (accountAddress && selectedVestingContract) {
       let minRequired = 0;
-      if (getQueryAccountType() === "multisig" && isMultisigTreasury(selectedVestingContract) && multisigTxFees) {
+      if (inspectedAccountType === "multisig" && isMultisigTreasury(selectedVestingContract) && multisigTxFees) {
         minRequired = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal fees
       } else if (transactionFees) {
         minRequired = transactionFees.blockchainFee + transactionFees.mspFlatFee;
@@ -3704,7 +3680,7 @@ export const VestingView = () => {
         consoleOut('Min balance required:', MIN_SOL_BALANCE_REQUIRED, 'blue');
       }
     }
-  }, [accountAddress, getQueryAccountType, isMultisigTreasury, multisigTxFees, selectedVestingContract, transactionFees]);
+  }, [accountAddress, inspectedAccountType, isMultisigTreasury, multisigTxFees, selectedVestingContract, transactionFees]);
 
   // Keep the available streaming balance for the current vesting contract updated
   useEffect(() => {
@@ -3805,13 +3781,12 @@ export const VestingView = () => {
   const onTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
     // /vesting/:address/contracts/:vestingContract/:activeTab
-    const param = getQueryAccountType();
     let url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${vestingContractAddress}/${activeKey}`;
-    if (param) {
-      url += `?account-type=${param}`;
+    if (inspectedAccountType) {
+      url += `?account-type=${inspectedAccountType}`;
     }
     navigate(url);
-  }, [accountAddress, getQueryAccountType, navigate, vestingContractAddress]);
+  }, [accountAddress, inspectedAccountType, navigate, vestingContractAddress]);
 
   const loadMoreActivity = () => {
     if (!vestingContractAddress) { return; }
@@ -4049,7 +4024,7 @@ export const VestingView = () => {
   ]);
 
   // Unauthorized access or disconnected access
-  if (!publicKey || (publicKey && accountAddress && getQueryAccountType() !== "multisig" && publicKey.toBase58() !== accountAddress)) {
+  if (!publicKey || (publicKey && accountAddress && inspectedAccountType !== "multisig" && publicKey.toBase58() !== accountAddress)) {
     return (
       <>
         <div className="container main-container">
@@ -4369,7 +4344,6 @@ export const VestingView = () => {
             isMultisigTreasury={isMultisigTreasury()}
             isVisible={isVestingContractTransferFundsModalVisible}
             minRequiredBalance={minRequiredBalance}
-            multisigAccounts={multisigAccounts}
             nativeBalance={nativeBalance}
             selectedMultisig={selectedMultisig}
             transactionFees={transactionFees}

@@ -1,11 +1,11 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Modal, Switch } from "antd";
-import { TokenInfo } from '@solana/spl-token-registry';
 import { MSP, Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { PublicKey } from '@solana/web3.js';
+import { Modal, Switch } from "antd";
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut } from '../../../../middleware/ui';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
-import { PublicKey } from '@solana/web3.js';
-import { AppStateContext } from '../../../../contexts/appstate';
 
 export const VestingContractStreamDetailModal = (props: {
   accountAddress: string;
@@ -150,7 +150,6 @@ export const VestingContractStreamDetailModal = (props: {
         highlightedStream={highlightedStream}
         isInboundStream={isInboundStream()}
         loadingStreamActivity={loadingStreamActivity}
-        msp={msp}
         onLoadMoreActivities={loadMoreActivity}
         selectedToken={selectedToken}
         stream={isToggledShowLastReadData ? highlightedStream : streamDetail}

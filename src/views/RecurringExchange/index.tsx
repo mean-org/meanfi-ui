@@ -107,7 +107,7 @@ export const RecurringExchange = (props: {
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
   const [renderCount, setRenderCount] = useState(0);
-  const [showLpList, setShowLpList] = useState(false);
+  const [showLpList] = useState(false);
   const [hlaInfo, setHlaInfo] = useState<HlaInfo>();
   const [defaultDdcaOption] = useState("Repeat weekly");
 

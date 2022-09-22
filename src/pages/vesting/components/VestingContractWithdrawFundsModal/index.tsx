@@ -7,11 +7,11 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { TransactionStatus } from '../../../../models/enums';
 import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
 import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
-import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming';
+import { TransactionFees } from '@mean-dao/money-streaming';
 import { formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
 import { useWallet } from '../../../../contexts/wallet';
-import { FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
-import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
+import { FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { Treasury, TreasuryType } from '@mean-dao/msp';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { BN } from 'bn.js';
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
@@ -29,7 +29,6 @@ export const VestingContractWithdrawFundsModal = (props: {
   isMultisigTreasury: boolean;
   isVisible: boolean;
   minRequiredBalance: number;
-  multisigAccounts: MultisigInfo[] | undefined;
   nativeBalance: number;
   selectedMultisig: MultisigInfo | undefined;
   transactionFees: TransactionFees;
@@ -42,7 +41,6 @@ export const VestingContractWithdrawFundsModal = (props: {
     isMultisigTreasury,
     isVisible,
     minRequiredBalance,
-    multisigAccounts,
     nativeBalance,
     selectedMultisig,
     transactionFees,
@@ -53,7 +51,6 @@ export const VestingContractWithdrawFundsModal = (props: {
   const {
     theme,
     tokenBalance,
-    isWhitelisted,
     loadingPrices,
     transactionStatus,
     isVerifiedRecipient,
@@ -69,9 +66,6 @@ export const VestingContractWithdrawFundsModal = (props: {
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
-  const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
-  const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
-  const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
 
   const getTokenPrice = useCallback((inputAmount: string) => {
@@ -80,14 +74,6 @@ export const VestingContractWithdrawFundsModal = (props: {
 
     return parseFloat(inputAmount) * price;
   }, [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken]);
-
-  const shouldFundFromTreasury = useCallback(() => {
-    if (!vestingContract || (vestingContract && vestingContract.autoClose)) {
-      return false;
-    }
-
-    return true;
-  }, [vestingContract]);
 
   const onAcceptWithdrawTreasuryFunds = () => {
     const multisig = isMultisigTreasury && selectedMultisig
@@ -161,34 +147,19 @@ export const VestingContractWithdrawFundsModal = (props: {
     setIsVerifiedRecipient(e.target.checked);
   }
 
-  const isfeePayedByTreasurerOn = useCallback(() => {
-    if (localStreamDetail && localStreamDetail.version >= 2 && (localStreamDetail as Stream).feePayedByTreasurer) {
-      return true;
-    }
-
-    return false;
-  }, [localStreamDetail]);
-
   // Validation
   const isValidForm = (): boolean => {
-    const userBalance = toTokenAmountBn(tokenBalance, selectedToken?.decimals || 9);
+    const br = getMinBalanceRequired();
     return  publicKey &&
             to &&
             isValidAddress(to) &&
             selectedToken && 
             isVerifiedRecipient &&
-            ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
-            (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
             tokenAmount && tokenAmount.gtn(0) &&
-            ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
-            (shouldFundFromTreasury() && ((isfeePayedByTreasurerOn() && tokenAmount.lte(maxAllocatableAmount)) ||
-            (!isfeePayedByTreasurerOn() && tokenAmount.lte(unallocatedBalance)))))
+            unallocatedBalance.gt(tokenAmount) &&
+            nativeBalance >= br
       ? true
       : false;
-  }
-
-  const isInputMultisigAddress = (address: string) => {
-    return multisigAddresses.includes(address);
   }
 
   const getButtonLabel = () => {
@@ -202,65 +173,14 @@ export const VestingContractWithdrawFundsModal = (props: {
             ? 'Amount exceeded'
             : !isVerifiedRecipient
               ? t('transactions.validation.verified-recipient-unchecked')
-              : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('treasuries.withdraw-funds.main-cta')
-                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                  ? t('general.cta-finish')
-                  : t('general.retry');
+              : nativeBalance < getMinBalanceRequired()
+                ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
+                : transactionStatus.currentOperation === TransactionStatus.Iddle
+                  ? t('treasuries.withdraw-funds.main-cta')
+                  : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                    ? t('general.cta-finish')
+                    : t('general.retry');
   }
-
-  const getMaxAmount = useCallback((preSetting = false) => {
-    if (((localStreamDetail && localStreamDetail.version >= 2 && (localStreamDetail as Stream).feePayedByTreasurer) || preSetting) && transactionFees) {
-      const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
-      const feeNumerator = transactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
-      const feeDenaminator = 1000000;
-      const badStreamMaxAllocation = unallocatedBalance
-        .mul(new BN(feeDenaminator))
-        .div(new BN(feeNumerator + feeDenaminator));
-
-      const feeAmount = badStreamMaxAllocation
-        .mul(new BN(feeNumerator))
-        .div(new BN(feeDenaminator));
-
-      const badTotal = badStreamMaxAllocation.add(feeAmount);
-      const badRemaining = unallocatedBalance.sub(badTotal);
-      const goodStreamMaxAllocation = unallocatedBalance.sub(feeAmount);
-      const goodTotal = goodStreamMaxAllocation.add(feeAmount);
-      const goodRemaining = unallocatedBalance.sub(goodTotal);
-      const maxAmount = goodStreamMaxAllocation;
-
-      if (isWhitelisted) {
-        const debugTable: any[] = [];
-        debugTable.push({
-          unallocatedBalance: unallocatedBalance.toString(),
-          feeNumerator: feeNumerator,
-          feePercentage01: feeNumerator/feeDenaminator,
-          badStreamMaxAllocation: badStreamMaxAllocation.toString(),
-          feeAmount: feeAmount.toString(),
-          badTotal: badTotal.toString(),
-          badRemaining: badRemaining.toString(),
-          goodStreamMaxAllocation: goodStreamMaxAllocation.toString(),
-          goodTotal: goodTotal.toString(),
-          goodRemaining: goodRemaining.toString(),
-        });
-        consoleOut('debug table', debugTable, 'blue');
-      }
-
-      if (!preSetting) {
-        setMaxAllocatableAmount(maxAmount);
-      }
-      return maxAmount;
-    }
-    if (!preSetting) {
-      setMaxAllocatableAmount(unallocatedBalance);
-    }
-    return unallocatedBalance;
-  },[
-    isWhitelisted,
-    localStreamDetail,
-    unallocatedBalance,
-    transactionFees,
-  ]);
 
   const isNewTreasury = useCallback(() => {
     if (vestingContract) {
@@ -270,6 +190,16 @@ export const VestingContractWithdrawFundsModal = (props: {
 
     return false;
   }, [vestingContract]);
+
+  const getMinBalanceRequired = useCallback(() => {
+    if (!transactionFees) { return 0; }
+
+    const bf = transactionFees.blockchainFee;       // Blockchain fee
+    const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+    const minRequired = isMultisigTreasury ? minRequiredBalance : bf + ff;
+    return minRequired > MIN_SOL_BALANCE_REQUIRED ? minRequired : MIN_SOL_BALANCE_REQUIRED;
+
+  }, [isMultisigTreasury, minRequiredBalance, transactionFees]);
 
   // Set a working token based on the Vesting Contract's Associated Token
   useEffect(() => {
@@ -285,18 +215,6 @@ export const VestingContractWithdrawFundsModal = (props: {
 
     return () => { }
   }, [getTokenByMintAddress, vestingContract])
-
-  useEffect(() => {
-    if (isVisible) {
-      if (multisigAccounts && multisigAccounts.length > 0) {
-        const msAddresses = multisigAccounts.map(ms => ms.id.toBase58());
-        setMultisigAddresses(msAddresses);
-      }
-    }
-  }, [
-    isVisible,
-    multisigAccounts
-  ]);
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
@@ -407,13 +325,9 @@ export const VestingContractWithdrawFundsModal = (props: {
                 required={true}
                 spellCheck="false"
                 value={to}/>
-              {to && !isValidAddress(to) ? (
+              {to && !isValidAddress(to) && (
                 <span className="form-field-error">
                   {t('transactions.validation.address-validation')}
-                </span>
-              ) : isInputMultisigAddress(to) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.invalid-account')}
                 </span>
               )}
             </div>
@@ -431,42 +345,15 @@ export const VestingContractWithdrawFundsModal = (props: {
                         showCaretDown={false}
                       />
                     )}
-                    {vestingContract && vestingContract.autoClose ? (
-                      <>
-                        {selectedToken && tokenBalance ? (
-                          <div
-                            className="token-max simplelink"
-                            onClick={() => {
-                              setWithdrawAmount(tokenBalance.toFixed(selectedToken.decimals));
-                              setTokenAmount(toTokenAmountBn(tokenBalance, selectedToken?.decimals || 9));
-                            }}>
-                            MAX
-                          </div>
-                        ) : null}
-                      </>
-                    ) : (
-                      <>
-                        {selectedToken && unallocatedBalance ? (
-                          <div
-                            className="token-max simplelink"
-                            onClick={() => {
-                              const decimals = selectedToken ? selectedToken.decimals : 6;
-                              if (isfeePayedByTreasurerOn()) {
-                                const maxAmount = getMaxAmount(true);
-                                consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
-                                consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                                setWithdrawAmount(toUiAmount(maxAmount, decimals));
-                                setTokenAmount(maxAmount);
-                              } else {
-                                const maxAmount = getMaxAmount();
-                                setWithdrawAmount(toUiAmount(maxAmount, decimals));
-                                setTokenAmount(maxAmount);
-                              }
-                            }}>
-                            MAX
-                          </div>
-                        ) : null}
-                      </>
+                    {selectedToken && unallocatedBalance && (
+                      <div
+                        className="token-max simplelink"
+                        onClick={() => {
+                          setWithdrawAmount(toUiAmount(unallocatedBalance, selectedToken.decimals));
+                          setTokenAmount(unallocatedBalance);
+                        }}>
+                        MAX
+                      </div>
                     )}
                   </span>
                 </div>
@@ -616,7 +503,7 @@ export const VestingContractWithdrawFundsModal = (props: {
               type="primary"
               shape="round"
               size="large"
-              disabled={isBusy || !isValidForm() || isInputMultisigAddress(to)}
+              disabled={isBusy || !isValidForm()}
               onClick={() => {
                 if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                   onAcceptWithdrawTreasuryFunds();
@@ -632,53 +519,6 @@ export const VestingContractWithdrawFundsModal = (props: {
               }
             </Button>
           </div>
-          {/* <div className="row two-col-ctas mt-3 transaction-progress p-0">
-            <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
-              <Button
-                block
-                type="text"
-                shape="round"
-                size="middle"
-                className={isBusy ? 'inactive' : ''}
-                onClick={() => isError(transactionStatus.currentOperation)
-                  ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                    ? onCloseModal()
-                    : onAcceptWithdrawTreasuryFunds()
-                  : onCloseModal()}>
-                {isError(transactionStatus.currentOperation)
-                  ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                    ? t('general.cta-close')
-                    : t('general.retry')
-                  : t('general.cta-close')
-                }
-              </Button>
-            </div>
-            {!isError(transactionStatus.currentOperation) && (
-              <div className="col-6">
-                <Button
-                  className={`extra-height ${isBusy ? 'inactive' : ''}`}
-                  block
-                  type="primary"
-                  shape="round"
-                  size="middle"
-                  disabled={!isValidForm() || isInputMultisigAddress(to)}
-                  onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                      onAcceptWithdrawTreasuryFunds();
-                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                      onCloseModal();
-                    } else {
-                      onAcceptWithdrawTreasuryFunds();
-                    }
-                  }}>
-                  {isBusy
-                    ? t('multisig.transfer-tokens.main-cta-busy')
-                    : getButtonLabel()
-                  }
-                </Button>
-              </div>
-            )}
-          </div> */}
         </>
       )}
     </Modal>
