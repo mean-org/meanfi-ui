@@ -2,12 +2,23 @@
   .account-group-heading {
     border-bottom: 1px solid var(--color-secondary-alpha-50);
     padding-bottom: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.8rem;
   }
   .accounts-list {
-    margin-bottom: 1rem;
+    margin-bottom: 1.8rem;
     .transaction-list-row {
+      margin: 0;
+      border: 2px solid var(--color-secondary-alpha-40);
+      border-radius: 6px !important;
+      padding: 5px 10px;
       border-radius: 0;
+      &:not(:last-of-type) {
+        margin-bottom: 0.8rem;
+      }
+      &.selected {
+        border: 2px solid var(--color-secondary-alpha-70) !important;
+        background-color: var(--darken) !important;
+      }
       .icon-cell {
         display: flex;
         justify-content: center;

@@ -262,7 +262,7 @@ export const getAmountWithSymbol = (
   const bigNumberAmount = typeof amount === "string" || typeof amount === "number"
     ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
   const decimalPlaces = friendlyDecimals
-    ? friendlyDisplayDecimalPlaces(parseFloat(bigNumberAmount.toString()), decimals) || decimals
+    ? friendlyDisplayDecimalPlaces(typeof amount === "number" ? amount : bigNumberAmount.toString(), decimals) || decimals
     : decimals;
   if (friendlyDecimals) {
     BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });

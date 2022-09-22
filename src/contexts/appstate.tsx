@@ -1543,18 +1543,19 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [multisigClient, needReloadMultisigAccounts, publicKey, refreshMultisigs]);
 
   useEffect(() => {
-    if (!publicKey || !multisigClient || patchedMultisigAccounts || loadingMultisigTxPendingCount || !multisigAccounts || multisigAccounts.length === 0) {
+    if (!publicKey || !multisigClient || patchedMultisigAccounts !== undefined || loadingMultisigTxPendingCount || !multisigAccounts || multisigAccounts.length === 0) {
+      return;
+    }
+
+    const multisigWithPendingTxs = multisigAccounts.filter(x => x.pendingTxsAmount > 0);
+    if (!multisigWithPendingTxs || multisigWithPendingTxs.length === 0) {
+      consoleOut('No safes found with pending Txs to work on!', 'moving on...', 'crimson');
       return;
     }
 
     (async () => {
-      consoleOut('Entering here god knows why...', '', 'crimson');
+      consoleOut('Searching for pending Txs across multisigs...', '', 'crimson');
       setLoadingMultisigTxPendingCount(true);
-
-      const multisigWithPendingTxs = multisigAccounts.filter(x => x.pendingTxsAmount > 0);
-      if (!multisigWithPendingTxs || multisigWithPendingTxs.length === 0) {
-         return;
-      }
 
       const multisigAccountsCopy = [...multisigAccounts];
       const multisigPendingStatus = [MultisigTransactionStatus.Active, MultisigTransactionStatus.Queued, MultisigTransactionStatus.Passed];

@@ -3,13 +3,14 @@ import { IconLoading, IconSafe, IconWallet } from "../../Icons";
 import { useWallet } from "../../contexts/wallet";
 import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../../contexts/appstate";
-import { Spin } from "antd";
+import { Spin, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 // import { useLocation, useNavigate } from "react-router-dom";
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, toUsCurrency } from "../../middleware/ui";
+import { consoleOut, kFormatter, toUsCurrency } from "../../middleware/ui";
 import { UserTokenAccount } from "../../models/transactions";
 import { shortenAddress } from "../../middleware/utils";
+import { Identicon } from "../Identicon";
 
 export const AccountSelector = () => {
   const {
@@ -18,8 +19,7 @@ export const AccountSelector = () => {
     multisigAccounts,
     loadingTokenAccounts,
     loadingMultisigAccounts,
-    // getTokenPriceByAddress,
-    // getTokenPriceBySymbol,
+    loadingMultisigTxPendingCount,
     setIsSelectingAccount,
     setShouldLoadTokens,
     getAssetsByAccount,
@@ -88,6 +88,14 @@ export const AccountSelector = () => {
       : '$0.00';
   }
 
+  const renderPendingTxCount = (item: MultisigInfo) => {
+    if (!item || !item.pendingTxsAmount) {
+      return (<span className="dimmed">0 queued</span>);
+    }
+
+    return (<span className="dimmed">{kFormatter(item.pendingTxsAmount)} queued</span>);
+  }
+
   return (
     <div className="account-selector">
       <div className="account-group-heading">
@@ -126,9 +134,14 @@ export const AccountSelector = () => {
         </div>
       </div>
       <div className="account-group-heading">
-        <div className="flex-row justify-content-start align-items-center">
-          <IconSafe className="mean-svg-icons" style={{ width: 24, height: 24 }} />
-          <span className="ml-2">Super Safe</span>
+        <div className="flex-fixed-right">
+          <div className="left flex-row align-items-center">
+            <IconSafe className="mean-svg-icons" style={{ width: 24, height: 24 }} />
+            <span className="ml-2">Super Safe</span>
+          </div>
+          <div className="right">
+            <span className="secondary-link underlined">Create new safe</span>
+          </div>
         </div>
       </div>
       <div className="accounts-list">
@@ -136,25 +149,42 @@ export const AccountSelector = () => {
           {(multisigAccounts && multisigAccounts.length > 0) ? (
             multisigAccounts.map((item, index) => {
               return (
-                <div key={`account-${index}`} className="transaction-list-row" onClick={() => onMultisigAccountSelected(item)}>
+                <div key={`account-${index}`} className={`transaction-list-row${index === 0 ? ' selected' : ''}`} onClick={() => onMultisigAccountSelected(item)}>
                   <div className="icon-cell">
-                    <span>xOx</span>
+                    {(item.version === 0) ? (
+                      <Tooltip placement="rightTop" title="Serum Multisig">
+                        <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />
+                      </Tooltip>
+                    ) : (item.version === 2) ? (
+                      <Tooltip placement="rightTop" title="Meanfi Multisig">
+                        <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" alt="Meanfi Multisig" width={30} height={30} />
+                      </Tooltip>
+                    ) : (
+                      <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
+                    )}
+                    {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
+                      <span className="status warning bottom-right"></span>
+                    ) : null}
                   </div>
                   <div className="description-cell">
                     <div className="title text-truncate">
-                      Title
+                      {item.label}
                     </div>
                     <div className="subtitle text-truncate">
-                      Subtitle
+                      {shortenAddress(item.authority, 8)}
                     </div>
                   </div>
                   <div className="rate-cell">
                     <div className="rate-amount">
-                      1 st line
+                      {
+                        loadingMultisigTxPendingCount ? (
+                          <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+                        ) : renderPendingTxCount(item)
+                      }
                     </div>
-                    <div className="interval">
+                    {/* <div className="interval">
                       2 nd line
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               );
@@ -162,10 +192,10 @@ export const AccountSelector = () => {
           ) : (
             <>
               {loadingMultisigAccounts ? (
-                <p>{t('streams.stream-activity.loading-activity')}</p>
+                <p>Loading safes</p>
               ) : (
                 <>
-                  <p>{t('streams.stream-activity.no-activity')}</p>
+                  <p>No safes detected</p>
                 </>
               )}
             </>
