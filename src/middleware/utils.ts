@@ -252,42 +252,26 @@ export const getAmountWithSymbol = (
     token = unknownToken;
   }
 
-  if (typeof amount === "number") {
-    const inputAmount = amount || 0;
-    if (token) {
-      const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
-      const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
-      const formatted2 = formatted.toFixed(token.decimals);
-      const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
-      if (onlyValue) { return toLocale; }
-      return `${toLocale} ${token.symbol}`;
-    } else if (address && !token) {
-      const formatted = formatThousands(inputAmount, 5, 5);
-      return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
-    }
-    return `${formatThousands(inputAmount, 5, 5)}`;
+  let inputAmount = '';
+  const decimals = token ? token.decimals : 9;
+  BigNumber.config({
+    CRYPTO: true,
+    FORMAT: BIGNUMBER_FORMAT,
+    DECIMAL_PLACES: 20
+  });
+  const bigNumberAmount = typeof amount === "string" || typeof amount === "number"
+    ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
+  const decimalPlaces = friendlyDecimals
+    ? friendlyDisplayDecimalPlaces(parseFloat(bigNumberAmount.toString()), decimals) || decimals
+    : decimals;
+  if (friendlyDecimals) {
+    BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
+  }
+  inputAmount = bigNumberAmount.toFormat(decimalPlaces);
+  if (token) {
+    return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
   } else {
-    let inputAmount = '';
-    const decimals = token ? token.decimals : 9;
-    BigNumber.config({
-      CRYPTO: true,
-      FORMAT: BIGNUMBER_FORMAT,
-      DECIMAL_PLACES: 20
-    });
-    const bigNumberAmount = typeof amount === "string"
-      ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
-    const decimalPlaces = friendlyDecimals
-      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
-      : decimals;
-    if (friendlyDecimals) {
-      BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
-    }
-    inputAmount = bigNumberAmount.toFormat(decimalPlaces);
-    if (token) {
-      return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
-    } else {
-      return onlyValue ? inputAmount : `${inputAmount} [${shortenAddress(address, 4)}]`;
-    }
+    return onlyValue ? inputAmount : `${inputAmount} [${shortenAddress(address, 4)}]`;
   }
 }
 

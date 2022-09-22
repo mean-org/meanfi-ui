@@ -125,6 +125,7 @@ export const AccountsNewView = () => {
     streamListv2,
     streamDetail,
     transactions,
+    splTokenList,
     previousRoute,
     isWhitelisted,
     selectedAsset,
@@ -4508,11 +4509,13 @@ export const AccountsNewView = () => {
                 <div className="transaction-detail-row">
                   <div className="info-data">
                     {
-                      `${formatThousands(
+                      getAmountWithSymbol(
                         selectedAsset.balance || 0,
-                        selectedAsset.decimals,
+                        selectedAsset.address,
+                        false,
+                        splTokenList,
                         selectedAsset.decimals
-                      )} ${selectedAsset.symbol}`
+                      )
                     }
                   </div>
                 </div>
