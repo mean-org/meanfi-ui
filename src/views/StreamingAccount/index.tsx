@@ -32,7 +32,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
-import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
+import { OperationType, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   getIntervalFromSeconds,
@@ -67,7 +67,7 @@ import { SolBalanceModal } from "../../components/SolBalanceModal";
 import { isMobile } from "react-device-detect";
 import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from "../../middleware/accounts";
 import { NATIVE_SOL } from "../../constants/tokens";
-import { AddFundsParams } from "../../models/vesting";
+import { AddFundsParams, getCategoryLabelByValue } from "../../models/vesting";
 import BN from "bn.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { ZERO_FEES } from "../../models/multisig";
@@ -2915,38 +2915,21 @@ export const StreamingAccountView = (props: {
 
   const streamAccountTitle = getStreamingAccountName() ? getStreamingAccountName() : (streamingAccountSelected && shortenAddress(streamingAccountSelected.id as string, 8));
 
-  const renderBadges = () => {
+  const getBadgesList = () => {
     if (!streamingAccountSelected) { return; }
 
     const v1 = streamingAccountSelected as unknown as TreasuryInfo;
     const v2 = streamingAccountSelected as Treasury;
     const isNewTreasury = streamingAccountSelected && streamingAccountSelected.version >= 2 ? true : false;
 
-    const type = isNewTreasury
-      ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-      : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+    let type = '';
+    if (isNewTreasury) {
+      type = v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked';
+    } else {
+      type = v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+    }
 
-    const category = isNewTreasury
-      && v2.category === 1 ? "Vesting" : "";
-
-    const subCategory = isNewTreasury
-      && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
-
-    let badges;
-
-    type && (
-      category ? (
-        subCategory ? (
-          badges = [category, subCategory, type]
-        ) : (
-          badges = [category, type]
-        )
-      ) : (
-        badges = [type]
-      )
-    )
-
-    return badges;
+    return [type];
   }
 
   const hasBalanceChanged = () => {
@@ -2973,7 +2956,7 @@ export const StreamingAccountView = (props: {
         {streamingAccountSelected && (
           <ResumeItem
             title={streamAccountTitle}
-            extraTitle={renderBadges()}
+            extraTitle={getBadgesList()}
             subtitle={streamAccountSubtitle}
             content={streamAccountContent}
             resume={getStreamingAccountResume()}

@@ -1159,8 +1159,9 @@ const AppStateProvider: React.FC = ({ children }) => {
             if (!isProd()) {
               const debugTable: any[] = [];
               streamAccumulator.forEach(item => debugTable.push({
-                createdBlockTime: new BN(item.createdBlockTime).toNumber(),
+                version: item.version,
                 name: item.version < 2 ? item.streamName : item.name.trim(),
+                streamId: shortenAddress(item.id, 8)
               }));
               console.table(debugTable);
             }

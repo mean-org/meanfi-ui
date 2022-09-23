@@ -4696,7 +4696,7 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {/* {(isLocal() || (!isProd() && isWhitelisted)) && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span>loadingTokenAccounts:</span><span className="ml-1 font-extrabold">{loadingTokenAccounts ? 'true' : 'false'}</span>
           <span className="ml-2">shouldLoadTokens:</span><span className="ml-1 font-extrabold">{shouldLoadTokens ? 'true' : 'false'}</span>

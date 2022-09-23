@@ -22,10 +22,10 @@ import { Identicon } from "../Identicon";
 import Countdown from "react-countdown";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
-import { getCategoryLabelByValue } from "../../models/enums";
 import { PublicKey } from "@solana/web3.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { MoneyStreaming } from "@mean-dao/money-streaming";
+import { getCategoryLabelByValue } from "../../models/vesting";
 
 export const MoneyStreamDetails = (props: {
   accountAddress: string;
@@ -445,7 +445,7 @@ export const MoneyStreamDetails = (props: {
   const isOtp = (): boolean => {
     if (stream) {
       const rateAmount = getRateAmountBn(stream);
-      return rateAmount.isZero();
+      return rateAmount.isZero() ? true : false;
     }
     return false;
   }
@@ -675,19 +675,26 @@ export const MoneyStreamDetails = (props: {
     }
   }
 
-  const renderBadges = () => {
+  const getBadgesList = () => {
     if (!treasuryDetails) { return; }
 
-    const v1 = treasuryDetails as unknown as TreasuryInfo;
+    const v1 = treasuryDetails as TreasuryInfo;
     const v2 = treasuryDetails as Treasury;
-    const isNewTreasury = treasuryDetails && treasuryDetails.version >= 2 ? true : false;
+    const isNewTreasury = treasuryDetails.version >= 2 ? true : false;
 
-    const type = isNewTreasury
-      ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-      : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+    let type = '';
 
-    const category = isNewTreasury
-      && v2.category === 1 ? "Vesting" : "";
+    if (isNewTreasury) {
+      type = v2.category === 1 ? "Vesting" : v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked';
+    } else {
+      type = v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+    }
+
+    if (isOtp() || isScheduledOtp()) {
+      type = 'One Time Payment';
+    }
+
+    const category = isNewTreasury ? v2.category : 0;
 
     const subCategory = isNewTreasury
       && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
@@ -697,9 +704,9 @@ export const MoneyStreamDetails = (props: {
     type && (
       category ? (
         subCategory ? (
-          badges = [category, subCategory, type]
+          badges = [type, subCategory]
         ) : (
-          badges = [category, type]
+          badges = [type]
         )
       ) : (
         badges = [type]
@@ -860,7 +867,7 @@ export const MoneyStreamDetails = (props: {
           <ResumeItem
             img={getStreamIcon(stream)}
             title={title}
-            extraTitle={renderBadges()}
+            extraTitle={getBadgesList()}
             status={getStreamStatusLabel(stream)}
             subtitle={subtitle}
             resume={resume}
