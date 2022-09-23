@@ -13,7 +13,7 @@ import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
 import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { TokenDisplay } from '../TokenDisplay';
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { TextInput } from '../TextInput';

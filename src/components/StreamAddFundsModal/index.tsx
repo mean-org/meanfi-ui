@@ -18,7 +18,7 @@ import BN from 'bn.js';
 import { StreamTopupParams } from '../../models/common-types';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;

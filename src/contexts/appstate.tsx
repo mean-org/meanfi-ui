@@ -20,7 +20,7 @@ import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
 import { PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { getPrices, getSolanaTokenListKeyNameByCluster, getSolanaTokens } from "../middleware/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";

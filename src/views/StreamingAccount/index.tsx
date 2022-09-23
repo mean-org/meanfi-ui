@@ -19,7 +19,7 @@ import {
   refreshTreasuryBalanceInstruction
 } from '@mean-dao/money-streaming';
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";

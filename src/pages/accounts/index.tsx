@@ -48,7 +48,7 @@ import { fetchAccountHistory, MappedTransaction } from '../../middleware/history
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { AccountTokenParsedInfo } from "../../models/accounts";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { initialSummary, StreamsSummary } from '../../models/streams';
 import { Category, MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';

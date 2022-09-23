@@ -1,5 +1,5 @@
 import { AllocationType, SubCategory, TimeUnit, TreasuryType } from "@mean-dao/msp";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 

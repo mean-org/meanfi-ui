@@ -22,7 +22,7 @@ import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { segmentAnalytics } from "../../App";
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "../../middleware/segment-service";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../middleware/ui";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { calculateActionFees } from "@mean-dao/money-streaming/lib/utils";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";

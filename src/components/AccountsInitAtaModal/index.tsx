@@ -1,10 +1,10 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { TransactionFees } from '@mean-dao/msp';
-import { TokenInfo } from '@solana/spl-token-registry';
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Drawer, Modal } from "antd";
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from "react-i18next";
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { customLogger } from '../..';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { NATIVE_SOL } from '../../constants/tokens';

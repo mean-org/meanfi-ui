@@ -17,7 +17,7 @@ import { MAX_TOKEN_LIST_ITEMS, MEAN_MULTISIG_ACCOUNT_LAMPORTS, MIN_SOL_BALANCE_R
 import { UserTokenAccount } from "../../models/accounts";
 import { InputMean } from '../InputMean';
 import { TokenDisplay } from '../TokenDisplay';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useAccountsContext } from '../../contexts/accounts';
 import { NATIVE_SOL } from '../../constants/tokens';
 import { TextInput } from '../TextInput';

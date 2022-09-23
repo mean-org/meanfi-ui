@@ -15,7 +15,7 @@ import {
   toUiAmount,
 } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import {
   consoleOut,
   disabledDate,

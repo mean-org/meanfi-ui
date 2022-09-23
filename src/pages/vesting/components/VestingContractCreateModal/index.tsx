@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from "antd";
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { UserTokenAccount } from "../../../../models/accounts";
 import { VestingContractCreateForm } from '../VestingContractCreateForm';
 import { TransactionFees } from '@mean-dao/msp';

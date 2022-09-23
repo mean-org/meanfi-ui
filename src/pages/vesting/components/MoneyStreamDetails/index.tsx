@@ -1,6 +1,6 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { Col, Row, Spin, Tabs } from 'antd';
 import BN from 'bn.js';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';

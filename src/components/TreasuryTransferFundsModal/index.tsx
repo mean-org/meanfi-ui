@@ -32,7 +32,7 @@ import { BN } from 'bn.js';
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

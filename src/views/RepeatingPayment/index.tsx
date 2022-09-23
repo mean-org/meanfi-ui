@@ -55,7 +55,7 @@ import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from "@mean-da
 import { AppUsageEvent, SegmentStreamRPTransferData } from '../../middleware/segment-service';
 import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import useWindowSize from '../../hooks/useWindowResize';
 import { InfoIcon } from '../../components/InfoIcon';
 import { NATIVE_SOL } from '../../constants/tokens';

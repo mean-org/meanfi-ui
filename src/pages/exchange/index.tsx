@@ -11,7 +11,7 @@ import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
 import { Modal, Button, Dropdown, Menu, Row, Col } from 'antd';
 import { PaymentRateType, TransactionStatus } from '../../models/enums';
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { TokenListItem } from "../TokenListItem";
 import { consoleOut, getPaymentRateOptionLabel, isValidAddress } from "../../middleware/ui";
 import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";

@@ -1,7 +1,7 @@
 import { CloseOutlined, LoadingOutlined } from '@ant-design/icons';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
 import { HlaInfo } from '@mean-dao/hybrid-liquidity-ag/lib/types';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Modal, Popconfirm, Slider } from "antd";
 import { SliderMarks } from 'antd/lib/slider';

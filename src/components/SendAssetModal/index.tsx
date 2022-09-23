@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Tabs } from "antd";
 import { useTranslation } from "react-i18next";
 import { OneTimePayment, RepeatingPayment } from '../../views';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { UserTokenAccount } from "../../models/accounts";
 import { useLocation } from 'react-router-dom';
 

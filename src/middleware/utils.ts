@@ -11,7 +11,7 @@ import { friendlyDisplayDecimalPlaces, isProd } from "./ui";
 import { TOKEN_PROGRAM_ID } from "./ids";
 import { NATIVE_SOL } from '../constants/tokens';
 import { isMobile } from "react-device-detect";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { getNetworkIdByEnvironment } from "../contexts/connection";
 import { environment } from "../environments/environment";
 import { BigNumber } from "bignumber.js";

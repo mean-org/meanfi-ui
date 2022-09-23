@@ -4,7 +4,7 @@ import {
 import { MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { MSP, Stream } from "@mean-dao/msp";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@solana/web3.js";
 import {
   Button,

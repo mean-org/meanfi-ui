@@ -22,7 +22,7 @@ import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { AccountInfo, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';

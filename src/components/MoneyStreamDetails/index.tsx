@@ -13,7 +13,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { useSearchParams } from "react-router-dom";
 import { useWallet } from "../../contexts/wallet";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";

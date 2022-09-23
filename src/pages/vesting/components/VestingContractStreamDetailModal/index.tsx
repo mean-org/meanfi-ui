@@ -1,5 +1,5 @@
 import { MSP, Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { PublicKey } from '@solana/web3.js';
 import { Modal, Switch } from "antd";
 import { useCallback, useContext, useEffect, useState } from 'react';

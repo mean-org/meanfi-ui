@@ -9,7 +9,7 @@ import {
   VestingTreasuryActivity
 } from '@mean-dao/msp';
 import { AccountLayout, u64 } from '@solana/spl-token';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';

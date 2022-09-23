@@ -16,7 +16,7 @@ import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
 import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { MEAN_TOKEN_LIST } from "../../constants/tokens";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
