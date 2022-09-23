@@ -4694,7 +4694,7 @@ export const AccountsNewView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span>loadingTokenAccounts:</span><span className="ml-1 font-extrabold">{loadingTokenAccounts ? 'true' : 'false'}</span>
           <span className="ml-2">shouldLoadTokens:</span><span className="ml-1 font-extrabold">{shouldLoadTokens ? 'true' : 'false'}</span>
@@ -4702,7 +4702,7 @@ export const AccountsNewView = () => {
           <span className="ml-2">userTokensResponse:</span><span className="ml-1 font-extrabold">{userTokensResponse !== null ? 'true' : 'false'}</span>
           <span className="ml-2">accountAddress:</span><span className="ml-1 font-extrabold">{accountAddress ? shortenAddress(accountAddress) : '-'}</span>
         </div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button

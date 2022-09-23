@@ -21,7 +21,8 @@ export const getSolanaTokens = async (chainId: number, honorCache = false): Prom
     headers: meanFiHeaders
   };
 
-  const url = appConfig.getConfig().apiUrl + `/solana-tokens?networkId=${chainId}`;
+  // const url = appConfig.getConfig().apiUrl + `/solana-tokens?networkId=${chainId}`;
+  const url = `https://tempo-api-dev.meanops.com/solana-tokens?networkId=${chainId}`;
 
   if (honorCache) {
     const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));

@@ -1313,8 +1313,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       tokenListPerformanceCounter.start();
       // Here we should determine how old the cached value is enough to deserve a fresh load
       // then set param "honorCache" when calling getSolanaTokens if needed to fetch fresh data
-      // const targetChain = 101;
-      const targetChain = getNetworkIdByCluster(connectionConfig.cluster);
+      const targetChain = 101;
+      // const targetChain = getNetworkIdByCluster(connectionConfig.cluster);
       const cacheEntryKey = getSolanaTokenListKeyNameByCluster(targetChain);
       const honorCache = isCacheItemExpired(cacheEntryKey) ? false : true;
       const tokenList = await getSolanaTokens(targetChain, honorCache);
