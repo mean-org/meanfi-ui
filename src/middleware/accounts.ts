@@ -14,9 +14,10 @@ import {
 } from "@solana/web3.js";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST, NATIVE_SOL } from "../constants/tokens";
-import { AccountsDictionary, AccountTokenParsedInfo, TokenAccountInfo, TokenPrice, UserTokenAccount, UserTokensResponse } from "../models/accounts";
+import { AccountsDictionary, AccountTokenParsedInfo, TokenAccountInfo, UserTokenAccount, UserTokensResponse } from "../models/accounts";
 import { consoleOut } from "./ui";
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from "./utils";
+import { TokenPrice } from "models/TokenPrice";
 
 export async function getMultipleAccounts(
   connection: Connection,

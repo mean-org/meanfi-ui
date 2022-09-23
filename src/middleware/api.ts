@@ -1,7 +1,8 @@
+import { TokenPrice } from "models/TokenPrice";
 import { appConfig } from "..";
 import { readFromCache, writeToCache } from "../cache/persistentCache";
 import { meanFiHeaders } from "../constants";
-import { SimpleTokenInfo, TokenPrice } from "../models/accounts";
+import { SimpleTokenInfo } from "../models/accounts";
 import { Allocation } from "../models/common-types";
 import { WhitelistClaimType } from "../models/enums";
 import { MeanFiStatsModel } from "../models/meanfi-stats";

@@ -39,7 +39,6 @@ import { MSP, Stream } from "@mean-dao/msp";
 import { openNotification } from "../components/Notifications";
 import { PerformanceCounter } from "../middleware/perf-counter";
 import { AccountDetails, UserTokensResponse } from "../models/accounts";
-import { TokenPrice } from "../models/accounts";
 import { ProgramAccounts } from "../models/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
@@ -48,6 +47,7 @@ import { MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionSta
 import { BN } from "bn.js";
 import { getUserAccountTokens } from "../middleware/accounts";
 import { isCacheItemExpired } from "../cache/persistentCache";
+import { TokenPrice } from "models/TokenPrice";
 
 const pricesPerformanceCounter = new PerformanceCounter();
 const tokenListPerformanceCounter = new PerformanceCounter();
