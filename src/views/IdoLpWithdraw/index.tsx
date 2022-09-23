@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { Button } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../middleware/utils';
+import { getAmountWithSymbol, getTxIxResume } from '../../middleware/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
@@ -504,7 +504,7 @@ export const IdoLpWithdraw = (props: {
             <div className="px-1 mb-2">
               {idoInfoRow(
                 'Your USDC Contribution',
-                getTokenAmountAndSymbolByTokenAddress(
+                getAmountWithSymbol(
                   props.idoStatus.userUsdcContributedAmount,
                   props.selectedToken.address,
                   true
@@ -516,7 +516,7 @@ export const IdoLpWithdraw = (props: {
               {idoInfoRow(
                 'Final Token Price',
                 props.idoStatus.finalMeanPrice
-                  ? getTokenAmountAndSymbolByTokenAddress(
+                  ? getAmountWithSymbol(
                       props.idoStatus.finalMeanPrice,
                       props.selectedToken.address
                     )
@@ -526,7 +526,7 @@ export const IdoLpWithdraw = (props: {
             <div className="px-1 mb-2">
               {idoInfoRow(
                 'Redeemable MEAN',
-                getTokenAmountAndSymbolByTokenAddress(
+                getAmountWithSymbol(
                   props.idoStatus.userMeanImpliedAmount,
                   '',
                   true

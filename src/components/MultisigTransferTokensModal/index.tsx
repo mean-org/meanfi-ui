@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from '../../middleware/ui';
 import { isError } from '../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../middleware/utils';
+import { getAmountWithSymbol, isValidNumber, shortenAddress } from '../../middleware/utils';
 import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
@@ -559,7 +559,7 @@ export const MultisigTransferTokensModal = (props: {
         title={<div className="modal-title">{t('multisig.transfer-tokens.modal-title')}</div>}
         maskClosable={false}
         footer={null}
-        visible={isVisible}
+        open={isVisible}
         onOk={onAcceptModal}
         onCancel={onCloseModal}
         width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
@@ -612,7 +612,14 @@ export const MultisigTransferTokensModal = (props: {
                       )}
                       {selectedToken && fromVault ? (
                         <div className="token-max simplelink" onClick={() => {
-                          setAmount(cutNumber(fromVault.balance as number, selectedToken.decimals));
+                          setAmount(
+                            getAmountWithSymbol(
+                              fromVault.balance as number,
+                              selectedToken.address,
+                              true,
+                              splTokenList,selectedToken.decimals
+                            )
+                          );
                           }}>
                           MAX
                         </div>
@@ -642,20 +649,21 @@ export const MultisigTransferTokensModal = (props: {
                     <span>{t('transactions.send-amount.label-right')}:</span>
                     <span>
                       {fromVault && (
-                        getTokenAmountAndSymbolByTokenAddress(
+                        getAmountWithSymbol(
                           fromVault.balance || 0,
-                          fromVault ? fromVault.publicAddress as string : '',
-                          true
+                          fromVault.publicAddress as string,
+                          true,
+                          splTokenList,
+                          fromVault.decimals
                         )
                       )}
                     </span>
                   </div>
-                  
                   <div className="right inner-label">
                     <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                      ~${amount
-                        ? formatAmount(getTokenPrice(), 2)
-                        : "0.00"}
+                      ~{amount
+                        ? toUsCurrency(getTokenPrice())
+                        : "$0.00"}
                     </span>
                   </div>
                 </div>
@@ -731,11 +739,11 @@ export const MultisigTransferTokensModal = (props: {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         minRequiredBalance,
                         NATIVE_SOL_MINT.toBase58()
                       )})
@@ -792,7 +800,7 @@ export const MultisigTransferTokensModal = (props: {
             placement="bottom"
             closable={true}
             onClose={onCloseTokenSelector}
-            visible={isTokenSelectorVisible}
+            open={isTokenSelectorVisible}
             getContainer={false}
             style={{ position: 'absolute' }}>
             {renderTokenSelectorInner}

@@ -588,7 +588,7 @@ export const UnwrapSolModal = (props: {
       className="mean-modal unpadded-content simple-modal"
       title={<div className="modal-title">Unwrap SOL</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={400}>

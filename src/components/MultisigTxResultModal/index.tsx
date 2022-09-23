@@ -57,7 +57,7 @@ export const MultisigTxResultModal = (props: {
         className="mean-modal simple-modal"
         title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
         maskClosable={false}
-        visible={isVisible}
+        open={isVisible}
         closable={true}
         onOk={() => handleOk(highlightedMultisigTx)}
         onCancel={handleClose}

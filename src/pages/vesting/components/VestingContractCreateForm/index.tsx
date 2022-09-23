@@ -4,7 +4,7 @@ import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/c
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
-import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
+import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isProd, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
 import { PaymentRateTypeOption } from "../../../../models/PaymentRateTypeOption";
 import { PaymentRateType } from '../../../../models/enums';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
@@ -34,6 +34,7 @@ import { Identicon } from '../../../../components/Identicon';
 import { InputMean } from '../../../../components/InputMean';
 import { BN } from 'bn.js';
 import BigNumber from 'bignumber.js';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const timeFormat="hh:mm A"
 
@@ -71,16 +72,15 @@ export const VestingContractCreateForm = (props: {
     const connection = useConnection();
     const { connected, publicKey } = useWallet();
     const {
+        isWhitelisted,
         loadingPrices,
         lockPeriodAmount,
-        paymentStartDate,
         transactionStatus,
         lockPeriodFrequency,
         pendingMultisigTxCount,
         setLockPeriodFrequency,
         getTokenPriceBySymbol,
         setLockPeriodAmount,
-        setPaymentStartDate,
         setEffectiveRate,
         refreshPrices,
     } = useContext(AppStateContext);
@@ -101,6 +101,7 @@ export const VestingContractCreateForm = (props: {
     const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
     const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption>(VESTING_ACCOUNT_TYPE_OPTIONS[0]);
     const [contractTime, setContractTime] = useState<string | undefined>(undefined);
+    const [paymentStartDate, setPaymentStartDate] = useState<string | undefined>(undefined);
     const [proposalTitle, setProposalTitle] = useState("");
 
     const getFeeAmount = useCallback(() => {
@@ -205,16 +206,37 @@ export const VestingContractCreateForm = (props: {
         setIsFeePaidByTreasurer(e.target.checked);
     }
 
+    const get30MinsAhead = useCallback(() => {
+        if (!isProd() && isWhitelisted) {
+            return moment().add(30, 'm');
+        } else {
+            return moment();
+        }
+    }, [isWhitelisted]);
+
     const getOneDayAhead = useCallback(() => {
-        const time =  moment().format(timeFormat);
-        setContractTime(time);
-        const date = addDays(new Date(), 1).toLocaleDateString("en-US");
-        setPaymentStartDate(date);
-    }, [setPaymentStartDate]);
+        if (!isProd() && isWhitelisted) {
+            const time =  get30MinsAhead().format(timeFormat);
+            setContractTime(time);
+        } else {
+            const time =  moment().format(timeFormat);
+            setContractTime(time);
+            const date = addDays(new Date(), 1).toLocaleDateString("en-US");
+            setPaymentStartDate(date);
+        }
+    }, [get30MinsAhead, isWhitelisted, setPaymentStartDate]);
 
     /////////////////////
     // Data management //
     /////////////////////
+
+    // Set an initial date for creating a contract
+    useEffect(() => {
+        if (!paymentStartDate) {
+            const today = new Date().toLocaleDateString("en-US");
+            setPaymentStartDate(today);
+        }
+    }, [paymentStartDate, setPaymentStartDate]);
 
     // Set an initial time for creating a contract
     useEffect(() => {
@@ -298,6 +320,16 @@ export const VestingContractCreateForm = (props: {
             window.removeEventListener('resize', resizeListener);
         }
     }, []);
+
+    // Do unmounting stuff here
+    useEffect(() => {
+        return () => {
+            setContractTime(undefined);
+            setPaymentStartDate('');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
 
     ////////////////////////////////////
     // Events, actions and Validation //
@@ -596,33 +628,27 @@ export const VestingContractCreateForm = (props: {
     // Rendering //
     ///////////////
 
-    const lockPeriodOptionsMenu = (
-        <Menu>
-            {getLockPeriodOptionsFromEnum(PaymentRateType).map((item) => {
-                return (
-                    <Menu.Item
-                        key={item.key}
-                        onClick={() => handleLockPeriodOptionChange(item.value)}>
-                        {item.text}
-                    </Menu.Item>
-                );
-            })}
-        </Menu>
-    );
+    const lockPeriodOptionsMenu = () => {
+        const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+            return {
+                key: `option-${index}`,
+                label: (<span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>)
+            };
+        });
 
-    const vestingCategoriesMenu = (
-        <Menu>
-            {VESTING_CATEGORIES.map(item => {
-                return (
-                    <Menu.Item
-                        key={`${slugify(item.label)}-${item.value}`}
-                        onClick={() => setVestingCategory(item)}>
-                        {item.label}
-                    </Menu.Item>
-                );
-            })}
-        </Menu>
-    );
+        return <Menu items={items} />;
+    }
+
+    const vestingCategoriesMenu = () => {
+        const items: ItemType[] = VESTING_CATEGORIES.map((item, index) => {
+            return {
+                key: `${slugify(item.label)}-${item.value}`,
+                label: (<span onClick={() => setVestingCategory(item)}>{item.label}</span>)
+            };
+        });
+
+        return <Menu items={items} />;
+    }
 
     const renderTokenList = (
         <>
@@ -973,7 +999,7 @@ export const VestingContractCreateForm = (props: {
                         />
                         <div className="well">
                             <Dropdown
-                                overlay={vestingCategoriesMenu}
+                                overlay={vestingCategoriesMenu()}
                                 trigger={["click"]}>
                                 <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                                     <div className="left">
@@ -1073,7 +1099,7 @@ export const VestingContractCreateForm = (props: {
                             <div className="right">
                                 <div className="well time-picker">
                                     <TimePicker
-                                        defaultValue={moment()}
+                                        defaultValue={get30MinsAhead()}
                                         bordered={false}
                                         allowClear={false}
                                         size="middle"
@@ -1183,7 +1209,7 @@ export const VestingContractCreateForm = (props: {
                     placement="bottom"
                     closable={true}
                     onClose={onCloseTokenSelector}
-                    visible={isTokenSelectorVisible}
+                    open={isTokenSelectorVisible}
                     getContainer={false}
                     style={{ position: 'absolute' }}>
                     {renderTokenSelectorInner}
@@ -1194,7 +1220,7 @@ export const VestingContractCreateForm = (props: {
             {!inModal && isTokenSelectorModalVisible && (
                 <Modal
                     className="mean-modal unpadded-content"
-                    visible={isTokenSelectorModalVisible}
+                    open={isTokenSelectorModalVisible}
                     title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
                     onCancel={onCloseTokenSelector}
                     width={450}

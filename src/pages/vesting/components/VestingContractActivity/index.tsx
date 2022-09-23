@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Treasury, VestingTreasuryActivity, VestingTreasuryActivityAction } from '@mean-dao/msp';
 import { Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { IconExternalLink } from '../../../../Icons';
-import { friendlyDisplayDecimalPlaces, getShortDate, stringNumberFormat } from '../../../../middleware/ui';
-import { formatThousands, makeDecimal, shortenAddress, toUiAmount } from '../../../../middleware/utils';
+import { getShortDate } from '../../../../middleware/ui';
+import { displayAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../middleware/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { BN } from 'bn.js';
+import { AppStateContext } from '../../../../contexts/appstate';
 
 export const VestingContractActivity = (props: {
     contractActivity: VestingTreasuryActivity[];
@@ -26,6 +27,9 @@ export const VestingContractActivity = (props: {
         selectedToken,
         vestingContract,
     } = props;
+    const {
+        splTokenList,
+    } = useContext(AppStateContext);
     const { t } = useTranslation('common');
 
     const getActivityDescription = (item: VestingTreasuryActivity) => {
@@ -116,19 +120,26 @@ export const VestingContractActivity = (props: {
             if (!item.amount) {
                 amount = '0';
             } else {
-                const convertedAmount = toUiAmount(new BN(item.amount), decimals);
-                amount = stringNumberFormat(
-                    convertedAmount,
-                    friendlyDisplayDecimalPlaces(convertedAmount) || decimals
+                amount = displayAmountWithSymbol(
+                    item.amount,
+                    selectedToken.address,
+                    selectedToken.decimals,
+                    splTokenList,
+                    true,
+                    false
                 );
             }
         } else {
             const value = item.amount ? makeDecimal(new BN(item.amount), decimals) : 0;
             amount = item.amount
-                ? formatThousands(
-                    value,
-                    friendlyDisplayDecimalPlaces(value) || decimals
-                )
+                ? displayAmountWithSymbol(
+                        item.amount,
+                        selectedToken.address,
+                        selectedToken.decimals,
+                        splTokenList,
+                        true,
+                        false
+                    )
                 : `${value}`;
         }
 

@@ -66,7 +66,7 @@ export const StreamPauseModal = (props: {
       const isTreasurer = amITreasurer();
       const isBeneficiary = amIBeneficiary();
       if (isBeneficiary) {
-        const wa = toUiAmount(streamDetail.withdrawableAmount, selectedToken?.decimals || 6);
+        const wa = toUiAmount(streamDetail.withdrawableAmount, selectedToken?.decimals || 9);
         fee = percentageBn(fees.mspPercentFee, wa, true) as number || 0;
       } else if (isTreasurer) {
         fee = fees.mspFlatFee;
@@ -82,7 +82,7 @@ export const StreamPauseModal = (props: {
 
   const getWithdrawableAmount = useCallback(() => {
     if (streamDetail) {
-      return toUiAmount(streamDetail.withdrawableAmount, selectedToken?.decimals || 6);
+      return toUiAmount(streamDetail.withdrawableAmount, selectedToken?.decimals || 9);
     }
     return '0';
   }, [
@@ -92,7 +92,7 @@ export const StreamPauseModal = (props: {
 
   const getUnvested = useCallback(() => {
     if (streamDetail) {
-      return toUiAmount(streamDetail.fundsLeftInStream, selectedToken?.decimals || 6);
+      return toUiAmount(streamDetail.fundsLeftInStream, selectedToken?.decimals || 9);
     }
     return '0';
   }, [
@@ -125,7 +125,7 @@ export const StreamPauseModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('streams.pause-stream-modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={400}>

@@ -1,11 +1,11 @@
-import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { Button, Col, Modal, Row, Spin } from "antd";
-import { useCallback, useContext } from "react";
+import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { TransactionStatus } from "../../models/enums";
 import { isError } from "../../middleware/transactions";
 import { getTransactionOperationDescription } from "../../middleware/ui";
+import { TransactionStatus } from "../../models/enums";
 import "./style.scss";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -42,7 +42,7 @@ export const RejectCancelModal = (props: {
       title={<div className="modal-title">Cancel proposal</div>}
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={380}>
@@ -86,11 +86,11 @@ export const RejectCancelModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {/* {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

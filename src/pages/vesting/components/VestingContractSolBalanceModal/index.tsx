@@ -21,7 +21,7 @@ export const VestingContractSolBalanceModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('vesting.sol-balance.modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={360}>

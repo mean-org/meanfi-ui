@@ -9,7 +9,18 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCur
 import { isError } from '../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
-import { displayAmountWithSymbol, formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeInteger, shortenAddress, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../middleware/utils';
+import {
+  displayAmountWithSymbol,
+  formatThousands,
+  getSdkValue,
+  getAmountWithSymbol,
+  isValidNumber,
+  makeInteger,
+  shortenAddress,
+  toTokenAmount,
+  toTokenAmountBn,
+  toUiAmount
+} from '../../middleware/utils';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
@@ -236,7 +247,7 @@ export const TreasuryTransferFundsModal = (props: {
 
   // Validation
   const isValidForm = (): boolean => {
-    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
+    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 9);
     return  publicKey &&
             to &&
             isValidAddress(to) &&
@@ -254,7 +265,7 @@ export const TreasuryTransferFundsModal = (props: {
 
   // Validation if multisig
   const isValidFormMultisig = (): boolean => {
-    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
+    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 9);
     return  publicKey &&
             proposalTitle &&
             to &&
@@ -460,7 +471,7 @@ export const TreasuryTransferFundsModal = (props: {
       title={<div className="modal-title">{param === "multisig" ? "Propose withdrawal" : t('treasuries.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={onAcceptWithdrawTreasuryFunds}
       onCancel={onCloseModal}
       afterClose={() => {
@@ -542,7 +553,7 @@ export const TreasuryTransferFundsModal = (props: {
                             className="token-max simplelink"
                             onClick={() => {
                               setTopupAmount(tokenBalance.toFixed(selectedToken.decimals));
-                              setTokenAmount(makeInteger(tokenBalance, selectedToken?.decimals || 6));
+                              setTokenAmount(makeInteger(tokenBalance, selectedToken?.decimals || 9));
                             }}>
                             MAX
                           </div>
@@ -602,7 +613,7 @@ export const TreasuryTransferFundsModal = (props: {
                   {treasuryDetails && treasuryDetails.autoClose ? (
                     <span>
                       {`${tokenBalance && selectedToken
-                        ? getTokenAmountAndSymbolByTokenAddress(
+                        ? getAmountWithSymbol(
                             tokenBalance,
                             selectedToken?.address,
                             true
@@ -626,7 +637,7 @@ export const TreasuryTransferFundsModal = (props: {
                       ) : tokenBalance && selectedToken ? (
                         <span>
                           {
-                            getTokenAmountAndSymbolByTokenAddress(
+                            getAmountWithSymbol(
                               tokenBalance,
                               selectedToken.address,
                               true
@@ -652,7 +663,7 @@ export const TreasuryTransferFundsModal = (props: {
                   )}
                 </div>
               </div>
-              {/* {(parseFloat(topupAmount) > makeDecimal(unallocatedBalance, selectedToken?.decimals || 6)) && (
+              {/* {(parseFloat(topupAmount) > makeDecimal(unallocatedBalance, selectedToken?.decimals || 9)) && (
                 <span className="form-field-error">
                   {t('transactions.validation.invalid-amount')}
                 </span>
@@ -715,11 +726,11 @@ export const TreasuryTransferFundsModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       minRequiredBalance,
                       NATIVE_SOL_MINT.toBase58()
                     )})

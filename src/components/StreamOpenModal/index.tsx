@@ -27,7 +27,7 @@ export const StreamOpenModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{t('open-stream.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptStreamId}
       onCancel={props.handleClose}
       width={480}>

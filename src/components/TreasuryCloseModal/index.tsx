@@ -1,13 +1,13 @@
 import React, { useCallback, useContext } from 'react';
 import { useEffect, useState } from 'react';
-import { Modal, Button, Spin, Select } from 'antd';
-import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
+import { Modal, Button, Spin } from 'antd';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { getTransactionOperationDescription } from '../../middleware/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../middleware/transactions';
 import { TransactionStatus } from '../../models/enums';
-import { formatThousands, getSdkValue, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../middleware/utils';
+import { formatThousands, getSdkValue, getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { Treasury, TreasuryType } from '@mean-dao/msp';
 import { AppStateContext } from '../../contexts/appstate';
@@ -194,7 +194,7 @@ export const TreasuryCloseModal = (props: {
       title={<div className="modal-title">{param === "multisig" ? "Propose close account" : t('treasuries.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onCancel={props.handleClose}
       width={380}>
 
@@ -291,11 +291,11 @@ export const TreasuryCloseModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

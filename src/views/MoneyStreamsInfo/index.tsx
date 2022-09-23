@@ -10,7 +10,7 @@ import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowForward, IconEllipsisVertical, IconLoading } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
+import { OperationType, TransactionStatus } from "../../models/enums";
 import "./style.scss";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import Wave from 'react-wavify'
@@ -26,7 +26,7 @@ import {
 } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigTransactionFees, MULTISIG_ACTIONS } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, stringNumberFormat, toUsCurrency } from "../../middleware/ui";
+import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../middleware/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import {
   cutNumber,
@@ -34,7 +34,6 @@ import {
   formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
-  getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   shortenAddress,
   toTokenAmountBn,
@@ -55,20 +54,19 @@ import { StreamsSummary } from "../../models/streams";
 import { Identicon } from "../../components/Identicon";
 import { openNotification } from "../../components/Notifications";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES } from "../../constants";
 import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
 import { TreasuryTopupParams } from "../../models/common-types";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { NATIVE_SOL } from "../../constants/tokens";
 import { fetchAccountTokens, readAccountInfo } from "../../middleware/accounts";
-import { AddFundsParams } from "../../models/vesting";
+import { AddFundsParams, getCategoryLabelByValue } from "../../models/vesting";
 import BigNumber from "bignumber.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { appConfig } from '../..';
 import { ZERO_FEES } from "../../models/multisig";
-
-const { TabPane } = Tabs;
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 export const MoneyStreamsInfoView = (props: {
   accountAddress: string;
@@ -448,8 +446,6 @@ export const MoneyStreamsInfoView = (props: {
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
-    // consoleOut('=========== Block start ===========', '', 'orange');
-
     for (const stream of updatedStreamsv1) {
 
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
@@ -487,7 +483,7 @@ export const MoneyStreamsInfoView = (props: {
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 6;
+        const decimals = token.decimals || 9;
         const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
@@ -499,10 +495,6 @@ export const MoneyStreamsInfoView = (props: {
 
     resume['totalAmount'] += updatedStreamsv2.length;
 
-    // consoleOut('totalNet in incoming streams:', resume['totalNet'], 'blue');
-    // consoleOut('=========== Block ends ===========', '', 'orange');
-
-    // Update state
     setIncomingStreamsSummary(resume);
 
     return resume;
@@ -535,8 +527,6 @@ export const MoneyStreamsInfoView = (props: {
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-
-    // consoleOut('=========== Block start ===========', '', 'orange');
 
     for (const stream of updatedStreamsv1) {
 
@@ -575,7 +565,7 @@ export const MoneyStreamsInfoView = (props: {
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 6;
+        const decimals = token.decimals || 9;
         const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
@@ -587,10 +577,6 @@ export const MoneyStreamsInfoView = (props: {
 
     resume['totalAmount'] += updatedStreamsv2.length;
 
-    // consoleOut('totalNet in outgoing streams:', resume['totalNet'], 'blue');
-    // consoleOut('=========== Block ends ===========', '', 'orange');
-
-    // Update state
     setOutgoingStreamsSummary(resume);
     return resume;
   }, [
@@ -759,9 +745,9 @@ export const MoneyStreamsInfoView = (props: {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
             customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
@@ -958,9 +944,9 @@ export const MoneyStreamsInfoView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
@@ -1380,9 +1366,9 @@ export const MoneyStreamsInfoView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Create streaming account transaction failed', { transcript: transactionLog });
@@ -1600,29 +1586,29 @@ export const MoneyStreamsInfoView = (props: {
   }, [accountAddress, publicKey]);
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
-    let value = '';
+    let associatedToken = '';
 
-    if (item) {
-      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
-
-      const rateAmount = getRateAmountBn(item, decimals);
-      value += stringNumberFormat(
-        toUiAmount(rateAmount, decimals),
-        friendlyDisplayDecimalPlaces(rateAmount.toString()) || decimals
-      )
-
-      value += ' ';
-      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as PublicKey).toString()}]`;
+    if (item.version < 2) {
+      associatedToken = (item as StreamInfo).associatedToken as string;
+    } else {
+      associatedToken = (item as Stream).associatedToken.toBase58();
     }
-    return value;
-  }, [getRateAmountBn, getTokenByMintAddress]);
+
+    const token = getTokenByMintAddress(associatedToken);
+    const decimals = token?.decimals || 9;
+
+    const rateAmount = getRateAmountBn(item, decimals);
+    const rate = displayAmountWithSymbol(
+      rateAmount,
+      associatedToken,
+      decimals,
+      splTokenList,
+      true,
+      true
+    );
+
+    return rate;
+  }, [getRateAmountBn, getTokenByMintAddress, splTokenList]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
@@ -1635,27 +1621,28 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     if (item && item.rateIntervalInSeconds === 0 && item.allocationAssigned > 0) {
-      let token = item.associatedToken ? getTokenByMintAddress((item.associatedToken as PublicKey).toString()) : undefined;
-      const decimals = token?.decimals || 6;
-
-      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL'
-        }) as TokenInfo;
-      }
+      const token = getTokenByMintAddress(associatedToken);
+      const decimals = token?.decimals || 9;
 
       if (item.version < 2) {
         const allocationAssigned = new BN(item.allocationAssigned).toNumber();
-        value += formatThousands(
+        value += getAmountWithSymbol(
           allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, decimals),
-          2
+          associatedToken,
+          true,
+          splTokenList,
+          decimals,
+          true
         );
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
-        value += stringNumberFormat(
-          toUiAmount(allocationAssigned, decimals),
-          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || decimals
+        value += displayAmountWithSymbol(
+          allocationAssigned,
+          associatedToken,
+          decimals,
+          splTokenList,
+          true,
+          false
         )
       }
       value += ' ';
@@ -1663,7 +1650,7 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     return value;
-  }, [getTokenByMintAddress]);
+  }, [getTokenByMintAddress, splTokenList]);
 
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';
@@ -1709,7 +1696,7 @@ export const MoneyStreamsInfoView = (props: {
         }
       } else {
         switch (v2.status) {
-          case STREAM_STATUS.Schedule:
+          case STREAM_STATUS.Scheduled:
             return t('streams.status.status-scheduled');
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
@@ -1775,7 +1762,7 @@ export const MoneyStreamsInfoView = (props: {
         }
       } else {
         switch (v2.status) {
-          case STREAM_STATUS.Schedule:
+          case STREAM_STATUS.Scheduled:
             return `starts on ${getShortDate(v2.startUtc)}`;
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
@@ -1962,13 +1949,10 @@ export const MoneyStreamsInfoView = (props: {
 
     consoleOut('outgoing streams:', sortedOutgoingStreamsList, 'crimson');
     setOutgoingStreamList(sortedOutgoingStreamsList);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     streamList,
-    getTokenByMintAddress,
-    getTokenPriceBySymbol,
-    getTokenPriceByAddress,
-    getQueryAccountType,
     isInboundStream,
   ]);
 
@@ -2747,34 +2731,10 @@ export const MoneyStreamsInfoView = (props: {
                   ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
                   : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
 
-                const category = isNewTreasury
-                  && v2.category === 1 ? "Vesting" : "";
-
-                const subCategory = isNewTreasury
-                  && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
-            
-                let badges;
-
-                type && (
-                  category ? (
-                    subCategory ? (
-                      badges = [category, subCategory, type]
-                    ) : (
-                      badges = [category, type]
-                    )
-                  ) : (
-                    badges = [type]
-                  )
-                );
+                const badges = [type];
 
                 const title = isNewTreasury ? v2.name : (v1.label ? v1.label : shortenAddress(v1.id as string, 8));
                 const subtitle = shortenAddress(streamingAccount.id as string, 8);
-                // const subtitle = <CopyExtLinkGroup
-                //   content={streamingAccount.id as string}
-                //   number={8}
-                //   externalLink={true}
-                // />;
-
                 const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
                 const resume = amount > 1 ? "streams" : "stream";
 
@@ -2816,65 +2776,68 @@ export const MoneyStreamsInfoView = (props: {
   // Tabs
   const tabs = [
     {
-      id: "summary",
-      name: "Summary",
-      render: renderSummary
+      key: "summary",
+      label: "Summary",
+      children: renderSummary
     },
     {
-      id: "streaming-accounts",
-      name: `Accounts ${(!loadingTreasuries && !loadingStreams) 
+      key: "streaming-accounts",
+      label: `Accounts ${(!loadingTreasuries && !loadingStreams) 
         ? `(${streamingAccountsAmount && streamingAccountsAmount >= 0 && streamingAccountsAmount})` 
         : ""}`,
-      render: renderListOfStreamingAccounts
+      children: renderListOfStreamingAccounts
     },
     {
-      id: "incoming",
-      name: `Incoming ${(!loadingTreasuries && !loadingStreams) 
+      key: "incoming",
+      label: `Incoming ${(!loadingTreasuries && !loadingStreams) 
         ? `(${incomingAmount && incomingAmount >= 0 && incomingAmount})` 
         : ""}`,
-      render: renderListOfIncomingStreams
+      children: renderListOfIncomingStreams
     },
     {
-      id: "outgoing",
-      name: `Outgoing ${!loadingStreams
+      key: "outgoing",
+      label: `Outgoing ${!loadingStreams
         ? `(${outgoingAmount && outgoingAmount >= 0 && outgoingAmount})` 
         : ""}`,
-      render: renderListOfOutgoingStreams
+      children: renderListOfOutgoingStreams
     },
   ];
 
   const renderTabset = () => {
     return (
-      <Tabs activeKey={selectedTab} onChange={onTabChange} className="neutral">
-        {tabs.map(item => {
-          return (
-            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
-              {item.render}
-            </TabPane>
-          );
-        })}
-      </Tabs>
+      <Tabs
+        items={tabs}
+        activeKey={selectedTab}
+        onChange={onTabChange}
+        className="neutral"
+      />
     );
   }
 
-  // Dropdown (three dots button) inside outgoing stream list
-  const menu = (
-    <Menu>
-      {param === "multisig" ? (
-        <Menu.Item key="00" onClick={() => {
-          param === "multisig"
-            ? showCreateStreamModal()
-            : showCreateMoneyStreamModal()
-        }}>
-          <span className="menu-item-text">Create stream</span>
-        </Menu.Item>
-      ) : (
-        <Menu.Item key="00" onClick={showOpenStreamModal}>
-          <span className="menu-item-text">Find stream</span>
-        </Menu.Item>
-      )}
-    </Menu>
-  );
+  const renderDropdownMenu = useCallback(() => {
+    const items: ItemType[] = [];
+    if (param === "multisig") {
+      items.push({
+        key: '01-create-stream',
+        label: (
+          <div onClick={showCreateStreamModal}>
+            <span className="menu-item-text">Create stream</span>
+          </div>
+        )
+      });
+    } else {
+      items.push({
+        key: '02-find-stream',
+        label: (
+          <div onClick={showOpenStreamModal}>
+            <span className="menu-item-text">Find stream</span>
+          </div>
+        )
+      });
+    }
+
+    return <Menu items={items} />;
+  }, [param, showCreateStreamModal, showOpenStreamModal]);
 
   return (
     <>
@@ -2962,7 +2925,7 @@ export const MoneyStreamsInfoView = (props: {
           {isXsDevice && (
             <Col xs={4} sm={6} md={4} lg={6}>
               <Dropdown className="options-dropdown"
-                overlay={menu}
+                overlay={renderDropdownMenu()}
                 placement="bottomRight"
                 trigger={["click"]}>
                 <span className="icon-button-container ml-1">

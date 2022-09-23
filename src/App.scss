@@ -342,6 +342,9 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-secondary-alpha-85);
 }
 // Foreground color classes
+.fg-inherit {
+  color: inherit !important;
+}
 .fg-secondary {
   color: var(--color-secondary);
 }
@@ -418,6 +421,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 // Background color classes
+.bg-inherit {
+  background-color: inherit !important;
+}
 .solid-bg {
   background-color: var(--bg-color);
 }
@@ -2247,7 +2253,9 @@ em {
 .card-fill {
   height: 100%;
 }
-
+.flex-wrap {
+  flex-wrap: wrap;
+}
 .two-column-layout {
   display: flex;
   margin-bottom: 24px;
@@ -5681,6 +5689,10 @@ main section {
   }
   &.underline-on-hover:hover {
     text-decoration: underline !important;
+  }
+  &.disabled {
+    color: var(--color-smoke) !important;
+    pointer-events: none;
   }
 }
 .primary-link {

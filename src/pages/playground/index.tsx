@@ -4,7 +4,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { AppStateContext } from "../../contexts/appstate";
 import "./style.scss";
 import {
-  ArrowRightOutlined,
+  ArrowRightOutlined, WarningFilled,
 } from "@ant-design/icons";
 import {
   Button,
@@ -20,6 +20,7 @@ import {
   intToString,
   isValidAddress,
   friendlyDisplayDecimalPlaces,
+  toUsCurrency,
 } from "../../middleware/ui";
 import {
   formatAmount,
@@ -29,13 +30,13 @@ import {
   shortenAddress,
   toUiAmount,
 } from "../../middleware/utils";
-import { IconCoin, IconCopy, IconExternalLink, IconTrash, IconWallet } from "../../Icons";
+import { IconCodeBlock, IconCoin, IconCopy, IconExternalLink, IconLoading, IconTrash, IconWallet } from "../../Icons";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
 import { IconType } from "antd/lib/notification";
-import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@solana/web3.js";
+import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@solana/web3.js";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { SYSTEM_PROGRAM_ID } from "../../middleware/ids";
+import { NATIVE_SOL_MINT, SYSTEM_PROGRAM_ID } from "../../middleware/ids";
 import { AddressDisplay } from "../../components/AddressDisplay";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
@@ -46,12 +47,24 @@ import { TextInput } from "../../components/TextInput";
 import { useNativeAccount } from "../../contexts/accounts";
 import { NATIVE_SOL } from "../../constants/tokens";
 import { getStreamForDebug } from "../../middleware/stream-debug-middleware";
-import { MSP } from "@mean-dao/msp";
+import { MSP, Stream } from "@mean-dao/msp";
 import { appConfig } from "../..";
 import ReactJson from "react-json-view";
 import { fetchAccountTokens } from "../../middleware/accounts";
+import { MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { MultisigOwnersView } from "../../components/MultisigOwnersView";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { ACCOUNT_LAYOUT } from "../../middleware/layouts";
+import BN from "bn.js";
+import { MultisigAsset } from "../../models/multisig";
+import BigNumber from "bignumber.js";
+import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
+import { getReadableStream } from "../../middleware/streams";
+import { readAccountInfo as getAccountInfo } from "../../middleware/accounts";
+import { VestingContractStreamDetailModal } from "../vesting/components/VestingContractStreamDetailModal";
 
-type TabOption = "first-tab" | "test-stream" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
+type TabOption = "first-tab" | "test-stream" | "account-info" | "multisig-tab" | "demo-notifications" | "misc-tab" | undefined;
+type StreamViewerOption = "treasurer" | "beneficiary";
 
 const CRYPTO_VALUES: number[] = [
   0.0004, 0.000003, 0.00000012345678, 1200.5, 1500.000009, 100500.000009226,
@@ -75,11 +88,13 @@ export const PlaygroundView = () => {
   const {
     tokenList,
     userTokens,
+    coinPrices,
     splTokenList,
-    recipientAddress,
+    isWhitelisted,
     setHighLightableMultisigId,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
-    setRecipientAddress,
+    getTokenByMintAddress,
     setEffectiveRate,
   } = useContext(AppStateContext);
   const { account } = useNativeAccount();
@@ -97,10 +112,21 @@ export const PlaygroundView = () => {
   const [canFetchTokenAccounts, setCanFetchTokenAccounts] = useState<boolean>(splTokenList ? true : false);
   const [streamId, setStreamId] = useState<string>("");
   const [streamRawData, setStreamRawData] = useState();
-  const [streamParsedData, setStreamParsedData] = useState();
+  const [streamParsedData, setStreamParsedData] = useState<Stream | undefined>(undefined);
   const [displayStreamData, setDisplayStreamData] = useState<boolean>(false);
+  const [targetAddress, setTargetAddress] = useState<string>('');
+  // Multisig
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
+  const [assetsAmout, setAssetsAmount] = useState<string>();
+  const [loadingAssets, setLoadingAssets] = useState(true);
+  const [multisigAssets, setMultisigAssets] = useState<MultisigAsset[]>([]);
+  const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
+  const [totalSafeBalance, setTotalSafeBalance] = useState<number | undefined>(undefined);
+  const [streamViewerAddress, setStreamViewerAddress] = useState('');
 
-  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+  const streamV2ProgramAddressFromConfig = useMemo(() => appConfig.getConfig().streamV2ProgramAddress, []);
 
   const msp = useMemo(() => {
     return new MSP(
@@ -111,6 +137,24 @@ export const PlaygroundView = () => {
   }, [
     connectionConfig.endpoint,
     streamV2ProgramAddressFromConfig
+  ]);
+
+  const multisigClient = useMemo(() => {
+
+    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
+
+    return new MeanMultisig(
+      connectionConfig.endpoint,
+      publicKey,
+      "confirmed",
+      multisigAddressPK
+    );
+
+  }, [
+    publicKey,
+    connection,
+    multisigAddressPK,
+    connectionConfig.endpoint,
   ]);
 
 
@@ -124,13 +168,18 @@ export const PlaygroundView = () => {
     const streamPK = new PublicKey(id);
 
     getStreamForDebug(streamPK, msp).then(value => {
-      consoleOut("raw stream data payload:", value);
+      consoleOut('raw stream data payload:', value, 'blue');
       setStreamRawData(value);
     });
 
     msp.getStream(streamPK).then(value => {
-      consoleOut("parsed stream data payload:", value);
-      setStreamParsedData(value);
+      if (value) {
+        consoleOut('parsed stream data payload:', value, 'blue');
+        setStreamParsedData(value);
+        if (value.version >= 2) {
+          consoleOut('Humanized stream data:', getReadableStream(value), 'blue');
+        }
+      }
     });
 
     setDisplayStreamData(true);
@@ -156,11 +205,11 @@ export const PlaygroundView = () => {
   }
 
   const readAccountInfo = useCallback(async (address?: string) => {
-    if (!recipientAddress && !address) {
+    if (!targetAddress && !address) {
       return;
     }
 
-    const scanAddress = address || recipientAddress;
+    const scanAddress = address || targetAddress;
     if (!isValidAddress(scanAddress)) {
       return;
     }
@@ -191,7 +240,37 @@ export const PlaygroundView = () => {
     } else {
       setAccountNotFound('Account info not available for this address');
     }
-  }, [connection, recipientAddress]);
+  }, [connection, targetAddress]);
+
+  const getMultisigInfo =  useCallback(async (filter: string) => {
+
+    if (!publicKey || !multisigClient || !filter) {
+      return undefined;
+    }
+
+    if (!isValidAddress(filter)) {
+      return;
+    }
+
+    setLoadingMultisigAccounts(true);
+
+    try {
+      const allInfo = await multisigClient.getMultisigs(publicKey);
+      consoleOut('All multisigs:', allInfo, 'green');
+      const selectedMultisig = allInfo.find(m => m.authority.toBase58() === filter);
+      consoleOut('selectedMultisig:', selectedMultisig, 'green');
+      if (selectedMultisig) {
+        setSelectedMultisig(selectedMultisig);
+      } else {
+        setSelectedMultisig(undefined);
+      }
+    } catch (error) {
+      console.error('getMultisigInfo ->', error);
+    } finally {
+      setLoadingMultisigAccounts(false);
+    }
+
+  }, [multisigClient, publicKey]);
 
   const triggerWindowResize = () => {
     window.dispatchEvent(new Event('resize'));
@@ -201,7 +280,7 @@ export const PlaygroundView = () => {
     const inputValue = e.target.value as string;
     // Set the input value
     const trimmedValue = inputValue.trim();
-    setRecipientAddress(trimmedValue);
+    setTargetAddress(trimmedValue);
   }
 
   const handleStreamIdChange = (e: any) => {
@@ -226,7 +305,8 @@ export const PlaygroundView = () => {
   const onClearResults = () => {
     setAccountInfo(null);
     setParsedAccountInfo(null);
-    setRecipientAddress('');
+    setTargetAddress('');
+    setSelectedMultisig(undefined);
   }
 
   const onClearStreamId = () => {
@@ -236,14 +316,14 @@ export const PlaygroundView = () => {
 
   const onScanMyAddress = () => {
     if (publicKey) {
-      setRecipientAddress(publicKey.toBase58());
+      setTargetAddress(publicKey.toBase58());
       readAccountInfo(publicKey.toBase58());
     }
   }
 
   const onScanAssetAddress = (asset: TokenInfo) => {
     if (asset) {
-      setRecipientAddress(asset.address);
+      setTargetAddress(asset.address);
       readAccountInfo(asset.address);
     }
   }
@@ -355,7 +435,7 @@ export const PlaygroundView = () => {
   // }, [splTokenList]);
 
   const notificationTwo = () => {
-    consoleOut("Notification is closing...");
+    consoleOut('Notification is closing...');
     openNotification({
       type: "info",
       description: t(
@@ -456,6 +536,117 @@ export const PlaygroundView = () => {
     });
   };
 
+  const getPricePerToken = useCallback((token: TokenInfo): number => {
+    if (!token || !coinPrices) { return 0; }
+
+    return coinPrices && coinPrices[token.symbol]
+      ? coinPrices[token.symbol]
+      : 0;
+
+  }, [coinPrices]);
+
+  const getMultisigAssets = useCallback(async (
+    connection: Connection,
+    multisig: PublicKey
+  ) => {
+
+    const [multisigSigner] = await PublicKey.findProgramAddress(
+      [multisig.toBuffer()],
+      multisigAddressPK
+    );
+
+    const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+      filters: [
+        { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, 
+        { dataSize: ACCOUNT_LAYOUT.span }
+      ],
+    });
+
+    if (!accountInfos || !accountInfos.length) { return []; }
+
+    const results = accountInfos.map((t: any) => {
+      const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
+      tokenAccount.address = t.pubkey;
+      return tokenAccount;
+    });
+
+    return results;
+
+  },[multisigAddressPK]);
+
+  const solToken = useMemo(() => {
+
+    if (!selectedMultisig) { return null; }
+
+    return {
+      address: selectedMultisig.id,
+      amount: multisigSolBalance ? new BN(multisigSolBalance) : new BN(0),
+      closeAuthority: undefined,
+      closeAuthorityOption: 0,
+      decimals: 9,
+      delegate: undefined,
+      delegateOption: 0,
+      delegatedAmount: 0,
+      isNative: true,
+      isNativeOption: 0,
+      mint: NATIVE_SOL_MINT,
+      owner: selectedMultisig.authority,
+      state: 1,
+    } as MultisigAsset;
+
+  }, [
+    selectedMultisig, 
+    multisigSolBalance
+  ]);
+
+  const getTokenOrCustomToken = useCallback(async (address: string) => {
+
+    const token = getTokenByMintAddress(address);
+
+    const unkToken = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: 6,
+      symbol: `[${shortenAddress(address)}]`,
+    };
+
+    if (token) {
+      return token;
+    } else {
+      try {
+        const tokeninfo = await getAccountInfo(connection, address);
+        if ((tokeninfo as any).data["parsed"]) {
+          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+          unkToken.decimals = decimals || 9;
+          return unkToken as TokenInfo;
+        } else {
+          return unkToken as TokenInfo;
+        }
+      } catch (error) {
+        console.error('Could not get token info, assuming decimals = 9');
+        return unkToken as TokenInfo;
+      }
+    }
+  }, [connection, getTokenByMintAddress]);
+
+  // Stream detail modal
+  const [isStreamDetailModalVisible, setIsStreamDetailModalVisibility] = useState(false);
+  const showStreamDetailModal = useCallback((option: StreamViewerOption) => {
+    if (streamParsedData) {
+      if (option === "treasurer") {
+        setStreamViewerAddress(streamParsedData.treasurer.toBase58());
+      } else {
+        setStreamViewerAddress(streamParsedData.beneficiary.toBase58());
+      }
+      setIsStreamDetailModalVisibility(true);
+    }
+  }, [streamParsedData]);
+  const closeStreamDetailModal = useCallback(() => {
+    setIsStreamDetailModalVisibility(false);
+  }, []);
+
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -477,8 +668,11 @@ export const PlaygroundView = () => {
       case "test-stream":
         setCurrentTab("test-stream");
         break;
-      case "second-tab":
-        setCurrentTab("second-tab");
+      case "account-info":
+        setCurrentTab("account-info");
+        break;
+      case "multisig-tab":
+        setCurrentTab("multisig-tab");
         break;
       case "demo-notifications":
         setCurrentTab("demo-notifications");
@@ -625,6 +819,127 @@ export const PlaygroundView = () => {
     filteredTokenList,
     updateTokenListByFilter
   ]);
+
+  // Get multisig SOL balance
+  useEffect(() => {
+
+    if (!connection || !selectedMultisig) { return; }
+
+    connection.getBalance(selectedMultisig.authority)
+    .then(balance => {
+      consoleOut('multisigSolBalance', balance, 'orange');
+      setMultisigSolBalance(balance);
+    })
+
+  }, [
+    connection,
+    selectedMultisig,
+  ]);
+
+  // Get Multisig assets
+  useEffect(() => {
+
+    if (!connection || !multisigClient || !selectedMultisig || !loadingAssets) { return; }
+
+    const timeout = setTimeout(() => {
+
+      getMultisigAssets(connection, selectedMultisig.id)
+        .then(result => {
+          const modifiedResults = new Array<any>();
+          modifiedResults.push(solToken);  
+          result.forEach(item => {
+            modifiedResults.push(item);
+          });
+          setMultisigAssets(modifiedResults);  
+          consoleOut('Multisig assets', modifiedResults, 'blue');
+        })
+        .catch(err => {
+          console.error(err);
+          setMultisigAssets([solToken as MultisigAsset]);
+        })
+        .finally(() => setLoadingAssets(false));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[
+    connection,
+    loadingAssets,
+    multisigClient,
+    selectedMultisig,
+  ]);
+
+  // Show amount of assets
+  useEffect(() => {
+    (selectedMultisig) && (
+      multisigAssets && multisigAssets.length > 0 ? (
+        multisigAssets.length > 1 ? (
+          setAssetsAmount(`(${multisigAssets.length} assets)`)
+        ) : (
+          setAssetsAmount(`(${multisigAssets.length} asset)`)
+        )
+      ) : (
+        setAssetsAmount("(0 assets)")
+      )
+    )
+  }, [
+    multisigAssets, 
+    selectedMultisig
+  ]);
+
+  // Calculates safe total USD balance
+  useEffect(() => {
+    if (!connection || !publicKey || !selectedMultisig || !multisigAssets) {
+      setTotalSafeBalance(0);
+      return;
+    }
+
+    let usdValue = 0;
+    const solPrice = getPricePerToken(NATIVE_SOL);
+    const solBalance = getAmountFromLamports(selectedMultisig.balance);
+    const nativeSolUsdValue = solBalance * solPrice;
+
+    for (const asset of multisigAssets) {
+      const token = getTokenByMintAddress(asset.mint.toBase58());
+      
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        if (!tokenPrice) {
+          continue;
+        }
+        BigNumber.config({
+          CRYPTO: true,
+          DECIMAL_PLACES: 16
+        });
+        const tokenBalance = toUiAmount(asset.amount, token.decimals);
+        const assetValue = new BigNumber(tokenBalance).multipliedBy(tokenPrice);
+        usdValue += assetValue.toNumber();
+      }
+    }
+
+    usdValue += nativeSolUsdValue;
+    setTotalSafeBalance(usdValue);
+
+  }, [connection, getPricePerToken, getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, multisigAssets, publicKey, selectedMultisig]);
+
+  // Set selected token to the stream associated token as soon as the stream is available or changes
+  useEffect(() => {
+    if (!publicKey || !streamParsedData) { return; }
+
+    const associatedToken = streamParsedData.associatedToken.toBase58();
+
+    if (associatedToken && (!selectedToken || selectedToken.address !== associatedToken)) {
+      getTokenOrCustomToken(associatedToken)
+      .then(token => {
+        consoleOut('getTokenOrCustomToken (PlaygroundView) ->', token, 'blue');
+        setSelectedToken(token);
+      });
+    }
+  }, [getTokenOrCustomToken, publicKey, streamParsedData, selectedToken]);
+
 
   ///////////////
   // Rendering //
@@ -781,6 +1096,13 @@ export const PlaygroundView = () => {
           <div className="left">
             <div className="form-label">Inspect stream</div>
           </div>
+          <div className="right">
+            <span className={`simplelink ${streamParsedData ? 'underline-on-hover' : 'disabled'}`}
+              onClick={() => showStreamDetailModal("treasurer")}>View as treasurer</span>
+            <span className="mx-2">|</span>
+            <span className={`simplelink ${streamParsedData ? 'underline-on-hover' : 'disabled'}`}
+              onClick={() => showStreamDetailModal("beneficiary")}>View as beneficiary</span>
+          </div>
         </div>
 
         <div className="two-column-form-layout col70x30">
@@ -790,9 +1112,9 @@ export const PlaygroundView = () => {
                 <div className="left position-relative">
                   <span className="recipient-field-wrapper">
                     <input
-                      id="stream-id-recipient-field"
+                      id="stream-id-for-playground"
                       className="general-text-input"
-                      autoComplete="off"
+                      autoComplete="on"
                       autoCorrect="off"
                       type="text"
                       onChange={handleStreamIdChange}
@@ -946,10 +1268,10 @@ export const PlaygroundView = () => {
                       placeholder={t('transactions.recipient.placeholder')}
                       required={true}
                       spellCheck="false"
-                      value={recipientAddress}/>
+                      value={targetAddress}/>
                     <span id="payment-recipient-static-field"
-                          className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                      {recipientAddress || t('transactions.recipient.placeholder')}
+                          className={`${targetAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                      {targetAddress || t('transactions.recipient.placeholder')}
                     </span>
                   </span>
                 </div>
@@ -958,11 +1280,11 @@ export const PlaygroundView = () => {
                 </div>
               </div>
               {
-                recipientAddress && !isValidAddress(recipientAddress) ? (
+                targetAddress && !isValidAddress(targetAddress) ? (
                   <span className="form-field-error">
                     {t('transactions.validation.address-validation')}
                   </span>
-                ) : recipientAddress && accountNotFound ? (
+                ) : targetAddress && accountNotFound ? (
                   <span className="form-field-error">
                     {accountNotFound}
                   </span>
@@ -996,7 +1318,7 @@ export const PlaygroundView = () => {
         </div>
 
         <div className="mb-3">
-          {recipientAddress && (accountInfo || parsedAccountInfo) && (
+          {targetAddress && (accountInfo || parsedAccountInfo) && (
             <div className="well-group text-monospace">
               {accountInfo && (
                 <>
@@ -1032,12 +1354,12 @@ export const PlaygroundView = () => {
                   {isProgram && infoRow('Owner:', parsedAccountInfo.owner.toBase58())}
                   {isTokenMint && infoRow('Owner:', parsedAccountInfo.owner.toBase58())}
                   {isTokenAccount && infoRow('Owner:', parsedAccountInfo.data.parsed.info.owner)}
-                  {recipientAddress && (isTokenAccount || isTokenMint) && (
+                  {targetAddress && (isTokenAccount || isTokenMint) && (
                     <>
                       <Divider orientation="left" className="mt-1 mb-1">Preview</Divider>
                       <TokenDisplay
                         className="px-2 pb-2"
-                        mintAddress={isTokenMint ? recipientAddress : parsedAccountInfo.data.parsed.info.mint}
+                        mintAddress={isTokenMint ? targetAddress : parsedAccountInfo.data.parsed.info.mint}
                         onClick={undefined}
                         showName={true}
                       />
@@ -1047,6 +1369,174 @@ export const PlaygroundView = () => {
                 </>
               )}
             </div>
+          )}
+        </div>
+      </>
+    );
+  }
+
+  const renderSafeName = useCallback(() => {
+    if (!selectedMultisig) { return '--'; }
+    const selectedLabelName = selectedMultisig.label || shortenAddress(selectedMultisig.id);
+    return (<div>{selectedLabelName}</div>);
+  }, [selectedMultisig]);
+
+  const renderSecurity = useCallback(() => {
+    return (
+      <>
+        <span>Security</span>
+        <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig ? selectedMultisig.owners : []} />
+      </>
+    );
+  }, [selectedMultisig]);
+
+  const renderSafeBalance = useCallback(() => {
+    return (
+      totalSafeBalance === undefined ? (
+        <>
+          <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+        </>
+      ) : totalSafeBalance === 0 ? (
+        <>
+          $0.00
+        </>
+      ) : (
+        <>
+          {toUsCurrency(totalSafeBalance)}
+        </>
+      )
+    );
+  }, [totalSafeBalance]);
+
+  // Deposit Address
+  const renderDepositAddress = useCallback(() => {
+    return (
+      <CopyExtLinkGroup
+        content={selectedMultisig ? selectedMultisig.authority.toBase58() : ''}
+        number={4}
+        externalLink={true}
+      />
+    );
+  }, [selectedMultisig]);
+
+  const infoSafeData = useMemo(() => [
+    {
+      name: "Safe name",
+      value: renderSafeName()
+    },
+    {
+      name: renderSecurity(),
+      value: selectedMultisig ? `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures` : "--"
+    },
+    {
+      name: `Safe balance ${assetsAmout}`,
+      value: renderSafeBalance()
+    },
+    {
+      name: "Deposit address",
+      value: renderDepositAddress()
+    }
+  ], [assetsAmout, renderDepositAddress, renderSafeBalance, renderSafeName, renderSecurity, selectedMultisig]);
+
+  const renderMultisigTab = () => {
+    return (
+      <>
+        <div className="tabset-heading">Get multisig info</div>
+
+        <div className="flex-fixed-right">
+          <div className="left">
+            <div className="form-label">Inspect account</div>
+          </div>
+          <div className="right">
+            &nbsp;
+          </div>
+        </div>
+
+        <div className="two-column-form-layout col70x30 mb-2">
+          <div className="left">
+            <div className="well">
+              <div className="flex-fixed-right">
+                <div className="left position-relative">
+                  <span className="recipient-field-wrapper">
+                    <input id="payment-recipient-field"
+                      className="general-text-input"
+                      autoComplete="on"
+                      autoCorrect="off"
+                      type="text"
+                      onFocus={handleRecipientAddressFocusIn}
+                      onChange={handleRecipientAddressChange}
+                      onBlur={handleRecipientAddressFocusOut}
+                      placeholder={t('transactions.recipient.placeholder')}
+                      required={true}
+                      spellCheck="false"
+                      value={targetAddress}/>
+                    <span id="payment-recipient-static-field"
+                          className={`${targetAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                      {targetAddress || t('transactions.recipient.placeholder')}
+                    </span>
+                  </span>
+                </div>
+                <div className="right">
+                  <span>&nbsp;</span>
+                </div>
+              </div>
+              {
+                targetAddress && !isValidAddress(targetAddress) ? (
+                  <span className="form-field-error">
+                    {t('transactions.validation.address-validation')}
+                  </span>
+                ) : targetAddress && selectedMultisig === undefined ? (
+                  <span className="form-field-error">
+                    {accountNotFound}
+                  </span>
+                ) : null
+              }
+            </div>
+          </div>
+          <div className="right">
+            <div className="flex-fixed-right">
+              <div className="left">
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  onClick={() => getMultisigInfo(targetAddress)}>
+                  Get multisig
+                </Button>
+              </div>
+              <div className="right">
+                <Button
+                  type="default"
+                  shape="round"
+                  size="large"
+                  onClick={onClearResults}>
+                  Clear
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-3">
+          {targetAddress && selectedMultisig && (
+            <>
+              <div className="well-group text-monospace flex-row two-column-form-layout flex-wrap">
+                {infoSafeData.map((info, index: number) => {
+                  const isEven = (index % 2 === 0) ? true : false;
+                  return (
+                    <div key={`${index}`} className={isEven ? 'left' : 'right'}>
+                      <div className="info-label">
+                        {info.name}
+                      </div>
+                      <div className="info-value mb-2 line-height-100">
+                        {info.value}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </>
@@ -1334,8 +1824,10 @@ export const PlaygroundView = () => {
         return renderDemoNumberFormatting;
       case "test-stream":
         return renderTestStream();
-      case "second-tab":
+      case "account-info":
         return renderDemo2Tab();
+      case "multisig-tab":
+        return renderMultisigTab();
       case "demo-notifications":
         return renderDemo3Tab;
       case "misc-tab":
@@ -1359,9 +1851,14 @@ export const PlaygroundView = () => {
           Test Stream
         </div>
         <div
-          className={`tab-button ${currentTab === "second-tab" ? "active" : ""}`}
-          onClick={() => navigateToTab("second-tab")}>
-          Demo 2
+          className={`tab-button ${currentTab === "multisig-tab" ? "active" : ""}`}
+          onClick={() => navigateToTab("multisig-tab")}>
+          Multisig info
+        </div>
+        <div
+          className={`tab-button ${currentTab === "account-info" ? "active" : ""}`}
+          onClick={() => navigateToTab("account-info")}>
+          Account info
         </div>
         <div
           className={`tab-button ${currentTab === "demo-notifications" ? "active" : ""}`}
@@ -1389,7 +1886,7 @@ export const PlaygroundView = () => {
               onScanAssetAddress(t);
             }, 100);
 
-            consoleOut("token selected:", t.symbol, 'blue');
+            consoleOut('token selected:', t.symbol, 'blue');
             setEffectiveRate(getTokenPriceBySymbol(t.symbol));
             onCloseTokenSelector();
           };
@@ -1448,7 +1945,7 @@ export const PlaygroundView = () => {
                 symbol: '',
               };
               setSelectedToken(uknwnToken);
-              consoleOut("token selected:", uknwnToken, 'blue');
+              consoleOut('token selected:', uknwnToken, 'blue');
               setEffectiveRate(0);
               onCloseTokenSelector();
             }}
@@ -1458,6 +1955,34 @@ export const PlaygroundView = () => {
       </div>
     </div>
   );
+
+  if (!publicKey || !isWhitelisted) {
+    return (
+      <>
+        <div className="container main-container">
+          <div className="interaction-area">
+            <div className="title-and-subtitle w-75 h-100">
+              <div className="title">
+                <IconCodeBlock className="mean-svg-icons" />
+                <div>Diagnostics playground</div>
+              </div>
+              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
+                <div className="text-center mb-2">
+                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
+                </div>
+                {!publicKey ? (
+                  <h3>Please connect your wallet to access this page</h3>
+                ) : (
+                  <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        <PreFooter />
+      </>
+    );
+  }
 
   return (
     <>
@@ -1473,11 +1998,23 @@ export const PlaygroundView = () => {
 
       <PreFooter />
 
+      {isStreamDetailModalVisible && streamParsedData && (
+        <VestingContractStreamDetailModal
+          accountAddress={streamViewerAddress}
+          handleClose={closeStreamDetailModal}
+          highlightedStream={streamParsedData}
+          isVisible={isStreamDetailModalVisible}
+          msp={msp}
+          selectedToken={selectedToken}
+          isDebugging={true}
+        />
+      )}
+
       {/* Token selection modal */}
       {isTokenSelectorModalVisible && (
         <Modal
           className="mean-modal unpadded-content"
-          visible={isTokenSelectorModalVisible}
+          open={isTokenSelectorModalVisible}
           title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
           onCancel={onCloseTokenSelector}
           width={450}

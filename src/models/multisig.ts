@@ -1,5 +1,5 @@
 import { Commitment, Connection, Keypair, Message, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { AnchorProvider, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
+import { AnchorProvider, BN, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
 import bs58 from "bs58";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { AppConfig, UiInstruction } from "@mean-dao/mean-multisig-apps";
@@ -99,11 +99,28 @@ export type MintTokensInfo = {
   amount: number;
 }
 
+export type MultisigAsset = {
+  address: PublicKey;
+  amount: BN;
+  closeAuthority: PublicKey | undefined;
+  closeAuthorityOption: number;
+  decimals: number;
+  delegate: PublicKey | undefined;
+  delegateOption: number;
+  delegatedAmount: number;
+  isNative: boolean;
+  isNativeOption: number;
+  mint: PublicKey;
+  owner: PublicKey;
+  state: number;
+}
+
 export type MultisigVault = {
   address: PublicKey;
   amount: any;
   closeAuthority: PublicKey;
   closeAuthorityOption: number;
+  decimals: number;
   delegate: PublicKey;
   delegateOption: number;
   delegatedAmount: any;
@@ -112,7 +129,6 @@ export type MultisigVault = {
   mint: PublicKey;
   owner: PublicKey;
   state: number;
-  decimals: number;
 }
 
 export type MultisigMint = {

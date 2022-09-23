@@ -14,7 +14,7 @@ import ReactGA from 'react-ga';
 // import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
 import { environment } from "../../environments/environment";
-import { GOOGLE_ANALYTICS_PROD_TAG_ID, LANGUAGES, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_SAMPLE_INTERVAL_FAST, PERFORMANCE_THRESHOLD, SOLANA_STATUS_PAGE } from "../../constants";
+import { GOOGLE_ANALYTICS_PROD_TAG_ID, LANGUAGES, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_THRESHOLD, SOLANA_STATUS_PAGE } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { reportConnectedAccount } from "../../middleware/api";
 import { Connection } from "@solana/web3.js";
@@ -25,7 +25,6 @@ import { openNotification } from "../Notifications";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
-import { getDefaultRpc } from "../../services/connections-hq";
 import { isUnauthenticatedRoute } from "../../middleware/utils";
 import { AccountDetails } from "../../models/accounts";
 
@@ -77,7 +76,8 @@ export const AppLayout = React.memo((props: any) => {
   // Callback to fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
 
-    const connection = new Connection(getDefaultRpc().httpProvider);
+    const serumRpc = "https://solana-api.projectserum.com";
+    const connection = new Connection(serumRpc);
 
     if (!connection) { return null; }
 
@@ -86,7 +86,7 @@ export const AppLayout = React.memo((props: any) => {
     }
 
     try {
-      const samples = await connection.getRecentPerformanceSamples(30);
+      const samples = await connection.getRecentPerformanceSamples(60);
 
       if (samples.length < 1) {
         // no samples to work with (node has no history).
@@ -105,7 +105,7 @@ export const AppLayout = React.memo((props: any) => {
       const averageTps = Math.round(tpsValues[0]);
       return averageTps;
     } catch (error) {
-      console.error(error);
+      consoleOut(`getRecentPerformanceSamples failed for rpc:`, serumRpc, 'darkred');
       return null;
     }
   }, []);
@@ -136,12 +136,8 @@ export const AppLayout = React.memo((props: any) => {
             setTpsAvg(value);
           }
         });
-    },
-    tpsAvg && tpsAvg < PERFORMANCE_THRESHOLD
-      ? isProd()
-        ? PERFORMANCE_SAMPLE_INTERVAL_FAST
-        : PERFORMANCE_SAMPLE_INTERVAL
-      : PERFORMANCE_SAMPLE_INTERVAL
+      },
+      PERFORMANCE_SAMPLE_INTERVAL
     );
 
     return () => {
@@ -473,7 +469,7 @@ export const AppLayout = React.memo((props: any) => {
           width={360}
           onClose={hideDrawer}
           className="recent-events"
-          visible={isDrawerVisible}>
+          open={isDrawerVisible}>
           {confirmationHistory && confirmationHistory.length > 0 ? (
             <TransactionConfirmationHistory confirmationHistory={confirmationHistory} />
           ) : (

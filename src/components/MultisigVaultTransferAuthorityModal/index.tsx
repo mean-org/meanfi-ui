@@ -8,10 +8,9 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../middleware/utils';
+import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
-
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { UserTokenAccount } from '../../models/transactions';
 import { InputMean } from '../InputMean';
@@ -137,7 +136,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
-            {getTokenAmountAndSymbolByTokenAddress(
+            {getAmountWithSymbol(
               item.balance || 0,
               token ? token.address as string : '',
               true
@@ -196,7 +195,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
       title={<div className="modal-title">{t('multisig.transfer-authority.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
@@ -316,11 +315,11 @@ export const MultisigVaultTransferAuthorityModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

@@ -26,6 +26,7 @@ export interface TxConfirmationInfo {
   loadingMessage?: string;
   completedTitle: string;
   completedMessage: string;
+  completedMessageTimeout?: number;
   timestamp?: number;
   extras?: any;
   timestampCompleted?: number;
@@ -353,7 +354,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
         key: data.signature,
         type: "success",
         title: data.completedTitle,
-        duration: 4,
+        duration: data.completedMessageTimeout || 5,
         description: (
           <>
             <span className="mr-1">

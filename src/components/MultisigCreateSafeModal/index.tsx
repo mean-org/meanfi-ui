@@ -12,7 +12,7 @@ import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
 import { MultisigSafeOwners } from "../MultisigSafeOwners";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { addDays, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../middleware/utils";
+import { addDays, getAmountWithSymbol, shortenAddress } from "../../middleware/utils";
 import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { getCoolOffPeriodOptionLabel, getTransactionOperationDescription, isValidAddress } from "../../middleware/ui";
 import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
@@ -21,6 +21,7 @@ import { CreateNewSafeParams } from "../../models/multisig";
 import moment from 'moment';
 import { isMobile } from "react-device-detect";
 import useWindowSize from "../../hooks/useWindowResize";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -218,19 +219,16 @@ export const MultisigCreateSafeModal = (props: {
     return options;
   }
 
-  const coolOffPeriodOptionsMenu = (
-    <Menu>
-      {getCoolOffPeriodOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handleCoolOffPeriodOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
+  const coolOffPeriodOptionsMenu = () => {
+    const items: ItemType[] = getCoolOffPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+      return {
+        key: `option-${index}`,
+        label: (<span onClick={() => handleCoolOffPeriodOptionChange(item.value)}>{item.text}</span>)
+      };
+    });
+
+    return <Menu items={items} />;
+  }
 
   // When modal goes visible, add current wallet address as first participant
   useEffect(() => {
@@ -269,7 +267,7 @@ export const MultisigCreateSafeModal = (props: {
       title={<div className="modal-title">{currentStep === 0 ? "Create multisig safe" : "Add safe"}</div>}
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
@@ -472,7 +470,7 @@ export const MultisigCreateSafeModal = (props: {
                             <div className="flex-fixed-left">
                               <div className="left">
                                 <Dropdown
-                                  overlay={coolOffPeriodOptionsMenu}
+                                  overlay={coolOffPeriodOptionsMenu()}
                                   trigger={["click"]}>
                                   <span className="dropdown-trigger no-decoration flex-fixed-right large-dropdown-area ">
                                     <div className="left">
@@ -751,11 +749,11 @@ export const MultisigCreateSafeModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       transactionFees.networkFee + transactionFees.multisigFee + transactionFees.rentExempt,
                       NATIVE_SOL_MINT.toBase58()
                     )})

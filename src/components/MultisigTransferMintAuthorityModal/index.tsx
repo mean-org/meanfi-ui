@@ -8,7 +8,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../middleware/utils';
+import { formatThousands, getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { MultisigMint } from '../../models/multisig';
 import { Identicon } from '../Identicon';
 
@@ -130,7 +130,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
       title={<div className="modal-title">{t('multisig.multisig-mints.change-mint-authority-modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
@@ -200,11 +200,11 @@ export const MultisigTransferMintAuthorityModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

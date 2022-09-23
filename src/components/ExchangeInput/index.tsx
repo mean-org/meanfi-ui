@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../middleware/utils';
+import { getAmountWithSymbol } from '../../middleware/utils';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../TokenDisplay';
 import { toUsCurrency } from '../../middleware/ui';
@@ -40,7 +40,7 @@ export const ExchangeInput = (props: {
                                 <span className="simplelink" onClick={props.onBalanceClick}>
                                 {`${
                                     props.token && props.tokenBalance
-                                    ? getTokenAmountAndSymbolByTokenAddress(
+                                    ? getAmountWithSymbol(
                                         parseFloat(props.tokenBalance),
                                         props.token.address,
                                         true

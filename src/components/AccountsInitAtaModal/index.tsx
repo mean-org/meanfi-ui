@@ -1,28 +1,28 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { environment } from '../../environments/environment';
-import { Button, Drawer, Modal } from "antd";
-import { useTranslation } from "react-i18next";
-import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { AppStateContext } from '../../contexts/appstate';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
-import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
-import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from '../../middleware/ui';
-import { OperationType, TransactionStatus } from '../../models/enums';
 import { LoadingOutlined } from '@ant-design/icons';
-import { AccountTokenParsedInfo } from "../../models/accounts";
+import { TransactionFees } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';
+import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Drawer, Modal } from "antd";
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from "react-i18next";
+import { customLogger } from '../..';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { NATIVE_SOL } from '../../constants/tokens';
-import { TokenListItem } from '../TokenListItem';
+import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
+import { AppStateContext } from '../../contexts/appstate';
+import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { useWallet } from '../../contexts/wallet';
+import { environment } from '../../environments/environment';
+import { createAtaAccount } from '../../middleware/accounts';
+import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from '../../middleware/ui';
+import { getAmountFromLamports, getTxIxResume, shortenAddress } from '../../middleware/utils';
+import { AccountTokenParsedInfo } from "../../models/accounts";
+import { OperationType, TransactionStatus } from '../../models/enums';
+import { openNotification } from '../Notifications';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
-import { TransactionFees } from '@mean-dao/msp';
-import { getAmountFromLamports, getTxIxResume, shortenAddress } from '../../middleware/utils';
-import { openNotification } from '../Notifications';
-import { createAtaAccount } from '../../middleware/accounts';
-import { customLogger } from '../..';
+import { TokenListItem } from '../TokenListItem';
 
 export const AccountsInitAtaModal = (props: {
   connection: Connection;
@@ -619,7 +619,7 @@ export const AccountsInitAtaModal = (props: {
       className="mean-modal simple-modal unpadded-content exchange-modal"
       title={<div className="modal-title">Add Asset</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={370}>
@@ -691,7 +691,7 @@ export const AccountsInitAtaModal = (props: {
         placement="bottom"
         closable={true}
         onClose={onCloseTokenSelector}
-        visible={isTokenSelectorVisible}
+        open={isTokenSelectorVisible}
         getContainer={false}
         style={{ position: 'absolute' }}>
         {renderTokenSelectorInner}

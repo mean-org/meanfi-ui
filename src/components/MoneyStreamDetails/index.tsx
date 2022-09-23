@@ -7,8 +7,8 @@ import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 import { StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { MSP, Stream, STREAM_STATUS, Treasury, TreasuryType } from "@mean-dao/msp";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { displayAmountWithSymbol, formatThousands, getAmountWithSymbol, shortenAddress, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
-import { consoleOut, friendlyDisplayDecimalPlaces, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates, stringNumberFormat } from "../../middleware/ui";
+import { displayAmountWithSymbol, getAmountWithSymbol, shortenAddress, toTokenAmountBn } from "../../middleware/utils";
+import { consoleOut, getIntervalFromSeconds, getReadableDate, getShortDate, relativeTimeFromDates } from "../../middleware/ui";
 import { AppStateContext } from "../../contexts/appstate";
 import BN from "bn.js";
 import { useTranslation } from "react-i18next";
@@ -22,12 +22,10 @@ import { Identicon } from "../Identicon";
 import Countdown from "react-countdown";
 import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
-import { getCategoryLabelByValue } from "../../models/enums";
 import { PublicKey } from "@solana/web3.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { MoneyStreaming } from "@mean-dao/money-streaming";
-
-const { TabPane } = Tabs;
+import { getCategoryLabelByValue } from "../../models/vesting";
 
 export const MoneyStreamDetails = (props: {
   accountAddress: string;
@@ -140,26 +138,18 @@ export const MoneyStreamDetails = (props: {
       return '';
     }
 
-    let value = '';
-    let associatedToken = '';
-
-    if (item.version < 2) {
-      associatedToken = (item as StreamInfo).associatedToken as string;
-    } else {
-      associatedToken = (item as Stream).associatedToken.toBase58();
-    }
-
     const rateAmount = getRateAmountBn(item);
-    value += stringNumberFormat(
-      toUiAmount(rateAmount, selectedToken.decimals),
-      friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
-    )
-
-    value += ' ';
-    value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken).toString()}]`;
+    const value = displayAmountWithSymbol(
+      rateAmount,
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
+      true,
+      true
+    );
 
     return value;
-  }, [getRateAmountBn, selectedToken]);
+  }, [getRateAmountBn, selectedToken, splTokenList]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     if (!selectedToken) {
@@ -167,36 +157,33 @@ export const MoneyStreamDetails = (props: {
     }
 
     let value = '';
-    let associatedToken = '';
-
-    if (item.version < 2) {
-      associatedToken = (item as StreamInfo).associatedToken as string;
-    } else {
-      associatedToken = (item as Stream).associatedToken.toBase58();
-    }
 
     if (item.rateIntervalInSeconds === 0) {
       if (item.version < 2) {
         const allocationAssigned = item.allocationAssigned as number;
-        value += formatThousands(
+        value += getAmountWithSymbol(
           allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, selectedToken.decimals),
-          2
+          selectedToken.address,
+          false,
+          splTokenList,
+          selectedToken.decimals,
+          true
         );
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
-        value += stringNumberFormat(
-          toUiAmount(allocationAssigned, selectedToken.decimals),
-          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
-        )
+        value += displayAmountWithSymbol(
+          allocationAssigned,
+          selectedToken.address,
+          selectedToken.decimals,
+          splTokenList,
+          true,
+          true
+        );
       }
-
-      value += ' ';
-      value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken)}]`;
     }
 
     return value;
-  }, [selectedToken]);
+  }, [selectedToken, splTokenList]);
 
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';
@@ -232,7 +219,7 @@ export const MoneyStreamDetails = (props: {
       }
     } else {
       switch (v2.status) {
-        case STREAM_STATUS.Schedule:
+        case STREAM_STATUS.Scheduled:
           return "scheduled";
         case STREAM_STATUS.Paused:
           if (v2.isManuallyPaused) {
@@ -260,7 +247,7 @@ export const MoneyStreamDetails = (props: {
         }
       } else {
         switch (v2.status) {
-          case STREAM_STATUS.Schedule:
+          case STREAM_STATUS.Scheduled:
             return t('streams.status.status-scheduled');
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
@@ -289,7 +276,7 @@ export const MoneyStreamDetails = (props: {
         }
       } else {
         switch (v2.status) {
-          case STREAM_STATUS.Schedule:
+          case STREAM_STATUS.Scheduled:
             return `starts on ${getShortDate(v2.startUtc)}`;
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
@@ -458,7 +445,7 @@ export const MoneyStreamDetails = (props: {
   const isOtp = (): boolean => {
     if (stream) {
       const rateAmount = getRateAmountBn(stream);
-      return rateAmount.isZero();
+      return rateAmount.isZero() ? true : false;
     }
     return false;
   }
@@ -688,19 +675,26 @@ export const MoneyStreamDetails = (props: {
     }
   }
 
-  const renderBadges = () => {
+  const getBadgesList = () => {
     if (!treasuryDetails) { return; }
 
-    const v1 = treasuryDetails as unknown as TreasuryInfo;
+    const v1 = treasuryDetails as TreasuryInfo;
     const v2 = treasuryDetails as Treasury;
-    const isNewTreasury = treasuryDetails && treasuryDetails.version >= 2 ? true : false;
+    const isNewTreasury = treasuryDetails.version >= 2 ? true : false;
 
-    const type = isNewTreasury
-      ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-      : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+    let type = '';
 
-    const category = isNewTreasury
-      && v2.category === 1 ? "Vesting" : "";
+    if (isNewTreasury) {
+      type = v2.category === 1 ? "Vesting" : v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked';
+    } else {
+      type = v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+    }
+
+    if (isOtp() || isScheduledOtp()) {
+      type = 'One Time Payment';
+    }
+
+    const category = isNewTreasury ? v2.category : 0;
 
     const subCategory = isNewTreasury
       && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
@@ -710,9 +704,9 @@ export const MoneyStreamDetails = (props: {
     type && (
       category ? (
         subCategory ? (
-          badges = [category, subCategory, type]
+          badges = [type, subCategory]
         ) : (
-          badges = [category, type]
+          badges = [type]
         )
       ) : (
         badges = [type]
@@ -819,28 +813,25 @@ export const MoneyStreamDetails = (props: {
   // Tabs
   const tabs = [
     {
-      id: "details",
-      name: "Details",
-      render: renderDetails
+      key: "details",
+      label: "Details",
+      children: renderDetails
     },
     {
-      id: "activity",
-      name: "Activity",
-      render: stream && renderActivities()
+      key: "activity",
+      label: "Activity",
+      children: stream && renderActivities()
     }
   ];
 
   const renderTabset = () => {
     return (
-      <Tabs activeKey={tabOption} onChange={navigateToTab} className="neutral">
-        {tabs.map(item => {
-          return (
-            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
-              {item.render}
-            </TabPane>
-          );
-        })}
-      </Tabs>
+      <Tabs
+        items={tabs}
+        activeKey={tabOption}
+        onChange={navigateToTab}
+        className="neutral"
+      />
     );
   }
 
@@ -876,7 +867,7 @@ export const MoneyStreamDetails = (props: {
           <ResumeItem
             img={getStreamIcon(stream)}
             title={title}
-            extraTitle={renderBadges()}
+            extraTitle={getBadgesList()}
             status={getStreamStatusLabel(stream)}
             subtitle={subtitle}
             resume={resume}

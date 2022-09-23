@@ -7,7 +7,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { NATIVE_SOL } from '../../constants/tokens';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../middleware/utils';
+import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { IconCheckedBox } from '../../Icons';
 import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress } from '../../middleware/ui';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -199,7 +199,7 @@ export const MultisigCreateAssetModal = (props: {
       title={<div className="modal-title">{t('multisig.create-asset.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
@@ -270,11 +270,11 @@ export const MultisigCreateAssetModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

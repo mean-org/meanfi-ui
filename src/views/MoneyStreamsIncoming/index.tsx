@@ -39,6 +39,7 @@ import { useSearchParams } from "react-router-dom";
 import { readAccountInfo } from "../../middleware/accounts";
 import { appConfig } from '../..';
 import BN from "bn.js";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1127,7 +1128,7 @@ export const MoneyStreamsIncomingView = (props: {
       }
     } else {
       switch (v2.status) {
-        case STREAM_STATUS.Schedule:
+        case STREAM_STATUS.Scheduled:
           return "scheduled";
         case STREAM_STATUS.Paused:
           if (v2.isManuallyPaused) {
@@ -1335,14 +1336,20 @@ export const MoneyStreamsIncomingView = (props: {
       <>
         <span className="info-data large mr-1">
           {
-            displayAmountWithSymbol(
-              isNewStream()
-                ? v2.withdrawableAmount
-                : v1.escrowVestedAmount,
-              workingToken.address,
-              workingToken.decimals,
-              splTokenList,
-            )
+            isNewStream()
+              ? displayAmountWithSymbol(
+                  v2.withdrawableAmount,
+                  workingToken.address,
+                  workingToken.decimals,
+                  splTokenList,
+                )
+              : getAmountWithSymbol(
+                  v1.escrowVestedAmount,
+                  workingToken.address,
+                  false,
+                  splTokenList,
+                  workingToken.decimals,
+                )
           }
         </span>
         <span className="info-icon">
@@ -1364,20 +1371,27 @@ export const MoneyStreamsIncomingView = (props: {
     },
   ];
 
-  // Dropdown (three dots button)
   const renderDropdownMenu = useCallback(() => {
-    return (
-      <Menu>
-        <Menu.Item key="msi-00" onClick={showTransferStreamModal}>
+    const items: ItemType[] = [];
+    items.push({
+      key: '01-transfer-ownership',
+      label: (
+        <div onClick={showTransferStreamModal}>
           <span className="menu-item-text">Transfer ownership</span>
-        </Menu.Item>
-        <Menu.Item key="msi-02">
-          <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`} target="_blank" rel="noopener noreferrer">
-            <span className="menu-item-text">{t('account-area.explorer-link')}</span>
-          </a>
-        </Menu.Item>
-      </Menu>
-    );
+        </div>
+      )
+    });
+    items.push({
+      key: '02-explorer-link',
+      label: (
+        <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`}
+           target="_blank" rel="noopener noreferrer">
+          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
+        </a>
+      )
+    });
+
+    return <Menu items={items} />;
   }, [showTransferStreamModal, streamSelected, t]);
 
   // Buttons
@@ -1474,7 +1488,7 @@ export const MoneyStreamsIncomingView = (props: {
         className="mean-modal no-full-screen"
         maskClosable={false}
         afterClose={onAfterWithdrawFundsTransactionModalClosed}
-        visible={isWithdrawFundsTransactionModalVisible}
+        open={isWithdrawFundsTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideWithdrawFundsTransactionModal}
         width={330}
@@ -1555,7 +1569,7 @@ export const MoneyStreamsIncomingView = (props: {
         className="mean-modal no-full-screen"
         maskClosable={false}
         afterClose={onAfterTransferStreamTransactionModalClosed}
-        visible={isTransferStreamTransactionModalVisible}
+        open={isTransferStreamTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideTransferStreamTransactionModal}
         width={330}

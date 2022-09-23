@@ -90,7 +90,7 @@ export const StreamResumeModal = (props: {
         if (v1.version < 2) {
           fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
         } else {
-          const wa = toUiAmount(v2.withdrawableAmount, token?.decimals || 6);
+          const wa = toUiAmount(v2.withdrawableAmount, token?.decimals || 9);
           fee = percentageBn(fees.mspPercentFee, wa, true) as number || 0;
         }
       } else if (isTreasurer) {
@@ -115,7 +115,7 @@ export const StreamResumeModal = (props: {
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount(v2.withdrawableAmount, token?.decimals || 6);
+        return toUiAmount(v2.withdrawableAmount, token?.decimals || 9);
       }
     }
     return 0;
@@ -135,7 +135,7 @@ export const StreamResumeModal = (props: {
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount(v2.fundsLeftInStream, token?.decimals || 6);
+        return toUiAmount(v2.fundsLeftInStream, token?.decimals || 9);
       }
     }
     return 0;
@@ -197,7 +197,7 @@ export const StreamResumeModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{param === "multisig" ? "Propose resume stream" : t('streams.resume-stream-modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onCancel={onCloseModal}
       width={400}>
 

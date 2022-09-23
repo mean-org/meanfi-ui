@@ -1,19 +1,18 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { getTransactionOperationDescription } from '../../../../middleware/ui';
+import { consoleOut, getTransactionOperationDescription } from '../../../../middleware/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../../../middleware/transactions';
 import { TransactionStatus } from '../../../../models/enums';
-import { displayAmountWithSymbol, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress } from '../../../../middleware/utils';
+import { displayAmountWithSymbol, getAmountWithSymbol } from '../../../../middleware/utils';
 import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { Treasury } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
-import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../../../../components/InputMean';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
@@ -48,21 +47,9 @@ export const VestingContractCloseModal = (props: {
     transactionStatus,
     getTokenByMintAddress
   } = useContext(AppStateContext);
-  const [searchParams] = useSearchParams();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [proposalTitle, setProposalTitle] = useState("");
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
 
   const getAvailableStreamingBalance = useCallback((item: Treasury) => {
 
@@ -86,8 +73,6 @@ export const VestingContractCloseModal = (props: {
 
     return false;
   }
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   // Preset fee amount
   useEffect(() => {
@@ -124,13 +109,13 @@ export const VestingContractCloseModal = (props: {
   }
 
   const isValidForm = (): boolean => {
-    return !selectedMultisig || (param === "multisig" && selectedMultisig && proposalTitle)
+    return !selectedMultisig || (selectedMultisig && proposalTitle)
       ? true
       : false;
   }
 
   const getTransactionStartButtonLabel = () => {
-    return param === "multisig" && selectedMultisig
+    return selectedMultisig
       ? !proposalTitle
         ? 'Add a proposal title'
         : 'Sign proposal'
@@ -143,7 +128,7 @@ export const VestingContractCloseModal = (props: {
       title={<div className="modal-title">{t('vesting.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={handleClose}
       width={360}>
 
@@ -197,7 +182,7 @@ export const VestingContractCloseModal = (props: {
               </div>
 
               {/* Proposal title */}
-              {canClose() && param === "multisig" && selectedMultisig && (
+              {canClose() && selectedMultisig && (
                 <div className="mb-3 mt-3">
                   <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
                   <InputMean
@@ -225,11 +210,11 @@ export const VestingContractCloseModal = (props: {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})

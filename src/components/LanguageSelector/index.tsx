@@ -46,7 +46,7 @@ export const LanguageSelector = (props: {
         <div className="modal-title">{t('language-selector.modal-title')}</div>
       }
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={300}>

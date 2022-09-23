@@ -9,7 +9,7 @@ import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import {
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   shortenAddress
 } from '../../middleware/utils';
 import "./style.scss";
@@ -501,7 +501,7 @@ export const ProposalSummaryModal = (props: {
       className="mean-modal simple-modal proposal-summary-modal"
       title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
       maskClosable={false}
-      visible={isVisible}
+      open={isVisible}
       closable={true}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
@@ -568,11 +568,11 @@ export const ProposalSummaryModal = (props: {
                   {/* Pre Tx execution failures here */}
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         minRequiredBalance,
                         NATIVE_SOL_MINT.toBase58()
                       )})

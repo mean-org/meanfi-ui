@@ -1,15 +1,12 @@
-name: Release-DEV
+name: Release-PROD
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - 'feature/*'
 
 env:
   NODE_VERSION: 18
   BUILD_NUMBER: $GITHUB_RUN_NUMBER
-  APP_ENV: development
-  BUCKET_NAME: "meanfi-development"
+  APP_ENV: production
+  BUCKET_NAME: "meanfi-production"
   ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
 
 jobs:
@@ -22,18 +19,17 @@ jobs:
           node-version: ${{env.NODE_VERSION}}
           cache: 'yarn' 
 
-      # Cache node modules
       - name: Cache packages
         uses: actions/cache@v3
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
 
-      # Install Yarn
+        # Install Yarn
       - name: Install packages
         run: yarn install
 
-      # Build react app
+        # Build react app
       - name: Generate build for ${{ env.APP_ENV }}
         run: npm run build:s3
         env:
@@ -77,15 +73,9 @@ jobs:
           aws s3 cp index.html ${{env.AWS_S3_PATH}}/index.html --acl public-read --cache-control max-age=0
         working-directory: .
 
-      # Only runs when it's development env
-      - name: Set distribution to development
-        if: ${{ env.APP_ENV == 'development' }}
-        run: echo "DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID_DEV }}" >> $GITHUB_ENV
-
-      # Only runs when it's staging env
-      - name: Set distribution to staging
-        if: ${{ env.APP_ENV == 'staging' }}
-        run: echo "DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID_STAGE }}" >> $GITHUB_ENV
+      # Only runs when it's Production env
+      - name: Set distribution to Production
+        run: echo "DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID_PROD }}" >> $GITHUB_ENV
 
       # Updates the distribution origin path
       - name: Update originPath

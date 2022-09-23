@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { useContext, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Modal, Button, Spin, Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -7,14 +6,12 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import {
   cutNumber,
   getAmountWithSymbol,
-  getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
   toTokenAmount,
   toUiAmount,
 } from '../../../../middleware/utils';
 import {
   consoleOut,
-  friendlyDisplayDecimalPlaces,
   getTransactionOperationDescription,
   toUsCurrency
 } from '../../../../middleware/ui';
@@ -457,7 +454,7 @@ export const VestingContractAddFundsModal = (props: {
       }
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
@@ -614,11 +611,11 @@ export const VestingContractAddFundsModal = (props: {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})

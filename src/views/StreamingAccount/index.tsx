@@ -32,27 +32,23 @@ import { AppStateContext } from "../../contexts/appstate";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
-import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
+import { OperationType, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
-  friendlyDisplayDecimalPlaces,
   getIntervalFromSeconds,
   getShortDate,
   getTransactionStatusForLogs,
   isProd,
-  stringNumberFormat,
 } from "../../middleware/ui";
 import {
   findATokenAddress,
   formatThousands,
   displayAmountWithSymbol,
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   getTxIxResume,
   makeInteger,
   openLinkInNewTab,
   shortenAddress,
-  toUiAmount,
-  getAmountWithSymbol,
   toTokenAmountBn,
   getAmountFromLamports,
 } from "../../middleware/utils";
@@ -71,12 +67,11 @@ import { SolBalanceModal } from "../../components/SolBalanceModal";
 import { isMobile } from "react-device-detect";
 import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from "../../middleware/accounts";
 import { NATIVE_SOL } from "../../constants/tokens";
-import { AddFundsParams } from "../../models/vesting";
+import { AddFundsParams, getCategoryLabelByValue } from "../../models/vesting";
 import BN from "bn.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { ZERO_FEES } from "../../models/multisig";
-
-const { TabPane } = Tabs;
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 export const StreamingAccountView = (props: {
   multisigAccounts: MultisigInfo[] | undefined;
@@ -413,8 +408,21 @@ export const StreamingAccountView = (props: {
   }, [streamingAccountSelected]);
 
   const getStreamingAccountActivityAssociatedToken = (item: VestingTreasuryActivity) => {
-    const amount = item.amount ? toUiAmount(new BN(item.amount), selectedToken?.decimals || 6) : 0;
     let message = '';
+
+    if (!selectedToken) {
+      return message;
+    }
+
+    const amount = displayAmountWithSymbol(
+      new BN(item.amount || 0),
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
+      true,
+      false
+    );
+
     switch (item.action) {
         case VestingTreasuryActivityAction.TreasuryAddFunds:
         case VestingTreasuryActivityAction.TreasuryWithdraw:
@@ -426,7 +434,7 @@ export const StreamingAccountView = (props: {
             message += `${amount} ${selectedToken?.symbol}`;
             break;
         default:
-            message = '';
+            message += '--';
             break;
     }
     return message;
@@ -475,26 +483,18 @@ export const StreamingAccountView = (props: {
       return '';
     }
 
-    let value = '';
-    let associatedToken = '';
-
-    if (item.version < 2) {
-      associatedToken = (item as StreamInfo).associatedToken as string;
-    } else {
-      associatedToken = (item as Stream).associatedToken.toBase58();
-    }
-
     const rateAmount = getRateAmountBn(item);
-    value += stringNumberFormat(
-      toUiAmount(rateAmount, selectedToken.decimals),
-      friendlyDisplayDecimalPlaces(rateAmount.toString()) || selectedToken.decimals
-    )
-
-    value += ' ';
-    value += selectedToken ? selectedToken.symbol : `[${shortenAddress(associatedToken).toString()}]`;
+    const value = displayAmountWithSymbol(
+      rateAmount,
+      selectedToken.address,
+      selectedToken.decimals,
+      splTokenList,
+      true,
+      true
+    );
 
     return value;
-  }, [getRateAmountBn, selectedToken]);
+  }, [getRateAmountBn, selectedToken, splTokenList]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     if (!selectedToken) {
@@ -513,17 +513,24 @@ export const StreamingAccountView = (props: {
     if (item.rateIntervalInSeconds === 0) {
       if (item.version < 2) {
         const allocationAssigned = new BN(item.allocationAssigned).toNumber();
-        value += formatThousands(
+        value += getAmountWithSymbol(
           allocationAssigned,
-          friendlyDisplayDecimalPlaces(allocationAssigned, selectedToken.decimals),
-          2
+          selectedToken.address,
+          true,
+          splTokenList,
+          selectedToken.decimals,
+          true
         );
       } else {
         const allocationAssigned = new BN(item.allocationAssigned);
-        value += stringNumberFormat(
-          toUiAmount(allocationAssigned, selectedToken.decimals),
-          friendlyDisplayDecimalPlaces(allocationAssigned.toString()) || selectedToken.decimals
-        )
+        value += displayAmountWithSymbol(
+          allocationAssigned,
+          selectedToken.address,
+          selectedToken.decimals,
+          splTokenList,
+          true,
+          false
+        );
       }
 
       value += ' ';
@@ -531,7 +538,7 @@ export const StreamingAccountView = (props: {
     }
 
     return value;
-  }, [selectedToken]);
+  }, [selectedToken, splTokenList]);
 
   const getStreamSubtitle = useCallback((item: Stream | StreamInfo) => {
     let subtitle = '';
@@ -568,7 +575,7 @@ export const StreamingAccountView = (props: {
         }
       } else {
         switch (v2.status) {
-          case STREAM_STATUS.Schedule:
+          case STREAM_STATUS.Scheduled:
             return t('streams.status.status-scheduled');
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
@@ -633,7 +640,7 @@ export const StreamingAccountView = (props: {
         }
       } else {
         switch (v2.status) {
-          case STREAM_STATUS.Schedule:
+          case STREAM_STATUS.Scheduled:
             return `starts on ${getShortDate(v2.startUtc)}`;
           case STREAM_STATUS.Paused:
             if (v2.isManuallyPaused) {
@@ -887,9 +894,9 @@ export const StreamingAccountView = (props: {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
             customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
@@ -1084,9 +1091,9 @@ export const StreamingAccountView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
@@ -1457,9 +1464,9 @@ export const StreamingAccountView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Treasury withdraw transaction failed', { transcript: transactionLog });
@@ -1758,9 +1765,9 @@ export const StreamingAccountView = (props: {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
             customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
@@ -1831,7 +1838,7 @@ export const StreamingAccountView = (props: {
 
       const closeTreasury = await msp.closeTreasury(
         publicKey,                                  // payer
-        multisig.authority,                         // TODO: This should come from the UI        
+        multisig.authority,                         // destination
         new PublicKey(data.treasury),               // treasury
         false                                       // autoWsol
       );
@@ -1911,9 +1918,9 @@ export const StreamingAccountView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
@@ -2244,9 +2251,9 @@ export const StreamingAccountView = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });
@@ -2661,22 +2668,22 @@ export const StreamingAccountView = (props: {
             message += "Refresh streaming account data";
             break;
         case VestingTreasuryActivityAction.StreamCreate:
-            message += `Create stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Create stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamAllocateFunds:
-            message += `Topped up stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Topped up stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamWithdraw:
-            message += `Withdraw funds from stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Withdraw funds from stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamClose:
-            message += `Close stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Close stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamPause:
-            message += `Pause stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Pause stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         case VestingTreasuryActivityAction.StreamResume:
-            message += `Resume stream ${item.stream ? shortenAddress(item.stream as string) : ''}`;
+            message += `Resume stream ${item.stream ? shortenAddress(item.stream) : ''}`;
             break;
         default:
             message += '--';
@@ -2685,32 +2692,52 @@ export const StreamingAccountView = (props: {
     return message;
   }
 
-  // Dropdown (three dots button)
-  const menu = (
-    <Menu>
-      {isXsDevice && (
-        <Menu.Item key="ms-00" onClick={showCreateStreamModal} disabled={
-          hasStreamingAccountPendingTx() ||
-          !streamingAccountSelected || getTreasuryUnallocatedBalance(streamingAccountSelected, selectedToken).ltn(0)
-          }>
-          <span className="menu-item-text">Create stream</span>
-        </Menu.Item>
-      )}
-      <Menu.Item key="ms-00" onClick={showCloseTreasuryModal} disabled={hasStreamingAccountPendingTx() || (streamingAccountStreams && streamingAccountStreams.length > 0) || !isTreasurer()}>
-        <span className="menu-item-text">Close account</span>
-      </Menu.Item>
-      {streamingAccountSelected && (
-        <Menu.Item key="ms-01" onClick={() => onExecuteRefreshTreasuryBalance()}>
-          <span className="menu-item-text">Refresh account data</span>
-        </Menu.Item>
-      )}
-      {isMultisigTreasury() && (
-        <Menu.Item key="ms-02" disabled={!isTreasurer()} onClick={showSolBalanceModal}>
-          <span className="menu-item-text">SOL balance</span>
-        </Menu.Item>
-      )}
-    </Menu>
-  );
+  const renderDropdownMenu = useCallback(() => {
+    const items: ItemType[] = [];
+    if (isXsDevice) {
+      items.push({
+        key: '00-create-stream',
+        label: (
+          <div onClick={showCreateStreamModal}>
+            <span className="menu-item-text">Create stream</span>
+          </div>
+        ),
+        disabled: hasStreamingAccountPendingTx() || !streamingAccountSelected || getTreasuryUnallocatedBalance(streamingAccountSelected, selectedToken).ltn(0)
+      });
+    }
+    items.push({
+      key: '01-close-account',
+      label: (
+        <div onClick={showCloseTreasuryModal}>
+          <span className="menu-item-text">Close account</span>
+        </div>
+      ),
+      disabled: hasStreamingAccountPendingTx() || (streamingAccountStreams && streamingAccountStreams.length > 0) || !isTreasurer()
+    });
+    if (streamingAccountSelected) {
+      items.push({
+        key: '02-refresh-account',
+        label: (
+          <div onClick={() => onExecuteRefreshTreasuryBalance()}>
+            <span className="menu-item-text">Refresh account data</span>
+          </div>
+        )
+      });
+    }
+    if (isMultisigTreasury()) {
+      items.push({
+        key: '03-sol-balance',
+        label: (
+          <div onClick={() => showSolBalanceModal()}>
+            <span className="menu-item-text">SOL balance</span>
+          </div>
+        ),
+        disabled: !isTreasurer()
+      });
+    }
+
+    return <Menu items={items} />;
+  }, [getTreasuryUnallocatedBalance, hasStreamingAccountPendingTx, isMultisigTreasury, isTreasurer, isXsDevice, onExecuteRefreshTreasuryBalance, selectedToken, showCloseTreasuryModal, showCreateStreamModal, showSolBalanceModal, streamingAccountSelected, streamingAccountStreams]);
 
   const renderStreamingAccountStreams = () => {
     const sortedStreamingAccountsStreamsList = streamingAccountStreams && streamingAccountStreams.sort((a, b) => {
@@ -2855,14 +2882,14 @@ export const StreamingAccountView = (props: {
   // Tabs
   const tabs = [
     {
-      id: "streams",
-      name: "Streams",
-      render: renderStreamingAccountStreams()
+      key: "streams",
+      label: "Streams",
+      children: renderStreamingAccountStreams()
     },
     {
-      id: "activity",
-      name: "Activity",
-      render: renderStreamingAccountActivity
+      key: "activity",
+      label: "Activity",
+      children: renderStreamingAccountActivity
     }
   ];
 
@@ -2877,52 +2904,32 @@ export const StreamingAccountView = (props: {
   const renderTabset = () => {
     const option = getQueryTabOption() || 'streams'
     return (
-      <Tabs activeKey={option} onChange={navigateToTab} className="neutral">
-        {tabs.map(item => {
-          return (
-            <TabPane tab={item.name} key={item.id} tabKey={item.id}>
-              {item.render}
-            </TabPane>
-          );
-        })}
-      </Tabs>
+      <Tabs
+        items={tabs}
+        activeKey={option}
+        onChange={navigateToTab}
+        className="neutral"
+      />
     );
   }
 
   const streamAccountTitle = getStreamingAccountName() ? getStreamingAccountName() : (streamingAccountSelected && shortenAddress(streamingAccountSelected.id as string, 8));
 
-  const renderBadges = () => {
+  const getBadgesList = () => {
     if (!streamingAccountSelected) { return; }
 
     const v1 = streamingAccountSelected as unknown as TreasuryInfo;
     const v2 = streamingAccountSelected as Treasury;
     const isNewTreasury = streamingAccountSelected && streamingAccountSelected.version >= 2 ? true : false;
 
-    const type = isNewTreasury
-      ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-      : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+    let type = '';
+    if (isNewTreasury) {
+      type = v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked';
+    } else {
+      type = v1.type === TreasuryType.Open ? 'Open' : 'Locked';
+    }
 
-    const category = isNewTreasury
-      && v2.category === 1 ? "Vesting" : "";
-
-    const subCategory = isNewTreasury
-      && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
-
-    let badges;
-
-    type && (
-      category ? (
-        subCategory ? (
-          badges = [category, subCategory, type]
-        ) : (
-          badges = [category, type]
-        )
-      ) : (
-        badges = [type]
-      )
-    )
-
-    return badges;
+    return [type];
   }
 
   const hasBalanceChanged = () => {
@@ -2949,7 +2956,7 @@ export const StreamingAccountView = (props: {
         {streamingAccountSelected && (
           <ResumeItem
             title={streamAccountTitle}
-            extraTitle={renderBadges()}
+            extraTitle={getBadgesList()}
             subtitle={streamAccountSubtitle}
             content={streamAccountContent}
             resume={getStreamingAccountResume()}
@@ -3010,7 +3017,7 @@ export const StreamingAccountView = (props: {
 
           <Col xs={4} sm={6} md={4} lg={6}>
             <Dropdown
-              overlay={menu}
+              overlay={renderDropdownMenu()}
               placement="bottomRight"
               trigger={["click"]}>
               <span className="ellipsis-icon icon-button-container mr-1">

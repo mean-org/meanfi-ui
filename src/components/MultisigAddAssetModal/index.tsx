@@ -344,7 +344,7 @@ export const MultisigAddAssetModal = (props: {
       title={<div className="modal-title">Create a multisig asset</div>}
       footer={null}
       maskClosable={false}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={370}>
@@ -412,7 +412,7 @@ export const MultisigAddAssetModal = (props: {
         placement="bottom"
         closable={true}
         onClose={onCloseTokenSelector}
-        visible={isTokenSelectorVisible}
+        open={isTokenSelectorVisible}
         getContainer={false}
         style={{ position: 'absolute' }}>
         {renderTokenSelectorInner}

@@ -107,7 +107,7 @@ export const RecurringExchange = (props: {
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
   const [renderCount, setRenderCount] = useState(0);
-  const [showLpList, setShowLpList] = useState(false);
+  const [showLpList] = useState(false);
   const [hlaInfo, setHlaInfo] = useState<HlaInfo>();
   const [defaultDdcaOption] = useState("Repeat weekly");
 
@@ -1593,7 +1593,7 @@ export const RecurringExchange = (props: {
           {/* Token selection modal */}
           <Modal
             className="mean-modal unpadded-content"
-            visible={isTokenSelectorModalVisible}
+            open={isTokenSelectorModalVisible}
             title={
               <div className="modal-title">{t('token-selector.modal-title')}</div>
             }

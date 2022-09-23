@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo, useRef } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeftOutlined,
   LoadingOutlined,
@@ -13,7 +13,6 @@ import {
   Transaction,
   TransactionInstruction
 } from '@solana/web3.js';
-import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
@@ -23,7 +22,7 @@ import { Identicon } from '../../components/Identicon';
 import {
   formatThousands,
   getAmountFromLamports,
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   getTxIxResume,
   shortenAddress,
   toUiAmount,
@@ -49,7 +48,7 @@ import './style.scss';
 
 // MULTISIG
 import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
-import { customLogger } from '../..';
+import { appConfig, customLogger } from '../..';
 import { openNotification } from '../../components/Notifications';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { ProposalDetailsView } from './components/ProposalDetails';
@@ -82,7 +81,6 @@ import { Category, MSP, Treasury } from '@mean-dao/msp';
 import { ErrorReportModal } from '../../components/ErrorReportModal';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
-import { appConfig } from '../..';
 import BigNumber from 'bignumber.js';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
@@ -508,9 +506,9 @@ export const SafeView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 minRequired, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -877,9 +875,9 @@ export const SafeView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 minRequired, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -1368,9 +1366,9 @@ export const SafeView = () => {
 
       if (nativeBalance < minRequired) {
         const txStatusMsg = `Not enough balance ${
-          getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
         } to pay for network fees ${
-          getTokenAmountAndSymbolByTokenAddress(
+          getAmountWithSymbol(
             minRequired, 
             NATIVE_SOL_MINT.toBase58()
           )
@@ -1659,9 +1657,9 @@ export const SafeView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 minRequired, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -1670,11 +1668,11 @@ export const SafeView = () => {
           customLogger.logWarning('Multisig Approve transaction failed', { transcript: transactionLog });
           openNotification({
             description: t('transactions.status.tx-start-failure', {
-              accountBalance: getTokenAmountAndSymbolByTokenAddress(
+              accountBalance: getAmountWithSymbol(
                 nativeBalance,
                 NATIVE_SOL_MINT.toBase58()
               ),
-              feeAmount: getTokenAmountAndSymbolByTokenAddress(
+              feeAmount: getAmountWithSymbol(
                 minRequired,
                 NATIVE_SOL_MINT.toBase58()
               )}),
@@ -1699,7 +1697,7 @@ export const SafeView = () => {
             return true;
           })
           .catch(error => {
-            console.error('mint tokens error:', error);
+            console.error('approveTx error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure
@@ -1951,9 +1949,9 @@ export const SafeView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 minRequired, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -1962,11 +1960,11 @@ export const SafeView = () => {
           customLogger.logWarning('Multisig Reject transaction failed', { transcript: transactionLog });
           openNotification({
             description: t('transactions.status.tx-start-failure', {
-              accountBalance: getTokenAmountAndSymbolByTokenAddress(
+              accountBalance: getAmountWithSymbol(
                 nativeBalance,
                 NATIVE_SOL_MINT.toBase58()
               ),
-              feeAmount: getTokenAmountAndSymbolByTokenAddress(
+              feeAmount: getAmountWithSymbol(
                 minRequired,
                 NATIVE_SOL_MINT.toBase58()
               )}),
@@ -1991,7 +1989,7 @@ export const SafeView = () => {
             return true;
           })
           .catch(error => {
-            console.error('mint tokens error:', error);
+            console.error('rejectTx error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure
@@ -2259,9 +2257,9 @@ export const SafeView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 minRequired, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -2269,11 +2267,11 @@ export const SafeView = () => {
           });
           customLogger.logWarning('Finish Approoved transaction failed', { transcript: transactionLog });
           const notifContent = t('transactions.status.tx-start-failure', {
-            accountBalance: getTokenAmountAndSymbolByTokenAddress(
+            accountBalance: getAmountWithSymbol(
               nativeBalance,
               NATIVE_SOL_MINT.toBase58()
             ),
-            feeAmount: getTokenAmountAndSymbolByTokenAddress(
+            feeAmount: getAmountWithSymbol(
               minRequired,
               NATIVE_SOL_MINT.toBase58()
             )});
@@ -2635,9 +2633,9 @@ export const SafeView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 minRequired, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -3045,6 +3043,8 @@ export const SafeView = () => {
           setNeedRefreshTxs(true);
           setSelectedMultisig(item);
         }
+      } else {
+        setSelectedMultisig(undefined);
       }
     })
 
@@ -3480,6 +3480,8 @@ export const SafeView = () => {
             setNeedRefreshTxs(true);
             setNeedReloadPrograms(true);
           }
+        } else {
+          setSelectedMultisig(undefined);
         }
       } else {
         if (multisigAccounts.length > 0) {
@@ -3488,6 +3490,8 @@ export const SafeView = () => {
           const url = `${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`;
           consoleOut('Redirecting to:', url, 'blue');
           navigate(url);
+        } else {
+          setSelectedMultisig(undefined);
         }
       }
 

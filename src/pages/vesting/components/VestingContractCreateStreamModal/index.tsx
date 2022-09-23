@@ -1,23 +1,23 @@
-import React, { useCallback, useEffect, useContext, useState, useMemo } from 'react';
-import { Button, Checkbox, Col, Modal, Row } from "antd";
-import { TokenInfo } from '@solana/spl-token-registry';
-import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount, toUiAmount } from '../../../../middleware/utils';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, stringNumberFormat, toUsCurrency } from '../../../../middleware/ui';
-import { WizardStepSelector } from '../../../../components/WizardStepSelector';
-import { useTranslation } from 'react-i18next';
-import BN from 'bn.js';
-import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { useWallet } from '../../../../contexts/wallet';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { isError } from '../../../../middleware/transactions';
-import { IconEdit, IconWarning } from '../../../../Icons';
-import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
-import { PaymentRateType } from '../../../../models/enums';
-import { InfoIcon } from '../../../../components/InfoIcon';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { Button, Checkbox, Col, Modal, Row } from "antd";
+import BN from 'bn.js';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { InfoIcon } from '../../../../components/InfoIcon';
 import { InputMean } from '../../../../components/InputMean';
+import { TokenDisplay } from '../../../../components/TokenDisplay';
+import { WizardStepSelector } from '../../../../components/WizardStepSelector';
+import { AppStateContext } from '../../../../contexts/appstate';
+import { useWallet } from '../../../../contexts/wallet';
+import { IconEdit, IconWarning } from '../../../../Icons';
+import { isError } from '../../../../middleware/transactions';
+import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, stringNumberFormat, toUsCurrency } from '../../../../middleware/ui';
+import { displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount, toUiAmount } from '../../../../middleware/utils';
+import { PaymentRateType } from '../../../../models/enums';
+import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
 
 export const VestingContractCreateStreamModal = (props: {
     handleClose: any;
@@ -68,7 +68,6 @@ export const VestingContractCreateStreamModal = (props: {
         refreshPrices,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
-    const [today] = useState(new Date());
     const { publicKey, wallet } = useWallet();
     const [currentStep, setCurrentStep] = useState(0);
     const [vestingStreamName, setVestingStreamName] = useState<string>('');
@@ -169,16 +168,6 @@ export const VestingContractCreateStreamModal = (props: {
         return minRequired;
 
     }, [isMultisigTreasury, minRequiredBalance, transactionFees]);
-
-    const isStartDateFuture = useCallback((date: string): boolean => {
-        const now = today.toUTCString();
-        const nowUtc = new Date(now);
-        const comparedDate = new Date(date);
-        if (comparedDate > nowUtc) {
-            return true;
-        }
-        return false;
-    }, [today]);
 
     const getReleaseRate = useCallback(() => {
         if (!lockPeriodAmount || !selectedToken) {
@@ -294,9 +283,13 @@ export const VestingContractCreateStreamModal = (props: {
 
         const releasePct = parseFloat(cliffReleasePercentage) || 0;
 
-        if (tokenAmount.gtn(0) && releasePct > 0) {
-            const cr = tokenAmount.muln(releasePct).divn(100);
-            const toStream = tokenAmount.sub(cr);
+        if (tokenAmount.gtn(0)) {
+            let toStream = tokenAmount;
+
+            if (releasePct > 0) {
+                const cr = tokenAmount.muln(releasePct).divn(100);
+                toStream = tokenAmount.sub(cr);
+            }
 
             const lpa = parseFloat(lockPeriodAmount);
             const ra = toStream.divn(lpa);
@@ -313,9 +306,12 @@ export const VestingContractCreateStreamModal = (props: {
 
         const releasePct = parseFloat(cliffReleasePercentage) || 0;
 
-        if (tokenAmount.gtn(0) && releasePct > 0) {
-            const cr = tokenAmount.muln(releasePct).divn(100);
-            const toStream = tokenAmount.sub(cr);
+        if (tokenAmount.gtn(0)) {
+            let toStream = tokenAmount;
+            if (releasePct > 0) {
+                const cr = tokenAmount.muln(releasePct).divn(100);
+                toStream = tokenAmount.sub(cr);
+            }
             setAmountToBeStreamedBn(toStream);
         }
 
@@ -372,14 +368,26 @@ export const VestingContractCreateStreamModal = (props: {
         if (!selectedToken) { return ''; }
         const cliff = getCliffReleaseAmount();
         const rate = getReleaseRate();
-        return `Create stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement.`;
+        let message = '';
+        if (cliff === '--') {
+            message = `Create stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}.`;
+        } else {
+            message = `Create stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement.`;
+        }
+        return message;
     }
 
     const getStreamTxConfirmedDescription = (multisig: string) => {
         if (!selectedToken) { return ''; }
         const cliff = getCliffReleaseAmount();
         const rate = getReleaseRate();
-        return `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
+        let message = '';
+        if (cliff === '--') {
+            message = `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} has been ${multisig ? 'proposed' : 'scheduled'}.`;
+        } else {
+            message = `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
+        }
+        return message;
     }
 
     const onStreamCreateClick = () => {
@@ -572,7 +580,7 @@ export const VestingContractCreateStreamModal = (props: {
             className="mean-modal simple-modal unpadded-content"
             title={<div className="modal-title">{t('vesting.create-stream.modal-title')}</div>}
             footer={null}
-            visible={isVisible}
+            open={isVisible}
             onCancel={handleClose}
             width={480}>
 
@@ -795,10 +803,8 @@ export const VestingContractCreateStreamModal = (props: {
                             <span className="ml-1">
                                 {
                                     paymentStartDate
-                                    ? isStartDateFuture(paymentStartDate)
                                         ? getReadableDate(paymentStartDate, true)
-                                        : t('vesting.create-stream.start-immediately')
-                                    : '--'
+                                        : '--'
                                 }
                             </span>
                         </Col>

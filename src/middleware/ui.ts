@@ -45,11 +45,16 @@ export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'blac
 }
 
 export const friendlyDisplayDecimalPlaces = (amount: number | string, decimals?: number) => {
+    if (!decimals) { return undefined; }
+
     if (typeof amount === "string") {
-        const value = new BigNumber(amount);
-        if (value.isLessThan(1)) {
+
+        const baseConvert = new BigNumber(10 ** decimals);
+        const bigNumberAmount = new BigNumber(amount);
+        const value = bigNumberAmount.div(baseConvert);
+        if (value.isLessThan(10)) {
             return decimals || undefined;
-        } else if (value.isLessThan(1000)) {
+        } else if (value.isGreaterThanOrEqualTo(10) && value.isLessThan(1000)) {
             return 4;
         } else if (value.isGreaterThanOrEqualTo(1000) && value.isLessThan(100000)) {
             return 3;
@@ -58,9 +63,9 @@ export const friendlyDisplayDecimalPlaces = (amount: number | string, decimals?:
         }
     } else {
         const value = Math.abs(amount);
-        if (value < 1) {
+        if (value < 10) {
             return decimals || undefined;
-        } else if (value < 1000) {
+        } else if (value >= 10 && value < 1000) {
             return 4;
         } else if (value >= 1000 && value < 100000) {
             return 3;
@@ -792,16 +797,16 @@ export const getTodayPercentualBetweenTwoDates = (starDate: string, endDate: str
     const end = toTimestamp(endDate);
     const delta = Math.abs(end - start);
     const today = toTimestamp();
-    const todayPartial = Math.abs(today - start);
-    return percentual(todayPartial, delta);
+    const todayPartial = today - start < 0 ? 0 : today - start;
+    return todayPartial ? percentual(todayPartial, delta) : todayPartial;
 }
 
-export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number) => {
+export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number, relative = false) => {
     const start = toTimestamp(starDate);
     const end = toTimestamp(endDate);
     const delta = Math.abs(end - start);
     const pctTs = percentage(percent, delta);
-    return start + pctTs;
+    return relative ? pctTs : start + pctTs;
 }
 
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {

@@ -6,9 +6,8 @@ import { AppStateContext } from '../../contexts/appstate';
 import {
   displayAmountWithSymbol,
   formatThousands,
-  getAmountWithSymbol,
   getSdkValue,
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   isValidNumber,
   shortenAddress,
   toTokenAmount,
@@ -43,7 +42,7 @@ import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from '../..
 import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
 import { appConfig, customLogger } from '../..';
 import { Beneficiary, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
@@ -55,6 +54,8 @@ import { InfoIcon } from '../InfoIcon';
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
 import { CreateStreamParams } from '../../models/streams';
+import { readAccountInfo } from '../../middleware/accounts';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const { Option } = Select;
 
@@ -283,6 +284,37 @@ export const TreasuryStreamCreateModal = (props: {
     )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
   }, [lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
 
+  const getTokenOrCustomToken = useCallback(async (address: string) => {
+
+    const token = getTokenByMintAddress(address);
+
+    const unkToken = {
+      address: address,
+      name: CUSTOM_TOKEN_NAME,
+      chainId: 101,
+      decimals: 6,
+      symbol: `[${shortenAddress(address)}]`,
+    };
+
+    if (token) {
+      return token;
+    } else {
+      try {
+        const tokeninfo = await readAccountInfo(connection, address);
+        if ((tokeninfo as any).data["parsed"]) {
+          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+          unkToken.decimals = decimals || 0;
+          return unkToken as TokenInfo;
+        } else {
+          return unkToken as TokenInfo;
+        }
+      } catch (error) {
+        console.error('Could not get token info, assuming decimals = 6');
+        return unkToken as TokenInfo;
+      }
+    }
+  }, [connection, getTokenByMintAddress]);
+
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
@@ -474,45 +506,6 @@ export const TreasuryStreamCreateModal = (props: {
     }
   }
 
-  const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
-    const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
-    if (ellipsisElements && ellipsisElements.length) {
-
-      ellipsisElements.forEach(element => {
-        if (state) {
-          if (!element.classList.contains('overflow-ellipsis-middle')) {
-            element.classList.add('overflow-ellipsis-middle');
-          }
-        } else {
-          if (element.classList.contains('overflow-ellipsis-middle')) {
-            element.classList.remove('overflow-ellipsis-middle');
-          }
-        }
-      });
-
-      setTimeout(() => {
-        triggerWindowResize();
-      }, 10);
-    }
-  }, []);
-
-  const setCustomToken = useCallback((address: string) => {
-    const unkToken: TokenInfo = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: shortenAddress(address),
-    };
-    setSelectedToken(unkToken);
-    consoleOut("token selected:", unkToken, 'blue');
-    toggleOverflowEllipsisMiddle(true);
-    return unkToken;
-  }, [
-    setSelectedToken,
-    toggleOverflowEllipsisMiddle
-  ]);
-
   const getPaymentRateAmount = useCallback(() => {
 
     let outStr = selectedToken
@@ -568,24 +561,27 @@ export const TreasuryStreamCreateModal = (props: {
   }, [isVisible, treasuryDetails, treasuryList, workingTreasuryDetails]);
 
   useEffect(() => {
-    if (hasNoStreamingAccounts || workingAssociatedToken || !workingTreasuryDetails) {
+    if (hasNoStreamingAccounts || !workingTreasuryDetails) {
       return;
     }
 
     let tokenAddress = '';
-    let token: TokenInfo | undefined = undefined;
     const v1 = workingTreasuryDetails as TreasuryInfo;
     const v2 = workingTreasuryDetails as Treasury;
     tokenAddress = workingTreasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-    token = getTokenByMintAddress(tokenAddress);
-
-    if (token) {
+    getTokenOrCustomToken(tokenAddress)
+    .then(token => {
+      consoleOut('Treasury workingAssociatedToken:', token, 'blue');
       setSelectedToken(token);
-    } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
-      setCustomToken(tokenAddress);
-    }
+      setWorkingAssociatedToken(tokenAddress)
+      if (userBalances[tokenAddress]) {
+        setSelectedTokenBalance(userBalances[tokenAddress]);
+      } else {
+        setSelectedTokenBalance(0);
+      }
+    });
     setWorkingAssociatedToken(tokenAddress)
-  }, [getTokenByMintAddress, hasNoStreamingAccounts, selectedToken, setCustomToken, treasuryList, workingAssociatedToken, workingTreasuryDetails]);
+  }, [getTokenOrCustomToken, hasNoStreamingAccounts, userBalances, workingTreasuryDetails]);
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
@@ -636,24 +632,6 @@ export const TreasuryStreamCreateModal = (props: {
     workingTreasuryDetails,
     withdrawTransactionFees,
     getMaxAmount
-  ]);
-
-  // Use treasury associated token
-  useEffect(() => {
-    if (workingAssociatedToken) {
-      const token = getTokenByMintAddress(workingAssociatedToken);
-      if (token) {
-        setSelectedToken(token);
-      } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
-        setCustomToken(workingAssociatedToken);
-      }
-    }
-  }, [
-    selectedToken,
-    workingAssociatedToken,
-    getTokenByMintAddress,
-    setSelectedToken,
-    setCustomToken,
   ]);
 
   // Window resize listener
@@ -1292,9 +1270,9 @@ export const TreasuryStreamCreateModal = (props: {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
@@ -1554,16 +1532,20 @@ export const TreasuryStreamCreateModal = (props: {
       const v1 = item as TreasuryInfo;
       const v2 = item as Treasury;
       const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-      const token = getTokenByMintAddress(tokenAddress);
-      if (token) {
+      getTokenOrCustomToken(tokenAddress)
+      .then(token => {
         consoleOut('Treasury workingAssociatedToken:', token, 'blue');
         setSelectedToken(token);
-      } else if (!selectedToken || selectedToken.address !== workingAssociatedToken) {
-        setCustomToken(tokenAddress);
-      }
+        setWorkingAssociatedToken(tokenAddress)
+        if (userBalances[tokenAddress]) {
+          setSelectedTokenBalance(userBalances[tokenAddress]);
+        } else {
+          setSelectedTokenBalance(0);
+        }
+      });
       setWorkingAssociatedToken(tokenAddress)
     }
-  },[getTokenByMintAddress, selectedToken, setCustomToken, treasuryList, workingAssociatedToken]);
+  }, [getTokenOrCustomToken, treasuryList, userBalances]);
 
   ///////////////
   // Rendering //
@@ -1574,33 +1556,27 @@ export const TreasuryStreamCreateModal = (props: {
     event.currentTarget.className = "error";
   };
 
-  const paymentRateOptionsMenu = (
-    <Menu>
-      {getOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handlePaymentRateOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
+  const paymentRateOptionsMenu = () => {
+    const items: ItemType[] = getOptionsFromEnum(PaymentRateType).map((item, index) => {
+      return {
+        key: `option-${index}`,
+        label: (<span onClick={() => handlePaymentRateOptionChange(item.value)}>{item.text}</span>)
+      };
+    });
 
-  const lockPeriodOptionsMenu = (
-    <Menu>
-      {getLockPeriodOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handleLockPeriodOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
+    return <Menu items={items} />;
+  }
+
+  const lockPeriodOptionsMenu = () => {
+    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+      return {
+        key: `option-${index}`,
+        label: (<span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>)
+      };
+    });
+
+    return <Menu items={items} />;
+  }
 
   const getStreamingAccountIcon = (item: Treasury | TreasuryInfo | undefined) => {
     if (!item) { return null; }
@@ -1707,7 +1683,7 @@ export const TreasuryStreamCreateModal = (props: {
       }
       maskClosable={false}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
       width={480}>
@@ -1962,32 +1938,6 @@ export const TreasuryStreamCreateModal = (props: {
                               fullTokenInfo={selectedToken}
                             />
                           )}
-
-                          {/* {(selectedToken && tokenList) && (
-                            <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
-                              {tokenList.map((option) => {
-                                if (option.address === NATIVE_SOL.address) {
-                                  return null;
-                                }
-                                return (
-                                  <Option key={option.address} value={option.address}>
-                                    <div className="option-container">
-                                      <TokenDisplay onClick={() => {}}
-                                        mintAddress={option.address}
-                                        name={option.name}
-                                        showCaretDown={workingAssociatedToken ? false : true}
-                                      />
-                                      <div className="balance">
-                                        {userBalances && userBalances[option.address] > 0 && (
-                                          <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </Option>
-                                );
-                              })}
-                            </Select>
-                          )} */}
                           {
                             selectedToken && unallocatedBalance ? (
                               <div
@@ -2242,7 +2192,7 @@ export const TreasuryStreamCreateModal = (props: {
                                       />
                                       <div className="balance">
                                         {userBalances && userBalances[option.address] > 0 && (
-                                          <span>{getTokenAmountAndSymbolByTokenAddress(userBalances[option.address], option.address, true)}</span>
+                                          <span>{getAmountWithSymbol(userBalances[option.address], option.address, true)}</span>
                                         )}
                                       </div>
                                     </div>

@@ -1853,7 +1853,7 @@ export const JupiterExchange = (props: {
                     placement="bottom"
                     closable={true}
                     onClose={onCloseTokenSelector}
-                    visible={isTokenSelectorVisible}
+                    open={isTokenSelectorVisible}
                     getContainer={false}
                     style={{ position: 'absolute' }}>
                     {renderTokenSelectorInner}
@@ -1864,7 +1864,7 @@ export const JupiterExchange = (props: {
             {!props.inModal && isTokenSelectorModalVisible && (
                 <Modal
                     className="mean-modal unpadded-content"
-                    visible={isTokenSelectorModalVisible}
+                    open={isTokenSelectorModalVisible}
                     title={
                         <div className="modal-title">{t('token-selector.modal-title')}</div>
                     }

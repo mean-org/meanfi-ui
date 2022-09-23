@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { Button } from 'antd';
-import { formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../middleware/utils';
+import { formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from '../../middleware/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
@@ -428,7 +428,7 @@ export const IdoLpDeposit = (props: {
           <div className="px-1 mb-2">
             {idoInfoRow(
               'USDC Contributed',
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 props.idoStatus.gaTotalUsdcContributed,
                 props.selectedToken.address,
                 true
@@ -436,7 +436,7 @@ export const IdoLpDeposit = (props: {
             )}
             {idoInfoRow(
               'Total MEAN for sale',
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 props.idoDetails.meanTotalMax,
                 '', // TODO: Create TokenInfo for MEAN
                 true
@@ -445,7 +445,7 @@ export const IdoLpDeposit = (props: {
             {idoInfoRow(
               'Implied token price',
               props.idoStatus.currentImpliedMeanPrice
-                ? getTokenAmountAndSymbolByTokenAddress(
+                ? getAmountWithSymbol(
                     props.idoStatus.currentImpliedMeanPrice,
                     props.selectedToken.address
                   )
@@ -453,7 +453,7 @@ export const IdoLpDeposit = (props: {
             )}
             {idoInfoRow(
               'Max Contribution (Cap)',
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 props.idoStatus.currentMaxUsdcContribution,
                 props.selectedToken.address,
                 true
@@ -463,7 +463,7 @@ export const IdoLpDeposit = (props: {
           <div className="card ido-info-box no-shadow">
             {idoInfoRow(
               'Your USDC deposit',
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 props.idoStatus.userUsdcContributedAmount,
                 props.selectedToken.address,
                 true
@@ -475,7 +475,7 @@ export const IdoLpDeposit = (props: {
             <div className="card ido-info-box no-shadow">
               {idoInfoRow(
                 'Your Est. MEAN allocation',
-                getTokenAmountAndSymbolByTokenAddress(
+                getAmountWithSymbol(
                   props.idoStatus.userMeanImpliedAmount,
                   '',
                   true

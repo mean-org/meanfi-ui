@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../../../components/Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { formatThousands, getSdkValue } from '../../../../middleware/utils';
+import { formatThousands, getSdkValue, makeDecimal } from '../../../../middleware/utils';
 import { PublicKey } from '@solana/web3.js';
-import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd, toTimestamp } from '../../../../middleware/ui';
+import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd } from '../../../../middleware/ui';
 import { IconLoading } from '../../../../Icons';
+import BN from 'bn.js';
 
 export const VestingContractList = (props: {
     loadingVestingAccounts: boolean;
@@ -44,7 +45,16 @@ export const VestingContractList = (props: {
         return false;
     }, [today]);
 
-    // Set template data
+    const getContractFinishDate = useCallback((templateValues: StreamTemplate) => {
+        // Total length of vesting period in seconds
+        const lockPeriod = templateValues.rateIntervalInSeconds * templateValues.durationNumberOfUnits;
+        // Final date = Start date + lockPeriod
+        const ts = new Date(templateValues.startUtc).getTime();
+        const finishDate = new Date((lockPeriod * 1000) + ts);
+        return finishDate;
+    }, []);
+
+    // Set template data map
     useEffect(() => {
 
         if (!msp || loadingVestingAccounts || !streamingAccounts || loadingTemplates) { return; }
@@ -106,6 +116,7 @@ export const VestingContractList = (props: {
 
     });
 
+    // Set chart completed percentages
     useEffect(() => {
         if (loadingVestingAccounts || loadingTemplates || !streamingAccounts || !vcTemplates) { return; }
 
@@ -114,26 +125,34 @@ export const VestingContractList = (props: {
             let streamTemplate: StreamTemplate | undefined = undefined;
             let startDate: string | undefined = undefined;
 
+            // get the contract template from the map if the item exists
             if (vcTemplates && vcTemplates[contract.id as string] && vcTemplates[contract.id as string].startUtc) {
                 streamTemplate = vcTemplates[contract.id as string];
+                // Set a start date for the contract
                 const localDate = new Date(vcTemplates[contract.id as string].startUtc);
                 startDate = localDate.toUTCString();
             }
 
             let completedVestingPercentage = 0;
             if (contract && streamTemplate && startDate) {
+
                 if (contract.totalStreams === 0) {
                     completedVestingPercentage = 0;
                 } else if (isStartDateFuture(startDate)) {
                     completedVestingPercentage = 0;
                 } else {
-                    const lockPeriodAmount = streamTemplate.durationNumberOfUnits;
-                    const lockPeriodUnits = streamTemplate.rateIntervalInSeconds;
-                    const lockPeriod = lockPeriodAmount * lockPeriodUnits;
-                    const sdTimestamp = toTimestamp(startDate);
-                    const finishDate = new Date((sdTimestamp + lockPeriod) * 1000).toUTCString();
-                    const todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
-                    completedVestingPercentage = todayPct > 100 ? 100 : todayPct;
+                    let todayPct = 0;
+                    const finishDate = getContractFinishDate(streamTemplate).toUTCString();
+                    todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
+                    const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
+                    if (cliffPercent > 0) {
+                        // visualCompletionPct = ((100 - cliffPercent) * completionPct) + cliffPercent
+                        const completionWithOutCliifReminder = (100 - cliffPercent) * todayPct;
+                        const visualCompletionPct = (completionWithOutCliifReminder / 100) + cliffPercent;
+                        completedVestingPercentage = visualCompletionPct > 100 ? 100 : visualCompletionPct;
+                    } else {
+                        completedVestingPercentage = todayPct > 100 ? 100 : todayPct;
+                    }
                 }
             } else {
                 completedVestingPercentage = 0;
@@ -142,7 +161,7 @@ export const VestingContractList = (props: {
         }
         setVcCompleteness(completedPercentages);
 
-    }, [isStartDateFuture, loadingTemplates, loadingVestingAccounts, streamingAccounts, today, vcTemplates]);
+    }, [getContractFinishDate, isStartDateFuture, loadingTemplates, loadingVestingAccounts, streamingAccounts, vcTemplates]);
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
         event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -184,22 +203,24 @@ export const VestingContractList = (props: {
                                             {
                                                 isStartDateFuture(vcTemplates[item.id as string].startUtc)
                                                     ? `Contract starts on ${getReadableDate(vcTemplates[item.id as string].startUtc, true)}`
-                                                    : <Progress
-                                                        percent={vcCompleteness[item.id as string] || 0}
-                                                        showInfo={false}
-                                                        status={
-                                                            vcCompleteness[item.id as string] === 0
-                                                                ? "normal"
-                                                                : vcCompleteness[item.id as string] < 100
-                                                                    ? "active"
-                                                                    : "success"
-                                                        }
-                                                        size="small"
-                                                        type="line"
-                                                        className="vesting-list-progress-bar small"
-                                                        trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
-                                                        style={{ width: 200 }}
+                                                    : (
+                                                        <Progress
+                                                            percent={vcCompleteness[item.id as string] || 0}
+                                                            showInfo={false}
+                                                            status={
+                                                                vcCompleteness[item.id as string] === 0
+                                                                    ? "normal"
+                                                                    : vcCompleteness[item.id as string] < 100
+                                                                        ? "active"
+                                                                        : "success"
+                                                            }
+                                                            size="small"
+                                                            type="line"
+                                                            className="vesting-list-progress-bar small"
+                                                            trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
+                                                            style={{ width: 200 }}
                                                         />
+                                                    )
                                             }
                                         </span>
                                     ) : (

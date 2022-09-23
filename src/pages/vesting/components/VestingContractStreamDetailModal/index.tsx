@@ -1,15 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Modal } from "antd";
-import { TokenInfo } from '@solana/spl-token-registry';
 import { MSP, Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { PublicKey } from '@solana/web3.js';
+import { Modal, Switch } from "antd";
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut } from '../../../../middleware/ui';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
-import { PublicKey } from '@solana/web3.js';
 
 export const VestingContractStreamDetailModal = (props: {
   accountAddress: string;
   handleClose: any;
   highlightedStream: Stream | undefined;
+  isDebugging?: boolean;
   isVisible: boolean;
   msp: MSP | undefined;
   selectedToken: TokenInfo | undefined;
@@ -18,15 +20,21 @@ export const VestingContractStreamDetailModal = (props: {
     accountAddress,
     handleClose,
     highlightedStream,
+    isDebugging,
     isVisible,
     msp,
     selectedToken,
   } = props;
 
+  const {
+    isWhitelisted,
+  } = useContext(AppStateContext);
+
   const [streamDetail, setStreamDetail] = useState<Stream | undefined>();
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(false);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
   const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(true);
+  const [isToggledShowLastReadData, setIsToggledShowLastReadData] = useState<boolean>(false);
 
   const isInboundStream = useCallback((): boolean => {
     return streamDetail && accountAddress && (streamDetail.beneficiary as PublicKey).toBase58() === accountAddress ? true : false;
@@ -88,6 +96,10 @@ export const VestingContractStreamDetailModal = (props: {
   // Live data calculation - Refresh Stream detail
   useEffect(() => {
 
+    if (isToggledShowLastReadData) {
+      return;
+    }
+
     const timeout = setTimeout(() => {
       if (msp && streamDetail && streamDetail.status === STREAM_STATUS.Running) {
         msp.refreshStream(streamDetail as Stream).then(detail => {
@@ -100,7 +112,11 @@ export const VestingContractStreamDetailModal = (props: {
       clearTimeout(timeout);
     }
 
-  }, [msp, streamDetail]);
+  }, [isToggledShowLastReadData, msp, streamDetail]);
+
+  const onToggleShowLastReadData = (value: boolean) => {
+    setIsToggledShowLastReadData(value);
+  };
 
   const loadMoreActivity = () => {
     if (!highlightedStream) { return; }
@@ -112,18 +128,31 @@ export const VestingContractStreamDetailModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">View vesting stream</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={handleClose}
       width={480}>
+
+      {isDebugging && isWhitelisted && (
+        <div className="flex-fixed-right shift-up-2 mb-3">
+          <div className="left">Show last read data</div>
+          <div className="right">
+            <Switch 
+              size="small"
+              checked={isToggledShowLastReadData}
+              onChange={onToggleShowLastReadData}
+            />
+          </div>
+        </div>
+      )}
+
       <MoneyStreamDetails
         hasMoreStreamActivity={hasMoreStreamActivity}
         highlightedStream={highlightedStream}
         isInboundStream={isInboundStream()}
         loadingStreamActivity={loadingStreamActivity}
-        msp={msp}
         onLoadMoreActivities={loadMoreActivity}
         selectedToken={selectedToken}
-        stream={streamDetail}
+        stream={isToggledShowLastReadData ? highlightedStream : streamDetail}
         streamActivity={streamActivity}
       />
     </Modal>

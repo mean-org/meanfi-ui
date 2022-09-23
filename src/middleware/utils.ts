@@ -203,13 +203,24 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
+/**
+ * Converts a number or string representation of an amount to a formatted amount string ready to display optionally including the token symbol.
+ * @param {number | string} amount - The token amount to be displayed as UI amount.
+ * @param {string} address - The mint address of the token corresponding to the token amount.
+ * @param {boolean} onlyValue - Flag to only obtain the value but not the token symbol. Default is false.
+ * @param {TokenInfo[]} tokenList - A token list where to look for the token meta (symbol and decimals).
+ * @param {number} tokenDecimals - The token decimals if known beforehand. Can be inferred if found in tokenList but it works better by providing it.
+ * @param {boolean} friendlyDecimals - Flag to indicate to reduce the amount of decimals to display when possible based on the amount. Default is true.
+ * @returns {string} - The formatted value including the token symbol if indicated.
+ */
 export const getAmountWithSymbol = (
-  amount: number | string | BN,
+  amount: number | string,
   address: string,
   onlyValue = false,
   tokenList?: TokenInfo[],
   tokenDecimals?: number,
-) => {
+  friendlyDecimals = true
+): string => {
 
   let token: TokenInfo | undefined = undefined;
   if (address) {
@@ -218,8 +229,10 @@ export const getAmountWithSymbol = (
     } else {
       token = tokenList && isProd()
         ? tokenList.find(t => t.address === address)
-        : MEAN_TOKEN_LIST.find(t => t.address === address);
-
+        : undefined;
+      if (!token) {
+        token = MEAN_TOKEN_LIST.find(t => t.address === address);
+      }
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
           symbol: 'SOL'
@@ -254,15 +267,22 @@ export const getAmountWithSymbol = (
     }
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
-    const decimals = token ? token.decimals : 6;
+    let inputAmount = '';
+    const decimals = token ? token.decimals : 9;
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,
-      DECIMAL_PLACES: decimals
+      DECIMAL_PLACES: 20
     });
     const bigNumberAmount = typeof amount === "string"
       ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
-    const inputAmount = bigNumberAmount.toFormat(decimals);
+    const decimalPlaces = friendlyDecimals
+      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
+      : decimals;
+    if (friendlyDecimals) {
+      BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
+    }
+    inputAmount = bigNumberAmount.toFormat(decimalPlaces);
     if (token) {
       return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
     } else {
@@ -271,13 +291,24 @@ export const getAmountWithSymbol = (
   }
 }
 
+/**
+ * Converts a token amount in a UI readable format ready to display optionally including the token symbol. This method does essentially the same of getAmountWithSymbol witht the difference that the amount provided should be legitimally a token amount and providing token details it is converted to UI amount.
+ * @param {number | string | BN} amount - The token amount to be displayed as UI amount.
+ * @param {string} address - The mint address of the token corresponding to the token amount.
+ * @param {number} tokenDecimals - The token decimals if known beforehand. Can be inferred if found in tokenList but it works better by providing it.
+ * @param {TokenInfo[]} tokenList - A token list where to look for the token meta (symbol and decimals).
+ * @param {boolean} friendlyDecimals - Flag to indicate to reduce the amount of decimals to display when possible based on the amount. Default is true.
+ * @param {boolean} showSymbol - Flag to indicate adding the token symbol to the resulting value. Default is true.
+ * @returns {string} - The formatted value including the token symbol if indicated.
+ */
 export const displayAmountWithSymbol = (
   amount: number | string | BN,
   address: string,
   tokenDecimals?: number,
   tokenList?: TokenInfo[],
-  friendlyDecimals = true
-) => {
+  friendlyDecimals = true,
+  showSymbol = true,
+): string => {
 
   let token: TokenInfo | undefined = undefined;
   if (address) {
@@ -286,8 +317,10 @@ export const displayAmountWithSymbol = (
     } else {
       token = tokenList && isProd()
         ? tokenList.find(t => t.address === address)
-        : MEAN_TOKEN_LIST.find(t => t.address === address);
-
+        : undefined;
+      if (!token) {
+        token = MEAN_TOKEN_LIST.find(t => t.address === address);
+      }
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
           symbol: 'SOL'
@@ -313,7 +346,10 @@ export const displayAmountWithSymbol = (
       const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
       const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
-      const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
+      const decimalPlaces = friendlyDecimals
+        ? friendlyDisplayDecimalPlaces(parseFloat(formatted2), decimals) || decimals
+        : decimals;
+      const toLocale = formatThousands(parseFloat(formatted2), decimalPlaces, decimalPlaces);
       return `${toLocale} ${token.symbol}`;
     } else if (address && !token) {
       const formatted = formatThousands(inputAmount, 5, 5);
@@ -321,68 +357,33 @@ export const displayAmountWithSymbol = (
     }
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
-    const decimals = token ? token.decimals : 6;
+    let inputAmount = '';
+    let decimals = 9;
+    if (token) {
+      decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
+    }
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,
-      DECIMAL_PLACES: decimals
+      DECIMAL_PLACES: 20
     });
     const baseConvert = new BigNumber(10 ** decimals);
     const bigNumberAmount = typeof amount === "string"
       ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
     const value = bigNumberAmount.div(baseConvert);
-    const inputAmount = value.toFormat(
-      friendlyDecimals
-        ? friendlyDisplayDecimalPlaces(value.toString(), decimals)
-        : decimals
-    );
+    const decimalPlaces = friendlyDecimals
+      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
+      : decimals;
+    if (friendlyDecimals) {
+      BigNumber.set({ DECIMAL_PLACES: decimalPlaces, ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN });
+    }
+    inputAmount = value.toFormat(decimalPlaces);
     if (token) {
-      return `${inputAmount} ${token.symbol}`;
+      return showSymbol ? `${inputAmount} ${token.symbol}` : inputAmount;
     } else {
-      return `${inputAmount} [${shortenAddress(address, 4)}]`;
+      return showSymbol ? `${inputAmount} [${shortenAddress(address, 4)}]` : inputAmount;
     }
   }
-}
-
-export const getTokenAmountAndSymbolByTokenAddress = (
-  amount: number,
-  address: string,
-  onlyValue = false,
-  tokenList?: TokenInfo[]
-): string => {
-  let token: TokenInfo | undefined = undefined;
-  if (address) {
-    if (address === NATIVE_SOL.address) {
-      token = NATIVE_SOL as TokenInfo;
-    } else {
-      token = tokenList && isProd()
-        ? tokenList.find(t => t.address === address)
-        : MEAN_TOKEN_LIST.find(t => t.address === address);
-    }
-  }
-  const inputAmount = amount || 0;
-  if (token) {
-    const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
-    const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
-    const formatted2 = formatted.toFixed(token.decimals);
-    const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
-    if (onlyValue) { return toLocale; }
-    return `${toLocale} ${token.symbol}`;
-  } else if (address && !token) {
-    // TODO: Fair assumption but we should be able to work with either an address or a TokenInfo param
-    const unkToken: TokenInfo = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: shortenAddress(address),
-    };
-    const formatted = getFormattedNumberToLocale(formatAmount(inputAmount, unkToken.decimals));
-    return onlyValue
-      ? maxTrailingZeroes(formatted, 2)
-      : `${maxTrailingZeroes(formatted, 2)} [${shortenAddress(address, 4)}]`;
-  }
-  return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
 }
 
 export function getTxIxResume(tx: Transaction) {
@@ -421,17 +422,23 @@ export const getSdkValue = (amount: number | string, asString = false) => {
   return asString ? value.toString() : value;
 }
 
-export const toUiAmount = (amount: number | BN, decimals: number) => {
+export const toUiAmount = (amount: number | string | BN, decimals: number) => {
   if (!amount || !decimals) { return '0'; }
+
+  const baseConvert = new BigNumber(10 ** decimals);
+  let value = new BigNumber(0);
+
   if (typeof amount === "number") {
     const value = amount / (10 ** decimals);
     return value.toFixed(decimals);
+  } else if (typeof amount === "string") {
+    const bigNumberAmount = new BigNumber(amount);
+    value = bigNumberAmount.dividedBy(baseConvert);
   } else {
-    const baseConvert = new BigNumber(10 ** decimals);
     const bigNumberAmount = new BigNumber((amount as BN).toString());
-    const value = bigNumberAmount.dividedBy(baseConvert);
-    return value.toFixed(decimals);
+    value = bigNumberAmount.dividedBy(baseConvert);
   }
+  return value.toFixed(decimals);
 }
 
 export const toUiAmountBn = (amount: number | BN, decimals: number, asBn = false) => {

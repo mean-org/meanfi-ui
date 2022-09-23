@@ -4,9 +4,8 @@ import { QRCodeSVG } from "qrcode.react";
 import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { IconLoading } from "../../Icons";
-import { NATIVE_SOL_MINT } from "../../middleware/ids";
 import { NATIVE_SOL } from "../../constants/tokens";
-import { displayAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, toUiAmount } from "../../middleware/utils";
+import { displayAmountWithSymbol, getAmountFromLamports, getAmountWithSymbol, toUiAmount } from "../../middleware/utils";
 import { AddressDisplay } from "../AddressDisplay";
 
 export const SolBalanceModal = (props: {
@@ -37,7 +36,7 @@ export const SolBalanceModal = (props: {
       className="mean-modal simple-modal unpadded-content"
       title={<div className="modal-title">SOL Balance</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={360}>
@@ -59,9 +58,10 @@ export const SolBalanceModal = (props: {
               <>
                 {treasuryBalance !== undefined ? (
                   <>
-                    {getTokenAmountAndSymbolByTokenAddress(
+                    {getAmountWithSymbol(
                       treasuryBalance,
-                      NATIVE_SOL_MINT.toBase58()
+                      NATIVE_SOL.address,
+                      false
                     )}
                   </>
                 ) : (
@@ -74,7 +74,7 @@ export const SolBalanceModal = (props: {
                   <>
                     {
                       displayAmountWithSymbol(
-                        selectedMultisig.balance,
+                        getAmountFromLamports(selectedMultisig.balance),
                         NATIVE_SOL.address,
                         NATIVE_SOL.decimals
                       )

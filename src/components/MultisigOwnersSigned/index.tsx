@@ -59,8 +59,8 @@ export const MultisigOwnersSigned = (props: {
         placement="topRight"
         title={titleContent}
         content={bodyContent}
-        visible={popoverVisible}
-        onVisibleChange={handlePopoverVisibleChange}
+        open={popoverVisible}
+        onOpenChange={handlePopoverVisibleChange}
         trigger="click">
         {props.className ? (
           <span className={`${props.className}`}>

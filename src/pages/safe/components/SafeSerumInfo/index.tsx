@@ -1,14 +1,14 @@
-import './style.scss';
-import { useCallback, useEffect, useState } from 'react';
-import { Button, Col, Row } from "antd"
-import { IconArrowForward } from "../../../../Icons"
-import { SafeInfo } from "../UI/SafeInfo";
-import { Idl, Program } from '@project-serum/anchor';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
-import { ProgramAccounts } from "../../../../models/accounts";
-import { consoleOut } from '../../../../middleware/ui';
+import { Idl, Program } from '@project-serum/anchor';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
+import { Button, Col, Row } from "antd";
+import { useCallback, useEffect, useState } from 'react';
 import { ResumeItem } from '../../../../components/ResumeItem';
+import { IconArrowForward } from "../../../../Icons";
+import { consoleOut } from '../../../../middleware/ui';
+import { ProgramAccounts } from "../../../../models/accounts";
+import { SafeInfo } from "../UI/SafeInfo";
+import './style.scss';
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;
@@ -265,19 +265,19 @@ export const SafeSerumInfoView = (props: {
   // Tabs
   const tabs = [
     {
-      id: "serum01",
-      name: "Proposals",
-      render: renderListOfProposals
+      key: "serum01",
+      label: "Proposals",
+      children: renderListOfProposals
     },
     {
-      id: "serum02",
-      name: "Activity",
-      render: '' //renderActivities
+      key: "serum02",
+      label: "Activity",
+      children: '' //renderActivities
     },
     {
-      id: "serum03",
-      name: "Programs",
-      render: renderPrograms
+      key: "serum03",
+      label: "Programs",
+      children: renderPrograms
     }
   ];
 
