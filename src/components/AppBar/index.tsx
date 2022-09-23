@@ -1,21 +1,21 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
-import { useWallet } from "../../contexts/wallet";
-import { AccountDetails } from "../AccountDetails";
-import { ConnectButton } from "../ConnectButton";
-import { AppContextMenu } from "../AppContextMenu";
-import { useConnectionConfig } from '../../contexts/connection';
+import { Menu } from 'antd';
+import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link, useLocation } from 'react-router-dom';
 import { AppStateContext } from '../../contexts/appstate';
-import { DepositOptions } from '../DepositOptions';
-import { CustomCSSProps } from '../../utils/css-custom-props';
-import { isProd } from '../../utils/ui';
-import { NotificationBell } from '../CurrentBalance';
-import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
+import { useConnectionConfig } from '../../contexts/connection';
+import { useWallet } from "../../contexts/wallet";
+import { CustomCSSProps } from '../../middleware/css-custom-props';
+import { isProd } from '../../middleware/ui';
 import { RoutingInfo } from '../../models/common-types';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 import { STAKING_ROUTE_BASE_PATH } from '../../pages/staking';
+import { AccountDetails } from "../AccountDetails";
+import { AppContextMenu } from "../AppContextMenu";
+import { ConnectButton } from "../ConnectButton";
+import { NotificationBell } from '../CurrentBalance';
+import { DepositOptions } from '../DepositOptions';
 
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
@@ -128,26 +128,36 @@ export const AppBar = (props: {
   }, [isMenuOpen]);
 
   const mainNav = (
-    <Menu selectedKeys={selectedItems} mode="horizontal">
-      <Menu.Item key="accounts">
-        <Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>
-      </Menu.Item>
-      <Menu.Item key="exchange">
-        <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
-      </Menu.Item>
-      <Menu.Item key="staking">
-        <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>
-      </Menu.Item>
-      <Menu.Item key="vesting">
-        <Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>
-      </Menu.Item>
-      <Menu.Item key="multisig">
-        <Link to="/multisig">{t('ui-menus.main-menu.multisig')}</Link>
-      </Menu.Item>
-      <Menu.Item key="stats">
-        <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
-      </Menu.Item>
-    </Menu>
+    <Menu
+      selectedKeys={selectedItems}
+      mode="horizontal"
+      items={[
+        {
+          key: 'accounts',
+          label: (<Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>),
+        },
+        {
+          key: 'exchange',
+          label: (<Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>),
+        },
+        {
+          key: 'staking',
+          label: (<Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>),
+        },
+        {
+          key: 'vesting',
+          label: (<Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>),
+        },
+        {
+          key: 'multisig',
+          label: (<Link to="/multisig">{t('ui-menus.main-menu.multisig')}</Link>),
+        },
+        {
+          key: 'stats',
+          label: (<Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>),
+        },
+      ]}
+    />
   );
 
   if (props.menuType === 'desktop' ) {

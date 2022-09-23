@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Modal } from "antd";
 import { CheckOutlined } from "@ant-design/icons";
-import { useContext } from "react";
-import { AppStateContext } from "../../contexts/appstate";
+import { Modal } from "antd";
+import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from "react-i18next";
 import { DDCA_FREQUENCY_OPTIONS } from '../../constants/ddca-frequency-options';
+import { AppStateContext } from "../../contexts/appstate";
+import { getDayOfWeek, getOrdinalDay } from '../../middleware/ui';
 import { DdcaFrequencyOption } from '../../models/ddca-models';
-import { getDayOfWeek, getOrdinalDay } from '../../utils/ui';
 
 export const DdcaFrequencySelectorModal = (props: {
   handleClose: any;
@@ -73,7 +72,7 @@ export const DdcaFrequencySelectorModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{t('ddca-selector.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={480}>

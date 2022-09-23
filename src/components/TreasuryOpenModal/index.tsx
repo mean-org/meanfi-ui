@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { useState } from 'react';
 import { Modal, Button } from 'antd';
-import { isValidAddress } from '../../utils/ui';
+import { isValidAddress } from '../../middleware/ui';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../contexts/wallet';
 
@@ -83,7 +83,7 @@ export const TreasuryOpenModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{t('treasuries.open-treasury.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptTreasuryId}
       onCancel={props.handleClose}
       width={480}>

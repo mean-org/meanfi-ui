@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
-import { isError } from '../../utils/transactions';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
+import { isError } from '../../middleware/transactions';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { formatThousands, getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { MultisigMint } from '../../models/multisig';
 import { Identicon } from '../Identicon';
 
@@ -75,7 +75,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="title text-truncate">{shortenAddress(item.address, 8)}</div>
           <div className="subtitle text-truncate">decimals: {item.decimals}</div>
         </div>
         <div className="rate-cell">
@@ -98,10 +98,10 @@ export const MultisigTransferMintAuthorityModal = (props: {
           {item.label ? (
             <div className="title text-truncate">{item.label}</div>
           ) : (
-            <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
+            <div className="title text-truncate">{shortenAddress(item.id, 8)}</div>
           )}
           {
-            <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
+            <div className="subtitle text-truncate">{shortenAddress(item.id, 8)}</div>
           }
         </div>
         <div className="rate-cell">
@@ -130,7 +130,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
       title={<div className="modal-title">{t('multisig.multisig-mints.change-mint-authority-modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
@@ -200,11 +200,11 @@ export const MultisigTransferMintAuthorityModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

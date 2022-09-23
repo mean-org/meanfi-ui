@@ -1,42 +1,36 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import { Treasury, VestingTreasuryActivity, VestingTreasuryActivityAction } from '@mean-dao/msp';
 import { Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { IconExternalLink } from '../../../../Icons';
-import { getShortDate } from '../../../../utils/ui';
-import { makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { getShortDate } from '../../../../middleware/ui';
+import { displayAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../middleware/utils';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { AppStateContext } from '../../../../contexts/appstate';
 import { BN } from 'bn.js';
+import { AppStateContext } from '../../../../contexts/appstate';
 
 export const VestingContractActivity = (props: {
     contractActivity: VestingTreasuryActivity[];
     hasMoreStreamActivity: boolean;
     loadingStreamActivity: boolean;
     onLoadMoreActivities: any;
+    selectedToken: TokenInfo | undefined;
     vestingContract: Treasury | undefined;
   }) => {
-    const { contractActivity, hasMoreStreamActivity, loadingStreamActivity, onLoadMoreActivities, vestingContract } = props;
+    const {
+        contractActivity,
+        hasMoreStreamActivity,
+        loadingStreamActivity,
+        onLoadMoreActivities,
+        selectedToken,
+        vestingContract,
+    } = props;
+    const {
+        splTokenList,
+    } = useContext(AppStateContext);
     const { t } = useTranslation('common');
-    const { getTokenByMintAddress } = useContext(AppStateContext);
-    const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
-
-    // Set a working token based on the Vesting Contract's Associated Token
-    useEffect(() => {
-        if (vestingContract) {
-            let token = getTokenByMintAddress(vestingContract.associatedToken as string);
-            if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-                token = Object.assign({}, token, {
-                    symbol: 'SOL'
-                }) as TokenInfo;
-            }
-            setSelectedToken(token);
-        }
-
-        return () => { }
-    }, [getTokenByMintAddress, vestingContract])
 
     const getActivityDescription = (item: VestingTreasuryActivity) => {
         if (!vestingContract) {
@@ -97,7 +91,7 @@ export const VestingContractActivity = (props: {
             case VestingTreasuryActivityAction.TreasuryAddFunds:
             case VestingTreasuryActivityAction.TreasuryWithdraw:
             case VestingTreasuryActivityAction.TreasuryRefresh:
-                message += shortenAddress(vestingContract.id as string);
+                message += shortenAddress(vestingContract.id);
                 break;
             case VestingTreasuryActivityAction.StreamCreate:
             case VestingTreasuryActivityAction.StreamAllocateFunds:
@@ -115,11 +109,40 @@ export const VestingContractActivity = (props: {
     }
 
     const getActivityAssociatedToken = (item: VestingTreasuryActivity) => {
-        if (!vestingContract) {
+        if (!vestingContract || !selectedToken) {
             return '--';
         }
 
-        const amount = item.amount ? makeDecimal(new BN(item.amount), selectedToken?.decimals || 6) : 0;
+        const decimals = selectedToken.decimals;
+        let amount = '';
+
+        if (typeof item.amount === "string") {
+            if (!item.amount) {
+                amount = '0';
+            } else {
+                amount = displayAmountWithSymbol(
+                    item.amount,
+                    selectedToken.address,
+                    selectedToken.decimals,
+                    splTokenList,
+                    true,
+                    false
+                );
+            }
+        } else {
+            const value = item.amount ? makeDecimal(new BN(item.amount), decimals) : 0;
+            amount = item.amount
+                ? displayAmountWithSymbol(
+                        item.amount,
+                        selectedToken.address,
+                        selectedToken.decimals,
+                        splTokenList,
+                        true,
+                        false
+                    )
+                : `${value}`;
+        }
+
         let message = '';
         switch (item.action) {
             case VestingTreasuryActivityAction.TreasuryAddFunds:

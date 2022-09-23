@@ -1,5 +1,5 @@
-import { Commitment, Connection, Keypair, LAMPORTS_PER_SOL, Message, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { AnchorProvider, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
+import { Commitment, Connection, Keypair, Message, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { AnchorProvider, BN, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
 import bs58 from "bs58";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { AppConfig, UiInstruction } from "@mean-dao/mean-multisig-apps";
@@ -8,9 +8,9 @@ import { OperationType, PaymentRateType } from "./enums";
 import { MeanSplTokenInstructionCoder } from "./spl-token-coder/instruction";
 import { MeanSystemInstructionCoder } from "./system-program-coder/instruction";
 import { appConfig } from "..";
+import { getAmountFromLamports } from "../middleware/utils";
 
 export const NATIVE_LOADER = new PublicKey("NativeLoader1111111111111111111111111111111");
-export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
 export const LAMPORTS_PER_SIG = 5000;
 export const DEFAULT_EXPIRATION_TIME_SECONDS = 604800;
 export const ZERO_FEES = {
@@ -99,11 +99,28 @@ export type MintTokensInfo = {
   amount: number;
 }
 
+export type MultisigAsset = {
+  address: PublicKey;
+  amount: BN;
+  closeAuthority: PublicKey | undefined;
+  closeAuthorityOption: number;
+  decimals: number;
+  delegate: PublicKey | undefined;
+  delegateOption: number;
+  delegatedAmount: number;
+  isNative: boolean;
+  isNativeOption: number;
+  mint: PublicKey;
+  owner: PublicKey;
+  state: number;
+}
+
 export type MultisigVault = {
   address: PublicKey;
   amount: any;
   closeAuthority: PublicKey;
   closeAuthorityOption: number;
+  decimals: number;
   delegate: PublicKey;
   delegateOption: number;
   delegatedAmount: any;
@@ -112,7 +129,6 @@ export type MultisigVault = {
   mint: PublicKey;
   owner: PublicKey;
   state: number;
-  decimals: number;
 }
 
 export type MultisigMint = {
@@ -204,7 +220,7 @@ export const getFees = async (
     }
   }
 
-  txFees.rentExempt = txFees.rentExempt / LAMPORTS_PER_SOL;
+  txFees.rentExempt = getAmountFromLamports(txFees.rentExempt);
 
   return txFees;
 };

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { TransactionConfirmationStatus } from "@solana/web3.js";
 import { getSolanaExplorerClusterParam, useConnection } from "./connection";
-import { fetchTransactionStatus } from "../utils/transactions";
-import { consoleOut, delay } from "../utils/ui";
+import { fetchTransactionStatus } from "../middleware/transactions";
+import { consoleOut, delay } from "../middleware/ui";
 import { EventType, OperationType } from "../models/enums";
 import {
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
@@ -26,6 +26,7 @@ export interface TxConfirmationInfo {
   loadingMessage?: string;
   completedTitle: string;
   completedMessage: string;
+  completedMessageTimeout?: number;
   timestamp?: number;
   extras?: any;
   timestampCompleted?: number;
@@ -353,7 +354,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
         key: data.signature,
         type: "success",
         title: data.completedTitle,
-        duration: 4,
+        duration: data.completedMessageTimeout || 5,
         description: (
           <>
             <span className="mr-1">

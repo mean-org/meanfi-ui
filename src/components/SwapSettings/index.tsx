@@ -22,7 +22,7 @@ export const SwapSettings = (props: {
     props.onValueSelected(value);
   }
 
-  const onChange = (value: number) => {
+  const onChange = (value: number | null) => {
     if (!value || value < 0.1) {
       props.onValueSelected(0.1);
     } else if (value > 20) {
@@ -71,17 +71,6 @@ export const SwapSettings = (props: {
         <span className="leading-percent">%</span>
       </div>
     </div>
-    {/* <div className="inner-label">{t('swap.pools-and-routes')}</div>
-    <div className="flexible-left">
-      <div className="left">
-        <span>{t('swap.show-routes')}</span>
-      </div>
-      <div className="right">
-        <Switch size="default"
-          checked={props.showLpList}
-          onClick={() => props.onToggleShowLpList(!props.showLpList)} />
-      </div>
-    </div> */}
     </>
   );
 
@@ -91,8 +80,8 @@ export const SwapSettings = (props: {
         placement={isSmScreen() ? "bottomRight" : 'bottom'}
         title={titleContent}
         content={bodyContent}
-        visible={popoverVisible}
-        onVisibleChange={handlePopoverVisibleChange}
+        open={popoverVisible}
+        onOpenChange={handlePopoverVisibleChange}
         trigger="click">
         <Button
           shape="round"

@@ -61,7 +61,7 @@ export const QrScannerModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{t('transactions.recipient.qr-scan-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={480}>

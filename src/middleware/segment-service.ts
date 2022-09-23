@@ -219,7 +219,7 @@ export interface SegmentStreamAddFundsData {
     contributor: string;
     treasury: string;
     stream: string;
-    amount: number;
+    amount: number | string;
     valueInUsd: number;
 }
 
@@ -229,8 +229,8 @@ export interface SegmentStreamCloseData {
     stream: string;
     initializer: string;
     closeTreasury: boolean;
-    vestedReturns: number;
-    unvestedReturns: number;
+    vestedReturns: number | string;
+    unvestedReturns: number | string;
     feeAmount: number;
     valueInUsd: number;
 }
@@ -300,12 +300,12 @@ export interface SegmentStreamCreateData {
     assetPrice: number;
     treasury: string;
     beneficiary: string;
-    allocation: number;
+    allocation: number | string;
     rateAmount: number;
     interval: string;
     category: number;
     feePayedByTreasurer: boolean;
-    valueInUsd: number;
+    valueInUsd: number | string;
 }
 
 export interface SegmentStreamStatusChangeActionData {

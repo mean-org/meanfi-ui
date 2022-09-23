@@ -5,7 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { getAmountWithSymbol } from '../../../../utils/utils';
+import { getAmountWithSymbol } from '../../../../middleware/utils';
 
 export const VestingContractSolBalanceModal = (props: {
   address: string;
@@ -21,7 +21,7 @@ export const VestingContractSolBalanceModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('vesting.sol-balance.modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={360}>

@@ -4,17 +4,17 @@ import { Modal, Button, Select, Divider, Input, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { IconCheckedBox } from '../../Icons';
-import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress } from '../../utils/ui';
+import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress } from '../../middleware/ui';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { isError } from '../../utils/transactions';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
+import { isError } from '../../middleware/transactions';
 import { useConnection } from '../../contexts/connection';
 import { openNotification } from '../Notifications';
 import { CUSTOM_TOKEN_NAME } from '../../constants';
@@ -199,7 +199,7 @@ export const MultisigCreateAssetModal = (props: {
       title={<div className="modal-title">{t('multisig.create-asset.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
@@ -270,11 +270,11 @@ export const MultisigCreateAssetModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

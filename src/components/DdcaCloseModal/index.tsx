@@ -1,9 +1,8 @@
-import React from 'react';
-import { useCallback, useEffect, useState } from 'react';
-import { Modal, Button, Row, Col } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
-import { useTranslation } from 'react-i18next';
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
+import { Button, Col, Modal, Row } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getAmountWithSymbol } from '../../middleware/utils';
 
 export const DdcaCloseModal = (props: {
   handleClose: any;
@@ -51,7 +50,7 @@ export const DdcaCloseModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('ddcas.close-ddca.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={400}>
@@ -63,7 +62,7 @@ export const DdcaCloseModal = (props: {
           <div className="p-2 mb-2">
             {infoRow(
               'Amount left:',
-              getTokenAmountAndSymbolByTokenAddress(props.ddcaDetails.fromBalance, props.ddcaDetails.fromMint)
+              getAmountWithSymbol(props.ddcaDetails.fromBalance, props.ddcaDetails.fromMint)
             )}
           </div>
         )}

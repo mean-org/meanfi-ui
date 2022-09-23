@@ -11,11 +11,8 @@ export const FIVE_MINUTES_REFRESH_TIMEOUT = 5 * 60 * 1000;
 export const TEN_MINUTES_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch transaction status every 3 seconds
 export const TRANSACTION_STATUS_RETRY_TIMEOUT = 40 * 1000;   // Max timeout for trying fetch
-
-export const PERFORMANCE_SAMPLE_INTERVAL = 30 * 1000;
-export const PERFORMANCE_SAMPLE_INTERVAL_FAST = 15 * 1000;
+export const PERFORMANCE_SAMPLE_INTERVAL = 60 * 1000;
 export const PERFORMANCE_THRESHOLD = 1400;  // Min TPS to show the top bar (1400 but can be changed)
-
 export const INPUT_DEBOUNCE_TIME = 400;
 export const MIN_SOL_BALANCE_REQUIRED = 0.05;
 export const TRANSACTIONS_PER_PAGE = 15;
@@ -59,6 +56,7 @@ export const MEANFI_DOCS_URL = 'https://docs.meanfi.com/';
 export const MEANFI_SUPPORT_URL = 'https://help.meanfi.com/';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 export const FALLBACK_COIN_IMAGE = '/assets/coin-error.svg';
+export const MSP_FEE_TREASURY = '3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw';
 
 export const UNAUTHENTICATED_ROUTES = [
     '/stats',
@@ -158,6 +156,7 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
     '746bzDBsHjjTG6UByDhj8z3ozdqV1sfujH9pAKMdeyuU', // MT
     'HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv', // PNL
+    'eKWANE4MKkxq6HgQ1EWjW6WY158fHUMgyJWnhCD9kPi', // PNL
     '49XcDH9tWX67uw53TzNrPE5ovGsXd7VxgH735jBg6K64', // PL
     'HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa', // TBM
     'ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7', // TBM
@@ -180,51 +179,16 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'E9Z6RHa2Bhf7d5T455FKCag9gNbvqHuAcF3vgwkYHWGy', // INNA
 ];
 
-export const BETA_TESTING_PROGRAM_WHITELIST = [
-    'BAnWo5QFgxrd5YHeLv1hXHJE5uNAP5As5VMUCQeSjGm7', // landslide#7558
-    '2zQohFjDMEDrWsU7K1f5xD89FRsGbPMs3QHXJLdgWwUQ', // Jodi#4816
-    '7KrTkLQx6gSbYctgxFM4z4aNeNEXPmSVMhKWzRD7otVv', // Lycan#5623
-    'DrtgEbUXVdQrUiHynnaJwdeAvXniWRP7VDGP3HdhU3yG', // Mean Sage#6735
-    'AWXqUTEnRyW3icMHGsEZxM7mjhQZrbSV4rZJdmjyKmWP', // evoyudhasamael#1447
-    '9VRzJuyxMdQiFFrDPEwHwdFjyssvmmmdkxedbfrHs7xJ', // DROGAN#2748
-    'HfeYW2zVjNk6UWYugBnebNbcmkAdhAtfTxtr5zTUuyaq', // Cc#8978
-    'RNhrU5LJKf3jMX3rQze1zZniQPKnVGbh9jEnCg2oUNe',  // KaCcHan#5876
-    '59mPSAga6JxPx3Xs6vRTqx3AvtucV5KzSe1uEEw9kzNR', // ilyas erkul#6798
-    '33qmfx5x75XoDDH1mDHHhhieSSZLbVrPUutkiGas9fej', // Melo#9757
-    'HhH1xPeFejs3BJAq8mBJQNEwxATKvHgEeAkzyAMUfZRb', // FT#2143
-    'C295PDBwWerWKCjaiU1CgN2nQXdhDcfGHWWc7AVFG4F8', // Anne21#2368
-    'ApB2Vz6uT36B4nChdrSwresQqB2rPwys2FQ4qgijEyAU', // Veteran#1552
-    'FeEmMVEjVirG9JWkiaNdCuwDGUVReUZQeyhF73tyTLoF', // mandrasaab#4072
-    '3YnbfnFDCVJ3oyT6E7CgJ35Z28Z8eYKDVrdMSo3tzHQj', // Chikwe#9600
-    '4jZbaLgMTVZt2uPVveJVC8D6ZQamwUHusBuBEG6yCtc4', // Chuka#6091
-    '9XadRpBF3AgTmXpqV4rtDQruQkgfrS3qLWM2a74PW4oq', // Shoki#5876
-    'BQC45PGH9ND7hhNYpdnn56E7drE1s79GTUm7PvM38DRd', // IRON#4745
-    'AC9j6pHmtPnMshho42JJ76V1euTbeJejmXhsQEiqpf7Q', // arabianhorses#9592
-    '6MvYs7KXSs2rz8kvrq3etne9DfdwHpSAZEP1ZqCSbUuG', // I am X#5363 
-    'FtEAv3tywCZ8qhzajiuMiXxvK83PycDvNkTFqCWtVQGG', // kedma#7644
-    'ETkoGSPhSFA5oR78VfaME758monyYRDwXYkdVjzFzSG4', // kukul61#8792
-    '68q3km8UZ5LF1V54WKRfdMassQUihVJMq7cJCkH8gF6r', // Alisa6811#0327
-    'HsehbauVzYLUsNXrGfEF2vVw3b4Hj8rmVDQ3BoL7Yhdx', // honeygupta110#4799
-    'FE3wH92iD3Z6MPWw8ELj8emAUSEUprDf3TxRWVok7Y5x', // vk#9756
-    '7qhkDe159pP2YjiT8q8jCksDTKxoo7byaVT3eogFFkH4', // AlphaTrader#4172
-    'HNHr39Xkbrc9pd3oVxgFdfrZnzsDHPsDSceVuFdWaca9', // Kore#9570
-    '5Tb4pJpx16pn2pf5XoJkNdmLxneUpEhKpRU1EHZbTxkJ', // PandaGrey#4916
-    '4jqnpnZFLJ4uF9grGTazzWct5MFVLCxUJEuiJakMbXwe', // EN BZetsu#9120
-    'CmmuH3oHhDAwYKvBYiA6Z5VMErURA4BRxrn3akwvAVpG', // innovator#9506
-    '2oGP5PVgKSx1J2G5GxMFeG1svsnG5eMuVyzhFESHLLnW', // Avc?o?lu#6603
-    'Qrw6y2DiogvivGah9Dj9BuDu8Cr7qxCRUEh63Z1dmpv',  // Pavelsan#6687
-    'JCwMxrNgGE262z69gut1zAdpcLPb7Nc1Rdc98eJUfgUE', // Thikkor#4429
-    'GGqieUyW18ZForVxhrs6dttUVGELhATX6Hoj2KVTXvxK', // cavicon#1832
-    '9f8uuHm4VFzsHnBoCUZxF2cuQJzJteX4tzAqL1sPsqXQ', // Tariqstp#3899
-    'DLSKpvH2ebHC76LGHaNAfPyHsnP5EZsmtnMc6S9w5gp',  // VetHekTayfun#8968
-    'CJGyMXF2VE94ZbnieRRMU3u3fvMU44fLQXPXSgWLcaaS', // vchieu05.near#9768
-    '87SSThZ6Qz7twDWBERhrC569H7AXknELaTTKK5enJQoP', // kryscode0#2033
-    'Cs6MpDB1PBWrdFe9WwbNMaQLgeM4QKgKTXDa1cxLjd6f', // Crex#4059
-    '9VRzJuyxMdQiFFrDPEwHwdFjyssvmmmdkxedbfrHs7xJ', // DROGAN#2748
-    '3Ddn8SkXdLvkQDfp56eLrq87FYQZESot6tNC1eNCjCyZ', // Stkemzy#4940
-    'BZH9bWQWtDpoCZr4TJZ5wHy7UporeXpgEsZCEY52tNG6', // K7#4627
-    'Ak8ir4C3XCCqcUVSt6fPdph1Y8YEiDnkPzTPFqtKimyz', // Drsamxy350#6255
-];
+export const BIGNUMBER_FORMAT = {
+    prefix: '',
+    decimalSeparator: '.',
+    groupSeparator: ',',
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    fractionGroupSeparator: ' ',
+    fractionGroupSize: 0,
+    suffix: ''
+}
 
 // Date.UTC(year, month, day, hour, minute, second, millisecond)
 // REAL DATES

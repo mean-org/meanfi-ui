@@ -16,12 +16,12 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
   isLocal
-} from '../../utils/ui';
+} from '../../middleware/ui';
 import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
-import { MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { Identicon } from '../../components/Identicon';
 import "./style.scss";
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, useLocalStorageState } from '../../utils/utils';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, useLocalStorageState } from '../../middleware/utils';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
@@ -35,7 +35,7 @@ import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/we
 import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { useNavigate } from 'react-router-dom';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { DdcaCloseModal } from '../../components/DdcaCloseModal';
@@ -44,6 +44,7 @@ import { DdcaWithdrawModal } from '../../components/DdcaWithdrawModal';
 import { DdcaAddFundsModal } from '../../components/DdcaAddFundsModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { openNotification } from '../../components/Notifications';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -59,7 +60,6 @@ export const ExchangeDcasView = () => {
     setLoadingRecurringBuys,
   } = useContext(AppStateContext);
   const {
-    lastSentTxStatus,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
@@ -131,13 +131,8 @@ export const ExchangeDcasView = () => {
 
   // Keep track of current balance
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -265,9 +260,9 @@ export const ExchangeDcasView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
@@ -549,9 +544,9 @@ export const ExchangeDcasView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(balance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(balance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('DDCA withdraw transaction failed', { transcript: transactionLog });
@@ -993,11 +988,11 @@ export const ExchangeDcasView = () => {
 
   const getRecurringBuyTitle = (item: DdcaAccount) => {
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
-    return `Buy ${getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint, false, splTokenList)} worth of ${toToken?.symbol}`;
+    return `Buy ${getAmountWithSymbol(item.amountPerSwap, item.fromMint, false, splTokenList)} worth of ${toToken?.symbol}`;
   }
 
   const getRecurringBuySubTitle = (item: DdcaAccount) => {
-    return `Last purchased ${getShortDate(item.startUtc as string)}`;
+    return `Last purchased ${getShortDate(item.startUtc)}`;
   }
 
   const getRecurrencePeriod = (item: DdcaAccount | undefined): string => {
@@ -1084,7 +1079,7 @@ export const ExchangeDcasView = () => {
             <Identicon address={ddcaDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
           )}
         </span>
-        <span className="info-data ml-1">{getTokenAmountAndSymbolByTokenAddress(amount, token.address, false, splTokenList)}</span>
+        <span className="info-data ml-1">{getAmountWithSymbol(amount, token.address, false, splTokenList)}</span>
       </>
     );
   }
@@ -1094,7 +1089,7 @@ export const ExchangeDcasView = () => {
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
 
     return (
-      <span>{t("ddcas.exchange-dcas.detail-panel-word-one")} <strong>{getTokenAmountAndSymbolByTokenAddress(
+      <span>{t("ddcas.exchange-dcas.detail-panel-word-one")} <strong>{getAmountWithSymbol(
           item.amountPerSwap,
           item.fromMint,
           false,
@@ -1128,18 +1123,18 @@ export const ExchangeDcasView = () => {
     switch (item.action) {
       case "deposited":
         result = t('ddcas.activity.action-deposit', {
-          fromAmount: getTokenAmountAndSymbolByTokenAddress(item.fromAmount || 0, item.fromMint || '', false, splTokenList)
+          fromAmount: getAmountWithSymbol(item.fromAmount || 0, item.fromMint || '', false, splTokenList)
         });
         break;
       case "withdrew":
         result = t('ddcas.activity.action-withdraw', {
-          toAmount: getTokenAmountAndSymbolByTokenAddress(item.toAmount || 0, item.toMint || '', false, splTokenList)
+          toAmount: getAmountWithSymbol(item.toAmount || 0, item.toMint || '', false, splTokenList)
         });
         break;
       case "exchanged":
         result = t('ddcas.activity.action-exchange', {
-          fromAmount: getTokenAmountAndSymbolByTokenAddress(item.fromAmount || 0, item.fromMint || '', false, splTokenList),
-          toAmount: getTokenAmountAndSymbolByTokenAddress(item.toAmount || 0, item.toMint || '', false, splTokenList)
+          fromAmount: getAmountWithSymbol(item.fromAmount || 0, item.fromMint || '', false, splTokenList),
+          toAmount: getAmountWithSymbol(item.toAmount || 0, item.toMint || '', false, splTokenList)
         });
         break;
       default:
@@ -1151,9 +1146,9 @@ export const ExchangeDcasView = () => {
 
   const getOfflineActivityTitle = (item: DdcaDetails): string => {
     const result = `Exchanged ${
-      getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint, false, splTokenList)
+      getAmountWithSymbol(item.amountPerSwap, item.fromMint, false, splTokenList)
     } for ${
-      getTokenAmountAndSymbolByTokenAddress(item.toBalance, item.toMint, false, splTokenList)
+      getAmountWithSymbol(item.toBalance, item.toMint, false, splTokenList)
     }`;
     return result;
   }
@@ -1197,21 +1192,30 @@ export const ExchangeDcasView = () => {
     setAutoOpenDetailsPanel(false);
   }
 
-  const menu = (
-    <Menu>
-      {/*
-        *     If exchangeFor is > 0 -> Withdraw is visible
-      */}
-      {(ddcaDetails && ddcaDetails.toBalance > 0) && (
-        <Menu.Item key="1" onClick={showWithdrawModal}>
-          <span className="menu-item-text">{t("ddcas.exchange-dcas.withdraw")}</span>
-        </Menu.Item>
-      )}
-      <Menu.Item key="2" onClick={showCloseDdcaModal}>
-        <span className="menu-item-text">{t("ddcas.exchange-dcas.cancel-withdraw-everything")}</span>
-      </Menu.Item>
-    </Menu>
-  );
+  // If exchangeFor is > 0 -> Withdraw is visible
+  const getMenuOptions = () => {
+    const items: ItemType[] = [];
+    if (ddcaDetails && ddcaDetails.toBalance > 0) {
+      items.push({
+        key: '01-withdraw',
+        label: (
+          <div onClick={showWithdrawModal}>
+            <span className="menu-item-text">{t("ddcas.exchange-dcas.withdraw")}</span>
+          </div>
+        )
+      });
+    }
+    items.push({
+      key: '02-cancel-withdraw',
+      label: (
+        <div onClick={showCloseDdcaModal}>
+          <span className="menu-item-text">{t("ddcas.exchange-dcas.cancel-withdraw-everything")}</span>
+        </div>
+      )
+    });
+
+    return <Menu items={items} />;
+  }
 
   const renderRecurringBuy = (
     <>
@@ -1234,7 +1238,7 @@ export const ExchangeDcasView = () => {
                     <IconClock className="mean-svg-icons" />
                   </span>
                   <span className="info-data">
-                    {getReadableDate(ddcaDetails.startUtc as string)}
+                    {getReadableDate(ddcaDetails.startUtc)}
                   </span>
                 </div>
               </div>
@@ -1268,7 +1272,7 @@ export const ExchangeDcasView = () => {
               <div className="mb-3">
                 <div className="info-label">
                   {
-                    t("ddcas.exchange-dcas.exchanged-for")} {getToken(ddcaDetails.fromMint)?.symbol} ≈ {getTokenAmountAndSymbolByTokenAddress(
+                    t("ddcas.exchange-dcas.exchanged-for")} {getToken(ddcaDetails.fromMint)?.symbol} ≈ {getAmountWithSymbol(
                       ddcaDetails.swapAvgRate,
                       ddcaDetails.toMint,
                       false,
@@ -1279,7 +1283,7 @@ export const ExchangeDcasView = () => {
                 <div className="transaction-detail-row">
                   {getTokenIcon(ddcaDetails.toMint)}
                   <span className="info-data large">
-                    {getTokenAmountAndSymbolByTokenAddress(
+                    {getAmountWithSymbol(
                       ddcaDetails.toBalance,
                       ddcaDetails.toMint,
                       false,
@@ -1336,7 +1340,7 @@ export const ExchangeDcasView = () => {
                 }
               </Button>
               {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && fetchTxInfoStatus !== "fetching") && (
-                <Dropdown overlay={menu} trigger={["click"]}>
+                <Dropdown overlay={getMenuOptions()} trigger={["click"]}>
                   <Button
                     shape="round"
                     type="text"
@@ -1379,7 +1383,7 @@ export const ExchangeDcasView = () => {
                             <span className="align-middle">{getOfflineActivityTitle(ddcaDetails)}</span>
                           </div>
                           <div className="std-table-cell fixed-width-150">
-                            <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                            <span className="align-middle">{getShortDate(ddcaDetails.startUtc, true)}</span>
                           </div>
                         </span>
                       )}
@@ -1389,11 +1393,11 @@ export const ExchangeDcasView = () => {
                         </div>
                         <div className="std-table-cell responsive-cell">
                           <span className="align-middle">
-                            {t('ddcas.exchange-dcas.deposited')} {getTokenAmountAndSymbolByTokenAddress(ddcaDetails.totalDepositsAmount, ddcaDetails.fromMint, false, splTokenList)}
+                            {t('ddcas.exchange-dcas.deposited')} {getAmountWithSymbol(ddcaDetails.totalDepositsAmount, ddcaDetails.fromMint, false, splTokenList)}
                           </span>
                         </div>
                         <div className="std-table-cell fixed-width-150">
-                          <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                          <span className="align-middle">{getShortDate(ddcaDetails.startUtc, true)}</span>
                         </div>
                       </span>
                     </>
@@ -1589,7 +1593,7 @@ export const ExchangeDcasView = () => {
         className="mean-modal no-full-screen"
         maskClosable={false}
         afterClose={onAfterCloseDdcaTransactionModalClosed}
-        visible={isCloseDdcaTransactionModalVisible}
+        open={isCloseDdcaTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideCloseDdcaTransactionModal}
         width={330}
@@ -1624,12 +1628,12 @@ export const ExchangeDcasView = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: `${getAmountWithSymbol(
                       nativeBalance,
                       NATIVE_SOL_MINT.toBase58(),
                       true
                     )} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: `${getAmountWithSymbol(
                       ddcaTxFees.maxBlockchainFee,
                       NATIVE_SOL_MINT.toBase58(),
                       true
@@ -1662,7 +1666,7 @@ export const ExchangeDcasView = () => {
         className="mean-modal no-full-screen"
         maskClosable={false}
         afterClose={onAfterWithdrawTransactionModalClosed}
-        visible={isWithdrawTransactionModalVisible}
+        open={isWithdrawTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideWithdrawTransactionModal}
         width={330}
@@ -1672,7 +1676,7 @@ export const ExchangeDcasView = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getTokenAmountAndSymbolByTokenAddress(withdrawFundsAmount, ddcaDetails?.toMint as string, false, splTokenList)}</h5>
+              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, ddcaDetails?.toMint as string, false, splTokenList)}</h5>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                 <div className="indication">{t('transactions.status.instructions')}</div>
               )}
@@ -1697,11 +1701,11 @@ export const ExchangeDcasView = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         ddcaTxFees.maxBlockchainFee,
                         NATIVE_SOL_MINT.toBase58()
                       )

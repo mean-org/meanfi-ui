@@ -1,10 +1,10 @@
 import React from "react";
 import { TxConfirmationInfo } from "../../contexts/transaction-status";
 import { CheckCircleOutlined, ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { getRelativeDate } from "../../utils/ui";
+import { getRelativeDate } from "../../middleware/ui";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { shortenAddress } from "../../utils/utils";
+import { shortenAddress } from "../../middleware/utils";
 
 export const TransactionConfirmationHistory = (props: {
     confirmationHistory: TxConfirmationInfo[];

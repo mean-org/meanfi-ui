@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
 import { IDO_FETCH_FREQUENCY } from "../../constants";
-import { consoleOut, isLocal, isProd, isValidAddress } from '../../utils/ui';
+import { consoleOut, isLocal, isProd, isValidAddress } from '../../middleware/ui';
 import "./style.scss";
 import { IdoLpDeposit, IdoLpWithdraw } from '../../views';
 import Countdown from 'react-countdown';
 import { useNativeAccount } from '../../contexts/accounts';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import { useNavigate } from 'react-router';
@@ -14,10 +14,11 @@ import { useLocation } from 'react-router-dom';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { CUSTOM_USDC_TEST_IDO_DEVNET, MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { CUSTOM_USDC_TEST_IDO_DEVNET, MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled } from '@ant-design/icons';
 import { openNotification } from '../../components/Notifications';
+import { getAmountFromLamports } from '../../middleware/utils';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -300,15 +301,10 @@ export const IdoLpView = () => {
 
   // Keep track of account changes and updates token balance
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

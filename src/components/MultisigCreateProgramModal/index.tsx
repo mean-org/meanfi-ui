@@ -3,7 +3,7 @@ import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { IconCopy } from '../../Icons';
-import { copyText } from '../../utils/ui';
+import { copyText } from '../../middleware/ui';
 import { openNotification } from '../Notifications';
 
 export const MultisigCreateProgramModal = (props: {
@@ -49,7 +49,7 @@ export const MultisigCreateProgramModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('multisig.multisig-programs.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}

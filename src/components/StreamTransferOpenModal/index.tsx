@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useState } from 'react';
 import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { isValidAddress } from '../../utils/ui';
+import { isValidAddress } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
 import { Stream } from '@mean-dao/msp';
 import { StreamInfo } from '@mean-dao/money-streaming';
@@ -36,7 +36,7 @@ export const StreamTransferOpenModal = (props: {
       const v1 = streamDetail as StreamInfo;
       const v2 = streamDetail as Stream;
       if ((v1.version < 2 && v1.treasurerAddress === address) ||
-          (v2.version >= 2 && v2.treasurer === address)) {
+          (v2.version >= 2 && v2.treasurer.toBase58() === address)) {
         return true;
       }
     }
@@ -143,7 +143,7 @@ export const StreamTransferOpenModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{queryAccountType === "multisig" ? "Propose transfer stream" : t('transfer-stream.modal-title')}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={onCloseModal}
       width={480}>
 

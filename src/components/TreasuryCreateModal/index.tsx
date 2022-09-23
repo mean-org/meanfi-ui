@@ -7,17 +7,16 @@ import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { AppStateContext } from '../../contexts/appstate';
 import { TreasuryCreateOptions, TreasuryTypeOption } from '../../models/treasuries';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress, toUsCurrency } from '../../utils/ui';
-import { isError } from '../../utils/transactions';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress } from '../../middleware/ui';
+import { isError } from '../../middleware/transactions';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
-import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TokenDisplay } from '../TokenDisplay';
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { TextInput } from '../TextInput';
-import { useAccountsContext } from '../../contexts/accounts';
 import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { TokenListItem } from '../TokenListItem';
@@ -26,6 +25,7 @@ import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { useSearchParams } from 'react-router-dom';
 import { InputMean } from '../InputMean';
 import { environment } from '../../environments/environment';
+import { fetchAccountTokens } from '../../middleware/accounts';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -55,14 +55,9 @@ export const TreasuryCreateModal = (props: {
     tokenList,
     userTokens,
     splTokenList,
-    loadingPrices,
-    accountAddress,
     transactionStatus,
-    getTokenPriceBySymbol,
     setTransactionStatus,
-    refreshPrices,
   } = useContext(AppStateContext);
-  const accounts = useAccountsContext();
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
   const [proposalTitle, setProposalTitle] = useState('');
@@ -76,14 +71,6 @@ export const TreasuryCreateModal = (props: {
   const [userBalances, setUserBalances] = useState<any>();
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   const [workingTokenBalance, setWorkingTokenBalance] = useState<number>(0);
-
-  const getTokenPrice = useCallback((amount: number) => {
-    if (!workingToken) {
-      return 0;
-    }
-
-    return amount * getTokenPriceBySymbol(workingToken.symbol);
-  }, [workingToken, getTokenPriceBySymbol]);
 
   const autoFocusInput = useCallback(() => {
     const input = document.getElementById("token-search-streaming-account");
@@ -522,7 +509,7 @@ export const TreasuryCreateModal = (props: {
         title={<div className="modal-title">{param === "multisig" ? "Propose streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
         maskClosable={false}
         footer={null}
-        visible={isVisible}
+        open={isVisible}
         onOk={onAcceptModal}
         onCancel={onCloseModal}
         afterClose={onAfterClose}
@@ -592,7 +579,7 @@ export const TreasuryCreateModal = (props: {
                     <span>{t('add-funds.label-right')}:</span>
                     <span>
                       {`${workingTokenBalance && workingToken
-                          ? getTokenAmountAndSymbolByTokenAddress(
+                          ? getAmountWithSymbol(
                               workingTokenBalance,
                               workingToken.address,
                               true
@@ -684,11 +671,11 @@ export const TreasuryCreateModal = (props: {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})
@@ -769,7 +756,7 @@ export const TreasuryCreateModal = (props: {
           placement="bottom"
           closable={true}
           onClose={onCloseTokenSelector}
-          visible={isTokenSelectorVisible}
+          open={isTokenSelectorVisible}
           getContainer={false}
           style={{ position: 'absolute' }}>
           {renderTokenSelectorInner}

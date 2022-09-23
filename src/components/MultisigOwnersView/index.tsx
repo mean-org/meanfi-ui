@@ -62,8 +62,8 @@ export const MultisigOwnersView = (props: {
         placement="bottom"
         title={titleContent}
         content={bodyContent}
-        visible={popoverVisible}
-        onVisibleChange={handlePopoverVisibleChange}
+        open={popoverVisible}
+        onOpenChange={handlePopoverVisibleChange}
         trigger="click">
         {props.className ? (
           <span className={`${props.className}`}>(<span className="simplelink underline-on-hover">{props.label}</span>)</span>

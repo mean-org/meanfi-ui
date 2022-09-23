@@ -1,15 +1,14 @@
-import React from 'react';
+import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
+import { Button, Col, Modal, Row } from "antd";
 import { useEffect, useState } from "react";
-import { Modal, Button, Row, Col } from "antd";
+import { useTranslation } from "react-i18next";
+import { percentage } from "../../middleware/ui";
 import {
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   getTokenDecimals,
   getTokenSymbol,
   isValidNumber
-} from "../../utils/utils";
-import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
-import { percentage } from "../../utils/ui";
-import { useTranslation } from "react-i18next";
+} from "../../middleware/utils";
 
 export const DdcaWithdrawModal = (props: {
   ddcaDetails: DdcaDetails | undefined;
@@ -149,7 +148,7 @@ export const DdcaWithdrawModal = (props: {
       className="mean-modal"
       title={<div className="modal-title">{t('withdraw-funds.modal-title')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptWithdrawal}
       onCancel={onCloseModal}
       width={480}>
@@ -233,11 +232,11 @@ export const DdcaWithdrawModal = (props: {
         <div className="p-2 mb-2">
           {isValidInput() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
-            `~${getTokenAmountAndSymbolByTokenAddress((feeAmount as number), props.ddcaDetails.toMint as string)}`
+            `~${getAmountWithSymbol((feeAmount as number), props.ddcaDetails.toMint as string)}`
           )}
           {isValidInput() && infoRow(
             t('transactions.transaction-info.you-receive') + ':',
-            `~${getTokenAmountAndSymbolByTokenAddress(parseFloat(withdrawAmountInput) - (feeAmount as number), props.ddcaDetails.toMint as string)}`
+            `~${getAmountWithSymbol(parseFloat(withdrawAmountInput) - (feeAmount as number), props.ddcaDetails.toMint as string)}`
           )}
         </div>
       )}

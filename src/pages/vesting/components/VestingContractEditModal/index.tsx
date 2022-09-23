@@ -6,19 +6,21 @@ import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, isValidInteger, isValidNumber, makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { addDays, isValidInteger, isValidNumber, makeDecimal, shortenAddress } from '../../../../middleware/utils';
 import { Identicon } from '../../../../components/Identicon';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
+import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
 import { FormLabelWithIconInfo } from '../../../../components/FormLabelWithIconInfo';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getRateIntervalInSeconds, PaymentRateTypeOption } from '../../../../utils/ui';
+import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getRateIntervalInSeconds } from '../../../../middleware/ui';
+import { PaymentRateTypeOption } from "../../../../models/PaymentRateTypeOption";
 import { PaymentRateType } from '../../../../models/enums';
 import { IconCaretDown } from '../../../../Icons';
 import moment from 'moment';
 import { LoadingOutlined } from '@ant-design/icons';
-import { isError } from '../../../../utils/transactions';
+import { isError } from '../../../../middleware/transactions';
 import { VestingContractEditOptions } from '../../../../models/vesting';
 import BN from 'bn.js';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const timeFormat="hh:mm A"
 
@@ -75,7 +77,7 @@ export const VestingContractEditModal = (props: {
     if (isVisible && vestingContract && streamTemplate) {
       const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
       setCliffReleasePercentage(cliffPercent.toString());
-      const contractStartDate = new Date(streamTemplate.startUtc as string);
+      const contractStartDate = new Date(streamTemplate.startUtc);
       const localUsDate = contractStartDate.toLocaleDateString("en-US");
       setPaymentStartDate(localUsDate);
       setLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
@@ -241,19 +243,16 @@ export const VestingContractEditModal = (props: {
   // Rendering //
   ///////////////
 
-  const lockPeriodOptionsMenu = (
-    <Menu>
-      {getLockPeriodOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handleLockPeriodOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
+  const lockPeriodOptionsMenu = () => {
+    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+      return {
+        key: `option-${index}`,
+        label: (<span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>)
+      };
+    });
+
+    return <Menu items={items} />;
+  }
 
   const renderDatePickerExtraPanel = () => {
     return (
@@ -272,7 +271,7 @@ export const VestingContractEditModal = (props: {
           </div>
           <div className="description-cell">
             <div className="title text-truncate">{selectedMultisig.label}</div>
-            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id.toBase58(), 8)}</div>
+            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id, 8)}</div>
           </div>
           <div className="rate-cell">
             <div className="rate-amount">
@@ -293,7 +292,7 @@ export const VestingContractEditModal = (props: {
       className="mean-modal simple-modal unpadded-content"
       title={<div className="modal-title">Create Vesting Contract</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={handleClose}
       width={480}>
 
@@ -336,7 +335,7 @@ export const VestingContractEditModal = (props: {
             <div className="right">
               <div className="well">
                 <Dropdown
-                  overlay={lockPeriodOptionsMenu}
+                  overlay={lockPeriodOptionsMenu()}
                   trigger={["click"]}>
                   <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                     <div className="left">
@@ -427,7 +426,6 @@ export const VestingContractEditModal = (props: {
                     <TokenDisplay onClick={() => { }}
                       mintAddress={selectedToken.address}
                       name={selectedToken.name}
-                      showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                       fullTokenInfo={selectedToken}
                     />
                   )}

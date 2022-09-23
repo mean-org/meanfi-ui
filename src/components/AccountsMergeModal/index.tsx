@@ -1,16 +1,16 @@
-import React, { useContext, useState } from 'react';
-import { Button, Modal, Spin } from "antd";
-import { useTranslation } from 'react-i18next';
-import { useWallet } from '../../contexts/wallet';
-import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatus } from '../../models/enums';
-import { consoleOut, friendlyDisplayDecimalPlaces, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../utils/ui';
 import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
-import { AccountTokenParsedInfo } from '../../models/token';
-import { formatThousands, getTxIxResume, shortenAddress } from '../../utils/utils';
-import { createTokenMergeTx } from '../../utils/accounts';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Modal, Spin } from "antd";
+import { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { customLogger } from '../..';
+import { AppStateContext } from '../../contexts/appstate';
+import { useWallet } from '../../contexts/wallet';
+import { createTokenMergeTx } from '../../middleware/accounts';
+import { consoleOut, friendlyDisplayDecimalPlaces, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../middleware/ui';
+import { formatThousands, getTxIxResume, shortenAddress } from '../../middleware/utils';
+import { AccountTokenParsedInfo } from "../../models/accounts";
+import { TransactionStatus } from '../../models/enums';
 import { UserTokenAccount } from '../../models/transactions';
 import { TokenDisplay } from '../TokenDisplay';
 
@@ -298,7 +298,7 @@ export const AccountsMergeModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('assets.merge-accounts-link')}</div>}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onCancel={props.handleClose}
       width={400}>
 
@@ -328,7 +328,7 @@ export const AccountsMergeModal = (props: {
                             />
                           )}
                         </span>
-                        <div className="public-address">{shortenAddress(item.pubkey.toBase58(), 10)}</div>
+                        <div className="public-address">{shortenAddress(item.pubkey, 10)}</div>
                       </div>
                       <div className="right">
                         {

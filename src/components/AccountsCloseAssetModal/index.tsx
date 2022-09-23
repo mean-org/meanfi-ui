@@ -1,24 +1,24 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Button, Checkbox, Modal } from "antd";
-import { useTranslation } from "react-i18next";
-import { useConnection } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { AppStateContext } from '../../contexts/appstate';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { useNativeAccount } from '../../contexts/accounts';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
-import { OperationType, TransactionStatus } from '../../models/enums';
 import { LoadingOutlined } from '@ant-design/icons';
-import { TokenListItem } from '../TokenListItem';
 import { TransactionFees } from '@mean-dao/msp';
-import { getTxIxResume } from '../../utils/utils';
-import { openNotification } from '../Notifications';
-import { closeTokenAccount } from '../../utils/accounts';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Checkbox, Modal } from "antd";
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
-import { UserTokenAccount } from '../../models/transactions';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { useNativeAccount } from '../../contexts/accounts';
+import { AppStateContext } from '../../contexts/appstate';
+import { useConnection } from '../../contexts/connection';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { useWallet } from '../../contexts/wallet';
+import { closeTokenAccount } from '../../middleware/accounts';
+import { consoleOut, getTransactionStatusForLogs } from '../../middleware/ui';
+import { getAmountFromLamports, getTxIxResume } from '../../middleware/utils';
+import { OperationType, TransactionStatus } from '../../models/enums';
+import { UserTokenAccount } from '../../models/transactions';
 import { InputMean } from '../InputMean';
+import { openNotification } from '../Notifications';
+import { TokenListItem } from '../TokenListItem';
 
 export const AccountsCloseAssetModal = (props: {
   connection: Connection;
@@ -56,13 +56,8 @@ export const AccountsCloseAssetModal = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -421,7 +416,7 @@ export const AccountsCloseAssetModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">Close Token Account</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={370}>

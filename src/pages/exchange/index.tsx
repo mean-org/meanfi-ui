@@ -1,11 +1,11 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
-import { consoleOut, isProd } from '../../utils/ui';
+import { consoleOut, isProd } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
 import { AppStateContext } from '../../contexts/appstate';
-import { getTokenBySymbol, useLocalStorageState } from '../../utils/utils';
+import { getTokenBySymbol, useLocalStorageState } from '../../middleware/utils';
 import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +13,7 @@ import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 
 type SwapOption = "one-time" | "recurring";
 

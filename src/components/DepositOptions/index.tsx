@@ -1,20 +1,18 @@
-import React from 'react';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Col, Modal, Row, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { appConfig } from '../..';
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
-import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
-import { consoleOut, copyText } from "../../utils/ui";
 import { AppConfig, environment } from '../../environments/environment';
-import "./style.scss";
-import { ArrowLeftOutlined } from '@ant-design/icons';
 import useScript from '../../hooks/useScript';
-import { appConfig } from '../..';
+import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
+import { consoleOut, copyText } from "../../middleware/ui";
 import { openNotification } from '../Notifications';
-
-import {QRCodeSVG} from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
+import "./style.scss";
 
 declare const TransakSDK: any;
 let transak: any = undefined;
@@ -25,7 +23,6 @@ export const DepositOptions = (props: {
 }) => {
   const { t } = useTranslation("common");
   const { publicKey, connected } = useWallet();
-  const { theme } = useContext(AppStateContext);
 
   // Load the Transak widget script asynchronously
   const {status} = useScript(`https://global.transak.com/sdk/v1.1/widget.js`);
@@ -184,7 +181,7 @@ export const DepositOptions = (props: {
         </>
       }
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={props.handleClose}
       onCancel={props.handleClose}
       afterClose={closePanels}

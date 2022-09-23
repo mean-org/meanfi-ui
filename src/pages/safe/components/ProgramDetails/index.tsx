@@ -14,17 +14,16 @@ import { TxConfirmationContext } from "../../../../contexts/transaction-status";
 import { useWallet } from "../../../../contexts/wallet";
 import { IconArrowBack } from "../../../../Icons";
 import { OperationType, TransactionStatus } from "../../../../models/enums";
-import { NATIVE_SOL_MINT } from "../../../../utils/ids";
-import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "../../../../utils/ui";
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../../../utils/utils";
-import { customLogger } from "../../../..";
+import { NATIVE_SOL_MINT } from "../../../../middleware/ids";
+import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "../../../../middleware/ui";
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from "../../../../middleware/utils";
+import { appConfig, customLogger } from "../../../..";
 import { TabsMean } from '../../../../components/TabsMean';
 import { AnchorProvider, Program } from '@project-serum/anchor';
-import { NATIVE_SOL } from '../../../../utils/tokens';
+import { NATIVE_SOL } from '../../../../constants/tokens';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 import moment from 'moment';
 import ReactJson from 'react-json-view'
-import { appConfig } from '../../../..';
 
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
@@ -32,7 +31,6 @@ export const ProgramDetailsView = (props: {
   programSelected: any;
   selectedMultisig?: any;
 }) => {
-  // const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
@@ -61,17 +59,12 @@ export const ProgramDetailsView = (props: {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
-  // const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
   const [selectedProgramIdl, setSelectedProgramIdl] = useState<any>(null);
   const [loadingTxs, setLoadingTxs] = useState(true);
   const [programTransactions, setProgramTransactions] = useState<any>();
   const noIdlInfo = "The program IDL is not initialized. To load the IDL info please run `anchor idl init` with the required parameters from your program workspace.";
 
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   // When back button is clicked, goes to Safe Info
   const hideProgramDetailsHandler = () => {
@@ -103,8 +96,9 @@ export const ProgramDetailsView = (props: {
       multisigAddressPK
     );
   }, [
-    connection,
     publicKey,
+    connection,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -158,8 +152,6 @@ export const ProgramDetailsView = (props: {
     clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.UpgradeProgram);
-    setRetryOperationPayload(data);
     setIsBusy(true);
 
     const upgradeProgram = async (data: any) => {
@@ -244,9 +236,9 @@ export const ProgramDetailsView = (props: {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 transactionFees.blockchainFee + transactionFees.mspFlatFee, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -256,7 +248,7 @@ export const ProgramDetailsView = (props: {
           return false;
         }
 
-        return await upgradeProgram(data)
+        return upgradeProgram(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('createTreasury returned transaction:', value);
@@ -311,7 +303,7 @@ export const ProgramDetailsView = (props: {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -359,7 +351,7 @@ export const ProgramDetailsView = (props: {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -420,28 +412,27 @@ export const ProgramDetailsView = (props: {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onProgramUpgraded();
-            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
   }, [
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigClient,
+    selectedMultisig,
+    transactionCancelled,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
     clearTxConfirmationContext,
+    startFetchTxSignatureInfo,
     resetTransactionStatus,
-    connection, 
-    multisigClient, 
-    nativeBalance, 
-    onProgramUpgraded, 
-    publicKey, 
-    selectedMultisig, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
-    wallet
+    setTransactionStatus,
+    onProgramUpgraded,
   ]);
 
   // Set program authority modal
@@ -476,8 +467,6 @@ export const ProgramDetailsView = (props: {
     clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.SetMultisigAuthority);
-    setRetryOperationPayload(data);
     setIsBusy(true);
 
     const setProgramAuth = async (data: any) => {
@@ -562,9 +551,9 @@ export const ProgramDetailsView = (props: {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 transactionFees.blockchainFee + transactionFees.mspFlatFee, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -574,7 +563,7 @@ export const ProgramDetailsView = (props: {
           return false;
         }
 
-        return await setProgramAuth(data)
+        return setProgramAuth(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('createTreasury returned transaction:', value);
@@ -629,7 +618,7 @@ export const ProgramDetailsView = (props: {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -677,7 +666,7 @@ export const ProgramDetailsView = (props: {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -738,40 +727,36 @@ export const ProgramDetailsView = (props: {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onProgramAuthSet();
-            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
   }, [
-    clearTxConfirmationContext,
-    resetTransactionStatus,
-    connection,
-    multisigClient,
-    nativeBalance,
-    onProgramAuthSet,
+    wallet,
     publicKey,
+    connection,
+    nativeBalance,
+    multisigClient,
     selectedMultisig,
-    setTransactionStatus,
-    startFetchTxSignatureInfo,
+    multisigAddressPK,
     transactionCancelled,
-    transactionFees.blockchainFee,
     transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
     transactionStatus.currentOperation,
-    wallet
+    clearTxConfirmationContext,
+    startFetchTxSignatureInfo,
+    resetTransactionStatus,
+    setTransactionStatus,
+    onProgramAuthSet,
   ]);
 
   // Keep account balance updated
   useEffect(() => {
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -975,7 +960,7 @@ export const ProgramDetailsView = (props: {
       };
 
       const anchorWallet = {
-        publicKey: publicKey as PublicKey,
+        publicKey: publicKey,
         signAllTransactions: async (txs: any) => txs,
         signTransaction: async (tx: any) => tx,
       };
@@ -987,7 +972,7 @@ export const ProgramDetailsView = (props: {
 
     const provider = createAnchorProvider();
 
-    return await Program.fetchIdl(programSelected.pubkey, provider);
+    return Program.fetchIdl(programSelected.pubkey, provider);
 
   }, [
     connection, 

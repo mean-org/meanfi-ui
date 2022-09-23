@@ -1,31 +1,28 @@
 import './style.scss';
-import { formatThousands, shortenAddress } from "../../../../utils/utils";
+import { formatThousands, getAmountFromLamports, shortenAddress } from "../../../../middleware/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { MeanMultisig, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { consoleOut } from '../../../../utils/ui';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { consoleOut } from '../../../../middleware/ui';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
-import { useWallet } from '../../../../contexts/wallet';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { openNotification } from '../../../../components/Notifications';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { useNativeAccount } from '../../../../contexts/accounts';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { NATIVE_SOL_MINT } from '../../../../utils/ids';
-import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
+import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
+import { ACCOUNT_LAYOUT } from '../../../../middleware/layouts';
 import BN from 'bn.js';
 import { IconArrowForward } from '../../../../Icons';
 import { ResumeItem } from '../../../../components/ResumeItem';
 import { appConfig } from '../../../..';
 
 export const SafeMeanInfo = (props: {
-  assetSelected?: any;
   connection: Connection;
-  isAssetDetails: boolean;
   isProgramDetails: boolean;
   isProposalDetails: boolean;
   loadingPrograms: boolean;
@@ -39,12 +36,15 @@ export const SafeMeanInfo = (props: {
   onRefreshRequested: any;
   proposalSelected?: any;
   publicKey: PublicKey | null | undefined;
+  safeBalanceInUsd: number;
   selectedMultisig?: any;
   selectedTab?: any;
   vestingAccountsCount: number;
 }) => {
   const {
     connection,
+    isProgramDetails,
+    isProposalDetails,
     loadingPrograms,
     loadingProposals,
     multisigClient,
@@ -56,6 +56,7 @@ export const SafeMeanInfo = (props: {
     onRefreshRequested,
     proposalSelected,
     publicKey,
+    safeBalanceInUsd,
     selectedMultisig,
     selectedTab,
     vestingAccountsCount,
@@ -64,7 +65,6 @@ export const SafeMeanInfo = (props: {
     programs,
     multisigTxs,
     multisigSolBalance,
-    previousWalletConnectState,
     setMultisigSolBalance,
     refreshTokenBalance,
     setMultisigVaults,
@@ -75,7 +75,6 @@ export const SafeMeanInfo = (props: {
     lastSentTxOperationType,
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
-  const navigate = useNavigate();
   const location = useLocation();
   const { address } = useParams();
   const { t } = useTranslation('common');
@@ -92,8 +91,8 @@ export const SafeMeanInfo = (props: {
   // Tabs
   const [amountOfProposals, setAmountOfProposals] = useState<string>("");
   const [amountOfPrograms, setAmountOfPrograms] = useState<string>("");
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-  
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+
   const getMultisigVaults = useCallback(async (
     connection: Connection,
     multisig: PublicKey
@@ -122,7 +121,7 @@ export const SafeMeanInfo = (props: {
 
     return results;
 
-  },[]);
+  },[multisigAddressPK]);
 
   const getSolToken = useCallback(() => {
 
@@ -200,15 +199,10 @@ export const SafeMeanInfo = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -393,8 +387,8 @@ export const SafeMeanInfo = (props: {
                 // Sends program value to the parent component "SafeView"
                 onDataToProgramView(program);
               }
-              const programTitle = program.pubkey ? shortenAddress(program.pubkey.toBase58(), 4) : "Unknown program";
-              const programSubtitle = shortenAddress(program.pubkey.toBase58(), 8);
+              const programTitle = program.pubkey ? shortenAddress(program.pubkey, 4) : "Unknown program";
+              const programSubtitle = shortenAddress(program.pubkey, 8);
               return (
                 <div 
                   key={`${index + 1}`}
@@ -448,6 +442,7 @@ export const SafeMeanInfo = (props: {
         onRefreshTabsInfo={onRefreshRequested}
         selectedMultisig={selectedMultisig}
         selectedTab={selectedTab}
+        totalSafeBalance={safeBalanceInUsd}
         programsTabContent={programsTabContent()}
         proposalsTabContent={proposalsTabContent()}
         vestingAccountsCount={vestingAccountsCount}

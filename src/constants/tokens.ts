@@ -1,6 +1,19 @@
+import { NATIVE_SOL_MINT } from '../middleware/ids';
 import { TokenInfo } from '@solana/spl-token-registry';
+import { isProd } from '../middleware/ui';
 
 const LOGO_BASE_URL = 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet';
+
+export const NATIVE_SOL: TokenInfo = {
+  chainId: isProd() ? 101 : 103,
+  symbol: 'SOL',
+  name: 'Native SOL',
+  address: NATIVE_SOL_MINT.toString(),
+  decimals: 9,
+  logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
+  tags: ['raydium']
+}
+
 export const CUSTOM_USDC_TEST_IDO_DEVNET = {
     chainId: 103,
     address: 'FsWi13eBPngZ87JTyEcQsPjbQqefoPfLJyhtbNeGyLCX',
@@ -627,6 +640,15 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     },
     // Testnet tokens
     {
+        chainId: 101,
+        address: '58fPBSQdynbfwgsus8FUpsiXSRtBm6L5VUbuFuAxSAjw',
+        symbol: 'eKWAN',
+        name: 'eKWAN',
+        decimals: 9,
+        logoURI: 'https://3txtza3bmunfw5ckgetu7qtgobudm6ii5hyyid7vrprmzykzhfmq.arweave.net/3O88g2FlGlt0SjEnT8JmcGg2eQjp8YQP9YvizOFZOVk?ext=png',
+        tags: [],
+    },
+    {
         chainId: 102,
         address: 'CpMah17kQEL2wqyMKt3mZBdTnZbkbfx4nqmQMFDP5vwp',
         symbol: 'USDC',
@@ -851,5 +873,78 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         decimals: 6,
         logoURI: '',
         tags: [],
-    }
+    },
+    // Custom tokens for testing
+    {
+        chainId: 103,
+        address: 'CeN7JbGgYyNthdoAWECczViR7NaCY6yUwCmyQHcg873M',
+        symbol: 'THREE',
+        name: 'THREE',
+        decimals: 3,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 103,
+        address: 'GmopnWLpQqYdMAR1w3kabxt15mBAReZvdD2FbBxjp7aT',
+        symbol: 'FOUR',
+        name: 'FOUR',
+        decimals: 4,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 103,
+        address: 'AyKVZFJiZF9mdhLR3TuXQHS6mBwecz6NRWLgxTcsJiVj',
+        symbol: 'FIVE',
+        name: 'FIVE',
+        decimals: 5,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 103,
+        address: '5BtmxTiSKcRFAn1tNXoRjiTGKepX6gtDdJUoKMe5rfxu',
+        symbol: 'SIX',
+        name: 'Six',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 103,
+        address: 'G1QahEecVmBhYibu8ZxPRqBSZQNYF8PRAXBLZpuVzRk9',
+        symbol: 'NINE',
+        name: 'NINE',
+        decimals: 9,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 103,
+        address: 'G5chh3Vtbunk4KYCaF2475MsrndFbNM5Yj3gzVrgXvZk',
+        symbol: 'TEN',
+        name: 'TEN',
+        decimals: 10,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 103,
+        address: '5x7ZwspfHfWkx5cWaSwKx7V4rUHsnmxaf3bRbwVKfk8r',
+        symbol: 'ELEVEN',
+        name: 'ELEVEN',
+        decimals: 11,
+        logoURI: '',
+        tags: [],
+    },
+    {
+        chainId: 103,
+        address: 'Dma8Hv94ByVHMXDU8ioh6iW3P1gWTYk6PerAnGCtZMpv',
+        symbol: 'TWELVE',
+        name: 'TWELVE',
+        decimals: 12,
+        logoURI: '',
+        tags: [],
+    },
 ];

@@ -1,9 +1,9 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import "./style.scss";
-import { consoleOut, copyText, getTransactionOperationDescription } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionOperationDescription } from '../../middleware/ui';
 import { useTranslation } from 'react-i18next';
-import { isError } from '../../utils/transactions';
+import { isError } from '../../middleware/transactions';
 import { TransactionStatus } from '../../models/enums';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
@@ -381,7 +381,7 @@ export const MultisigProposalModal = (props: {
       title={<div className="modal-title">New proposal</div>}
       maskClosable={false}
       footer={null}
-      visible={isModalVisible}
+      open={isModalVisible}
       // onOk={onAcceptModal}
       onCancel={onCloseModal}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
@@ -1028,11 +1028,11 @@ export const MultisigProposalModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {/* {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

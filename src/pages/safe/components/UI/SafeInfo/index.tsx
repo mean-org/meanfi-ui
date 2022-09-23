@@ -1,24 +1,22 @@
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Tabs, Tooltip } from "antd";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
 import { RightInfoDetails } from "../../../../../components/RightInfoDetails";
 import { SolBalanceModal } from "../../../../../components/SolBalanceModal";
 import { MIN_SOL_BALANCE_REQUIRED } from "../../../../../constants";
+import { NATIVE_SOL } from "../../../../../constants/tokens";
 import { useNativeAccount } from "../../../../../contexts/accounts";
 import { AppStateContext } from "../../../../../contexts/appstate";
-import { IconEllipsisVertical, IconInfoCircle, IconLoading } from "../../../../../Icons";
-import { UserTokenAccount } from "../../../../../models/transactions";
-import { NATIVE_SOL } from "../../../../../utils/tokens";
-import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
-import { shortenAddress } from "../../../../../utils/utils";
+import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
+import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../middleware/ui";
+import { getAmountFromLamports, shortenAddress } from "../../../../../middleware/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
 import { VESTING_ROUTE_BASE_PATH } from "../../../../vesting";
-
-const { TabPane } = Tabs;
 
 export const SafeInfo = (props: {
   isTxInProgress?: any;
@@ -28,6 +26,7 @@ export const SafeInfo = (props: {
   onRefreshTabsInfo?: any;
   programsTabContent?: any;
   proposalsTabContent?: any;
+  totalSafeBalance?: number;
   safeNameImg?: string;
   safeNameImgAlt?: string;
   selectedMultisig?: MultisigInfo;
@@ -43,6 +42,7 @@ export const SafeInfo = (props: {
     onRefreshTabsInfo,
     programsTabContent,
     proposalsTabContent,
+    totalSafeBalance,
     safeNameImg,
     safeNameImgAlt,
     selectedMultisig,
@@ -51,16 +51,11 @@ export const SafeInfo = (props: {
     vestingAccountsCount,
   } = props;
   const {
-    coinPrices,
-    splTokenList,
     isWhitelisted,
     multisigVaults,
     accountAddress,
-    totalSafeBalance,
     multisigSolBalance,
-    getTokenByMintAddress,
     refreshTokenBalance,
-    setTotalSafeBalance,
     setActiveTab,
   } = useContext(AppStateContext);
   const navigate = useNavigate();
@@ -71,9 +66,7 @@ export const SafeInfo = (props: {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
 
-  const isUnderDevelopment = () => {
-    return isLocal() || (isDev() && isWhitelisted) ? true : false;
-  }
+  const isUnderDevelopment = useMemo(() => isLocal() || (isDev() && isWhitelisted) ? true : false, [isWhitelisted]);
 
   ////////////////
   ///  MODALS  ///
@@ -86,15 +79,10 @@ export const SafeInfo = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -111,7 +99,7 @@ export const SafeInfo = (props: {
       if (selectedMultisig.label) {
         setSelectedLabelName(selectedMultisig.label)
       } else {
-        setSelectedLabelName(shortenAddress(selectedMultisig.id.toBase58(), 4))
+        setSelectedLabelName(shortenAddress(selectedMultisig.id, 4))
       }
     }
   }, [selectedMultisig]);
@@ -134,17 +122,9 @@ export const SafeInfo = (props: {
       <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig ? selectedMultisig.owners : []} />
     </>
   );
-  
+
   // Safe Balance
   const [assetsAmout, setAssetsAmount] = useState<string>();
-
-  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
 
   // Show amount of assets
   useEffect(() => {
@@ -162,43 +142,6 @@ export const SafeInfo = (props: {
   }, [
     multisigVaults, 
     selectedMultisig
-  ]);
-
-  // Fetch safe balance.
-  useEffect(() => {
-
-    if (!selectedMultisig || !multisigVaults || !multisigVaults.length) { return; }
-    
-    const timeout = setTimeout(() => {
-      let usdValue = 0;
-
-      usdValue = multisigSolBalance ? (multisigSolBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL) : 0;
-
-      for (const item of multisigVaults) {
-        const token = getTokenByMintAddress(item.mint.toBase58());
-
-        if (token) {
-          const rate = getPricePerToken(token);
-          const balance = item.amount.toNumber() / 10 ** token.decimals;
-          usdValue += balance * rate;
-        }
-      }
-      
-      setTotalSafeBalance(usdValue);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    getPricePerToken,
-    selectedMultisig,
-    splTokenList,
-    multisigVaults,
-    multisigSolBalance,
-    setTotalSafeBalance,
-    getTokenByMintAddress
   ]);
 
   const renderSafeBalance = (
@@ -261,65 +204,95 @@ export const SafeInfo = (props: {
     }
   }
 
-  const onTabChanged = (tab: string) => {
+  const onTabChanged = useCallback((tab: string) => {
     consoleOut('Setting tab to:', tab, 'blue');
     setActiveTab(tab);
     setSearchParams({v: tab as string});
-  }
+  }, [setActiveTab, setSearchParams]);
 
-  // Dropdown (three dots button)
-  const menu = (
-    <Menu>
-      <Menu.Item key="ms-00" onClick={onEditMultisigClick}>
-        <span className="menu-item-text">Edit safe</span>
-      </Menu.Item>
-      {isUnderDevelopment() && (
-        <Menu.Item key="ms-01" onClick={() => {}}>
-          <span className="menu-item-text">Delete safe</span>
-        </Menu.Item>
-      )}
-      <Menu.Item key="ms-02" onClick={onRefreshTabsInfo}>
-        <span className="menu-item-text">Refresh</span>
-      </Menu.Item>
-    </Menu>
-  );
+  const renderDropdownMenu = useCallback(() => {
+    const items: ItemType[] = [];
+    items.push({
+      key: '01-edit-safe',
+      label: (
+        <div onClick={() => onEditMultisigClick()}>
+          <span className="menu-item-text">Edit safe</span>
+        </div>
+      )
+    });
+    if (isUnderDevelopment) {
+      items.push({
+        key: '02-delete-safe',
+        label: (
+          <div onClick={() => consoleOut('Not implemented yet', '', 'red')}>
+            <span className="menu-item-text">Delete safe</span>
+          </div>
+        )
+      });
+    }
+    items.push({
+      key: '03-refresh',
+      label: (
+        <div onClick={() => onRefreshTabsInfo()}>
+          <span className="menu-item-text">Refresh</span>
+        </div>
+      )
+    });
+
+    return <Menu items={items} />;
+  }, [isUnderDevelopment, onEditMultisigClick, onRefreshTabsInfo]);
+
+  const getSafeTabs = useCallback(() => {
+    const items = [];
+    if (proposalsTabContent) {
+      items.push({
+        key: proposalsTabContent.id,
+        label: proposalsTabContent.name,
+        children: proposalsTabContent.render
+      });
+    } else {
+      items.push({
+        key: "proposals",
+        label: "Proposals",
+        children: 'Loading...'
+      });
+    }
+    if (programsTabContent) {
+      items.push({
+        key: programsTabContent.id,
+        label: programsTabContent.name,
+        children: programsTabContent.render
+      });
+    } else {
+      items.push({
+        key: "programs",
+        label: "Programs",
+        children: 'Loading...'
+      });
+    }
+
+    return (
+      <Tabs
+        items={items}
+        activeKey={selectedTab}
+        onChange={onTabChanged}
+        className="neutral"
+      />
+    );
+  }, [onTabChanged, programsTabContent, proposalsTabContent, selectedTab]);
 
   const renderTabset = () => {
     if (tabs && tabs.length > 0) {
       return (
-        <Tabs activeKey={selectedTab} onChange={onTabChanged} className="neutral">
-          {tabs && tabs.map(item => {
-            return (
-              <TabPane tab={item.name} key={item.id} tabKey={item.id}>
-                {item.render}
-              </TabPane>
-            );
-          })}
-        </Tabs>
+        <Tabs
+          items={tabs}
+          activeKey={selectedTab}
+          onChange={onTabChanged}
+          className="neutral"
+        />
       );
     } else {
-      return (
-        <Tabs activeKey={selectedTab} onChange={onTabChanged} className="neutral">
-          {proposalsTabContent ? (
-            <TabPane tab={proposalsTabContent.name} key={proposalsTabContent.id} tabKey={proposalsTabContent.id}>
-              {proposalsTabContent.render}
-            </TabPane>
-          ) : (
-            <TabPane tab="Proposals" key="proposals" tabKey="proposals">
-              Loading...
-            </TabPane>
-          )}
-          {programsTabContent ? (
-            <TabPane tab={programsTabContent.name} key={programsTabContent.id} tabKey={programsTabContent.id}>
-              {programsTabContent.render}
-            </TabPane>
-          ) : (
-            <TabPane tab="Programs" key="programs" tabKey="programs">
-              Loading...
-            </TabPane>
-          )}
-        </Tabs>
-      );
+      return getSafeTabs();
     }
   }
 
@@ -382,7 +355,7 @@ export const SafeInfo = (props: {
         
         <Col xs={4} sm={6} md={4} lg={6}>
           <Dropdown
-            overlay={menu}
+            overlay={renderDropdownMenu()}
             placement="bottomRight"
             trigger={["click"]}>
             <span className="ellipsis-icon icon-button-container mr-1">

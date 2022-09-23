@@ -3,7 +3,7 @@ import { Modal } from "antd";
 import { useTranslation } from "react-i18next";
 import "./style.scss";
 import { IconCopy, IconFacebook, IconLinkedin, IconTelegram, IconTwitter, IconWhatsapp } from '../../Icons';
-import { copyText } from '../../utils/ui';
+import { copyText } from '../../middleware/ui';
 import {
   FacebookShareButton,
   LinkedinShareButton,
@@ -52,7 +52,7 @@ export const ReferFriendModal = (props: {
         className="mean-modal simple-modal"
         title={<div className="modal-title">{t('referrals.modal-title')}</div>}
         footer={null}
-        visible={props.isVisible}
+        open={props.isVisible}
         onCancel={props.handleClose}
         width={450}>
         <div className="transaction-progress refer-friend-wrapper">

@@ -1,14 +1,14 @@
 import React, { useCallback, useContext } from 'react';
 import { useEffect, useState } from 'react';
-import { Modal, Button, Spin, Select } from 'antd';
-import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { getTransactionOperationDescription } from '../../utils/ui';
+import { Modal, Button, Spin } from 'antd';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
+import { getTransactionOperationDescription } from '../../middleware/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
-import { isError } from '../../utils/transactions';
+import { isError } from '../../middleware/transactions';
 import { TransactionStatus } from '../../models/enums';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { formatThousands, getSdkValue, getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { Treasury, TreasuryType } from '@mean-dao/msp';
 import { AppStateContext } from '../../contexts/appstate';
 import { useSearchParams } from 'react-router-dom';
@@ -73,7 +73,7 @@ export const TreasuryCloseModal = (props: {
       <div className="token-icon">
         {(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
           <>
-            {token ? (
+            {token && token.logoURI ? (
               <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
               <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "20", display: "inline-flex" }} />
@@ -125,7 +125,7 @@ export const TreasuryCloseModal = (props: {
         ) : (
           <>
           <div className="rate-amount">
-            {formatThousands(isV2Treasury ? v2.totalStreams : v1.streamsAmount)}
+            {formatThousands(isV2Treasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
           </div>
           <div className="interval">streams</div>
           </>
@@ -194,7 +194,7 @@ export const TreasuryCloseModal = (props: {
       title={<div className="modal-title">{param === "multisig" ? "Propose close account" : t('treasuries.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onCancel={props.handleClose}
       width={380}>
 
@@ -291,11 +291,11 @@ export const TreasuryCloseModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

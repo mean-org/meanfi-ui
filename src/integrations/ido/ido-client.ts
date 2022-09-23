@@ -10,6 +10,7 @@ import { Wallet } from "anchor-0-20-1/src/provider";
 import ido_idl from './mean_ido_pool.json';
 import EventEmitter from 'eventemitter3';
 import { MeanIdoPool } from "./mean_ido_pool_types";
+import { MSP_FEE_TREASURY } from '../../constants';
 
 
 type idoAccountType = IdlAccounts<MeanIdoPool>["idoAccount"];
@@ -21,7 +22,7 @@ const SYSVAR_RENT_PUBKEY = anchor.web3.SYSVAR_RENT_PUBKEY;
 const DECIMALS = 6;
 const DECIMALS_BN = new BN(DECIMALS);
 const IDO_READONLY_PUBKEY = new PublicKey("3KmMEv7A8R3MMhScQceXBQe69qLmnFfxSM3q8HyzkrSx");
-const MSP_FEE_PUBKEY = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
+const MSP_FEE_PUBKEY = new PublicKey(MSP_FEE_TREASURY);
 const MSP_PROGRAM_PUBKEY_DEVNET = new PublicKey("9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k");
 const MSP_PROGRAM_PUBKEY_MAINNET = new PublicKey("H6wJxgkcc93yeUFnsZHgor3Q3pSWgGpEysfqKrwLtMko");
 

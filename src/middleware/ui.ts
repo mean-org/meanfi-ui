@@ -4,9 +4,11 @@ import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { environment } from "../environments/environment";
-import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
+import { BIGNUMBER_FORMAT, SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
 import dateFormat from "dateformat";
 import { TimeData } from "../models/common-types";
+import BN from "bn.js";
+import BigNumber from "bignumber.js";
 
 export const isDev = (): boolean => {
     return environment === 'development';
@@ -42,64 +44,34 @@ export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'blac
     }
 }
 
-export class CoolOffPeriodTypeOption {
-    key: number;
-    value: PaymentRateType;
-    text: string;
+export const friendlyDisplayDecimalPlaces = (amount: number | string, decimals?: number) => {
+    if (!decimals) { return undefined; }
 
-    constructor(
-        public _key: number,
-        public _value: PaymentRateType,
-        public _text: string
-    ) {
-        this.key = _key;
-        this.value = _value;
-        this.text = _text;
-    }
-}
+    if (typeof amount === "string") {
 
-export class PaymentRateTypeOption {
-    key: number;
-    value: PaymentRateType;
-    text: string;
-
-    constructor(
-        public _key: number,
-        public _value: PaymentRateType,
-        public _text: string
-    ) {
-        this.key = _key;
-        this.value = _value;
-        this.text = _text;
-    }
-}
-
-export class LockPeriodTypeOption {
-    key: number;
-    value: PaymentRateType;
-    text: string;
-
-    constructor(
-        public _key: number,
-        public _value: PaymentRateType,
-        public _text: string
-    ) {
-        this.key = _key;
-        this.value = _value;
-        this.text = _text;
-    }
-}
-
-export const friendlyDisplayDecimalPlaces = (amount: number, decimals?: number) => {
-    const value = Math.abs(amount);
-    if (value < 1) {
-        return decimals || undefined;
-    } else if (value < 1000) {
-        return 4;
-    } else if (value >= 1000 && value < 100000) {
-        return 3;
+        const baseConvert = new BigNumber(10 ** decimals);
+        const bigNumberAmount = new BigNumber(amount);
+        const value = bigNumberAmount.div(baseConvert);
+        if (value.isLessThan(10)) {
+            return decimals || undefined;
+        } else if (value.isGreaterThanOrEqualTo(10) && value.isLessThan(1000)) {
+            return 4;
+        } else if (value.isGreaterThanOrEqualTo(1000) && value.isLessThan(100000)) {
+            return 3;
+        } else {
+            return 2;
+        }
     } else {
-        return 2;
+        const value = Math.abs(amount);
+        if (value < 10) {
+            return decimals || undefined;
+        } else if (value >= 10 && value < 1000) {
+            return 4;
+        } else if (value >= 1000 && value < 100000) {
+            return 3;
+        } else {
+            return 2;
+        }
     }
 };
 
@@ -584,6 +556,28 @@ export const percentual = (partialValue: number, total: number): number => {
     return (100 * partialValue) / total;
 }
 
+export const percentualBn = (partialValue: string | BN, total: string | BN, asNumber = false): number | BN => {
+    let partialBn = new BigNumber(0);
+    let totalBn = new BigNumber(0);
+    if (!partialValue) {
+        return asNumber ? new BN(partialValue).toNumber() : new BN(partialValue)
+    }
+    if (typeof partialValue === "string") {
+        partialBn = new BigNumber(partialValue);
+    } else {
+        partialBn = new BigNumber((partialValue as BN).toString());
+    }
+    if (typeof total === "string") {
+        totalBn = new BigNumber(total);
+    } else {
+        totalBn = new BigNumber((total as BN).toString());
+    }
+    if (asNumber) {
+        return partialBn.multipliedBy(100).dividedBy(totalBn).toNumber();
+    }
+    return new BN(partialBn.multipliedBy(100).dividedBy(totalBn).toString());
+}
+
 /**
  * Get the given percent of total
  * @param {number} percent - The percentual value to obtain from the total amount
@@ -592,6 +586,22 @@ export const percentual = (partialValue: number, total: number): number => {
  */
 export const percentage = (percent: number, total: number): number => {
     return percent * total / 100;
+}
+
+export const percentageBn = (percent: number, total: string | BN, asNumber = false): number | BN => {
+    if (!percent) {
+        return asNumber ? 0 : new BN(0);
+    }
+    let totalBn = new BigNumber(0);
+    if (typeof total === "string") {
+        totalBn = new BigNumber(total);
+    } else {
+        totalBn = new BigNumber((total as BN).toString());
+    }
+    if (asNumber) {
+        return totalBn.multipliedBy(percent).dividedBy(100).toNumber();
+    }
+    return new BN(totalBn.multipliedBy(percent).dividedToIntegerBy(100).toString());
 }
 
 export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
@@ -787,16 +797,16 @@ export const getTodayPercentualBetweenTwoDates = (starDate: string, endDate: str
     const end = toTimestamp(endDate);
     const delta = Math.abs(end - start);
     const today = toTimestamp();
-    const todayPartial = Math.abs(today - start);
-    return percentual(todayPartial, delta);
+    const todayPartial = today - start < 0 ? 0 : today - start;
+    return todayPartial ? percentual(todayPartial, delta) : todayPartial;
 }
 
-export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number) => {
+export const getPercentualTsBetweenTwoDates = (starDate: string, endDate: string, percent: number, relative = false) => {
     const start = toTimestamp(starDate);
     const end = toTimestamp(endDate);
     const delta = Math.abs(end - start);
     const pctTs = percentage(percent, delta);
-    return start + pctTs;
+    return relative ? pctTs : start + pctTs;
 }
 
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {
@@ -870,6 +880,29 @@ export const getRelativeDate = (timestamp: number) => {
     return relativeTimeFromDates(reference);
 }
 
+export function stringNumberFormat(value: string, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',') {
+    if (!value) {
+        return '0';
+    }
+    let fixed = '';
+    const valueBn = new BigNumber(value);
+    if (dec > 0) {
+        BigNumber.config({
+            CRYPTO: true,
+            FORMAT: BIGNUMBER_FORMAT,
+            DECIMAL_PLACES: dec
+        });
+        fixed = valueBn.toFormat(dec);
+    } else {
+        BigNumber.config({
+            CRYPTO: true,
+            FORMAT: BIGNUMBER_FORMAT,
+            DECIMAL_PLACES: 0
+        });
+        fixed = valueBn.toFormat(0);
+    }
+    return fixed;
+}
 
 function numberFormat(value: any, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',', hideDecimalsIfZero = true) {
     if (!value) {

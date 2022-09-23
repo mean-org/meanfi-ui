@@ -6,19 +6,20 @@ import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { findATokenAddress, formatThousands, getTxIxResume, isValidNumber } from "../../utils/utils";
+import { findATokenAddress, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber } from "../../middleware/utils";
 import { IconStats } from "../../Icons";
-import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from "../../utils/ui";
-import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from "../../middleware/ui";
+import { ConfirmOptions, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { confirmationEvents, TxConfirmationContext } from "../../contexts/transaction-status";
-import { MEAN_TOKEN_LIST } from "../../constants/token-list";
+import { MEAN_TOKEN_LIST } from "../../constants/tokens";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { appConfig, customLogger } from "../..";
 import { Button, Spin } from "antd";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import { DepositRecord, DepositsInfo, StakingClient } from "@mean-dao/staking";
 import { openNotification } from "../../components/Notifications";
+import { getTokenAccountBalanceByAddress } from "../../middleware/accounts";
 
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
@@ -107,20 +108,6 @@ export const StakingRewardsView = () => {
   //  Callbacks  //
   /////////////////
 
-  const getTokenAccountBalanceByAddress = useCallback(async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
-    if (!connection || !tokenMintAddress) return 0;
-    try {
-      const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress));
-      if (tokenAmount) {
-        const value = tokenAmount.value;
-        return value.uiAmount || 0;
-      }
-    } catch (error) {
-      consoleOut('Could not find account:', tokenMintAddress.toBase58(), 'red');
-    }
-    return 0;
-  }, [connection]);
-
   const refreshMeanBalance = useCallback(async () => {
 
     if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
@@ -136,7 +123,10 @@ export const StakingRewardsView = () => {
 
     const meanTokenPk = new PublicKey(meanToken.address);
     const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
-    balance = await getTokenAccountBalanceByAddress(meanTokenAddress);
+    const result = await getTokenAccountBalanceByAddress(connection, meanTokenAddress);
+    if (result) {
+      balance = result.uiAmount || 0;
+    }
     setMeanBalance(balance);
 
   }, [
@@ -144,7 +134,6 @@ export const StakingRewardsView = () => {
     meanToken,
     publicKey,
     connection,
-    getTokenAccountBalanceByAddress
   ]);
 
   const refreshMeanStakingVaultBalance = useCallback(async () => {
@@ -216,15 +205,10 @@ export const StakingRewardsView = () => {
 
   // Keep native account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balances
       refreshMeanStakingVaultBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -674,7 +658,7 @@ export const StakingRewardsView = () => {
         <div className="flex-fixed-right">
           <div className="left static-data-field">
             {
-              formatThousands(meanStakingVaultBalance, meanToken?.decimals || 6)
+              formatThousands(meanStakingVaultBalance, meanToken?.decimals || 9)
             }
           </div>
           <div className="right">&nbsp;</div>
@@ -730,12 +714,12 @@ export const StakingRewardsView = () => {
         <div className="flex-fixed-right">
           <div className="left static-data-field">
             {
-              formatThousands(getTotalMeanAdded(), meanToken?.decimals || 6)
+              formatThousands(getTotalMeanAdded(), meanToken?.decimals || 9)
             }
           </div>
           <div className="right">&nbsp;</div>
         </div>
-        <span className="form-field-hint">User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 6) : '0'}</span>
+        <span className="form-field-hint">User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 9) : '0'}</span>
       </div>
     </>
   );

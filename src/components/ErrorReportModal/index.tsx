@@ -1,10 +1,10 @@
-import React, { useCallback, useContext } from 'react';
-import { Button, Modal } from "antd";
 import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { AppStateContext } from '../../contexts/appstate';
+import { Button, Modal } from "antd";
+import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { copyText, getTransactionOperationDescription } from '../../utils/ui';
-import { shortenAddress } from '../../utils/utils';
+import { AppStateContext } from '../../contexts/appstate';
+import { copyText, getTransactionOperationDescription } from '../../middleware/ui';
+import { shortenAddress } from '../../middleware/utils';
 import { openNotification } from '../Notifications';
 
 export const ErrorReportModal = (props: {
@@ -46,7 +46,7 @@ export const ErrorReportModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{title}</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onCancel={handleClose}
       width={360}>
       <div className="transaction-progress p-0 shift-up-1">

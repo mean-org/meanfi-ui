@@ -9,18 +9,18 @@ import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import {
-  getTokenAmountAndSymbolByTokenAddress,
+  getAmountWithSymbol,
   shortenAddress
-} from '../../utils/utils';
+} from '../../middleware/utils';
 import "./style.scss";
 import { Button, Col, Divider, Modal, Row, Spin } from 'antd';
 import {
   copyText,
   getTransactionOperationDescription,
   getReadableDate,
-} from '../../utils/ui';
+} from '../../middleware/ui';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import {
   MultisigInfo,
   MultisigParticipant,
@@ -33,8 +33,8 @@ import Countdown from 'react-countdown';
 
 // MULTISIG
 import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
-import { isError } from '../../utils/transactions';
-import { getOperationName } from '../../utils/multisig-helpers';
+import { isError } from '../../middleware/transactions';
+import { getOperationName } from '../../middleware/multisig-helpers';
 import { openNotification } from '../../components/Notifications';
 import { IconExternalLink } from '../../Icons';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
@@ -501,7 +501,7 @@ export const ProposalSummaryModal = (props: {
       className="mean-modal simple-modal proposal-summary-modal"
       title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
       maskClosable={false}
-      visible={isVisible}
+      open={isVisible}
       closable={true}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
@@ -568,11 +568,11 @@ export const ProposalSummaryModal = (props: {
                   {/* Pre Tx execution failures here */}
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         minRequiredBalance,
                         NATIVE_SOL_MINT.toBase58()
                       )})

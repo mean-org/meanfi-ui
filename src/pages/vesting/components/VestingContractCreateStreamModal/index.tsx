@@ -1,24 +1,23 @@
-import React, { useCallback, useEffect, useContext, useState, useMemo } from 'react';
-import { Button, Checkbox, Col, Modal, Row } from "antd";
-import { TokenInfo } from '@solana/spl-token-registry';
-import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { cutNumber, formatPercent, formatThousands, getAmountWithSymbol, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../../../utils/utils';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, toUsCurrency } from '../../../../utils/ui';
-import { WizardStepSelector } from '../../../../components/WizardStepSelector';
-import { useTranslation } from 'react-i18next';
-import BN from 'bn.js';
-import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { useWallet } from '../../../../contexts/wallet';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { isError } from '../../../../utils/transactions';
-import { IconEdit, IconWarning } from '../../../../Icons';
-import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
-import { PaymentRateType } from '../../../../models/enums';
-import { CUSTOM_TOKEN_NAME } from '../../../../constants';
-import { InfoIcon } from '../../../../components/InfoIcon';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { Button, Checkbox, Col, Modal, Row } from "antd";
+import BN from 'bn.js';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { InfoIcon } from '../../../../components/InfoIcon';
 import { InputMean } from '../../../../components/InputMean';
+import { TokenDisplay } from '../../../../components/TokenDisplay';
+import { WizardStepSelector } from '../../../../components/WizardStepSelector';
+import { AppStateContext } from '../../../../contexts/appstate';
+import { useWallet } from '../../../../contexts/wallet';
+import { IconEdit, IconWarning } from '../../../../Icons';
+import { isError } from '../../../../middleware/transactions';
+import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, stringNumberFormat, toUsCurrency } from '../../../../middleware/ui';
+import { displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount, toUiAmount } from '../../../../middleware/utils';
+import { PaymentRateType } from '../../../../models/enums';
+import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
 
 export const VestingContractCreateStreamModal = (props: {
     handleClose: any;
@@ -30,6 +29,7 @@ export const VestingContractCreateStreamModal = (props: {
     minRequiredBalance: number;
     nativeBalance: number;
     selectedMultisig: MultisigInfo | undefined;
+    selectedToken: TokenInfo | undefined;
     streamTemplate: StreamTemplate | undefined;
     transactionFees: TransactionFees;
     vestingContract: Treasury | undefined;
@@ -45,6 +45,7 @@ export const VestingContractCreateStreamModal = (props: {
         minRequiredBalance,
         nativeBalance,
         selectedMultisig,
+        selectedToken,
         streamTemplate,
         transactionFees,
         vestingContract,
@@ -52,8 +53,7 @@ export const VestingContractCreateStreamModal = (props: {
     } = props;
     const {
         theme,
-        tokenList,
-        selectedToken,
+        splTokenList,
         loadingPrices,
         isWhitelisted,
         fromCoinAmount,
@@ -63,15 +63,11 @@ export const VestingContractCreateStreamModal = (props: {
         setIsVerifiedRecipient,
         getTokenPriceByAddress,
         getTokenPriceBySymbol,
-        getTokenByMintAddress,
         setRecipientAddress,
         setFromCoinAmount,
-        setSelectedToken,
-        setEffectiveRate,
         refreshPrices,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
-    const [today] = useState(new Date());
     const { publicKey, wallet } = useWallet();
     const [currentStep, setCurrentStep] = useState(0);
     const [vestingStreamName, setVestingStreamName] = useState<string>('');
@@ -84,8 +80,11 @@ export const VestingContractCreateStreamModal = (props: {
     const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>("");
     const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
     const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("");
-    const [cliffRelease, setCliffRelease] = useState<string>("")
+    const [cliffRelease, setCliffRelease] = useState<string>("");
+    const [cliffReleaseBn, setCliffReleaseBn] = useState(new BN(0));
     const [paymentRateAmount, setPaymentRateAmount] = useState<string>("");
+    const [paymentRateAmountBn, setPaymentRateAmountBn] = useState(new BN(0));
+    const [amountToBeStreamedBn, setAmountToBeStreamedBn] = useState(new BN(0));
     const [proposalTitle, setProposalTitle] = useState('');
 
     const isFeePaidByTreasurer = useMemo(() => {
@@ -97,46 +96,6 @@ export const VestingContractCreateStreamModal = (props: {
     /////////////////
     //  Callbacks  //
     /////////////////
-
-    const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
-        const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
-        if (ellipsisElements && ellipsisElements.length) {
-
-            ellipsisElements.forEach(element => {
-                if (state) {
-                    if (!element.classList.contains('overflow-ellipsis-middle')) {
-                        element.classList.add('overflow-ellipsis-middle');
-                    }
-                } else {
-                    if (element.classList.contains('overflow-ellipsis-middle')) {
-                        element.classList.remove('overflow-ellipsis-middle');
-                    }
-                }
-            });
-
-            setTimeout(() => {
-                triggerWindowResize();
-            }, 10);
-        }
-    }, []);
-
-    const setCustomToken = useCallback((address: string) => {
-        const unkToken: TokenInfo = {
-            address: address,
-            name: CUSTOM_TOKEN_NAME,
-            chainId: 101,
-            decimals: 6,
-            symbol: shortenAddress(address),
-        };
-        setSelectedToken(unkToken);
-        consoleOut("token selected:", unkToken, 'blue');
-        setEffectiveRate(0);
-        toggleOverflowEllipsisMiddle(true);
-    }, [
-        setEffectiveRate,
-        setSelectedToken,
-        toggleOverflowEllipsisMiddle
-    ]);
 
     const getMaxAmount = useCallback((preSetting = false) => {
         if ((isFeePaidByTreasurer || preSetting) && withdrawTransactionFees) {
@@ -161,16 +120,16 @@ export const VestingContractCreateStreamModal = (props: {
             if (isWhitelisted) {
                 const debugTable: any[] = [];
                 debugTable.push({
-                    unallocatedBalance: unallocatedBalance.toNumber(),
+                    unallocatedBalance: unallocatedBalance.toString(),
                     feeNumerator: feeNumerator,
                     feePercentage01: feeNumerator / feeDenaminator,
-                    badStreamMaxAllocation: badStreamMaxAllocation.toNumber(),
-                    feeAmount: feeAmount.toNumber(),
-                    badTotal: badTotal.toNumber(),
-                    badRemaining: badRemaining.toNumber(),
-                    goodStreamMaxAllocation: goodStreamMaxAllocation.toNumber(),
-                    goodTotal: goodTotal.toNumber(),
-                    goodRemaining: goodRemaining.toNumber(),
+                    badStreamMaxAllocation: badStreamMaxAllocation.toString(),
+                    feeAmount: feeAmount.toString(),
+                    badTotal: badTotal.toString(),
+                    badRemaining: badRemaining.toString(),
+                    goodStreamMaxAllocation: goodStreamMaxAllocation.toString(),
+                    goodTotal: goodTotal.toString(),
+                    goodRemaining: goodRemaining.toString(),
                 });
                 consoleOut('debug table', debugTable, 'blue');
             }
@@ -210,15 +169,31 @@ export const VestingContractCreateStreamModal = (props: {
 
     }, [isMultisigTreasury, minRequiredBalance, transactionFees]);
 
-    const isStartDateFuture = useCallback((date: string): boolean => {
-        const now = today.toUTCString();
-        const nowUtc = new Date(now);
-        const comparedDate = new Date(date);
-        if (comparedDate > nowUtc) {
-            return true;
+    const getReleaseRate = useCallback(() => {
+        if (!lockPeriodAmount || !selectedToken) {
+            return '--';
         }
-        return false;
-    }, [today]);
+
+        return `${displayAmountWithSymbol(
+            paymentRateAmountBn,
+            selectedToken.address,
+            selectedToken.decimals,
+            splTokenList,
+        )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
+    }, [lockPeriodAmount, lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
+
+    const getCliffReleaseAmount = useCallback(() => {
+        if (!cliffRelease || !selectedToken) {
+            return '--';
+        }
+
+        return displayAmountWithSymbol(
+            cliffReleaseBn,
+            selectedToken.address,
+            selectedToken.decimals,
+            splTokenList,
+        );
+    }, [cliffRelease, cliffReleaseBn, selectedToken, splTokenList]);
 
 
     /////////////////////
@@ -235,11 +210,17 @@ export const VestingContractCreateStreamModal = (props: {
 
     // Set treasury unalocated balance in BN
     useEffect(() => {
+
+        const getUnallocatedBalance = (details: Treasury) => {
+            const balance = new BN(details.balance);
+            const allocationAssigned = new BN(details.allocationAssigned);
+            return balance.sub(allocationAssigned);
+        }
+
         if (isVisible && vestingContract) {
-            const unallocated = vestingContract.balance - vestingContract.allocationAssigned;
-            const ub = new BN(unallocated);
-            consoleOut('unallocatedBalance:', ub.toNumber(), 'blue');
-            setUnallocatedBalance(ub);
+            const unallocated = getUnallocatedBalance(vestingContract);
+            consoleOut('unallocatedBalance:', unallocated.toString(), 'blue');
+            setUnallocatedBalance(unallocated);
         }
     }, [
         isVisible,
@@ -259,48 +240,19 @@ export const VestingContractCreateStreamModal = (props: {
         getMaxAmount
     ]);
 
-    // When modal goes visible, set the associated token
-    useEffect(() => {
-        if (isVisible && vestingContract) {
-            const assTokenAddr = vestingContract.associatedToken as string;
-            const token = getTokenByMintAddress(assTokenAddr);
-            if (token) {
-                const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-                if (!selectedToken || selectedToken.address !== token.address) {
-                    setSelectedToken(token);
-                    setEffectiveRate(price);
-                }
-            } else if (!selectedToken || selectedToken.address !== assTokenAddr) {
-                setCustomToken(assTokenAddr);
-            }
-        }
-    }, [
-        isVisible,
-        selectedToken,
-        vestingContract,
-        getTokenPriceByAddress,
-        getTokenPriceBySymbol,
-        getTokenByMintAddress,
-        setSelectedToken,
-        setEffectiveRate,
-        setCustomToken,
-    ]);
-
     // When modal goes visible, set template data
     useEffect(() => {
         if (isVisible && vestingContract && streamTemplate) {
             consoleOut('this one I received:', streamTemplate, 'orange');
             setTreasuryOption(vestingContract.treasuryType);
-            if (currentStep === 1) {
-                const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
-                setCliffReleasePercentage(formatPercent(cliffPercent, 4));
-                const localDate = new Date(streamTemplate.startUtc as string);
-                const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
-                setPaymentStartDate(dateWithoutOffset.toUTCString());
-                updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
-                const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
-                setLockPeriodFrequency(periodFrequency);
-            }
+            const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
+            setCliffReleasePercentage(formatPercent(cliffPercent, 4));
+            const localDate = new Date(streamTemplate.startUtc);
+            const dateWithoutOffset = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+            setPaymentStartDate(dateWithoutOffset.toUTCString());
+            updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
+            const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
+            setLockPeriodFrequency(periodFrequency);
         }
     }, [
         isVisible,
@@ -311,16 +263,59 @@ export const VestingContractCreateStreamModal = (props: {
 
     // Set Cliff release
     useEffect(() => {
-        const percentageFromCoinAmount = parseFloat(fromCoinAmount) > 0 ? `${(parseFloat(fromCoinAmount) * parseFloat(cliffReleasePercentage) / 100)}` : '';
 
-        setCliffRelease(percentageFromCoinAmount);
+        if (!selectedToken) { return; }
 
-    }, [fromCoinAmount, cliffReleasePercentage]);
+        const releasePct = parseFloat(cliffReleasePercentage) || 0;
+
+        if (tokenAmount.gtn(0) && releasePct > 0) {
+            const cr = tokenAmount.muln(releasePct).divn(100);
+            setCliffReleaseBn(cr);
+            setCliffRelease(cr.toString());
+        }
+
+    }, [cliffReleasePercentage, selectedToken, tokenAmount]);
 
     // Set payment rate amount
     useEffect(() => {
-        setPaymentRateAmount(cutNumber((parseFloat(fromCoinAmount) - parseFloat(cliffRelease)) / parseFloat(lockPeriodAmount), selectedToken?.decimals || 6));
-    }, [cliffRelease, fromCoinAmount, lockPeriodAmount, selectedToken?.decimals]);
+
+        if (!selectedToken) { return; }
+
+        const releasePct = parseFloat(cliffReleasePercentage) || 0;
+
+        if (tokenAmount.gtn(0)) {
+            let toStream = tokenAmount;
+
+            if (releasePct > 0) {
+                const cr = tokenAmount.muln(releasePct).divn(100);
+                toStream = tokenAmount.sub(cr);
+            }
+
+            const lpa = parseFloat(lockPeriodAmount);
+            const ra = toStream.divn(lpa);
+
+            setPaymentRateAmountBn(ra);
+            setPaymentRateAmount(ra.toString());
+        }
+    }, [cliffReleasePercentage, fromCoinAmount, lockPeriodAmount, selectedToken, tokenAmount]);
+
+    // Set the amount to be streamed
+    useEffect(() => {
+
+        if (!selectedToken) { return; }
+
+        const releasePct = parseFloat(cliffReleasePercentage) || 0;
+
+        if (tokenAmount.gtn(0)) {
+            let toStream = tokenAmount;
+            if (releasePct > 0) {
+                const cr = tokenAmount.muln(releasePct).divn(100);
+                toStream = tokenAmount.sub(cr);
+            }
+            setAmountToBeStreamedBn(toStream);
+        }
+
+    }, [cliffReleasePercentage, fromCoinAmount, selectedToken, tokenAmount]);
 
     // Window resize listener
     useEffect(() => {
@@ -357,36 +352,47 @@ export const VestingContractCreateStreamModal = (props: {
 
         consoleOut('clicked the MAX motherfkr!', '', 'blue');
         const decimals = selectedToken ? selectedToken.decimals : 6;
+        const maxAmount = getMaxAmount();
+
         consoleOut('decimals:', decimals, 'blue');
         consoleOut('isFeePaidByTreasurer?', isFeePaidByTreasurer, 'blue');
+        consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+        consoleOut('maxAmount:', maxAmount.toString(), 'blue');
 
-        if (isFeePaidByTreasurer) {
-            const maxAmount = getMaxAmount();
-            consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-            consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-            setTokenAmount(new BN(maxAmount));
-        } else {
-            const maxAmount = getMaxAmount();
-            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-            setTokenAmount(new BN(maxAmount));
-        }
+        setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
+        setTokenAmount(new BN(maxAmount));
 
     }, [getMaxAmount, selectedToken, setFromCoinAmount, isFeePaidByTreasurer, tokenAmount]);
 
     const getStreamTxConfirmDescription = (multisig: string) => {
-        const cliff = `${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol}`;
-        const rate = `${paymentRateAmount} ${selectedToken?.symbol} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
-        return `Create stream to send ${rate} with ${cliff} released on commencement.`;
+        if (!selectedToken) { return ''; }
+        const cliff = getCliffReleaseAmount();
+        const rate = getReleaseRate();
+        let message = '';
+        if (cliff === '--') {
+            message = `Create stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}.`;
+        } else {
+            message = `Create stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement.`;
+        }
+        return message;
     }
 
     const getStreamTxConfirmedDescription = (multisig: string) => {
-        const cliff = `${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol}`;
-        const rate = `${paymentRateAmount} ${selectedToken?.symbol} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
-        return `Stream to send ${rate} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
+        if (!selectedToken) { return ''; }
+        const cliff = getCliffReleaseAmount();
+        const rate = getReleaseRate();
+        let message = '';
+        if (cliff === '--') {
+            message = `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} has been ${multisig ? 'proposed' : 'scheduled'}.`;
+        } else {
+            message = `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
+        }
+        return message;
     }
 
     const onStreamCreateClick = () => {
+        if (!selectedToken) { return; }
+
         const multisig = isMultisigTreasury && selectedMultisig
             ? selectedMultisig.authority.toBase58()
             : '';
@@ -398,7 +404,7 @@ export const VestingContractCreateStreamModal = (props: {
             multisig,
             rateAmount: parseFloat(paymentRateAmount),
             streamName: vestingStreamName,
-            tokenAmount: tokenAmount.toNumber(),
+            tokenAmount: tokenAmount,
             txConfirmDescription: getStreamTxConfirmDescription(multisig),
             txConfirmedDescription: getStreamTxConfirmedDescription(multisig),
             proposalTitle: proposalTitle || ''
@@ -452,7 +458,7 @@ export const VestingContractCreateStreamModal = (props: {
             setFromCoinAmount(".");
         } else if (isValidNumber(newValue)) {
             setFromCoinAmount(newValue);
-            setTokenAmount(makeInteger(newValue, decimals));
+            setTokenAmount(new BN(toTokenAmount(newValue, decimals).toString()));
         }
     };
 
@@ -496,7 +502,7 @@ export const VestingContractCreateStreamModal = (props: {
                 isValidAddress(recipientAddress) &&
                 !isAddressOwnAccount() &&
                 nativeBalance > getMinBalanceRequired() &&
-                tokenAmount && tokenAmount.toNumber() > 0 &&
+                tokenAmount && tokenAmount.gtn(0) &&
                 ((isFeePaidByTreasurer && tokenAmount.lte(mAa)) ||
                  (!isFeePaidByTreasurer && tokenAmount.lte(ub)))
         ? true
@@ -574,7 +580,7 @@ export const VestingContractCreateStreamModal = (props: {
             className="mean-modal simple-modal unpadded-content"
             title={<div className="modal-title">{t('vesting.create-stream.modal-title')}</div>}
             footer={null}
-            visible={isVisible}
+            open={isVisible}
             onCancel={handleClose}
             width={480}>
 
@@ -682,7 +688,6 @@ export const VestingContractCreateStreamModal = (props: {
                                         <TokenDisplay onClick={() => {}}
                                             mintAddress={selectedToken.address}
                                             name={selectedToken.name}
-                                            showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                                             showCaretDown={false}
                                             fullTokenInfo={selectedToken}
                                         />
@@ -717,14 +722,13 @@ export const VestingContractCreateStreamModal = (props: {
                             <div className="left inner-label">
                                 <span>{t('transactions.send-amount.label-right')}:</span>
                                 <span>
-                                    {unallocatedBalance && selectedToken
-                                        ? getAmountWithSymbol(
-                                            makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
-                                            selectedToken.address,
-                                            true,
-                                            tokenList
-                                        )
-                                        : "0"
+                                    {
+                                        unallocatedBalance && selectedToken
+                                            ? stringNumberFormat(
+                                                toUiAmount(unallocatedBalance, selectedToken.decimals),
+                                                4,
+                                            )
+                                            : "0"
                                     }
                                 </span>
                             </div>
@@ -780,39 +784,58 @@ export const VestingContractCreateStreamModal = (props: {
 
                     <Row className="mb-2 px-1">
                         <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}</strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), selectedToken?.decimals || 6)} ${selectedToken?.symbol}` : "--"}
+                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}</strong>
+                            <span className="ml-1">
+                                {
+                                    fromCoinAmount && selectedToken
+                                        ? `${displayAmountWithSymbol(
+                                                tokenAmount,
+                                                selectedToken.address,
+                                                selectedToken.decimals,
+                                                splTokenList,
+                                            )}`
+                                        : "--"
+                                }
+                            </span>
                         </Col>
                         <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}</strong> {
-                                paymentStartDate
-                                ? isStartDateFuture(paymentStartDate)
-                                    ? getReadableDate(paymentStartDate, true)
-                                    : t('vesting.create-stream.start-immediately')
-                                : '--'
-                            }
+                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}</strong>
+                            <span className="ml-1">
+                                {
+                                    paymentStartDate
+                                        ? getReadableDate(paymentStartDate, true)
+                                        : '--'
+                                }
+                            </span>
                         </Col>
                         <Col span={24}>
-                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}</strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), selectedToken?.decimals || 6)} ${selectedToken?.symbol} (on commencement)`) : "--"}
+                            <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}</strong>
+                            <span className="ml-1">
+                                {
+                                    cliffRelease && selectedToken
+                                        ? `${getCliffReleaseAmount()} (on commencement)`
+                                        : "--"
+                                }
+                            </span>
                         </Col>
                         <Col span={24}>
-                            <strong>Amount to be streamed: </strong>
-                        <span>
-                        {
-                            (cliffRelease && lockPeriodAmount && selectedToken)
-                            ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.symbol} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`)
-                            : "--"
-                        }
-                        </span>
+                            <strong>Amount to be streamed:</strong>
+                            <span className="ml-1">
+                                {
+                                    lockPeriodAmount && selectedToken
+                                        ? `${displayAmountWithSymbol(
+                                                amountToBeStreamedBn,
+                                                selectedToken.address,
+                                                selectedToken.decimals,
+                                                splTokenList,
+                                            )} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`
+                                        : "--"
+                                }
+                            </span>
                         </Col>
                         <Col span={24}>
-                        <strong>Release rate: </strong>
-                        <span>
-                            {
-                            (cliffRelease && lockPeriodAmount && selectedToken)
-                                ? (`${paymentRateAmount} ${selectedToken.symbol} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`)
-                                : "--"
-                            }
-                        </span>
+                            <strong>Release rate:</strong>
+                            <span className="ml-1">{getReleaseRate()}</span>
                         </Col>
                     </Row>
 

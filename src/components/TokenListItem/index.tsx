@@ -1,7 +1,7 @@
 import { TokenInfo } from "@solana/spl-token-registry";
 import React, { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { getAmountWithSymbol, shortenAddress } from "../../middleware/utils";
 import { Identicon } from "../Identicon";
 
 export const TokenListItem = (props: {
@@ -38,7 +38,7 @@ export const TokenListItem = (props: {
       </div>
       {(balance > 0 || showZeroBalances)  && (
         <div className="token-balance">
-          {balance ? getTokenAmountAndSymbolByTokenAddress(balance, displayToken ? displayToken.address : mintAddress, true) : "0"}
+          {balance ? getAmountWithSymbol(balance, displayToken ? displayToken.address : mintAddress, true) : "0"}
         </div>
       )}
     </div>

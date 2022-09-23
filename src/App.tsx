@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Layout } from "antd";
 import { AppRoutes } from "./routes";
 import "./App.scss";
-import { useLocalStorageState } from './utils/utils';
+import { useLocalStorageState } from './middleware/utils';
 import { refreshCachedRpc } from './services/connections-hq';
 import { useTranslation } from 'react-i18next';
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { appConfig } from '.';
-import { isLocal } from './utils/ui';
-import { SegmentAnalyticsService } from './utils/segment-service';
+import { isLocal } from './middleware/ui';
+import { SegmentAnalyticsService } from './middleware/segment-service';
 
 const { Content } = Layout;
 export const segmentAnalytics = new SegmentAnalyticsService();

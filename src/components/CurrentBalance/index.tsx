@@ -30,7 +30,7 @@ export const NotificationBell = (props: {
           {renderSolanaIcon}
         </span>
         <span className="account-balance">
-          <Tooltip placement="bottom" title={getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL.address)}>
+          <Tooltip placement="bottom" title={getAmountWithSymbol(nativeBalance, NATIVE_SOL.address)}>
             <span>
               {nativeBalance ? getAmountWithTokenSymbol(
                   nativeBalance,

@@ -4,14 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
-import { isError } from '../../utils/transactions';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
+import { isError } from '../../middleware/transactions';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
-
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { UserTokenAccount } from '../../models/transactions';
 import { InputMean } from '../InputMean';
@@ -105,6 +104,9 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   }
 
   const renderVault = (item: UserTokenAccount) => {
+    if (!item || !item.publicAddress) {
+      return null;
+    }
     const token = getTokenByMintAddress(item.address as string);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -129,12 +131,12 @@ export const MultisigVaultTransferAuthorityModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.address as string, 6)}]`}</div>
-          <div className="subtitle text-truncate">{shortenAddress(item.publicAddress as string, 8)}</div>
+          <div className="title text-truncate">{token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.address, 6)}]`}</div>
+          <div className="subtitle text-truncate">{shortenAddress(item.publicAddress, 8)}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
-            {getTokenAmountAndSymbolByTokenAddress(
+            {getAmountWithSymbol(
               item.balance || 0,
               token ? token.address as string : '',
               true
@@ -193,7 +195,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
       title={<div className="modal-title">{t('multisig.transfer-authority.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
@@ -313,11 +315,11 @@ export const MultisigVaultTransferAuthorityModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                    feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})

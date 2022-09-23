@@ -1,13 +1,13 @@
 import './style.scss';
 import { Button, Col, Row, Tooltip } from "antd"
 import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus, IconThumbsDown } from "../../../../Icons"
-import { shortenAddress } from '../../../../utils/utils';
+import { shortenAddress } from '../../../../middleware/utils';
 import { TabsMean } from '../../../../components/TabsMean';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../../../../components/Notifications';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { consoleOut, copyText } from '../../../../utils/ui';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { consoleOut, copyText } from '../../../../middleware/ui';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { MeanMultisig, MultisigParticipant, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { useWallet } from '../../../../contexts/wallet';
@@ -33,7 +33,6 @@ export const ProposalDetailsView = (props: {
   loadingData: boolean;
   multisigClient?: MeanMultisig | undefined;
   onDataToSafeView: any;
-  onOperationStarted: any;
   onProposalApprove?: any;
   onProposalCancel?: any;
   onProposalExecute?: any;
@@ -57,7 +56,6 @@ export const ProposalDetailsView = (props: {
     loadingData,
     multisigClient, 
     onDataToSafeView, 
-    onOperationStarted,
     onProposalApprove,
     onProposalCancel,
     onProposalExecute,
@@ -78,7 +76,7 @@ export const ProposalDetailsView = (props: {
 
   const [isCancelRejectModalVisible, setIsCancelRejectModalVisible] = useState(false);
   
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -92,7 +90,6 @@ export const ProposalDetailsView = (props: {
   const onAcceptCancelRejectProposalModal = () => {
     consoleOut('cancel reject proposal');
     const operation = { transaction: selectedProposal }
-    onOperationStarted(operation)
     onProposalCancel(operation);
   };
 
@@ -611,7 +608,7 @@ export const ProposalDetailsView = (props: {
                   <div className="proposal-resume-left-text">
                     <div className="info-label">Pending execution by</div>
                     {publicKey && (
-                      <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(publicKey.toBase58(), 4)}</span>
+                      <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(publicKey, 4)}</span>
                     )}
                   </div>
                 </Col>
@@ -620,7 +617,7 @@ export const ProposalDetailsView = (props: {
                   <IconUserClock className="user-image mean-svg-icons bg-yellow" />
                   <div className="proposal-resume-left-text">
                     <div className="info-label">Pending execution by</div>
-                    <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                    <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
                   </div>
                 </Col>
               )
@@ -629,7 +626,7 @@ export const ProposalDetailsView = (props: {
                 <IconLightning className="user-image mean-svg-icons bg-green" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Proposed by</div>
-                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
                 </div>
               </Col>
             ) : (
@@ -637,7 +634,7 @@ export const ProposalDetailsView = (props: {
                 <IconUser className="user-image mean-svg-icons" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Proposed by</div>
-                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
                 </div>
               </Col>
             )}
@@ -693,7 +690,6 @@ export const ProposalDetailsView = (props: {
                     }
                     onClick={() => {
                       const operation = { transaction: selectedProposal };
-                      onOperationStarted(operation)
                       onProposalApprove(operation);
                     }}>
                       {
@@ -726,7 +722,6 @@ export const ProposalDetailsView = (props: {
                     }
                     onClick={() => {
                       const operation = { transaction: selectedProposal };
-                      onOperationStarted(operation)
                       onProposalReject(operation);
                     }}>
                       {
@@ -783,7 +778,6 @@ export const ProposalDetailsView = (props: {
                     }
                     onClick={() => {
                       const operation = { transaction: selectedProposal }
-                      onOperationStarted(operation)
                       onProposalExecute(operation);
                     }}>
                       <div className="btn-content">

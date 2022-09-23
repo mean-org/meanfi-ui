@@ -9,14 +9,14 @@ import {
   UTC_DATE_TIME_FORMAT2
 } from "../../constants";
 import { useTranslation } from 'react-i18next';
-import { consoleOut, isLocal, isProd, isValidAddress, percentual, toUsCurrency } from '../../utils/ui';
+import { consoleOut, isLocal, isProd, isValidAddress, percentual, toUsCurrency } from '../../middleware/ui';
 import "./style.scss";
 import { IdoDeposit, IdoRedeem } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
 import Countdown from 'react-countdown';
 import dateFormat from "dateformat";
 import { useNativeAccount } from '../../contexts/accounts';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import YoutubeEmbed from '../../components/YoutubeEmbed';
@@ -25,8 +25,8 @@ import { useLocation } from 'react-router-dom';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
-import { CUSTOM_USDC_TEST_IDO_DEVNET, MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol } from '../../middleware/utils';
+import { CUSTOM_USDC_TEST_IDO_DEVNET, MEAN_TOKEN_LIST } from '../../constants/tokens';
 import { PartnerImage } from '../../models/common-types';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled, DoubleRightOutlined } from '@ant-design/icons';
@@ -248,35 +248,6 @@ export const IdoLiveView = () => {
     idoEngineInitStatus
   ]);
 
-  // Get list of idos
-  /*
-  useEffect(() => {
-
-    if (!idoClient) { return; }
-
-    const getIdos = async () => {
-      try {
-        const idos = await idoClient.listIdos();
-        if (idos && idos.length > 0) {
-          setIdoList(idos);
-        } else {
-          setIdoList(undefined);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    if (!idoList) {
-      getIdos();
-    }
-  }, [
-    publicKey,
-    idoClient,
-    idoList
-  ]);
-  */
-
   // Fetches the IDO status
   const refreshIdoData = useCallback(async () => {
     if (!idoClient || !idoAccountAddress || idoEngineInitStatus !== "started") {
@@ -490,15 +461,10 @@ export const IdoLiveView = () => {
 
   // Keep track of account changes and updates token balance
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -841,26 +807,6 @@ export const IdoLiveView = () => {
     </>
   );
 
-  // const idoItemsMenu = (
-  //   <>
-  //     {idoList && idoList.length > 0 ? (
-  //       <Menu>
-  //         {idoList.map((item: IdoDetails, index: number) => {
-  //           return (
-  //             <Menu.Item
-  //               key={`${index}`}
-  //               onClick={() => {
-  //                 consoleOut('Selected IDO address:', item.idoAddress, 'blue');
-  //               }}>
-  //               {item.idoAddress}
-  //             </Menu.Item>
-  //           );
-  //         })}
-  //       </Menu>
-  //     ) : null}
-  //   </>
-  // );
-
   return (
     <>
       {/* <div className={`ido-overlay ${regionLimitationAcknowledged && idoFinishedFireworks ? 'active' : '' }`}>
@@ -905,7 +851,7 @@ export const IdoLiveView = () => {
                             )}
                             {infoRow(
                               'USDC Contributed',
-                              getTokenAmountAndSymbolByTokenAddress(
+                              getAmountWithSymbol(
                                 idoStatus.gaTotalUsdcContributed,
                                 selectedToken.address,
                                 true
@@ -913,7 +859,7 @@ export const IdoLiveView = () => {
                             )}
                             {infoRow(
                               'MEAN tokens sold',
-                              getTokenAmountAndSymbolByTokenAddress(
+                              getAmountWithSymbol(
                                 idoStatus.finalMeanPurchasedAmount,
                                 '',
                                 true
@@ -922,7 +868,7 @@ export const IdoLiveView = () => {
                             {infoRow(
                               'Final token price',
                               idoStatus.finalMeanPrice
-                                ? getTokenAmountAndSymbolByTokenAddress(
+                                ? getAmountWithSymbol(
                                     idoStatus.finalMeanPrice,
                                     selectedToken.address
                                   )

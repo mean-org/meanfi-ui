@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "../../contexts/connection";
-import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount } from "../../utils/utils";
+import { cutNumber, formatAmount, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
@@ -17,11 +17,11 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress
-} from "../../utils/ui";
+} from "../../middleware/ui";
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountInfo, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
@@ -32,13 +32,16 @@ import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { segmentAnalytics } from '../../App';
-import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
+import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../middleware/segment-service';
 import dateFormat from 'dateformat';
-import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../constants/tokens';
 import { environment } from '../../environments/environment';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
-import { AccountTokenParsedInfo } from '../../models/token';
+import { AccountTokenParsedInfo } from "../../models/accounts";
 import { RecipientAddressInfo } from '../../models/common-types';
+import { OtpTxParams } from '../../models/transfers';
+import BN from 'bn.js';
+import { fetchAccountTokens } from '../../middleware/accounts';
 
 const { Option } = Select;
 
@@ -95,6 +98,7 @@ export const OneTimePayment = (props: {
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+  const [tokenBalanceBn, setSelectedTokenBalanceBn] = useState(new BN(0));
   const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
   const [otpFees, setOtpFees] = useState<TransactionFees>(NO_FEES);
 
@@ -121,6 +125,19 @@ export const OneTimePayment = (props: {
     const amount = nativeBalance - getMinSolBlanceRequired();
     return amount > 0 ? amount : 0;
   }, [getMinSolBlanceRequired, nativeBalance]);
+
+  const getDisplayAmount = useCallback((amount: BN) => {
+    if (selectedToken) {
+      return getAmountWithSymbol(
+        toUiAmount(amount, selectedToken.decimals),
+        selectedToken.address,
+        true,
+        splTokenList,
+        selectedToken.decimals
+      );
+    }
+    return '0';
+  }, [selectedToken, splTokenList]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -252,6 +269,16 @@ export const OneTimePayment = (props: {
 
   }, [selectedList]);
 
+  const getInputAmountBn = useCallback(() => {
+    if (!selectedToken || !fromCoinAmount) {
+      return new BN(0);
+    }
+
+    return parseFloat(fromCoinAmount) > 0
+      ? toTokenAmountBn(fromCoinAmount, selectedToken.decimals)
+      : new BN(0);
+  }, [fromCoinAmount, selectedToken]);
+
 
   /////////////////////
   // Data management //
@@ -297,13 +324,8 @@ export const OneTimePayment = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -440,11 +462,15 @@ export const OneTimePayment = (props: {
 
     if (!connection || !publicKey || !userBalances || !selectedToken) {
       setSelectedTokenBalance(0);
+      setSelectedTokenBalanceBn(new BN(0));
       return;
     }
 
     const timeout = setTimeout(() => {
-      setSelectedTokenBalance(userBalances[selectedToken.address]);
+      const balance = userBalances[selectedToken.address] as number;
+      setSelectedTokenBalance(balance);
+      const balanceBn = toTokenAmount(balance, selectedToken.decimals);
+      setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
     });
 
     return () => {
@@ -710,15 +736,18 @@ export const OneTimePayment = (props: {
   }
 
   const isSendAmountValid = (): boolean => {
-    return  connected &&
-            selectedToken &&
-            tokenBalance &&
-            nativeBalance >= getMinSolBlanceRequired() &&
-            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-            ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
-             (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) <= tokenBalance))
-      ? true
-      : false;
+    if (!selectedToken) { return false; }
+
+    const inputAmount = getInputAmountBn();
+
+    return connected &&
+           inputAmount.gtn(0) &&
+           tokenBalanceBn.gtn(0) &&
+           nativeBalance >= getMinSolBlanceRequired() &&
+           ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+            (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
+    ? true
+    : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -727,18 +756,19 @@ export const OneTimePayment = (props: {
 
   // Ui helpers
   const getTransactionStartButtonLabel = (): string => {
+    const inputAmount = getInputAmountBn();
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
         ? t('transactions.validation.select-recipient')
         : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
           ? 'Invalid recipient address'
-          : !selectedToken || !tokenBalance
+          : !selectedToken || tokenBalanceBn.isZero()
             ? t('transactions.validation.no-balance')
-            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()
               ? t('transactions.validation.no-amount')
               : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
-                (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) > tokenBalance))
+                (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.lt(inputAmount)))
                 ? t('transactions.validation.amount-high')
                 : !paymentStartDate
                   ? t('transactions.validation.no-valid-date')
@@ -763,10 +793,10 @@ export const OneTimePayment = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const otpTx = async (data: any) => {
+    const otpTx = async (data: OtpTxParams) => {
 
       if (!endpoint || !streamV2ProgramAddress) { return null; }
-      
+
       // Init a streaming operation
       const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
@@ -812,7 +842,7 @@ export const OneTimePayment = (props: {
       const beneficiary = new PublicKey(recipientAddress as string);
       consoleOut('associatedToken:', selectedToken.address);
       const associatedToken = new PublicKey(selectedToken.address as string);
-      const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
+      const amount = toTokenAmount(fromCoinAmount, selectedToken.decimals, true);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       let startUtc = new Date(parsedDate);
@@ -833,15 +863,15 @@ export const OneTimePayment = (props: {
       consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
 
       // Create a transaction
-      const data = {
+      const data: OtpTxParams = {
         wallet: publicKey.toBase58(),
         beneficiary: beneficiary.toBase58(),                                        // beneficiary
         associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
-        amount: amount,                                                             // fundingAmount
+        amount: amount as string,                                                   // fundingAmount
         startUtc: startUtc,                                                         // startUtc
         recipientNote: recipientNote
           ? recipientNote.trim()
-          : undefined                                                               // streamName
+          : ''                                                                      // streamName
       };
 
       consoleOut('data:', data, 'blue');
@@ -1138,7 +1168,7 @@ export const OneTimePayment = (props: {
             tokenChanged(t);
             setSelectedToken(t);
 
-            consoleOut("token selected:", t.symbol, 'blue');
+            consoleOut("token selected:", t, 'blue');
             const price = getTokenPriceByAddress(t.address) || getTokenPriceBySymbol(t.symbol);
             setEffectiveRate(price);
             onCloseTokenSelector();
@@ -1309,14 +1339,15 @@ export const OneTimePayment = (props: {
                     />
                   </>
                 )}
-                {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
+                {selectedToken && tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
                   <div className="token-max simplelink" onClick={() =>
                     {
+                      console.log('decimals:', selectedToken.decimals);
                       if (selectedToken.address === NATIVE_SOL.address) {
                         const amount = nativeBalance - getMinSolBlanceRequired();
                         setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
                       } else {
-                        setFromCoinAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                        setFromCoinAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
                       }
                     }}>
                     MAX
@@ -1345,10 +1376,7 @@ export const OneTimePayment = (props: {
             <div className="left inner-label">
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>
-                {`${tokenBalance && selectedToken
-                    ? getAmountWithSymbol(tokenBalance, selectedToken.address, true)
-                    : "0"
-                }`}
+                {getDisplayAmount(tokenBalanceBn)}
               </span>
             </div>
             <div className="right inner-label">
@@ -1472,7 +1500,7 @@ export const OneTimePayment = (props: {
           placement="bottom"
           closable={true}
           onClose={onCloseTokenSelector}
-          visible={isTokenSelectorVisible}
+          open={isTokenSelectorVisible}
           getContainer={false}
           style={{ position: 'absolute' }}>
           {renderTokenSelectorInner}
@@ -1483,7 +1511,7 @@ export const OneTimePayment = (props: {
       {!inModal && isTokenSelectorModalVisible && (
         <Modal
           className="mean-modal unpadded-content"
-          visible={isTokenSelectorModalVisible}
+          open={isTokenSelectorModalVisible}
           title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
           onCancel={onCloseTokenSelector}
           width={450}

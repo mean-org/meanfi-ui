@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { PlusOutlined } from "@ant-design/icons";
 import { MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
-import { isValidAddress, scrollToBottom } from "../../utils/ui";
+import { isValidAddress, scrollToBottom } from "../../middleware/ui";
 import { TextInput } from "../TextInput";
 
 export const MultisigParticipants = (props: {

@@ -3,12 +3,11 @@ import { useConnection } from "./connection";
 import { useWallet } from "./wallet";
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import { AccountLayout, u64, MintInfo, MintLayout } from "@solana/spl-token";
-import { TokenAccount } from "./../models";
-import { chunks } from "./../utils/utils";
-import { EventEmitter } from "./../utils/eventEmitter";
-import { WRAPPED_SOL_MINT, programIds } from "../utils/ids";
+import { chunks } from "../middleware/utils";
+import { EventEmitter } from "../middleware/eventEmitter";
+import { WRAPPED_SOL_MINT, programIds } from "../middleware/ids";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../constants";
-import { consoleOut } from "../utils/ui";
+import { TokenAccount } from "../models/accounts";
 
 interface AccountsContextConfig {
   userAccounts: TokenAccount[];
@@ -260,7 +259,7 @@ const UseNativeAccount = () => {
       if (wrapped !== undefined) {
         const id = publicKey.toBase58();
         cache.registerParser(id, TokenAccountParser);
-        genericCache.set(id, wrapped as TokenAccount);
+        genericCache.set(id, wrapped);
         cache.emitter.raiseCacheUpdated(id, false, TokenAccountParser);
       }
     },
@@ -272,7 +271,6 @@ const UseNativeAccount = () => {
       return undefined;
     }
 
-    consoleOut('Refreshing native account...', '', 'blue');
     connection.getAccountInfo(publicKey).then((acc) => {
       if (acc) {
         updateCache(acc);

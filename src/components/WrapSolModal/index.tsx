@@ -9,11 +9,11 @@ import { calculateActionFees, wrapSol } from '@mean-dao/money-streaming/lib/util
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from '../../utils/ui';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from '../../middleware/ui';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
-import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, isValidNumber } from '../../middleware/utils';
 import { TokenDisplay } from '../TokenDisplay';
 import { LoadingOutlined } from '@ant-design/icons';
 
@@ -56,15 +56,10 @@ export const WrapSolModal = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -436,7 +431,7 @@ export const WrapSolModal = (props: {
       className="mean-modal unpadded-content simple-modal"
       title={<div className="modal-title">Wrap SOL</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={400}>
@@ -513,7 +508,7 @@ export const WrapSolModal = (props: {
               `${
                 wrapAmount
                   ? "~" +
-                    getTokenAmountAndSymbolByTokenAddress(
+                    getAmountWithSymbol(
                       parseFloat(wrapAmount) >=
                         (MIN_SOL_BALANCE_REQUIRED as number)
                         ? parseFloat(wrapAmount)
@@ -523,19 +518,6 @@ export const WrapSolModal = (props: {
                     )
                   : "0"
               }`
-              // `${
-              //   wrapFees
-              //     ? "~" +
-              //       getTokenAmountAndSymbolByTokenAddress(
-              //         parseFloat(wrapAmount) >=
-              //           (wrapFees.blockchainFee as number)
-              //           ? parseFloat(wrapAmount)
-              //           : 0,
-              //         WRAPPED_SOL_MINT_ADDRESS,
-              //         false
-              //       )
-              //     : "0"
-              // }`
             )
           }
         </div>

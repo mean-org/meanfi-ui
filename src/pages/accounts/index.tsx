@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo, useRef } from 'react';
+import React, { useCallback, useContext, useMemo, useRef, useEffect, useState } from 'react';
 import "./style.scss";
 import {
   ArrowLeftOutlined,
@@ -9,7 +9,6 @@ import {
   WarningFilled
 } from '@ant-design/icons';
 import { Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -19,19 +18,17 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import {
-  fetchAccountTokens,
-  findATokenAddress,
   formatThousands,
   getAmountFromLamports,
-  getTokenAmountAndSymbolByTokenAddress,
+  getSdkValue,
+  getAmountWithSymbol,
   getTxIxResume,
-  makeDecimal,
   openLinkInNewTab,
   shortenAddress,
-  tabNameFormat
-} from '../../utils/utils';
+  toUiAmount
+} from '../../middleware/utils';
 import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   EMOJIS,
@@ -46,10 +43,10 @@ import {
 } from '../../constants';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
-import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
+import { fetchAccountHistory, MappedTransaction } from '../../middleware/history';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import { AccountTokenParsedInfo } from '../../models/token';
+import { AccountTokenParsedInfo } from "../../models/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { initialSummary, StreamsSummary } from '../../models/streams';
@@ -60,22 +57,22 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from '../../middleware/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { AppUsageEvent } from '../../utils/segment-service';
+import { AppUsageEvent } from '../../middleware/segment-service';
 import { segmentAnalytics } from '../../App';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 import { QRCodeSVG } from 'qrcode.react';
-import { NATIVE_SOL } from '../../utils/tokens';
-import { customLogger } from '../..';
+import { NATIVE_SOL } from '../../constants/tokens';
+import { appConfig, customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
 import { STAKING_ROUTE_BASE_PATH } from '../staking';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
-import { closeTokenAccount } from '../../utils/accounts';
+import { closeTokenAccount } from '../../middleware/accounts';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
@@ -92,7 +89,9 @@ import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
 import notification from 'antd/lib/notification';
 import { SolBalanceModal } from '../../components/SolBalanceModal';
-import { appConfig } from '../..';
+import BigNumber from 'bignumber.js';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { MetaInfoCta } from '../../models/common-types';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -120,12 +119,8 @@ export const AccountsNewView = () => {
   const connectionConfig = useConnectionConfig();
   const {
     theme,
-    activeTab,
-    coinPrices,
-    userTokens,
     streamList,
-    pinnedTokens,
-    splTokenList,
+    tokensLoaded,
     streamListv1,
     streamListv2,
     streamDetail,
@@ -140,6 +135,8 @@ export const AccountsNewView = () => {
     multisigAccounts,
     shouldLoadTokens,
     transactionStatus,
+    userTokensResponse,
+    loadingTokenAccounts,
     streamProgramAddress,
     streamV2ProgramAddress,
     pendingMultisigTxCount,
@@ -177,8 +174,6 @@ export const AccountsNewView = () => {
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
   const [isPageLoaded, setIsPageLoaded] = useState(true);
-  const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(false);
-  const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
@@ -293,8 +288,8 @@ export const AccountsNewView = () => {
       multisigAddressPK
     );
   }, [
-    connection,
     publicKey,
+    connection,
     multisigAddressPK,
     connectionConfig.endpoint,
   ]);
@@ -364,7 +359,7 @@ export const AccountsNewView = () => {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
       let beneficiary = '';
-      if (v1.version < 2) {
+      if (item.version < 2) {
         beneficiary = typeof v1.beneficiaryAddress === "string"
           ? v1.beneficiaryAddress
           : (v1.beneficiaryAddress as PublicKey).toBase58();
@@ -634,11 +629,6 @@ export const AccountsNewView = () => {
     return false;
   }
 
-  const updateAtaFlag = useCallback(async (token: UserTokenAccount): Promise<boolean> => {
-    const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(token.address));
-    return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
-  }, [accountAddress]);
-
   const refreshAssetBalance = useCallback(() => {
     if (!connection || !accountAddress || !selectedAsset || refreshingBalance || !accountTokens) { return; }
 
@@ -654,9 +644,9 @@ export const AccountsNewView = () => {
           let itemIndex = -1;
           itemIndex = tokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
           if (itemIndex !== -1) {
-            tokensCopy[itemIndex].balance = solBalance / LAMPORTS_PER_SOL;
-            tokensCopy[itemIndex].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(tokensCopy[itemIndex].symbol);
-            consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
+            tokensCopy[itemIndex].balance = getAmountFromLamports(solBalance);
+            tokensCopy[itemIndex].valueInUsd = (getAmountFromLamports(solBalance)) * getTokenPriceBySymbol(tokensCopy[itemIndex].symbol);
+            consoleOut('solBalance:', getAmountFromLamports(solBalance), 'blue');
             setAccountTokens(tokensCopy);
             setSelectedAsset(tokensCopy[itemIndex]);
           }
@@ -740,7 +730,6 @@ export const AccountsNewView = () => {
   const reloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
     setShouldLoadTokens(true);
-    setLoadingTokenAccounts(false);
     setDetailsPanelOpen(false);
     setAutoOpenDetailsPanel(true);
     reloadSwitch();
@@ -749,7 +738,6 @@ export const AccountsNewView = () => {
   const hardReloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling hardReloadTokensAndActivity...', '', 'orangered');
     setShouldLoadTokens(true);
-    setLoadingTokenAccounts(false);
     setDetailsPanelOpen(false);
     setSelectedAsset(accountTokens[0]);
     navigateToAsset(accountTokens[0]);
@@ -892,11 +880,6 @@ export const AccountsNewView = () => {
     }
   };
 
-  const refreshAssetBalances = useCallback((reset = false) => {
-    setAccountTokens([]);
-    reloadAssets();
-  }, []);
-
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
@@ -1018,9 +1001,7 @@ export const AccountsNewView = () => {
             refreshMultisigs(false);
             notifyMultisigActionFollowup(item);
           }
-          setTimeout(() => {
-            softReloadStreams();
-          }, 20);
+          softReloadStreams();
           break;
         case OperationType.TreasuryCreate:
         case OperationType.StreamWithdraw:
@@ -1030,10 +1011,8 @@ export const AccountsNewView = () => {
             refreshMultisigs(false);
             notifyMultisigActionFollowup(item);
           }
-          setTimeout(() => {
-            softReloadAssets();
-            softReloadStreams();
-          }, 100);
+          softReloadAssets();
+          softReloadStreams();
           break;
         case OperationType.StreamClose:
         case OperationType.TreasuryClose:
@@ -1069,7 +1048,7 @@ export const AccountsNewView = () => {
       }
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, navigate, setHighLightableMultisigId]);
+  }, []);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
@@ -1081,6 +1060,7 @@ export const AccountsNewView = () => {
       } else if (item.operationType === OperationType.TransferTokens) {
         setIsBusy(false);
       }
+      fullAccountRefresh();
       fullAccountRefresh();
     }
     resetTransactionStatus();
@@ -1298,9 +1278,9 @@ export const AccountsNewView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 transactionAssetFees.blockchainFee + transactionAssetFees.mspFlatFee, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -1688,9 +1668,9 @@ export const AccountsNewView = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
+              getAmountWithSymbol(
                 minRequiredBalance, 
                 NATIVE_SOL_MINT.toBase58()
               )
@@ -2015,9 +1995,9 @@ export const AccountsNewView = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(
+            getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee, 
               NATIVE_SOL_MINT.toBase58()
             )
@@ -2367,9 +2347,9 @@ export const AccountsNewView = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(
+            getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee, 
               NATIVE_SOL_MINT.toBase58()
             )
@@ -2588,7 +2568,7 @@ export const AccountsNewView = () => {
       const pk = new PublicKey(addr || accountAddress);
 
       consoleOut('Fetching treasuries for:', addr || accountAddress, 'orange');
-      const treasuries = await msp.listTreasuries(pk, true, false, Category.default);
+      const treasuries = await msp.listTreasuries(pk, true, Category.default);
       consoleOut('getAllUserV2Treasuries ->', treasuries, 'orange');
 
       return treasuries;
@@ -2604,7 +2584,9 @@ export const AccountsNewView = () => {
 
   const refreshTreasuries = useCallback((reset = false) => {
 
-    if (!publicKey) { return; }
+    if (!publicKey || !accountAddress) { return; }
+
+    const pk = new PublicKey(accountAddress);
 
     if (msp && ms) {
 
@@ -2620,7 +2602,7 @@ export const AccountsNewView = () => {
           const param = getQueryAccountType();
           if (!param || param !== "multisig") {
             try {
-              treasuriesv1 = await ms.listTreasuries(publicKey);
+              treasuriesv1 = await ms.listTreasuries(pk);
             } catch (error) {
               console.error(error);
             }
@@ -2640,7 +2622,7 @@ export const AccountsNewView = () => {
               : false;
           
             if (isNewTreasury) {
-              return vB2.totalStreams - vA2.totalStreams;
+              return +getSdkValue(vB2.totalStreams) - +getSdkValue(vA2.totalStreams);
             } else {
               return vB1.streamsAmount - vA1.streamsAmount;
             }
@@ -2659,18 +2641,26 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
+    accountAddress,
     getAllUserV2Treasuries,
     getQueryAccountType,
   ]);
 
   const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
+
+    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+      const balance = new BN(details.balance);
+      const allocationAssigned = new BN(details.allocationAssigned);
+      return balance.sub(allocationAssigned);
+    }
+
     if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
-        const unallocated = tsry.balance - tsry.allocationAssigned;
+        const unallocated = getUnallocatedBalance(tsry);
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         const ub = isNewTreasury
-            ? makeDecimal(new BN(unallocated), decimals)
-            : unallocated;
+          ? new BigNumber(toUiAmount(unallocated, decimals)).toNumber()
+          : new BigNumber(unallocated.toString()).toNumber();
         return ub;
     }
     return 0;
@@ -2778,7 +2768,7 @@ export const AccountsNewView = () => {
 
     for (const stream of updatedStreamsv2) {
 
-      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+      const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer)
         ? true
         : false;
 
@@ -2786,12 +2776,12 @@ export const AccountsNewView = () => {
       const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+      const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 6;
-        const amount = freshStream.withdrawableAmount;
+        const decimals = token.decimals || 9;
+        const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (isIncoming) {
@@ -2836,7 +2826,7 @@ export const AccountsNewView = () => {
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-
+  
     for (const stream of updatedStreamsv1) {
 
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
@@ -2844,7 +2834,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream, undefined, false) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -2862,7 +2852,7 @@ export const AccountsNewView = () => {
 
     for (const stream of updatedStreamsv2) {
 
-      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+      const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer)
         ? true
         : false;
 
@@ -2870,12 +2860,12 @@ export const AccountsNewView = () => {
       const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+      const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 6;
-        const amount = freshStream.fundsLeftInStream;
+        const decimals = token.decimals || 9;
+        const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (!isIncoming) {
@@ -2928,15 +2918,10 @@ export const AccountsNewView = () => {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
@@ -2987,179 +2972,6 @@ export const AccountsNewView = () => {
       setIsXsDevice(false);
     }
   }, [width]);
-
-  // Build CTAs
-  useEffect(() => {
-    if (!selectedAsset) { return; }
-
-    const numMaxCtas = isXsDevice ? 2 : 5;
-    const actions: AssetCta[] = [];
-    let ctaItems = 0;
-
-    // Send
-    actions.push({
-      action: MetaInfoCtaAction.Send,
-      isVisible: true,
-      caption: 'Send',
-      disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentType: 'button',
-      uiComponentId: `button-${MetaInfoCtaAction.Send}`,
-      tooltip: isInspectedAccountTheConnectedWallet() ? '' : 'You can only send assets from your connected account',
-      callBack: onSendAsset
-    });
-    ctaItems++;
-
-    // UnwrapSol
-    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && wSolBalance > 0) {
-      actions.push({
-        action: MetaInfoCtaAction.UnwrapSol,
-        caption: 'Unwrap',
-        isVisible: true,
-        uiComponentType: 'button',
-        disabled: false,
-        uiComponentId: `button-${MetaInfoCtaAction.UnwrapSol}`,
-        tooltip: '',
-        callBack: showUnwrapSolModal
-      });
-      ctaItems++;
-    }
-
-    // Buy
-    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
-      actions.push({
-        action: MetaInfoCtaAction.Buy,
-        caption: 'Buy',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy}`,
-        tooltip: '',
-        callBack: showDepositOptionsModal
-      });
-      ctaItems++;
-    }
-
-    // Deposit
-    actions.push({
-      action: MetaInfoCtaAction.Deposit,
-      caption: 'Deposit',
-      isVisible: true,
-      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Deposit}`,
-      tooltip: '',
-      callBack: showReceiveSplOrSolModal
-    });
-    ctaItems++;
-
-    // Exchange
-    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
-      actions.push({
-        action: MetaInfoCtaAction.Exchange,
-        caption: 'Exchange',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange}`,
-        tooltip: '',
-        callBack: onExchangeAsset
-      });
-      ctaItems++;
-    }
-
-    // Invest
-    if (investButtonEnabled()) {
-      actions.push({
-        action: MetaInfoCtaAction.Invest,
-        caption: selectedAsset.symbol === 'sMEAN' ? 'Unstake' : 'Stake',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest}`,
-        tooltip: '',
-        callBack: handleGoToInvestClick
-      });
-      ctaItems++;
-    }
-
-    // Wrap
-    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() && isWhitelisted) {
-      actions.push({
-        action: MetaInfoCtaAction.WrapSol,
-        caption: 'Wrap',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.WrapSol}`,
-        tooltip: '',
-        callBack: showWrapSolModal
-      });
-      ctaItems++;
-    }
-
-    // Refresh asset
-    actions.push({
-      action: MetaInfoCtaAction.Refresh,
-      caption: 'Refresh asset',
-      isVisible: true,
-      uiComponentType: 'menuitem',
-      disabled: false,
-      uiComponentId: `menuitem-${MetaInfoCtaAction.Refresh}`,
-      tooltip: '',
-      callBack: reloadSwitch
-    });
-
-    // Merge token accounts
-    if (isInspectedAccountTheConnectedWallet() && canActivateMergeTokenAccounts()) {
-      actions.push({
-        action: MetaInfoCtaAction.MergeAccounts,
-        caption: t('assets.merge-accounts-cta'),
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: false,
-        uiComponentId: `menuitem-${MetaInfoCtaAction.MergeAccounts}`,
-        tooltip: '',
-        callBack: activateTokenMerge
-      });
-    }
-
-    // Close asset
-    if (inspectedAccountType && inspectedAccountType === "multisig") {
-      actions.push({
-        action: MetaInfoCtaAction.Close,
-        caption: 'Close account',
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: isAnyTxPendingConfirmation() || !canDeleteVault() || !isDeleteAssetValid(),
-        uiComponentId: `menuitem-${MetaInfoCtaAction.Close}`,
-        tooltip: '',
-        callBack: showDeleteVaultModal
-      });
-    } else if (isInspectedAccountTheConnectedWallet()) {
-      actions.push({
-        action: MetaInfoCtaAction.CloseAccount,
-        caption: 'Close account',
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: isAnyTxPendingConfirmation(),
-        uiComponentId: `menuitem-${MetaInfoCtaAction.CloseAccount}`,
-        tooltip: '',
-        callBack: showCloseAssetModal
-      });
-    }
-
-    setAssetCtas(actions);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    isXsDevice,
-    wSolBalance,
-    selectedAsset,
-    isInspectedAccountTheConnectedWallet,
-    isSelectedAssetNativeAccount,
-    isSelectedAssetWsol,
-    investButtonEnabled,
-  ]);  
 
   // Enable deep-linking when isPageLoaded - Parse and save query params as needed
   useEffect(() => {
@@ -3276,313 +3088,23 @@ export const AccountsNewView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountAddress, address, publicKey]);
 
-  // Ensure tokens Load on entering /accounts
-  useEffect(() => {
-    if (!isPageLoaded || !publicKey || !accountAddress) { return; }
-
-    setIsPageLoaded(false);
-    setTransactions([]);
-
-    // setTimeout(() => {
-    //   if (!shouldLoadTokens) {
-    //     setShouldLoadTokens(true);
-    //   }
-    // }, 1000);
-  }, [
-    publicKey,
-    isPageLoaded,
-    accountAddress,
-    shouldLoadTokens,
-    setShouldLoadTokens,
-    setTransactions,
-  ]);
-
-  // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
-  // Also, do this after any Tx is completed in places where token balances were indeed changed)
+  // Process userTokensResponse from AppState to get a renderable list of tokens
   useEffect(() => {
 
-    if (!connection ||
-        !publicKey ||
-        !accountAddress ||
-        !shouldLoadTokens ||
-        !userTokens ||
-        userTokens.length === 0 ||
-        !splTokenList ||
-        splTokenList.length === 0 ||
-        !coinPrices ||
-        loadingTokenAccounts ||
-        isPageLoaded
-    ) {
-      return;
+    if (userTokensResponse) {
+      consoleOut('Processing userTokensResponse:', userTokensResponse, 'blue');
+      setMultisigSolBalance(userTokensResponse.nativeBalance);
+      setWsolBalance(userTokensResponse.wSolBalance);
+      setAccountTokens(userTokensResponse.accountTokens);
+      setUserOwnedTokenAccounts(userTokensResponse.userTokenAccouns);
+      setTokenAccountGroups(userTokensResponse.tokenAccountGroups);
+      if (userTokensResponse.selectedAsset) {
+        selectAsset(userTokensResponse.selectedAsset);
+      }
     }
 
-    const timeout = setTimeout(() => {
-      setLoadingTokenAccounts(true);
-      setShouldLoadTokens(false);
-      setTokensLoaded(false);
-
-      const meanTokensCopy = new Array<UserTokenAccount>();
-      const intersectedList = new Array<UserTokenAccount>();
-
-      const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
-      const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
-      const pk = new PublicKey(accountAddress);
-
-      // Fetch SOL balance.
-      connection.getBalance(pk)
-        .then(solBalance => {
-
-          const sol: UserTokenAccount = {
-            address: NATIVE_SOL.address,
-            balance: solBalance / LAMPORTS_PER_SOL,
-            chainId: 0,
-            decimals: NATIVE_SOL.decimals,
-            name: NATIVE_SOL.name,
-            symbol: NATIVE_SOL.symbol,
-            publicAddress: accountAddress,
-            tags: NATIVE_SOL.tags,
-            logoURI: NATIVE_SOL.logoURI,
-            valueInUsd: (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol('SOL')
-          };
-
-          setMultisigSolBalance(solBalance / LAMPORTS_PER_SOL);
-
-          fetchAccountTokens(connection, pk)
-            .then(accTks => {
-              if (accTks) {
-
-                consoleOut('fetched accountTokens:', accTks.map(i => {
-                  return {
-                    pubAddress: i.pubkey.toBase58(),
-                    mintAddress: i.parsedInfo.mint,
-                    balance: i.parsedInfo.tokenAmount.uiAmount || 0
-                  };
-                }), 'blue');
-
-                setUserOwnedTokenAccounts(accTks);
-
-                // Group the token accounts by mint.
-                const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
-                const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
-                accTks.forEach((ta) => {
-                  const key = ta.parsedInfo.mint;
-                  const info = getTokenByMintAddress(key);
-                  const updatedTa = Object.assign({}, ta, {
-                    description: info ? `${info.name} (${info.symbol})` : ''
-                  });
-                  if (groupedTokenAccounts.has(key)) {
-                    const current = groupedTokenAccounts.get(key) as AccountTokenParsedInfo[];
-                    current.push(updatedTa);
-                  } else {
-                    groupedTokenAccounts.set(key, [updatedTa]);
-                  }
-                });
-
-                // Keep only groups with more than 1 item
-                groupedTokenAccounts.forEach((item, key) => {
-                  if (item.length > 1) {
-                    tokenGroups.set(key, item);
-                  }
-                });
-
-                // Save groups for possible further merging
-                if (tokenGroups.size > 0) {
-                  consoleOut('This account owns duplicated tokens...', '', 'blue');
-                  consoleOut('tokenGroups:', tokenGroups, 'blue');
-                  setTokenAccountGroups(tokenGroups);
-                } else {
-                  setTokenAccountGroups(undefined);
-                }
-
-                // Build meanTokensCopy including the MeanFi pinned tokens
-                userTokensCopy.forEach(item => {
-                  meanTokensCopy.push(item);
-                });
-                // Now add all other items but excluding those in userTokens
-                splTokensCopy.forEach(item => {
-                  if (!userTokens.includes(item)) {
-                    meanTokensCopy.push(item);
-                  }
-                });
-
-                // Create a list containing tokens for the user owned token accounts
-                // Intersected output list
-                accTks.forEach(item => {
-                  // Loop through the user token accounts and add the token account to the list: intersectedList
-                  // If it is not already on the list (diferentiate token accounts of the same mint)
-
-                  const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-                  const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-
-                  if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-                    tokenFromMeanTokensCopy.owner = item.parsedInfo.owner;
-                    intersectedList.push(tokenFromMeanTokensCopy);
-                  }
-                });
-
-                intersectedList.unshift(sol);
-
-                // Update balances in the mean token list
-                accTks.forEach(item => {
-                  // Locate the token in intersectedList
-                  const tokenIndex = intersectedList.findIndex(i => i.address === item.parsedInfo.mint);
-                  if (tokenIndex !== -1) {
-                    const price = getTokenPriceByAddress(intersectedList[tokenIndex].address) || getTokenPriceBySymbol(intersectedList[tokenIndex].symbol);
-                    const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                    const valueInUSD = balance * price;
-                    // If we didn't already filled info for this associated token address
-                    if (!intersectedList[tokenIndex].publicAddress) {
-                      // Add it
-                      intersectedList[tokenIndex].publicAddress = item.pubkey.toBase58();
-                      intersectedList[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      intersectedList[tokenIndex].valueInUsd = valueInUSD;
-                    } else if (intersectedList[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
-                      // If we did and the publicAddress is different/new then duplicate this item with the new info
-                      const newItem = Object.assign({}, intersectedList[tokenIndex]) as UserTokenAccount;
-                      newItem.publicAddress = item.pubkey.toBase58();
-                      newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      newItem.valueInUsd = valueInUSD;
-                      intersectedList.splice(tokenIndex + 1, 0, newItem);
-                    }
-                  }
-                });
-
-                // Update displayIndex and isAta flag
-                intersectedList.forEach(async (item: UserTokenAccount, index: number) => {
-                  item.displayIndex = index;
-                  item.isAta = await updateAtaFlag(item);
-                });
-
-                // Sort by valueInUsd and then by token balance and then by token name
-                intersectedList.sort((a, b) => {
-                  if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
-                     return -1;
-                  } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
-                     return 1;
-                  } else {
-                    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
-                  }
-                });
-
-                const custom: UserTokenAccount[] = [];
-                // Build a list with all owned token accounts not already in intersectedList as custom tokens
-                accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
-                  if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
-                    const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                    const price = getTokenPriceByAddress(item.parsedInfo.mint);
-                    const valueInUsd = balance * price;
-                    const customToken: UserTokenAccount = {
-                      address: item.parsedInfo.mint,
-                      balance,
-                      chainId: 0,
-                      displayIndex: intersectedList.length + 1 + index,
-                      decimals: item.parsedInfo.tokenAmount.decimals,
-                      name: 'Custom account',
-                      symbol: shortenAddress(item.parsedInfo.mint),
-                      publicAddress: item.pubkey.toBase58(),
-                      tags: undefined,
-                      logoURI: undefined,
-                      valueInUsd
-                    };
-                    custom.push(customToken);
-                  }
-                });
-
-                // Sort by valueInUsd and then by token balance
-                custom.sort((a, b) => {
-                  if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
-                     return -1;
-                  } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
-                     return 1;
-                  } else {
-                    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
-                  }
-                });
-
-                // Finally add all owned token accounts as custom tokens
-                const finalList = intersectedList.concat(custom);
-
-                // Find Wrapped sol token account and update state with its balance
-                const wSol = finalList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
-                if (wSol) {
-                  setWsolBalance(wSol.balance || 0);
-                } else {
-                  setWsolBalance(0);
-                }
-
-                // Report in the console for debugging
-                // if (isLocal()) {
-                //   const tokenTable: any[] = [];
-                //   finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
-                //       pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
-                //       mintAddress: shortenAddress(item.address),
-                //       symbol: item.symbol,
-                //       decimals: item.decimals,
-                //       balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
-                //       price: getTokenPriceBySymbol(item.symbol),
-                //       valueInUSD: toUsCurrency(item.valueInUsd) || "$0.00"
-                //     })
-                //   );
-                //   console.table(tokenTable);
-                // }
-
-                // Update the state
-                setAccountTokens(finalList);
-
-              } else {
-                pinnedTokens.forEach((item, index) => {
-                  item.valueInUsd = 0;
-                });
-                setWsolBalance(0);
-                setAccountTokens(pinnedTokens);
-                selectAsset(pinnedTokens[0]);
-                consoleOut('No tokens found in account!', '', 'red');
-              }
-            })
-            .catch(error => {
-              console.error(error);
-              setWsolBalance(0);
-              setAccountTokens(pinnedTokens);
-              selectAsset(pinnedTokens[0], true);
-            })
-            .finally(() => {
-              setTokensLoaded(true);
-            });
-        })
-        .catch(error => {
-          console.error(error);
-        })
-        .finally(() => {
-          setTokensLoaded(true);
-        });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    connection,
-    coinPrices,
-    userTokens,
-    isPageLoaded,
-    pinnedTokens,
-    splTokenList,
-    pathParamAsset,
-    selectedAsset,
-    accountAddress,
-    shouldLoadTokens,
-    selectedCategory,
-    loadingTokenAccounts,
-    getTokenPriceByAddress,
-    getTokenByMintAddress,
-    getTokenPriceBySymbol,
-    setShouldLoadTokens,
-    navigateToAsset,
-    updateAtaFlag,
-    selectAsset,
-  ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userTokensResponse]);
 
   // Load the transactions when signaled
   useEffect(() => {
@@ -3669,6 +3191,8 @@ export const AccountsNewView = () => {
       setPendingMultisigTxCount(item.pendingTxsAmount);
       consoleOut('selectedMultisig:', item, 'blue');
       consoleOut('pendingMultisigTxCount:', item.pendingTxsAmount, 'blue');
+    } else {
+      setSelectedMultisig(undefined);
     }
 
   }, [accountAddress, isMultisigContext, multisigAccounts, setPendingMultisigTxCount, setSelectedMultisig]);
@@ -3734,13 +3258,196 @@ export const AccountsNewView = () => {
       // }
     } else {
       reloadTokensAndActivity();
-
-      // setShouldLoadTokens(true);
-      // setLoadingTokenAccounts(false);
-
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountAddress, accountTokens, pathParamAsset]);
+
+  // Build CTAs
+  useEffect(() => {
+    if (!selectedAsset) { return; }
+
+    const numMaxCtas = isXsDevice ? 2 : 5;
+    const actions: AssetCta[] = [];
+    let ctaItems = 0;
+
+    // Send
+    actions.push({
+      action: MetaInfoCtaAction.Send,
+      isVisible: true,
+      caption: 'Send',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentType: 'button',
+      uiComponentId: `button-${MetaInfoCtaAction.Send}`,
+      tooltip: isInspectedAccountTheConnectedWallet() ? '' : 'You can only send assets from your connected account',
+      callBack: onSendAsset
+    });
+    ctaItems++;
+
+    // UnwrapSol
+    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && wSolBalance > 0) {
+      actions.push({
+        action: MetaInfoCtaAction.UnwrapSol,
+        caption: 'Unwrap',
+        isVisible: true,
+        uiComponentType: 'button',
+        disabled: false,
+        uiComponentId: `button-${MetaInfoCtaAction.UnwrapSol}`,
+        tooltip: '',
+        callBack: showUnwrapSolModal
+      });
+      ctaItems++;
+    }
+
+    // Buy
+    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
+      actions.push({
+        action: MetaInfoCtaAction.Buy,
+        caption: 'Buy',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy}`,
+        tooltip: '',
+        callBack: showDepositOptionsModal
+      });
+      ctaItems++;
+    }
+
+    // Deposit
+    actions.push({
+      action: MetaInfoCtaAction.Deposit,
+      caption: 'Deposit',
+      isVisible: true,
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+      disabled: false,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Deposit}`,
+      tooltip: '',
+      callBack: showReceiveSplOrSolModal
+    });
+    ctaItems++;
+
+    // Exchange
+    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
+      actions.push({
+        action: MetaInfoCtaAction.Exchange,
+        caption: 'Exchange',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange}`,
+        tooltip: '',
+        callBack: onExchangeAsset
+      });
+      ctaItems++;
+    }
+
+    // Invest
+    if (investButtonEnabled()) {
+      actions.push({
+        action: MetaInfoCtaAction.Invest,
+        caption: selectedAsset.symbol === 'sMEAN' ? 'Unstake' : 'Stake',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest}`,
+        tooltip: '',
+        callBack: handleGoToInvestClick
+      });
+      ctaItems++;
+    }
+
+    // Wrap
+    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() && isWhitelisted) {
+      actions.push({
+        action: MetaInfoCtaAction.WrapSol,
+        caption: 'Wrap',
+        isVisible: true,
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.WrapSol}`,
+        tooltip: '',
+        callBack: showWrapSolModal
+      });
+      ctaItems++;
+    }
+
+    // Copy asset mint address
+    if (selectedAsset.address !== NATIVE_SOL.address) {
+      actions.push({
+        action: MetaInfoCtaAction.CopyAssetMintAddress,
+        caption: 'Copy mint address',
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: false,
+        uiComponentId: `menuitem-${MetaInfoCtaAction.CopyAssetMintAddress}`,
+        tooltip: '',
+        callBack: () => copyAddressToClipboard(selectedAsset.address)
+      });
+    }
+
+    // Refresh asset
+    actions.push({
+      action: MetaInfoCtaAction.Refresh,
+      caption: 'Refresh asset',
+      isVisible: true,
+      uiComponentType: 'menuitem',
+      disabled: false,
+      uiComponentId: `menuitem-${MetaInfoCtaAction.Refresh}`,
+      tooltip: '',
+      callBack: reloadSwitch
+    });
+
+    // Merge token accounts
+    if (isInspectedAccountTheConnectedWallet() && canActivateMergeTokenAccounts()) {
+      actions.push({
+        action: MetaInfoCtaAction.MergeAccounts,
+        caption: t('assets.merge-accounts-cta'),
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: false,
+        uiComponentId: `menuitem-${MetaInfoCtaAction.MergeAccounts}`,
+        tooltip: '',
+        callBack: activateTokenMerge
+      });
+    }
+
+    // Close asset
+    if (inspectedAccountType && inspectedAccountType === "multisig") {
+      actions.push({
+        action: MetaInfoCtaAction.Close,
+        caption: 'Close account',
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: isAnyTxPendingConfirmation() || !canDeleteVault() || !isDeleteAssetValid(),
+        uiComponentId: `menuitem-${MetaInfoCtaAction.Close}`,
+        tooltip: '',
+        callBack: showDeleteVaultModal
+      });
+    } else if (isInspectedAccountTheConnectedWallet()) {
+      actions.push({
+        action: MetaInfoCtaAction.CloseAccount,
+        caption: 'Close account',
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: isAnyTxPendingConfirmation(),
+        uiComponentId: `menuitem-${MetaInfoCtaAction.CloseAccount}`,
+        tooltip: '',
+        callBack: showCloseAssetModal
+      });
+    }
+
+    setAssetCtas(actions);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isXsDevice,
+    wSolBalance,
+    selectedAsset,
+    isInspectedAccountTheConnectedWallet,
+    isSelectedAssetNativeAccount,
+    isSelectedAssetWsol,
+    investButtonEnabled,
+  ]);  
 
   // Preset the selected streaming account from the list if provided in path param (streamingItemId)
   useEffect(() => {
@@ -3759,10 +3466,21 @@ export const AccountsNewView = () => {
 
   // Preset the selected stream from the list if provided in path param (streamId)
   useEffect(() => {
-    if (publicKey && streamList && streamList.length > 0 && pathParamStreamId && (!streamDetail || streamDetail.id !== pathParamStreamId)) {
-      const item = streamList.find(s => s.id as string === pathParamStreamId);
-      consoleOut('streamList:', streamList, 'darkgreen');
-      consoleOut('item:', item, 'darkgreen');
+    const inPath = (item: Stream | StreamInfo, param: string) => {
+      if (!item.id) {
+        return false;
+      }
+      const isNew = item.version >= 2 ? true : false;
+      if (isNew) {
+        return (item as Stream).id.toBase58() === param;
+      } else {
+        return (item as StreamInfo).id as string === param;
+      }
+    }
+
+    if (publicKey && streamList && streamList.length > 0 &&
+        pathParamStreamId && (!streamDetail || !inPath(streamDetail, pathParamStreamId))) {
+      const item = streamList.find(s => s.id && (s.id as PublicKey).toString() === pathParamStreamId);
       if (item) {
         setStreamDetail(item);
         setActiveStream(item);
@@ -3853,8 +3571,10 @@ export const AccountsNewView = () => {
   useEffect(() => {
     if (loadingStreams) { return; }
 
-    const wdb = parseFloat(incomingStreamsSummary.totalNet.toFixed(2));
-    const ub = parseFloat(outgoingStreamsSummary.totalNet.toFixed(2)) + parseFloat(streamingAccountsSummary.totalNet.toFixed(2));
+    const wdb = new BigNumber(incomingStreamsSummary.totalNet.toFixed(2)).toNumber();
+
+    const unallocatedTotalAmount = outgoingStreamsSummary.totalNet + streamingAccountsSummary.totalNet;
+    const ub = new BigNumber(unallocatedTotalAmount.toFixed(2)).toNumber();
 
     setTotalAccountBalance(wdb + ub);
     setCanShowStreamingAccountBalance(true);
@@ -3897,6 +3617,21 @@ export const AccountsNewView = () => {
     }
   }, [canSubscribe, isPageLoaded, onTxConfirmed, onTxTimedout]);
 
+  // Set page loaded on entering /accounts
+  useEffect(() => {
+    if (!isPageLoaded || !publicKey || !accountAddress) { return; }
+
+    setIsPageLoaded(false);
+    setTransactions([]);
+
+  }, [
+    publicKey,
+    isPageLoaded,
+    accountAddress,
+    shouldLoadTokens,
+    setTransactions,
+  ]);
+
   // Unsubscribe from events
   useEffect(() => {
     // Do unmounting stuff here
@@ -3907,8 +3642,6 @@ export const AccountsNewView = () => {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       consoleOut('Clearing accounts state...', '', 'purple');
       clearStateData();
-      // setSelectedAsset(undefined);
-      setTokensLoaded(false);
       setCanSubscribe(true);
       isWorkflowLocked = false;
     };
@@ -4178,31 +3911,25 @@ export const AccountsNewView = () => {
   //////////////
 
   const onBackButtonClicked = () => {
+    let url = '';
+
     if (location.pathname.indexOf('/assets') !== -1) {
       setDetailsPanelOpen(false);
       setAutoOpenDetailsPanel(false);
     } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming/${streamingItemId}`) {
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
-      if (inspectedAccountType && inspectedAccountType === "multisig") {
-        url += `?account-type=multisig`;
-      }
-      navigate(url);
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
     } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing/${streamingItemId}`) {
-      // let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
-      // if (inspectedAccountType && inspectedAccountType === "multisig") {
-      //   url += `?account-type=multisig`;
-      // }
-      navigate(-1);
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
+      setStreamDetail(undefined);
     } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts/${streamingItemId}`) {
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts`;
-      if (inspectedAccountType && inspectedAccountType === "multisig") {
-        url += `?account-type=multisig`;
-      }
-      navigate(url);
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/streaming-accounts`;
     } else {
       setDetailsPanelOpen(false);
       setAutoOpenDetailsPanel(false);
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming`;
+    }
+    // Navigate if needed but first append multisig param if exists
+    if (url) {
       if (inspectedAccountType && inspectedAccountType === "multisig") {
         url += `?account-type=multisig`;
       }
@@ -4222,11 +3949,7 @@ export const AccountsNewView = () => {
               let url = '/multisig';
               if (accountAddress) {
                 setHighLightableMultisigId(accountAddress);
-                if (activeTab) {
-                  url += `/${accountAddress}?v=${tabNameFormat(activeTab)}`;
-                } else {
-                  url += `/${accountAddress}?v=proposals`;
-                }
+                url += `/${accountAddress}?v=proposals`;
               }
               navigate(url);
             }}>
@@ -4426,18 +4149,20 @@ export const AccountsNewView = () => {
   const renderAssetsList = () => {
 
     const renderMessages = () => {
-      if (tokensLoaded) {
+      if (loadingTokenAccounts) {
+        return (
+          <div className="flex flex-center">
+            <Spin indicator={antIcon} />
+          </div>
+        );
+      } else if (tokensLoaded) {
         return (
           <div className="flex flex-center">
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
           </div>
         );
       } else {
-        return (
-          <div className="flex flex-center">
-            <Spin indicator={antIcon} />
-          </div>
-        );
+        return null;
       }
     }
 
@@ -4589,46 +4314,55 @@ export const AccountsNewView = () => {
     } else return null;
   };
 
-  const assetListOptions = (
-    <Menu>
-      <Menu.Item key="10" onClick={showSuggestAssetModal}>
-        <IconLightBulb className="mean-svg-icons" />
-        <span className="menu-item-text">Suggest an asset</span>
-      </Menu.Item>
-      {(accountTokens && accountTokens.length > 0) && (
-        <>
-          {hideLowBalances ? (
-            <Menu.Item key="11" onClick={() => toggleHideLowBalances(false)}>
+  const getAssetListOptions = () => {
+    const items: ItemType[] = [];
+    items.push({
+      key: '01-suggest-asset',
+      label: (
+        <div onClick={showSuggestAssetModal}>
+          <IconLightBulb className="mean-svg-icons" />
+          <span className="menu-item-text">Suggest an asset</span>
+        </div>
+      )
+    });
+    if (accountTokens && accountTokens.length > 0) {
+      if (hideLowBalances) {
+        items.push({
+          key: '02-show-low-balances',
+          label: (
+            <div onClick={() => toggleHideLowBalances(false)}>
               <IconEyeOn className="mean-svg-icons" />
               <span className="menu-item-text">Show low balances</span>
-            </Menu.Item>
-          ) : (
-            <Menu.Item key="12" onClick={() => toggleHideLowBalances(true)}>
+            </div>
+          )
+        });
+      } else {
+        items.push({
+          key: '03-hide-low-balances',
+          label: (
+            <div onClick={() => toggleHideLowBalances(true)}>
               <IconEyeOff className="mean-svg-icons" />
               <span className="menu-item-text">Hide low balances</span>
-            </Menu.Item>
-          )}
-        </>
-      )}
-    </Menu>
-  );
+            </div>
+          )
+        });
+      }
+    }
+    return <Menu items={items} />;
+  }
 
   const renderUserAccountAssetMenu = () => {
-    const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
-    return (
-      <Menu>
-        {items.map(item => {
-          return (
-            <Menu.Item
-              key={item.uiComponentId}
-              disabled={item.disabled}
-              onClick={item.callBack}>
-              <span className="menu-item-text">{item.caption}</span>
-            </Menu.Item>
-          );
-        })}
-      </Menu>
-    );
+    const ctas = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
+    const items: ItemType[] = ctas.map((item: MetaInfoCta, index: number) => {
+      return {
+        key: `${index + 44}-${item.uiComponentId}`,
+        label: (
+          <span className="menu-item-text" onClick={item.callBack}>{item.caption}</span>
+        ),
+        disabled: item.disabled
+      }
+    });
+    return <Menu items={items} />;
   }
 
   const isDeleteAssetValid = () => {
@@ -4940,21 +4674,10 @@ export const AccountsNewView = () => {
     setTimeout(() => {
       setStreamDetail(undefined);
     }, 100);
-    navigate(url);
-  }
-
-  // TODO: Make navigate(-1) works correctly
-  const returnFromOutgoingStreamDetailsHandler = () => {
-    // let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
-
-    // if (inspectedAccountType && inspectedAccountType === "multisig") {
-    //   url += `?account-type=multisig`;
-    // }
-
     setTimeout(() => {
       setStreamDetail(undefined);
     }, 100);
-    navigate(-1);
+    navigate(url);
   }
 
   const returnFromStreamingAccountDetailsHandler = () => {
@@ -4970,6 +4693,16 @@ export const AccountsNewView = () => {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span>loadingTokenAccounts:</span><span className="ml-1 font-extrabold">{loadingTokenAccounts ? 'true' : 'false'}</span>
+          <span className="ml-2">shouldLoadTokens:</span><span className="ml-1 font-extrabold">{shouldLoadTokens ? 'true' : 'false'}</span>
+          <span className="ml-2">tokensLoaded:</span><span className="ml-1 font-extrabold">{tokensLoaded ? 'true' : 'false'}</span>
+          <span className="ml-2">userTokensResponse:</span><span className="ml-1 font-extrabold">{userTokensResponse !== null ? 'true' : 'false'}</span>
+          <span className="ml-2">accountAddress:</span><span className="ml-1 font-extrabold">{accountAddress ? shortenAddress(accountAddress) : '-'}</span>
+        </div>
+      )} */}
+
       {detailsPanelOpen && (
         <Button
           id="back-button"
@@ -5016,7 +4749,7 @@ export const AccountsNewView = () => {
                                   if (selectedMultisig) {
                                     setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                                   }
-                                  navigate(`/multisig/${address}?v=${tabNameFormat(activeTab)}`)
+                                  navigate(`/multisig/${address}?v=proposals`);
                                 }}
                               />
                             </Tooltip>
@@ -5135,7 +4868,7 @@ export const AccountsNewView = () => {
                         )}
                       </div>
                       <Dropdown className="options-dropdown"
-                        overlay={assetListOptions}
+                        overlay={getAssetListOptions()}
                         placement="bottomRight"
                         trigger={["click"]}>
                         <span className="icon-button-container">
@@ -5242,15 +4975,14 @@ export const AccountsNewView = () => {
                         ) : pathParamStreamId && pathParamStreamingTab === "outgoing" ? (
                           <MoneyStreamsOutgoingView
                             loadingStreams={loadingStreams}
+                            accountAddress={accountAddress}
                             streamSelected={streamDetail}
                             streamList={streamList}
-                            streamingAccountSelected={treasuryDetail}
                             multisigAccounts={multisigAccounts}
-                            onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
+                            onSendFromOutgoingStreamDetails={onBackButtonClicked}
                           />
                         ) : pathParamTreasuryId && pathParamStreamingTab === "streaming-accounts" && treasuryDetail && treasuryDetail.id === pathParamTreasuryId ? (
                           <StreamingAccountView
-                            streamSelected={streamDetail}
                             treasuryList={treasuryList}
                             multisigAccounts={multisigAccounts}
                             selectedMultisig={selectedMultisig}

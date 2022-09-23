@@ -1,30 +1,25 @@
-import './style.scss';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { Button, Col, Row } from "antd"
-import { IconArrowForward } from "../../../../Icons"
-// import { shortenAddress } from "../../../../utils/utils";
-import { SafeInfo } from "../UI/SafeInfo";
-// import { MultisigVault } from '../../../../models/multisig';
-import { Idl, Program } from '@project-serum/anchor';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
-import { ProgramAccounts } from '../../../../utils/accounts';
-import { consoleOut } from '../../../../utils/ui';
+import { Idl, Program } from '@project-serum/anchor';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
-import { AppStateContext } from '../../../../contexts/appstate';
+import { Button, Col, Row } from "antd";
+import { useCallback, useEffect, useState } from 'react';
 import { ResumeItem } from '../../../../components/ResumeItem';
+import { IconArrowForward } from "../../../../Icons";
+import { consoleOut } from '../../../../middleware/ui';
+import { ProgramAccounts } from "../../../../models/accounts";
+import { SafeInfo } from "../UI/SafeInfo";
+import './style.scss';
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;
   isProposalDetails: boolean;
   isProgramDetails: boolean;
-  isAssetDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
   onNavigateAway: any;
   selectedMultisig?: any;
   onEditMultisigClick: any;
   onNewProposalMultisigClick: any;
-  // multisigVaults: MultisigVault[];
   multisigClient: Program<Idl>;
   multisigTxs: MultisigTransaction[];
   vestingAccountsCount: number;
@@ -41,12 +36,7 @@ export const SafeSerumInfoView = (props: {
     vestingAccountsCount,
   } = props;
 
-  const {
-    multisigSolBalance
-  } = useContext(AppStateContext);
-
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
-  const [loadingPrograms, setLoadingPrograms] = useState(true);
   const safeSerumNameImg = "https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png";
   const safeSerumNameImgAlt = "Serum";
   // const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
@@ -210,12 +200,6 @@ export const SafeSerumInfoView = (props: {
 
   }, [connection]);
 
-  // useEffect(() => {
-  //   setLoadingPrograms(true);
-  //   setPrograms(undefined);
-  //   setSelectedProgram(undefined);
-  // }, [selectedMultisig]);
-
   // Get Programs
   useEffect(() => {
 
@@ -227,8 +211,7 @@ export const SafeSerumInfoView = (props: {
         consoleOut('programs:', progs, 'blue');
         setPrograms(progs || []);
       })
-      .catch(error => console.error(error))
-      .finally(() => setLoadingPrograms(false));
+      .catch(error => console.error(error));
     });
 
     return () => {
@@ -282,19 +265,19 @@ export const SafeSerumInfoView = (props: {
   // Tabs
   const tabs = [
     {
-      id: "serum01",
-      name: "Proposals",
-      render: renderListOfProposals
+      key: "serum01",
+      label: "Proposals",
+      children: renderListOfProposals
     },
     {
-      id: "serum02",
-      name: "Activity",
-      render: '' //renderActivities
+      key: "serum02",
+      label: "Activity",
+      children: '' //renderActivities
     },
     {
-      id: "serum03",
-      name: "Programs",
-      render: renderPrograms
+      key: "serum03",
+      label: "Programs",
+      children: renderPrograms
     }
   ];
 

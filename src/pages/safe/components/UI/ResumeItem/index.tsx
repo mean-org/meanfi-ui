@@ -6,7 +6,7 @@ import { MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-m
 import Countdown from 'react-countdown';
 import { AppStateContext } from '../../../../../contexts/appstate';
 import { IconThumbsDown, IconThumbsUp } from '../../../../../Icons';
-import { formatThousands } from '../../../../../utils/utils';
+import { formatThousands } from '../../../../../middleware/utils';
 
 export const ResumeItem = (props: {
   id?: any;

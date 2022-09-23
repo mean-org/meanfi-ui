@@ -6,17 +6,17 @@ import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
+import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../middleware/utils";
 import { StakeQuote, StakingClient } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, getTransactionStatusForLogs } from "../../middleware/ui";
 import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { INPUT_DEBOUNCE_TIME } from "../../constants";
-import { AppUsageEvent, SegmentStakeMeanData } from "../../utils/segment-service";
+import { AppUsageEvent, SegmentStakeMeanData } from "../../middleware/segment-service";
 import { segmentAnalytics } from "../../App";
 import { openNotification } from "../../components/Notifications";
 import { STAKING_ROUTE_BASE_PATH } from "../../pages/staking";
@@ -679,7 +679,7 @@ export const StakeTabView = (props: {
               )}
               {selectedToken && meanBalance ? (
                 <div className="token-max simplelink" onClick={() => {
-                  const newAmount = meanBalance.toFixed(selectedToken?.decimals || 6);
+                  const newAmount = meanBalance.toFixed(selectedToken?.decimals || 9);
                   setFromCoinAmount(newAmount);
                   // Debouncing
                   fetchQuoteFromInput(newAmount);

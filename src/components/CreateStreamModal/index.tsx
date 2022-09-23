@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from "antd";
-import { useTranslation } from "react-i18next";
 import { RepeatingPayment } from '../../views';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { UserTokenAccount } from '../../models/transactions';
@@ -11,7 +10,6 @@ export const CreateStreamModal = (props: {
   selectedToken: UserTokenAccount | undefined;
 }) => {
   const { isVisible, handleClose, selectedToken } = props;
-  const { t } = useTranslation("common");
   const [token, setToken] = useState<TokenInfo | undefined>(undefined);
 
   useEffect(() => {
@@ -25,7 +23,7 @@ export const CreateStreamModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">Create outgoing stream</div>}
       footer={null}
-      visible={isVisible}
+      open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={480}>

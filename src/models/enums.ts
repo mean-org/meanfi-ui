@@ -143,6 +143,7 @@ export enum MetaInfoCtaAction {
     CloseAccount = 12,
     Share = 13,
     Close = 14,
+    CopyAssetMintAddress = 15,
     VestingContractCreateStreamOnce = 20,
     VestingContractCreateStreamBulk = 21,
     VestingContractAddFunds = 21,
@@ -156,47 +157,4 @@ export enum MetaInfoCtaAction {
 export type VestingContractCategory = {
     label: string;
     value: SubCategory;
-}
-
-export const VESTING_CATEGORIES: VestingContractCategory[] = [
-    {
-        label: 'Advisor',
-        value: SubCategory.advisor
-    },
-    {
-        label: 'Development',
-        value: SubCategory.development
-    },
-    {
-        label: 'Foundation',
-        value: SubCategory.foundation
-    },
-    {
-        label: 'Investor',
-        value: SubCategory.investor
-    },
-    {
-        label: 'Marketing',
-        value: SubCategory.marketing
-    },
-    {
-        label: 'Partnership',
-        value: SubCategory.partnership
-    },
-    {
-        label: 'Seed round',
-        value: SubCategory.seed
-    },
-    {
-        label: 'Team',
-        value: SubCategory.team
-    }
-];
-
-export const getCategoryLabelByValue = (value: SubCategory) => {
-    const item = VESTING_CATEGORIES.find(c => c.value === value);
-    if (item) {
-        return item.label;
-    }
-    return '-';
 }

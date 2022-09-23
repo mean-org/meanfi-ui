@@ -8,20 +8,21 @@ import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { findATokenAddress, formatThousands } from "../../utils/utils";
 import { IconLoading, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
-import { consoleOut, isProd } from "../../utils/ui";
 import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
 import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { MEAN_TOKEN_LIST } from "../../constants/token-list";
+import { MEAN_TOKEN_LIST } from "../../constants/tokens";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
+import { consoleOut, isProd } from "../../middleware/ui";
+import { findATokenAddress, formatThousands, getAmountFromLamports } from "../../middleware/utils";
+import { getTokenAccountBalanceByAddress } from "../../middleware/accounts";
 
 export type StakeOption = "stake" | "unstake" | undefined;
 export const STAKING_ROUTE_BASE_PATH = '/staking';
@@ -93,17 +94,6 @@ export const StakingView = () => {
   //  Callbacks  //
   /////////////////
 
-  const getTokenAccountBalanceByAddress = useCallback(async (tokenAddress: PublicKey | undefined | null): Promise<number> => {
-    if (!connection || !tokenAddress) return 0;
-    try {
-      const tokenAmount = (await connection.getTokenAccountBalance(tokenAddress)).value;
-      return tokenAmount.uiAmount || 0;
-    } catch (error) {
-      consoleOut('getTokenAccountBalance failed for:', tokenAddress.toBase58(), 'red');
-      return 0;
-    }
-  }, [connection]);
-
   const refreshMeanBalance = useCallback(async () => {
 
     if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
@@ -120,7 +110,10 @@ export const StakingView = () => {
     try {
       const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
       const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
-      balance = await getTokenAccountBalanceByAddress(meanTokenAddress);
+      const result = await getTokenAccountBalanceByAddress(connection, meanTokenAddress);
+      if (result) {
+        balance = result.uiAmount || 0;
+      }
       consoleOut('MEAN balance:', balance, 'blue');
       setMeanBalance(balance);
     } catch (error) {
@@ -149,7 +142,10 @@ export const StakingView = () => {
 
     const sMeanTokenPk = new PublicKey(stakingPair.stakedToken.address);
     const smeanTokenAddress = await findATokenAddress(publicKey, sMeanTokenPk);
-    balance = await getTokenAccountBalanceByAddress(smeanTokenAddress);
+    const result = await getTokenAccountBalanceByAddress(connection, smeanTokenAddress);
+    if (result) {
+      balance = result.uiAmount || 0;
+    }
     consoleOut('sMEAN balance:', balance, 'blue');
     setSmeanBalance(balance);
 
@@ -252,14 +248,9 @@ export const StakingView = () => {
 
   // Keep account balance updated
   useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balances
-      setNativeBalance(getAccountBalance());
+      setNativeBalance(getAmountFromLamports(account?.lamports));
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }

@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, toTokenAmount } from '../../utils/utils';
+import { getAmountWithSymbol, getTxIxResume, toTokenAmount } from '../../middleware/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
@@ -12,14 +12,14 @@ import { PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../mo
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
-import { getWhitelistAllocation, sendRecordClaimTxRequest, sendSignClaimTxRequest } from '../../utils/api';
+import { getWhitelistAllocation, sendRecordClaimTxRequest, sendSignClaimTxRequest } from '../../middleware/api';
 import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
-import { isError } from '../../utils/transactions';
+import { isError } from '../../middleware/transactions';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { useConnectionConfig } from '../../contexts/connection';
 import { useNavigate } from 'react-router-dom';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { openNotification } from '../../components/Notifications';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
@@ -129,7 +129,7 @@ export const AirdropRedeem = (props: {
         : userAllocation.isAirdropCompleted
           ? 'Airdrop has completed'
           : props.nativeBalance < transactionFee.blockchainFee + transactionFee.mspFlatFee
-            ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())}`
+            ? `Need at least ${getAmountWithSymbol(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())}`
             : isError(transactionStatus.currentOperation)
               ? 'Retry operation'
               : 'Claim now'
@@ -169,8 +169,8 @@ export const AirdropRedeem = (props: {
         const treasurer = new PublicKey(treasurerAddress);
         const treasury = new PublicKey(treasuryAddress);
         const associatedToken = new PublicKey(meanToken.address as string);
-        const allocation = toTokenAmount(userAllocation.tokenAmount, meanToken.decimals);
-        const rateAmount = toTokenAmount(userAllocation.monthlyRate, meanToken.decimals);
+        const allocation = toTokenAmount(userAllocation.tokenAmount, meanToken.decimals, true) as string;
+        const rateAmount = toTokenAmount(userAllocation.monthlyRate, meanToken.decimals, true) as string;
         const streamName = 'MEAN Airdrop';
         const now = new Date();
         const cliffAmount = 0;
@@ -209,9 +209,9 @@ export const AirdropRedeem = (props: {
         consoleOut('nativeBalance:', props.nativeBalance, 'blue');
         if (props.nativeBalance < transactionFee.blockchainFee + transactionFee.mspFlatFee) {
           const noBalanceMessage = `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(props.nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(props.nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`;
           openNotification({
             title: 'Not enough SOL balance',

@@ -1,13 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { findATokenAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
+import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from "../middleware/utils";
 import {
   DAO_CORE_TEAM_WHITELIST,
   DDCA_FREQUENCY_OPTIONS,
   TEN_MINUTES_REFRESH_TIMEOUT,
-  STREAMING_PAYMENT_CONTRACTS,
   FIVE_MINUTES_REFRESH_TIMEOUT,
   TRANSACTIONS_PER_PAGE,
-  BETA_TESTING_PROGRAM_WHITELIST,
   WRAPPED_SOL_MINT_ADDRESS,
   FORTY_SECONDS_REFRESH_TIMEOUT,
   FIVETY_SECONDS_REFRESH_TIMEOUT,
@@ -15,23 +13,22 @@ import {
   PERFORMANCE_THRESHOLD,
   ONE_MINUTE_REFRESH_TIMEOUT
 } from "../constants";
-import { ContractDefinition } from "../models/contract-definition";
 import { DdcaFrequencyOption } from "../models/ddca-models";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices } from "../utils/api";
+import { getPrices } from "../middleware/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
-import { BANNED_TOKENS, MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
-import { NATIVE_SOL } from "../utils/tokens";
-import { MappedTransaction } from "../utils/history";
-import { consoleOut, isProd, msToTime } from "../utils/ui";
+import { BANNED_TOKENS, MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/tokens";
+import { NATIVE_SOL } from "../constants/tokens";
+import { MappedTransaction } from "../middleware/history";
+import { consoleOut, isProd, msToTime } from "../middleware/ui";
 import { appConfig } from "..";
 import { DdcaAccount } from "@mean-dao/ddca";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
@@ -39,22 +36,21 @@ import { TreasuryTypeOption } from "../models/treasuries";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
-import { AccountDetails } from "../models";
 import { openNotification } from "../components/Notifications";
-import { PerformanceCounter } from "../utils/perf-counter";
-import { TokenPrice } from "../models/token";
-import { ProgramAccounts } from "../utils/accounts";
+import { PerformanceCounter } from "../middleware/perf-counter";
+import { AccountDetails, UserTokensResponse } from "../models/accounts";
+import { TokenPrice } from "../models/accounts";
+import { ProgramAccounts } from "../models/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
 import { MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from "@mean-dao/mean-multisig-sdk";
+import { BN } from "bn.js";
+import { getUserAccountTokens } from "../middleware/accounts";
 
-const pricesOldPerformanceCounter = new PerformanceCounter();
-const pricesNewPerformanceCounter = new PerformanceCounter();
-const refreshStreamsPerformanceCounter = new PerformanceCounter();
+const pricesPerformanceCounter = new PerformanceCounter();
 const listStreamsV1PerformanceCounter = new PerformanceCounter();
 const listStreamsV2PerformanceCounter = new PerformanceCounter();
-const streamDetailPerformanceCounter = new PerformanceCounter();
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -67,7 +63,6 @@ interface AppStateConfig {
   tpsAvg: number | null | undefined;
   refreshInterval: number;
   isWhitelisted: boolean;
-  isInBetaTestingProgram: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
@@ -76,8 +71,8 @@ interface AppStateConfig {
   fromCoinAmount: string;
   effectiveRate: number;
   coinPrices: any | null;
+  priceList: TokenPrice[] | null;
   loadingPrices: boolean;
-  contract: ContractDefinition | undefined;
   treasuryOption: TreasuryTypeOption | undefined;
   recipientAddress: string;
   recipientNote: string;
@@ -116,6 +111,9 @@ interface AppStateConfig {
   diagnosisInfo: AccountDetails | undefined;
   // Accounts
   shouldLoadTokens: boolean;
+  loadingTokenAccounts: boolean;
+  userTokensResponse: UserTokensResponse | null;
+  tokensLoaded: boolean;
   splTokenList: UserTokenAccount[];
   userTokens: UserTokenAccount[];
   pinnedTokens: UserTokenAccount[];
@@ -161,13 +159,11 @@ interface AppStateConfig {
   getTokenPriceByAddress: (address: string) => number;
   getTokenPriceBySymbol: (symbol: string) => number;
   getTokenByMintAddress: (address: string) => TokenInfo | undefined;
-  getUserTokenByMintAddress: (address: string) => TokenInfo | undefined;
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
   resetStreamsState: () => void;
   clearStreams: () => void;
   refreshStreamList: (reset?: boolean, userAddress?: PublicKey) => void;
-  setContract: (name: string) => void;
   setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
@@ -234,7 +230,6 @@ const contextDefaultValues: AppStateConfig = {
   tpsAvg: undefined,
   refreshInterval: ONE_MINUTE_REFRESH_TIMEOUT,
   isWhitelisted: false,
-  isInBetaTestingProgram: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,
@@ -243,8 +238,8 @@ const contextDefaultValues: AppStateConfig = {
   fromCoinAmount: '',
   effectiveRate: 0,
   coinPrices: null,
+  priceList: null,
   loadingPrices: false,
-  contract: undefined,
   treasuryOption: TREASURY_TYPE_OPTIONS[0],
   recipientAddress: '',
   recipientNote: '',
@@ -286,6 +281,9 @@ const contextDefaultValues: AppStateConfig = {
   diagnosisInfo: undefined,
   // Accounts
   shouldLoadTokens: true,
+  loadingTokenAccounts: true,
+  userTokensResponse: null,
+  tokensLoaded: false,
   splTokenList: [],
   userTokens: [],
   pinnedTokens: [],
@@ -321,7 +319,6 @@ const contextDefaultValues: AppStateConfig = {
   setTpsAvg: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
-  setContract: () => {},
   setTreasuryOption: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
@@ -333,7 +330,6 @@ const contextDefaultValues: AppStateConfig = {
   getTokenPriceByAddress: () => 0,
   getTokenPriceBySymbol: () => 0,
   getTokenByMintAddress: () => undefined,
-  getUserTokenByMintAddress: () => undefined,
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
   resetStreamsState: () => {},
@@ -410,7 +406,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
-  const [isInBetaTestingProgram, setIsInBetaTestingProgram] = useState(contextDefaultValues.isInBetaTestingProgram);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
   const today = new Date().toLocaleDateString("en-US");
@@ -418,9 +413,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const timeDate = moment().format('hh:mm A');  
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [tpsAvg, setTpsAvg] = useState<number | null | undefined>(contextDefaultValues.tpsAvg);
-  const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
-  const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
-  const [contractName, setContractName] = useLocalStorageState("contractName");
   const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
   const [treasuryOption, updateTreasuryOption] = useState<TreasuryTypeOption | undefined>(contextDefaultValues.treasuryOption);
   const [ddcaOptionName, setDdcaOptionName] = useState<string>('');
@@ -463,12 +455,11 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
   const [multisigSolBalance, updateMultisigSolBalance] = useState<number | undefined>(contextDefaultValues.multisigSolBalance);
   const [pendingMultisigTxCount, setPendingMultisigTxCount] = useState<number | undefined>(contextDefaultValues.pendingMultisigTxCount);
-
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
   const [totalSafeBalance, updateTotalSafeBalance] = useState<number | undefined>(contextDefaultValues.totalSafeBalance);
   const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
-  const [coinPricesFromApi, setCoinPricesFromApi] = useState<TokenPrice[] | null>(null);
+  const [priceList, setPriceList] = useState<TokenPrice[] | null>(null);
   const [coinPrices, setCoinPrices] = useState<any>(null);
   const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
@@ -490,15 +481,21 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
 
+  const [tokensLoaded, setTokensLoaded] = useState(contextDefaultValues.tokensLoaded);
+  const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
+  const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(contextDefaultValues.loadingTokenAccounts);
+  const [userTokensResponse, setUserTokensResponse] = useState<UserTokensResponse | null>(contextDefaultValues.userTokensResponse);
+  const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
+
   const isDowngradedPerformance = useMemo(() => {
     return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
       ? true
       : false;
   }, [tpsAvg]);
 
-  const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
-  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+  const streamProgramAddressFromConfig = useMemo(() => appConfig.getConfig().streamProgramAddress, []);
+  const streamV2ProgramAddressFromConfig = useMemo(() => appConfig.getConfig().streamV2ProgramAddress, []);
 
   if (!streamProgramAddress) {
     setStreamProgramAddress(streamProgramAddressFromConfig);
@@ -541,8 +538,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     );
 
   }, [
-    connection,
     publicKey,
+    connection,
+    multisigAddressPK,
     connectionConfig.endpoint,
   ]);
 
@@ -588,27 +586,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => {};
   }, [theme, updateTheme]);
 
-  // Update isInBetaTestingProgram
-  useEffect(() => {
-    const isUserInBetaTestingProgram = () => {
-      if (!publicKey) {
-        setIsWhitelisted(false);
-      } else {
-        const user = BETA_TESTING_PROGRAM_WHITELIST.some(a => a === publicKey.toBase58());
-        setIsInBetaTestingProgram(user);
-      }
-    }
-
-    isUserInBetaTestingProgram();
-    return () => {};
-  }, [
-    publicKey
-  ]);
-
-  useEffect(() => {
-    consoleOut('isInBetaTestingProgram:', isInBetaTestingProgram, 'blue');
-  }, [isInBetaTestingProgram]);
-
   // Update isWhitelisted
   useEffect(() => {
     const updateIsWhitelisted = () => {
@@ -632,14 +609,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setLoadingStreams = (state: boolean) => {
     updateLoadingStreams(state);
-  }
-
-  const setContract = (name: string) => {
-    const items = STREAMING_PAYMENT_CONTRACTS.filter(c => c.name === name);
-    if (items?.length) {
-      setSelectedContract(items[0]);
-      setContractName(name);
-    }
   }
 
   const setDdcaOption = (name: string) => {
@@ -768,24 +737,17 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const getTokenByMintAddress = useCallback((address: string): TokenInfo | undefined => {
-    const tokenFromTokenList = splTokenList && isProd()
-      ? splTokenList.find(t => t.address === address)
-      : MEAN_TOKEN_LIST.find(t => t.address === address);
-    if (tokenFromTokenList) {
-      return tokenFromTokenList;
+    let token = splTokenList && isProd()
+      ? tokenList.find(t => t.address === address)
+      : undefined;
+    if (!token) {
+      token = MEAN_TOKEN_LIST.find(t => t.address === address);
     }
-    return undefined;
-  }, [splTokenList]);
-
-  const getUserTokenByMintAddress = useCallback((address: string): TokenInfo | undefined => {
-    const tokenFromTokenList = splTokenList && isProd()
-      ? splTokenList.find(t => t.address === address)
-      : userTokens.find(t => t.address === address);
-    if (tokenFromTokenList) {
-      return tokenFromTokenList;
+    if (!token) {
+      token = accountTokens.find(t => t.address === address);
     }
-    return undefined;
-  }, [splTokenList, userTokens]);
+    return token;
+  }, [accountTokens, splTokenList, tokenList]);
 
   const openStreamById = async (streamId: string, dock = false) => {
     try {
@@ -809,7 +771,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             if (dock) {
               openNotification({
                 title: t('notifications.error-title'),
-                description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+                description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
                 type: "error"
               });
             }
@@ -817,7 +779,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         } else {
           openNotification({
             title: t('notifications.error-title'),
-            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
             type: "error"
           });
         }
@@ -825,7 +787,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         console.error('customStream', error);
         openNotification({
           title: t('notifications.error-title'),
-          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId, 10)}),
           type: "error"
         });
       }
@@ -896,7 +858,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           })
           .catch(err => {
             console.error(err);
-            setStreamActivity(undefined);
+            setStreamActivity([]);
             setHasMoreStreamActivity(false);
           })
           .finally(() => setLoadingStreamActivity(false));
@@ -992,13 +954,13 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const getTokenPriceByAddress = useCallback((address: string): number => {
-    if (!address || !coinPricesFromApi || coinPricesFromApi.length === 0) { return 0; }
+    if (!address || !priceList || priceList.length === 0) { return 0; }
 
-    const item = coinPricesFromApi.find(i => i.address === address);
+    const item = priceList.find(i => i.address === address);
 
     return item ? (item.price || 0) : 0;
 
-  }, [coinPricesFromApi]);
+  }, [priceList]);
 
   const getTokenPriceBySymbol = useCallback((symbol: string): number => {
     if (!symbol || !coinPrices) { return 0; }
@@ -1013,10 +975,10 @@ const AppStateProvider: React.FC = ({ children }) => {
   const getCoinPrices = useCallback(async () => {
 
     try {
-      pricesNewPerformanceCounter.start();
+      pricesPerformanceCounter.start();
       const newPrices = await getPrices();
-      pricesNewPerformanceCounter.stop();
-      consoleOut(`Fetched price list in ${pricesNewPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
+      pricesPerformanceCounter.stop();
+      consoleOut(`Fetched price list in ${pricesPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
       if (newPrices && newPrices.length > 0) {
         const pricesMap: any = {};
         newPrices.forEach(tp => pricesMap[tp.symbol] = tp.price);
@@ -1044,7 +1006,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             price: sol.price,
           });
         }
-        setCoinPricesFromApi(listCopy);
+        setPriceList(listCopy);
         consoleOut('Price items:', newPrices.length, 'blue');
         consoleOut('Mapped prices:', pricesMap, 'blue');
         setCoinPrices(pricesMap);
@@ -1053,7 +1015,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setCoinPrices({ "NO-TOKEN-VALUE": 1 });
       }
     } catch (error) {
-      pricesOldPerformanceCounter.stop();
       setCoinPrices({ "NO-TOKEN-VALUE": 1 });
       updateEffectiveRate(0);
       consoleOut('New prices API error:', error, 'red');
@@ -1096,40 +1057,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       updateEffectiveRate(price);
     }
   }, [coinPrices, selectedToken]);
-
-  // Cache selected contract
-  const contractFromCache = useMemo(
-    () => STREAMING_PAYMENT_CONTRACTS.find(({ name }) => name === contractName),
-    [contractName]
-  );
-
-  // Preselect a contract
-  useEffect(() => {
-
-    const setContractOrAutoSelectFirst = (name?: string) => {
-      if (name) {
-        if (contractFromCache) {
-          setSelectedContract(contractFromCache);
-        } else {
-          const item = STREAMING_PAYMENT_CONTRACTS.filter(c => !c.disabled)[0];
-          setSelectedContract(item);
-          setContractName(item.name);
-        }
-      } else {
-        const item = STREAMING_PAYMENT_CONTRACTS.filter(c => !c.disabled)[0];
-        setSelectedContract(item);
-        setContractName(item.name);
-      }
-    }
-
-    setContractOrAutoSelectFirst(contractName);
-    return () => {};
-  }, [
-    contractName,
-    contractFromCache,
-    setSelectedContract,
-    setContractName
-  ]);
 
   // Cache selected DDCA frequency option
   const ddcaOptFromCache = useMemo(
@@ -1189,95 +1116,51 @@ const AppStateProvider: React.FC = ({ children }) => {
       let rawStreamsv2: Stream[] = [];
 
       // Reset all counters
-      refreshStreamsPerformanceCounter.reset();
       listStreamsV1PerformanceCounter.reset();
       listStreamsV2PerformanceCounter.reset();
-      streamDetailPerformanceCounter.reset();
-
-      refreshStreamsPerformanceCounter.start();
       listStreamsV2PerformanceCounter.start();
 
-      msp.listStreams({treasurer: userPk, beneficiary: userPk})
+      msp.listStreams({ treasurer: userPk, beneficiary: userPk })
         .then(streamsv2 => {
+          consoleOut('streamsv2 from AppSate:', streamsv2, 'blue');
           listStreamsV2PerformanceCounter.stop();
           streamAccumulator.push(...streamsv2);
           rawStreamsv2 = streamsv2;
-          rawStreamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1);
+          rawStreamsv2.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1);
           listStreamsV1PerformanceCounter.start();
-          ms.listStreams({treasurer: userPk, beneficiary: userPk})
+          ms.listStreams({ treasurer: userPk, beneficiary: userPk })
           .then(async streamsv1 => {
             listStreamsV1PerformanceCounter.stop();
             streamAccumulator.push(...streamsv1);
             rawStreamsv1 = streamsv1;
-            rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
-            streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
-            // Sort debugging block
-            // if (!isProd()) {
-            //   const debugTable: any[] = [];
-            //   streamAccumulator.forEach(item => debugTable.push({
-            //     createdBlockTime: item.createdBlockTime,
-            //     name: item.version < 2 ? item.streamName : item.name.trim(),
-            //   }));
-            //   console.table(debugTable);
-            // }
+            rawStreamsv1.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1)
+            streamAccumulator.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1)
+            // Start debugging block
+            if (!isProd()) {
+              const debugTable: any[] = [];
+              streamAccumulator.forEach(item => debugTable.push({
+                version: item.version,
+                name: item.version < 2 ? item.streamName : item.name.trim(),
+                streamId: shortenAddress(item.id, 8)
+              }));
+              console.table(debugTable);
+            }
             // End of debugging block
             setStreamList(streamAccumulator);
             setStreamListv2(rawStreamsv2);
             setStreamListv1(rawStreamsv1);
-            consoleOut('Streams:', streamAccumulator, 'blue');
-            setDeletedStreams([]);
-            if (streamAccumulator.length) {
-              let item: Stream | StreamInfo | undefined;
-              if (reset) {
-                item = streamAccumulator[0];
-              } else {
-                if (highLightableStreamId) {
-                  const highLightableItem = streamAccumulator.find(i => i.id === highLightableStreamId);
-                  item = highLightableItem || streamAccumulator[0];
-                } else if (selectedStream) {
-                  const itemFromServer = streamAccumulator.find(i => i.id === selectedStream.id);
-                  item = itemFromServer || streamAccumulator[0];
-                } else {
-                  item = streamAccumulator[0];
-                }
+            consoleOut('Streams from AppSate:', streamAccumulator, 'blue');
+            if (streamDetail) {
+              const streamId = streamDetail.version < 2 ? (streamDetail as StreamInfo).id as string : (streamDetail as Stream).id.toBase58();
+              const item = streamAccumulator.find(s => {
+                const id = s.version < 2 ? (s as StreamInfo).id as string : (s as Stream).id.toBase58();
+                return id === streamId;
+              });
+              if (item) {
+                setStreamDetail(item);
               }
-              if (!item) {
-                item = Object.assign({}, streamAccumulator[0]);
-              }
-              consoleOut('selectedStream:', item, 'blue');
-
-              setStreamActivity([]);
-              setHasMoreStreamActivity(true);
-
-              const mspInstance: any = item && item.version < 2 ? ms : msp;
-              streamDetailPerformanceCounter.start();
-              mspInstance.getStream(new PublicKey(item?.id as string))
-              .then((detail: Stream | StreamInfo) => {
-                streamDetailPerformanceCounter.stop();
-                refreshStreamsPerformanceCounter.stop();
-                // if (!isProd()) {
-                //   consoleOut('listStreams performance counter:', '', 'crimson');
-                //   const results = [{
-                //     v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //     v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //     streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //     total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                //   }];
-                //   console.table(results);
-                // }
-                if (detail) {
-                  updateStreamDetail(detail);
-                  setActiveStream(detail);
-                } else if (item) {
-                  updateStreamDetail(item);
-                  setActiveStream(item);
-                }
-              })
-            } else {
-              updateSelectedStream(undefined);
-              updateStreamDetail(undefined);
-              setActiveStream(undefined);
             }
+            setDeletedStreams([]);
           })
           .catch(err => {
             console.error(err);
@@ -1295,11 +1178,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     ms,
     msp,
     publicKey,
+    streamDetail,
     accountAddress,
     loadingStreams,
-    selectedStream,
     customStreamDocked,
-    highLightableStreamId,
   ]);
 
 
@@ -1344,7 +1226,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         const accountInfo = await connection.getAccountInfo(address.toPublicKey());
         if (!accountInfo) return 0;
         if (address === publicKey?.toBase58()) {
-          return accountInfo.lamports / LAMPORTS_PER_SOL;
+          return getAmountFromLamports(accountInfo.lamports);
         }
         const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
         return tokenAmount.uiAmount || 0;
@@ -1461,36 +1343,84 @@ const AppStateProvider: React.FC = ({ children }) => {
       updateTokenlist(list.filter(t => t.address !== NATIVE_SOL.address) as TokenInfo[]);
       // Update the list
       const userTokenList = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
-      consoleOut('userTokenList:', userTokenList, 'purple');
       updateUserTokens(userTokenList);
       // Load the mainnet list
-      const res = await new TokenListProvider().resolve();
-      const mainnetList = res
-        .filterByChainId(101)
-        .excludeByTag("nft")
-        .getList() as UserTokenAccount[];
-      // Filter out the banned tokens
-      const filteredTokens = mainnetList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
-      // Sort the big list
-      const sortedMainnetList = filteredTokens.sort((a, b) => {
-        const nameA = a.symbol.toUpperCase();
-        const nameB = b.symbol.toUpperCase();
-        if (nameA < nameB) {
-          return -1;
-        }
-        if (nameA > nameB) {
-          return 1;
-        }
-        // names must be equal
-        return 0;
-      });
-
-      updateSplTokenList(sortedMainnetList);
+      try {
+        const res = await new TokenListProvider().resolve();
+        const mainnetList = res
+          .filterByChainId(101)
+          .excludeByTag("nft")
+          .getList() as UserTokenAccount[];
+        // Filter out the banned tokens
+        const filteredTokens = mainnetList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
+        // Sort the big list
+        const sortedMainnetList = filteredTokens.sort((a, b) => {
+          const nameA = a.symbol.toUpperCase();
+          const nameB = b.symbol.toUpperCase();
+          if (nameA < nameB) {
+            return -1;
+          }
+          if (nameA > nameB) {
+            return 1;
+          }
+          // names must be equal
+          return 0;
+        });
+  
+        updateSplTokenList(sortedMainnetList);
+      } catch (error) {
+        console.error('Could not load fallback token list');
+      }
     })();
 
     return () => { }
 
   }, [connectionConfig.cluster]);
+
+  // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
+  // Also, do this after any Tx is completed in places where token balances were indeed changed)
+  useEffect(() => {
+
+    if (!connection ||
+        !publicKey ||
+        !accountAddress ||
+        !shouldLoadTokens ||
+        !userTokens ||
+        userTokens.length === 0 ||
+        !pinnedTokens ||
+        pinnedTokens.length === 0 ||
+        !priceList
+    ) {
+      return;
+    }
+
+    setLoadingTokenAccounts(true);
+    updateShouldLoadTokens(false);
+    setTokensLoaded(false);
+
+    getUserAccountTokens(
+      connection,
+      accountAddress,
+      priceList,
+      userTokens,
+      splTokenList,
+      pinnedTokens
+    ).then(response => {
+      if (response) {
+        setUserTokensResponse(response);
+        setAccountTokens(response.accountTokens);
+      } else {
+        setUserTokensResponse(null);
+        setAccountTokens([]);
+      }
+    }).finally(() => {
+      setTokensLoaded(true);
+      setLoadingTokenAccounts(false);
+    });
+
+    return () => {}
+
+  }, [accountAddress, connection, pinnedTokens, priceList, publicKey, shouldLoadTokens, splTokenList, userTokens]);
 
   ///////////////////////
   // Multisig accounts //
@@ -1514,7 +1444,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     try {
       const allInfo = await multisigClient.getMultisigs(publicKey);
-      allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+      allInfo.sort((a: any, b: any) => new Date(b.createdOnUtc).getTime() - new Date(a.createdOnUtc).getTime());
       setMultisigAccounts(allInfo);
       consoleOut('multisigAccounts:', allInfo, 'darkorange');
       if (allInfo.length > 0) {
@@ -1621,8 +1551,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         tpsAvg,
         refreshInterval,
         isWhitelisted,
-        isInBetaTestingProgram,
         shouldLoadTokens,
+        loadingTokenAccounts,
+        tokensLoaded,
         isDepositOptionsModalVisible,
         tokenList,
         selectedToken,
@@ -1631,8 +1562,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         fromCoinAmount,
         effectiveRate,
         coinPrices,
+        priceList,
         loadingPrices,
-        contract,
         ddcaOption,
         treasuryOption,
         recipientAddress,
@@ -1674,6 +1605,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         userTokens,
         pinnedTokens,
         selectedAsset,
+        userTokensResponse,
         transactions,
         accountAddress,
         lastTxSignature,
@@ -1711,13 +1643,11 @@ const AppStateProvider: React.FC = ({ children }) => {
         getTokenPriceByAddress,
         getTokenPriceBySymbol,
         getTokenByMintAddress,
-        getUserTokenByMintAddress,
         refreshTokenBalance,
         resetContractValues,
         resetStreamsState,
         clearStreams,
         refreshStreamList,
-        setContract,
         setDdcaOption,
         setTreasuryOption,
         setRecipientAddress,
