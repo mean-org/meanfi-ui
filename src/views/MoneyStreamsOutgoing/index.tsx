@@ -2770,6 +2770,18 @@ export const MoneyStreamsOutgoingView = (props: {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span>isBusy:</span><span className="ml-1 font-extrabold">{isBusy ? 'true' : 'false'}</span>
+          <span className="ml-2">selectedStream:</span><span className="ml-1 font-extrabold">{streamSelected ? 'true' : 'false'}</span>
+          <span className="ml-2">treasuryDetails:</span><span className="ml-1 font-extrabold">{treasuryDetails ? 'true' : 'false'}</span>
+          <span className="ml-2">isPendingTx:</span><span className="ml-1 font-extrabold">{hasStreamPendingTx(OperationType.StreamAddFunds) ? 'true' : 'false'}</span>
+          <span className="ml-2">isOtp:</span><span className="ml-1 font-extrabold">{isOtp() ? 'true' : 'false'}</span>
+          <span className="ml-2">isDeletedStream:</span><span className="ml-1 font-extrabold">{streamSelected && isDeletedStream(streamSelected) ? 'true' : 'false'}</span>
+          <span className="ml-2">getTreasuryType:</span><span className="ml-1 font-extrabold">{getTreasuryType()}</span>
+        </div>
+      )} */}
+
       <Spin spinning={loadingStreams}>
         <MoneyStreamDetails
           accountAddress={accountAddress}

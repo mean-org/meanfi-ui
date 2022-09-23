@@ -10,7 +10,7 @@ import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconArrowForward, IconEllipsisVertical, IconLoading } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { getCategoryLabelByValue, OperationType, TransactionStatus } from "../../models/enums";
+import { OperationType, TransactionStatus } from "../../models/enums";
 import "./style.scss";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import Wave from 'react-wavify'
@@ -61,7 +61,7 @@ import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { NATIVE_SOL } from "../../constants/tokens";
 import { fetchAccountTokens, readAccountInfo } from "../../middleware/accounts";
-import { AddFundsParams } from "../../models/vesting";
+import { AddFundsParams, getCategoryLabelByValue } from "../../models/vesting";
 import BigNumber from "bignumber.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { appConfig } from '../..';
@@ -2731,34 +2731,10 @@ export const MoneyStreamsInfoView = (props: {
                   ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
                   : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
 
-                const category = isNewTreasury
-                  && v2.category === 1 ? "Vesting" : "";
-
-                const subCategory = isNewTreasury
-                  && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
-            
-                let badges;
-
-                type && (
-                  category ? (
-                    subCategory ? (
-                      badges = [category, subCategory, type]
-                    ) : (
-                      badges = [category, type]
-                    )
-                  ) : (
-                    badges = [type]
-                  )
-                );
+                const badges = [type];
 
                 const title = isNewTreasury ? v2.name : (v1.label ? v1.label : shortenAddress(v1.id as string, 8));
                 const subtitle = shortenAddress(streamingAccount.id as string, 8);
-                // const subtitle = <CopyExtLinkGroup
-                //   content={streamingAccount.id as string}
-                //   number={8}
-                //   externalLink={true}
-                // />;
-
                 const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
                 const resume = amount > 1 ? "streams" : "stream";
 

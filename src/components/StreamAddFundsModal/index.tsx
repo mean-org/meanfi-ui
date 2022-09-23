@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { cutNumber, getAmountWithSymbol, isValidNumber, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../middleware/utils';
+import { cutNumber, displayAmountWithSymbol, getAmountWithSymbol, isValidNumber, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
@@ -277,12 +277,12 @@ export const StreamAddFundsModal = (props: {
       let balance = new BN(0);
       let allocationAssigned = new BN(0);
 
-      if (!isNew) {
-        balance = toTokenAmountBn(details.balance, selectedToken.decimals);
-        allocationAssigned = toTokenAmountBn(details.allocationAssigned, selectedToken.decimals);
-      } else {
+      if (isNew) {
         balance = new BN(details.balance);
         allocationAssigned = new BN(details.allocationAssigned);
+      } else {
+        balance = toTokenAmountBn(details.balance, selectedToken.decimals);
+        allocationAssigned = toTokenAmountBn(details.allocationAssigned, selectedToken.decimals);
       }
       result = balance.sub(allocationAssigned);
 
@@ -517,7 +517,6 @@ export const StreamAddFundsModal = (props: {
                       ? getAmountWithSymbol(
                           selectFromTokenBalance(),
                           selectedToken?.address,
-                          true
                         )
                       : "0"
                     }`}
@@ -527,12 +526,11 @@ export const StreamAddFundsModal = (props: {
                     {selectedToken ? (
                       <span>
                         {
-                          getAmountWithSymbol(
-                            unallocatedBalance.toString(),
+                          displayAmountWithSymbol(
+                            unallocatedBalance,
                             selectedToken.address,
-                            true,
+                            selectedToken.decimals,
                             splTokenList,
-                            selectedToken.decimals
                           )
                         }
                       </span>
