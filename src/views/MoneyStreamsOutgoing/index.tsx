@@ -21,7 +21,7 @@ import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxRes
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { segmentAnalytics } from "../../App";
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "../../middleware/segment-service";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../middleware/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isLocal } from "../../middleware/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { calculateActionFees } from "@mean-dao/money-streaming/lib/utils";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
@@ -2770,6 +2770,18 @@ export const MoneyStreamsOutgoingView = (props: {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span>isBusy:</span><span className="ml-1 font-extrabold">{isBusy ? 'true' : 'false'}</span>
+          <span className="ml-2">selectedStream:</span><span className="ml-1 font-extrabold">{streamSelected ? 'true' : 'false'}</span>
+          <span className="ml-2">treasuryDetails:</span><span className="ml-1 font-extrabold">{treasuryDetails ? 'true' : 'false'}</span>
+          <span className="ml-2">isPendingTx:</span><span className="ml-1 font-extrabold">{hasStreamPendingTx(OperationType.StreamAddFunds) ? 'true' : 'false'}</span>
+          <span className="ml-2">isOtp:</span><span className="ml-1 font-extrabold">{isOtp() ? 'true' : 'false'}</span>
+          <span className="ml-2">isDeletedStream:</span><span className="ml-1 font-extrabold">{streamSelected && isDeletedStream(streamSelected) ? 'true' : 'false'}</span>
+          <span className="ml-2">getTreasuryType:</span><span className="ml-1 font-extrabold">{getTreasuryType()}</span>
+        </div>
+      )} */}
+
       <Spin spinning={loadingStreams}>
         <MoneyStreamDetails
           accountAddress={accountAddress}
