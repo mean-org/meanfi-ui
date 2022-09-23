@@ -659,16 +659,16 @@ export const StreamingAccountView = (props: {
     const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
       const balance = new BN(details.balance);
       const allocationAssigned = new BN(details.allocationAssigned);
-      const result = balance.sub(allocationAssigned);
-
-      return result.gtn(0) ? result : new BN(0);
+      return balance.sub(allocationAssigned);
     }
 
     if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
+        const unallocated = getUnallocatedBalance(tsry);
+        consoleOut('getTreasuryUnallocatedBalance -> StreamingAccountView', unallocated.toString(), 'info');
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         if (isNewTreasury) {
-          return getUnallocatedBalance(tsry);
+          return unallocated;
         } else {
           return makeInteger((tsry as TreasuryInfo).balance - (tsry as TreasuryInfo).allocationAssigned, decimals)
         }

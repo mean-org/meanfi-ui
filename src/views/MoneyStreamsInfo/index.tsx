@@ -358,6 +358,7 @@ export const MoneyStreamsInfoView = (props: {
     if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
         const unallocated = getUnallocatedBalance(tsry);
+        consoleOut('getTreasuryUnallocatedBalance -> MoneyStreamsInfoView', unallocated.toString(), 'info');
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         const ub = isNewTreasury
           ? new BigNumber(toUiAmount(unallocated, decimals)).toNumber()
