@@ -1,13 +1,52 @@
 import { appConfig } from "..";
+import { readFromCache, writeToCache } from "../cache/persistentCache";
 import { meanFiHeaders } from "../constants";
+import { SimpleTokenInfo, TokenPrice } from "../models/accounts";
 import { Allocation } from "../models/common-types";
-import { getDefaultRpc, RpcConfig } from "../services/connections-hq";
 import { WhitelistClaimType } from "../models/enums";
-import { TokenPrice } from "../models/accounts";
-import { PriceGraphModel } from "../models/price-graph";
 import { MeanFiStatsModel } from "../models/meanfi-stats";
+import { PriceGraphModel } from "../models/price-graph";
+import { getDefaultRpc, RpcConfig } from "../services/connections-hq";
 
 declare interface RequestInit { }
+
+export const getSolanaTokenListKeyNameByCluster = (chainId: number) => {
+  return `solana-tokens-${chainId}`;
+}
+
+export const getSolanaTokens = async (chainId: number, honorCache = false): Promise<SimpleTokenInfo[]> => {
+
+  const options: RequestInit = {
+    method: "GET",
+    headers: meanFiHeaders
+  };
+
+  const url = appConfig.getConfig().apiUrl + `/solana-tokens?networkId=${chainId}`;
+
+  if (honorCache) {
+    const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
+    if (cachedTokens) {
+      return Promise.resolve(cachedTokens.data);
+    }
+  }
+
+  return fetch(url, options)
+    .then((response) => response.json())
+    .then((response) => {
+      // Filter out items with no decimals value
+      const filtered = (response as SimpleTokenInfo[]).filter(t => t.decimals !== null);
+      writeToCache(getSolanaTokenListKeyNameByCluster(chainId), filtered);
+      return response;
+    })
+    .catch((err) => {
+      console.error(err);
+      const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
+      if (cachedTokens) {
+        console.warn('Using cached data...');
+        return cachedTokens.data;
+      }
+    });
+};
 
 export const getPrices = async (): Promise<TokenPrice[]> => {
 

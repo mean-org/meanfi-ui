@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { RepeatingPayment } from '../../views';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { UserTokenAccount } from '../../models/transactions';
+import { UserTokenAccount } from "../../models/accounts";
 
 export const CreateStreamModal = (props: {
   handleClose: any;

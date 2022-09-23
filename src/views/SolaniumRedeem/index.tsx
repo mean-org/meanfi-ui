@@ -30,7 +30,7 @@ export const SolaniumRedeem = (props: {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
   const {
-    userTokens,
+    tokenList,
     selectedToken,
     transactionStatus,
     setTransactionStatus,
@@ -44,10 +44,10 @@ export const SolaniumRedeem = (props: {
   const [userAllocation, setUserAllocation] = useState<Allocation | null>();
 
   const meanToken = useMemo(() => {
-    const token = userTokens.filter(t => t.symbol === 'MEAN');
+    const token = tokenList.filter(t => t.symbol === 'MEAN');
     consoleOut('token:', token, 'blue');
     return token[0];
-  }, [userTokens]);
+  }, [tokenList]);
 
   useEffect(() => {
     if (!publicKey) {

@@ -7,7 +7,7 @@ import {
 } from "@solana/web3.js";
 import { BIGNUMBER_FORMAT, CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST } from "../constants/tokens";
-import { friendlyDisplayDecimalPlaces, getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
+import { friendlyDisplayDecimalPlaces, isProd } from "./ui";
 import { TOKEN_PROGRAM_ID } from "./ids";
 import { NATIVE_SOL } from '../constants/tokens';
 import { isMobile } from "react-device-detect";

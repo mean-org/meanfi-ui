@@ -3,7 +3,6 @@ import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStora
 import {
   DAO_CORE_TEAM_WHITELIST,
   DDCA_FREQUENCY_OPTIONS,
-  TEN_MINUTES_REFRESH_TIMEOUT,
   FIVE_MINUTES_REFRESH_TIMEOUT,
   TRANSACTIONS_PER_PAGE,
   WRAPPED_SOL_MINT_ADDRESS,
@@ -11,7 +10,8 @@ import {
   FIVETY_SECONDS_REFRESH_TIMEOUT,
   SEVENTY_SECONDS_REFRESH_TIMEOUT,
   PERFORMANCE_THRESHOLD,
-  ONE_MINUTE_REFRESH_TIMEOUT
+  ONE_MINUTE_REFRESH_TIMEOUT,
+  THIRTY_MINUTES_REFRESH_TIMEOUT
 } from "../constants";
 import { DdcaFrequencyOption } from "../models/ddca-models";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
@@ -20,12 +20,12 @@ import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
 import { PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
-import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices } from "../middleware/api";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { getPrices, getSolanaTokenListKeyNameByCluster, getSolanaTokens } from "../middleware/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { UserTokenAccount } from "../models/transactions";
-import { BANNED_TOKENS, MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/tokens";
+import { UserTokenAccount } from "../models/accounts";
+import { BANNED_TOKENS, MEAN_TOKEN_LIST } from "../constants/tokens";
 import { NATIVE_SOL } from "../constants/tokens";
 import { MappedTransaction } from "../middleware/history";
 import { consoleOut, isProd, msToTime } from "../middleware/ui";
@@ -47,8 +47,10 @@ import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
 import { MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from "@mean-dao/mean-multisig-sdk";
 import { BN } from "bn.js";
 import { getUserAccountTokens } from "../middleware/accounts";
+import { isCacheItemExpired } from "../cache/persistentCache";
 
 const pricesPerformanceCounter = new PerformanceCounter();
+const tokenListPerformanceCounter = new PerformanceCounter();
 const listStreamsV1PerformanceCounter = new PerformanceCounter();
 const listStreamsV2PerformanceCounter = new PerformanceCounter();
 
@@ -115,8 +117,6 @@ interface AppStateConfig {
   userTokensResponse: UserTokensResponse | null;
   tokensLoaded: boolean;
   splTokenList: UserTokenAccount[];
-  userTokens: UserTokenAccount[];
-  pinnedTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
   accountAddress: string;
@@ -285,8 +285,6 @@ const contextDefaultValues: AppStateConfig = {
   userTokensResponse: null,
   tokensLoaded: false,
   splTokenList: [],
-  userTokens: [],
-  pinnedTokens: [],
   selectedAsset: undefined,
   transactions: undefined,
   accountAddress: '',
@@ -463,7 +461,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [coinPrices, setCoinPrices] = useState<any>(null);
   const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
-  const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
   const [stakedAmount, updateStakedAmount] = useState<string>(contextDefaultValues.stakedAmount);
   const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
@@ -471,8 +468,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
   const [accountAddress, updateAccountAddress] = useState('');
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
-  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
-  const [pinnedTokens, updatePinnedTokens] = useState<UserTokenAccount[]>(contextDefaultValues.pinnedTokens);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
   const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
@@ -480,6 +475,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
+
+  const [loadingMeanTokenList, setLoadingMeanTokenList] = useState<boolean>(true);
+  const [meanTokenList, setMeanTokenlist] = useState<UserTokenAccount[] | undefined>(undefined);
 
   const [tokensLoaded, setTokensLoaded] = useState(contextDefaultValues.tokensLoaded);
   const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
@@ -949,7 +947,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const refreshPrices = () => {
-    setLoadingPrices(true);
     getCoinPrices();
   }
 
@@ -971,49 +968,54 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   }, [coinPrices]);
 
+  const mapPrices = useCallback((prices: TokenPrice[]) => {
+    if (prices && prices.length > 0) {
+      const pricesMap: any = {};
+      prices.forEach(tp => pricesMap[tp.symbol] = tp.price);
+      const solPrice = pricesMap["SOL"];
+      // Lets add wSOL to the list using SOL price
+      if (solPrice) {
+        pricesMap["WSOL"] = solPrice;
+        pricesMap["wSOL"] = solPrice;
+      }
+      const solIndex = prices.findIndex(p => p.symbol === "SOL");
+      const listCopy = JSON.parse(JSON.stringify(prices)) as TokenPrice[];
+      if (solIndex !== -1) {
+        listCopy[solIndex].address = NATIVE_SOL.address;
+      }
+      const sol = listCopy.find(p => p.symbol === "SOL");
+      if (sol) {
+        listCopy.push({
+          symbol: 'wSOL',
+          address: WRAPPED_SOL_MINT_ADDRESS,
+          price: sol.price,
+        });
+        listCopy.push({
+          symbol: 'WSOL',
+          address: WRAPPED_SOL_MINT_ADDRESS,
+          price: sol.price,
+        });
+      }
+      setPriceList(listCopy);
+      consoleOut('Price items:', prices.length, 'blue');
+      consoleOut('Mapped prices:', pricesMap, 'blue');
+      setCoinPrices(pricesMap);
+    } else {
+      consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');
+      setCoinPrices({ "NO-TOKEN-VALUE": 1 });
+    }
+  }, []);
+
   // Fetch coin prices
   const getCoinPrices = useCallback(async () => {
 
     try {
+      setLoadingPrices(true);
       pricesPerformanceCounter.start();
       const newPrices = await getPrices();
       pricesPerformanceCounter.stop();
       consoleOut(`Fetched price list in ${pricesPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
-      if (newPrices && newPrices.length > 0) {
-        const pricesMap: any = {};
-        newPrices.forEach(tp => pricesMap[tp.symbol] = tp.price);
-        const solPrice = pricesMap["SOL"];
-        // Lets add wSOL to the list using SOL price
-        if (solPrice) {
-          pricesMap["WSOL"] = solPrice;
-          pricesMap["wSOL"] = solPrice;
-        }
-        const solIndex = newPrices.findIndex(p => p.symbol === "SOL");
-        const listCopy = JSON.parse(JSON.stringify(newPrices)) as TokenPrice[];
-        if (solIndex !== -1) {
-          listCopy[solIndex].address = NATIVE_SOL.address;
-        }
-        const sol = listCopy.find(p => p.symbol === "SOL");
-        if (sol) {
-          listCopy.push({
-            symbol: 'wSOL',
-            address: WRAPPED_SOL_MINT_ADDRESS,
-            price: sol.price,
-          });
-          listCopy.push({
-            symbol: 'WSOL',
-            address: WRAPPED_SOL_MINT_ADDRESS,
-            price: sol.price,
-          });
-        }
-        setPriceList(listCopy);
-        consoleOut('Price items:', newPrices.length, 'blue');
-        consoleOut('Mapped prices:', pricesMap, 'blue');
-        setCoinPrices(pricesMap);
-      } else {
-        consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');
-        setCoinPrices({ "NO-TOKEN-VALUE": 1 });
-      }
+      mapPrices(newPrices);
     } catch (error) {
       setCoinPrices({ "NO-TOKEN-VALUE": 1 });
       updateEffectiveRate(0);
@@ -1022,22 +1024,15 @@ const AppStateProvider: React.FC = ({ children }) => {
       setLoadingPrices(false);
     }
 
-  },[]);
+  },[mapPrices]);
 
   // Effect to load coin prices
   useEffect(() => {
 
-    if (shouldLoadCoinPrices) {
-      setShouldLoadCoinPrices(false);
-      setLoadingPrices(true);
-      getCoinPrices();
-    }
-
     const coinTimer = window.setInterval(() => {
-      consoleOut(`Refreshing prices past ${TEN_MINUTES_REFRESH_TIMEOUT / 60 / 1000}min...`);
-      setLoadingPrices(true);
+      consoleOut(`Refreshing prices past ${THIRTY_MINUTES_REFRESH_TIMEOUT / 60 / 1000}min...`);
       getCoinPrices();
-    }, TEN_MINUTES_REFRESH_TIMEOUT);
+    }, THIRTY_MINUTES_REFRESH_TIMEOUT);
 
     // Return callback to run on unmount.
     return () => {
@@ -1045,10 +1040,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         window.clearInterval(coinTimer);
       }
     };
-  }, [
-    shouldLoadCoinPrices,
-    getCoinPrices
-  ]);
+  }, [getCoinPrices]);
 
   // Update token price while list of prices change
   useEffect(() => {
@@ -1312,6 +1304,71 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateAccountAddress(address);
   }
 
+  // Fetch token list
+  const getTokenList = useCallback(async () => {
+
+    setLoadingMeanTokenList(true);
+
+    try {
+      tokenListPerformanceCounter.start();
+      // Here we should determine how old the cached value is enough to deserve a fresh load
+      // then set param "honorCache" when calling getSolanaTokens if needed to fetch fresh data
+      // const targetChain = 101;
+      const targetChain = getNetworkIdByCluster(connectionConfig.cluster);
+      const cacheEntryKey = getSolanaTokenListKeyNameByCluster(targetChain);
+      const honorCache = isCacheItemExpired(cacheEntryKey) ? false : true;
+      const tokenList = await getSolanaTokens(targetChain, honorCache);
+      tokenListPerformanceCounter.stop();
+      consoleOut(`Fetched token list in ${tokenListPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
+      const newTokenList: TokenInfo[] = []
+      const newPriceList: TokenPrice[] = [];
+      for (const token of tokenList) {
+        const item: TokenInfo = {
+          address: token.mint,
+          name: token.name,
+          chainId: targetChain,
+          decimals: token.decimals,
+          symbol: token.symbol,
+          logoURI: token.mint === NATIVE_SOL.address ? NATIVE_SOL.logoURI : token.image,
+          extensions: undefined,
+          tags: []
+        };
+        newTokenList.push(item);
+        if (token.priceUsd) {
+          const priceItem: TokenPrice = {
+            address: token.mint,
+            symbol: token.symbol,
+            price: token.priceUsd
+          };
+          newPriceList.push(priceItem);
+        }
+      }
+      const filtered = newTokenList.filter(t => t.decimals !== null);
+      consoleOut('API token list items:', filtered.length, 'blue');
+      setMeanTokenlist(filtered);
+      if (newPriceList.length > 0) {
+        mapPrices(newPriceList);
+      } else {
+        getCoinPrices();
+      }
+    } catch (error) {
+      consoleOut('Token list API error:', error, 'red');
+    } finally {
+      setLoadingMeanTokenList(false);
+      tokenListPerformanceCounter.reset();
+    }
+
+  },[getCoinPrices, mapPrices]);
+
+  // Only get the token list once per page reload
+  useEffect(() => {
+    if(meanTokenList === undefined) {
+      consoleOut('Fetching the new token list...', '', 'blue');
+      getTokenList();
+    }
+  }, [getTokenList, meanTokenList]);
+
+
   // Load the supported tokens
   useEffect(() => {
     (async () => {
@@ -1329,52 +1386,42 @@ const AppStateProvider: React.FC = ({ children }) => {
       };
       // First add Native SOL as a token
       list.push(sol);
-      // Add pinned tokens from the MeanFi list
-      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && PINNED_TOKENS.includes(t.symbol))
-        .forEach(item => list.push(item));
-      // Save pinned tokens' list
-      const pinned = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
-      updatePinnedTokens(pinned);
-      // Add non-pinned tokens from the MeanFi list
-      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && !PINNED_TOKENS.includes(t.symbol))
+      // Add items from the MeanFi list
+      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
         .forEach(item => list.push(item));
       // Save the MeanFi list
       updateTokenlist(list.filter(t => t.address !== NATIVE_SOL.address) as TokenInfo[]);
       // Update the list
       const userTokenList = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
-      updateUserTokens(userTokenList);
-      // Load the mainnet list
-      try {
-        const res = await new TokenListProvider().resolve();
-        const mainnetList = res
-          .filterByChainId(101)
-          .excludeByTag("nft")
-          .getList() as UserTokenAccount[];
-        // Filter out the banned tokens
-        const filteredTokens = mainnetList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
-        // Sort the big list
-        const sortedMainnetList = filteredTokens.sort((a, b) => {
-          const nameA = a.symbol.toUpperCase();
-          const nameB = b.symbol.toUpperCase();
-          if (nameA < nameB) {
-            return -1;
+      // Add the items from the API
+      if (meanTokenList && meanTokenList.length > 0) {
+        meanTokenList.forEach(item => {
+          if (!userTokenList.some(i => i.address === item.address)) {
+            userTokenList.push(item);
           }
-          if (nameA > nameB) {
-            return 1;
-          }
-          // names must be equal
-          return 0;
         });
-  
-        updateSplTokenList(sortedMainnetList);
-      } catch (error) {
-        console.error('Could not load fallback token list');
       }
+      // Filter out the banned tokens
+      const filteredTokens = userTokenList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
+      // Sort the big list
+      const sortedMainnetList = filteredTokens.sort((a, b) => {
+        const nameA = a.symbol.toUpperCase();
+        const nameB = b.symbol.toUpperCase();
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+        // names must be equal
+        return 0;
+      });
+      updateSplTokenList(sortedMainnetList);
     })();
 
     return () => { }
 
-  }, [connectionConfig.cluster]);
+  }, [connectionConfig.cluster, meanTokenList]);
 
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   // Also, do this after any Tx is completed in places where token balances were indeed changed)
@@ -1384,12 +1431,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         !publicKey ||
         !accountAddress ||
         !shouldLoadTokens ||
-        !userTokens ||
-        userTokens.length === 0 ||
-        !pinnedTokens ||
-        pinnedTokens.length === 0 ||
-        !priceList
-    ) {
+        !splTokenList ||
+        !priceList) {
       return;
     }
 
@@ -1401,9 +1444,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       connection,
       accountAddress,
       priceList,
-      userTokens,
       splTokenList,
-      pinnedTokens
     ).then(response => {
       if (response) {
         setUserTokensResponse(response);
@@ -1419,7 +1460,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     return () => {}
 
-  }, [accountAddress, connection, pinnedTokens, priceList, publicKey, shouldLoadTokens, splTokenList, userTokens]);
+  }, [accountAddress, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
 
   ///////////////////////
   // Multisig accounts //
@@ -1601,8 +1642,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         customStreamDocked,
         diagnosisInfo,
         splTokenList,
-        userTokens,
-        pinnedTokens,
         selectedAsset,
         userTokensResponse,
         transactions,

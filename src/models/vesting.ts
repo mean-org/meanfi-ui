@@ -166,7 +166,7 @@ export interface AddFundsParams {
     amount: string;
 }
 
-// Map cache to maintain the vesting flow rates between reloads of the vesting accounts' list
+// Map cache to maintain the vesting flow rates when switching vesting accounts
 const vfrCache = new Map<string, VestingFlowRateInfo>();
 
 export const vestingFlowRatesCache = {

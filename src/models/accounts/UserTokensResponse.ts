@@ -1,5 +1,5 @@
 import { AccountTokenParsedInfo } from ".";
-import { UserTokenAccount } from "../transactions";
+import { UserTokenAccount } from "./UserTokenAccount";
 
 export interface UserTokensResponse {
     nativeBalance: number;

@@ -1,26 +1,49 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { PreFooter } from "../../components/PreFooter";
-import { AppStateContext } from "../../contexts/appstate";
-import "./style.scss";
 import {
-  ArrowRightOutlined, WarningFilled,
+  ArrowRightOutlined, WarningFilled
 } from "@ant-design/icons";
+import { MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { MSP, Stream } from "@mean-dao/msp";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@solana/web3.js";
 import {
   Button,
   Divider,
   Modal,
   Space,
-  Tooltip,
+  Tooltip
 } from "antd";
+import { IconType } from "antd/lib/notification";
+import BigNumber from "bignumber.js";
+import BN from "bn.js";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import ReactJson from "react-json-view";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { appConfig } from "../..";
+import { AddressDisplay } from "../../components/AddressDisplay";
+import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
+import { MultisigOwnersView } from "../../components/MultisigOwnersView";
+import { openNotification } from "../../components/Notifications";
+import { PreFooter } from "../../components/PreFooter";
+import { TextInput } from "../../components/TextInput";
+import { TokenDisplay } from "../../components/TokenDisplay";
+import { TokenListItem } from "../../components/TokenListItem";
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "../../constants";
+import { NATIVE_SOL } from "../../constants/tokens";
+import { useNativeAccount } from "../../contexts/accounts";
+import { AppStateContext } from "../../contexts/appstate";
+import { useConnection, useConnectionConfig } from "../../contexts/connection";
+import { useWallet } from "../../contexts/wallet";
+import { IconCodeBlock, IconCoin, IconCopy, IconExternalLink, IconLoading, IconTrash, IconWallet } from "../../Icons";
+import { fetchAccountTokens, readAccountInfo as getAccountInfo } from "../../middleware/accounts";
+import { NATIVE_SOL_MINT, SYSTEM_PROGRAM_ID } from "../../middleware/ids";
+import { ACCOUNT_LAYOUT } from "../../middleware/layouts";
+import { getStreamForDebug } from "../../middleware/stream-debug-middleware";
+import { getReadableStream } from "../../middleware/streams";
 import {
-  delay,
-  consoleOut,
-  kFormatter,
-  intToString,
-  isValidAddress,
-  friendlyDisplayDecimalPlaces,
-  toUsCurrency,
+  consoleOut, delay, friendlyDisplayDecimalPlaces, intToString,
+  isValidAddress, kFormatter, toUsCurrency
 } from "../../middleware/ui";
 import {
   formatAmount,
@@ -28,40 +51,11 @@ import {
   getAmountFromLamports,
   getAmountWithSymbol,
   shortenAddress,
-  toUiAmount,
+  toUiAmount
 } from "../../middleware/utils";
-import { IconCodeBlock, IconCoin, IconCopy, IconExternalLink, IconLoading, IconTrash, IconWallet } from "../../Icons";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { openNotification } from "../../components/Notifications";
-import { IconType } from "antd/lib/notification";
-import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@solana/web3.js";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { NATIVE_SOL_MINT, SYSTEM_PROGRAM_ID } from "../../middleware/ids";
-import { AddressDisplay } from "../../components/AddressDisplay";
-import { TokenDisplay } from "../../components/TokenDisplay";
-import { useWallet } from "../../contexts/wallet";
-import { TokenInfo } from "@solana/spl-token-registry";
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "../../constants";
-import { TokenListItem } from "../../components/TokenListItem";
-import { TextInput } from "../../components/TextInput";
-import { useNativeAccount } from "../../contexts/accounts";
-import { NATIVE_SOL } from "../../constants/tokens";
-import { getStreamForDebug } from "../../middleware/stream-debug-middleware";
-import { MSP, Stream } from "@mean-dao/msp";
-import { appConfig } from "../..";
-import ReactJson from "react-json-view";
-import { fetchAccountTokens } from "../../middleware/accounts";
-import { MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { MultisigOwnersView } from "../../components/MultisigOwnersView";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { ACCOUNT_LAYOUT } from "../../middleware/layouts";
-import BN from "bn.js";
 import { MultisigAsset } from "../../models/multisig";
-import BigNumber from "bignumber.js";
-import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
-import { getReadableStream } from "../../middleware/streams";
-import { readAccountInfo as getAccountInfo } from "../../middleware/accounts";
 import { VestingContractStreamDetailModal } from "../vesting/components/VestingContractStreamDetailModal";
+import "./style.scss";
 
 type TabOption = "first-tab" | "test-stream" | "account-info" | "multisig-tab" | "demo-notifications" | "misc-tab" | undefined;
 type StreamViewerOption = "treasurer" | "beneficiary";
@@ -87,7 +81,6 @@ export const PlaygroundView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     tokenList,
-    userTokens,
     coinPrices,
     splTokenList,
     isWhitelisted,
@@ -708,7 +701,7 @@ export const PlaygroundView = () => {
       return;
     }
 
-    if (!publicKey || !userTokens || !tokenList || !canFetchTokenAccounts) {
+    if (!publicKey || !tokenList || !canFetchTokenAccounts) {
       return;
     }
 
@@ -722,29 +715,18 @@ export const PlaygroundView = () => {
       .then(accTks => {
         if (accTks) {
 
-          const meanTokensCopy = new Array<TokenInfo>();
           const intersectedList = new Array<TokenInfo>();
-          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+          const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
 
-          // Build meanTokensCopy including the MeanFi pinned tokens
-          userTokensCopy.forEach(item => {
-            meanTokensCopy.push(item);
-          });
-
-          // Now add all other items but excluding those in userTokens
-          splTokenList.forEach(item => {
-            if (!userTokens.includes(item)) {
-              meanTokensCopy.push(item);
-            }
-          });
-
+          intersectedList.push(splTokensCopy[0]);
+          balancesMap[NATIVE_SOL.address] = nativeBalance;
           // Create a list containing tokens for the user owned token accounts
           accTks.forEach(item => {
             balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
             const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-              intersectedList.push(tokenFromMeanTokensCopy);
+            const tokenFromSplTokensCopy = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromSplTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromSplTokensCopy);
             }
           });
 
@@ -764,8 +746,6 @@ export const PlaygroundView = () => {
             }
           });
 
-          intersectedList.unshift(userTokensCopy[0]);
-          balancesMap[userTokensCopy[0].address] = nativeBalance;
           intersectedList.sort((a, b) => {
             if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
               return 1;
@@ -800,7 +780,6 @@ export const PlaygroundView = () => {
   }, [
     publicKey,
     tokenList,
-    userTokens,
     connection,
     splTokenList,
     nativeBalance,

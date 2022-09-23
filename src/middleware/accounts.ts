@@ -1,4 +1,5 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, AuthorityType, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TokenInfo } from "@solana/spl-token-registry";
 import {
   AccountInfo,
   Commitment,
@@ -10,16 +11,12 @@ import {
   TokenAmount,
   Transaction,
   TransactionInstruction
-} from "@solana/web3.js"
-import { AccountTokenParsedInfo, TokenPrice, UserTokensResponse } from "../models/accounts";
-import { TokenAccountInfo } from "../models/accounts";
-import { consoleOut } from "./ui";
+} from "@solana/web3.js";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST, NATIVE_SOL } from "../constants/tokens";
-import { AccountsDictionary } from "../models/accounts";
-import { UserTokenAccount } from "../models/transactions";
+import { AccountsDictionary, AccountTokenParsedInfo, TokenAccountInfo, TokenPrice, UserTokenAccount, UserTokensResponse } from "../models/accounts";
+import { consoleOut } from "./ui";
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from "./utils";
-import { TokenInfo } from "@solana/spl-token-registry";
 
 export async function getMultipleAccounts(
   connection: Connection,
@@ -330,12 +327,10 @@ export const getUserAccountTokens = async (
   connection: Connection,
   accountAddress: string,
   coinPrices: TokenPrice[] | null,
-  userTokens: UserTokenAccount[],
   splTokenList: UserTokenAccount[],
-  pinnedTokens: UserTokenAccount[],
 ): Promise<UserTokensResponse | null> => {
 
-  if (!connection || !accountAddress || !userTokens || !splTokenList || !coinPrices) {
+  if (!connection || !accountAddress || !splTokenList || !coinPrices) {
     return null;
   }
 
@@ -376,9 +371,7 @@ export const getUserAccountTokens = async (
     tokenAccountGroups: undefined
   };
 
-  const meanTokensCopy = new Array<UserTokenAccount>();
   const intersectedList = new Array<UserTokenAccount>();
-  const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
   const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
   const pk = new PublicKey(accountAddress);
 
@@ -447,34 +440,16 @@ export const getUserAccountTokens = async (
         response.tokenAccountGroups = undefined;
       }
 
-      // Build meanTokensCopy including the MeanFi pinned tokens
-      userTokensCopy.forEach(item => {
-        meanTokensCopy.push(item);
-      });
-
-      // Now add all other items but excluding those in userTokens
-      splTokensCopy.forEach(item => {
-        if (!userTokens.includes(item)) {
-          meanTokensCopy.push(item);
-        }
-      });
-
+      intersectedList.push(sol);
       // Create a list containing tokens for the user owned token accounts
-      // Intersected output list
       accTks.forEach(item => {
-        // Loop through the user token accounts and add the token account to the list: intersectedList
-        // If it is not already on the list (diferentiate token accounts of the same mint)
-
         const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-        const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-
-        if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-          tokenFromMeanTokensCopy.owner = item.parsedInfo.owner;
-          intersectedList.push(tokenFromMeanTokensCopy);
+        const tokenFromSplTokensCopy = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
+        if (tokenFromSplTokensCopy && !isTokenAccountInTheList) {
+          tokenFromSplTokensCopy.owner = item.parsedInfo.owner;
+          intersectedList.push(tokenFromSplTokensCopy);
         }
       });
-
-      intersectedList.unshift(sol);
 
       // Update balances in the mean token list
       accTks.forEach(item => {
@@ -566,19 +541,19 @@ export const getUserAccountTokens = async (
       response.accountTokens = finalList;
 
     } else {
-      pinnedTokens.forEach((item, index) => {
+      splTokensCopy.forEach((item, index) => {
         item.valueInUsd = 0;
       });
       response.wSolBalance = 0;
-      response.accountTokens = pinnedTokens;
-      response.selectedAsset = pinnedTokens[0];
+      response.accountTokens = splTokensCopy;
+      response.selectedAsset = splTokensCopy[0];
       consoleOut('No tokens found in account!', '', 'red');
     }
   } catch (error) {
     console.error(error);
     response.wSolBalance = 0;
-    response.accountTokens = pinnedTokens;
-    response.selectedAsset = pinnedTokens[0];
+    response.accountTokens = splTokensCopy;
+    response.selectedAsset = splTokensCopy[0];
   }
 
   return response;

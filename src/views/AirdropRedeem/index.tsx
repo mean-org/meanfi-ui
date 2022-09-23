@@ -38,7 +38,7 @@ export const AirdropRedeem = (props: {
   const { endpoint } = useConnectionConfig();
   const { connected, wallet, publicKey } = useWallet();
   const {
-    userTokens,
+    tokenList,
     selectedToken,
     transactionStatus,
     streamV2ProgramAddress,
@@ -55,10 +55,10 @@ export const AirdropRedeem = (props: {
   });
 
   const meanToken = useMemo(() => {
-    const token = userTokens.filter(t => t.symbol === 'MEAN');
+    const token = tokenList.filter(t => t.symbol === 'MEAN');
     consoleOut('token:', token, 'blue');
     return token[0];
-  }, [userTokens]);
+  }, [tokenList]);
 
   const treasuryAddress = useMemo(() => appConfig.getConfig().idoAirdropTreasuryAddress, []);
   const treasurerAddress = useMemo(() => appConfig.getConfig().idoAirdropTreasurerAddress, []);
