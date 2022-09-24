@@ -8,6 +8,8 @@ env:
   APP_ENV: production
   BUCKET_NAME: "meanfi-production"
   ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
+  ARTIFACT_NAME: mean-ui-build-production
+  DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID_PROD }}
 
 jobs:
   build:
@@ -43,7 +45,7 @@ jobs:
       - name: Share artifact inside workflow
         uses: actions/upload-artifact@v3
         with:
-          name: mean-ui-build-${{env.APP_ENV}}
+          name: ${{ env.ARTIFACT_NAME }}
           path: build
   deploy:
     runs-on: ubuntu-latest
@@ -55,7 +57,7 @@ jobs:
       - name: Get artifact
         uses: actions/download-artifact@v3
         with:
-          name: mean-ui-build-${{env.APP_ENV}}
+          name: ${{ env.ARTIFACT_NAME }}
       # Set the credentials from repository settings/secrets
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -73,10 +75,6 @@ jobs:
           aws s3 cp index.html ${{env.AWS_S3_PATH}}/index.html --acl public-read --cache-control max-age=0
         working-directory: .
 
-      # Only runs when it's Production env
-      - name: Set distribution to Production
-        run: echo "DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID_PROD }}" >> $GITHUB_ENV
-
       # Updates the distribution origin path
       - name: Update originPath
         uses: mean-dao/aws-web-deploy@v1
@@ -86,3 +84,10 @@ jobs:
           ORIGIN_PATH: "/v${{ github.run_number }}"
           AWS_DISTRIBUTION_ID: ${{ env.DISTRIBUTION_ID }}
           AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
+          
+      # clean up old artifacts. keep last 30 days
+      - name: Cleanup
+        uses: Remagpie/gha-remove-artifact@v1
+        with:
+          only-name: ${{ env.ARTIFACT_NAME }}
+          max-age: 2592000 # 30 * 24 * 60 * 60
