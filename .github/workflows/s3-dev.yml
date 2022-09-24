@@ -1,4 +1,4 @@
-name: Release-STAGE
+name: Release-DEV
 on:
   workflow_dispatch:
   # push:
@@ -8,8 +8,8 @@ on:
 env:
   NODE_VERSION: 18
   BUILD_NUMBER: $GITHUB_RUN_NUMBER
-  APP_ENV: staging
-  BUCKET_NAME: "meanfi-staging"
+  APP_ENV: development
+  BUCKET_NAME: "meanfi-development"
   ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
 
 jobs:
