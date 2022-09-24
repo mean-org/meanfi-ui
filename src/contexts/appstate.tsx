@@ -29,7 +29,7 @@ import { BANNED_TOKENS, MEAN_TOKEN_LIST } from "../constants/tokens";
 import { NATIVE_SOL } from "../constants/tokens";
 import { MappedTransaction } from "../middleware/history";
 import { consoleOut, isProd, msToTime } from "../middleware/ui";
-import { appConfig } from "..";
+import { appConfig, customLogger } from "..";
 import { DdcaAccount } from "@mean-dao/ddca";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { TreasuryTypeOption } from "../models/treasuries";
@@ -589,8 +589,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     const updateIsWhitelisted = () => {
       if (!publicKey) {
         setIsWhitelisted(false);
+        customLogger.canLogToConsole = false;
       } else {
         const isWl = DAO_CORE_TEAM_WHITELIST.some(a => a === publicKey.toBase58());
+        customLogger.canLogToConsole = isWl;
         setIsWhitelisted(isWl);
       }
     }
