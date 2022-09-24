@@ -1,53 +1,43 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from "../middleware/utils";
-import {
-  DAO_CORE_TEAM_WHITELIST,
-  DDCA_FREQUENCY_OPTIONS,
-  FIVE_MINUTES_REFRESH_TIMEOUT,
-  TRANSACTIONS_PER_PAGE,
-  WRAPPED_SOL_MINT_ADDRESS,
-  FORTY_SECONDS_REFRESH_TIMEOUT,
-  FIVETY_SECONDS_REFRESH_TIMEOUT,
-  SEVENTY_SECONDS_REFRESH_TIMEOUT,
-  PERFORMANCE_THRESHOLD,
-  ONE_MINUTE_REFRESH_TIMEOUT,
-  THIRTY_MINUTES_REFRESH_TIMEOUT
-} from "../constants";
-import { DdcaFrequencyOption } from "../models/ddca-models";
-import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
+import { DdcaAccount } from "@mean-dao/ddca";
+import { MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from "@mean-dao/mean-multisig-sdk";
+import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
-import { useWallet } from "./wallet";
-import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
+import { MSP, Stream } from "@mean-dao/msp";
 import { PublicKey } from "@solana/web3.js";
-import { useAccountsContext } from "./accounts";
+import { UtlConfig, Client } from '@solflare-wallet/utl-sdk';
+import { BN } from "bn.js";
 import { TokenInfo } from "models/SolanaTokenInfo";
-import { getPrices, getSolanaTokenListKeyNameByCluster, getSolanaTokens } from "../middleware/api";
+import { TokenPrice } from "models/TokenPrice";
+import moment from "moment";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { UserTokenAccount } from "../models/accounts";
-import { BANNED_TOKENS, MEAN_TOKEN_LIST } from "../constants/tokens";
-import { NATIVE_SOL } from "../constants/tokens";
-import { MappedTransaction } from "../middleware/history";
-import { consoleOut, isProd, msToTime } from "../middleware/ui";
 import { appConfig, customLogger } from "..";
-import { DdcaAccount } from "@mean-dao/ddca";
-import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
-import { TreasuryTypeOption } from "../models/treasuries";
-import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
-import { initialSummary, StreamsSummary } from "../models/streams";
-import { MSP, Stream } from "@mean-dao/msp";
-import { openNotification } from "../components/Notifications";
-import { PerformanceCounter } from "../middleware/perf-counter";
-import { AccountDetails, UserTokensResponse } from "../models/accounts";
-import { ProgramAccounts } from "../models/accounts";
-import { MultisigVault } from "../models/multisig";
-import moment from "moment";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
-import { MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionStatus } from "@mean-dao/mean-multisig-sdk";
-import { BN } from "bn.js";
-import { getUserAccountTokens } from "../middleware/accounts";
 import { isCacheItemExpired } from "../cache/persistentCache";
-import { TokenPrice } from "models/TokenPrice";
+import { openNotification } from "../components/Notifications";
+import {
+  DAO_CORE_TEAM_WHITELIST,
+  DDCA_FREQUENCY_OPTIONS, FIVETY_SECONDS_REFRESH_TIMEOUT, FIVE_MINUTES_REFRESH_TIMEOUT, FORTY_SECONDS_REFRESH_TIMEOUT, ONE_MINUTE_REFRESH_TIMEOUT, PERFORMANCE_THRESHOLD, SEVENTY_SECONDS_REFRESH_TIMEOUT, THIRTY_MINUTES_REFRESH_TIMEOUT, TRANSACTIONS_PER_PAGE,
+  WRAPPED_SOL_MINT_ADDRESS
+} from "../constants";
+import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from "../constants/tokens";
+import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
+import { getUserAccountTokens } from "../middleware/accounts";
+import { getPrices, getSolanaTokenListKeyNameByCluster, getSolanaTokens, getSolFlareTokenList } from "../middleware/api";
+import { MappedTransaction } from "../middleware/history";
+import { PerformanceCounter } from "../middleware/perf-counter";
+import { consoleOut, isProd, msToTime } from "../middleware/ui";
+import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from "../middleware/utils";
+import { AccountDetails, ProgramAccounts, UserTokenAccount, UserTokensResponse } from "../models/accounts";
+import { DdcaFrequencyOption } from "../models/ddca-models";
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
+import { MultisigVault } from "../models/multisig";
+import { initialSummary, StreamsSummary } from "../models/streams";
+import { TreasuryTypeOption } from "../models/treasuries";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
+import { useAccountsContext } from "./accounts";
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
+import { useWallet } from "./wallet";
 
 const pricesPerformanceCounter = new PerformanceCounter();
 const tokenListPerformanceCounter = new PerformanceCounter();
@@ -541,6 +531,21 @@ const AppStateProvider: React.FC = ({ children }) => {
     multisigAddressPK,
     connectionConfig.endpoint,
   ]);
+
+  const utlClient = useMemo(() => {
+    if (!connection) { return undefined; }
+    const targetChain = getNetworkIdByCluster(connectionConfig.cluster);
+    const config = new UtlConfig({
+      chainId: +targetChain,
+      timeout: 2000,
+      connection: connection,
+      apiUrl: "https://token-list-api.solana.cloud",
+      cdnUrl: "https://cdn.jsdelivr.net/gh/solflare-wallet/token-list/solana-tokenlist.json"
+    });
+    consoleOut('Solflare Unified Token List client initialized as fallback', '', 'blue');
+    return new Client(config);
+  }, [connection, connectionConfig.cluster]);
+
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -1323,39 +1328,46 @@ const AppStateProvider: React.FC = ({ children }) => {
       const tokenList = await getSolanaTokens(targetChain, honorCache);
       tokenListPerformanceCounter.stop();
       consoleOut(`Fetched token list in ${tokenListPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
-      const newTokenList: TokenInfo[] = []
-      const newPriceList: TokenPrice[] = [];
-      for (const token of tokenList) {
-        const item: TokenInfo = {
-          address: token.mint,
-          name: token.name,
-          chainId: targetChain,
-          decimals: token.decimals,
-          symbol: token.symbol,
-          logoURI: token.mint === NATIVE_SOL.address ? NATIVE_SOL.logoURI : token.image,
-          extensions: undefined,
-          tags: []
-        };
-        newTokenList.push(item);
-        if (token.priceUsd) {
-          const priceItem: TokenPrice = {
+      if (tokenList && tokenList.length > 0) {
+        const newTokenList: TokenInfo[] = []
+        const newPriceList: TokenPrice[] = [];
+        for (const token of tokenList) {
+          const item: TokenInfo = {
             address: token.mint,
+            name: token.name,
+            chainId: targetChain,
+            decimals: token.decimals,
             symbol: token.symbol,
-            price: token.priceUsd
+            logoURI: token.mint === NATIVE_SOL.address ? NATIVE_SOL.logoURI : token.image,
+            extensions: undefined,
+            tags: []
           };
-          newPriceList.push(priceItem);
+          newTokenList.push(item);
+          if (token.priceUsd) {
+            const priceItem: TokenPrice = {
+              address: token.mint,
+              symbol: token.symbol,
+              price: token.priceUsd
+            };
+            newPriceList.push(priceItem);
+          }
         }
-      }
-      const filtered = newTokenList.filter(t => t.decimals !== null);
-      consoleOut('API token list items:', filtered.length, 'blue');
-      setMeanTokenlist(filtered);
-      if (newPriceList.length > 0) {
-        mapPrices(newPriceList);
-      } else {
-        getCoinPrices();
+        const filtered = newTokenList.filter(t => t.decimals !== null);
+        consoleOut('API token list items:', filtered.length, 'blue');
+        setMeanTokenlist(filtered);
+        if (newPriceList.length > 0) {
+          mapPrices(newPriceList);
+        } else {
+          getCoinPrices();
+        }
       }
     } catch (error) {
       consoleOut('Token list API error:', error, 'red');
+      consoleOut('Trying Solflare Unified Token List...', '', 'blue');
+      getSolFlareTokenList()
+      .then(response => {
+        consoleOut('response:', response, 'blue');
+      });
     } finally {
       setLoadingMeanTokenList(false);
       tokenListPerformanceCounter.reset();
@@ -1434,8 +1446,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         !publicKey ||
         !accountAddress ||
         !shouldLoadTokens ||
-        !splTokenList ||
-        !priceList) {
+        !splTokenList) {
       return;
     }
 

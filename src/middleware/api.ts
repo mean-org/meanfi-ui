@@ -47,6 +47,7 @@ export const getSolanaTokens = async (chainId: number, honorCache = false): Prom
         console.warn('Using cached data...');
         return cachedTokens.data;
       }
+      return [];
     });
 };
 
@@ -59,6 +60,20 @@ export const getPrices = async (): Promise<TokenPrice[]> => {
   const url = appConfig.getConfig().apiUrl + '/coin-prices';
 
   return fetch(url, options)
+    .then((response) => response.json())
+    .then((response) => {
+      return response;
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+};
+
+export const getSolFlareTokenList = async (): Promise<any> => {
+  const path = 'https://cdn.jsdelivr.net/gh/solflare-wallet/token-list/solana-tokenlist.json';
+  return fetch(path, {
+    method: "GET",
+  })
     .then((response) => response.json())
     .then((response) => {
       return response;
