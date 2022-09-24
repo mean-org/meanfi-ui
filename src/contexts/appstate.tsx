@@ -1360,14 +1360,15 @@ const AppStateProvider: React.FC = ({ children }) => {
         } else {
           getCoinPrices();
         }
+      } else {
+        consoleOut('Trying Solflare Unified Token List...', '', 'blue');
+        const response = await getSolFlareTokenList();
+        if (response) {
+          consoleOut('response:', response, 'blue');
+        }
       }
     } catch (error) {
       consoleOut('Token list API error:', error, 'red');
-      consoleOut('Trying Solflare Unified Token List...', '', 'blue');
-      getSolFlareTokenList()
-      .then(response => {
-        consoleOut('response:', response, 'blue');
-      });
     } finally {
       setLoadingMeanTokenList(false);
       tokenListPerformanceCounter.reset();
