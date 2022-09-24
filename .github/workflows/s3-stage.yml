@@ -11,6 +11,8 @@ env:
   APP_ENV: staging
   BUCKET_NAME: "meanfi-staging"
   ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
+  ARTIFACT_NAME: mean-ui-build-staging
+  DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID_STAGE }}
 
 jobs:
   build:
@@ -40,7 +42,7 @@ jobs:
       - name: Share artifact inside workflow
         uses: actions/upload-artifact@v3
         with:
-          name: mean-ui-build-${{env.APP_ENV}}
+          name: ${{ env.ARTIFACT_NAME }}
           path: build
   deploy:
     runs-on: ubuntu-latest
@@ -52,7 +54,7 @@ jobs:
       - name: Get artifact
         uses: actions/download-artifact@v3
         with:
-          name: mean-ui-build-${{env.APP_ENV}}
+          name: ${{ env.ARTIFACT_NAME }}
       # Set the credentials from repository settings/secrets
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -70,16 +72,6 @@ jobs:
           aws s3 cp index.html ${{env.AWS_S3_PATH}}/index.html --acl public-read --cache-control max-age=0
         working-directory: .
 
-      # Only runs when it's development env
-      - name: Set distribution to development
-        if: ${{ env.APP_ENV == 'development' }}
-        run: echo "DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID_DEV }}" >> $GITHUB_ENV
-
-      # Only runs when it's staging env
-      - name: Set distribution to staging
-        if: ${{ env.APP_ENV == 'staging' }}
-        run: echo "DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID_STAGE }}" >> $GITHUB_ENV
-
       # Updates the distribution origin path
       - name: Update originPath
         uses: mean-dao/aws-web-deploy@v1
@@ -89,3 +81,10 @@ jobs:
           ORIGIN_PATH: "/v${{ github.run_number }}"
           AWS_DISTRIBUTION_ID: ${{ env.DISTRIBUTION_ID }}
           AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
+
+      # clean up old artifacts. keep last 3
+      - name: Cleanup
+        uses: Remagpie/gha-remove-artifact@v1
+        with:
+          only-name: ${{ env.ARTIFACT_NAME }}
+          max-count: 3
