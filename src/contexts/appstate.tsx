@@ -1363,8 +1363,12 @@ const AppStateProvider: React.FC = ({ children }) => {
       } else {
         consoleOut('Trying Solflare Unified Token List...', '', 'blue');
         const response = await getSolFlareTokenList();
-        if (response) {
-          consoleOut('response:', response, 'blue');
+        if (response && response.tokens && response.tokens.length > 0) {
+          consoleOut('Solflare utl:', response.tokens.length, 'blue');
+          const utl = response.tokens.filter((t: any) => t.verified);
+          consoleOut('verified:', utl.length, 'blue');
+          const withDecimals = response.tokens.filter((t: any) => t.decimals && t.decimals > 0);
+          consoleOut('with decimals:', withDecimals.length, 'blue');
         }
       }
     } catch (error) {
