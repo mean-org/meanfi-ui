@@ -15,7 +15,8 @@ export const isDev = (): boolean => {
 }
 
 export const isProd = (): boolean => {
-    return environment === 'production';
+    // return environment === 'production';
+    return window.location.hostname === "app.meanfi.com";
 }
 
 const isLocalhost = Boolean(
@@ -33,7 +34,7 @@ export const isLocal = (): boolean => {
 }
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (!isProd() || isLocal()) {
+    if (!isProd()) {
         if (msg) {
             if (value === 'NOT_SPECIFIED') {
                 console.log(`%c${msg}`, `color: ${color}`);
