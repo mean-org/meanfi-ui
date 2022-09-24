@@ -4,7 +4,6 @@ import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream } from "@mean-dao/msp";
 import { PublicKey } from "@solana/web3.js";
-import { UtlConfig, Client } from '@solflare-wallet/utl-sdk';
 import { BN } from "bn.js";
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { TokenPrice } from "models/TokenPrice";
@@ -532,6 +531,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     connectionConfig.endpoint,
   ]);
 
+  /*
   const utlClient = useMemo(() => {
     if (!connection) { return undefined; }
     const targetChain = getNetworkIdByCluster(connectionConfig.cluster);
@@ -545,7 +545,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     consoleOut('Solflare Unified Token List client initialized as fallback', '', 'blue');
     return new Client(config);
   }, [connection, connectionConfig.cluster]);
-
+  */
 
   const setTheme = (name: string) => {
     updateTheme(name);
