@@ -255,7 +255,7 @@ export const getAmountWithSymbol = (
   if (typeof amount === "number") {
     const inputAmount = amount || 0;
     if (token) {
-      const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
+      const decimals = token.decimals;
       const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
       const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
@@ -343,7 +343,7 @@ export const displayAmountWithSymbol = (
   if (typeof amount === "number") {
     const inputAmount = amount || 0;
     if (token) {
-      const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
+      const decimals = token.decimals;
       const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
       const decimalPlaces = friendlyDecimals
@@ -358,10 +358,7 @@ export const displayAmountWithSymbol = (
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
     let inputAmount = '';
-    let decimals = 9;
-    if (token) {
-      decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
-    }
+    let decimals = token ? token.decimals : 9;
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,
