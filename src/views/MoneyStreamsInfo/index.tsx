@@ -1595,6 +1595,7 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     const token = getTokenByMintAddress(associatedToken);
+    consoleOut(token ? `name: ${token.symbol}, decimals: ${token.decimals}` : '', '', 'blue');
     const decimals = token?.decimals || 9;
 
     const rateAmount = getRateAmountBn(item, decimals);
