@@ -15,15 +15,14 @@ export const getSolanaTokenListKeyNameByCluster = (chainId: number) => {
   return `solana-tokens-${chainId}`;
 }
 
-export const getSolanaTokens = async (chainId: number, honorCache = false): Promise<SimpleTokenInfo[]> => {
+export const getSplTokens = async (chainId: number, honorCache = false): Promise<SimpleTokenInfo[]> => {
 
   const options: RequestInit = {
     method: "GET",
     headers: meanFiHeaders
   };
 
-  // const url = appConfig.getConfig().apiUrl + `/solana-tokens?networkId=${chainId}`;
-  const url = `https://tempo-api-dev.meanops.com/solana-tokens?networkId=${chainId}`;
+  const url = appConfig.getConfig().apiUrl + `/solana-tokens?networkId=${chainId}`;
 
   if (honorCache) {
     const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));

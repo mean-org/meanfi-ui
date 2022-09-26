@@ -22,7 +22,7 @@ import {
 import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from "../constants/tokens";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { getUserAccountTokens } from "../middleware/accounts";
-import { getPrices, getSolanaTokenListKeyNameByCluster, getSolanaTokens, getSolFlareTokenList } from "../middleware/api";
+import { getPrices, getSolanaTokenListKeyNameByCluster, getSplTokens, getSolFlareTokenList } from "../middleware/api";
 import { MappedTransaction } from "../middleware/history";
 import { PerformanceCounter } from "../middleware/perf-counter";
 import { consoleOut, isProd, msToTime } from "../middleware/ui";
@@ -464,10 +464,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
-
-  const [loadingMeanTokenList, setLoadingMeanTokenList] = useState<boolean>(true);
   const [meanTokenList, setMeanTokenlist] = useState<UserTokenAccount[] | undefined>(undefined);
-
   const [tokensLoaded, setTokensLoaded] = useState(contextDefaultValues.tokensLoaded);
   const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
   const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(contextDefaultValues.loadingTokenAccounts);
@@ -1315,17 +1312,13 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Fetch token list
   const getTokenList = useCallback(async () => {
 
-    setLoadingMeanTokenList(true);
-
     try {
       tokenListPerformanceCounter.start();
-      // Here we should determine how old the cached value is enough to deserve a fresh load
-      // then set param "honorCache" when calling getSolanaTokens if needed to fetch fresh data
-      const targetChain = 101;
-      // const targetChain = getNetworkIdByCluster(connectionConfig.cluster);
+      // const targetChain = 101;
+      const targetChain = getNetworkIdByCluster(connectionConfig.cluster);
       const cacheEntryKey = getSolanaTokenListKeyNameByCluster(targetChain);
       const honorCache = isCacheItemExpired(cacheEntryKey) ? false : true;
-      const tokenList = await getSolanaTokens(targetChain, honorCache);
+      const tokenList = await getSplTokens(targetChain, honorCache);
       tokenListPerformanceCounter.stop();
       consoleOut(`Fetched token list in ${tokenListPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
       if (tokenList && tokenList.length > 0) {
@@ -1373,7 +1366,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     } catch (error) {
       consoleOut('Token list API error:', error, 'red');
     } finally {
-      setLoadingMeanTokenList(false);
       tokenListPerformanceCounter.reset();
     }
 
