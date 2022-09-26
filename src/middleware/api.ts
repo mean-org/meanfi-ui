@@ -27,6 +27,7 @@ export const getSplTokens = async (chainId: number, honorCache = false): Promise
   if (honorCache) {
     const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
     if (cachedTokens) {
+      console.log(`%ctokens from cache:`, `color: purple`, cachedTokens.data);
       return Promise.resolve(cachedTokens.data);
     }
   }
@@ -37,6 +38,7 @@ export const getSplTokens = async (chainId: number, honorCache = false): Promise
       // Filter out items with no decimals value
       const filtered = (response as SimpleTokenInfo[]).filter(t => t.decimals !== null);
       writeToCache(getSolanaTokenListKeyNameByCluster(chainId), filtered);
+      console.log(`%ctokens from api:`, `color: purple`, filtered);
       return response;
     })
     .catch((err) => {
@@ -44,6 +46,7 @@ export const getSplTokens = async (chainId: number, honorCache = false): Promise
       const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
       if (cachedTokens) {
         console.warn('Using cached data...');
+        console.log(`%ctokens from cache:`, `color: purple`, cachedTokens.data);
         return cachedTokens.data;
       }
       return [];

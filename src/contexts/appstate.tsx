@@ -1359,6 +1359,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         if (response && response.tokens && response.tokens.length > 0) {
           const withDecimals = response.tokens.filter((t: any) => t.decimals && t.decimals > 0);
           consoleOut('Solflare utl:', withDecimals.length, 'blue');
+          console.log(`%ctokens:`, `color: purple`, withDecimals);
           setMeanTokenlist(withDecimals);
           getCoinPrices();
         }
