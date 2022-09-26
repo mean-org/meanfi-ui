@@ -951,7 +951,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const refreshPrices = () => {
-    getCoinPrices();
+    getCoinPrices(false);
   }
 
   const getTokenPriceByAddress = useCallback((address: string): number => {
@@ -1011,12 +1011,14 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, []);
 
   // Fetch coin prices
-  const getCoinPrices = useCallback(async () => {
+  const getCoinPrices = useCallback(async (fromCache = true) => {
 
     try {
       setLoadingPrices(true);
       pricesPerformanceCounter.start();
-      const newPrices = await getPrices();
+      const isExpired = isCacheItemExpired('coin-prices', THIRTY_MINUTES_REFRESH_TIMEOUT);
+      const honorCache = fromCache && !isExpired ? true : false;
+      const newPrices = await getPrices(honorCache);
       pricesPerformanceCounter.stop();
       consoleOut(`Fetched price list in ${pricesPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
       mapPrices(newPrices);

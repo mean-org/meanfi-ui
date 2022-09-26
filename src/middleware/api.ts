@@ -1,6 +1,6 @@
 import { TokenPrice } from "models/TokenPrice";
 import { appConfig } from "..";
-import { readFromCache, writeToCache } from "../cache/persistentCache";
+import { isCacheItemExpired, readFromCache, writeToCache } from "../cache/persistentCache";
 import { meanFiHeaders } from "../constants";
 import { SimpleTokenInfo } from "../models/accounts";
 import { Allocation } from "../models/common-types";
@@ -15,7 +15,7 @@ export const getSolanaTokenListKeyNameByCluster = (chainId: number) => {
   return `solana-tokens-${chainId}`;
 }
 
-export const getSplTokens = async (chainId: number, honorCache = false): Promise<SimpleTokenInfo[]> => {
+export const getSplTokens = async (chainId: number, honorCache = true): Promise<SimpleTokenInfo[]> => {
 
   const options: RequestInit = {
     method: "GET",
@@ -53,21 +53,38 @@ export const getSplTokens = async (chainId: number, honorCache = false): Promise
     });
 };
 
-export const getPrices = async (): Promise<TokenPrice[]> => {
+export const getPrices = async (honorCache = true): Promise<TokenPrice[]> => {
 
   const options: RequestInit = {
     method: "GET",
     headers: meanFiHeaders
   };
   const url = appConfig.getConfig().apiUrl + '/coin-prices';
+  const cacheEntryKey = 'coin-prices';
+
+  if (honorCache) {
+    const cachedPrices = readFromCache(cacheEntryKey);
+    if (cachedPrices) {
+      console.log(`%cprices from cache:`, `color: purple`, cachedPrices.data);
+      return Promise.resolve(cachedPrices.data);
+    }
+  }
 
   return fetch(url, options)
     .then((response) => response.json())
     .then((response) => {
+      writeToCache(cacheEntryKey, response);
+      console.log(`%cprices from api:`, `color: purple`, response);
       return response;
     })
     .catch((err) => {
       console.error(err);
+      const cachedPrices = readFromCache(cacheEntryKey);
+      if (cachedPrices) {
+        console.log(`%cprices from cache:`, `color: purple`, cachedPrices.data);
+        return Promise.resolve(cachedPrices.data);
+      }
+      return [];
     });
 };
 
