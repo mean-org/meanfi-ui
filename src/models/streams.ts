@@ -1,4 +1,4 @@
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 
 export interface StreamsSummary {
     totalNet: number;

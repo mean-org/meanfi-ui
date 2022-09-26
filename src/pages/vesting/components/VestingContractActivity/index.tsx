@@ -7,7 +7,7 @@ import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { IconExternalLink } from '../../../../Icons';
 import { getShortDate } from '../../../../middleware/ui';
 import { displayAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../middleware/utils';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { BN } from 'bn.js';
 import { AppStateContext } from '../../../../contexts/appstate';
 

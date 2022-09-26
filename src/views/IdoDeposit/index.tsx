@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { consoleOut, getTransactionStatusForLogs } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../../components/TokenDisplay';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';

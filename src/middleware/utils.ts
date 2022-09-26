@@ -7,11 +7,11 @@ import {
 } from "@solana/web3.js";
 import { BIGNUMBER_FORMAT, CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST } from "../constants/tokens";
-import { friendlyDisplayDecimalPlaces, getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
+import { friendlyDisplayDecimalPlaces, isProd } from "./ui";
 import { TOKEN_PROGRAM_ID } from "./ids";
 import { NATIVE_SOL } from '../constants/tokens';
 import { isMobile } from "react-device-detect";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { getNetworkIdByEnvironment } from "../contexts/connection";
 import { environment } from "../environments/environment";
 import { BigNumber } from "bignumber.js";
@@ -255,7 +255,7 @@ export const getAmountWithSymbol = (
   if (typeof amount === "number") {
     const inputAmount = amount || 0;
     if (token) {
-      const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
+      const decimals = token.decimals;
       const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
       const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
@@ -343,7 +343,7 @@ export const displayAmountWithSymbol = (
   if (typeof amount === "number") {
     const inputAmount = amount || 0;
     if (token) {
-      const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
+      const decimals = token.decimals;
       const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
       const decimalPlaces = friendlyDecimals
@@ -358,10 +358,7 @@ export const displayAmountWithSymbol = (
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
     let inputAmount = '';
-    let decimals = 9;
-    if (token) {
-      decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
-    }
+    let decimals = token ? token.decimals : 9;
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,

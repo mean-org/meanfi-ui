@@ -6,7 +6,7 @@ import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
 import { consoleOut, getTransactionStatusForLogs } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
@@ -32,7 +32,7 @@ export const IdoRedeem = (props: {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
   const {
-    userTokens,
+    tokenList,
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
@@ -45,10 +45,10 @@ export const IdoRedeem = (props: {
   const [userAllocation, setUserAllocation] = useState<Allocation | null>();
 
   const meanToken = useMemo(() => {
-    const token = userTokens.filter(t => t.symbol === 'MEAN');
+    const token = tokenList.filter(t => t.symbol === 'MEAN');
     consoleOut('token:', token, 'blue');
     return token[0];
-  }, [userTokens]);
+  }, [tokenList]);
 
   useEffect(() => {
     if (!publicKey) {

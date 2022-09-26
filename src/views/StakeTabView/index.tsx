@@ -14,7 +14,7 @@ import { EventType, OperationType, TransactionStatus } from "../../models/enums"
 import { consoleOut, getTransactionStatusForLogs } from "../../middleware/ui";
 import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { INPUT_DEBOUNCE_TIME } from "../../constants";
 import { AppUsageEvent, SegmentStakeMeanData } from "../../middleware/segment-service";
 import { segmentAnalytics } from "../../App";

@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { IconCaretDown } from "../../Icons";
 import { shortenAddress } from "../../middleware/utils";
 import { Identicon } from "../Identicon";

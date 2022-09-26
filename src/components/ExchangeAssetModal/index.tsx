@@ -6,7 +6,7 @@ import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { useNavigate } from 'react-router-dom';
 import { Connection } from '@solana/web3.js';
 import { consoleOut } from '../../middleware/ui';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
 export const ExchangeAssetModal = (props: {
   handleClose: any;

@@ -11,7 +11,7 @@ import { consoleOut, friendlyDisplayDecimalPlaces, getTransactionOperationDescri
 import { formatThousands, getTxIxResume, shortenAddress } from '../../middleware/utils';
 import { AccountTokenParsedInfo } from "../../models/accounts";
 import { TransactionStatus } from '../../models/enums';
-import { UserTokenAccount } from '../../models/transactions';
+import { UserTokenAccount } from "../../models/accounts";
 import { TokenDisplay } from '../TokenDisplay';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

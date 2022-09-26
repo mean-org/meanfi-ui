@@ -4,7 +4,7 @@ import { TokenBalance } from "@solana/web3.js";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { formatThousands, getAmountFromLamports, shortenAddress } from "../../middleware/utils";
-import { UserTokenAccount } from "../../models/transactions";
+import { UserTokenAccount } from "../../models/accounts";
 import { NATIVE_SOL } from "../../constants/tokens";
 import { Tooltip } from "antd";
 import { MappedTransaction } from "../../middleware/history";

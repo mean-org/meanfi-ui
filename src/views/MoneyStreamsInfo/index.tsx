@@ -27,7 +27,7 @@ import {
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigTransactionFees, MULTISIG_ACTIONS } from "@mean-dao/mean-multisig-sdk";
 import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../middleware/ui";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import {
   cutNumber,
   displayAmountWithSymbol,
@@ -1596,8 +1596,8 @@ export const MoneyStreamsInfoView = (props: {
 
     const token = getTokenByMintAddress(associatedToken);
     const decimals = token?.decimals || 9;
-
     const rateAmount = getRateAmountBn(item, decimals);
+
     const rate = displayAmountWithSymbol(
       rateAmount,
       associatedToken,
