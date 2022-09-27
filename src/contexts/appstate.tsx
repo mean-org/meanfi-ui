@@ -1371,7 +1371,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         consoleOut('API token list items:', filtered.length, 'blue');
         setMeanTokenlist(filtered);
         if (newPriceList.length > 0) {
-          console.log(`%cprices:`, `color: purple`, newPriceList.length);
           mapPrices(newPriceList);
         } else {
           getCoinPrices();
@@ -1382,7 +1381,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         if (response && response.tokens && response.tokens.length > 0) {
           const withDecimals = response.tokens.filter((t: any) => t.decimals && t.decimals > 0);
           consoleOut('Solflare utl:', withDecimals.length, 'blue');
-          console.log(`%ctokens:`, `color: purple`, withDecimals.length);
           setMeanTokenlist(withDecimals);
           getCoinPrices();
         }

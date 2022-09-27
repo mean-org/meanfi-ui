@@ -2009,10 +2009,10 @@
     prompt-sync "^4.2.0"
     yaml "^1.10.2"
 
-"@mean-dao/msp@3.0.0-alpha.23":
-  version "3.0.0-alpha.23"
-  resolved "https://registry.yarnpkg.com/@mean-dao/msp/-/msp-3.0.0-alpha.23.tgz#f9d63ba292d2c1a0ab2a0706013e3474179e10d1"
-  integrity sha512-/TU9hlWM+S//1NpHMiEMOrT2JKYu1/OWml3338Amr/ZIrxmKQXp9FyIWCdwXR0mliJcT9n9Q3FHt0JLzpEpSSQ==
+"@mean-dao/msp@3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@mean-dao/msp/-/msp-3.0.0.tgz#ffcad38c21555d4053b791bf5f33a82465cce704"
+  integrity sha512-wjzDhsvabln4MM2pUW6hkX5D6ZDSjg7oTVUwUi4JA3/pZktq05NhlbFqn7Uh68CtMcgqJtCye/bIS7L8A2ikzA==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@solana/spl-token" "^0.1.8"
