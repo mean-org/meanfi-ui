@@ -49,7 +49,6 @@ import BN from "bn.js";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamOpenModal } from "../../components/StreamOpenModal";
-import { CreateStreamModal } from "../../components/CreateStreamModal";
 import { StreamsSummary } from "../../models/streams";
 import { Identicon } from "../../components/Identicon";
 import { openNotification } from "../../components/Notifications";
@@ -61,12 +60,13 @@ import useWindowSize from "../../hooks/useWindowResize";
 import { isMobile } from "react-device-detect";
 import { NATIVE_SOL } from "../../constants/tokens";
 import { fetchAccountTokens, readAccountInfo } from "../../middleware/accounts";
-import { AddFundsParams, getCategoryLabelByValue } from "../../models/vesting";
+import { AddFundsParams } from "../../models/vesting";
 import BigNumber from "bignumber.js";
 import { getStreamTitle } from "../../middleware/streams";
 import { appConfig } from '../..';
 import { ZERO_FEES } from "../../models/multisig";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
+import { SendAssetModal } from "components/SendAssetModal";
 
 export const MoneyStreamsInfoView = (props: {
   accountAddress: string;
@@ -2986,8 +2986,10 @@ export const MoneyStreamsInfoView = (props: {
       )}
 
       {isCreateMoneyStreamModalOpen && (
-        <CreateStreamModal
+        <SendAssetModal
           selectedToken={undefined}
+          title="Create outgoing stream"
+          selected="recurring"
           isVisible={isCreateMoneyStreamModalOpen}
           handleClose={hideCreateMoneyStreamModal}
         />

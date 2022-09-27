@@ -665,7 +665,6 @@ export const StreamingAccountView = (props: {
     if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
         const unallocated = getUnallocatedBalance(tsry);
-        consoleOut('getTreasuryUnallocatedBalance -> StreamingAccountView', unallocated.toString(), 'info');
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         if (isNewTreasury) {
           return unallocated;
