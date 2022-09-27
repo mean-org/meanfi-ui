@@ -3,7 +3,7 @@ import { useContext, useState } from 'react';
 import { Modal, Button, Select, Spin, Tooltip, Radio } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import {

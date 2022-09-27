@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Tabs } from "antd";
 import { useTranslation } from "react-i18next";
 import { OneTimePayment, RepeatingPayment } from '../../views';
-import { TokenInfo } from '@solana/spl-token-registry';
-import { UserTokenAccount } from '../../models/transactions';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { UserTokenAccount } from "../../models/accounts";
 import { useLocation } from 'react-router-dom';
 
 type TransfersTabOption = "one-time" | "recurring";

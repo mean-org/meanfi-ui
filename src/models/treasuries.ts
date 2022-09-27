@@ -1,5 +1,5 @@
 import { TreasuryType } from "@mean-dao/money-streaming/lib/types";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 
 export interface TreasuryTypeOption {
     name: string;

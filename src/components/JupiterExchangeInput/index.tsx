@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
 import { TokenDisplay } from '../TokenDisplay';

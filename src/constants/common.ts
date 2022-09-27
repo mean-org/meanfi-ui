@@ -9,6 +9,7 @@ export const SEVENTY_SECONDS_REFRESH_TIMEOUT = 70 * 1000;
 export const THREE_MINUTES_REFRESH_TIMEOUT = 3 * 60 * 1000;
 export const FIVE_MINUTES_REFRESH_TIMEOUT = 5 * 60 * 1000;
 export const TEN_MINUTES_REFRESH_TIMEOUT = 10 * 60 * 1000;
+export const THIRTY_MINUTES_REFRESH_TIMEOUT = 30 * 60 * 1000;
 export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch transaction status every 3 seconds
 export const TRANSACTION_STATUS_RETRY_TIMEOUT = 40 * 1000;   // Max timeout for trying fetch
 export const PERFORMANCE_SAMPLE_INTERVAL = 60 * 1000;
@@ -158,10 +159,6 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv', // PNL
     'eKWANE4MKkxq6HgQ1EWjW6WY158fHUMgyJWnhCD9kPi', // PNL
     '49XcDH9tWX67uw53TzNrPE5ovGsXd7VxgH735jBg6K64', // PL
-    'HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa', // TBM
-    'ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7', // TBM
-    'GV1ikmCUjXjy8wTtNXGd6Cnnid31HX4JfCrTKCgW3kfS', // K7
-    'G91856C8jV9LdSpFKZb1SQ27ZfA72hn5q2vfjvJMLqX2', // K7
     '9gB9rcJiaKq6iXcJn8AqD5xoxTr3ZLPHpFGWRaVx99jH', // TAB trader
     '4esXsAJjoExvhPZf1EMvDaajJeCTm72EYt3aurn3fFUG', // J
     'EjchiDcivSQnC282UF4d751JDd7vMb2VCFrQaNeUAjwz', // J

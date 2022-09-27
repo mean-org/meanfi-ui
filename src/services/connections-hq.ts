@@ -1,9 +1,9 @@
-import { ENV } from "@solana/spl-token-registry";
 import { Cluster, clusterApiUrl, Connection } from "@solana/web3.js";
 import { appConfig } from "..";
 import { requestOptions } from "../constants";
 import { environment } from "../environments/environment";
 import { getRpcApiEndpoint } from "../middleware/api";
+import { ChainID } from "../models/enums";
 
 export interface RpcConfig {
   cluster: Cluster;
@@ -22,21 +22,21 @@ export const DEFAULT_RPCS: RpcConfig[] = [
   {
     cluster: "mainnet-beta",
     httpProvider: clusterApiUrl("mainnet-beta"),
-    networkId: ENV.MainnetBeta,
+    networkId: ChainID.MainnetBeta,
     network: 'Mainnet Beta',
     id: 0
   },
   {
     cluster: "testnet",
     httpProvider: clusterApiUrl("testnet"),
-    networkId: ENV.Testnet,
+    networkId: ChainID.Testnet,
     network: 'Testnet',
     id: 0
   },
   {
     cluster: "devnet",
     httpProvider: clusterApiUrl("devnet"),
-    networkId: ENV.Devnet,
+    networkId: ChainID.Devnet,
     network: 'Devnet',
     id: 0
   }

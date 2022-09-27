@@ -11,7 +11,7 @@ import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey
 import { consoleOut, isProd, isValidAddress } from '../../middleware/ui';
 import { LoadingOutlined } from '@ant-design/icons';
 import { AccountTokenParsedInfo } from "../../models/accounts";
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { NATIVE_SOL } from '../../constants/tokens';
 import { TokenListItem } from '../TokenListItem';
 import { TextInput } from '../TextInput';

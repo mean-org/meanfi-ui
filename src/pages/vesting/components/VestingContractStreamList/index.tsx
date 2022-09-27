@@ -26,7 +26,7 @@ import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../consta
 import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { displayAmountWithSymbol, getAmountWithSymbol, getTxIxResume, shortenAddress } from '../../../../middleware/utils';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import BN from 'bn.js';
 import { openNotification } from '../../../../components/Notifications';
 import { IconVerticalEllipsis } from '../../../../Icons';

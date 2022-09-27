@@ -10,7 +10,7 @@ import { displayAmountWithSymbol, getAmountWithSymbol } from '../../../../middle
 import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { Treasury } from '@mean-dao/msp';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import BN from 'bn.js';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { InputMean } from '../../../../components/InputMean';

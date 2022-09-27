@@ -1,4 +1,4 @@
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import React, { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { getAmountWithSymbol, shortenAddress } from "../../middleware/utils";

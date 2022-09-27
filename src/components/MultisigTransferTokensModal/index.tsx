@@ -14,10 +14,10 @@ import { useWallet } from '../../contexts/wallet';
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { MAX_TOKEN_LIST_ITEMS, MEAN_MULTISIG_ACCOUNT_LAMPORTS, MIN_SOL_BALANCE_REQUIRED } from '../../constants';
-import { UserTokenAccount } from '../../models/transactions';
+import { UserTokenAccount } from "../../models/accounts";
 import { InputMean } from '../InputMean';
 import { TokenDisplay } from '../TokenDisplay';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useAccountsContext } from '../../contexts/accounts';
 import { NATIVE_SOL } from '../../constants/tokens';
 import { TextInput } from '../TextInput';
@@ -57,7 +57,6 @@ export const MultisigTransferTokensModal = (props: {
   const { publicKey, connected } = useWallet();
   const {
     tokenList,
-    userTokens,
     splTokenList,
     loadingPrices,
     transactionStatus,
@@ -184,7 +183,7 @@ export const MultisigTransferTokensModal = (props: {
       return;
     }
 
-    if (!publicKey || !userTokens || !tokenList || !accounts || !accounts.tokenAccounts) {
+    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
       return;
     }
 
@@ -197,34 +196,21 @@ export const MultisigTransferTokensModal = (props: {
       .then(accTks => {
         if (accTks) {
 
-          const meanTokensCopy = new Array<TokenInfo>();
           const intersectedList = new Array<TokenInfo>();
-          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+          const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
 
-          // Build meanTokensCopy including the MeanFi pinned tokens
-          userTokensCopy.forEach(item => {
-            meanTokensCopy.push(item);
-          });
-
-          // Now add all other items but excluding those in userTokens
-          splTokenList.forEach(item => {
-            if (!userTokens.includes(item)) {
-              meanTokensCopy.push(item);
-            }
-          });
-
+          intersectedList.push(splTokensCopy[0]);
+          balancesMap[NATIVE_SOL.address] = nativeBalance;
           // Create a list containing tokens for the user owned token accounts
           accTks.forEach(item => {
             balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
             const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
-              intersectedList.push(tokenFromMeanTokensCopy);
+            const tokenFromSplTokensCopy = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromSplTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromSplTokensCopy);
             }
           });
 
-          intersectedList.unshift(userTokensCopy[0]);
-          balancesMap[userTokensCopy[0].address] = nativeBalance;
           intersectedList.sort((a, b) => {
             if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
               return 1;
@@ -260,7 +246,7 @@ export const MultisigTransferTokensModal = (props: {
       clearTimeout(timeout);
     }
 
-  }, [accounts, connection, nativeBalance, publicKey, selectedMultisig, splTokenList, tokenList, userTokens]);
+  }, [accounts, connection, nativeBalance, publicKey, selectedMultisig, splTokenList, tokenList]);
 
     // Reset results when the filter is cleared
     useEffect(() => {

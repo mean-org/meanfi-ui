@@ -7,7 +7,7 @@ import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, to
 import { consoleOut, percentageBn } from "../../middleware/ui";
 import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useTranslation } from "react-i18next";
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { PublicKey } from '@solana/web3.js';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';

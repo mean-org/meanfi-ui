@@ -1,5 +1,5 @@
 import { NATIVE_SOL_MINT } from '../middleware/ids';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { isProd } from '../middleware/ui';
 
 const LOGO_BASE_URL = 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet';

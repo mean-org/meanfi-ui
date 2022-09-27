@@ -13,7 +13,7 @@ import { ConfirmOptions, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { confirmationEvents, TxConfirmationContext } from "../../contexts/transaction-status";
 import { MEAN_TOKEN_LIST } from "../../constants/tokens";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { appConfig, customLogger } from "../..";
 import { Button, Spin } from "antd";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";

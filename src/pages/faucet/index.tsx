@@ -9,7 +9,7 @@ import { environment } from "../../environments/environment";
 import { getAmountFromLamports, getAmountWithSymbol } from "../../middleware/utils";
 import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { useTranslation } from "react-i18next";
 import { openNotification } from '../../components/Notifications';
 

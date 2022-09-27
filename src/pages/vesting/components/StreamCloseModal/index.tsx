@@ -4,7 +4,7 @@ import { Modal, Button, Row, Col, Radio } from 'antd';
 import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { useTranslation } from 'react-i18next';
 import { MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { PublicKey } from '@solana/web3.js';
 import { useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
