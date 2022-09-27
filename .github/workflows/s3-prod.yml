@@ -83,7 +83,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
-      # Upload the files to S3
+      # Copy the files from build folder to the S3 bucket
       - name: Deploy to S3        
         env:
           AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
