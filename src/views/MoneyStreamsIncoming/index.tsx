@@ -32,7 +32,7 @@ import { segmentAnalytics } from "../../App";
 import { StreamWithdrawModal } from "../../components/StreamWithdrawModal";
 import { StreamWithdrawData } from "../../models/streams";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { useNativeAccount } from "../../contexts/accounts";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { useSearchParams } from "react-router-dom";

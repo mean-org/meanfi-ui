@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { environment } from "../environments/environment";
 import { osName, isBrowser, browserName, browserVersion } from "react-device-detect";
-import { consoleOut, isLocal } from "./ui";
+import { isLocal, isProd } from "../middleware/ui";
 import { appConfig } from "..";
 import { WALLET_PROVIDERS } from "../contexts/wallet";
 
@@ -38,8 +38,10 @@ export class CustomLoggerService {
 
     public applicationName: string;
     private walletProviderKey: string;
+    private _canLogToConsole: boolean;
 
     constructor() {
+        this._canLogToConsole = false;
         this.applicationName = appConfig.getConfig().logglyTag;
         this.walletProviderKey = 'walletName';
         logger.push({
@@ -48,7 +50,15 @@ export class CustomLoggerService {
             'subdomain': 'intelerit.com',
             'useDomainProxy': false
         });
-        console.log(`%cLoggly logger initialized!`, 'color:brown');
+        console.log(`%cLogger initialized!`, 'color:brown');
+    }
+
+    public set canLogToConsole(setting : boolean) {
+        this._canLogToConsole = setting;
+    }
+
+    public get canLogToConsole() : boolean {
+        return this._canLogToConsole;
     }
 
     public async logInfo(message: string, data?: any) {
@@ -64,11 +74,23 @@ export class CustomLoggerService {
     public async logError(message: string, data?: any) {
         const errorData = this.getLoggerJsonData(message, LogLevel.Error, data);
         if (isLocal()) {
-            consoleOut('Loggly logger not available for localhost', 'consoleOut then', 'orange');
-            consoleOut('loggerJsonData:', errorData, 'blue');
+            this.print('Loggly logger not available for localhost', 'print then', 'orange');
+            this.print('loggerJsonData:', errorData, 'blue');
             return;
         }
         logger.push(errorData);
+    }
+
+    public print(msg: any, value?: any, color = 'black') {
+        if (this._canLogToConsole || isLocal()) {
+            if (msg) {
+                if (value === undefined) {
+                    console.log(`%c${msg}`, `color: ${color}`);
+                } else {
+                    console.log(`%c${msg}`, `color: ${color}`, value);
+                }
+            }
+        }
     }
 
     private getEnv(): string {

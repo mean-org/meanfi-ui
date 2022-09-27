@@ -19,7 +19,7 @@ import {
   refreshTreasuryBalanceInstruction
 } from '@mean-dao/money-streaming';
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -659,16 +659,15 @@ export const StreamingAccountView = (props: {
     const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
       const balance = new BN(details.balance);
       const allocationAssigned = new BN(details.allocationAssigned);
-      const result = balance.sub(allocationAssigned);
-
-      return result.gtn(0) ? result : new BN(0);
+      return balance.sub(allocationAssigned);
     }
 
     if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
+        const unallocated = getUnallocatedBalance(tsry);
         const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
         if (isNewTreasury) {
-          return getUnallocatedBalance(tsry);
+          return unallocated;
         } else {
           return makeInteger((tsry as TreasuryInfo).balance - (tsry as TreasuryInfo).allocationAssigned, decimals)
         }

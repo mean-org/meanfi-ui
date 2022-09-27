@@ -16,7 +16,7 @@ import { StreamTreasuryType } from '../../models/treasuries';
 import { AppStateContext } from '../../contexts/appstate';
 import { InputMean } from '../InputMean';
 import { TransactionStatus } from '../../models/enums';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
 export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;

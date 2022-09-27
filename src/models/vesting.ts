@@ -1,5 +1,5 @@
 import { AllocationType, SubCategory, TimeUnit, TreasuryType } from "@mean-dao/msp";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 
@@ -166,7 +166,7 @@ export interface AddFundsParams {
     amount: string;
 }
 
-// Map cache to maintain the vesting flow rates between reloads of the vesting accounts' list
+// Map cache to maintain the vesting flow rates when switching vesting accounts
 const vfrCache = new Map<string, VestingFlowRateInfo>();
 
 export const vestingFlowRatesCache = {

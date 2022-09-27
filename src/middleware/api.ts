@@ -1,23 +1,95 @@
+import { TokenPrice } from "models/TokenPrice";
 import { appConfig } from "..";
+import { readFromCache, writeToCache } from "../cache/persistentCache";
 import { meanFiHeaders } from "../constants";
+import { SimpleTokenInfo } from "../models/accounts";
 import { Allocation } from "../models/common-types";
-import { getDefaultRpc, RpcConfig } from "../services/connections-hq";
 import { WhitelistClaimType } from "../models/enums";
-import { TokenPrice } from "../models/accounts";
-import { PriceGraphModel } from "../models/price-graph";
 import { MeanFiStatsModel } from "../models/meanfi-stats";
+import { PriceGraphModel } from "../models/price-graph";
+import { getDefaultRpc, RpcConfig } from "../services/connections-hq";
 
 declare interface RequestInit { }
 
-export const getPrices = async (): Promise<TokenPrice[]> => {
+export const getSolanaTokenListKeyNameByCluster = (chainId: number) => {
+  return `solana-tokens-${chainId}`;
+}
+
+export const getSplTokens = async (chainId: number, honorCache = true): Promise<SimpleTokenInfo[]> => {
+
+  const options: RequestInit = {
+    method: "GET",
+    headers: meanFiHeaders
+  };
+
+  const url = appConfig.getConfig().apiUrl + `/solana-tokens?networkId=${chainId}`;
+
+  if (honorCache) {
+    const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
+    if (cachedTokens) {
+      return Promise.resolve(cachedTokens.data);
+    }
+  }
+
+  return fetch(url, options)
+    .then((response) => response.json())
+    .then((response) => {
+      // Filter out items with no decimals value
+      const filtered = (response as SimpleTokenInfo[]).filter(t => t.decimals !== null);
+      writeToCache(getSolanaTokenListKeyNameByCluster(chainId), filtered);
+      return response;
+    })
+    .catch((err) => {
+      console.error(err);
+      const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
+      if (cachedTokens) {
+        console.warn('Using cached data...');
+        return cachedTokens.data;
+      }
+      return [];
+    });
+};
+
+export const getPrices = async (honorCache = true): Promise<TokenPrice[]> => {
 
   const options: RequestInit = {
     method: "GET",
     headers: meanFiHeaders
   };
   const url = appConfig.getConfig().apiUrl + '/coin-prices';
+  const cacheEntryKey = 'coin-prices';
+
+  if (honorCache) {
+    const cachedPrices = readFromCache(cacheEntryKey);
+    if (cachedPrices) {
+      console.log(`%cprices from cache:`, `color: purple`, cachedPrices.data);
+      return Promise.resolve(cachedPrices.data);
+    }
+  }
 
   return fetch(url, options)
+    .then((response) => response.json())
+    .then((response) => {
+      writeToCache(cacheEntryKey, response);
+      console.log(`%cprices from api:`, `color: purple`, response);
+      return response;
+    })
+    .catch((err) => {
+      console.error(err);
+      const cachedPrices = readFromCache(cacheEntryKey);
+      if (cachedPrices) {
+        console.log(`%cprices from cache:`, `color: purple`, cachedPrices.data);
+        return Promise.resolve(cachedPrices.data);
+      }
+      return [];
+    });
+};
+
+export const getSolFlareTokenList = async (): Promise<any> => {
+  const path = 'https://cdn.jsdelivr.net/gh/solflare-wallet/token-list/solana-tokenlist.json';
+  return fetch(path, {
+    method: "GET",
+  })
     .then((response) => response.json())
     .then((response) => {
       return response;

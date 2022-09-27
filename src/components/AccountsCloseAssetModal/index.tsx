@@ -15,7 +15,7 @@ import { closeTokenAccount } from '../../middleware/accounts';
 import { consoleOut, getTransactionStatusForLogs } from '../../middleware/ui';
 import { getAmountFromLamports, getTxIxResume } from '../../middleware/utils';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { UserTokenAccount } from '../../models/transactions';
+import { UserTokenAccount } from "../../models/accounts";
 import { InputMean } from '../InputMean';
 import { openNotification } from '../Notifications';
 import { TokenListItem } from '../TokenListItem';

@@ -9,7 +9,7 @@ import {
   VestingTreasuryActivity
 } from '@mean-dao/msp';
 import { AccountLayout, u64 } from '@solana/spl-token';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -65,7 +65,6 @@ const notificationKey = 'updatable';
 
 export const VestingView = () => {
   const {
-    userTokens,
     splTokenList,
     isWhitelisted,
     selectedMultisig,
@@ -3173,14 +3172,13 @@ export const VestingView = () => {
       return;
     }
 
-    if (!publicKey || !userTokens || !splTokenList) {
+    if (!publicKey || !splTokenList) {
       return;
     }
 
-    const meanTokensCopy = new Array<TokenInfo>();
-    const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+    const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
     const balancesMap: any = {};
-    balancesMap[userTokensCopy[0].address] = nativeBalance;
+    balancesMap[splTokensCopy[0].address] = nativeBalance;
 
     const pk = balancesSource
       ? new PublicKey(balancesSource)
@@ -3188,29 +3186,12 @@ export const VestingView = () => {
     fetchAccountTokens(connection, pk)
       .then(accTks => {
         if (accTks) {
-
-          // Build meanTokensCopy including the MeanFi pinned tokens
-          userTokensCopy.forEach(item => {
-            if (!meanTokensCopy.some(i => i.address === item.address)) {
-              meanTokensCopy.push(item);
-            }
-          });
-
-          // Now add all other items but excluding those in userTokens (only in prod)
-          if (isProd()) {
-            splTokenList.forEach(item => {
-              if (!meanTokensCopy.some(i => i.address === item.address)) {
-                meanTokensCopy.push(item);
-              }
-            });
-          }
-
           // Add owned token accounts to balances map
           // Code to have all tokens sorted by balance
           accTks.forEach(item => {
             balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
           });
-          meanTokensCopy.sort((a, b) => {
+          splTokensCopy.sort((a, b) => {
             if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
               return 1;
             } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
@@ -3218,33 +3199,33 @@ export const VestingView = () => {
             }
             return 0;
           });
-          setSelectedList(meanTokensCopy);
+          setSelectedList(splTokensCopy);
           if (!workingToken) {
-            setWorkingToken(meanTokensCopy[0]);
-            setSelectedToken(meanTokensCopy[0]);
+            setWorkingToken(splTokensCopy[0]);
+            setSelectedToken(splTokensCopy[0]);
           }
 
         } else {
-          for (const t of userTokensCopy) {
+          for (const t of splTokensCopy) {
             balancesMap[t.address] = 0;
           }
           // set the list to the userTokens list
-          setSelectedList(userTokensCopy);
+          setSelectedList(splTokensCopy);
           if (!workingToken) {
-            setWorkingToken(userTokensCopy[0]);
-            setSelectedToken(userTokensCopy[0]);
+            setWorkingToken(splTokensCopy[0]);
+            setSelectedToken(splTokensCopy[0]);
           }
         }
       })
       .catch(error => {
         console.error(error);
-        for (const t of userTokensCopy) {
+        for (const t of splTokensCopy) {
           balancesMap[t.address] = 0;
         }
-        setSelectedList(userTokensCopy);
+        setSelectedList(splTokensCopy);
         if (!workingToken) {
-          setWorkingToken(userTokensCopy[0]);
-          setSelectedToken(userTokensCopy[0]);
+          setWorkingToken(splTokensCopy[0]);
+          setSelectedToken(splTokensCopy[0]);
         }
       })
       .finally(() => setUserBalances(balancesMap));

@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Button, Checkbox, DatePicker, Dropdown, Menu, Modal, Spin, TimePicker } from "antd";
-import { UserTokenAccount } from '../../../../models/transactions';
+import { UserTokenAccount } from "../../../../models/accounts";
 import { StreamTemplate, TransactionFees, Treasury } from '@mean-dao/msp';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { useTranslation } from 'react-i18next';

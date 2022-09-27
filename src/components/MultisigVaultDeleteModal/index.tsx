@@ -10,7 +10,7 @@ import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { consoleOut, getTransactionOperationDescription } from '../../middleware/ui';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
-import { UserTokenAccount } from '../../models/transactions';
+import { UserTokenAccount } from "../../models/accounts";
 import { InputMean } from '../InputMean';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 

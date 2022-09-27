@@ -1,7 +1,7 @@
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import BN from 'bn.js';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';

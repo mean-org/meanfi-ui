@@ -9,6 +9,7 @@ import dateFormat from "dateformat";
 import { TimeData } from "../models/common-types";
 import BN from "bn.js";
 import BigNumber from "bignumber.js";
+import { customLogger } from "index";
 
 export const isDev = (): boolean => {
     return environment === 'development';
@@ -32,15 +33,9 @@ export const isLocal = (): boolean => {
     return isLocalhost;
 }
 
-export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (!isProd() || isLocal()) {
-        if (msg) {
-            if (value === 'NOT_SPECIFIED') {
-                console.log(`%c${msg}`, `color: ${color}`);
-            } else {
-                console.log(`%c${msg}`, `color: ${color}`, value);
-            }
-        }
+export function consoleOut(msg: any, value?: any, color = 'black') {
+    if (msg) {
+        customLogger.print(msg, value, color);
     }
 }
 

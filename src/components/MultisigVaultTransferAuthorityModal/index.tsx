@@ -12,7 +12,7 @@ import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { UserTokenAccount } from '../../models/transactions';
+import { UserTokenAccount } from "../../models/accounts";
 import { InputMean } from '../InputMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

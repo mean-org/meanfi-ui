@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Divider, Drawer, Modal, Tooltip } from "antd";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "models/SolanaTokenInfo";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { TOKEN_PROGRAM_ID } from "../../middleware/ids";

@@ -18,7 +18,7 @@ import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { Identicon } from '../../../../components/Identicon';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { VestingContractWithdrawOptions } from '../../../../models/vesting';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
