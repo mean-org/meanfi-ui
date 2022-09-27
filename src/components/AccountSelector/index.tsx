@@ -1,16 +1,15 @@
-import "./style.scss";
-import { IconLoading, IconSafe, IconWallet } from "../../Icons";
-import { useWallet } from "../../contexts/wallet";
 import { useContext, useEffect, useState } from "react";
-import { AppStateContext } from "../../contexts/appstate";
-import { Spin, Tooltip } from "antd";
-import { useTranslation } from "react-i18next";
-// import { useLocation, useNavigate } from "react-router-dom";
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { Spin, Tooltip } from "antd";
+import { UserTokenAccount } from "models/accounts";
+import { useTranslation } from "react-i18next";
+import { AppStateContext } from "../../contexts/appstate";
+import { useWallet } from "../../contexts/wallet";
+import { IconLoading, IconSafe, IconWallet } from "../../Icons";
 import { consoleOut, kFormatter, toUsCurrency } from "../../middleware/ui";
-import { UserTokenAccount } from "../../models/transactions";
 import { shortenAddress } from "../../middleware/utils";
 import { Identicon } from "../Identicon";
+import "./style.scss";
 
 export const AccountSelector = () => {
   const {

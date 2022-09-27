@@ -1502,10 +1502,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (!connection ||
         !publicKey ||
         !account ||
-        !userTokens ||
-        userTokens.length === 0 ||
-        !pinnedTokens ||
-        pinnedTokens.length === 0 ||
         !priceList
     ) {
       return null;
@@ -1518,9 +1514,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       connection,
       account,
       priceList,
-      userTokens,
       splTokenList,
-      pinnedTokens
     ).then(response => {
       if (response) {
         return response;
@@ -1533,7 +1527,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       return null;
     });
 
-  }, [connection, pinnedTokens, priceList, publicKey, splTokenList, userTokens]);
+  }, [connection, priceList, publicKey, splTokenList]);
 
   ///////////////////////
   // Multisig accounts //
