@@ -5041,7 +5041,6 @@ export const AccountsNewView = () => {
           selectedToken={selectedAsset}
           isVisible={isSendAssetModalOpen}
           handleClose={hideSendAssetModal}
-          selected={"one-time"}
         />
       )}
 
