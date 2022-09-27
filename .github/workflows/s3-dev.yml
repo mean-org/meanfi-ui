@@ -1,9 +1,6 @@
 name: Release-DEV
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - 'feature/*'
 
 env:
   NODE_VERSION: 18
@@ -13,6 +10,7 @@ env:
   ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
   ARTIFACT_NAME: mean-ui-build-development
   DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID_DEV }}
+  AWS_S3_SKIP_FOLDERS: 3 # keep only last 3 deploys
 
 jobs:
   build:
@@ -62,6 +60,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}
+          
       # Set the credentials from repository settings/secrets
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -90,8 +89,18 @@ jobs:
           AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
           
       # clean up old artifacts. keep last 3
-      - name: Cleanup
+      - name: Cleanup Artifacts
         uses: Remagpie/gha-remove-artifact@v1
         with:
           only-name: ${{ env.ARTIFACT_NAME }}
           max-count: 3
+      
+      # get list of folders and remove older ones
+      - name: S3 Cleanup
+        run: |
+          FOLDERS_TO_DELETE="$(aws s3 ls s3://${{ env.BUCKET_NAME }} | awk -Fv '{print $2}' | awk -F/ '{print $1}' | sort -n -r | awk '{if(NR > ${{ env.AWS_S3_SKIP_FOLDERS }}) print $0}')"
+          for FOLDER_NO in $FOLDERS_TO_DELETE
+          do
+            echo "Removing s3://${{ env.BUCKET_NAME }}/v$FOLDER_NO ..."
+            aws s3 rm s3://${{ env.BUCKET_NAME }}/v$FOLDER_NO/ --recursive
+          done
