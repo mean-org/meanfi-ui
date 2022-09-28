@@ -57,14 +57,14 @@ export const TreasuryOpenModal = (props: {
       const NUM_CHARS = 4;
       const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
       if (isValidAddress(treasuryId)) {
-        for (let i = 0; i < ellipsisElements.length; ++i){
-          const e = ellipsisElements[i] as HTMLElement;
+        for (const element of ellipsisElements) {
+          const e = element as HTMLElement;
           if (e.offsetWidth < e.scrollWidth){
             const text = e.textContent;
             e.dataset.tail = text?.slice(text.length - NUM_CHARS);
           }
         }
-      } else {
+        } else {
         if (ellipsisElements && ellipsisElements.length > 0) {
           const e = ellipsisElements[0] as HTMLElement;
           e.dataset.tail = '';

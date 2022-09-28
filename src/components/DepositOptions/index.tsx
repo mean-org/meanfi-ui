@@ -1,17 +1,16 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Col, Modal, Row, Tooltip } from "antd";
-import { useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { appConfig } from '../..';
-import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from "../../constants";
-import { AppStateContext } from "../../contexts/appstate";
-import { useWallet } from "../../contexts/wallet";
-import { AppConfig, environment } from '../../environments/environment';
-import useScript from '../../hooks/useScript';
-import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
-import { consoleOut, copyText } from "../../middleware/ui";
-import { openNotification } from '../Notifications';
+import { openNotification } from 'components/Notifications';
+import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from "constants/common";
+import { useWallet } from "contexts/wallet";
+import { environment } from 'environments/environment';
+import useScript from 'hooks/useScript';
+import { IconCopy, IconInfoTriangle, IconSolana } from "Icons";
+import { appConfig } from 'index';
+import { consoleOut, copyText } from "middleware/ui";
 import { QRCodeSVG } from 'qrcode.react';
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import "./style.scss";
 
 declare const TransakSDK: any;
@@ -30,10 +29,9 @@ export const DepositOptions = (props: {
   const [isSharingAddress, setIsSharingAddress] = useState(false);
 
   // Get App config
-  const [currentConfig, setCurrentConfig] = useState<AppConfig | null>(null);
-  if (!currentConfig) {
-    setCurrentConfig(appConfig.getConfig());
-  }
+  const currentConfig = useMemo(() => {
+    return appConfig.getConfig();
+  }, []);
 
   const enableAddressSharing = () => {
     setIsSharingAddress(true);
@@ -76,13 +74,6 @@ export const DepositOptions = (props: {
     }, 500);
     props.handleClose();
   }
-
-  // const handleBridgeFromRenButtonClick = () => {
-  //   setTimeout(() => {
-  //     window.open(MEAN_FINANCE_APP_RENBRIDGE_URL, '_blank','noreferrer');
-  //   }, 500);
-  //   props.handleClose();
-  // }
 
   useEffect(() => {
     if (status === 'ready' && !transak) {
@@ -135,12 +126,13 @@ export const DepositOptions = (props: {
     }
   }
 
+  // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
       const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (let i = 0; i < ellipsisElements.length; ++i){
-        const e = ellipsisElements[i] as HTMLElement;
+      for (const element of ellipsisElements) {
+        const e = element as HTMLElement;
         if (e.offsetWidth < e.scrollWidth){
           const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);

@@ -300,13 +300,13 @@ export const VestingContractCreateForm = (props: {
         const resizeListener = () => {
             const NUM_CHARS = 4;
             const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-            for (let i = 0; i < ellipsisElements.length; ++i) {
-                const e = ellipsisElements[i] as HTMLElement;
-                if (e.offsetWidth < e.scrollWidth) {
-                    const text = e.textContent;
-                    e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+            for (const element of ellipsisElements) {
+                const e = element as HTMLElement;
+                if (e.offsetWidth < e.scrollWidth){
+                  const text = e.textContent;
+                  e.dataset.tail = text?.slice(text.length - NUM_CHARS);
                 }
-            }
+              }
         };
         // Call it a first time
         resizeListener();

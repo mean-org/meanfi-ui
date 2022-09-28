@@ -1470,6 +1470,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         !publicKey ||
         !accountAddress ||
         !shouldLoadTokens ||
+        isSelectingAccount ||
         !splTokenList) {
       return;
     }
@@ -1477,6 +1478,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     setLoadingTokenAccounts(true);
     updateShouldLoadTokens(false);
     setTokensLoaded(false);
+    consoleOut('calling getUserAccountTokens from:', 'AppState', 'darkgreen');
 
     getUserAccountTokens(
       connection,
@@ -1513,6 +1515,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     setLoadingTokenAccounts(true);
     setTokensLoaded(false);
+    consoleOut('calling getUserAccountTokens from:', 'getAssetsByAccount', 'darkgreen');
 
     return getUserAccountTokens(
       connection,

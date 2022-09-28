@@ -69,7 +69,7 @@ export interface WalletProviderEntry {
   isWebWallet: boolean;
   underDevelopment: boolean;
   hideIfUnavailable: boolean;
-}
+};
 
 export const WALLET_PROVIDERS: WalletProviderEntry[] = [
   {
@@ -292,26 +292,26 @@ const getIsProviderInstalled = (provider: any): boolean => {
     }
   }
   return true;
-}
+};
 
 const WalletContext = React.createContext<{
   wallet: MeanFiWallet;
   connected: boolean;
   connecting: boolean;
-  select: () => void;
   autoConnect: boolean;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
-  resetWalletProvider: () => void;
   isSelectingWallet: boolean;
+  select: () => void;
+  resetWalletProvider: () => void;
 }>({
   wallet: undefined,
   connected: false,
   connecting: true,
-  select() {},
   autoConnect: true,
   provider: undefined,
-  resetWalletProvider: () => {},
   isSelectingWallet: false,
+  select() { },
+  resetWalletProvider: () => { },
 });
 
 export function WalletProvider({ children = null as any }) {
@@ -338,6 +338,12 @@ export function WalletProvider({ children = null as any }) {
     walletRef.current = wallet;
   }, [wallet]);
 
+  const forgetWallet = useCallback(() => {
+    setConnected(false);
+    setWalletName(null);
+    setWallet(undefined);
+  }, []);
+
   const connectOnDemand = useCallback(() => {
     if (!wallet) { return; }
 
@@ -351,12 +357,10 @@ export function WalletProvider({ children = null as any }) {
           title: 'Wallet adapter not configured',
           description: `Cannot connect to ${wallet.name}. Wallet is not configured or enabled in your browser.`
         });
-        setConnected(false);
-        setWalletName(null);
-        setWallet(undefined);
+        forgetWallet();
       }
     });
-  }, [setWalletName, wallet]);
+  }, [setWalletName, wallet, forgetWallet]);
 
   const resetWalletProvider = () => {
     setWalletName(null);
@@ -423,8 +427,6 @@ export function WalletProvider({ children = null as any }) {
   useEffect(() => {
     if (wallet) {
       wallet.on("connect", (pk) => {
-        // const newAddress = pk.toBase58();
-        // consoleOut('New wallet address:', newAddress, 'crimson');
         if (wallet.publicKey) {
           setConnected(true);
           close();
@@ -508,10 +510,10 @@ export function WalletProvider({ children = null as any }) {
               }
 
               const onClick = function () {
-                if (item.name === provider?.name && connected) {
-                  close();
-                  return;
-                }
+                // if (item.name === provider?.name && connected) {
+                //   close();
+                //   return;
+                // }
 
                 if (wallet) {
                   wallet.disconnect();
@@ -578,7 +580,7 @@ export function WalletProvider({ children = null as any }) {
       </Modal>
     </WalletContext.Provider>
   );
-}
+};
 
 export function useWallet() {
   const { wallet, connected, connecting, provider, autoConnect, resetWalletProvider, select, isSelectingWallet } = useContext(WalletContext);
@@ -602,7 +604,8 @@ export function useWallet() {
     disconnect() {
       consoleOut(`Disconnecting provider...`, '', 'blue');
       wallet?.disconnect();
+      resetWalletProvider();
     },
     isSelectingWallet
   };
-}
+};

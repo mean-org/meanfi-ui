@@ -1,17 +1,21 @@
-import { useContext, useEffect, useState } from "react";
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { Spin, Tooltip } from "antd";
+import { Identicon } from "components/Identicon";
+import { AppStateContext } from "contexts/appstate";
+import { useWallet } from "contexts/wallet";
+import { IconLoading, IconSafe, IconWallet } from "Icons";
+import { consoleOut, kFormatter, toUsCurrency } from "middleware/ui";
+import { shortenAddress } from "middleware/utils";
 import { UserTokenAccount } from "models/accounts";
-import { useTranslation } from "react-i18next";
-import { AppStateContext } from "../../contexts/appstate";
-import { useWallet } from "../../contexts/wallet";
-import { IconLoading, IconSafe, IconWallet } from "../../Icons";
-import { consoleOut, kFormatter, toUsCurrency } from "../../middleware/ui";
-import { shortenAddress } from "../../middleware/utils";
-import { Identicon } from "../Identicon";
+import { useContext, useEffect, useState } from "react";
 import "./style.scss";
 
-export const AccountSelector = () => {
+export const AccountSelector = (props: {
+  onAccountSelected?: any;
+}) => {
+  const {
+    onAccountSelected,
+  } = props;
   const {
     tokensLoaded,
     loadingPrices,
@@ -24,10 +28,7 @@ export const AccountSelector = () => {
     getAssetsByAccount,
     setAccountAddress,
   } = useContext(AppStateContext);
-  // const location = useLocation();
-  // const navigate = useNavigate();
   const { publicKey, provider } = useWallet();
-  const { t } = useTranslation("common");
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[] | undefined>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
 
@@ -74,11 +75,17 @@ export const AccountSelector = () => {
       setAccountAddress(publicKey.toBase58());
     }
     setIsSelectingAccount(false);
+    if (onAccountSelected) {
+      onAccountSelected();
+    }
   }
 
   const onMultisigAccountSelected = (item: MultisigInfo) => {
     setAccountAddress(item.authority.toBase58());
     setIsSelectingAccount(false);
+    if (onAccountSelected) {
+      onAccountSelected();
+    }
   }
 
   const renderAssetsValue = () => {
@@ -93,6 +100,24 @@ export const AccountSelector = () => {
     }
 
     return (<span className="dimmed">{kFormatter(item.pendingTxsAmount)} queued</span>);
+  }
+
+  const renderMultisigIcon = (item: MultisigInfo) => {
+    if (item.version === 0) {
+      return (
+        <Tooltip placement="rightTop" title="Serum Multisig">
+          <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />
+        </Tooltip>
+      );
+    } else if (item.version === 2) {
+      return (
+        <Tooltip placement="rightTop" title="Meanfi Multisig">
+          <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" alt="Meanfi Multisig" width={30} height={30} />
+        </Tooltip>
+      );
+    } else {
+      return (<Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />);
+    }
   }
 
   return (
@@ -150,17 +175,7 @@ export const AccountSelector = () => {
               return (
                 <div key={`account-${index}`} className={`transaction-list-row${index === 0 ? ' selected' : ''}`} onClick={() => onMultisigAccountSelected(item)}>
                   <div className="icon-cell">
-                    {(item.version === 0) ? (
-                      <Tooltip placement="rightTop" title="Serum Multisig">
-                        <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />
-                      </Tooltip>
-                    ) : (item.version === 2) ? (
-                      <Tooltip placement="rightTop" title="Meanfi Multisig">
-                        <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" alt="Meanfi Multisig" width={30} height={30} />
-                      </Tooltip>
-                    ) : (
-                      <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
-                    )}
+                    {renderMultisigIcon(item)}
                     {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
                       <span className="status warning bottom-right"></span>
                     ) : null}

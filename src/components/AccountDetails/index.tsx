@@ -1,44 +1,59 @@
 import { Button, Dropdown, Menu, Modal } from "antd";
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
-import { useCallback, useContext, useState } from 'react';
-import { useTranslation } from "react-i18next";
-import { segmentAnalytics } from '../../App';
-import { AppStateContext } from '../../contexts/appstate';
-import { useWallet } from "../../contexts/wallet";
+import { segmentAnalytics } from 'App';
+import { AccountSelectorModal } from "components/AccountSelectorModal";
+import { openNotification } from "components/Notifications";
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from "contexts/wallet";
 import {
   IconCopy,
+  IconExit,
+  IconPulse,
   IconUser,
   IconWallet
-} from "../../Icons";
-import { AppUsageEvent } from '../../middleware/segment-service';
-import { copyText } from "../../middleware/ui";
-import { shortenAddress } from "../../middleware/utils";
-import { openNotification } from '../Notifications';
+} from "Icons";
+import { AppUsageEvent } from 'middleware/segment-service';
+import { copyText } from "middleware/ui";
+import { shortenAddress } from "middleware/utils";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "pages/accounts";
+import { useCallback, useContext, useState } from 'react';
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import "./style.scss";
 
 export const AccountDetails = () => {
 
-  const { t } = useTranslation("common");
   const {
     diagnosisInfo,
-    setStreamList,
     setSelectedStream,
-    setIsSelectingAccount,
+    setStreamList,
   } = useContext(AppStateContext);
-
+  const navigate = useNavigate();
+  const { t } = useTranslation("common");
+  const { publicKey, provider, select, disconnect, resetWalletProvider } = useWallet();
+  const [isSelectingAccount, setIsSelectingAccount] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
-  const { publicKey, provider, select, disconnect, resetWalletProvider } = useWallet();
 
   const switchWallet = useCallback(() => {
     setTimeout(() => {
-      setIsSelectingAccount(true);
+      disconnect();
+      navigate('/');
       select();
     }, 500);
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletChange);
-  }, [select, setIsSelectingAccount]);
+  }, [disconnect, navigate, select]);
+
+  const switchAccount = useCallback(() => {
+    setIsSelectingAccount(true);
+  }, []);
+
+  const onCompleteAccountSelection = useCallback(() => {
+    setIsSelectingAccount(false);
+    navigate(ACCOUNTS_ROUTE_BASE_PATH);
+  }, []);
 
   const onCopyAddress = () => {
     if (copyText(publicKey)) {
@@ -138,8 +153,8 @@ export const AccountDetails = () => {
       key: '02-connected-account',
       label: (
         <div onClick={onCopyAddress}>
-          <IconUser className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">{shortenAddress(publicKey)}</span>
+          <IconCopy className="mean-svg-icons" />
+          <span className="menu-item-text ml-1">Click to copy address</span>
         </div>
       )
     });
@@ -147,25 +162,34 @@ export const AccountDetails = () => {
       key: '03-wallet-change',
       label: (
         <div onClick={switchWallet}>
-          <IconUser className="mean-svg-icons" />
+          <IconWallet className="mean-svg-icons" />
           <span className="menu-item-text ml-1">{t('account-area.wallet-change')}</span>
         </div>
       )
     });
     items.push({
-      key: '04-diagnosis-info',
+      key: '04-account-change',
+      label: (
+        <div onClick={switchAccount}>
+          <IconUser className="mean-svg-icons" />
+          <span className="menu-item-text ml-1">Change account</span>
+        </div>
+      )
+    });
+    items.push({
+      key: '05-diagnosis-info',
       label: (
         <div onClick={showAccount}>
-          <IconUser className="mean-svg-icons" />
+          <IconPulse className="mean-svg-icons" />
           <span className="menu-item-text ml-1">{t('account-area.diagnosis-info')}</span>
         </div>
       )
     });
     items.push({
-      key: '05-disconnect',
+      key: '06-disconnect',
       label: (
         <div onClick={onDisconnectWallet}>
-          <IconUser className="mean-svg-icons" />
+          <IconExit className="mean-svg-icons" />
           <span className="menu-item-text ml-1">{t('account-area.disconnect')}</span>
         </div>
       )
@@ -215,6 +239,13 @@ export const AccountDetails = () => {
           )}
         </div>
       </Modal>
+
+      <AccountSelectorModal
+        isVisible={isSelectingAccount}
+        isFullWorkflowEnabled={false}
+        onAccountSelected={onCompleteAccountSelection}
+      />
+
     </>
   );
 

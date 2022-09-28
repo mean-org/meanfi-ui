@@ -11,7 +11,6 @@ import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { consoleOut, isLocal, isProd, isValidAddress } from "../../middleware/ui";
 import ReactGA from 'react-ga';
-// import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
 import { environment } from "../../environments/environment";
 import { GOOGLE_ANALYTICS_PROD_TAG_ID, LANGUAGES, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_THRESHOLD, SOLANA_STATUS_PAGE } from "../../constants";
@@ -56,7 +55,7 @@ export const AppLayout = React.memo((props: any) => {
   const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { wallet, provider, connected, publicKey, connecting, select, isSelectingWallet } = useWallet();
+  const { wallet, provider, connected, publicKey, connecting, select, disconnect, isSelectingWallet } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
@@ -154,45 +153,16 @@ export const AppLayout = React.memo((props: any) => {
   ]);
 
   const getPlatform = useCallback((): string => {
-    return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
+    if (isDesktop) {
+      return 'Desktop';
+    } else if (isTablet) {
+      return 'Tablet';
+    } else if (isMobile) {
+      return 'Mobile';
+    } else {
+      return 'Other';
+    }
   }, []);
-
-  /*
-  const sendConnectionMetric = useCallback((address: string) => {
-    const url = appConfig.getConfig().influxDbUrl;
-    const token = appConfig.getConfig().influxDbToken;
-    const org = appConfig.getConfig().influxDbOrg;
-    const bucket = appConfig.getConfig().influxDbBucket;
-    const writeApi = new InfluxDB({url, token, timeout: 3000, writeOptions: {maxRetries: 0}}).getWriteApi(org, bucket);
-    const data = {
-      platform: getPlatform(),
-      browser: browserName,
-      'wallet_address': address,
-      'wallet_type': provider?.name || 'Other'
-    };
-    writeApi.useDefaultTags({
-      platform: getPlatform(),
-      browser: browserName
-    });
-
-    const point1 = new Point('wallet_account_connections')
-      .tag('wallet_address', address)
-      .tag('wallet_type', provider?.name || 'Other')
-      .intField('value', 1);
-
-    writeApi.writePoint(point1);
-
-    // flush pending writes and close writeApi
-    writeApi
-      .close()
-      .then(() => {
-        consoleOut('InfluxDB write API - WRITE FINISHED', data, 'green');
-      })
-      .catch(e => {
-        consoleOut('InfluxDB write API - WRITE FAILED', e, 'red');
-      })
-  }, [provider, getPlatform]);
-  */
 
   // Init Google Analytics
   useEffect(() => {
@@ -266,9 +236,6 @@ export const AppLayout = React.memo((props: any) => {
             language: language
           });
 
-          // if (!isLocal()) {
-          //   sendConnectionMetric(walletAddress);
-          // }
           setNeedRefresh(true);
 
           // Record pending referral, get referrals count and clear referralAddress from localStorage
@@ -407,7 +374,7 @@ export const AppLayout = React.memo((props: any) => {
   useEffect(() => {
     if (connectionConfig && connectionConfig.endpoint && needRefresh) {
       const now = new Date();
-      const device = isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
+      const device = getPlatform();
       const dateTime = `Client time: ${now.toUTCString()}`;
       const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
       const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${tpsAvg || '-'}, latency: ${responseTime}ms`;
@@ -428,10 +395,11 @@ export const AppLayout = React.memo((props: any) => {
     isOnline,
     provider,
     publicKey,
+    needRefresh,
     responseTime,
     connectionConfig,
-    needRefresh,
     setDiagnosisInfo,
+    getPlatform,
     t
   ]);
 
@@ -448,6 +416,12 @@ export const AppLayout = React.memo((props: any) => {
           )}
           <AccountSelectorModal
             isVisible={isSelectingAccount}
+            isFullWorkflowEnabled={true}
+            onGotoSelectWallet={() => {
+              disconnect();
+              navigate('/');
+              select();
+            }}
           />
         </>
       );
