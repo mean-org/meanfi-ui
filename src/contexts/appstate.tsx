@@ -1149,6 +1149,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           ms.listStreams({ treasurer: userPk, beneficiary: userPk })
           .then(async streamsv1 => {
             listStreamsV1PerformanceCounter.stop();
+            consoleOut(`listStreams performance counter: ${tokenListPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
             streamAccumulator.push(...streamsv1);
             rawStreamsv1 = streamsv1;
             rawStreamsv1.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1)
@@ -1185,7 +1186,6 @@ const AppStateProvider: React.FC = ({ children }) => {
           })
           .finally(() => {
             updateLoadingStreams(false);
-            consoleOut('listStreams performance counter:', 'Pending streamDetails...', 'crimson');
           });
         }).catch(err => {
           console.error(err);
@@ -1210,6 +1210,8 @@ const AppStateProvider: React.FC = ({ children }) => {
    * and resume when TPS goes up again.
    */
   useEffect(() => {
+    if (!publicKey) { return; }
+
     let timer: any;
 
     if (accountAddress && location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) && !customStreamDocked && !isDowngradedPerformance) {
@@ -1219,7 +1221,11 @@ const AppStateProvider: React.FC = ({ children }) => {
       }, FIVE_MINUTES_REFRESH_TIMEOUT);
     }
 
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    }
   }, [
     location,
     accountAddress,

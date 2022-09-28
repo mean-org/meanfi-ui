@@ -42,7 +42,7 @@ export function AppRoutes() {
                   <AppLayout>
                     <Routes>
                       <Route path="/" element={<Navigate replace to='/accounts' />} />
-                      {/* Accounts detailed deep-linking */}
+                      {/* Accounts routes */}
                       <Route path="/accounts" element={<AccountsNewView />} />
                       <Route path="/accounts/:address" element={<AccountsNewView />} />
                       <Route path="/accounts/:address/assets" element={<AccountsNewView />} />
@@ -50,20 +50,22 @@ export function AppRoutes() {
                       <Route path="/accounts/:address/streaming" element={<AccountsNewView />} />
                       <Route path="/accounts/:address/streaming/:streamingTab" element={<AccountsNewView />} />
                       <Route path="/accounts/:address/streaming/:streamingTab/:streamingItemId" element={<AccountsNewView />} />
-                      {/* Streams routes (under refactor) */}
-                      <Route path="/accounts/streams" element={<AccountsNewView />} />
+                      {/* Vesting routes */}
                       <Route path="/vesting" element={<VestingView />} />
                       <Route path="/vesting/:address" element={<VestingView />} />
                       <Route path="/vesting/:address/contracts" element={<VestingView />} />
                       <Route path="/vesting/:address/contracts/:vestingContract" element={<VestingView />} />
                       <Route path="/vesting/:address/contracts/:vestingContract/:activeTab" element={<VestingView />} />
+                      {/* Multisig routes */}
+                      <Route path="/multisig" element={<SafeView />} />
+                      <Route path="/multisig/:address" element={<SafeView />} />
+                      <Route path="/multisig/:address/proposals/:id" element={<SafeView />} />
+                      <Route path="/multisig/:address/programs/:id" element={<SafeView />} />
                       {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
                       )}
-                      {/* Deprecated routes (still active) */}
-                      <Route path="/faucet" element={<FaucetView />} />
                       {/* IDO */}
                       <Route path="/ido" element={<IdoView />} />
                       <Route path="/ido-live" element={<IdoLiveView />} />
@@ -74,10 +76,7 @@ export function AppRoutes() {
                       <Route path="/staking-rewards" element={<StakingRewardsView />} />
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
-                      <Route path="/multisig" element={<SafeView />} />
-                      <Route path="/multisig/:address" element={<SafeView />} />
-                      <Route path="/multisig/:address/proposals/:id" element={<SafeView />} />
-                      <Route path="/multisig/:address/programs/:id" element={<SafeView />} />
+                      <Route path="/faucet" element={<FaucetView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       <Route path="/playground" element={<PlaygroundView />} />
                       <Route path='*' element={<NotFoundView />} />
