@@ -27,7 +27,7 @@ export const SafeMeanInfo = (props: {
   isProposalDetails: boolean;
   loadingPrograms: boolean;
   loadingProposals: boolean;
-  multisigClient: MeanMultisig | null;
+  multisigClient: MeanMultisig | undefined;
   onDataToProgramView: any;
   onDataToSafeView: any;
   onEditMultisigClick: any;
