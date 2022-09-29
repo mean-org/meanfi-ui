@@ -1,8 +1,7 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeftOutlined,
   LoadingOutlined,
-  ReloadOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import {
   ConfirmOptions,
@@ -13,50 +12,41 @@ import {
   Transaction,
   TransactionInstruction
 } from '@solana/web3.js';
-import { PreFooter } from '../../components/PreFooter';
-import { useConnectionConfig } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
-import { useTranslation } from 'react-i18next';
-import { Identicon } from '../../components/Identicon';
+import { Identicon } from 'components/Identicon';
+import { PreFooter } from 'components/PreFooter';
+import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
+import { useConnectionConfig } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
 import {
   formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
   getTxIxResume,
   shortenAddress,
-  toUiAmount,
-} from '../../middleware/utils';
+  toUiAmount
+} from 'middleware/utils';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button, Empty, Spin, Tooltip } from 'antd';
 import {
-  consoleOut,
-  getTransactionStatusForLogs,
-  toUsCurrency,
-  delay
-} from '../../middleware/ui';
+  consoleOut, delay, getTransactionStatusForLogs,
+  toUsCurrency
+} from 'middleware/ui';
 
-import { MEAN_MULTISIG_ACCOUNT_LAMPORTS } from '../../constants';
-import { isDesktop } from "react-device-detect";
-import useWindowSize from '../../hooks/useWindowResize';
-import { EventType, OperationType, TransactionStatus } from '../../models/enums';
-import { IconLoading, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
-import { useNativeAccount } from '../../contexts/accounts';
-import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { MEAN_MULTISIG_ACCOUNT_LAMPORTS } from 'constants/common';
+import { useNativeAccount } from 'contexts/accounts';
+import useWindowSize from 'hooks/useWindowResize';
+import { IconLoading, IconSafe, IconUserGroup, IconUsers } from 'Icons';
+import { MEAN_MULTISIG, NATIVE_SOL_MINT } from 'middleware/ids';
+import { EventType, OperationType, TransactionStatus } from 'models/enums';
+import { isDesktop } from "react-device-detect";
 import './style.scss';
 
 // MULTISIG
-import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
-import { appConfig, customLogger } from '../..';
-import { openNotification } from '../../components/Notifications';
-import { SafeMeanInfo } from './components/SafeMeanInfo';
-import { ProposalDetailsView } from './components/ProposalDetails';
-import { MultisigProposalModal } from '../../components/MultisigProposalModal';
-import { ProgramDetailsView } from './components/ProgramDetails';
-import SerumIDL from '../../models/serum-multisig-idl';
-import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } from '@mean-dao/mean-multisig-apps';
-import { SafeSerumInfoView } from './components/SafeSerumInfo';
+import { App, AppConfig, AppsProvider, Arg, NETWORK, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
+import { createProgram, getDepositIx, getGatewayToken, getTrancheDepositIx, getTrancheWithdrawIx, getWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   getFees,
@@ -67,21 +57,28 @@ import {
   MultisigTransactionFees,
   MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk';
-import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken, getTrancheDepositIx, getTrancheWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
-import { NATIVE_SOL } from '../../constants/tokens';
-import { UserTokenAccount } from "../../models/accounts";
-import { ACCOUNT_LAYOUT } from '../../middleware/layouts';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
-import { AppUsageEvent } from '../../middleware/segment-service';
-import { segmentAnalytics } from "../../App";
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ProgramAccounts } from "../../models/accounts";
-import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 import { Category, MSP, Treasury } from '@mean-dao/msp';
-import { ErrorReportModal } from '../../components/ErrorReportModal';
-import { MultisigCreateModal } from '../../components/MultisigCreateModal';
-import { MultisigEditModal } from '../../components/MultisigEditModal';
+import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
+import { segmentAnalytics } from "App";
 import BigNumber from 'bignumber.js';
+import { ErrorReportModal } from 'components/ErrorReportModal';
+import { MultisigCreateModal } from 'components/MultisigCreateModal';
+import { MultisigEditModal } from 'components/MultisigEditModal';
+import { MultisigProposalModal } from 'components/MultisigProposalModal';
+import { openNotification } from 'components/Notifications';
+import { NATIVE_SOL } from 'constants/tokens';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "contexts/transaction-status";
+import { appConfig, customLogger } from 'index';
+import { ACCOUNT_LAYOUT } from 'middleware/layouts';
+import { AppUsageEvent } from 'middleware/segment-service';
+import { ProgramAccounts, UserTokenAccount } from "models/accounts";
+import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from 'models/multisig';
+import SerumIDL from 'models/serum-multisig-idl';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ProgramDetailsView } from './components/ProgramDetails';
+import { ProposalDetailsView } from './components/ProposalDetails';
+import { SafeMeanInfo } from './components/SafeMeanInfo';
+import { SafeSerumInfoView } from './components/SafeSerumInfo';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
@@ -189,11 +186,20 @@ export const SafeView = () => {
 
     if (!connectionConfig.cluster) { return; }
 
-    const network = connectionConfig.cluster === "mainnet-beta"
-      ? NETWORK.MainnetBeta
-      : connectionConfig.cluster === "testnet"
-      ? NETWORK.Testnet
-      : NETWORK.Devnet;
+    let network: NETWORK;
+    switch (connectionConfig.cluster) {
+      case "mainnet-beta":
+        network = NETWORK.MainnetBeta
+        break;
+      case "testnet":
+        network = NETWORK.Testnet;
+        break;
+      case "devnet":
+      default:
+        network = NETWORK.Devnet;
+        break;
+    }
+
     const provider = new AppsProvider(network);
     setAppsProvider(provider);
     provider
@@ -208,7 +214,7 @@ export const SafeView = () => {
 
   const multisigClient = useMemo(() => {
 
-    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
+    if (!connection || !publicKey || !connectionConfig.endpoint) { return undefined; }
 
     return new MeanMultisig(
       connectionConfig.endpoint,
@@ -300,7 +306,7 @@ export const SafeView = () => {
 
     const pk = new PublicKey(account);
 
-    return await msp.listTreasuries(pk, true, Category.vesting);
+    return msp.listTreasuries(pk, true, Category.vesting);
 
   }, [msp]);
 
@@ -518,7 +524,7 @@ export const SafeView = () => {
           return false;
         }
 
-        return await createMultisig(payload)
+        return createMultisig(payload)
           .then(value => {
             if (!value) { return false; }
             consoleOut('createMultisig returned transaction:', value);
@@ -573,7 +579,7 @@ export const SafeView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -621,7 +627,7 @@ export const SafeView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -791,7 +797,7 @@ export const SafeView = () => {
       const ixData = program.coder.instruction.encode("edit_multisig", {
         owners: owners,
         threshold: new BN(data.threshold),
-        label: data.label as any,
+        label: data.label,
         title: data.title
       });
 
@@ -887,7 +893,7 @@ export const SafeView = () => {
           return false;
         }
 
-        return await editMultisig(data)
+        return editMultisig(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('editMultisig returned transaction:', value);
@@ -942,7 +948,7 @@ export const SafeView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -990,7 +996,7 @@ export const SafeView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -1168,7 +1174,7 @@ export const SafeView = () => {
 
     const program = await getCredixProgram(connection, investor);
 
-    return await getDepositIx(program, investor, amount, marketplace);
+    return getDepositIx(program, investor, amount, marketplace);
 
   }, [
     connection, 
@@ -1182,7 +1188,7 @@ export const SafeView = () => {
 
     const program = await getCredixProgram(connection, investor);
 
-    return await getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
+    return getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
 
   }, [
     connection, 
@@ -1196,7 +1202,7 @@ export const SafeView = () => {
 
     const program = await getCredixProgram(connection, investor);
 
-    return await getWithdrawIx(program, investor, amount, marketplace);
+    return getWithdrawIx(program, investor, amount, marketplace);
 
   }, [
     connection, 
@@ -1210,7 +1216,7 @@ export const SafeView = () => {
 
     const program = await getCredixProgram(connection, investor);
 
-    return await getTrancheWithdrawIx(program, investor, deal, amount, trancheIndex, marketplace);
+    return getTrancheWithdrawIx(program, investor, deal, amount, trancheIndex, marketplace);
 
   }, [
     connection, 
@@ -1249,11 +1255,12 @@ export const SafeView = () => {
       } else if (data.appId === CREDIX_PROGRAM.toBase58()) { //        
         const investorPK = new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'investor').value);
         const marketPlaceVal = String(data.instruction.uiElements.find((x: any) => x.name === 'marketName').value);
-        const amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
-        consoleOut('**** common inputs: ',{investorPK:investorPK.toString(), marketPlaceVal, amountVal});
+        let amountVal = 0;
         switch (data.instruction.name) {
           case 'depositFunds':
             operation = OperationType.CredixDepositFunds;
+            amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+            consoleOut('**** common inputs: ',{investorPK:investorPK.toString(), marketPlaceVal, amountVal});
             proposalIx = await createCredixDepositIx(
               investorPK,
               amountVal,
@@ -1263,6 +1270,8 @@ export const SafeView = () => {
 
           case 'withdrawFunds':
             operation = OperationType.CredixWithdrawFunds;
+            amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'baseWithdrawalAmount').value);
+            consoleOut('**** common inputs: ',{investorPK:investorPK.toString(), marketPlaceVal, amountVal});
             proposalIx = await createCredixWithdrawIx(
               investorPK,
               amountVal,
@@ -1272,6 +1281,8 @@ export const SafeView = () => {
 
           case 'depositTranche':
             operation = OperationType.CredixDepositTranche;
+            amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+            consoleOut('**** common inputs: ',{investorPK:investorPK.toString(), marketPlaceVal, amountVal});
             proposalIx = await createCredixDepositTrancheIx(
               investorPK,
               new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
@@ -1283,6 +1294,8 @@ export const SafeView = () => {
 
           case 'withdrawTranche':
             operation = OperationType.CredixWithdrawTranche;
+            amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+            consoleOut('**** common inputs: ',{investorPK:investorPK.toString(), marketPlaceVal, amountVal});
             proposalIx = await createCredixWithdrawTrancheIx(
               investorPK,
               new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
@@ -1434,7 +1447,7 @@ export const SafeView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -1681,7 +1694,7 @@ export const SafeView = () => {
           return false;
         }
 
-        return await approveTx(payload)
+        return  approveTx(payload)
           .then(value => {
             if (!value) { return false; }
             consoleOut('approveTx returned transaction:', value);
@@ -1736,7 +1749,7 @@ export const SafeView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -1784,7 +1797,7 @@ export const SafeView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -1973,7 +1986,7 @@ export const SafeView = () => {
           return false;
         }
 
-        return await rejectTx(payload)
+        return rejectTx(payload)
           .then(value => {
             if (!value) { return false; }
             consoleOut('approveTx returned transaction:', value);
@@ -2028,7 +2041,7 @@ export const SafeView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -2076,7 +2089,7 @@ export const SafeView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -2290,7 +2303,7 @@ export const SafeView = () => {
           return false;
         }
 
-        return await finishTx(data)
+        return finishTx(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('multisig returned transaction:', value);
@@ -2345,7 +2358,7 @@ export const SafeView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -2430,13 +2443,16 @@ export const SafeView = () => {
             currentOperation: TransactionStatus.SendTransactionFailure
           } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
-            const accountIndex = data.transaction.operation === OperationType.StreamClose
-              ? 5
-              : data.transaction.operation === OperationType.TreasuryStreamCreate ||
-                data.transaction.operation === OperationType.StreamCreate ||
-                data.transaction.operation === OperationType.StreamCreateWithTemplate
-                ? 2
-                : 3;
+            let accountIndex = 0;
+            if (data.transaction.operation === OperationType.StreamClose) {
+              accountIndex = 5;
+            } else if (data.transaction.operation === OperationType.TreasuryStreamCreate ||
+                       data.transaction.operation === OperationType.StreamCreate ||
+                       data.transaction.operation === OperationType.StreamCreateWithTemplate) {
+              accountIndex = 2;
+            } else {
+              accountIndex = 3;
+            }
             consoleOut('accounts:', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()), 'orange');
             const treasury = data.transaction.accounts[accountIndex]
               ? data.transaction.accounts[accountIndex].pubkey.toBase58()
@@ -2448,13 +2464,16 @@ export const SafeView = () => {
               data: treasury
             };
           } else if (error.toString().indexOf('0x1797') !== -1) {
-            const accountIndex =  data.transaction.operation === OperationType.StreamCreate ||
-                                  data.transaction.operation === OperationType.TreasuryStreamCreate ||
-                                  data.transaction.operation === OperationType.StreamCreateWithTemplate
-              ? 2
-              : data.transaction.operation === OperationType.TreasuryWithdraw
-                ? 5
-                : 3;
+            let accountIndex = 0;
+            if (data.transaction.operation === OperationType.StreamCreate ||
+                data.transaction.operation === OperationType.TreasuryStreamCreate ||
+                data.transaction.operation === OperationType.StreamCreateWithTemplate) {
+              accountIndex = 2;
+            } else if (data.transaction.operation === OperationType.TreasuryWithdraw) {
+              accountIndex = 5;
+            } else {
+              accountIndex = 3;
+            }
             consoleOut('accounts:', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()), 'orange');
             const treasury = data.transaction.accounts[accountIndex]
               ? data.transaction.accounts[accountIndex].pubkey.toBase58()
@@ -2645,7 +2664,7 @@ export const SafeView = () => {
           return false;
         }
 
-        return await cancelTx(payload)
+        return cancelTx(payload)
           .then(value => {
             if (!value) { return false; }
             consoleOut('Returned transaction:', value);
@@ -2700,7 +2719,7 @@ export const SafeView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -2955,13 +2974,7 @@ export const SafeView = () => {
         reloadMultisigs();
         break;
       case OperationType.ApproveTransaction:
-        reloadMultisigs();
-        reloadSelectedProposal();
-        break;
       case OperationType.RejectTransaction:
-        reloadMultisigs();
-        reloadSelectedProposal();
-        break;
       case OperationType.ExecuteTransaction:
         reloadMultisigs();
         reloadSelectedProposal();
@@ -3222,53 +3235,6 @@ export const SafeView = () => {
 
   }, [publicKey, selectedMultisig]);
 
-  // SERUM ACCOUNTS
-  /*
-  useEffect(() => {
-
-    if (!connection || !publicKey || !multisigSerumClient) { return; }
-
-    const timeout = setTimeout(() => {
-      multisigSerumClient
-      .account
-      .multisig
-      .all()
-      .then(accs => {
-        const filteredSerumAccs = accs.filter((a: any) => {
-          if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) {
-            return true;
-          }
-          return false;
-        });
-
-        const parsedSerumAccs: MultisigInfo[] = [];
-
-        for (const acc of filteredSerumAccs) {
-          parseSerumMultisigAccount(acc)
-            .then((parsed: any) => {
-              if (parsed) {
-                parsedSerumAccs.push(parsed);
-              }
-            })
-            .catch((err: any) => console.error(err));
-        }
-
-        setSerumAccounts(parsedSerumAccs);
-      })
-      .catch((err: any) => console.error(err));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    connection,
-    multisigSerumClient, 
-    publicKey
-  ]);
-  */
-
   // Calculates the USD value of the Multisig accounts assets
   useEffect(() => {
 
@@ -3515,7 +3481,6 @@ export const SafeView = () => {
       return;
     }
 
-    // consoleOut('Try to scroll multisig into view...', '', 'green');
     const timeout = setTimeout(() => {
       const highlightTarget = document.getElementById(selectedMultisig.authority.toBase58());
       if (highlightTarget) {
@@ -3648,6 +3613,24 @@ export const SafeView = () => {
   // Rendering //
   ///////////////
 
+  const renderMultisigIcon = (item: MultisigInfo) => {
+    if (item.version === 0) {
+      return (
+        <Tooltip placement="rightTop" title="Serum Multisig">
+          <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />
+        </Tooltip>
+      );
+    } else if (item.version === 2) {
+      return (
+        <Tooltip placement="rightTop" title="Meanfi Multisig">
+          <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" alt="Meanfi Multisig" width={30} height={30} />
+        </Tooltip>
+      );
+    } else {
+      return (<Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />);
+    }
+  }
+
   const renderMultisigList = useCallback(() => {
     return (
       <>
@@ -3680,17 +3663,7 @@ export const SafeView = () => {
                   }>
   
                 <div className="icon-cell pl-1">
-                  {(item.version === 0) ? (
-                    <Tooltip placement="rightTop" title="Serum Multisig">
-                      <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />
-                    </Tooltip>
-                  ) : (item.version === 2) ? (
-                    <Tooltip placement="rightTop" title="Meanfi Multisig">
-                      <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" alt="Meanfi Multisig" width={30} height={30} />
-                    </Tooltip>
-                  ) : (
-                    <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
-                  )}
+                  {renderMultisigIcon(item)}
                   {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
                     <span className="status warning bottom-right"></span>
                   ) : null}
@@ -3790,6 +3763,84 @@ export const SafeView = () => {
     navigate(url);
   }
 
+  const renderRightPanelInner = () => {
+    if (!selectedMultisig) { return null; }
+
+    if (!isProposalDetails && !isProgramDetails) {
+      if (selectedMultisig.version === 0) {
+        return (
+          <SafeSerumInfoView
+            connection={connection}
+            isProgramDetails={isProgramDetails}
+            isProposalDetails={isProposalDetails}
+            multisigClient={multisigSerumClient}
+            multisigTxs={[]}
+            onDataToProgramView={goToProgramDetailsHandler}
+            onDataToSafeView={goToProposalDetailsHandler}
+            onEditMultisigClick={onEditMultisigClick}
+            onNavigateAway={onNavigateAway}
+            onNewProposalMultisigClick={onNewProposalMultisigClick}
+            selectedMultisig={selectedMultisig}
+            vestingAccountsCount={treasuryList ? treasuryList.length : 0}
+          />
+        );
+      } else {
+        return (
+          <SafeMeanInfo
+            connection={connection}
+            isProgramDetails={isProgramDetails}
+            isProposalDetails={isProposalDetails}
+            loadingPrograms={loadingPrograms}
+            loadingProposals={loadingProposals}
+            multisigClient={multisigClient}
+            safeBalanceInUsd={getCurrentMultisigValue()}
+            onDataToProgramView={goToProgramDetailsHandler}
+            onDataToSafeView={goToProposalDetailsHandler}
+            onEditMultisigClick={onEditMultisigClick}
+            onNavigateAway={onNavigateAway}
+            onNewProposalMultisigClick={onNewProposalMultisigClick}
+            onRefreshRequested={onRefresMultisigDetailTabs}
+            proposalSelected={selectedProposal}
+            publicKey={publicKey}
+            selectedMultisig={selectedMultisig}
+            selectedTab={queryParamV}
+            vestingAccountsCount={treasuryList ? treasuryList.length : 0}
+          />
+        );
+      }
+    } else if (isProposalDetails) {
+      return (
+        <ProposalDetailsView
+          onDataToSafeView={returnFromProposalDetailsHandler}
+          proposalSelected={selectedProposal}
+          selectedMultisig={selectedMultisig}
+          onProposalApprove={onExecuteApproveTx}
+          onProposalReject={onExecuteRejectTx}
+          onProposalExecute={onExecuteFinishTx}
+          onProposalCancel={onExecuteCancelTx}
+          connection={connection}
+          solanaApps={solanaApps}
+          appsProvider={appsProvider}
+          multisigClient={multisigClient}
+          hasMultisigPendingProposal={hasMultisigPendingProposal()}
+          isBusy={isBusy}
+          loadingData={loadingMultisigAccounts || loadingProposals || loadingProposalDetails}
+        />
+      );
+    } else if (isProgramDetails) {
+      return (
+        <ProgramDetailsView
+          isProgramDetails={isProgramDetails}
+          onDataToProgramView={returnFromProgramDetailsHandler}
+          programSelected={programSelected}
+          selectedMultisig={selectedMultisig}
+        />
+      );
+    } else {
+      return null;
+    }
+  }
+
   return (
     <>
       {detailsPanelOpen && (
@@ -3863,22 +3914,6 @@ export const SafeView = () => {
                       }
                     </Button>
                   </div>
-                  {/* {isUnderDevelopment() && (
-                    <Dropdown className="options-dropdown"
-                      overlay={menu}
-                      placement="bottomRight"
-                      trigger={["click"]}>
-                      <span className="icon-button-container ml-1">
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
-                          icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-                          onClick={(e) => e.preventDefault()}
-                        />
-                      </span>
-                    </Dropdown>
-                  )} */}
                 </div>
               </div>
             </div>
@@ -3913,69 +3948,7 @@ export const SafeView = () => {
                   {connected && multisigClient && selectedMultisig ? (
                     <>
                       <Spin spinning={loadingMultisigAccounts}>
-                        {(!isProposalDetails && !isProgramDetails) ? (
-                          selectedMultisig.version === 0 ? (
-                            <SafeSerumInfoView
-                              connection={connection}
-                              isProgramDetails={isProgramDetails}
-                              isProposalDetails={isProposalDetails}
-                              multisigClient={multisigSerumClient}
-                              multisigTxs={[]}
-                              onDataToProgramView={goToProgramDetailsHandler}
-                              onDataToSafeView={goToProposalDetailsHandler}
-                              onEditMultisigClick={onEditMultisigClick}
-                              onNavigateAway={onNavigateAway}
-                              onNewProposalMultisigClick={onNewProposalMultisigClick}
-                              selectedMultisig={selectedMultisig}
-                              vestingAccountsCount={treasuryList ? treasuryList.length : 0}
-                            />
-                          ) : (
-                            <SafeMeanInfo
-                              connection={connection}
-                              isProgramDetails={isProgramDetails}
-                              isProposalDetails={isProposalDetails}
-                              loadingPrograms={loadingPrograms}
-                              loadingProposals={loadingProposals}
-                              multisigClient={multisigClient}
-                              safeBalanceInUsd={getCurrentMultisigValue()}
-                              onDataToProgramView={goToProgramDetailsHandler}
-                              onDataToSafeView={goToProposalDetailsHandler}
-                              onEditMultisigClick={onEditMultisigClick}
-                              onNavigateAway={onNavigateAway}
-                              onNewProposalMultisigClick={onNewProposalMultisigClick}
-                              onRefreshRequested={onRefresMultisigDetailTabs}
-                              proposalSelected={selectedProposal}
-                              publicKey={publicKey}
-                              selectedMultisig={selectedMultisig}
-                              selectedTab={queryParamV}
-                              vestingAccountsCount={treasuryList ? treasuryList.length : 0}
-                            />
-                          )
-                        ) : isProposalDetails ? (
-                          <ProposalDetailsView
-                            onDataToSafeView={returnFromProposalDetailsHandler}
-                            proposalSelected={selectedProposal}
-                            selectedMultisig={selectedMultisig}
-                            onProposalApprove={onExecuteApproveTx}
-                            onProposalReject={onExecuteRejectTx}
-                            onProposalExecute={onExecuteFinishTx}
-                            onProposalCancel={onExecuteCancelTx}
-                            connection={connection}
-                            solanaApps={solanaApps}
-                            appsProvider={appsProvider}
-                            multisigClient={multisigClient}
-                            hasMultisigPendingProposal={hasMultisigPendingProposal()}
-                            isBusy={isBusy}
-                            loadingData={loadingMultisigAccounts || loadingProposals || loadingProposalDetails}
-                          />
-                        ) : isProgramDetails ? (
-                          <ProgramDetailsView
-                            isProgramDetails={isProgramDetails}
-                            onDataToProgramView={returnFromProgramDetailsHandler}
-                            programSelected={programSelected}
-                            selectedMultisig={selectedMultisig}
-                          />
-                        ) : null}
+                        {renderRightPanelInner()}
                       </Spin>
                     </>
                   ) : (

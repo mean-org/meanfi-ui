@@ -281,6 +281,7 @@ export const TreasuryStreamCreateModal = (props: {
       selectedToken.address,
       selectedToken.decimals,
       splTokenList,
+      false
     )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
   }, [lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
 
@@ -2481,6 +2482,7 @@ export const TreasuryStreamCreateModal = (props: {
                               selectedToken.address,
                               selectedToken.decimals,
                               splTokenList,
+                              false
                             )}`
                             : "--"
                         }
@@ -2504,6 +2506,7 @@ export const TreasuryStreamCreateModal = (props: {
                               selectedToken.address,
                               selectedToken.decimals,
                               splTokenList,
+                              false
                             )} (on commencement)`
                             : "--"
                         }
@@ -2519,6 +2522,7 @@ export const TreasuryStreamCreateModal = (props: {
                               selectedToken.address,
                               selectedToken.decimals,
                               splTokenList,
+                              false
                             )} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`
                             : "--"
                         }
