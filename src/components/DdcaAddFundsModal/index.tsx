@@ -1,7 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { DdcaClient, DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Col, Modal, Progress, Row } from 'antd';
+import { Button, Col, message, Modal, Progress, Row } from 'antd';
 import Slider, { SliderMarks } from 'antd/lib/slider';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -329,7 +329,7 @@ export const DdcaAddFundsModal = (props: {
         });
 
         // Create a transaction
-        return await ddcaClient.createAddFundsTx(
+        return ddcaClient.createAddFundsTx(
           ddcaAccountAddress,
           payload.swapsCount,
           isWrappedSol()
@@ -373,7 +373,7 @@ export const DdcaAddFundsModal = (props: {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -434,7 +434,7 @@ export const DdcaAddFundsModal = (props: {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
@@ -538,6 +538,28 @@ export const DdcaAddFundsModal = (props: {
     );
   };
 
+  const getDepositCtaLabel = () => {
+    let message = '';
+    if (lastSentTxSignature) {
+      message = t('general.finished');
+    } else if (isWrappedSol()) {
+      if (getTotalCombinedSolanaAmount() > (userBalance + fromTokenBalance)) {
+        message = `Need at least ${getAmountWithSymbol(getTotalCombinedSolanaAmount() - usableTokenAmount, NATIVE_SOL_MINT.toBase58())}`;
+      } else {
+        message = t('ddca-setup-modal.cta-label-deposit');
+      }
+    } else {
+      if (!hasEnoughFromTokenBalance()) {
+        message = t('transactions.validation.amount-low');
+      } else {
+        message = !hasEnoughNativeBalanceForFees()
+          ? `Need at least ${getAmountWithSymbol(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
+          : t('ddca-setup-modal.cta-label-deposit')
+      }
+    }
+    return message;
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -590,7 +612,7 @@ export const DdcaAddFundsModal = (props: {
       {isWrappedSol() && (
         <div className="flexible-right mb-2">
           <span className="left from-token-balance">SOL balance<br />
-            {userBalance &&
+            {userBalance > 0 &&
               getAmountWithSymbol(
                 userBalance,
                 NATIVE_SOL_MINT.toBase58()
@@ -687,17 +709,7 @@ export const DdcaAddFundsModal = (props: {
           {isBusy && (<LoadingOutlined className="mr-1" />)}
           {isBusy
             ? t('ddca-setup-modal.cta-label-depositing')
-            : lastSentTxSignature
-              ? t('general.finished')
-              : isWrappedSol()
-                ? getTotalCombinedSolanaAmount() > (userBalance + fromTokenBalance)
-                  ? `Need at least ${getAmountWithSymbol(getTotalCombinedSolanaAmount() - usableTokenAmount, NATIVE_SOL_MINT.toBase58())}`
-                  : t('ddca-setup-modal.cta-label-deposit')
-                : !hasEnoughFromTokenBalance()
-                  ? t('transactions.validation.amount-low')
-                  : !hasEnoughNativeBalanceForFees()
-                    ? `Need at least ${getAmountWithSymbol(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
-                    : t('ddca-setup-modal.cta-label-deposit')
+            : getDepositCtaLabel()
           }
         </Button>
       </div>
