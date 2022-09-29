@@ -46,11 +46,11 @@ import {
 } from "@solana/wallet-adapter-wallets";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getDefaultRpc } from "../services/connections-hq";
-import { environment } from "../environments/environment";
-import { openNotification } from "../components/Notifications";
+import { getDefaultRpc } from "services/connections-hq";
+import { environment } from "environments/environment";
+import { openNotification } from "components/Notifications";
 import { SentreWalletAdapter, SentreWalletName } from '@sentre/connector';
-import { sentreAppId } from "../constants";
+import { sentreAppId } from "constants/common";
 
 export type MeanFiWallet = PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
                           | SlopeWalletAdapter | Coin98WalletAdapter | SolongWalletAdapter | SolletWalletAdapter
@@ -69,7 +69,7 @@ export interface WalletProviderEntry {
   isWebWallet: boolean;
   underDevelopment: boolean;
   hideIfUnavailable: boolean;
-};
+}
 
 export const WALLET_PROVIDERS: WalletProviderEntry[] = [
   {
@@ -299,9 +299,8 @@ interface WalletContextState {
   connected: boolean;
   connecting: boolean;
   autoConnect: boolean;
-  provider: typeof WALLET_PROVIDERS[number] | undefined;
   isSelectingWallet: boolean;
-  select: () => void;
+  provider: typeof WALLET_PROVIDERS[number] | undefined;
   resetWalletProvider: () => void;
   select: () => void;
 }
@@ -312,8 +311,9 @@ const defaultCtxValues: WalletContextState = {
   connecting: true,
   autoConnect: true,
   provider: undefined,
+  isSelectingWallet: false,
   resetWalletProvider: () => {},
-  select() {},
+  select: () => {},
 };
 
 const WalletContext = React.createContext<WalletContextState>(defaultCtxValues);
@@ -508,7 +508,7 @@ export function WalletProvider({ children = null as any }) {
 
               const isInstalled = getIsProviderInstalled(item);
 
-              const shoupdHideItem = () => {
+              const shouldHideItem = () => {
                 if ((item.hideOnDesktop && isDesktop) || (item.hideOnMobile && !isDesktop)) {
                   return true;
                 } else {
@@ -522,10 +522,6 @@ export function WalletProvider({ children = null as any }) {
               }
 
               const onClick = function () {
-                // if (item.name === provider?.name && connected) {
-                //   close();
-                //   return;
-                // }
 
                 if (wallet) {
                   wallet.disconnect();
@@ -552,7 +548,7 @@ export function WalletProvider({ children = null as any }) {
                 <Button
                   block
                   size="large"
-                  className={`wallet-provider thin-stroke${shoupdHideItem() ? ' hidden' : ''}`}
+                  className={`wallet-provider thin-stroke${shouldHideItem() ? ' hidden' : ''}`}
                   shape="round"
                   type="ghost"
                   onClick={onClick}
@@ -592,7 +588,7 @@ export function WalletProvider({ children = null as any }) {
       </Modal>
     </WalletContext.Provider>
   );
-};
+}
 
 export function useWallet() {
   const { wallet, connected, connecting, provider, autoConnect, resetWalletProvider, select, isSelectingWallet } = useContext(WalletContext);
@@ -620,4 +616,4 @@ export function useWallet() {
     },
     isSelectingWallet
   };
-};
+}
