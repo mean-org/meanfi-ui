@@ -1,25 +1,25 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import './style.scss';
 import { WarningFilled } from "@ant-design/icons";
-import { useTranslation } from 'react-i18next';
-import { PreFooter } from "../../components/PreFooter";
-import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
-import { useWallet } from "../../contexts/wallet";
-import { AppStateContext } from "../../contexts/appstate";
-import { findATokenAddress, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber } from "../../middleware/utils";
-import { IconStats } from "../../Icons";
-import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from "../../middleware/ui";
-import { ConfirmOptions, PublicKey, Transaction } from "@solana/web3.js";
-import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
-import { confirmationEvents, TxConfirmationContext } from "../../contexts/transaction-status";
-import { MEAN_TOKEN_LIST } from "../../constants/tokens";
-import { TokenInfo } from "models/SolanaTokenInfo";
-import { appConfig, customLogger } from "../..";
-import { Button, Spin } from "antd";
-import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import { DepositRecord, DepositsInfo, StakingClient } from "@mean-dao/staking";
-import { openNotification } from "../../components/Notifications";
-import { getTokenAccountBalanceByAddress } from "../../middleware/accounts";
+import { ConfirmOptions, PublicKey, Transaction } from "@solana/web3.js";
+import { Button, Spin } from "antd";
+import { openNotification } from "components/Notifications";
+import { PreFooter } from "components/PreFooter";
+import { MEAN_TOKEN_LIST } from "constants/tokens";
+import { useAccountsContext, useNativeAccount } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from 'contexts/connection';
+import { confirmationEvents, TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import { IconStats } from "Icons";
+import { getTokenAccountBalanceByAddress } from "middleware/accounts";
+import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from "middleware/ui";
+import { findATokenAddress, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber } from "middleware/utils";
+import { EventType, OperationType, TransactionStatus } from "models/enums";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from 'react-i18next';
+import { appConfig, customLogger } from "../..";
+import './style.scss';
 
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
@@ -328,7 +328,7 @@ export const StakingRewardsView = () => {
           result: "",
         });
 
-        return await stakeClient.depositTransaction(
+        return stakeClient.depositTransaction(
           depositPercentage             // depositPercentage
         )
         .then((value) => {
@@ -379,7 +379,7 @@ export const StakingRewardsView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut("Signing transaction...");
-        return await wallet
+        return wallet
           .signTransaction(transaction)
           .then((signed: Transaction) => {
             consoleOut(
@@ -462,7 +462,7 @@ export const StakingRewardsView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then((sig) => {
             consoleOut("sendEncodedTransaction returned a signature:", sig);
@@ -667,6 +667,16 @@ export const StakingRewardsView = () => {
     </>
   );
 
+  const renderPercentGoalValidationErrors = () => {
+    if (!aprPercentGoal || parseFloat(aprPercentGoal) < 0.01 || parseFloat(aprPercentGoal) > 100) {
+      return (<span className="form-field-error">Valid values: from 0.01 to 100</span>);
+    } else if (meanStakingVaultBalance && meanBalance !== undefined && meanBalance < getTotalMeanAdded()) {
+      return (<span className="form-field-error">Insufficient balance for APR Percent Goal</span>);
+    } else {
+      return null;
+    }
+  }
+
   const renderAddFundsToStakingRewardsVault = (
     <>
       <div className={`well ${isDepositing ? 'disabled' : ''}`}>
@@ -695,11 +705,7 @@ export const StakingRewardsView = () => {
           </div>
           <div className="right">&nbsp;</div>
         </div>
-        {!aprPercentGoal || parseFloat(aprPercentGoal) < 0.01 || parseFloat(aprPercentGoal) > 100 ? (
-          <span className="form-field-error">Valid values: from 0.01 to 100</span>
-        ) : meanStakingVaultBalance && meanBalance !== undefined && meanBalance < getTotalMeanAdded() ? (
-          <span className="form-field-error">Insufficient balance for APR Percent Goal</span>
-        ) : (null)}
+        {renderPercentGoalValidationErrors()}
       </div>
     </>
   );
