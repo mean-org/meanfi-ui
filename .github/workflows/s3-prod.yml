@@ -7,7 +7,7 @@ env:
   BUILD_NUMBER: $GITHUB_RUN_NUMBER
   APP_ENV: production
   BUCKET_NAME: "meanfi-production"
-  ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
+  ROBOTS_TXT_FILE_NAME: "robots.txt"
   ARTIFACT_NAME: mean-ui-build-production
   DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID_PROD }}
   AWS_S3_SKIP_FOLDERS: 3 # keep only last 3 deploys
