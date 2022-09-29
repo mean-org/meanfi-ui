@@ -1,7 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { DdcaClient, DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Col, message, Modal, Progress, Row } from 'antd';
+import { Button, Col, Modal, Progress, Row } from 'antd';
 import Slider, { SliderMarks } from 'antd/lib/slider';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

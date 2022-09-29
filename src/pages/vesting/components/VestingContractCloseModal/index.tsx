@@ -1,20 +1,20 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { consoleOut, getTransactionOperationDescription } from '../../../../middleware/ui';
-import { useTranslation } from 'react-i18next';
-import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { isError } from '../../../../middleware/transactions';
-import { TransactionStatus } from '../../../../models/enums';
-import { displayAmountWithSymbol, getAmountWithSymbol } from '../../../../middleware/utils';
-import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { Treasury } from '@mean-dao/msp';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import BN from 'bn.js';
-import { WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
-import { InputMean } from '../../../../components/InputMean';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { Treasury } from '@mean-dao/msp';
+import { Button, Modal, Spin } from 'antd';
+import BN from 'bn.js';
+import { InputMean } from 'components/InputMean';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { isError } from 'middleware/transactions';
+import { getTransactionOperationDescription } from 'middleware/ui';
+import { displayAmountWithSymbol, getAmountWithSymbol } from 'middleware/utils';
+import { TransactionStatus } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -115,11 +115,20 @@ export const VestingContractCloseModal = (props: {
   }
 
   const getTransactionStartButtonLabel = () => {
-    return selectedMultisig
-      ? !proposalTitle
-        ? 'Add a proposal title'
-        : 'Sign proposal'
-      : t('vesting.close-account.close-cta')
+
+    if (isBusy) {
+      return t('vesting.close-account.close-cta-busy');
+    } else if (isError(transactionStatus.currentOperation)) {
+      return t('general.retry');
+    } else if (selectedMultisig) {
+      if (!proposalTitle) {
+        return 'Add a proposal title';
+      } else {
+        return 'Sign proposal';
+      }
+    } else {
+      return t('vesting.close-account.close-cta');
+    }
   }
 
   return (
@@ -135,7 +144,7 @@ export const VestingContractCloseModal = (props: {
       <div className="scrollable-content pl-5 pr-4 py-2">
 
         <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
-          {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+          {transactionStatus.currentOperation === TransactionStatus.Iddle && (
             <>
               <div className="text-center">
                 {theme === 'light' ? (
@@ -196,14 +205,17 @@ export const VestingContractCloseModal = (props: {
                 </div>
               )}
             </>
-          ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
+          )}
+          {transactionStatus.currentOperation === TransactionStatus.TransactionFinished && (
             <>
               <div className="transaction-progress">
                 <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
                 <h4 className="font-bold">{t('treasuries.create-treasury.success-message')}</h4>
               </div>
             </>
-          ) : (
+          )}
+          {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
+           transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
             <>
               <div className="transaction-progress p-0">
                 <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
@@ -256,12 +268,7 @@ export const VestingContractCloseModal = (props: {
               {isBusy && (
                 <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
               )}
-              {isBusy
-                ? t('vesting.close-account.close-cta-busy')
-                : isError(transactionStatus.currentOperation)
-                  ? t('general.retry')
-                  : getTransactionStartButtonLabel()
-              }
+              {getTransactionStartButtonLabel()}
             </Button>
           </div>
         )}

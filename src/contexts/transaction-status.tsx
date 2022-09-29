@@ -289,7 +289,12 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
 
     const fetchStatus = async () => {
       try {
-        const result = await connection.confirmTransaction(signature, targetFinality);
+        const latestBlockHash = await connection.getLatestBlockhash();
+        const result = await connection.confirmTransaction({
+          signature: signature,
+          blockhash: latestBlockHash.blockhash,
+          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight
+        }, targetFinality);
         if (result && result.value && !result.value.err) {
           setLastSentTxStatus(targetFinality);
           return targetFinality;
@@ -301,7 +306,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
       }
     }
 
-    return await fetchStatus();
+    return fetchStatus();
 
   }, [connection]);
 
@@ -309,7 +314,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
 
     const rebuildHistoryFromCache = () => {
       const history = Array.from(txStatusCache.values());
-      setConfirmationHistory(history.reverse());
+      setConfirmationHistory([...history].reverse());
       consoleOut('confirmationHistory:', history, 'orange');
     };
 
@@ -387,7 +392,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
           timestampCompleted: new Date().getTime()
         })
       );
-      // notification.close(data.signature);
       openNotification({
         key: data.signature,
         type: "info",

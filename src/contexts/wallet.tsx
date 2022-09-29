@@ -294,29 +294,33 @@ const getIsProviderInstalled = (provider: any): boolean => {
   return true;
 }
 
-const WalletContext = React.createContext<{
+interface WalletContextState {
   wallet: MeanFiWallet;
   connected: boolean;
   connecting: boolean;
-  select: () => void;
   autoConnect: boolean;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
   resetWalletProvider: () => void;
-}>({
+  select: () => void;
+}
+
+const defaultCtxValues: WalletContextState = {
   wallet: undefined,
   connected: false,
   connecting: true,
-  select() {},
   autoConnect: true,
   provider: undefined,
   resetWalletProvider: () => {},
-});
+  select() {},
+};
+
+const WalletContext = React.createContext<WalletContextState>(defaultCtxValues);
 
 export function WalletProvider({ children = null as any }) {
   const { t } = useTranslation("common");
   const location = useLocation();
   const navigate = useNavigate();
-  const [autoConnect, setAutoConnect] = useState(true);
+  const [autoConnect] = useState(true);
   const [walletName, setWalletName] = useLocalStorageState("walletName");
   const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
   const [connected, setConnected] = useState(false);
@@ -421,8 +425,6 @@ export function WalletProvider({ children = null as any }) {
   useEffect(() => {
     if (wallet) {
       wallet.on("connect", (pk) => {
-        // const newAddress = pk.toBase58();
-        // consoleOut('New wallet address:', newAddress, 'crimson');
         if (wallet.publicKey) {
           setConnected(true);
           close();
@@ -499,6 +501,14 @@ export function WalletProvider({ children = null as any }) {
 
               const isInstalled = getIsProviderInstalled(item);
 
+              const shoupdHideItem = () => {
+                if ((item.hideOnDesktop && isDesktop) || (item.hideOnMobile && !isDesktop)) {
+                  return true;
+                } else {
+                  return false;
+                }
+              }
+
               // Skip items that won't show up
               if ((item.underDevelopment && isProd()) || (item.hideIfUnavailable && !isInstalled)) {
                 return null;
@@ -535,7 +545,7 @@ export function WalletProvider({ children = null as any }) {
                 <Button
                   block
                   size="large"
-                  className={`wallet-provider thin-stroke ${item.hideOnDesktop && isDesktop ? 'hidden' : item.hideOnMobile && !isDesktop ? 'hidden' : ''}`}
+                  className={`wallet-provider thin-stroke${shoupdHideItem() ? ' hidden' : ''}`}
                   shape="round"
                   type="ghost"
                   onClick={onClick}

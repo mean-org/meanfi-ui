@@ -250,7 +250,7 @@ export async function setAccountOwner(
   programId: PublicKey,
   authType: AuthorityType,
 ): Promise<boolean> {
-  return await sendAndConfirmTransaction(
+  return sendAndConfirmTransaction(
     connection,
     new Transaction().add(
       Token.createSetAuthorityInstruction(
@@ -468,7 +468,7 @@ export const getUserAccountTokens = async (
             intersectedList[tokenIndex].valueInUsd = valueInUSD;
           } else if (intersectedList[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
             // If we did and the publicAddress is different/new then duplicate this item with the new info
-            const newItem = Object.assign({}, intersectedList[tokenIndex]) as UserTokenAccount;
+            const newItem = Object.assign({}, intersectedList[tokenIndex]);
             newItem.publicAddress = item.pubkey.toBase58();
             newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
             newItem.valueInUsd = valueInUSD;
