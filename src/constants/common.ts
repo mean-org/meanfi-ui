@@ -25,8 +25,8 @@ export const MAX_TOKEN_LIST_ITEMS = 100;
 export const MAX_MULTISIG_PARTICIPANTS = 10;
 export const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
 export const CUSTOM_TOKEN_NAME = 'Custom token';
-export const INPUT_AMOUNT_PATTERN = /^[0-9]*[.,]?[0-9]*$/;
-export const INTEGER_INPUT_AMOUNT_PATTERN = /^[1-9][0-9]*$/;
+export const INPUT_AMOUNT_PATTERN = /^\d*[.,]?\d*$/;
+export const INTEGER_INPUT_AMOUNT_PATTERN = /^[1-9]\d*$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
 export const TIMEPICKER_FORMAT = 'h:mm a';
 export const SIMPLE_DATE_FORMAT = 'mm/dd/yyyy';
@@ -166,13 +166,8 @@ export const DAO_CORE_TEAM_WHITELIST = [
     '5rtv52oecUAYAMXN9UzYBwoHGsRD1arLQN6WmRfcMDBP', // J
     '468Z5p52439dAqjLzBm2FCNxvDSnpbMsNx85b7Kmz3TQ', // Ayaz
     '4gCGAWB4bVva2tsEsjmK8iVEKobs3ZsZB7n9HShGnN4o', // Ayaz
-    'Cgn2mBir832Eyzx3j77DcdK8nCWndJvD6LewULNMfpbv',  // Ridwan
-    // Credix
     'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL', // Maxim Credix
     '63cUbJ3yecyduEPPYbPERPSJzAy6ZnRWvjE6u4qkkAVd', // Maxim Credix 2
-    // BD team
-    '5wSYErsZGiJAVFyiM3JTvodn2ne4fXNsBjHu9YSRW7va', // LL
-    'CPq1KRCwFyQKUxQG6ewSorLoof5qrSMxjdhDm96auvij', // KRYL
     'E9Z6RHa2Bhf7d5T455FKCag9gNbvqHuAcF3vgwkYHWGy', // INNA
 ];
 

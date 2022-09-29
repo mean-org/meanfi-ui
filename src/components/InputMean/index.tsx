@@ -20,6 +20,20 @@ export const InputMean = (props: {
 }) => {
   const { id, name, className, autoComplete, autoCorrect, type, maxLength, placeholder, onChange, value, pattern, min, validationIcons, isTouched, isValid, onBlur } = props;
 
+  const renderValidity = () => {
+    if (isTouched) {
+      if (isValid) {
+        return (<IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green"/>);
+      } else {
+        return (<IconWarningCover className="mean-svg-icons simplelink form-warning-icon fg-warning"/>);
+      }
+    } else if (isValid) {
+      return (<IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green"/>);
+    } else {
+      return  null;
+    }
+  }
+
   return (
     <>
       <div className={`well ${className}`}>
@@ -44,17 +58,7 @@ export const InputMean = (props: {
           {validationIcons && (
             <div className="right">
               <div className="add-on h-100">
-                {isTouched ? (
-                  isValid ? (
-                    <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green"/>
-                  ) : (
-                    <IconWarningCover className="mean-svg-icons simplelink form-warning-icon fg-warning"/>
-                  )
-                ) : (
-                  isValid && (
-                    <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green"/>
-                  )
-                )}
+                {renderValidity()}
               </div>
             </div>
           )}
