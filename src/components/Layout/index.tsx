@@ -27,6 +27,7 @@ import { TransactionConfirmationHistory } from "../TransactionConfirmationHistor
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { isUnauthenticatedRoute } from "../../middleware/utils";
 import { AccountDetails } from "../../models/accounts";
+import { useAccountsContext } from "contexts/accounts";
 
 const { Header, Content, Footer } = Layout;
 
@@ -48,8 +49,12 @@ export const AppLayout = React.memo((props: any) => {
     setStreamList,
     setTpsAvg,
   } = useContext(AppStateContext);
-  const { confirmationHistory, clearConfirmationHistory } = useContext(TxConfirmationContext);
+  const {
+    confirmationHistory,
+    clearConfirmationHistory
+  } = useContext(TxConfirmationContext);
   const { t, i18n } = useTranslation("common");
+  const { refreshAccount } = useAccountsContext();
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
   const { wallet, provider, connected, publicKey, connecting, select } = useWallet();
@@ -252,6 +257,7 @@ export const AppLayout = React.memo((props: any) => {
         setNeedReloadMultisigAccounts(true);
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
+          refreshAccount();
 
           // Record user login in Segment Analytics
           segmentAnalytics.recordIdentity(walletAddress, {
@@ -317,6 +323,7 @@ export const AppLayout = React.memo((props: any) => {
     refreshTokenBalance,
     setReferralAddress,
     setSelectedAsset,
+    refreshAccount,
     setStreamList,
     getPlatform,
     t,
