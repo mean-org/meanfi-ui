@@ -1,23 +1,22 @@
-import React, { useCallback, useEffect } from 'react';
-import { useContext, useState } from 'react';
-import { Modal, Button, Select, Divider, Input, Spin } from 'antd';
-import { AppStateContext } from '../../contexts/appstate';
-import { useTranslation } from 'react-i18next';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { NATIVE_SOL } from '../../constants/tokens';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { TokenDisplay } from '../TokenDisplay';
-import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
-import { IconCheckedBox } from '../../Icons';
-import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress } from '../../middleware/ui';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { TransactionStatus } from '../../models/enums';
-import { useWallet } from '../../contexts/wallet';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { isError } from '../../middleware/transactions';
-import { useConnection } from '../../contexts/connection';
+import { Button, Divider, Input, Modal, Select, Spin } from 'antd';
+import { CUSTOM_TOKEN_NAME } from 'constants/common';
+import { NATIVE_SOL } from 'constants/tokens';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnection } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { IconCheckedBox } from 'Icons';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { isError } from 'middleware/transactions';
+import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress } from 'middleware/ui';
+import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
+import { TransactionStatus } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { openNotification } from '../Notifications';
-import { CUSTOM_TOKEN_NAME } from '../../constants';
+import { TokenDisplay } from '../TokenDisplay';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -25,12 +24,19 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const MultisigCreateAssetModal = (props: {
   handleClose: any;
   handleOk: any;
-  isVisible: boolean;
   isBusy: boolean;
+  isVisible: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-  // tokens: any[]
 }) => {
+  const {
+    handleClose,
+    handleOk,
+    isBusy,
+    isVisible,
+    nativeBalance,
+    transactionFees,
+  } = props;
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
@@ -63,8 +69,8 @@ export const MultisigCreateAssetModal = (props: {
     const resizeListener = () => {
       const NUM_CHARS = 4;
       const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (let i = 0; i < ellipsisElements.length; ++i){
-        const e = ellipsisElements[i] as HTMLElement;
+      for (const element of ellipsisElements) {
+        const e = element as HTMLElement;
         if (e.offsetWidth < e.scrollWidth){
           const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
@@ -114,11 +120,11 @@ export const MultisigCreateAssetModal = (props: {
   ////////////////
 
   const onAcceptModal = () => {
-    props.handleOk({ token });
+    handleOk({ token });
   }
 
   const onCloseModal = () => {
-    props.handleClose();
+    handleClose();
   }
 
   const onAfterClose = () => {
@@ -135,7 +141,7 @@ export const MultisigCreateAssetModal = (props: {
   }
 
   const refreshPage = () => {
-    props.handleClose();
+    handleClose();
     window.location.reload();
   }
 
@@ -167,8 +173,7 @@ export const MultisigCreateAssetModal = (props: {
     consoleOut("token selected:", e, 'blue');
     const token = getTokenByMintAddress(e);
     if (token) {
-      setToken(token as TokenInfo);
-      // toggleOverflowEllipsisMiddle(false);
+      setToken(token);
     }
 
   },[getTokenByMintAddress]);
@@ -193,27 +198,37 @@ export const MultisigCreateAssetModal = (props: {
   //  Rendering  //
   /////////////////
 
+  const getMainCtaLabel = () => {
+    if (isBusy) {
+      return t('multisig.create-asset.main-cta-busy');
+    } else if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+      return getTransactionStartButtonLabel();
+    } else {
+      return t('general.refresh');
+    }
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('multisig.create-asset.modal-title')}</div>}
       maskClosable={false}
       footer={null}
-      open={props.isVisible}
+      open={isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
       {/* sdsssd */}
-      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+      <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
 
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Iddle && (
           <>
             {/* Token mint */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.create-asset.token-label')}</div>
-              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+              <div className={`well ${isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-left">
                   <div className="left">
                     <span className="add-on">
@@ -256,14 +271,17 @@ export const MultisigCreateAssetModal = (props: {
               </div>
             </div>
           </>
-        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
+        )}
+        {transactionStatus.currentOperation === TransactionStatus.TransactionFinished && (
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               <h4 className="font-bold">{t('multisig.create-asset.success-message')}</h4>
             </div>
           </>
-        ) : (
+        )}
+        {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
+         transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
           <>
             <div className="transaction-progress p-0">
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
@@ -271,11 +289,11 @@ export const MultisigCreateAssetModal = (props: {
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(
-                      props.nativeBalance,
+                      nativeBalance,
                       NATIVE_SOL_MINT.toBase58()
                     ),
                     feeAmount: getAmountWithSymbol(
-                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                      transactionFees.blockchainFee + transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
                     )})
                   }
@@ -290,8 +308,8 @@ export const MultisigCreateAssetModal = (props: {
         )}
       </div>
 
-      <div className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
-        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+      <div className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
+        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
         <div className="transaction-progress">
           <Spin indicator={bigLoadingIcon} className="icon mt-0" />
           <h4 className="font-bold mb-1">
@@ -310,7 +328,7 @@ export const MultisigCreateAssetModal = (props: {
        * and auto-close the modal after 1s. If we chose to NOT auto-close the modal
        * Uncommenting the commented lines below will do it!
        */}
-      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+      {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
         <div className="row two-col-ctas mt-3 transaction-progress p-0">
           <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
             <Button
@@ -318,7 +336,7 @@ export const MultisigCreateAssetModal = (props: {
               type="text"
               shape="round"
               size="middle"
-              className={props.isBusy ? 'inactive' : ''}
+              className={isBusy ? 'inactive' : ''}
               onClick={() => isError(transactionStatus.currentOperation)
                 ? onAcceptModal()
                 : onCloseModal()}>
@@ -331,7 +349,7 @@ export const MultisigCreateAssetModal = (props: {
           {!isError(transactionStatus.currentOperation) && (
             <div className="col-6">
               <Button
-                className={props.isBusy ? 'inactive' : ''}
+                className={isBusy ? 'inactive' : ''}
                 block
                 type="primary"
                 shape="round"
@@ -346,12 +364,7 @@ export const MultisigCreateAssetModal = (props: {
                     refreshPage();
                   }
                 }}>
-                {props.isBusy
-                  ? t('multisig.create-asset.main-cta-busy')
-                  : transactionStatus.currentOperation === TransactionStatus.Iddle
-                  ? getTransactionStartButtonLabel()
-                  : t('general.refresh')
-                }
+                {getMainCtaLabel()}
               </Button>
             </div>
           )}

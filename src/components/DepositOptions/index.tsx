@@ -1,17 +1,17 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Col, Modal, Row, Tooltip } from "antd";
-import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { openNotification } from 'components/Notifications';
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from "constants/common";
 import { useWallet } from "contexts/wallet";
+import { environment } from 'environments/environment';
 import useScript from 'hooks/useScript';
 import { IconCopy, IconInfoTriangle, IconSolana } from "Icons";
-import { consoleOut, copyText } from "middleware/ui";
-import { openNotification } from '../Notifications';
-import { QRCodeSVG } from 'qrcode.react';
-import "./style.scss";
 import { appConfig } from 'index';
-import { environment } from 'environments/environment';
+import { consoleOut, copyText } from "middleware/ui";
+import { QRCodeSVG } from 'qrcode.react';
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import "./style.scss";
 
 declare const TransakSDK: any;
 let transak: any = undefined;
@@ -124,12 +124,13 @@ export const DepositOptions = (props: {
     }
   }
 
+  // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
       const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (let i = 0; i < ellipsisElements.length; ++i){
-        const e = ellipsisElements[i] as HTMLElement;
+      for (const element of ellipsisElements) {
+        const e = element as HTMLElement;
         if (e.offsetWidth < e.scrollWidth){
           const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
@@ -248,18 +249,6 @@ export const DepositOptions = (props: {
                 {t('deposits.move-from-polygon-cta-label')}
               </Button>
             </Col>
-            {/* <Col span={24}>
-              <Button
-                block
-                className="deposit-option"
-                type="ghost"
-                shape="round"
-                size="middle"
-                onClick={handleBridgeFromRenButtonClick}>
-                <img src="/assets/deposit-partners/btc.png" className="deposit-partner-icon" alt={t('deposits.move-from-renbridge-cta-label')} />
-                {t('deposits.move-from-renbridge-cta-label')}
-              </Button>
-            </Col> */}
           </Row>
         </div>
         <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>
