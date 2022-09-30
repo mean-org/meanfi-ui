@@ -1,42 +1,60 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
-import { useWallet } from '../../../../contexts/wallet';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
-import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isProd, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
-import { PaymentRateTypeOption } from "../../../../models/PaymentRateTypeOption";
-import { PaymentRateType } from '../../../../models/enums';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
-import { TokenListItem } from '../../../../components/TokenListItem';
-import { TextInput } from '../../../../components/TextInput';
-import { useTranslation } from 'react-i18next';
-import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, Spin, TimePicker } from 'antd';
-import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { SubCategory, TransactionFees, TreasuryType } from '@mean-dao/msp';
-import { NATIVE_SOL } from '../../../../constants/tokens';
-import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
-import { TreasuryTypeOption } from '../../../../models/treasuries';
-import { FormLabelWithIconInfo } from '../../../../components/FormLabelWithIconInfo';
-import { WizardStepSelector } from '../../../../components/WizardStepSelector';
-import { isMobile } from 'react-device-detect';
-import useWindowSize from '../../../../hooks/useWindowResize';
-import { IconCaretDown } from '../../../../Icons';
-import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from '../../../../models/vesting';
-import { isError } from '../../../../middleware/transactions';
-import moment from 'moment';
-import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { environment } from '../../../../environments/environment';
-import { PendingProposalsComponent } from '../PendingProposalsComponent';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { Identicon } from '../../../../components/Identicon';
-import { InputMean } from '../../../../components/InputMean';
-import { BN } from 'bn.js';
-import BigNumber from 'bignumber.js';
+import { SubCategory, TransactionFees, TreasuryType } from '@mean-dao/msp';
+import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, Spin, TimePicker } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import BigNumber from 'bignumber.js';
+import { BN } from 'bn.js';
+import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
+import { Identicon } from 'components/Identicon';
+import { InputMean } from 'components/InputMean';
+import { TextInput } from 'components/TextInput';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { TokenListItem } from 'components/TokenListItem';
+import { WizardStepSelector } from 'components/WizardStepSelector';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
+import { NATIVE_SOL } from 'constants/tokens';
+import { VESTING_ACCOUNT_TYPE_OPTIONS } from 'constants/treasury-type-options';
+import { AppStateContext } from 'contexts/appstate';
+import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { environment } from 'environments/environment';
+import useWindowSize from 'hooks/useWindowResize';
+import { IconCaretDown } from 'Icons';
+import { isError } from 'middleware/transactions';
+import {
+    consoleOut,
+    getLockPeriodOptionLabel,
+    getRateIntervalInSeconds,
+    isProd,
+    isValidAddress,
+    toUsCurrency
+} from 'middleware/ui';
+import {
+    addDays,
+    cutNumber,
+    getAmountWithSymbol,
+    isValidInteger,
+    isValidNumber,
+    shortenAddress,
+    slugify,
+    toTokenAmount,
+    toTokenAmountBn,
+    toUiAmount
+} from 'middleware/utils';
+import { PaymentRateType } from 'models/enums';
+import { PaymentRateTypeOption } from "models/PaymentRateTypeOption";
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { TreasuryTypeOption } from 'models/treasuries';
+import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from 'models/vesting';
+import moment from 'moment';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { isMobile } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { PendingProposalsComponent } from '../PendingProposalsComponent';
 
-const timeFormat="hh:mm A"
+const timeFormat="hh:mm A";
 
 export const VestingContractCreateForm = (props: {
     accountAddress: string;
@@ -300,11 +318,11 @@ export const VestingContractCreateForm = (props: {
         const resizeListener = () => {
             const NUM_CHARS = 4;
             const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-            for (let i = 0; i < ellipsisElements.length; ++i) {
-                const e = ellipsisElements[i] as HTMLElement;
-                if (e.offsetWidth < e.scrollWidth) {
-                    const text = e.textContent;
-                    e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+            for (const element of ellipsisElements) {
+                const e = element as HTMLElement;
+                if (e.offsetWidth < e.scrollWidth){
+                  const text = e.textContent;
+                  e.dataset.tail = text?.slice(text.length - NUM_CHARS);
                 }
             }
         };
@@ -354,7 +372,6 @@ export const VestingContractCreateForm = (props: {
         setIsTokenSelectorVisible(false);
     };
 
-    // TODO: Modify payload as needed
     const onAccountCreateClick = () => {
         const parsedDate = Date.parse(paymentStartDate as string);
         const startUtc = new Date(parsedDate);
@@ -558,20 +575,21 @@ export const VestingContractCreateForm = (props: {
         const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
         const fundingAmount = new BigNumber(fa.toString());
 
-        return  !publicKey
-            ? t('transactions.validation.not-connected')
-            : isMultisigContext && !proposalTitle
-                ? 'Add a proposal title'
-                : !vestingLockName
-                    ? 'Add contract name'
-                    : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
-                        ? t('transactions.validation.amount-sol-low')
-                        : !selectedToken
-                            ? 'No token selected'
-                            : (vestingLockFundingAmount && fundingAmount.gt(maxAmount))
-                                ? t('transactions.validation.amount-high')
-                                : t('transactions.validation.valid-continue');
-
+        if (!publicKey) {
+            return t('transactions.validation.not-connected');
+        } else if (isMultisigContext && !proposalTitle) {
+            return 'Add a proposal title';
+        } else if (!vestingLockName) {
+            return 'Add contract name';
+        } else if (!nativeBalance || nativeBalance < getMinSolBlanceRequired()) {
+            return t('transactions.validation.amount-sol-low');
+        } else if (!selectedToken) {
+            return 'No token selected';
+        } else if (vestingLockFundingAmount && fundingAmount.gt(maxAmount)) {
+            return t('transactions.validation.amount-high');
+        } else {
+            return t('transactions.validation.valid-continue');
+        }
     }
 
     const getStepTwoButtonLabel = () => {
@@ -590,24 +608,35 @@ export const VestingContractCreateForm = (props: {
         const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
         const fundingAmount = new BigNumber(fa.toString());
 
-        return  !publicKey
-            ? t('transactions.validation.not-connected')
-            : isMultisigContext && !proposalTitle
-                ? 'Add a proposal title'
-                : !vestingLockName
-                    ? 'Add contract name'
-                    : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
-                        ? t('transactions.validation.amount-sol-low')
-                        : !selectedToken
-                            ? 'No token selected'
-                            : (vestingLockFundingAmount && fundingAmount.gt(maxAmount))
-                                ? t('transactions.validation.amount-high')
-                                : !lockPeriodAmount
-                                    ? 'Set vesting period'
-                                    : !lockPeriodFrequency
-                                        ? 'Set vesting period'
-                                        : t('vesting.create-account.create-cta');
+        if (!publicKey) {
+            return t('transactions.validation.not-connected');
+        } else if (isMultisigContext && !proposalTitle) {
+            return 'Add a proposal title';
+        } else if (!vestingLockName) {
+            return 'Add contract name';
+        } else if (!nativeBalance || nativeBalance < getMinSolBlanceRequired()) {
+            return t('transactions.validation.amount-sol-low');
+        } else if (!selectedToken) {
+            return 'No token selected';
+        } else if (vestingLockFundingAmount && fundingAmount.gt(maxAmount)) {
+            return t('transactions.validation.amount-high');
+        } else if (!lockPeriodAmount) {
+            return 'Set vesting period';
+        } else if (!lockPeriodFrequency) {
+            return 'Set vesting period';
+        } else {
+            return t('transactions.validation.valid-continue');
+        }
+    }
 
+    const getMainCtaLabel = () => {
+        if (isBusy) {
+            return t('vesting.create-account.create-cta-busy');
+        } else if (isError(transactionStatus.currentOperation)) {
+            return t('general.retry');
+        } else {
+            return getStepTwoButtonLabel();
+        }
     }
 
     const todayAndPriorDatesDisabled = (current: any) => {
@@ -685,6 +714,17 @@ export const VestingContractCreateForm = (props: {
         </>
     );
 
+    const getSelectedTokenError = () => {
+        if (tokenFilter && selectedToken) {
+            if (selectedToken.decimals === -1) {
+                return 'Account not found';
+            } else if (selectedToken.decimals === -2) {
+                return 'Account is not a token mint';
+            }
+        }
+        return undefined;
+    }
+
     const renderTokenSelectorInner = (
         <div className="token-selector-wrapper">
             <div className="token-search-wrapper">
@@ -695,13 +735,7 @@ export const VestingContractCreateForm = (props: {
                     extraClass="mb-2"
                     onInputClear={onInputCleared}
                     placeholder={t('token-selector.search-input-placeholder')}
-                    error={
-                        tokenFilter && selectedToken && selectedToken.decimals === -1
-                            ? 'Account not found'
-                            : tokenFilter && selectedToken && selectedToken.decimals === -2
-                                ? 'Account is not a token mint'
-                                : ''
-                    }
+                    error={getSelectedTokenError()}
                     onInputChange={onTokenSearchInputChange} />
             </div>
             <div className="token-list">
@@ -1187,12 +1221,7 @@ export const VestingContractCreateForm = (props: {
                                     {isBusy && (
                                         <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                                     )}
-                                    {isBusy
-                                        ? t('vesting.create-account.create-cta-busy')
-                                        : isError(transactionStatus.currentOperation)
-                                            ? t('general.retry')
-                                            : getStepTwoButtonLabel()
-                                    }
+                                    {getMainCtaLabel()}
                                 </Button>
                             </div>
                         </div>

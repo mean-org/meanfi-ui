@@ -25,7 +25,7 @@ const isLocalhost = Boolean(
       window.location.hostname === "[::1]" ||
       // 127.0.0.0/8 are considered localhost for IPv4.
       window.location.hostname.match(
-        /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
+        /^127(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/
       )
 );
 
@@ -321,61 +321,46 @@ export const getLockPeriodOptionLabelByAmount = (val: PaymentRateType, periodAmo
     let result = '';
     switch (val) {
         case PaymentRateType.PerMinute:
-            result = trans
-                ? periodAmount === 1
-                    ? trans('general.minute')
-                    : trans('general.minutes')
-                : periodAmount === 1
-                    ? 'minute'
-                    : 'minutes';
+            if (trans) {
+                result = periodAmount === 1 ? trans('general.minute') : trans('general.minutes');
+            } else {
+                result = periodAmount === 1 ? 'minute' : 'minutes';
+            }
             break;
         case PaymentRateType.PerHour:
-            result = trans
-                ? periodAmount === 1
-                    ? trans('general.hour')
-                    : trans('general.hours')
-                : periodAmount === 1
-                    ? 'hour'
-                    : 'hours';
+            if (trans) {
+                result = periodAmount === 1 ? trans('general.hour') : trans('general.hours');
+            } else {
+                result = periodAmount === 1 ? 'hour' : 'hours';
+            }
             break;
         case PaymentRateType.PerDay:
-            result = trans
-                ? periodAmount === 1
-                    ? trans('general.day')
-                    : trans('general.days')
-                : periodAmount === 1
-                    ? 'day'
-                    : 'days';
-
+            if (trans) {
+                result = periodAmount === 1 ? trans('general.day') : trans('general.days');
+            } else {
+                result = periodAmount === 1 ? 'day' : 'days';
+            }
             break;
         case PaymentRateType.PerWeek:
-            result = trans
-                ? periodAmount === 1
-                    ? trans('general.week')
-                    : trans('general.weeks')
-                : periodAmount === 1
-                    ? 'week'
-                    : 'weeks';
-
+            if (trans) {
+                result = periodAmount === 1 ? trans('general.week') : trans('general.weeks');
+            } else {
+                result = periodAmount === 1 ? 'week' : 'weeks';
+            }
             break;
         case PaymentRateType.PerMonth:
-            result = trans
-                ? periodAmount === 1
-                    ? trans('general.month')
-                    : trans('general.months')
-                : periodAmount === 1
-                    ? 'month'
-                    : 'months';
+            if (trans) {
+                result = periodAmount === 1 ? trans('general.month') : trans('general.months');
+            } else {
+                result = periodAmount === 1 ? 'month' : 'months';
+            }
             break;
         case PaymentRateType.PerYear:
-            result = trans
-                ? periodAmount === 1
-                    ? trans('general.year')
-                    : trans('general.years')
-                : periodAmount === 1
-                    ? 'year'
-                    : 'years';
-
+            if (trans) {
+                result = periodAmount === 1 ? trans('general.year') : trans('general.years');
+            } else {
+                result = periodAmount === 1 ? 'year' : 'years';
+            }
             break;
         default:
             break;
@@ -404,9 +389,6 @@ export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOpti
 export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => {
     let value = 60;
     switch (frequency) {
-        case PaymentRateType.PerMinute:
-            value = 60;
-            break;
         case PaymentRateType.PerHour:
             value = 3600;
             break;
@@ -422,6 +404,7 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
         case PaymentRateType.PerYear:
             value = 31557000;
             break;
+        case PaymentRateType.PerMinute:
         default:
             break;
     }
@@ -495,36 +478,47 @@ export const getTransactionOperationDescription = (status: TransactionStatus | u
         case TransactionStatus.TransactionFinished:
             return trans ? trans('transactions.status.tx-completed') : 'Operation completed';
         default:
-            return ''; // trans ? trans('transactions.status.tx-idle') : 'Idle';
+            return '';
     }
 }
-
 export const getIntervalFromSeconds = (seconds: number, slash = false, trans?: any): string => {
     switch (seconds) {
         case 60:
-            return trans
-                ? slash ? ` / ${trans('general.minute')}` : trans('transactions.rate-and-frequency.payment-rates.per-minute')
-                : slash ? ' / minute' : 'per minute';
+            if (trans) {
+                return slash ? ` / ${trans('general.minute')}` : trans('transactions.rate-and-frequency.payment-rates.per-minute');
+            } else {
+                return slash ? ' / minute' : 'per minute';
+            }
         case 3600:
-            return trans
-                ? slash ? ` / ${trans('general.hour')}` : trans('transactions.rate-and-frequency.payment-rates.per-hour')
-                : slash ? ' / hour' : 'per hour';
+            if (trans) {
+                return slash ? ` / ${trans('general.hour')}` : trans('transactions.rate-and-frequency.payment-rates.per-hour');
+            } else {
+                return slash ? ' / hour' : 'per hour';
+            }
         case 86400:
-            return trans
-                ? slash ? ` / ${trans('general.day')}` : trans('transactions.rate-and-frequency.payment-rates.per-day')
-                : slash ? ' / day' : 'per day';
+            if (trans) {
+                return slash ? ` / ${trans('general.day')}` : trans('transactions.rate-and-frequency.payment-rates.per-day');
+            } else {
+                return slash ? ' / day' : 'per day';
+            }
         case 604800:
-            return trans
-                ? slash ? ` / ${trans('general.week')}` : trans('transactions.rate-and-frequency.payment-rates.per-week')
-                : slash ? ' / week' : 'per week';
+            if (trans) {
+                return slash ? ` / ${trans('general.week')}` : trans('transactions.rate-and-frequency.payment-rates.per-week');
+            } else {
+                return slash ? ' / week' : 'per week';
+            }
         case 2629750:
-            return trans
-                ? slash ? ` / ${trans('general.month')}` : trans('transactions.rate-and-frequency.payment-rates.per-month')
-                : slash ? ' / month' : 'per month';
+            if (trans) {
+                return slash ? ` / ${trans('general.month')}` : trans('transactions.rate-and-frequency.payment-rates.per-month');
+            } else {
+                return slash ? ' / month' : 'per month';
+            }
         case 31557000:
-            return trans
-                ? slash ? ` / ${trans('general.year')}` : trans('transactions.rate-and-frequency.payment-rates.per-year')
-                : slash ? ' / year' : 'per year';
+            if (trans) {
+                return slash ? ` / ${trans('general.year')}` : trans('transactions.rate-and-frequency.payment-rates.per-year');
+            } else {
+                return slash ? ' / year' : 'per year';
+            }
         default:
             return '';
     }
@@ -552,20 +546,20 @@ export const percentual = (partialValue: number, total: number): number => {
 }
 
 export const percentualBn = (partialValue: string | BN, total: string | BN, asNumber = false): number | BN => {
-    let partialBn = new BigNumber(0);
-    let totalBn = new BigNumber(0);
+    let partialBn;
+    let totalBn;
     if (!partialValue) {
         return asNumber ? new BN(partialValue).toNumber() : new BN(partialValue)
     }
     if (typeof partialValue === "string") {
         partialBn = new BigNumber(partialValue);
     } else {
-        partialBn = new BigNumber((partialValue as BN).toString());
+        partialBn = new BigNumber(partialValue.toString());
     }
     if (typeof total === "string") {
         totalBn = new BigNumber(total);
     } else {
-        totalBn = new BigNumber((total as BN).toString());
+        totalBn = new BigNumber(total.toString());
     }
     if (asNumber) {
         return partialBn.multipliedBy(100).dividedBy(totalBn).toNumber();
@@ -587,11 +581,11 @@ export const percentageBn = (percent: number, total: string | BN, asNumber = fal
     if (!percent) {
         return asNumber ? 0 : new BN(0);
     }
-    let totalBn = new BigNumber(0);
+    let totalBn;
     if (typeof total === "string") {
         totalBn = new BigNumber(total);
     } else {
-        totalBn = new BigNumber((total as BN).toString());
+        totalBn = new BigNumber(total.toString());
     }
     if (asNumber) {
         return totalBn.multipliedBy(percent).dividedBy(100).toNumber();
@@ -899,35 +893,7 @@ export function stringNumberFormat(value: string, dec = 0, decimalsSeparator = '
     return fixed;
 }
 
-function numberFormat(value: any, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',', hideDecimalsIfZero = true) {
-    if (!value) {
-        return '0';
-    }
-    value = parseFloat(value).toFixed(~~dec);
-    const parts = value.split('.');
-    const fnums = parts[0];
-    let decimals = '';
-    if (parts[1] && (+parts[1] !== 0 || !hideDecimalsIfZero)) {
-        decimals = decimalsSeparator + parts[1];
-    }
-    return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + thowsendsSeparator) + decimals;
-}
-
-export function kFormatter(num: number) {
-    let tempNum: number;
-    if (num > 999 && num < 1000000) {
-        tempNum = num / 1000;
-        return numberFormat(tempNum, 1) + 'k';
-    }
-
-    if (num >= 1000000) {
-        tempNum = num / 1000000;
-        return numberFormat(tempNum, 1) + 'M';
-    }
-    return numberFormat(num);
-}
-
-export function intToString(value: number, decimals: number) {
+export function kFormatter(value: number, decimals = 0) {
     const num = value.toString().replace(/[^0-9.]/g, '');
     if (value < 1000) {
         return num;
@@ -946,5 +912,5 @@ export function intToString(value: number, decimals: number) {
             break;
         }
     }
-    return (value / si[index].v).toFixed(decimals).replace(/\.0+$|(\.[0-9]*[1-9])0+$/, "$1") + si[index].s;
+    return (value / si[index].v).toFixed(decimals).replace(/\.0+$|(\.\d*[1-9])0+$/, "$1") + si[index].s;
 }
