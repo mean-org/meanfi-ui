@@ -350,156 +350,6 @@ export const TreasuryStreamCreateModal = (props: {
     return options;
   }
 
-  const getStepOneContinueButtonLabel = (): string => {
-    // if (!publicKey) {
-    //   return t('transactions.validation.not-connected');
-    // } else if (xxxxx) {
-    //   return yyyyy;
-    // } else if (xxxxx) {
-    //   return yyyyy;
-    // } else {
-    //   return zzzzzz;
-    // }
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : (param === "multisig" && !proposalTitle)
-        ? 'Add a proposal title'
-        : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
-          ? 'Select streaming account'
-          : (!enableMultipleStreamsOption && !recipientNote)
-            ? 'Set stream name'
-            : (!enableMultipleStreamsOption && !recipientAddress)
-              ? t('transactions.validation.select-recipient') 
-              : (enableMultipleStreamsOption && !validMultiRecipientsList)
-                ? t('transactions.validation.select-address-list')
-                : !selectedToken || unallocatedBalance.isZero()
-                  ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
-                    : (!paymentRateAmount || parseFloat(paymentRateAmount) === 0)
-                    ? t('transactions.validation.no-amount')
-                      : !paymentStartDate
-                        ? t('transactions.validation.no-valid-date')
-                        : !arePaymentSettingsValid()
-                          ? getPaymentSettingsButtonLabel()
-                          : t('transactions.validation.valid-continue');
-  };
-
-  const getStepOneContinueButtonLabelInLocked = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : (param === "multisig" && !proposalTitle)
-        ? 'Add a proposal title'
-        : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
-          ? 'Select streaming account'
-          : (!enableMultipleStreamsOption && !recipientNote)
-            ? 'Set stream name'
-            : (!enableMultipleStreamsOption && !recipientAddress)
-              ? t('transactions.validation.select-recipient') 
-              : (enableMultipleStreamsOption && !validMultiRecipientsList)
-                ? t('transactions.validation.select-address-list')
-                : !selectedToken || unallocatedBalance.isZero()
-                  ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
-                  : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
-                    ? t('transactions.validation.no-amount')
-                    : (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)))
-                      ? t('Invalid amount')
-                      : !paymentStartDate
-                        ? t('transactions.validation.no-valid-date')
-                        : !arePaymentSettingsValid()
-                          ? getPaymentSettingsButtonLabel()
-                          : t('transactions.validation.valid-continue');
-  };
-
-  const getStepTwoContinueButtonLabel = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : (param === "multisig" && !proposalTitle)
-        ? 'Add a proposal title'
-        : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
-          ? 'Select streaming account'
-          : !recipientNote
-            ? 'Set stream name'
-            : !recipientAddress
-              ? t('transactions.validation.select-recipient')
-              : !selectedToken || unallocatedBalance.isZero()
-                ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
-                : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
-                  ? t('transactions.validation.no-amount')
-                  : (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)))
-                    ? t('Invalid amount')
-                    : !lockPeriodAmount || parseFloat(lockPeriodAmount) === 0
-                      ? 'Lock period cannot be empty'
-                      : cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
-                        ? 'Invalid cliff amount'
-                        : !paymentStartDate
-                          ? t('transactions.validation.no-valid-date')
-                          : !areSendAmountSettingsValid()
-                            ? getPaymentSettingsButtonLabel()
-                            : t('transactions.validation.valid-continue');
-  }
-
-  const getTransactionStartButtonLabel = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : (param === "multisig" && !proposalTitle)
-        ? 'Add a proposal title'
-        : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
-          ? 'Select streaming account'
-          : (!enableMultipleStreamsOption && !recipientNote)
-            ? 'Set stream name'
-            : (!enableMultipleStreamsOption && !recipientAddress)
-              ? t('transactions.validation.select-recipient') 
-              : (enableMultipleStreamsOption && !validMultiRecipientsList)
-                ? t('transactions.validation.select-address-list')
-                : !selectedToken || unallocatedBalance.isZero()
-                  ? t('transactions.validation.no-balance')
-                  : !tokenAmount || tokenAmount.isZero()
-                    ? t('transactions.validation.no-amount')
-                    : (isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
-                      (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))
-                      ? t('transactions.validation.amount-high')
-                      : !paymentStartDate
-                        ? t('transactions.validation.no-valid-date')
-                        : !arePaymentSettingsValid()
-                          ? getPaymentSettingsButtonLabel()
-                          : !isVerifiedRecipient
-                            ? t('transactions.validation.verified-recipient-unchecked')
-                            : nativeBalance < getMinBalanceRequired()
-                              ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-                              : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
-  };
-
-  const getTransactionStartButtonLabelInLocked = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : (param === "multisig" && !proposalTitle)
-        ? 'Add a proposal title'
-        : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
-          ? 'Select streaming account'
-          : !recipientNote
-            ? 'Set stream name'
-            : !recipientAddress
-              ? t('transactions.validation.select-recipient') 
-              : !selectedToken || unallocatedBalance.isZero()
-                ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
-                : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
-                  ? t('transactions.validation.no-amount')
-                  : (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)))
-                    ? t('Invalid amount')
-                    : !lockPeriodAmount || parseFloat(lockPeriodAmount) === 0
-                      ? 'Lock period cannot be empty'
-                      : cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
-                        ? 'Invalid cliff amount'
-                        : !paymentStartDate
-                          ? t('transactions.validation.no-valid-date')
-                          : !arePaymentSettingsValid()
-                            ? getPaymentSettingsButtonLabel()
-                            : !isVerifiedRecipient
-                              ? t('transactions.validation.verified-recipient-unchecked')
-                              : nativeBalance < getMinBalanceRequired()
-                                ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-                                : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
-  };
-
   const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
 
@@ -513,6 +363,161 @@ export const TreasuryStreamCreateModal = (props: {
         : '';
     }
   }
+
+  const getStepOneContinueButtonLabel = (): string => {
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (param === "multisig" && !proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+      return 'Select streaming account';
+    } else if (!enableMultipleStreamsOption && !recipientNote) {
+      return 'Set stream name';
+    } else if (!enableMultipleStreamsOption && !recipientAddress) {
+      return t('transactions.validation.select-recipient');
+    } else if (enableMultipleStreamsOption && !validMultiRecipientsList) {
+      return t('transactions.validation.select-address-list');
+    } else if (!selectedToken || unallocatedBalance.isZero()) {
+      return `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}`;
+    } else if (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) {
+      return t('transactions.validation.no-amount');
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    } else if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else {
+      return t('transactions.validation.valid-continue');
+    }
+  };
+
+  const getStepOneContinueButtonLabelInLocked = (): string => {
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (param === "multisig" && !proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+      return 'Select streaming account';
+    } else if (!enableMultipleStreamsOption && !recipientNote) {
+      return 'Set stream name';
+    } else if (!enableMultipleStreamsOption && !recipientAddress) {
+      return t('transactions.validation.select-recipient');
+    } else if (enableMultipleStreamsOption && !validMultiRecipientsList) {
+      return t('transactions.validation.select-address-list');
+    } else if (!selectedToken || unallocatedBalance.isZero()) {
+      return `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}`;
+    } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
+      return t('transactions.validation.no-amount');
+    } else if (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid amount';
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date')
+    } else if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else {
+      return t('transactions.validation.valid-continue');
+    }
+  };
+
+  const getStepTwoContinueButtonLabel = (): string => {
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (param === "multisig" && !proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+      return 'Select streaming account';
+    } else if (!recipientNote) {
+      return 'Set stream name';
+    } else if (!recipientAddress) {
+      return t('transactions.validation.select-recipient');
+    } else if (!selectedToken || unallocatedBalance.isZero()) {
+      return `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}`;
+    } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
+      return t('transactions.validation.no-amount');
+    } else if (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid amount';
+    } else if (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) {
+      return 'Lock period cannot be empty';
+    } else if (cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid cliff amount';
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    } else if (!areSendAmountSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else {
+      return t('transactions.validation.valid-continue');
+    }
+  };
+
+  const getTransactionStartButtonLabel = (): string => {
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (param === "multisig" && !proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+      return 'Select streaming account';
+    } else if (!enableMultipleStreamsOption && !recipientNote) {
+      return 'Set stream name';
+    } else if (!enableMultipleStreamsOption && !recipientAddress) {
+      return t('transactions.validation.select-recipient');
+    } else if (enableMultipleStreamsOption && !validMultiRecipientsList) {
+      return t('transactions.validation.select-address-list');
+    } else if (!selectedToken || unallocatedBalance.isZero()) {
+      return t('transactions.validation.no-balance');
+    } else if (!tokenAmount || tokenAmount.isZero()) {
+      return t('transactions.validation.no-amount');
+    } else if ((isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
+               (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))) {
+      return t('transactions.validation.amount-high');
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date')
+    } else if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else if (!isVerifiedRecipient) {
+      return t('transactions.validation.verified-recipient-unchecked');
+    } else if (nativeBalance < getMinBalanceRequired()) {
+      return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) });
+    } else if (param === "multisig") {
+      return 'Submit proposal';
+    } else {
+      return t('transactions.validation.valid-approve');
+    }
+  };
+
+  const getTransactionStartButtonLabelInLocked = (): string => {
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (param === "multisig" && !proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+      return 'Select streaming account';
+    } else if (!recipientNote) {
+      return 'Set stream name';
+    } else if (!recipientAddress) {
+      return t('transactions.validation.select-recipient');
+    } else if (!selectedToken || unallocatedBalance.isZero()) {
+      return `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}`;
+    } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
+      return t('transactions.validation.no-amount');
+    } else if (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid amount';
+    } else if (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) {
+      return 'Lock period cannot be empty';
+    } else if (cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid cliff amount';
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    } else if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else if (!isVerifiedRecipient) {
+      return t('transactions.validation.verified-recipient-unchecked');
+    } else if (nativeBalance < getMinBalanceRequired()) {
+      return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) });
+    } else if (param === "multisig") {
+      return 'Submit proposal';
+    } else {
+      return t('transactions.validation.valid-approve');
+    }
+  };
 
   const getPaymentRateAmount = useCallback(() => {
 

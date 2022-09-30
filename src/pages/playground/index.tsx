@@ -42,8 +42,12 @@ import { ACCOUNT_LAYOUT } from "../../middleware/layouts";
 import { getStreamForDebug } from "../../middleware/stream-debug-middleware";
 import { getReadableStream } from "../../middleware/streams";
 import {
-  consoleOut, delay, friendlyDisplayDecimalPlaces, intToString,
-  isValidAddress, kFormatter, toUsCurrency
+  consoleOut,
+  delay,
+  friendlyDisplayDecimalPlaces,
+  kFormatter,
+  isValidAddress,
+  toUsCurrency,
 } from "../../middleware/ui";
 import {
   formatAmount,
@@ -981,18 +985,7 @@ export const PlaygroundView = () => {
               <div className="icon-cell">
                 <div className="token-icon">
                     <div className="streams-count">
-                      <span className="font-size-75 font-bold text-shadow">{kFormatter(value) || 0}</span>
-                    </div>
-                  </div>
-              </div>
-            </div>
-          </div>
-          <div className="std-table-cell responsive-cell text-monospace">
-            <div className="table-cell-flex-content">
-              <div className="icon-cell">
-                <div className="token-icon">
-                    <div className="streams-count">
-                      <span className="font-size-75 font-bold text-shadow">{intToString(value, 1) || 0}</span>
+                      <span className="font-size-75 font-bold text-shadow">{kFormatter(value, 1) || 0}</span>
                     </div>
                   </div>
               </div>
@@ -1041,9 +1034,6 @@ export const PlaygroundView = () => {
           </div>
           <div className="std-table-cell responsive-cell">
             kFormatter
-          </div>
-          <div className="std-table-cell responsive-cell">
-            intToString
           </div>
         </div>
       </div>

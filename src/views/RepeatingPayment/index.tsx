@@ -6,29 +6,29 @@ import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from "@mean-da
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Checkbox, DatePicker, Dropdown, Menu } from "antd";
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { segmentAnalytics } from 'App';
 import BN from 'bn.js';
+import { Identicon } from "components/Identicon";
+import { InfoIcon } from 'components/InfoIcon';
+import { StepSelector } from 'components/StepSelector';
+import { TokenDisplay } from 'components/TokenDisplay';
+import {
+  DATEPICKER_FORMAT,
+  MIN_SOL_BALANCE_REQUIRED,
+  NO_FEES,
+  SIMPLE_DATE_TIME_FORMAT
+} from "constants/common";
+import { NATIVE_SOL } from 'constants/tokens';
+import { useNativeAccount } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { useConnection, useConnectionConfig } from "contexts/connection";
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { useWallet } from "contexts/wallet";
 import dateFormat from 'dateformat';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import moment from "moment";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { customLogger } from '../..';
-import { segmentAnalytics } from '../../App';
-import { Identicon } from "../../components/Identicon";
-import { InfoIcon } from '../../components/InfoIcon';
-import { StepSelector } from '../../components/StepSelector';
-import { TokenDisplay } from '../../components/TokenDisplay';
-import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
-import { NATIVE_SOL } from '../../constants/tokens';
-import { useNativeAccount } from "../../contexts/accounts";
-import { AppStateContext } from "../../contexts/appstate";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { useWallet } from "../../contexts/wallet";
-import useWindowSize from '../../hooks/useWindowResize';
-import { IconCaretDown, IconEdit } from "../../Icons";
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { AppUsageEvent, SegmentStreamRPTransferData } from '../../middleware/segment-service';
+import useWindowSize from 'hooks/useWindowResize';
+import { IconCaretDown, IconEdit } from "Icons";
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { AppUsageEvent, SegmentStreamRPTransferData } from 'middleware/segment-service';
 import {
   consoleOut,
   disabledDate,
@@ -39,7 +39,7 @@ import {
   isToday,
   isValidAddress,
   toUsCurrency
-} from "../../middleware/ui";
+} from "middleware/ui";
 import {
   cutNumber,
   displayAmountWithSymbol,
@@ -52,11 +52,16 @@ import {
   toTokenAmount,
   toTokenAmountBn,
   toUiAmount
-} from "../../middleware/utils";
-import { RecipientAddressInfo } from '../../models/common-types';
-import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
-import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
-import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
+} from "middleware/utils";
+import { RecipientAddressInfo } from 'models/common-types';
+import { EventType, OperationType, PaymentRateType, TransactionStatus } from "models/enums";
+import { PaymentRateTypeOption } from "models/PaymentRateTypeOption";
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import moment from "moment";
+import { ACCOUNTS_ROUTE_BASE_PATH } from 'pages/accounts';
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { customLogger } from '../..';
 
 export const RepeatingPayment = (props: {
   onOpenTokenSelector: any;
@@ -115,8 +120,14 @@ export const RepeatingPayment = (props: {
   const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
   const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>(NO_FEES);
 
+  const isNative = useMemo(() => {
+    return selectedToken && selectedToken.address === NATIVE_SOL.address
+      ? true
+      : false;
+  }, []);
+
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
-    return await calculateActionFees(connection, action);
+    return calculateActionFees(connection, action);
   }, [connection]);
 
   const getFeeAmount = useCallback(() => {
@@ -252,13 +263,7 @@ export const RepeatingPayment = (props: {
     setRecipientAddress(trimmedValue);
   }
 
-  const handleRecipientAddressFocusIn = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 10);
-  }
-
-  const handleRecipientAddressFocusOut = () => {
+  const handleRecipientAddressFocusInOut = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
@@ -460,8 +465,8 @@ export const RepeatingPayment = (props: {
     const resizeListener = () => {
       const NUM_CHARS = 4;
       const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (let i = 0; i < ellipsisElements.length; ++i){
-        const e = ellipsisElements[i] as HTMLElement;
+      for (const element of ellipsisElements) {
+        const e = element as HTMLElement;
         if (e.offsetWidth < e.scrollWidth){
           const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
@@ -535,6 +540,19 @@ export const RepeatingPayment = (props: {
     return '';
   }
 
+  const isRecipientAddressValid = () => {
+    if (recipientAddressInfo.type === "mint") {
+      return false;
+    }
+    if (recipientAddressInfo.type === "account" &&
+               recipientAddressInfo.mint &&
+               recipientAddressInfo.mint === selectedToken?.address &&
+               recipientAddressInfo.owner === publicKey?.toBase58()) {
+      return false;
+    }
+    return true;
+  }
+
   const isMemoValid = (): boolean => {
     return recipientNote && recipientNote.length <= 32
       ? true
@@ -579,59 +597,65 @@ export const RepeatingPayment = (props: {
   }
 
   // Ui helpers
+  const getPaymentSettingsButtonLabel = (): string => {
+    const rateAmount = parseFloat(paymentRateAmount || '0');
+    if (!rateAmount) {
+      return t('transactions.validation.no-payment-rate');
+    } else if (tokenBalanceBn.ltn(rateAmount)) {
+      return t('transactions.validation.payment-rate-high');
+    } else {
+      return 'Invalid payment rate';
+    }
+  }
+
   const getStepOneContinueButtonLabel = (): string => {
-    return !connected
-      ? t('transactions.validation.not-connected')
-      : !recipientAddress || isAddressOwnAccount()
-        ? t('transactions.validation.select-recipient')
-        : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
-          ? 'Invalid recipient address'
-          : !selectedToken || tokenBalanceBn.isZero()
-            ? t('transactions.validation.no-balance')
-            : !paymentStartDate
-              ? t('transactions.validation.no-valid-date')
-              : !recipientNote
-                ? t('transactions.validation.memo-empty')
-                : !arePaymentSettingsValid()
-                  ? getPaymentSettingsButtonLabel()
-                  : t('transactions.validation.valid-continue');
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (!recipientAddress || isAddressOwnAccount()) {
+      return t('transactions.validation.select-recipient');
+    } else if (!isRecipientAddressValid() || !isValidAddress(recipientAddress)) {
+      return 'Invalid recipient address';
+    } else if (!selectedToken || tokenBalanceBn.isZero()) {
+      return t('transactions.validation.no-balance');
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    } else if (!recipientNote) {
+      return t('transactions.validation.memo-empty');
+    } else if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else {
+      return t('transactions.validation.valid-continue');
+    }
   }
 
   const getTransactionStartButtonLabel = (): string => {
     const inputAmount = getInputAmountBn();
-    return !connected
-      ? t('transactions.validation.not-connected')
-      : !recipientAddress || isAddressOwnAccount()
-        ? t('transactions.validation.select-recipient')
-        : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
-          ? 'Invalid recipient address'
-          : !selectedToken || tokenBalanceBn.isZero()
-            ? t('transactions.validation.no-balance')
-            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()
-              ? t('transactions.validation.no-amount')
-              : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
-                 (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.lt(inputAmount)))
-                ? t('transactions.validation.amount-high')
-                : !paymentStartDate
-                  ? t('transactions.validation.no-valid-date')
-                  : !recipientNote
-                    ? t('transactions.validation.memo-empty')
-                    : !arePaymentSettingsValid()
-                      ? getPaymentSettingsButtonLabel()
-                      : !isVerifiedRecipient
-                        ? t('transactions.validation.verified-recipient-unchecked')
-                        : nativeBalance < getMinSolBlanceRequired()
-                          ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
-                          : t('transactions.validation.valid-approve');
-  }
-
-  const getPaymentSettingsButtonLabel = (): string => {
-    const rateAmount = parseFloat(paymentRateAmount || '0');
-    return !rateAmount
-      ? t('transactions.validation.no-payment-rate')
-      : tokenBalanceBn.ltn(rateAmount)
-      ? t('transactions.validation.payment-rate-high')
-      : '';
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (!recipientAddress || isAddressOwnAccount()) {
+      return t('transactions.validation.select-recipient');
+    } else if (!isRecipientAddressValid() || !isValidAddress(recipientAddress)) {
+      return 'Invalid recipient address';
+    } else if (!selectedToken || tokenBalanceBn.isZero()) {
+      return t('transactions.validation.no-balance');
+    } else if (!fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()) {
+      return t('transactions.validation.no-amount');
+    } else if (((isNative && parseFloat(fromCoinAmount) > getMaxAmount()) ||
+                (!isNative && tokenBalanceBn.lt(inputAmount)))) {
+      return t('transactions.validation.amount-high');
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    } else if (!recipientNote) {
+      return t('transactions.validation.memo-empty');
+    } else if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else if (!isVerifiedRecipient) {
+      return t('transactions.validation.verified-recipient-unchecked');
+    } else if (nativeBalance < getMinSolBlanceRequired()) {
+      return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) });
+    } else {
+      return t('transactions.validation.valid-approve');
+    }
   }
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
@@ -682,9 +706,9 @@ export const RepeatingPayment = (props: {
         });
 
         consoleOut('Beneficiary address:', recipientAddress);
-        const beneficiary = new PublicKey(recipientAddress as string);
+        const beneficiary = new PublicKey(recipientAddress);
         consoleOut('beneficiaryMint:', selectedToken.address);
-        const associatedToken = new PublicKey(selectedToken.address as string);
+        const associatedToken = new PublicKey(selectedToken.address);
         const amount = toTokenAmount(fromCoinAmount, selectedToken.decimals).toString();
         const rateAmount = toTokenAmount(paymentRateAmount, selectedToken.decimals).toString();
         const now = new Date();
@@ -723,13 +747,13 @@ export const RepeatingPayment = (props: {
         const segmentData: SegmentStreamRPTransferData = {
           asset: selectedToken?.symbol,
           assetPrice: price,
-          allocation: parseFloat(fromCoinAmount as string),
+          allocation: parseFloat(fromCoinAmount),
           beneficiary: data.beneficiary,
           startUtc: dateFormat(data.startUtc, SIMPLE_DATE_TIME_FORMAT),
-          rateAmount: parseFloat(paymentRateAmount as string),
+          rateAmount: parseFloat(paymentRateAmount),
           interval: getPaymentRateOptionLabel(paymentRateFrequency),
           feePayedByTreasurer: data.feePayedByTreasurer,
-          valueInUsd: price * parseFloat(fromCoinAmount as string)
+          valueInUsd: price * parseFloat(fromCoinAmount)
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFormButton, segmentData);
@@ -751,7 +775,7 @@ export const RepeatingPayment = (props: {
         // Init a streaming operation
         const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
-        return await msp.streamPayment(
+        return msp.streamPayment(
           publicKey,                                                  // treasurer
           beneficiary,                                                // beneficiary
           associatedToken,                                            // mint
@@ -805,7 +829,7 @@ export const RepeatingPayment = (props: {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -873,7 +897,7 @@ export const RepeatingPayment = (props: {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -1036,9 +1060,9 @@ export const RepeatingPayment = (props: {
                   autoComplete="on"
                   autoCorrect="off"
                   type="text"
-                  onFocus={handleRecipientAddressFocusIn}
+                  onFocus={handleRecipientAddressFocusInOut}
                   onChange={handleRecipientAddressChange}
-                  onBlur={handleRecipientAddressFocusOut}
+                  onBlur={handleRecipientAddressFocusInOut}
                   placeholder={t('transactions.recipient.placeholder')}
                   required={true}
                   spellCheck="false"
@@ -1053,21 +1077,21 @@ export const RepeatingPayment = (props: {
               <span>&nbsp;</span>
             </div>
           </div>
-          {
-            recipientAddress && !isValidAddress(recipientAddress) ? (
+            {recipientAddress && !isValidAddress(recipientAddress) && (
               <span className="form-field-error">
                 {t('transactions.validation.address-validation')}
               </span>
-            ) : isAddressOwnAccount() ? (
+            )}
+            {isAddressOwnAccount() && (
               <span className="form-field-error">
                 {t('transactions.recipient.recipient-is-own-account')}
               </span>
-            ) : recipientAddress && getRecipientAddressValidation() ? (
+            )}
+            {recipientAddress && !isRecipientAddressValid() && (
               <span className="form-field-error">
                 {getRecipientAddressValidation()}
               </span>
-            ) : (null)
-          }
+            )}
         </div>
 
         {/* Payment rate */}

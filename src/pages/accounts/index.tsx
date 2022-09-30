@@ -1,5 +1,3 @@
-import React, { useCallback, useContext, useMemo, useRef, useEffect, useState } from 'react';
-import "./style.scss";
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
@@ -8,91 +6,101 @@ import {
   SyncOutlined,
   WarningFilled
 } from '@ant-design/icons';
-import { Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { PreFooter } from '../../components/PreFooter';
-import { TransactionItemView } from '../../components/TransactionItemView';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { FetchStatus } from '../../models/transactions';
-import { UserTokenAccount } from "../../models/accounts";
-import { AppStateContext } from '../../contexts/appstate';
-import { useTranslation } from 'react-i18next';
-import { Identicon } from '../../components/Identicon';
+import {
+  DEFAULT_EXPIRATION_TIME_SECONDS,
+  getFees,
+  MeanMultisig,
+  MultisigTransaction,
+  MultisigTransactionFees,
+  MultisigTransactionStatus,
+  MULTISIG_ACTIONS
+} from '@mean-dao/mean-multisig-sdk';
+import { MoneyStreaming, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming';
+import { Category, MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  ParsedTransactionMeta,
+  PublicKey,
+  Signer,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction
+} from '@solana/web3.js';
+import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import notification from 'antd/lib/notification';
+import { segmentAnalytics } from 'App';
+import BigNumber from 'bignumber.js';
+import { BN } from 'bn.js';
+import { AccountsCloseAssetModal } from 'components/AccountsCloseAssetModal';
+import { AccountsInitAtaModal } from 'components/AccountsInitAtaModal';
+import { AccountsMergeModal } from 'components/AccountsMergeModal';
+import { AccountsSuggestAssetModal } from 'components/AccountsSuggestAssetModal';
+import { AddressDisplay } from 'components/AddressDisplay';
+import { Identicon } from 'components/Identicon';
+import { MultisigAddAssetModal } from 'components/MultisigAddAssetModal';
+import { MultisigTransferTokensModal } from 'components/MultisigTransferTokensModal';
+import { MultisigVaultDeleteModal } from 'components/MultisigVaultDeleteModal';
+import { MultisigVaultTransferAuthorityModal } from 'components/MultisigVaultTransferAuthorityModal';
+import { openNotification } from 'components/Notifications';
+import { PreFooter } from 'components/PreFooter';
+import { ReceiveSplOrSolModal } from 'components/ReceiveSplOrSolModal';
+import { SendAssetModal } from 'components/SendAssetModal';
+import { SolBalanceModal } from 'components/SolBalanceModal';
+import { TransactionItemView } from 'components/TransactionItemView';
+import { UnwrapSolModal } from 'components/UnwrapSolModal';
+import { WrapSolModal } from 'components/WrapSolModal';
+import { EMOJIS } from 'constants/emojis';
+import {
+  ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  MIN_SOL_BALANCE_REQUIRED, NO_FEES,
+  ONE_MINUTE_REFRESH_TIMEOUT, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, TRANSACTIONS_PER_PAGE, WRAPPED_SOL_MINT_ADDRESS
+} from 'constants/common';
+import { NATIVE_SOL } from 'constants/tokens';
+import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
+import useWindowSize from 'hooks/useWindowResize';
+import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from 'Icons';
+import { closeTokenAccount } from 'middleware/accounts';
+import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { AppUsageEvent } from 'middleware/segment-service';
+import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
-  getAmountFromLamports,
-  getSdkValue,
-  getAmountWithSymbol,
-  getTxIxResume,
+  getAmountFromLamports, getAmountWithSymbol, getSdkValue, getTxIxResume,
   openLinkInNewTab,
   shortenAddress,
   toUiAmount
-} from '../../middleware/utils';
-import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import {
-  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
-  EMOJIS,
-  TRANSACTIONS_PER_PAGE,
-  FALLBACK_COIN_IMAGE,
-  WRAPPED_SOL_MINT_ADDRESS,
-  ACCOUNTS_LOW_BALANCE_LIMIT,
-  NO_FEES,
-  ONE_MINUTE_REFRESH_TIMEOUT,
-  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-  MIN_SOL_BALANCE_REQUIRED
-} from '../../constants';
-import { Helmet } from "react-helmet";
-import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
-import { fetchAccountHistory, MappedTransaction } from '../../middleware/history';
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import useLocalStorage from '../../hooks/useLocalStorage';
-import { AccountTokenParsedInfo } from "../../models/accounts";
+} from 'middleware/utils';
+import { AccountTokenParsedInfo, UserTokenAccount } from "models/accounts";
+import { MetaInfoCta } from 'models/common-types';
+import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from 'models/enums';
+import { ZERO_FEES } from 'models/multisig';
 import { TokenInfo } from "models/SolanaTokenInfo";
-import { AccountsMergeModal } from '../../components/AccountsMergeModal';
-import { initialSummary, StreamsSummary } from '../../models/streams';
-import { Category, MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { StreamInfo, STREAM_STATE, MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
-import { openNotification } from '../../components/Notifications';
-import { AddressDisplay } from '../../components/AddressDisplay';
-import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
-import { SendAssetModal } from '../../components/SendAssetModal';
-import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from '../../middleware/ui';
-import { WrapSolModal } from '../../components/WrapSolModal';
-import { UnwrapSolModal } from '../../components/UnwrapSolModal';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { AppUsageEvent } from '../../middleware/segment-service';
-import { segmentAnalytics } from '../../App';
-import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
+import { initialSummary, StreamsSummary } from 'models/streams';
+import { FetchStatus } from 'models/transactions';
+import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from 'models/treasuries';
 import { QRCodeSVG } from 'qrcode.react';
-import { NATIVE_SOL } from '../../constants/tokens';
-import { appConfig, customLogger } from '../..';
-import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
-import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
-import { STAKING_ROUTE_BASE_PATH } from '../staking';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
-import useWindowSize from '../../hooks/useWindowResize';
-import { closeTokenAccount } from '../../middleware/accounts';
-import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransaction, MultisigTransactionFees, MultisigTransactionStatus, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
-import { BN } from 'bn.js';
-import { ZERO_FEES } from '../../models/multisig';
-import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
-import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
-import { useNativeAccount } from '../../contexts/accounts';
-import { MoneyStreamsInfoView } from '../../views/MoneyStreamsInfo';
-import { MoneyStreamsIncomingView } from '../../views/MoneyStreamsIncoming';
-import { MoneyStreamsOutgoingView } from '../../views/MoneyStreamsOutgoing';
-import { StreamingAccountView } from '../../views/StreamingAccount';
-import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
-import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
-import notification from 'antd/lib/notification';
-import { SolBalanceModal } from '../../components/SolBalanceModal';
-import BigNumber from 'bignumber.js';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
-import { MetaInfoCta } from '../../models/common-types';
+import { Helmet } from "react-helmet";
+import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { MoneyStreamsIncomingView } from 'views/MoneyStreamsIncoming';
+import { MoneyStreamsInfoView } from 'views/MoneyStreamsInfo';
+import { MoneyStreamsOutgoingView } from 'views/MoneyStreamsOutgoing';
+import { StreamingAccountView } from 'views/StreamingAccount';
+import "./style.scss";
+import { appConfig, customLogger } from 'index';
+import { STAKING_ROUTE_BASE_PATH } from 'pages/staking';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -202,7 +210,6 @@ export const AccountsNewView = () => {
   const [transactionAssetFees, setTransactionAssetFees] = useState<TransactionFees>(NO_FEES);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
@@ -612,11 +619,12 @@ export const AccountsNewView = () => {
   }, [transactions]);
 
   const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
-    return asset?.publicAddress
-            ? asset.publicAddress !== NATIVE_SOL_MINT.toBase58()
-              ? new PublicKey(asset.publicAddress)
-              : new PublicKey(accountAddress)
-            : null;
+    if (asset && asset.publicAddress) {
+      return asset.publicAddress !== NATIVE_SOL_MINT.toBase58()
+        ? new PublicKey(asset.publicAddress)
+        : new PublicKey(accountAddress);
+    }
+    return null;
   },[accountAddress]);
 
   const canActivateMergeTokenAccounts = (): boolean => {
@@ -1067,19 +1075,18 @@ export const AccountsNewView = () => {
     resetTransactionStatus();
   }, [recordTxConfirmation, resetTransactionStatus]);
 
+  const getChange = useCallback((accountIndex: number, meta: ParsedTransactionMeta | null): number => {
+    if (meta !== null && accountIndex !== -1) {
+      const prevBalance = meta.preBalances[accountIndex] || 0;
+      const postbalance = meta.postBalances[accountIndex] || 0;
+      const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
+      return change;
+    }
+    return 0;
+  }, []);
+
   // Filter only useful Txs for the SOL account and return count
   const getSolAccountItems = useCallback((txs: MappedTransaction[]): number => {
-
-    const getChange = (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
-      if (meta !== null && accountIndex !== -1) {
-        const prevBalance = meta.preBalances[accountIndex] || 0;
-        const postbalance = meta.postBalances[accountIndex] || 0;
-        const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
-        return change;
-      }
-      return 0;
-    }
-
     if (txs && txs.length) {
 
       // Show only txs that have SOL changes
@@ -1102,7 +1109,8 @@ export const AccountsNewView = () => {
     }
   }, [
     accountAddress,
-    isSelectedAssetNativeAccount
+    isSelectedAssetNativeAccount,
+    getChange,
   ]);
 
   // Lets consider there are items to render if there are transactions for selected asset (NOT SOL)
@@ -1291,7 +1299,7 @@ export const AccountsNewView = () => {
           return false;
         }
 
-        return await createAsset(data)
+        return createAsset(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('createVault returned transaction:', value);
@@ -1346,7 +1354,7 @@ export const AccountsNewView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -1394,7 +1402,7 @@ export const AccountsNewView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -1556,12 +1564,11 @@ export const AccountsNewView = () => {
         toPubkey: toAddress,
         lamports: new BN(data.amount * LAMPORTS_PER_SOL).toNumber()
       });
-      
+
       const ixs: TransactionInstruction[] = [];
 
       if (!fromMintAddress.equals(NATIVE_SOL_MINT)) {
 
-        // programId = TOKEN_PROGRAM_ID;
         const mintInfo = await connection.getAccountInfo(fromMintAddress);
 
         if (!mintInfo) { 
@@ -1681,7 +1688,7 @@ export const AccountsNewView = () => {
           return false;
         }
 
-        return await transferTokens(data)
+        return transferTokens(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('transferTokens returned transaction:', value);
@@ -1736,7 +1743,7 @@ export const AccountsNewView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -1784,7 +1791,7 @@ export const AccountsNewView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -2056,7 +2063,7 @@ export const AccountsNewView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -2104,7 +2111,7 @@ export const AccountsNewView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -2158,35 +2165,30 @@ export const AccountsNewView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            if (sent) {
-              enqueueTransactionConfirmation({
-                signature: signature,
-                operationType: OperationType.SetAssetAuthority,
-                finality: "confirmed",
-                txInfoFetchStatus: "fetching",
-                loadingTitle: 'Confirming transaction',
-                loadingMessage: "Transferring ownership",
-                completedTitle: 'Transaction confirmed',
-                completedMessage: `Asset ${selectedAsset.name} successfully transferred to ${shortenAddress(data.selectedAuthority)}`,
-                extras: {
-                  multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
-                }
-              });
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.TransactionFinished
-              });
-              setIsTransferVaultAuthorityModalVisible(false);
-            } else {
-              openNotification({
-                title: t('notifications.error-title'),
-                description: t('notifications.error-sending-transaction'),
-                type: "error"
-              });
-            }
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.SetAssetAuthority,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: "Transferring ownership",
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Asset ${selectedAsset.name} successfully transferred to ${shortenAddress(data.selectedAuthority)}`,
+              extras: {
+                multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+              }
+            });
+            setIsTransferVaultAuthorityModalVisible(false);
             resetTransactionStatus();
             setIsBusy(false);
-          } else { setIsBusy(false); }
+          } else {
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: "error"
+            });
+            setIsBusy(false);
+          }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
@@ -2278,9 +2280,9 @@ export const AccountsNewView = () => {
 
       const closeIx = Token.createCloseAccountInstruction(
         TOKEN_PROGRAM_ID,
-        new PublicKey(inputAsset.publicAddress as string),
+        new PublicKey(inputAsset.publicAddress),
         publicKey,
-        new PublicKey(inputAsset.owner as string),
+        new PublicKey(inputAsset.owner),
         []
       );
 
@@ -2408,7 +2410,7 @@ export const AccountsNewView = () => {
       }
       const signedPublicKey = wallet.publicKey;
       consoleOut('Signing transaction...');
-      return await wallet.signTransaction(transaction)
+      return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -2456,7 +2458,7 @@ export const AccountsNewView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -2510,35 +2512,30 @@ export const AccountsNewView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            if (sent) {
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.TransactionFinished
-              });
-              enqueueTransactionConfirmation({
-                signature: signature,
-                operationType: OperationType.DeleteAsset,
-                finality: "confirmed",
-                txInfoFetchStatus: "fetching",
-                loadingTitle: 'Confirming transaction',
-                loadingMessage: "Deleting asset",
-                completedTitle: 'Transaction confirmed',
-                completedMessage: 'Asset successfully deleted',
-                extras: {
-                  multisigAuthority: multisigAuth
-                }
-              });
-              setIsDeleteVaultModalVisible(false);
-            } else {
-              openNotification({
-                title: t('notifications.error-title'),
-                description: t('notifications.error-sending-transaction'),
-                type: "error"
-              });
-            }
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.DeleteAsset,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: "Deleting asset",
+              completedTitle: 'Transaction confirmed',
+              completedMessage: 'Asset successfully deleted',
+              extras: {
+                multisigAuthority: multisigAuth
+              }
+            });
+            setIsDeleteVaultModalVisible(false);
             resetTransactionStatus();
             setIsBusy(false);
-          } else { setIsBusy(false); }
+          } else {
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: "error"
+            });
+            setIsBusy(false);
+          }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
@@ -2700,7 +2697,7 @@ export const AccountsNewView = () => {
 
         let amountChange = 0;
 
-        const token = getTokenByMintAddress(associatedToken as string);
+        const token = getTokenByMintAddress(associatedToken);
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
@@ -2751,7 +2748,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream);
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -2835,7 +2832,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream, undefined, false) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream, undefined, false);
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -3118,7 +3115,7 @@ export const AccountsNewView = () => {
       setLoadingTransactions(true);
 
       // Get the address to scan and ensure there is one
-      const pk = getScanAddress(selectedAsset as UserTokenAccount);
+      const pk = getScanAddress(selectedAsset);
       consoleOut('Load transactions for pk:', pk ? pk.toBase58() : 'NONE', 'blue');
       if (!pk) {
         consoleOut('Asset has no public address, aborting...', '', 'goldenrod');
@@ -3247,16 +3244,6 @@ export const AccountsNewView = () => {
       if (inferredAsset) {
         selectAsset(inferredAsset);
       }
-
-      // if (!selectedAsset) {
-      //   consoleOut('Presetting first token in the list...', accountTokens[0].publicAddress, 'crimson');
-      //   selectAsset(accountTokens[0]);
-      // } else {
-      //   const inferredAsset = accountTokens.find(t => t.publicAddress === accountAddress);
-      //   if (inferredAsset) {
-      //     selectAsset(inferredAsset);
-      //   }
-      // }
     } else {
       reloadTokensAndActivity();
     }
@@ -3530,7 +3517,7 @@ export const AccountsNewView = () => {
   useEffect(() => {
     if (!incomingAmount && !outgoingAmount) { return; }
 
-    setTotalStreamsAmount((incomingAmount + outgoingAmount) as number);
+    setTotalStreamsAmount(incomingAmount + outgoingAmount);
   }, [incomingAmount, outgoingAmount])
 
   // Live data calculation
@@ -3702,10 +3689,10 @@ export const AccountsNewView = () => {
 
         const wSolPubKey = new PublicKey(wSol.publicAddress);
 
-        return await closeTokenAccount(
+        return closeTokenAccount(
           connection,                       // connection
           wSolPubKey,                       // tokenPubkey
-          publicKey as PublicKey            // owner
+          publicKey                         // owner
         )
           .then((value: Transaction | null) => {
             if (value !== null) {
@@ -3760,7 +3747,7 @@ export const AccountsNewView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet
+        return wallet
           .signTransaction(transaction)
           .then((signed: Transaction) => {
             consoleOut('signTransaction returned a signed transaction:', signed);
@@ -3822,7 +3809,7 @@ export const AccountsNewView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then((sig) => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -3974,88 +3961,97 @@ export const AccountsNewView = () => {
   };
 
   const renderNetworth = () => {
+
+    const renderValues = () => {
+      if (netWorth) {
+        return toUsCurrency(netWorth);
+      } else {
+        return '$0.00';
+      }
+    }
+
     return (
-      <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`} onClick={() => {
-        // setSelectedCategory("networth");
-        // setSelectedAsset(undefined);
-      }}>
+      <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`}>
         <div className="font-bold font-size-110 left">{!isInspectedAccountTheConnectedWallet() ? "Treasury Balance" : "Net Worth"}</div>
         <div className="font-bold font-size-110 right">
-          {
-            loadingStreams || !canShowStreamingAccountBalance ? (
+          {loadingStreams || !canShowStreamingAccountBalance ? (
               <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-            ) : netWorth
-              ? toUsCurrency(netWorth)
-              : '$0.00'
-          }
+          ) : renderValues()}
         </div>
       </div>
     );
   };
 
-  const renderMoneyStreamsSummary = (
-    <>
-      {
-        <div key="streams" onClick={() => {
-          navigateToStreaming();
-          setAutoOpenDetailsPanel(true);
-        }} className={`transaction-list-row ${selectedCategory === "streaming" ? 'selected' : ''}`}>
-          <div className="icon-cell">
-            {loadingStreams ? (
-              <div className="token-icon animate-border-loading">
-                <div className="streams-count simplelink" onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}>
-                  <span className="font-bold text-shadow"><SyncOutlined spin /></span>
-                </div>
-              </div>
-            ) : (
-              <div className={totalStreamsAmount !== 0 ? 'token-icon animate-border' : 'token-icon'}>
-                <div className="streams-count simplelink" onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    refreshStreamList(false);
-                  }}>
-                  <span className="font-size-75 font-bold text-shadow">{kFormatter(totalStreamsAmount as number) || 0}</span>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="description-cell">
-            <div className="title">{t('account-area.money-streams')}</div>
-            {loadingStreams ? (
-              <div className="subtitle"><IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }}/></div>
-            ) : (totalStreamsAmount === 0) ? (
-              <div className="subtitle">{t('account-area.no-money-streams')}</div>
-            ) : (
-              <div className="subtitle">{incomingAmount} {t('streams.stream-stats-incoming')}, {outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
-            )}
-          </div>
-          <div className="rate-cell">
-            {loadingStreams || !canShowStreamingAccountBalance ? (
-              <div className="rate-amount">
-                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-              </div>
-            ) : (
-              <>
-                {totalAccountBalance > 0 ? (
-                  <>
-                    <div className="rate-amount">
-                      {toUsCurrency(totalAccountBalance)}
-                    </div>
-                    <div className="interval">{t('streams.streaming-balance')}</div>
-                  </>
-                ) : (
-                  <span className="rate-amount">$0.00</span>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+  const renderMoneyStreamsSummary = () => {
+
+    const renderValues = () => {
+      if (totalStreamsAmount === 0) {
+        return (<div className="subtitle">{t('account-area.no-money-streams')}</div>);
+      } else {
+        return (<div className="subtitle">{incomingAmount} {t('streams.stream-stats-incoming')}, {outgoingAmount} {t('streams.stream-stats-outgoing')}</div>);
       }
-    </>
-  );
+    }
+
+    return  (
+      <>
+        {
+          <div key="streams" onClick={() => {
+            navigateToStreaming();
+            setAutoOpenDetailsPanel(true);
+          }} className={`transaction-list-row ${selectedCategory === "streaming" ? 'selected' : ''}`}>
+            <div className="icon-cell">
+              {loadingStreams ? (
+                <div className="token-icon animate-border-loading">
+                  <div className="streams-count simplelink" onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}>
+                    <span className="font-bold text-shadow"><SyncOutlined spin /></span>
+                  </div>
+                </div>
+              ) : (
+                <div className={totalStreamsAmount !== 0 ? 'token-icon animate-border' : 'token-icon'}>
+                  <div className="streams-count simplelink" onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      refreshStreamList(false);
+                    }}>
+                    <span className="font-size-75 font-bold text-shadow">{kFormatter(totalStreamsAmount || 0, 1) || 0}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="description-cell">
+              <div className="title">{t('account-area.money-streams')}</div>
+              {loadingStreams ? (
+                <div className="subtitle"><IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }}/></div>
+              ) : renderValues()}
+            </div>
+            <div className="rate-cell">
+              {loadingStreams || !canShowStreamingAccountBalance ? (
+                <div className="rate-amount">
+                  <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                </div>
+              ) : (
+                <>
+                  {totalAccountBalance > 0 ? (
+                    <>
+                      <div className="rate-amount">
+                        {toUsCurrency(totalAccountBalance)}
+                      </div>
+                      <div className="interval">{t('streams.streaming-balance')}</div>
+                    </>
+                  ) : (
+                    <span className="rate-amount">$0.00</span>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        }
+      </>
+    );
+  }
 
   const renderAsset = useCallback((asset: UserTokenAccount) => {
     const onTokenAccountClick = () => {
@@ -4268,25 +4264,16 @@ export const AccountsNewView = () => {
   const renderTransactions = () => {
     if (transactions) {
       if (isSelectedAssetNativeAccount()) {
-        // Get amount change for each tx
-        const getChange = (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
-          if (meta !== null && accountIndex !== -1) {
-            const prevBalance = meta.preBalances[accountIndex] || 0;
-            const postbalance = meta.postBalances[accountIndex] || 0;
-            const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
-            return change;
-          }
-          return 0;
-        }
         // Render only txs that have SOL changes
         const filtered = transactions.filter(tx => {
           const meta = tx.parsedTransaction && tx.parsedTransaction.meta
-            ? tx.parsedTransaction.meta
-            : null;
+          ? tx.parsedTransaction.meta
+          : null;
           if (!meta || meta.err !== null) { return false; }
           const accounts = tx.parsedTransaction.transaction.message.accountKeys;
           const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
           if (isSelectedAssetNativeAccount() && accIdx === -1) { return false; }
+          // Get amount change for each tx
           const change = getChange(accIdx, meta);
           return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
         });
@@ -4495,8 +4482,16 @@ export const AccountsNewView = () => {
   const renderUserAccountAssetMeta = () => {
     if (!selectedAsset) { return null; }
 
+    const renderBalance = () => {
+      if (tokenPrice > 0) {
+        return selectedAsset.balance ? toUsCurrency((selectedAsset.balance || 0) * tokenPrice) : '$0.00';
+      } else {
+        return '$0.00';
+      }
+    }
     const priceByAddress = getTokenPriceByAddress(selectedAsset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(selectedAsset.symbol);
+
     return (
       <>
         <div className="accounts-category-meta">
@@ -4526,19 +4521,9 @@ export const AccountsNewView = () => {
                 </div>
               </Col>
               <Col span={10}>
-                <div className="info-label">
-                  Value
-                </div>
+                <div className="info-label">Value</div>
                 <div className="transaction-detail-row">
-                  <span className="info-data">
-                    {
-                      tokenPrice > 0
-                        ? selectedAsset.balance
-                          ? toUsCurrency((selectedAsset.balance || 0) * tokenPrice)
-                          : '$0.00'
-                        : '$0.00'
-                    }
-                  </span>
+                  <span className="info-data">{renderBalance()}</span>
                 </div>
               </Col>
             </Row>
@@ -4692,18 +4677,12 @@ export const AccountsNewView = () => {
     navigate(url);
   }
 
+  const renderTotalAccountBalance = () => {
+    return totalAccountBalance > 0 ? toUsCurrency(totalAccountBalance) : "$0.00";
+  }
+
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar">
-          <span>loadingTokenAccounts:</span><span className="ml-1 font-extrabold">{loadingTokenAccounts ? 'true' : 'false'}</span>
-          <span className="ml-2">shouldLoadTokens:</span><span className="ml-1 font-extrabold">{shouldLoadTokens ? 'true' : 'false'}</span>
-          <span className="ml-2">tokensLoaded:</span><span className="ml-1 font-extrabold">{tokensLoaded ? 'true' : 'false'}</span>
-          <span className="ml-2">userTokensResponse:</span><span className="ml-1 font-extrabold">{userTokensResponse !== null ? 'true' : 'false'}</span>
-          <span className="ml-2">accountAddress:</span><span className="ml-1 font-extrabold">{accountAddress ? shortenAddress(accountAddress) : '-'}</span>
-        </div>
-      )} */}
-
       {detailsPanelOpen && (
         <Button
           id="back-button"
@@ -4816,14 +4795,11 @@ export const AccountsNewView = () => {
                         <div className="amount">{
                           loadingStreams || !canShowStreamingAccountBalance ? (
                             <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-                          ) : totalAccountBalance > 0
-                            ? toUsCurrency(totalAccountBalance)
-                            : "$0.00"
-                          }
+                          ) : renderTotalAccountBalance()}
                         </div>
                       </div>
                       <div className="asset-category">
-                        {renderMoneyStreamsSummary}
+                        {renderMoneyStreamsSummary()}
                       </div>
 
                       <div className="asset-category-title flex-fixed-right">
@@ -5059,14 +5035,6 @@ export const AccountsNewView = () => {
           handleClose={hideUnwrapSolModal}
         />
       )}
-
-      {/* {isExchangeAssetModalOpen && publicKey && selectedAsset && (
-        <ExchangeAssetModal
-          isVisible={isExchangeAssetModalOpen}
-          handleClose={hideExchangeAssetModal}
-          tokenSymbol={selectedAsset.symbol}
-        />
-      )} */}
 
       {isSuggestAssetModalOpen && (
         <AccountsSuggestAssetModal
