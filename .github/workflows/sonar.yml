@@ -1,10 +1,10 @@
-name: Sonar
+name: SonarQube
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - develop
+    branches: ['main', 'develop']
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 jobs:
   build:
     name: Build
@@ -13,6 +13,18 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          
+      # - name: Setup Nodejs
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
+      #     cache: 'yarn'
+
+      # - name: Install
+      #   run: yarn install
+
+      # - name: Unit Tests
+      #   run: yarn test
 
       # Run the Quality Scanner
       - name: SonarQube Scanner
@@ -24,19 +36,15 @@ jobs:
           args: >
             -Dsonar.verbose=false
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.sources=src/
-
+            -Dsonar.sources=.
+            
       # Check the Quality Gate status.
-      # - name: SonarQube Quality Gate check
-      #   id: sonarqube-quality-gate-check
-      #   uses: sonarsource/sonarqube-quality-gate-action@master
-      #   # Force to fail step after specific time.
-      #   timeout-minutes: 5
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-      # # Optionally you can use the output from the Quality Gate in another step.
-      # # The possible outputs of the `quality-gate-status` variable are `PASSED`, `WARN` or `FAILED`.
-      # - name: "SonarQube Quality Gate Status"
-      #   run: echo "The Quality Gate status is ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}"
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        # Force to fail step after specific time.
+        timeout-minutes: 5
+        continue-on-error: true # this should be removed in the future when the sonarqube is passing
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
