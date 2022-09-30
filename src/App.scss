@@ -270,16 +270,15 @@ body {
     .logo {
       filter: alpha(opacity=100);
       opacity: 1;
-      -webkit-transition: opacity .3s ease-in-out;
-      -moz-transition: opacity .3s ease-in-out;
-      -ms-transition: opacity .3s ease-in-out;
-      -o-transition: opacity .3s ease-in-out;
-      transition: opacity .3s ease-in-out;
+      -webkit-transition: all .3s ease-in-out;
+      -moz-transition: all .3s ease-in-out;
+      -ms-transition: all .3s ease-in-out;
+      -o-transition: all .3s ease-in-out;
+      transition: all .3s ease-in-out;
       text-align: center;
       vertical-align: middle;
       font-weight: 700;
       font-size: 18px;
-      transition: all 0.3s ease-in-out;
       position: relative;
       display: inline-block !important;
       width: 54px;
@@ -1363,7 +1362,7 @@ footer.ant-layout-footer {
 }
 
 .app-title {
-  font-family: "Roboto";
+  font-family: "Roboto", Helvetica, Arial, Verdana, Tahoma, sans-serif;
   font-style: normal;
   font-weight: 300;
   letter-spacing: 0px;
@@ -2909,10 +2908,9 @@ main section {
   justify-content: center;
   align-items: center;
   display: inline-flex;
-  margin-right: 8px;
   padding: 2px;
   background: black;
-  margin: 0 2px;
+  margin: 0 8px 0 2px;
   vertical-align: -4px;
 }
 .token-group {
@@ -2948,10 +2946,9 @@ main section {
   justify-content: center;
   align-items: center;
   display: inline-flex;
-  margin-right: 8px;
   padding: 2px;
   background: black;
-  margin: 0 2px;
+  margin: 0 8px 0 2px;
   vertical-align: -4px;
 }
 
@@ -7835,7 +7832,7 @@ code {
 
 .emoji {
   font-weight: 400;
-  font-family: apple color emoji,segoe ui emoji,noto color emoji,android emoji,emojisymbols,emojione mozilla,twemoji mozilla,segoe ui symbol;
+  font-family: apple color emoji,segoe ui emoji,noto color emoji,android emoji,emojisymbols,emojione mozilla,twemoji mozilla,segoe ui symbol, Helvetica, Arial, Verdana, Tahoma, sans-serif;
 }
 
 .online-status {
