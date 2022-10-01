@@ -5,5 +5,6 @@ export * from "./ProgramAccounts";
 export * from "./SimpleTokenInfo";
 export * from "./TokenAccount";
 export * from "./TokenAccountInfo";
+export * from "./TokenSelectorListWithBalances";
 export * from "./UserTokenAccount";
 export * from "./UserTokensResponse";
