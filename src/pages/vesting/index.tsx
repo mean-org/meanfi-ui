@@ -9,38 +9,74 @@ import {
   VestingTreasuryActivity
 } from '@mean-dao/msp';
 import { AccountLayout, u64 } from '@solana/spl-token';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { segmentAnalytics } from 'App';
 import { BN } from 'bn.js';
+import { openNotification } from 'components/Notifications';
+import { PreFooter } from "components/PreFooter";
+import {
+  CUSTOM_TOKEN_NAME,
+  MIN_SOL_BALANCE_REQUIRED,
+  MSP_FEE_TREASURY,
+  NO_FEES,
+  WRAPPED_SOL_MINT_ADDRESS
+} from 'constants/common';
+import { NATIVE_SOL } from 'constants/tokens';
+import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext } from "contexts/appstate";
+import { useConnectionConfig } from 'contexts/connection';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import useWindowSize from 'hooks/useWindowResize';
+import { IconMoneyTransfer, IconVerticalEllipsis } from "Icons";
+import { appConfig, customLogger } from 'index';
+import { getTokenAccountBalanceByAddress, getTokensWithBalances, readAccountInfo } from 'middleware/accounts';
+import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from 'middleware/ids';
+import {
+  AppUsageEvent,
+  SegmentRefreshAccountBalanceData,
+  SegmentStreamAddFundsData,
+  SegmentStreamCreateData,
+  SegmentVestingContractCloseData,
+  SegmentVestingContractCreateData,
+  SegmentVestingContractWithdrawData
+} from 'middleware/segment-service';
+import {
+  consoleOut,
+  copyText,
+  delay,
+  getDurationUnitFromSeconds,
+  getReadableDate,
+  getTransactionStatusForLogs,
+  isDev,
+  isLocal,
+  toTimestamp
+} from 'middleware/ui';
+import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from 'middleware/utils';
+import { MetaInfoCta } from 'models/common-types';
+import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
+import { ZERO_FEES } from 'models/multisig';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { TreasuryWithdrawParams } from 'models/treasuries';
+import {
+  AddFundsParams,
+  CreateVestingStreamParams,
+  CreateVestingTreasuryParams,
+  getCategoryLabelByValue,
+  VestingContractCreateOptions,
+  VestingContractEditOptions,
+  VestingContractStreamCreateOptions,
+  VestingContractTopupParams,
+  VestingContractWithdrawOptions,
+  VestingFlowRateInfo,
+  vestingFlowRatesCache
+} from 'models/vesting';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { appConfig, customLogger } from '../..';
-import { segmentAnalytics } from '../../App';
-import { openNotification } from '../../components/Notifications';
-import { PreFooter } from "../../components/PreFooter";
-import { CUSTOM_TOKEN_NAME, MIN_SOL_BALANCE_REQUIRED, MSP_FEE_TREASURY, NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { NATIVE_SOL } from '../../constants/tokens';
-import { useNativeAccount } from '../../contexts/accounts';
-import { AppStateContext } from "../../contexts/appstate";
-import { useConnectionConfig } from '../../contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { useWallet } from '../../contexts/wallet';
-import useWindowSize from '../../hooks/useWindowResize';
-import { IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
-import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from '../../middleware/accounts';
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from '../../middleware/ids';
-import { AppUsageEvent, SegmentRefreshAccountBalanceData, SegmentStreamAddFundsData, SegmentStreamCreateData, SegmentVestingContractCloseData, SegmentVestingContractCreateData, SegmentVestingContractWithdrawData } from '../../middleware/segment-service';
-import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isDev, isLocal, isProd, toTimestamp } from '../../middleware/ui';
-import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from '../../middleware/utils';
-import { MetaInfoCta } from '../../models/common-types';
-import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
-import { ZERO_FEES } from '../../models/multisig';
-import { TreasuryWithdrawParams } from '../../models/treasuries';
-import { AddFundsParams, CreateVestingStreamParams, CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from '../../models/vesting';
 import { InspectedAccountType } from '../accounts';
 import { PendingProposalsComponent } from './components/PendingProposalsComponent';
 import { VestingContractActivity } from './components/VestingContractActivity';
@@ -65,6 +101,7 @@ const notificationKey = 'updatable';
 
 export const VestingView = () => {
   const {
+    priceList,
     splTokenList,
     isWhitelisted,
     selectedMultisig,
@@ -2477,7 +2514,7 @@ export const VestingView = () => {
 
       if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      const treasury = selectedVestingContract as Treasury;
+      const treasury = selectedVestingContract;
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
@@ -3176,65 +3213,39 @@ export const VestingView = () => {
       return;
     }
 
-    const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
-    const balancesMap: any = {};
-    balancesMap[splTokensCopy[0].address] = nativeBalance;
+    const pk = balancesSource || publicKey.toBase58();
 
-    const pk = balancesSource
-      ? new PublicKey(balancesSource)
-      : publicKey;
-    fetchAccountTokens(connection, pk)
-      .then(accTks => {
-        if (accTks) {
-          // Add owned token accounts to balances map
-          // Code to have all tokens sorted by balance
-          accTks.forEach(item => {
-            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
-          });
-          splTokensCopy.sort((a, b) => {
-            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
-              return 1;
-            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
-              return -1;
-            }
-            return 0;
-          });
-          setSelectedList(splTokensCopy);
+    const timeout = setTimeout(() => {
+
+      getTokensWithBalances(
+        connection,
+        pk,
+        priceList,
+        splTokenList,
+        false
+      )
+      .then(response => {
+        if (response) {
+          setSelectedList(response.tokenList);
+          setUserBalances(response.balancesMap);
           if (!workingToken) {
-            setWorkingToken(splTokensCopy[0]);
-            setSelectedToken(splTokensCopy[0]);
-          }
+            setWorkingToken(response.tokenList[0]);
+            setSelectedToken(response.tokenList[0]);
+          }  
+        }
+      });
 
-        } else {
-          for (const t of splTokensCopy) {
-            balancesMap[t.address] = 0;
-          }
-          // set the list to the userTokens list
-          setSelectedList(splTokensCopy);
-          if (!workingToken) {
-            setWorkingToken(splTokensCopy[0]);
-            setSelectedToken(splTokensCopy[0]);
-          }
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (const t of splTokensCopy) {
-          balancesMap[t.address] = 0;
-        }
-        setSelectedList(splTokensCopy);
-        if (!workingToken) {
-          setWorkingToken(splTokensCopy[0]);
-          setSelectedToken(splTokensCopy[0]);
-        }
-      })
-      .finally(() => setUserBalances(balancesMap));
+    });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      clearTimeout(timeout);
+    }
+
   }, [
     publicKey,
     connection,
-    nativeBalance,
+    priceList,
+    splTokenList,
     balancesSource,
   ]);
 

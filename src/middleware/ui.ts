@@ -639,7 +639,7 @@ export const getFormattedNumberToLocale = (value: any, digits = 0) => {
 }
 
 export const toUsCurrency = (value: any) => {
-    if (!value) { return ''; }
+    if (!value) { return '$0.00'; }
     const converted = parseFloat(value.toString());
     const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(converted);
     return formatted || '';
