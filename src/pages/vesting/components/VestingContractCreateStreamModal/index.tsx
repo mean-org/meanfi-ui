@@ -22,7 +22,15 @@ import {
     stringNumberFormat,
     toUsCurrency
 } from 'middleware/ui';
-import { displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount, toUiAmount } from 'middleware/utils';
+import {
+    displayAmountWithSymbol,
+    formatPercent,
+    formatThousands,
+    isValidNumber,
+    makeDecimal,
+    toTokenAmount,
+    toUiAmount
+} from 'middleware/utils';
 import { PaymentRateType } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { VestingContractStreamCreateOptions } from 'models/vesting';
@@ -78,7 +86,7 @@ export const VestingContractCreateStreamModal = (props: {
         refreshPrices,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
-    const { publicKey, wallet } = useWallet();
+    const { publicKey } = useWallet();
     const [currentStep, setCurrentStep] = useState(0);
     const [vestingStreamName, setVestingStreamName] = useState<string>('');
     const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
@@ -482,13 +490,7 @@ export const VestingContractCreateStreamModal = (props: {
         setRecipientAddress(trimmedValue);
     }
 
-    const handleRecipientAddressFocusIn = () => {
-        setTimeout(() => {
-            triggerWindowResize();
-        }, 10);
-    }
-
-    const handleRecipientAddressFocusOut = () => {
+    const handleRecipientAddressFocusInOut = () => {
         setTimeout(() => {
             triggerWindowResize();
         }, 10);
@@ -526,32 +528,47 @@ export const VestingContractCreateStreamModal = (props: {
     const getStepOneButtonLabel = (): string => {
         const mAa = new BN(maxAllocatableAmount || 0);
         const ub = new BN(unallocatedBalance || 0);
-        return  !publicKey
-            ? t('transactions.validation.not-connected')
-                : (isMultisigTreasury && selectedMultisig && !proposalTitle)
-                ? 'Add a proposal title'
-                    : !vestingStreamName || vestingStreamName.length > 32
-                        ? t('vesting.create-stream.stream-name-empty')
-                        : !recipientAddress || !isValidAddress(recipientAddress)
-                            ? t('vesting.create-stream.beneficiary-address-missing')
-                            : !selectedToken || unallocatedBalance.isZero()
-                                ? t('transactions.validation.no-balance')
-                                : !tokenAmount || tokenAmount.isZero()
-                                    ? t('transactions.validation.no-amount')
-                                    : (isFeePaidByTreasurer && tokenAmount.gt(mAa)) ||
-                                    (!isFeePaidByTreasurer && tokenAmount.gt(ub))
-                                        ? t('transactions.validation.amount-high')
-                                        : nativeBalance < getMinBalanceRequired()
-                                            ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-                                            : t('vesting.create-stream.step-one-validation-pass');
+
+        if (!publicKey) {
+            return t('transactions.validation.not-connected');
+        } else if (isMultisigTreasury && selectedMultisig && !proposalTitle) {
+            return 'Add a proposal title';
+        } else if (!vestingStreamName) {
+            return t('vesting.create-stream.stream-name-empty');
+        } else if (!recipientAddress || !isValidAddress(recipientAddress)) {
+            return t('vesting.create-stream.beneficiary-address-missing');
+        } else if (!selectedToken || unallocatedBalance.isZero()) {
+            return t('transactions.validation.no-balance');
+        } else if (!tokenAmount || tokenAmount.isZero()) {
+            return t('transactions.validation.no-amount');
+        } else if ((isFeePaidByTreasurer && tokenAmount.gt(mAa)) ||
+                   (!isFeePaidByTreasurer && tokenAmount.gt(ub))) {
+            return t('transactions.validation.amount-high');
+        } else if (nativeBalance < getMinBalanceRequired()) {
+            return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) });
+        } else {
+            return t('vesting.create-stream.step-one-validation-pass');
+        }
     }
 
     const getStepTwoButtonLabel = (): string => {
-        return  !isStepOneValid()
-            ? getStepOneButtonLabel()
-            : !isVerifiedRecipient
-                ? t('transactions.validation.verified-recipient-unchecked')
-                : t('vesting.create-stream.create-cta');
+        if (!isStepOneValid()) {
+            return getStepOneButtonLabel();
+        } else if (!isVerifiedRecipient) {
+            return t('transactions.validation.verified-recipient-unchecked');
+        } else {
+            return t('vesting.create-stream.create-cta');
+        }
+    }
+
+    const getMainCtaLabel = () => {
+        if (isBusy) {
+            return t('vesting.create-stream.create-cta-busy');
+        } else if (isError(transactionStatus.currentOperation)) {
+            return t('general.retry');
+        } else {
+            return getStepTwoButtonLabel();
+        }
     }
 
     const onTitleInputValueChange = (e: any) => {
@@ -649,9 +666,9 @@ export const VestingContractCreateStreamModal = (props: {
                                         autoComplete="on"
                                         autoCorrect="off"
                                         type="text"
-                                        onFocus={handleRecipientAddressFocusIn}
+                                        onFocus={handleRecipientAddressFocusInOut}
                                         onChange={handleRecipientAddressChange}
-                                        onBlur={handleRecipientAddressFocusOut}
+                                        onBlur={handleRecipientAddressFocusInOut}
                                         placeholder={t('vesting.create-stream.beneficiary-address-placeholder')}
                                         required={true}
                                         spellCheck="false"
@@ -883,12 +900,7 @@ export const VestingContractCreateStreamModal = (props: {
                                 {isBusy && (
                                     <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                                 )}
-                                {isBusy
-                                    ? t('vesting.create-stream.create-cta-busy')
-                                    : isError(transactionStatus.currentOperation)
-                                        ? t('general.retry')
-                                        : getStepTwoButtonLabel()
-                                }
+                                {getMainCtaLabel()}
                             </Button>
                         </div>
                     </div>

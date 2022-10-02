@@ -29,9 +29,7 @@ export const DepositOptions = (props: {
   const [isSharingAddress, setIsSharingAddress] = useState(false);
 
   // Get App config
-  const currentConfig = useMemo(() => {
-    return appConfig.getConfig();
-  }, []);
+  const currentConfig = useMemo(() => appConfig.getConfig(), []);
 
   const enableAddressSharing = () => {
     setIsSharingAddress(true);
@@ -251,18 +249,6 @@ export const DepositOptions = (props: {
                 {t('deposits.move-from-polygon-cta-label')}
               </Button>
             </Col>
-            {/* <Col span={24}>
-              <Button
-                block
-                className="deposit-option"
-                type="ghost"
-                shape="round"
-                size="middle"
-                onClick={handleBridgeFromRenButtonClick}>
-                <img src="/assets/deposit-partners/btc.png" className="deposit-partner-icon" alt={t('deposits.move-from-renbridge-cta-label')} />
-                {t('deposits.move-from-renbridge-cta-label')}
-              </Button>
-            </Col> */}
           </Row>
         </div>
         <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>

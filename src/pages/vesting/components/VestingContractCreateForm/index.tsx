@@ -1,42 +1,60 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { getNetworkIdByEnvironment, useConnection } from '../../../../contexts/connection';
-import { useWallet } from '../../../../contexts/wallet';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, cutNumber, getAmountWithSymbol, isValidInteger, isValidNumber, shortenAddress, slugify, toTokenAmount, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
-import { consoleOut, getLockPeriodOptionLabel, getRateIntervalInSeconds, isProd, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
-import { PaymentRateTypeOption } from "../../../../models/PaymentRateTypeOption";
-import { PaymentRateType } from '../../../../models/enums';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
-import { TokenListItem } from '../../../../components/TokenListItem';
-import { TextInput } from '../../../../components/TextInput';
-import { useTranslation } from 'react-i18next';
-import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, Spin, TimePicker } from 'antd';
-import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { SubCategory, TransactionFees, TreasuryType } from '@mean-dao/msp';
-import { NATIVE_SOL } from '../../../../constants/tokens';
-import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
-import { TreasuryTypeOption } from '../../../../models/treasuries';
-import { FormLabelWithIconInfo } from '../../../../components/FormLabelWithIconInfo';
-import { WizardStepSelector } from '../../../../components/WizardStepSelector';
-import { isMobile } from 'react-device-detect';
-import useWindowSize from '../../../../hooks/useWindowResize';
-import { IconCaretDown } from '../../../../Icons';
-import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from '../../../../models/vesting';
-import { isError } from '../../../../middleware/transactions';
-import moment from 'moment';
-import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { environment } from '../../../../environments/environment';
-import { PendingProposalsComponent } from '../PendingProposalsComponent';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { Identicon } from '../../../../components/Identicon';
-import { InputMean } from '../../../../components/InputMean';
-import { BN } from 'bn.js';
-import BigNumber from 'bignumber.js';
+import { SubCategory, TransactionFees, TreasuryType } from '@mean-dao/msp';
+import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, Spin, TimePicker } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import BigNumber from 'bignumber.js';
+import { BN } from 'bn.js';
+import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
+import { Identicon } from 'components/Identicon';
+import { InputMean } from 'components/InputMean';
+import { TextInput } from 'components/TextInput';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { TokenListItem } from 'components/TokenListItem';
+import { WizardStepSelector } from 'components/WizardStepSelector';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
+import { NATIVE_SOL } from 'constants/tokens';
+import { VESTING_ACCOUNT_TYPE_OPTIONS } from 'constants/treasury-type-options';
+import { AppStateContext } from 'contexts/appstate';
+import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { environment } from 'environments/environment';
+import useWindowSize from 'hooks/useWindowResize';
+import { IconCaretDown } from 'Icons';
+import { isError } from 'middleware/transactions';
+import {
+    consoleOut,
+    getLockPeriodOptionLabel,
+    getRateIntervalInSeconds,
+    isProd,
+    isValidAddress,
+    toUsCurrency
+} from 'middleware/ui';
+import {
+    addDays,
+    cutNumber,
+    getAmountWithSymbol,
+    isValidInteger,
+    isValidNumber,
+    shortenAddress,
+    slugify,
+    toTokenAmount,
+    toTokenAmountBn,
+    toUiAmount
+} from 'middleware/utils';
+import { PaymentRateType } from 'models/enums';
+import { PaymentRateTypeOption } from "models/PaymentRateTypeOption";
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { TreasuryTypeOption } from 'models/treasuries';
+import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from 'models/vesting';
+import moment from 'moment';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { isMobile } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { PendingProposalsComponent } from '../PendingProposalsComponent';
 
-const timeFormat="hh:mm A"
+const timeFormat="hh:mm A";
 
 export const VestingContractCreateForm = (props: {
     accountAddress: string;
@@ -354,7 +372,6 @@ export const VestingContractCreateForm = (props: {
         setIsTokenSelectorVisible(false);
     };
 
-    // TODO: Modify payload as needed
     const onAccountCreateClick = () => {
         const parsedDate = Date.parse(paymentStartDate as string);
         const startUtc = new Date(parsedDate);
@@ -542,6 +559,31 @@ export const VestingContractCreateForm = (props: {
         }
     };
 
+    const isProposalTitleRequiredAndMissing = () => {
+        return selectedMultisig && !proposalTitle ? true : false;
+    }
+
+    const isSolLow = () => {
+        return !nativeBalance || nativeBalance < getMinSolBlanceRequired() ? true : false;
+    }
+
+    const isFundingAmountHigh = () => {
+        if (!selectedToken) { return false; }
+
+        let maxAmount = new BigNumber(0);
+        if (selectedToken.address === NATIVE_SOL.address) {
+            const amount = getMaxAmount();
+            if (amount > 0) {
+                maxAmount = new BigNumber(amount);
+            }
+        } else {
+            maxAmount = new BigNumber(tokenBalanceBn.toString());
+        }
+        const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+        const fundingAmount = new BigNumber(fa.toString());
+        return vestingLockFundingAmount && fundingAmount.gt(maxAmount) ? true : false;
+    }
+
     const getStepOneButtonLabel = () => {
         if (!selectedToken) { return false; }
 
@@ -558,56 +600,55 @@ export const VestingContractCreateForm = (props: {
         const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
         const fundingAmount = new BigNumber(fa.toString());
 
-        return  !publicKey
-            ? t('transactions.validation.not-connected')
-            : isMultisigContext && !proposalTitle
-                ? 'Add a proposal title'
-                : !vestingLockName
-                    ? 'Add contract name'
-                    : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
-                        ? t('transactions.validation.amount-sol-low')
-                        : !selectedToken
-                            ? 'No token selected'
-                            : (vestingLockFundingAmount && fundingAmount.gt(maxAmount))
-                                ? t('transactions.validation.amount-high')
-                                : t('transactions.validation.valid-continue');
-
+        if (!publicKey) {
+            return t('transactions.validation.not-connected');
+        } else if (isProposalTitleRequiredAndMissing()) {
+            return 'Add a proposal title';
+        } else if (!vestingLockName) {
+            return 'Add contract name';
+        } else if (isSolLow()) {
+            return t('transactions.validation.amount-sol-low');
+        } else if (!selectedToken) {
+            return 'No token selected';
+        } else if (vestingLockFundingAmount && fundingAmount.gt(maxAmount)) {
+            return t('transactions.validation.amount-high');
+        } else {
+            return t('transactions.validation.valid-continue');
+        }
     }
 
     const getStepTwoButtonLabel = () => {
         if (!selectedToken) { return false; }
 
-        let maxAmount = new BigNumber(0);
-        if (selectedToken.address === NATIVE_SOL.address) {
-            const amount = getMaxAmount();
-            if (amount > 0) {
-                maxAmount = new BigNumber(amount);
-            }
+        if (!publicKey) {
+            return t('transactions.validation.not-connected');
+        } else if (isProposalTitleRequiredAndMissing()) {
+            return 'Add a proposal title';
+        } else if (!vestingLockName) {
+            return 'Add contract name';
+        } else if (isSolLow()) {
+            return t('transactions.validation.amount-sol-low');
+        } else if (!selectedToken) {
+            return 'No token selected';
+        } else if (isFundingAmountHigh()) {
+            return t('transactions.validation.amount-high');
+        } else if (!lockPeriodAmount) {
+            return 'Set vesting period';
+        } else if (!lockPeriodFrequency) {
+            return 'Set vesting period';
         } else {
-            maxAmount = new BigNumber(tokenBalanceBn.toString());
+            return t('transactions.validation.valid-continue');
         }
+    }
 
-        const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
-        const fundingAmount = new BigNumber(fa.toString());
-
-        return  !publicKey
-            ? t('transactions.validation.not-connected')
-            : isMultisigContext && !proposalTitle
-                ? 'Add a proposal title'
-                : !vestingLockName
-                    ? 'Add contract name'
-                    : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
-                        ? t('transactions.validation.amount-sol-low')
-                        : !selectedToken
-                            ? 'No token selected'
-                            : (vestingLockFundingAmount && fundingAmount.gt(maxAmount))
-                                ? t('transactions.validation.amount-high')
-                                : !lockPeriodAmount
-                                    ? 'Set vesting period'
-                                    : !lockPeriodFrequency
-                                        ? 'Set vesting period'
-                                        : t('vesting.create-account.create-cta');
-
+    const getMainCtaLabel = () => {
+        if (isBusy) {
+            return t('vesting.create-account.create-cta-busy');
+        } else if (isError(transactionStatus.currentOperation)) {
+            return t('general.retry');
+        } else {
+            return getStepTwoButtonLabel();
+        }
     }
 
     const todayAndPriorDatesDisabled = (current: any) => {
@@ -650,113 +691,146 @@ export const VestingContractCreateForm = (props: {
         return <Menu items={items} />;
     }
 
-    const renderTokenList = (
-        <>
-            {(filteredTokenList && filteredTokenList.length > 0) && (
-                filteredTokenList.map((t, index) => {
-                    const onClick = function () {
-                        tokenChanged(t);
-                        setSelectedToken(t);
+    //#region Token selector - render methods
 
-                        consoleOut("token selected:", t.symbol, 'blue');
-                        setEffectiveRate(getTokenPriceBySymbol(t.symbol));
-                        onCloseTokenSelector();
-                    };
+    const getTokenListItemClass = (item: TokenInfo) => {
+        return selectedToken?.address === item.address ? "selected" : "simplelink";
+    }
 
-                    if (index < MAX_TOKEN_LIST_ITEMS) {
-                        const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
-                        return (
-                            <TokenListItem
-                                key={t.address}
-                                name={t.name || CUSTOM_TOKEN_NAME}
-                                mintAddress={t.address}
-                                token={t}
-                                className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
-                                onClick={onClick}
-                                balance={balance}
-                                showZeroBalances={false}
-                            />
-                        );
-                    } else {
-                        return null;
-                    }
-                })
-            )}
-        </>
-    );
+    const getSingleTokenResultClass = () => {
+        return selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink";
+    }
 
-    const renderTokenSelectorInner = (
-        <div className="token-selector-wrapper">
-            <div className="token-search-wrapper">
-                <TextInput
-                    id="token-search-otp"
-                    value={tokenFilter}
-                    allowClear={true}
-                    extraClass="mb-2"
-                    onInputClear={onInputCleared}
-                    placeholder={t('token-selector.search-input-placeholder')}
-                    error={
-                        tokenFilter && selectedToken && selectedToken.decimals === -1
-                            ? 'Account not found'
-                            : tokenFilter && selectedToken && selectedToken.decimals === -2
-                                ? 'Account is not a token mint'
-                                : ''
-                    }
-                    onInputChange={onTokenSearchInputChange} />
-            </div>
-            <div className="token-list">
-                {filteredTokenList.length > 0 && renderTokenList}
-                {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+    const renderTokenList = () => {
+        return filteredTokenList.map((t, index) => {
+            const onClick = function () {
+                tokenChanged(t);
+                setSelectedToken(t);
+
+                consoleOut("token selected:", t.symbol, 'blue');
+                setEffectiveRate(getTokenPriceBySymbol(t.symbol));
+                onCloseTokenSelector();
+            }
+
+            if (index < MAX_TOKEN_LIST_ITEMS) {
+                const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
+                return (
                     <TokenListItem
-                        key={tokenFilter}
-                        name={CUSTOM_TOKEN_NAME}
-                        mintAddress={tokenFilter}
-                        className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-                        onClick={async () => {
-                            const address = tokenFilter;
-                            let decimals = -1;
-                            let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
-                            try {
-                                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
-                                consoleOut('accountInfo:', accountInfo, 'blue');
-                            } catch (error) {
-                                console.error(error);
-                            }
-                            if (accountInfo) {
-                                if ((accountInfo as any).data["program"] &&
-                                    (accountInfo as any).data["program"] === "spl-token" &&
-                                    (accountInfo as any).data["parsed"] &&
-                                    (accountInfo as any).data["parsed"]["type"] &&
-                                    (accountInfo as any).data["parsed"]["type"] === "mint") {
-                                    decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
-                                } else {
-                                    decimals = -2;
-                                }
-                            }
-                            const unknownToken: TokenInfo = {
-                                address,
-                                name: CUSTOM_TOKEN_NAME,
-                                chainId: getNetworkIdByEnvironment(environment),
-                                decimals,
-                                symbol: `[${shortenAddress(address)}]`,
-                            };
-                            tokenChanged(unknownToken);
-                            setSelectedToken(unknownToken);
-                            if (userBalances && userBalances[address]) {
-                                setSelectedTokenBalance(userBalances[address]);
-                            }
-                            consoleOut("token selected:", unknownToken, 'blue');
-                            // Do not close on errors (-1 or -2)
-                            if (decimals >= 0) {
-                                onCloseTokenSelector();
-                            }
-                        }}
-                        balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+                        key={t.address}
+                        name={t.name || CUSTOM_TOKEN_NAME}
+                        mintAddress={t.address}
+                        token={t}
+                        className={balance ? getTokenListItemClass(t) : "hidden"}
+                        onClick={onClick}
+                        balance={balance}
+                        showUsdValues={true}
                     />
-                )}
+                );
+            } else {
+                return null;
+            }
+        });
+    }
+
+    const getSelectedTokenError = () => {
+        if (tokenFilter && selectedToken) {
+            if (selectedToken.decimals === -1) {
+                return 'Account not found';
+            } else if (selectedToken.decimals === -2) {
+                return 'Account is not a token mint';
+            }
+        }
+        return undefined;
+    }
+
+    const getBalanceForTokenFilter = () => {
+        return connected && userBalances && userBalances[tokenFilter] > 0
+            ? userBalances[tokenFilter]
+            : 0;
+    }
+
+    const renderTokenSelectorInner = () => {
+        return (
+            <div className="token-selector-wrapper">
+                <div className="token-search-wrapper">
+                    <TextInput
+                        id="token-search-rp"
+                        value={tokenFilter}
+                        allowClear={true}
+                        extraClass="mb-2"
+                        onInputClear={onInputCleared}
+                        placeholder={t('token-selector.search-input-placeholder')}
+                        error={getSelectedTokenError()}
+                        onInputChange={onTokenSearchInputChange} />
+                </div>
+                <div className="token-list">
+                    {renderTokenList()}
+                    {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+                        <TokenListItem
+                            key={tokenFilter}
+                            name={CUSTOM_TOKEN_NAME}
+                            mintAddress={tokenFilter}
+                            className={getSingleTokenResultClass()}
+                            onClick={async () => {
+                                const address = tokenFilter;
+                                let decimals = -1;
+                                let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+                                try {
+                                    accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                                    consoleOut('accountInfo:', accountInfo, 'blue');
+                                } catch (error) {
+                                    console.error(error);
+                                }
+                                if (accountInfo) {
+                                    if ((accountInfo as any).data["program"] &&
+                                        (accountInfo as any).data["program"] === "spl-token" &&
+                                        (accountInfo as any).data["parsed"] &&
+                                        (accountInfo as any).data["parsed"]["type"] &&
+                                        (accountInfo as any).data["parsed"]["type"] === "mint") {
+                                        decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+                                    } else {
+                                        decimals = -2;
+                                    }
+                                }
+                                const unknownToken: TokenInfo = {
+                                    address,
+                                    name: CUSTOM_TOKEN_NAME,
+                                    chainId: getNetworkIdByEnvironment(environment),
+                                    decimals,
+                                    symbol: `[${shortenAddress(address)}]`,
+                                };
+                                tokenChanged(unknownToken);
+                                setSelectedToken(unknownToken);
+                                if (userBalances && userBalances[address]) {
+                                    setSelectedTokenBalance(userBalances[address]);
+                                }
+                                consoleOut("token selected:", unknownToken, 'blue');
+                                // Do not close on errors (-1 or -2)
+                                if (decimals >= 0) {
+                                    onCloseTokenSelector();
+                                }
+                            }}
+                            balance={getBalanceForTokenFilter()}
+                        />
+                    )}
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
+
+    //#endregion
+
+    const getFormContainerClasses = () => {
+        return inModal ? 'scrollable-content pl-5 pr-4 py-2' : 'elastic-form-container';
+    }
+
+    const getPanel1Classes = () => {
+        return `panel1 ${currentStep === 0 ? 'show' : 'hide'}`;
+    }
+
+    const getPanel2Classes = () => {
+        return `panel2 ${currentStep === 1 ? 'show' : 'hide'}`;
+    }
 
     const renderDatePickerExtraPanel = () => {
         return (
@@ -808,19 +882,380 @@ export const VestingContractCreateForm = (props: {
         );
     }
 
+    const renderPendingProposals = () => {
+        if (inModal) { return null; }
+        return(
+            <PendingProposalsComponent
+                accountAddress={accountAddress}
+                extraClasses="no-pointer justify-content-center shift-up-3 mb-2"
+                pendingMultisigTxCount={pendingMultisigTxCount}
+            />
+        );
+    }
+
+    const renderProposalTitleField = () => {
+        if (isMultisigContext && selectedMultisig) {
+            return (
+                <div className="mb-3 mt-3">
+                    <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+                    <InputMean
+                        id="proposal-title-field"
+                        name="Title"
+                        className="w-100 general-text-input"
+                        onChange={onTitleInputValueChange}
+                        placeholder="Title for the multisig proposal"
+                        value={proposalTitle}
+                    />
+                </div>
+            );
+        }
+        return null;
+    }
+
+    const getTokenToVestFormFieldTitle = () => {
+        if (isMultisigContext) {
+            return t('vesting.create-account.multisig-vesting-contract-token-label');
+        } else {
+            return t('vesting.create-account.vesting-contract-token-label');
+        }
+    }
+
+    const renderTokenToVestSelectedItem = () => {
+        if (!selectedToken) { return null; }
+
+        return (
+            <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
+                mintAddress={selectedToken.address}
+                name={selectedToken.name}
+                showCaretDown={true}
+                fullTokenInfo={selectedToken}
+            />
+        );
+    }
+
+    const renderTokenToVestMaxCta = () => {
+        if(!isMultisigContext && selectedToken && tokenBalance && canShowMaxCta()) {
+            return (
+                <div className="token-max simplelink" onClick={() => {
+                    if (selectedToken.address === NATIVE_SOL.address) {
+                        const amount = getMaxAmount();
+                        setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                    } else {
+                        setVestingLockFundingAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
+                    }
+                }}>
+                    MAX
+                </div>
+            );
+        }
+        return null;
+    }
+
+    const renderTokenToVestField = () => {
+        return (
+            <>
+                <FormLabelWithIconInfo
+                    label={getTokenToVestFormFieldTitle()}
+                    tooltipText={t('vesting.create-account.vesting-contract-token-tooltip')}
+                />
+                <div className="well">
+                    <div className="flex-fixed-left">
+                        <div className="left">
+                            <span className="add-on simplelink">
+                                {renderTokenToVestSelectedItem()}
+                                {renderTokenToVestMaxCta()}
+                            </span>
+                        </div>
+                        <div className="right">
+                            {isMultisigContext ? (
+                                <span>&nbsp;</span>
+                            ) : (
+                                <input
+                                    className="general-text-input text-right"
+                                    inputMode="decimal"
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    type="text"
+                                    onChange={onVestingLockFundingAmountChange}
+                                    pattern="^[0-9]*[.,]?[0-9]*$"
+                                    placeholder="0.0"
+                                    minLength={1}
+                                    maxLength={79}
+                                    spellCheck="false"
+                                    value={vestingLockFundingAmount}
+                                />
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex-fixed-right">
+                        <div className="left inner-label">
+                            <span>{t('transactions.send-amount.label-right')}:</span>
+                            <span>
+                                {`${tokenBalance && selectedToken
+                                    ? getAmountWithSymbol(tokenBalance, selectedToken.address, true)
+                                    : "0"
+                                    }`
+                                }
+                            </span>
+                        </div>
+                        {!isMultisigContext && (
+                            <div className="right inner-label">
+                                {publicKey ? (
+                                    <>
+                                        <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                                            ~{vestingLockFundingAmount
+                                                ? toUsCurrency(getTokenPrice())
+                                                : "$0.00"
+                                            }
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span>~$0.00</span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    {nativeBalance < getMinSolBlanceRequired() && (
+                        <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+                    )}
+                </div>
+
+            </>
+        );
+    }
+
+    const renderContractNameField = () => {
+        return (
+            <>
+                <div className="form-label">{t('vesting.create-account.vesting-contract-name-label')}</div>
+                <div className="well">
+                    <div className="flex-fixed-right">
+                        <div className="left">
+                            <input
+                                id="vesting-lock-name-input"
+                                className="w-100 general-text-input"
+                                autoComplete="on"
+                                autoCorrect="off"
+                                type="text"
+                                maxLength={32}
+                                onChange={handleVestingLockNameChange}
+                                placeholder="Name for this no-code vesting lock account"
+                                spellCheck="false"
+                                value={vestingLockName} />
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
+    const renderMultisigAccount = () => {
+        if (isMultisigContext && selectedMultisig) {
+            return (
+                <>
+                    <div className="form-label">Multisig account</div>
+                    <div className="well">
+                        {renderSelectedMultisig()}
+                    </div>
+                </>
+            );
+        }
+        return null;
+    }
+
+    const renderVestingCategoryField = () => {
+        return (
+            <>
+                <FormLabelWithIconInfo
+                    label="Vesting category"
+                    tooltipText="This vesting category helps identify the type of streams in this contract. Some examples are seed round, investor, marketing, token lock."
+                />
+                <div className="well">
+                    <Dropdown
+                        overlay={vestingCategoriesMenu()}
+                        trigger={["click"]}>
+                        <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                            <div className="left">
+                                {vestingCategory ? (
+                                    <span>{vestingCategory.label}</span>
+                                ) : (
+                                    <span className="placeholder-text">Please select a vesting category</span>
+                                )}
+                            </div>
+                            <div className="right">
+                                <IconCaretDown className="mean-svg-icons" />
+                            </div>
+                        </span>
+                    </Dropdown>
+                </div>
+            </>
+        );
+    }
+
+    const renderVestingPeriodFields = () => {
+        return (
+            <>
+                <div className="form-label">Vesting period</div>
+                <div className="two-column-layout">
+                    <div className="left">
+                        <div className="well">
+                            <div className="flex-fixed-right">
+                                <div className="left">
+                                    <input
+                                        id="plock-period-field"
+                                        className="w-100 general-text-input"
+                                        autoComplete="on"
+                                        autoCorrect="off"
+                                        type="text"
+                                        onChange={handleLockPeriodAmountChange}
+                                        placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
+                                        spellCheck="false"
+                                        min={1}
+                                        value={lockPeriodAmount}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="right">
+                        <div className="well">
+                            <Dropdown
+                                overlay={lockPeriodOptionsMenu}
+                                trigger={["click"]}>
+                                <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                                    <div className="left">
+                                        <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)}{" "}</span>
+                                    </div>
+                                    <div className="right">
+                                        <IconCaretDown className="mean-svg-icons" />
+                                    </div>
+                                </span>
+                            </Dropdown>
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
+    const renderCommencementDateFields = () => {
+        return (
+            <>
+                <FormLabelWithIconInfo
+                    label="Contract commencement date"
+                    tooltipText="This the the contract start date and time and establishes when vesting will begin for all recipients. No additional streams can be created once the vesting contract has started."
+                />
+                <div className="two-column-layout">
+                    <div className="left">
+                        <div className="well">
+                            <div className="flex-fixed-right">
+                                <div className="left static-data-field">{paymentStartDate}</div>
+                                <div className="right">
+                                    <div className="add-on simplelink">
+                                        <>
+                                            {
+                                                <DatePicker
+                                                    size="middle"
+                                                    bordered={false}
+                                                    className="addon-date-picker"
+                                                    aria-required={true}
+                                                    allowClear={false}
+                                                    disabledDate={todayAndPriorDatesDisabled}
+                                                    placeholder="Pick a date"
+                                                    onChange={(value: any, date: string) => handleDateChange(date)}
+                                                    value={moment(
+                                                        paymentStartDate,
+                                                        DATEPICKER_FORMAT
+                                                    ) as any}
+                                                    format={DATEPICKER_FORMAT}
+                                                    showNow={false}
+                                                    showToday={false}
+                                                    renderExtraFooter={renderDatePickerExtraPanel}
+                                                />
+                                            }
+                                        </>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="right">
+                        <div className="well time-picker">
+                            <TimePicker
+                                defaultValue={get30MinsAhead()}
+                                bordered={false}
+                                allowClear={false}
+                                size="middle"
+                                use12Hours
+                                format={timeFormat}
+                                onChange={onTimePickerChange} />
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
+    const renderCliffReleaseField = () => {
+        return (
+            <>
+                <FormLabelWithIconInfo
+                    label="Cliff release (On commencement date)"
+                    tooltipText="The percentage of allocated funds released to each recipient once the vesting contract starts."
+                />
+                <div className="well">
+                    <div className="flexible-right mb-1">
+                        <div className="token-group">
+                            {percentages.map((percentage, index) => (
+                                <div key={index} className="mb-1 d-flex flex-column align-items-center">
+                                    <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>{percentage}%</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex-fixed-left">
+                        <div className="left">
+                            <span className="add-on simplelink">
+                                {selectedToken && (
+                                    <TokenDisplay onClick={() => { }}
+                                        mintAddress={selectedToken.address}
+                                        name={selectedToken.name}
+                                        fullTokenInfo={selectedToken}
+                                    />
+                                )}
+                            </span>
+                        </div>
+                        <div className="right flex-row justify-content-end align-items-center">
+                            <input
+                                className="general-text-input text-right"
+                                inputMode="decimal"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                type="text"
+                                onChange={handleCliffReleaseAmountChange}
+                                pattern="^[0-9]*[.,]?[0-9]*$"
+                                placeholder="0.0"
+                                minLength={1}
+                                maxLength={79}
+                                spellCheck="false"
+                                value={cliffReleasePercentage}
+                            />
+                            <span className="suffix">%</span>
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
+
     return (
         <>
             <Spin spinning={loadingMultisigAccounts}>
 
-                {!inModal && (
-                    <PendingProposalsComponent
-                        accountAddress={accountAddress}
-                        extraClasses="no-pointer justify-content-center shift-up-3 mb-2"
-                        pendingMultisigTxCount={pendingMultisigTxCount}
-                    />
-                )}
+                {renderPendingProposals()}
 
-                <div className={`${inModal ? 'scrollable-content pl-5 pr-4 py-2' : 'elastic-form-container'}`}>
+                <div className={getFormContainerClasses()}>
 
                     <WizardStepSelector
                         step={currentStep}
@@ -829,7 +1264,7 @@ export const VestingContractCreateForm = (props: {
                         onValueSelected={onStepperChange}
                     />
 
-                    <div className={`panel1 ${currentStep === 0 ? 'show' : 'hide'}`}>
+                    <div className={getPanel1Classes()}>
 
                         <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
 
@@ -839,139 +1274,16 @@ export const VestingContractCreateForm = (props: {
                         </div>
 
                         {/* Proposal title */}
-                        {isMultisigContext && selectedMultisig && (
-                            <div className="mb-3 mt-3">
-                                <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
-                                <InputMean
-                                    id="proposal-title-field"
-                                    name="Title"
-                                    className="w-100 general-text-input"
-                                    onChange={onTitleInputValueChange}
-                                    placeholder="Title for the multisig proposal"
-                                    value={proposalTitle}
-                                />
-                            </div>
-                        )}
+                        {renderProposalTitleField()}
 
-                        {/* Vesting Lock name */}
-                        <div className="form-label">{t('vesting.create-account.vesting-contract-name-label')}</div>
-                        <div className="well">
-                            <div className="flex-fixed-right">
-                                <div className="left">
-                                    <input
-                                        id="vesting-lock-name-input"
-                                        className="w-100 general-text-input"
-                                        autoComplete="on"
-                                        autoCorrect="off"
-                                        type="text"
-                                        maxLength={32}
-                                        onChange={handleVestingLockNameChange}
-                                        placeholder="Name for this no-code vesting lock account"
-                                        spellCheck="false"
-                                        value={vestingLockName}
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                        {/* Vesting Contract name */}
+                        {renderContractNameField()}
 
                         {/* Token to vest */}
-                        <FormLabelWithIconInfo
-                            label={
-                                isMultisigContext
-                                    ? t('vesting.create-account.multisig-vesting-contract-token-label')
-                                    : t('vesting.create-account.vesting-contract-token-label')
-                            }
-                            tooltipText={t('vesting.create-account.vesting-contract-token-tooltip')}
-                        />
-                        <div className="well">
-                            <div className="flex-fixed-left">
-                                <div className="left">
-                                    <span className="add-on simplelink">
-                                        {selectedToken && (
-                                            <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
-                                                mintAddress={selectedToken.address}
-                                                name={selectedToken.name}
-                                                showCaretDown={true}
-                                                fullTokenInfo={selectedToken}
-                                            />
-                                        )}
-                                        {!isMultisigContext && selectedToken && tokenBalance && canShowMaxCta() ? (
-                                            <div className="token-max simplelink" onClick={() => {
-                                                if (selectedToken.address === NATIVE_SOL.address) {
-                                                    const amount = getMaxAmount();
-                                                    setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-                                                } else {
-                                                    setVestingLockFundingAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
-                                                }
-                                            }}>
-                                                MAX
-                                            </div>
-                                        ) : null}
-                                    </span>
-                                </div>
-                                <div className="right">
-                                    {isMultisigContext ? (
-                                        <span>&nbsp;</span>
-                                    ) : (
-                                        <input
-                                            className="general-text-input text-right"
-                                            inputMode="decimal"
-                                            autoComplete="off"
-                                            autoCorrect="off"
-                                            type="text"
-                                            onChange={onVestingLockFundingAmountChange}
-                                            pattern="^[0-9]*[.,]?[0-9]*$"
-                                            placeholder="0.0"
-                                            minLength={1}
-                                            maxLength={79}
-                                            spellCheck="false"
-                                            value={vestingLockFundingAmount}
-                                        />
-                                    )}
-                                </div>
-                            </div>
-                            <div className="flex-fixed-right">
-                                <div className="left inner-label">
-                                    <span>{t('transactions.send-amount.label-right')}:</span>
-                                    <span>
-                                        {`${tokenBalance && selectedToken
-                                            ? getAmountWithSymbol(tokenBalance, selectedToken.address, true)
-                                            : "0"
-                                            }`
-                                        }
-                                    </span>
-                                </div>
-                                {!isMultisigContext && (
-                                    <div className="right inner-label">
-                                        {publicKey ? (
-                                            <>
-                                                <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                                                ~{vestingLockFundingAmount
-                                                    ? toUsCurrency(getTokenPrice())
-                                                    : "$0.00"
-                                                }
-                                                </span>
-                                            </>
-                                        ) : (
-                                            <span>~$0.00</span>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                            {nativeBalance < getMinSolBlanceRequired() && (
-                                <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
-                            )}
-                        </div>
+                        {renderTokenToVestField()}
 
                         {/* Display Multisig account */}
-                        {isMultisigContext && selectedMultisig && (
-                            <>
-                                <div className="form-label">Multisig account</div>
-                                <div className="well">
-                                    {renderSelectedMultisig()}
-                                </div>
-                            </>
-                        )}
+                        {renderMultisigAccount()}
 
                         {/* CTA */}
                         <div className="cta-container">
@@ -988,174 +1300,21 @@ export const VestingContractCreateForm = (props: {
 
                     </div>
 
-                    <div className={`panel2 ${currentStep === 1 ? 'show' : 'hide'}`}>
+                    <div className={getPanel2Classes()}>
 
                         <h2 className="form-group-label">{t('vesting.create-account.step-two-label')}</h2>
 
                         {/* Vesting category */}
-                        <FormLabelWithIconInfo
-                            label="Vesting category"
-                            tooltipText="This vesting category helps identify the type of streams in this contract. Some examples are seed round, investor, marketing, token lock."
-                        />
-                        <div className="well">
-                            <Dropdown
-                                overlay={vestingCategoriesMenu()}
-                                trigger={["click"]}>
-                                <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                                    <div className="left">
-                                        {vestingCategory ? (
-                                            <span>{vestingCategory.label}</span>
-                                        ) : (
-                                            <span className="placeholder-text">Please select a vesting category</span>
-                                        )}
-                                    </div>
-                                    <div className="right">
-                                        <IconCaretDown className="mean-svg-icons" />
-                                    </div>
-                                </span>
-                            </Dropdown>
-                        </div>
+                        {renderVestingCategoryField()}
 
                         {/* Vesting period */}
-                        <div className="form-label">Vesting period</div>
-                        <div className="two-column-layout">
-                            <div className="left">
-                                <div className="well">
-                                    <div className="flex-fixed-right">
-                                        <div className="left">
-                                            <input
-                                                id="plock-period-field"
-                                                className="w-100 general-text-input"
-                                                autoComplete="on"
-                                                autoCorrect="off"
-                                                type="text"
-                                                onChange={handleLockPeriodAmountChange}
-                                                placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
-                                                spellCheck="false"
-                                                min={1}
-                                                value={lockPeriodAmount}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="right">
-                                <div className="well">
-                                    <Dropdown
-                                        overlay={lockPeriodOptionsMenu}
-                                        trigger={["click"]}>
-                                        <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                                            <div className="left">
-                                                <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)}{" "}</span>
-                                            </div>
-                                            <div className="right">
-                                                <IconCaretDown className="mean-svg-icons" />
-                                            </div>
-                                        </span>
-                                    </Dropdown>
-                                </div>
-                            </div>
-                        </div>
+                        {renderVestingPeriodFields()}
 
                         {/* Contract commencement date */}
-                        <FormLabelWithIconInfo
-                            label="Contract commencement date"
-                            tooltipText="This the the contract start date and time and establishes when vesting will begin for all recipients. No additional streams can be created once the vesting contract has started."
-                        />
-                        <div className="two-column-layout">
-                            <div className="left">
-                                <div className="well">
-                                    <div className="flex-fixed-right">
-                                        <div className="left static-data-field">{paymentStartDate}</div>
-                                        <div className="right">
-                                            <div className="add-on simplelink">
-                                                <>
-                                                    {
-                                                        <DatePicker
-                                                            size="middle"
-                                                            bordered={false}
-                                                            className="addon-date-picker"
-                                                            aria-required={true}
-                                                            allowClear={false}
-                                                            disabledDate={todayAndPriorDatesDisabled}
-                                                            placeholder="Pick a date"
-                                                            onChange={(value: any, date: string) => handleDateChange(date)}
-                                                            value={moment(
-                                                                paymentStartDate,
-                                                                DATEPICKER_FORMAT
-                                                            ) as any}
-                                                            format={DATEPICKER_FORMAT}
-                                                            showNow={false}
-                                                            showToday={false}
-                                                            renderExtraFooter={renderDatePickerExtraPanel}
-                                                        />
-                                                    }
-                                                </>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="right">
-                                <div className="well time-picker">
-                                    <TimePicker
-                                        defaultValue={get30MinsAhead()}
-                                        bordered={false}
-                                        allowClear={false}
-                                        size="middle"
-                                        use12Hours
-                                        format={timeFormat}
-                                        onChange={onTimePickerChange} />
-                                </div>
-                            </div>
-                        </div>
+                        {renderCommencementDateFields()}
 
                         {/* Cliff release */}
-                        <FormLabelWithIconInfo
-                            label="Cliff release (On commencement date)"
-                            tooltipText="The percentage of allocated funds released to each recipient once the vesting contract starts."
-                        />
-                        <div className="well">
-                            <div className="flexible-right mb-1">
-                                <div className="token-group">
-                                    {percentages.map((percentage, index) => (
-                                        <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                                            <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>{percentage}%</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="flex-fixed-left">
-                                <div className="left">
-                                    <span className="add-on simplelink">
-                                        {selectedToken && (
-                                            <TokenDisplay onClick={() => { }}
-                                                mintAddress={selectedToken.address}
-                                                name={selectedToken.name}
-                                                fullTokenInfo={selectedToken}
-                                            />
-                                        )}
-                                    </span>
-                                </div>
-                                <div className="right flex-row justify-content-end align-items-center">
-                                    <input
-                                        className="general-text-input text-right"
-                                        inputMode="decimal"
-                                        autoComplete="off"
-                                        autoCorrect="off"
-                                        type="text"
-                                        onChange={handleCliffReleaseAmountChange}
-                                        pattern="^[0-9]*[.,]?[0-9]*$"
-                                        placeholder="0.0"
-                                        minLength={1}
-                                        maxLength={79}
-                                        spellCheck="false"
-                                        value={cliffReleasePercentage}
-                                    />
-                                    <span className="suffix">%</span>
-                                </div>
-                            </div>
-                        </div>
+                        {renderCliffReleaseField()}
 
                         {/* Streaming fees will be paid from the vesting contract's funds */}
                         <div className="ml-1 mb-3">
@@ -1187,12 +1346,7 @@ export const VestingContractCreateForm = (props: {
                                     {isBusy && (
                                         <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                                     )}
-                                    {isBusy
-                                        ? t('vesting.create-account.create-cta-busy')
-                                        : isError(transactionStatus.currentOperation)
-                                            ? t('general.retry')
-                                            : getStepTwoButtonLabel()
-                                    }
+                                    {getMainCtaLabel()}
                                 </Button>
                             </div>
                         </div>
@@ -1212,7 +1366,7 @@ export const VestingContractCreateForm = (props: {
                     open={isTokenSelectorVisible}
                     getContainer={false}
                     style={{ position: 'absolute' }}>
-                    {renderTokenSelectorInner}
+                    {renderTokenSelectorInner()}
                 </Drawer>
             )}
 
@@ -1225,7 +1379,7 @@ export const VestingContractCreateForm = (props: {
                     onCancel={onCloseTokenSelector}
                     width={450}
                     footer={null}>
-                    {renderTokenSelectorInner}
+                    {renderTokenSelectorInner()}
                 </Modal>
             )}
         </>

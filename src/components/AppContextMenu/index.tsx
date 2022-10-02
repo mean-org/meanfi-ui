@@ -1,12 +1,12 @@
 import { EllipsisOutlined } from "@ant-design/icons";
 import { Button, Dropdown, Menu } from "antd";
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
-import { useCallback, useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Link } from 'react-router-dom';
-import { LANGUAGES, MEANFI_SUPPORT_URL, MEAN_DAO_GITBOOKS_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_FINANCE_DISCORD_URL } from "../../constants";
-import { AppStateContext } from "../../contexts/appstate";
-import { useWallet } from "../../contexts/wallet";
+import { LanguageSelector } from "components/LanguageSelector";
+import { openNotification } from 'components/Notifications';
+import { ReferFriendModal } from 'components/ReferFriendModal';
+import { LANGUAGES, MEANFI_SUPPORT_URL, MEAN_DAO_GITBOOKS_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_FINANCE_DISCORD_URL } from "constants/common";
+import { AppStateContext } from "contexts/appstate";
+import { useWallet } from "contexts/wallet";
 import {
   IconBookOpen,
   IconChat,
@@ -15,10 +15,10 @@ import {
   IconMoon,
   IconSettings,
   IconShareBox
-} from "../../Icons";
-import { LanguageSelector } from "../LanguageSelector";
-import { openNotification } from '../Notifications';
-import { ReferFriendModal } from '../ReferFriendModal';
+} from "Icons";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from 'react-router-dom';
 
 export const AppContextMenu = () => {
 
@@ -79,7 +79,7 @@ export const AppContextMenu = () => {
     if (lang && lang.length) {
       return (<img src={lang[0].flag} alt={getLanguageCode(lang[0].code)} className="mean-svg-icons" />);
     } else {
-      <IconSettings className="mean-svg-icons" />
+      return (<IconSettings className="mean-svg-icons" />);
     }
   }
 

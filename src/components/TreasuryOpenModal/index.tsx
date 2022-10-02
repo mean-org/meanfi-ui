@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect } from 'react';
-import { useState } from 'react';
-import { Modal, Button } from 'antd';
-import { isValidAddress } from '../../middleware/ui';
+import { Button, Modal } from 'antd';
+import { useWallet } from 'contexts/wallet';
+import { isValidAddress } from 'middleware/ui';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useWallet } from '../../contexts/wallet';
 
 export const TreasuryOpenModal = (props: {
   handleClose: any;
@@ -39,13 +38,7 @@ export const TreasuryOpenModal = (props: {
     setTreasuryId(trimmedValue);
   }
 
-  const onTreasuryIdFocusIn = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 10);
-  }
-
-  const onTreasuryIdFocusOut = () => {
+  const onTreasuryIdFocusInOut = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
@@ -78,6 +71,16 @@ export const TreasuryOpenModal = (props: {
     }
   }, [treasuryId]);
 
+  const getMainCtaLabel = () => {
+    if (!treasuryId) {
+      return t('treasuries.open-treasury.treasuryid-input-empty');
+    } else if (!isValidAddress(treasuryId)) {
+      return t('transactions.validation.invalid-solana-address');
+    } else {
+      return t('treasuries.open-treasury.main-cta');
+    }
+  }
+
   return (
     <Modal
       className="mean-modal"
@@ -98,9 +101,9 @@ export const TreasuryOpenModal = (props: {
                 autoComplete="on"
                 autoCorrect="off"
                 type="text"
-                onFocus={onTreasuryIdFocusIn}
+                onFocus={onTreasuryIdFocusInOut}
                 onChange={onTreasuryIdChange}
-                onBlur={onTreasuryIdFocusOut}
+                onBlur={onTreasuryIdFocusInOut}
                 placeholder={t('treasuries.open-treasury.treasuryid-placeholder')}
                 required={true}
                 spellCheck="false"
@@ -114,15 +117,18 @@ export const TreasuryOpenModal = (props: {
           <div className="right">&nbsp;</div>
         </div>
         {
-          treasuryId && !isValidAddress(treasuryId) ? (
+          treasuryId && !isValidAddress(treasuryId) && (
             <span className="form-field-error">
               {t('transactions.validation.address-validation')}
             </span>
-          ) : isAddressOwnAccount() ? (
+          )
+        }
+        {
+          isAddressOwnAccount() && (
             <span className="form-field-error">
               {t('transactions.validation.cannot-use-own-account-as-treasury')}
             </span>
-          ) : (null)
+          )
         }
       </div>
 
@@ -134,12 +140,7 @@ export const TreasuryOpenModal = (props: {
         size="large"
         disabled={!treasuryId || !isValidAddress(treasuryId) || isAddressOwnAccount()}
         onClick={onAcceptTreasuryId}>
-        {!treasuryId
-          ? t('treasuries.open-treasury.treasuryid-input-empty')
-          : !isValidAddress(treasuryId)
-          ? t('transactions.validation.invalid-solana-address')
-          : t('treasuries.open-treasury.main-cta')
-        }
+        {getMainCtaLabel()}
       </Button>
     </Modal>
   );

@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useContext, useState } from 'react';
 import "./style.scss";
-import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col } from 'antd';
-import { AppStateContext } from '../../contexts/appstate';
+import { AppStateContext } from 'contexts/appstate';
 import {
   displayAmountWithSymbol,
   formatThousands,
@@ -13,7 +12,7 @@ import {
   toTokenAmount,
   toTokenAmountBn,
   toUiAmount,
-} from '../../middleware/utils';
+} from 'middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import {
@@ -29,35 +28,36 @@ import {
   isValidAddress,
   stringNumberFormat,
   toUsCurrency,
-} from '../../middleware/ui';
-import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
+} from 'middleware/ui';
+import { PaymentRateTypeOption } from "models/PaymentRateTypeOption";
 import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
-import { TokenDisplay } from '../TokenDisplay';
-import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
-import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
+import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
+import { OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import moment from "moment";
-import { useWallet } from '../../contexts/wallet';
+import { useWallet } from 'contexts/wallet';
 import { StepSelector } from '../StepSelector';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
 import { Identicon } from '../Identicon';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { TxConfirmationContext } from 'contexts/transaction-status';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
-import { appConfig, customLogger } from '../..';
 import { Beneficiary, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
-import { useConnectionConfig } from '../../contexts/connection';
+import { useConnectionConfig } from 'contexts/connection';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
 import { MeanMultisig, DEFAULT_EXPIRATION_TIME_SECONDS, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { InfoIcon } from '../InfoIcon';
 import { useSearchParams } from 'react-router-dom';
-import { InputMean } from '../InputMean';
-import { CreateStreamParams } from '../../models/streams';
-import { readAccountInfo } from '../../middleware/accounts';
+import { CreateStreamParams } from 'models/streams';
+import { readAccountInfo } from 'middleware/accounts';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { appConfig, customLogger } from 'index';
+import { InputMean } from 'components/InputMean';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { InfoIcon } from 'components/InfoIcon';
 
 const { Option } = Select;
+type TreasuryValues = Treasury | TreasuryInfo | undefined;
 
 export const TreasuryStreamCreateModal = (props: {
   associatedToken: string;
@@ -71,7 +71,7 @@ export const TreasuryStreamCreateModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   treasuryList: (Treasury | TreasuryInfo)[] | undefined;
-  treasuryDetails: Treasury | TreasuryInfo | undefined;
+  treasuryDetails: TreasuryValues;
   userBalances: any;
   withdrawTransactionFees: TransactionFees;
 }) => {
@@ -149,9 +149,7 @@ export const TreasuryStreamCreateModal = (props: {
   const [paymentRateAmountBn, setPaymentRateAmountBn] = useState(new BN(0));
   const [amountToBeStreamedBn, setAmountToBeStreamedBn] = useState(new BN(0));
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
-  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
-  const [workingAssociatedToken, setWorkingAssociatedToken] = useState('');
-  const [workingTreasuryDetails, setWorkingTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
+  const [workingTreasuryDetails, setWorkingTreasuryDetails] = useState<TreasuryValues>(undefined);
   const [workingTreasuryType, setWorkingTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] = useState('');
   const [proposalTitle, setProposalTitle] = useState('');
@@ -352,147 +350,6 @@ export const TreasuryStreamCreateModal = (props: {
     return options;
   }
 
-  const getStepOneContinueButtonLabel = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : (param === "multisig" && !proposalTitle)
-        ? 'Add a proposal title'
-        : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
-          ? 'Select streaming account'
-          : (!enableMultipleStreamsOption && !recipientNote)
-            ? 'Set stream name'
-            : (!enableMultipleStreamsOption && !recipientAddress)
-              ? t('transactions.validation.select-recipient') 
-              : (enableMultipleStreamsOption && !validMultiRecipientsList)
-                ? t('transactions.validation.select-address-list')
-                : !selectedToken || unallocatedBalance.isZero()
-                  ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
-                    : (!paymentRateAmount || parseFloat(paymentRateAmount) === 0)
-                    ? t('transactions.validation.no-amount')
-                      : !paymentStartDate
-                        ? t('transactions.validation.no-valid-date')
-                        : !arePaymentSettingsValid()
-                          ? getPaymentSettingsButtonLabel()
-                          : t('transactions.validation.valid-continue');
-  };
-
-  const getStepOneContinueButtonLabelInLocked = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : (param === "multisig" && !proposalTitle)
-        ? 'Add a proposal title'
-        : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
-          ? 'Select streaming account'
-          : (!enableMultipleStreamsOption && !recipientNote)
-            ? 'Set stream name'
-            : (!enableMultipleStreamsOption && !recipientAddress)
-              ? t('transactions.validation.select-recipient') 
-              : (enableMultipleStreamsOption && !validMultiRecipientsList)
-                ? t('transactions.validation.select-address-list')
-                : !selectedToken || unallocatedBalance.isZero()
-                  ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
-                  : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
-                    ? t('transactions.validation.no-amount')
-                    : (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)))
-                      ? t('Invalid amount')
-                      : !paymentStartDate
-                        ? t('transactions.validation.no-valid-date')
-                        : !arePaymentSettingsValid()
-                          ? getPaymentSettingsButtonLabel()
-                          : t('transactions.validation.valid-continue');
-  };
-
-  const getStepTwoContinueButtonLabel = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : (param === "multisig" && !proposalTitle)
-        ? 'Add a proposal title'
-        : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
-          ? 'Select streaming account'
-          : !recipientNote
-            ? 'Set stream name'
-            : !recipientAddress
-              ? t('transactions.validation.select-recipient')
-              : !selectedToken || unallocatedBalance.isZero()
-                ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
-                : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
-                  ? t('transactions.validation.no-amount')
-                  : (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)))
-                    ? t('Invalid amount')
-                    : !lockPeriodAmount || parseFloat(lockPeriodAmount) === 0
-                      ? 'Lock period cannot be empty'
-                      : cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
-                        ? 'Invalid cliff amount'
-                        : !paymentStartDate
-                          ? t('transactions.validation.no-valid-date')
-                          : !areSendAmountSettingsValid()
-                            ? getPaymentSettingsButtonLabel()
-                            : t('transactions.validation.valid-continue');
-  }
-
-  const getTransactionStartButtonLabel = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : (param === "multisig" && !proposalTitle)
-        ? 'Add a proposal title'
-        : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
-          ? 'Select streaming account'
-          : (!enableMultipleStreamsOption && !recipientNote)
-            ? 'Set stream name'
-            : (!enableMultipleStreamsOption && !recipientAddress)
-              ? t('transactions.validation.select-recipient') 
-              : (enableMultipleStreamsOption && !validMultiRecipientsList)
-                ? t('transactions.validation.select-address-list')
-                : !selectedToken || unallocatedBalance.isZero()
-                  ? t('transactions.validation.no-balance')
-                  : !tokenAmount || tokenAmount.isZero()
-                    ? t('transactions.validation.no-amount')
-                    : (isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
-                      (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))
-                      ? t('transactions.validation.amount-high')
-                      : !paymentStartDate
-                        ? t('transactions.validation.no-valid-date')
-                        : !arePaymentSettingsValid()
-                          ? getPaymentSettingsButtonLabel()
-                          : !isVerifiedRecipient
-                            ? t('transactions.validation.verified-recipient-unchecked')
-                            : nativeBalance < getMinBalanceRequired()
-                              ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-                              : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
-  };
-
-  const getTransactionStartButtonLabelInLocked = (): string => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : (param === "multisig" && !proposalTitle)
-        ? 'Add a proposal title'
-        : (!enableMultipleStreamsOption && !isStreamingAccountSelected())
-          ? 'Select streaming account'
-          : !recipientNote
-            ? 'Set stream name'
-            : !recipientAddress
-              ? t('transactions.validation.select-recipient') 
-              : !selectedToken || unallocatedBalance.isZero()
-                ? `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}` // t('transactions.validation.no-balance')
-                : (!fromCoinAmount || parseFloat(fromCoinAmount) === 0)
-                  ? t('transactions.validation.no-amount')
-                  : (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)))
-                    ? t('Invalid amount')
-                    : !lockPeriodAmount || parseFloat(lockPeriodAmount) === 0
-                      ? 'Lock period cannot be empty'
-                      : cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
-                        ? 'Invalid cliff amount'
-                        : !paymentStartDate
-                          ? t('transactions.validation.no-valid-date')
-                          : !arePaymentSettingsValid()
-                            ? getPaymentSettingsButtonLabel()
-                            : !isVerifiedRecipient
-                              ? t('transactions.validation.verified-recipient-unchecked')
-                              : nativeBalance < getMinBalanceRequired()
-                                ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-                                : (param === "multisig" ? "Submit proposal" : t('transactions.validation.valid-approve'));
-  };
-
   const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
 
@@ -506,6 +363,161 @@ export const TreasuryStreamCreateModal = (props: {
         : '';
     }
   }
+
+  const getStepOneContinueButtonLabel = (): string => {
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (param === "multisig" && !proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+      return 'Select streaming account';
+    } else if (!enableMultipleStreamsOption && !recipientNote) {
+      return 'Set stream name';
+    } else if (!enableMultipleStreamsOption && !recipientAddress) {
+      return t('transactions.validation.select-recipient');
+    } else if (enableMultipleStreamsOption && !validMultiRecipientsList) {
+      return t('transactions.validation.select-address-list');
+    } else if (!selectedToken || unallocatedBalance.isZero()) {
+      return `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}`;
+    } else if (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) {
+      return t('transactions.validation.no-amount');
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    } else if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else {
+      return t('transactions.validation.valid-continue');
+    }
+  };
+
+  const getStepOneContinueButtonLabelInLocked = (): string => {
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (param === "multisig" && !proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+      return 'Select streaming account';
+    } else if (!enableMultipleStreamsOption && !recipientNote) {
+      return 'Set stream name';
+    } else if (!enableMultipleStreamsOption && !recipientAddress) {
+      return t('transactions.validation.select-recipient');
+    } else if (enableMultipleStreamsOption && !validMultiRecipientsList) {
+      return t('transactions.validation.select-address-list');
+    } else if (!selectedToken || unallocatedBalance.isZero()) {
+      return `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}`;
+    } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
+      return t('transactions.validation.no-amount');
+    } else if (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid amount';
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date')
+    } else if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else {
+      return t('transactions.validation.valid-continue');
+    }
+  };
+
+  const getStepTwoContinueButtonLabel = (): string => {
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (param === "multisig" && !proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+      return 'Select streaming account';
+    } else if (!recipientNote) {
+      return 'Set stream name';
+    } else if (!recipientAddress) {
+      return t('transactions.validation.select-recipient');
+    } else if (!selectedToken || unallocatedBalance.isZero()) {
+      return `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}`;
+    } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
+      return t('transactions.validation.no-amount');
+    } else if (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid amount';
+    } else if (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) {
+      return 'Lock period cannot be empty';
+    } else if (cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid cliff amount';
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    } else if (!areSendAmountSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else {
+      return t('transactions.validation.valid-continue');
+    }
+  };
+
+  const getTransactionStartButtonLabel = (): string => {
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (param === "multisig" && !proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+      return 'Select streaming account';
+    } else if (!enableMultipleStreamsOption && !recipientNote) {
+      return 'Set stream name';
+    } else if (!enableMultipleStreamsOption && !recipientAddress) {
+      return t('transactions.validation.select-recipient');
+    } else if (enableMultipleStreamsOption && !validMultiRecipientsList) {
+      return t('transactions.validation.select-address-list');
+    } else if (!selectedToken || unallocatedBalance.isZero()) {
+      return t('transactions.validation.no-balance');
+    } else if (!tokenAmount || tokenAmount.isZero()) {
+      return t('transactions.validation.no-amount');
+    } else if ((isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
+               (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))) {
+      return t('transactions.validation.amount-high');
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date')
+    } else if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else if (!isVerifiedRecipient) {
+      return t('transactions.validation.verified-recipient-unchecked');
+    } else if (nativeBalance < getMinBalanceRequired()) {
+      return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) });
+    } else if (param === "multisig") {
+      return 'Submit proposal';
+    } else {
+      return t('transactions.validation.valid-approve');
+    }
+  };
+
+  const getTransactionStartButtonLabelInLocked = (): string => {
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (param === "multisig" && !proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+      return 'Select streaming account';
+    } else if (!recipientNote) {
+      return 'Set stream name';
+    } else if (!recipientAddress) {
+      return t('transactions.validation.select-recipient');
+    } else if (!selectedToken || unallocatedBalance.isZero()) {
+      return `No balance in account ${workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')' : ''}`;
+    } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
+      return t('transactions.validation.no-amount');
+    } else if (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid amount';
+    } else if (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) {
+      return 'Lock period cannot be empty';
+    } else if (cliffRelease && parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid cliff amount';
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    } else if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    } else if (!isVerifiedRecipient) {
+      return t('transactions.validation.verified-recipient-unchecked');
+    } else if (nativeBalance < getMinBalanceRequired()) {
+      return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) });
+    } else if (param === "multisig") {
+      return 'Submit proposal';
+    } else {
+      return t('transactions.validation.valid-approve');
+    }
+  };
 
   const getPaymentRateAmount = useCallback(() => {
 
@@ -535,11 +547,10 @@ export const TreasuryStreamCreateModal = (props: {
       if (treasuryDetails) {
         const v1 = treasuryDetails as TreasuryInfo;
         const v2 = treasuryDetails as Treasury;
-        const treasuryType = treasuryDetails.version < 2 ? v1.type as TreasuryType : v2.treasuryType as TreasuryType;
+        const treasuryType = treasuryDetails.version < 2 ? v1.type as TreasuryType : v2.treasuryType;
         consoleOut('treasuryDetails aquired:', treasuryDetails, 'blue');
         setWorkingTreasuryDetails(treasuryDetails);
         setSelectedStreamingAccountId(treasuryDetails.id as string);
-        setWorkingAssociatedToken(treasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
         setWorkingTreasuryType(treasuryType);
       }
     }
@@ -552,11 +563,10 @@ export const TreasuryStreamCreateModal = (props: {
       const selected = treasuryList[0];
       const v1 = selected as TreasuryInfo;
       const v2 = selected as Treasury;
-      const treasuryType = selected.version < 2 ? v1.type as TreasuryType : v2.treasuryType as TreasuryType;
+      const treasuryType = selected.version < 2 ? v1.type as TreasuryType : v2.treasuryType;
       consoleOut('treasuryDetails preset:', selected, 'blue');
       setWorkingTreasuryDetails(selected);
       setSelectedStreamingAccountId(selected.id as string);
-      setWorkingAssociatedToken(selected.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string);
       setWorkingTreasuryType(treasuryType);
     }
   }, [isVisible, treasuryDetails, treasuryList, workingTreasuryDetails]);
@@ -572,16 +582,9 @@ export const TreasuryStreamCreateModal = (props: {
     tokenAddress = workingTreasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
     getTokenOrCustomToken(tokenAddress)
     .then(token => {
-      consoleOut('Treasury workingAssociatedToken:', token, 'blue');
+      consoleOut('Treasury associated token:', token, 'blue');
       setSelectedToken(token);
-      setWorkingAssociatedToken(tokenAddress)
-      if (userBalances[tokenAddress]) {
-        setSelectedTokenBalance(userBalances[tokenAddress]);
-      } else {
-        setSelectedTokenBalance(0);
-      }
     });
-    setWorkingAssociatedToken(tokenAddress)
   }, [getTokenOrCustomToken, hasNoStreamingAccounts, userBalances, workingTreasuryDetails]);
 
   // Set treasury unalocated balance in BN
@@ -595,8 +598,8 @@ export const TreasuryStreamCreateModal = (props: {
     const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
       const isNew = details && details.version >= 2 ? true : false;
       let result = new BN(0);
-      let balance = new BN(0);
-      let allocationAssigned = new BN(0);
+      let balance;
+      let allocationAssigned;
 
       if (!isNew) {
         balance = toTokenAmountBn(details.balance, selectedToken.decimals);
@@ -692,13 +695,7 @@ export const TreasuryStreamCreateModal = (props: {
     setRecipientAddress(trimmedValue);
   }
 
-  const handleRecipientAddressFocusIn = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 10);
-  }
-
-  const handleRecipientAddressFocusOut = () => {
+  const handleRecipientAddressFocusInOut = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
@@ -942,7 +939,7 @@ export const TreasuryStreamCreateModal = (props: {
     const timeout = setTimeout(() => {
       const validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
 
-      const validAddressesSingleSigner = validAddresses.filter((csvItem: any) => wallet && !(csvItem.address === `${publicKey.toBase58()}`));
+      const validAddressesSingleSigner = validAddresses.filter((csvItem: any) => csvItem.address !== `${publicKey.toBase58()}`);
 
       if (!isSelectedStreamingAccountMultisigTreasury) {
         setListValidAddresses(validAddressesSingleSigner);
@@ -1022,23 +1019,6 @@ export const TreasuryStreamCreateModal = (props: {
 
   }, [cliffReleaseBn, selectedToken, tokenAmount]);
 
-  // Keep token balance updated
-  useEffect(() => {
-
-    if (!connection || !publicKey || !userBalances || !selectedToken) {
-      setSelectedTokenBalance(0);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      setSelectedTokenBalance(userBalances[selectedToken.address]);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [connection, publicKey, selectedToken, userBalances]);
 
   ////////////////////////
   // Transaction start  //
@@ -1074,7 +1054,7 @@ export const TreasuryStreamCreateModal = (props: {
           } as Beneficiary
         });
 
-        return await msp.createStreams(
+        return msp.createStreams(
           new PublicKey(data.payer),                                          // initializer
           new PublicKey(data.treasurer),                                      // treasurer
           new PublicKey(data.treasury),                                       // treasury
@@ -1192,10 +1172,10 @@ export const TreasuryStreamCreateModal = (props: {
       });
 
       const beneficiaries = !enableMultipleStreamsOption 
-        ? [{ streamName: recipientNote ? recipientNote.trim() : '', address: recipientAddress as string }]
+        ? [{ streamName: recipientNote ? recipientNote.trim() : '', address: recipientAddress }]
         : csvArray;
 
-      const assocToken = new PublicKey(selectedToken?.address as string);
+      const assocToken = new PublicKey(selectedToken.address);
       const treasury = new PublicKey(workingTreasuryDetails.id as string);
       const treasurer = isSelectedStreamingAccountMultisigTreasury && selectedMultisig
         ? selectedMultisig.id
@@ -1329,7 +1309,6 @@ export const TreasuryStreamCreateModal = (props: {
       consoleOut('Signing transactions...');
       const result = await wallet.signAllTransactions(transactions)
         .then((signed: Transaction[]) => {
-          // consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransactions = signed;
           // Try signature verification by serializing the transaction
           try {
@@ -1535,18 +1514,19 @@ export const TreasuryStreamCreateModal = (props: {
       const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
       getTokenOrCustomToken(tokenAddress)
       .then(token => {
-        consoleOut('Treasury workingAssociatedToken:', token, 'blue');
+        consoleOut('Treasury associated token:', token, 'blue');
         setSelectedToken(token);
-        setWorkingAssociatedToken(tokenAddress)
-        if (userBalances[tokenAddress]) {
-          setSelectedTokenBalance(userBalances[tokenAddress]);
-        } else {
-          setSelectedTokenBalance(0);
-        }
       });
-      setWorkingAssociatedToken(tokenAddress)
     }
   }, [getTokenOrCustomToken, treasuryList, userBalances]);
+
+  const isDestinationAddressValid = () => {
+    if (!enableMultipleStreamsOption) {
+      return isValidAddress(recipientAddress);
+    } else {
+      return validMultiRecipientsList;
+    }
+  }
 
   ///////////////
   // Rendering //
@@ -1579,26 +1559,22 @@ export const TreasuryStreamCreateModal = (props: {
     return <Menu items={items} />;
   }
 
-  const getStreamingAccountIcon = (item: Treasury | TreasuryInfo | undefined) => {
+  const getStreamingAccountIcon = (item: TreasuryValues) => {
     if (!item) { return null; }
     const isV2Treasury = item && item.version >= 2 ? true : false;
     const v1 = item as TreasuryInfo;
     const v2 = item as Treasury;
-    const token = isV2Treasury
-      ? v2.associatedToken
-        ? getTokenByMintAddress(v2.associatedToken as string)
-        : undefined
-      : v1.associatedTokenAddress
-        ? getTokenByMintAddress(v1.associatedTokenAddress as string)
-        : undefined;
+    const treasuryAssociatedToken = isV2Treasury ? v2.associatedToken as string : v1.associatedTokenAddress as string;
+    const token = treasuryAssociatedToken ? getTokenByMintAddress(treasuryAssociatedToken) : undefined;
+
     return (
       <div className="token-icon">
-        {(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
+        {treasuryAssociatedToken ? (
           <>
             {token && token.logoURI ? (
               <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
-              <Identicon address={(isV2Treasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "20", display: "inline-flex" }} />
+              <Identicon address={treasuryAssociatedToken} style={{ width: "20", display: "inline-flex" }} />
             )}
           </>
         ) : (
@@ -1608,22 +1584,21 @@ export const TreasuryStreamCreateModal = (props: {
     );
   }
 
-  const getStreamingAccountDescription = (item: Treasury | TreasuryInfo | undefined) => {
+  const getStreamingAccountDescription = (item: TreasuryValues) => {
     if (!item) { return null; }
     const isV2Treasury = item && item.version >= 2 ? true : false;
     const v1 = item as TreasuryInfo;
     const v2 = item as Treasury;
+    const name = isV2Treasury ? v2.name : v1.label;
+    const treasuryType = isV2Treasury ? v2.treasuryType : v1.type as TreasuryType;
     return (
       <>
-        {(isV2Treasury && item ? v2.name : v1.label) ? (
+        {name ? (
           <>
             <div className="title text-truncate">
-              {isV2Treasury ? v2.name : v1.label}
+              {name}
               <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                {isV2Treasury
-                  ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-                  : v1.type === TreasuryType.Open ? 'Open' : 'Locked'
-                }
+                {treasuryType === TreasuryType.Open ? 'Open' : 'Locked'}
               </span>
             </div>
             <div className="subtitle text-truncate">{shortenAddress(item.id as string, 8)}</div>
@@ -1635,7 +1610,7 @@ export const TreasuryStreamCreateModal = (props: {
     );
   }
 
-  const getStreamingAccountStreamCount = (item: Treasury | TreasuryInfo | undefined) => {
+  const getStreamingAccountStreamCount = (item: TreasuryValues) => {
     if (!item) { return null; }
     const isV2Treasury = item && item.version >= 2 ? true : false;
     const v1 = item as TreasuryInfo;
@@ -1725,20 +1700,6 @@ export const TreasuryStreamCreateModal = (props: {
                 </div>
               )}
 
-              {/* Create multi-recipient stream checkbox */}
-              {/* {(workingTreasuryType === TreasuryType.Open) && (
-                <div className="mb-2 flex-row align-items-start">
-                  <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-multi-recipient-checkbox-label')}</span>
-                  <Radio.Group className="ml-2 d-flex" 
-                    onChange={onCloseMultipleStreamsChanged} 
-                    value={enableMultipleStreamsOption}
-                  >
-                    <Radio value={true}>{t('general.yes')}</Radio>
-                    <Radio value={false}>{t('general.no')}</Radio>
-                  </Radio.Group>
-                </div>
-              )} */}
-
               {!enableMultipleStreamsOption && (
                 <>
                   {param === "multisig" && selectedMultisig && !treasuryDetails && (
@@ -1818,9 +1779,9 @@ export const TreasuryStreamCreateModal = (props: {
                           autoComplete="on"
                           autoCorrect="off"
                           type="text"
-                          onFocus={handleRecipientAddressFocusIn}
+                          onFocus={handleRecipientAddressFocusInOut}
                           onChange={handleRecipientAddressChange}
-                          onBlur={handleRecipientAddressFocusOut}
+                          onBlur={handleRecipientAddressFocusInOut}
                           placeholder={t('transactions.recipient.placeholder')}
                           required={true}
                           spellCheck="false"
@@ -2176,32 +2137,6 @@ export const TreasuryStreamCreateModal = (props: {
                               fullTokenInfo={selectedToken}
                             />
                           )}
-
-                          {/* {(selectedToken && tokenList) && (
-                            <Select className={`token-selector-dropdown ${workingAssociatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
-                              {tokenList.map((option) => {
-                                if (option.address === NATIVE_SOL.address) {
-                                  return null;
-                                }
-                                return (
-                                  <Option key={option.address} value={option.address}>
-                                    <div className="option-container">
-                                      <TokenDisplay onClick={() => {}}
-                                        mintAddress={option.address}
-                                        name={option.name}
-                                        showCaretDown={workingAssociatedToken ? false : true}
-                                      />
-                                      <div className="balance">
-                                        {userBalances && userBalances[option.address] > 0 && (
-                                          <span>{getAmountWithSymbol(userBalances[option.address], option.address, true)}</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </Option>
-                                );
-                              })}
-                            </Select>
-                          )} */}
                           {selectedToken && unallocatedBalance ? (
                             <div
                               className="token-max simplelink"
@@ -2267,29 +2202,6 @@ export const TreasuryStreamCreateModal = (props: {
                       </div>
                     </div>
                   </div>
-
-                  {/* {workingTreasuryType === TreasuryType.Lock && (
-                    <div className="mb-2 flex-fixed-right">
-                      <div className="left form-label flex-row align-items-center">
-                        {t('treasuries.treasury-streams.allocation-reserved-label')}
-                        <a className="simplelink" href="https://docs.meanfi.com/platform/specifications/money-streaming-protocol#treasuries-and-streams"
-                            target="_blank" rel="noopener noreferrer">
-                          <Button
-                            className="info-icon-button"
-                            type="default"
-                            shape="circle">
-                            <InfoCircleOutlined />
-                          </Button>
-                        </a>
-                      </div>
-                      <div className="right">
-                        <Radio.Group onChange={onAllocationReservedChanged} value={isAllocationReserved}>
-                          <Radio value={true}>{t('general.yes')}</Radio>
-                          <Radio value={false}>{t('general.no')}</Radio>
-                        </Radio.Group>
-                      </div>
-                    </div>
-                  )} */}
 
                   <div className="ml-1 mb-3">
                     <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>
@@ -2575,7 +2487,7 @@ export const TreasuryStreamCreateModal = (props: {
                 (param === "multisig" && !proposalTitle) ||
                 (!enableMultipleStreamsOption && !isMemoValid()) ||
                 !isStreamingAccountSelected() ||
-                ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
+                !isDestinationAddressValid() ||
                 (!paymentRateAmount || unallocatedBalance.isZero()) ||
                 (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
                 !arePaymentSettingsValid()
@@ -2607,7 +2519,7 @@ export const TreasuryStreamCreateModal = (props: {
                 (param === "multisig" && !proposalTitle) ||
                 (!enableMultipleStreamsOption && !isMemoValid()) ||
                 !isStreamingAccountSelected() ||
-                ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : !validMultiRecipientsList)) ||
+                !isDestinationAddressValid() ||
                 (!paymentRateAmount || unallocatedBalance.isZero()) ||
                 (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
                 !arePaymentSettingsValid() ||

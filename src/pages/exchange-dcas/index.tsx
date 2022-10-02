@@ -1,12 +1,40 @@
-import React, { useCallback, useContext, useMemo } from 'react';
-import { useEffect, useState } from 'react';
-import { PreFooter } from '../../components/PreFooter';
-import { AppStateContext } from '../../contexts/appstate';
-import { useTranslation } from 'react-i18next';
-import { isDesktop } from "react-device-detect";
-import useWindowSize from '../../hooks/useWindowResize';
-import { useWallet } from '../../contexts/wallet';
-import { getSolanaExplorerClusterParam } from '../../contexts/connection';
+import {
+  ArrowDownOutlined,
+  ArrowLeftOutlined,
+  ArrowUpOutlined,
+  CheckOutlined,
+  EllipsisOutlined,
+  LoadingOutlined,
+  ReloadOutlined,
+  WarningOutlined
+} from '@ant-design/icons';
+import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { DdcaAddFundsModal } from 'components/DdcaAddFundsModal';
+import { DdcaCloseModal } from 'components/DdcaCloseModal';
+import { DdcaWithdrawModal } from 'components/DdcaWithdrawModal';
+import { Identicon } from 'components/Identicon';
+import { openNotification } from 'components/Notifications';
+import { PreFooter } from 'components/PreFooter';
+import {
+  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
+  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+  VERBOSE_DATE_FORMAT,
+  VERBOSE_DATE_TIME_FORMAT
+} from 'constants/common';
+import { MEAN_TOKEN_LIST } from 'constants/tokens';
+import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import dateFormat from "dateformat";
+import useWindowSize from 'hooks/useWindowResize';
+import { IconClock, IconExchange, IconExternalLink } from 'Icons';
+import { customLogger } from 'index';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
 import {
   consoleOut,
   copyText,
@@ -16,35 +44,21 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
   isLocal
-} from '../../middleware/ui';
-import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
-import { MEAN_TOKEN_LIST } from '../../constants/tokens';
-import { Identicon } from '../../components/Identicon';
-import "./style.scss";
-import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, useLocalStorageState } from '../../middleware/utils';
+} from 'middleware/ui';
 import {
-  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
-  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-  VERBOSE_DATE_FORMAT,
-  VERBOSE_DATE_TIME_FORMAT
-} from '../../constants';
-import { IconClock, IconExchange, IconExternalLink } from '../../Icons';
-import { ArrowDownOutlined, ArrowLeftOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons';
-import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
+  formatThousands,
+  getAmountFromLamports,
+  getAmountWithSymbol,
+  getTxIxResume,
+  useLocalStorageState
+} from 'middleware/utils';
+import { OperationType, TransactionStatus } from 'models/enums';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { isDesktop } from "react-device-detect";
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { OperationType, TransactionStatus } from '../../models/enums';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import dateFormat from "dateformat";
-import { customLogger } from '../..';
-import { DdcaCloseModal } from '../../components/DdcaCloseModal';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { DdcaWithdrawModal } from '../../components/DdcaWithdrawModal';
-import { DdcaAddFundsModal } from '../../components/DdcaAddFundsModal';
-import { useNativeAccount } from '../../contexts/accounts';
-import { openNotification } from '../../components/Notifications';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { getLiveRpc, RpcConfig } from 'services/connections-hq';
+import "./style.scss";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -91,7 +105,6 @@ export const ExchangeDcasView = () => {
   const [activity, setActivity] = useState<DdcaActivity[]>([]);
 
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
-  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
   // Select, Connect to and test the network
   useEffect(() => {
@@ -150,7 +163,7 @@ export const ExchangeDcasView = () => {
   });
 
   const getTransactionFees = useCallback(async (action: DDCA_ACTIONS): Promise<TransactionFees> => {
-    return await calculateActionFees(connection, action, 1);
+    return calculateActionFees(connection, action, 1);
   }, [connection]);
 
   const resetTransactionStatus = () => {
@@ -270,7 +283,7 @@ export const ExchangeDcasView = () => {
         }
 
         // Create a transaction
-        return await ddcaClient.createCloseTx(
+        return ddcaClient.createCloseTx(
           ddcaAccountPda,                                   // ddcaAccountAddress
         )
         .then(value => {
@@ -312,7 +325,7 @@ export const ExchangeDcasView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey && ddcaDetails && ddcaClient) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return wallet.signTransaction(transaction)
         .then(async (signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -378,7 +391,7 @@ export const ExchangeDcasView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -554,7 +567,7 @@ export const ExchangeDcasView = () => {
         }
 
         // Create a transaction
-        return await ddcaClient.createWithdrawTx(
+        return ddcaClient.createWithdrawTx(
           ddcaAccountPda,                                   // ddcaAccountAddress
           amount                                            // withdrawAmount
         )
@@ -597,7 +610,7 @@ export const ExchangeDcasView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -658,7 +671,7 @@ export const ExchangeDcasView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return await connection
+        return connection
           .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -746,7 +759,7 @@ export const ExchangeDcasView = () => {
 
     setLoadingActivity(true);
     consoleOut('Loading activity...', '', 'blue');
-    const ddcaAddress = new PublicKey(ddcaAccountAddress as string);
+    const ddcaAddress = new PublicKey(ddcaAccountAddress);
     ddcaClient.getActivity(ddcaAddress)
       .then(activity => {
         if (activity) {
@@ -770,7 +783,7 @@ export const ExchangeDcasView = () => {
     if (!ddcaClient) { return; }
 
     setLoadingDdcaDetails(true);
-    const ddcaAddress = new PublicKey(address as string);
+    const ddcaAddress = new PublicKey(address);
     ddcaClient.getDdca(ddcaAddress)
       .then(ddca => {
         if (ddca) {
@@ -1180,7 +1193,7 @@ export const ExchangeDcasView = () => {
   const isNextRoundScheduled = (item: DdcaDetails): boolean => {
     const now = new Date().toUTCString();
     const nowUtc = new Date(now);
-    const nextScheduledDate = new Date(item.nextScheduledSwapUtc as string);
+    const nextScheduledDate = new Date(item.nextScheduledSwapUtc);
     if (nextScheduledDate > nowUtc) {
       return true;
     }
@@ -1189,7 +1202,6 @@ export const ExchangeDcasView = () => {
 
   const onBackButtonClicked = () => {
     setDetailsPanelOpen(false);
-    setAutoOpenDetailsPanel(false);
   }
 
   // If exchangeFor is > 0 -> Withdraw is visible
@@ -1215,6 +1227,20 @@ export const ExchangeDcasView = () => {
     });
 
     return <Menu items={items} />;
+  }
+
+  const getAddFundsCtaLabel = () => {
+    if (isCreating()) {
+      return t('ddcas.add-funds-cta-disabled-executing-swap');
+    } else if (isClosing()) {
+      return t('ddcas.add-funds-cta-disabled-closing');
+    } else if (isAddingFunds()) {
+      return t('ddcas.add-funds-cta-disabled-funding');
+    } else if (isWithdrawing()) {
+      return t('ddcas.add-funds-cta-disabled-withdrawing');
+    } else {
+      return t('streams.stream-detail.add-funds-cta');
+    }
   }
 
   const renderRecurringBuy = (
@@ -1303,7 +1329,7 @@ export const ExchangeDcasView = () => {
                     <IconClock className="mean-svg-icons" />
                   </span>
                   <span className="info-data">
-                    {getReadableDate(ddcaDetails.nextScheduledSwapUtc as string)}
+                    {getReadableDate(ddcaDetails.nextScheduledSwapUtc)}
                   </span>
                 </div>
               </div>
@@ -1328,16 +1354,7 @@ export const ExchangeDcasView = () => {
                 disabled={fetchTxInfoStatus === "fetching"}
                 onClick={showAddFundsModal}>
                 {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                {isCreating()
-                  ? t('ddcas.add-funds-cta-disabled-executing-swap')
-                  : isClosing()
-                    ? t('ddcas.add-funds-cta-disabled-closing')
-                    : isAddingFunds()
-                      ? t('ddcas.add-funds-cta-disabled-funding')
-                      : isWithdrawing()
-                        ? t('ddcas.add-funds-cta-disabled-withdrawing')
-                        : t('streams.stream-detail.add-funds-cta')
-                }
+                {getAddFundsCtaLabel()}
               </Button>
               {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && fetchTxInfoStatus !== "fetching") && (
                 <Dropdown overlay={getMenuOptions()} trigger={["click"]}>
@@ -1427,7 +1444,7 @@ export const ExchangeDcasView = () => {
                         <span className="align-middle">{getActivityTitle(item)}</span>
                       </div>
                       <div className="std-table-cell fixed-width-150" >
-                        <span className="align-middle">{getShortDate(item.dateUtc as string, true)}</span>
+                        <span className="align-middle">{getShortDate(item.dateUtc, true)}</span>
                       </div>
                     </a>
                   );
@@ -1498,6 +1515,145 @@ export const ExchangeDcasView = () => {
     )}
     </>
   );
+
+  const getCloseVaultTxModalContent = () => {
+    if (isBusy) {
+      return (
+        <>
+          <Spin indicator={bigLoadingIcon} className="icon" />
+          <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+          <h5 className="operation">{t('transactions.status.tx-close-vault-operation')}</h5>
+          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+            <div className="indication">{t('transactions.status.instructions')}</div>
+          )}
+        </>
+      );
+    } else if (isSuccess()) {
+      return (
+        <>
+          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+          <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+          <p className="operation">{t('transactions.status.tx-close-vault-operation-success')}</p>
+          <Button
+            block
+            type="primary"
+            shape="round"
+            size="middle"
+            onClick={onCloseDdcaTransactionFinished}>
+            {t('general.cta-finish')}
+          </Button>
+        </>
+      );
+    } else if (isError()) {
+      return (
+        <>
+          <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+          {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+            <h4 className="mb-4">
+              {t('transactions.status.tx-start-failure', {
+                accountBalance: `${getAmountWithSymbol(
+                  nativeBalance,
+                  NATIVE_SOL_MINT.toBase58(),
+                  true
+                )} SOL`,
+                feeAmount: `${getAmountWithSymbol(
+                  ddcaTxFees.maxBlockchainFee,
+                  NATIVE_SOL_MINT.toBase58(),
+                  true
+                )} SOL`})
+              }
+            </h4>
+          ) : (
+            <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+          )}
+          <Button
+            block
+            type="primary"
+            shape="round"
+            size="middle"
+            onClick={hideCloseDdcaTransactionModal}>
+            {t('general.cta-close')}
+          </Button>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <Spin indicator={bigLoadingIcon} className="icon" />
+          <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+        </>
+      );
+    }
+  }
+
+  const getWithdrawFundsTxModalContent = () => {
+    if (isBusy) {
+      return (
+        <>
+          <Spin indicator={bigLoadingIcon} className="icon" />
+          <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+          <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, ddcaDetails?.toMint as string, false, splTokenList)}</h5>
+          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+            <div className="indication">{t('transactions.status.instructions')}</div>
+          )}
+        </>
+      );
+    } else if (isSuccess()) {
+      return (
+        <>
+          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+          <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+          <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
+          <Button
+            block
+            type="primary"
+            shape="round"
+            size="middle"
+            onClick={onWithdrawTransactionFinished}>
+            {t('general.cta-close')}
+          </Button>
+        </>
+      );
+    } else if (isError()) {
+      return (
+        <>
+          <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+          {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+            <h4 className="mb-4">
+              {t('transactions.status.tx-start-failure', {
+                  accountBalance: getAmountWithSymbol(
+                    nativeBalance,
+                    NATIVE_SOL_MINT.toBase58()
+                  ),
+                  feeAmount: getAmountWithSymbol(
+                    ddcaTxFees.maxBlockchainFee,
+                    NATIVE_SOL_MINT.toBase58()
+                  )
+                })
+              }
+            </h4>
+          ) : (
+            <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+          )}
+          <Button
+            block
+            type="primary"
+            shape="round"
+            size="middle"
+            onClick={hideWithdrawTransactionModal}>
+            {t('general.cta-close')}
+          </Button>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <Spin indicator={bigLoadingIcon} className="icon" />
+          <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+        </>
+      );
+    }
+  }
 
   return (
     <>
@@ -1599,65 +1755,7 @@ export const ExchangeDcasView = () => {
         width={330}
         footer={null}>
         <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <h5 className="operation">{t('transactions.status.tx-close-vault-operation')}</h5>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
-              )}
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <p className="operation">{t('transactions.status.tx-close-vault-operation-success')}</p>
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={onCloseDdcaTransactionFinished}>
-                {t('general.cta-finish')}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getAmountWithSymbol(
-                      nativeBalance,
-                      NATIVE_SOL_MINT.toBase58(),
-                      true
-                    )} SOL`,
-                    feeAmount: `${getAmountWithSymbol(
-                      ddcaTxFees.maxBlockchainFee,
-                      NATIVE_SOL_MINT.toBase58(),
-                      true
-                    )} SOL`})
-                  }
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              )}
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={hideCloseDdcaTransactionModal}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-            </>
-          )}
+          {getCloseVaultTxModalContent()}
         </div>
       </Modal>
 
@@ -1672,64 +1770,7 @@ export const ExchangeDcasView = () => {
         width={330}
         footer={null}>
         <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, ddcaDetails?.toMint as string, false, splTokenList)}</h5>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
-              )}
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={onWithdrawTransactionFinished}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                      accountBalance: getAmountWithSymbol(
-                        nativeBalance,
-                        NATIVE_SOL_MINT.toBase58()
-                      ),
-                      feeAmount: getAmountWithSymbol(
-                        ddcaTxFees.maxBlockchainFee,
-                        NATIVE_SOL_MINT.toBase58()
-                      )
-                    })
-                  }
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              )}
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={hideWithdrawTransactionModal}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-            </>
-          )}
+          {getWithdrawFundsTxModalContent()}
         </div>
       </Modal>
 
