@@ -1,15 +1,15 @@
-import React, { useContext } from 'react';
 import { Treasury, VestingTreasuryActivity, VestingTreasuryActivityAction } from '@mean-dao/msp';
 import { Spin } from 'antd';
-import { useTranslation } from 'react-i18next';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
-import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { IconExternalLink } from '../../../../Icons';
-import { getShortDate } from '../../../../middleware/ui';
-import { displayAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../middleware/utils';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { BN } from 'bn.js';
-import { AppStateContext } from '../../../../contexts/appstate';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import { IconExternalLink } from 'Icons';
+import { getShortDate } from 'middleware/ui';
+import { displayAmountWithSymbol, makeDecimal, shortenAddress } from 'middleware/utils';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const VestingContractActivity = (props: {
     contractActivity: VestingTreasuryActivity[];
@@ -187,7 +187,7 @@ export const VestingContractActivity = (props: {
                                         <div className="rate-amount">
                                             {getActivityAssociatedToken(item)}
                                         </div>
-                                        <div className="interval">{getShortDate(item.utcDate as string, true)}</div>
+                                        <div className="interval">{getShortDate(item.utcDate, true)}</div>
                                     </div>
                                     <div className="actions-cell">
                                         <IconExternalLink className="mean-svg-icons" style={{ width: "15", height: "15" }} />

@@ -52,10 +52,8 @@ export function AppRoutes() {
                       <Route path="/accounts/:address/streaming/:streamingTab/:streamingItemId" element={<AccountsNewView />} />
                       {/* Vesting routes */}
                       <Route path="/vesting" element={<VestingView />} />
-                      <Route path="/vesting/:address" element={<VestingView />} />
-                      <Route path="/vesting/:address/contracts" element={<VestingView />} />
-                      <Route path="/vesting/:address/contracts/:vestingContract" element={<VestingView />} />
-                      <Route path="/vesting/:address/contracts/:vestingContract/:activeTab" element={<VestingView />} />
+                      <Route path="/vesting/:vestingContract" element={<VestingView />} />
+                      <Route path="/vesting/:vestingContract/:activeTab" element={<VestingView />} />
                       {/* Multisig routes */}
                       <Route path="/multisig" element={<SafeView />} />
                       <Route path="/multisig/:address" element={<SafeView />} />

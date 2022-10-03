@@ -27,7 +27,7 @@ import { MappedTransaction } from "../middleware/history";
 import { PerformanceCounter } from "../middleware/perf-counter";
 import { consoleOut, isProd, msToTime } from "../middleware/ui";
 import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from "../middleware/utils";
-import { AccountDetails, ProgramAccounts, UserTokenAccount, UserTokensResponse } from "../models/accounts";
+import { AccountContext, AccountDetails, ProgramAccounts, UserTokenAccount, UserTokensResponse } from "../models/accounts";
 import { DdcaFrequencyOption } from "../models/ddca-models";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { MultisigVault } from "../models/multisig";
@@ -55,6 +55,8 @@ export interface TransactionStatusInfo {
 interface AppStateConfig {
   // Account selection
   isSelectingAccount: boolean;
+  selectedAccount: AccountContext;
+  accountAddress: string;
   // General
   theme: string | undefined;
   tpsAvg: TpsAverageValues;
@@ -114,7 +116,6 @@ interface AppStateConfig {
   splTokenList: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
-  accountAddress: string;
   lastTxSignature: string;
   addAccountPanelOpen: boolean;
   streamsSummary: StreamsSummary;
@@ -142,6 +143,8 @@ interface AppStateConfig {
   previousRoute: string;
   // Account selection
   setIsSelectingAccount: (state: boolean) => void;
+  setAccountAddress: (address: string) => void;
+  setSelectedAccount: (account: AccountContext) => void;
   getAssetsByAccount: (address: string) => Promise<UserTokensResponse | null> | null;
   // General
   setTheme: (name: string) => void;
@@ -198,7 +201,6 @@ interface AppStateConfig {
   setShouldLoadTokens: (state: boolean) => void;
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
-  setAccountAddress: (address: string) => void;
   setAddAccountPanelOpen: (state: boolean) => void;
   setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
@@ -227,6 +229,8 @@ interface AppStateConfig {
 const contextDefaultValues: AppStateConfig = {
   // Account selection
   isSelectingAccount: true,
+  selectedAccount: { address: '', name: '', type: 0 },
+  accountAddress: '',
   // General
   theme: undefined,
   tpsAvg: undefined,  // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
@@ -289,7 +293,6 @@ const contextDefaultValues: AppStateConfig = {
   splTokenList: [],
   selectedAsset: undefined,
   transactions: undefined,
-  accountAddress: '',
   lastTxSignature: '',
   addAccountPanelOpen: true,
   streamsSummary: initialSummary,
@@ -317,6 +320,8 @@ const contextDefaultValues: AppStateConfig = {
   previousRoute: '',
   // Account selection
   setIsSelectingAccount: () => {},
+  setAccountAddress: () => {},
+  setSelectedAccount: () => {},
   getAssetsByAccount: () => null,
   // General
   setTheme: () => {},
@@ -373,7 +378,6 @@ const contextDefaultValues: AppStateConfig = {
   setShouldLoadTokens: () => {},
   setTransactions: () => {},
   setSelectedAsset: () => {},
-  setAccountAddress: () => {},
   setAddAccountPanelOpen: () => {},
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
@@ -473,6 +477,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
   const [accountAddress, updateAccountAddress] = useState('');
+  const [selectedAccount, updateSelectedAccount] = useState<AccountContext>(contextDefaultValues.selectedAccount);
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
@@ -1310,6 +1315,11 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateAccountAddress(address);
   }
 
+  const setSelectedAccount = (account: AccountContext) => {
+    setAccountAddress(account.address);
+    updateSelectedAccount(account);
+  }
+
   // Fetch token list
   const getTokenList = useCallback(async () => {
 
@@ -1634,6 +1644,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     <AppStateContext.Provider
       value={{
         isSelectingAccount,
+        selectedAccount,
+        accountAddress,
         theme,
         tpsAvg,
         refreshInterval,
@@ -1692,7 +1704,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         selectedAsset,
         userTokensResponse,
         transactions,
-        accountAddress,
         lastTxSignature,
         addAccountPanelOpen,
         streamsSummary,
@@ -1714,7 +1725,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         stakingMultiplier,
         previousRoute,
         setIsSelectingAccount,
+        setSelectedAccount,
         getAssetsByAccount,
+        setAccountAddress,
         setTheme,
         setTpsAvg,
         setShouldLoadTokens,
@@ -1769,7 +1782,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setDiagnosisInfo,
         setTransactions,
         setSelectedAsset,
-        setAccountAddress,
         setAddAccountPanelOpen,
         setStreamsSummary,
         setLastStreamsSummary,

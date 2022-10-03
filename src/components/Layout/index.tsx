@@ -1,33 +1,39 @@
+import { Connection } from "@solana/web3.js";
+import { Drawer, Empty, Layout } from "antd";
+import { segmentAnalytics } from "App";
+import { AccountSelectorModal } from "components/AccountSelectorModal";
+import { AppBar } from "components/AppBar";
+import { FooterBar } from "components/FooterBar";
+import { openNotification } from "components/Notifications";
+import { TransactionConfirmationHistory } from "components/TransactionConfirmationHistory";
+import {
+  GOOGLE_ANALYTICS_PROD_TAG_ID,
+  LANGUAGES,
+  PERFORMANCE_SAMPLE_INTERVAL,
+  PERFORMANCE_THRESHOLD,
+  SOLANA_STATUS_PAGE
+} from "constants/common";
+import { useAccountsContext } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { useConnectionConfig } from "contexts/connection";
+import useOnlineStatus from "contexts/online-status";
+import { TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import { environment } from "environments/environment";
+import useLocalStorage from "hooks/useLocalStorage";
+import { gitInfo } from "index";
+import { reportConnectedAccount } from "middleware/api";
+import { AppUsageEvent } from "middleware/segment-service";
+import { consoleOut, isProd, isValidAddress } from "middleware/ui";
+import { isUnauthenticatedRoute } from "middleware/utils";
+import { AccountDetails } from "models/accounts";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "pages/accounts";
 import React, { useCallback, useContext, useEffect, useState } from "react";
+import { browserName, deviceType, fullBrowserVersion, isDesktop, isMobile, isTablet, osName, osVersion } from "react-device-detect";
+import ReactGA from 'react-ga';
+import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./style.scss";
-import { gitInfo } from "../..";
-import { Drawer, Empty, Layout } from "antd";
-import { AppBar } from "../AppBar";
-import { FooterBar } from "../FooterBar";
-import { AppStateContext } from "../../contexts/appstate";
-import { useTranslation } from "react-i18next";
-import { useConnectionConfig } from "../../contexts/connection";
-import { useWallet } from "../../contexts/wallet";
-import { consoleOut, isLocal, isProd, isValidAddress } from "../../middleware/ui";
-import ReactGA from 'react-ga';
-import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
-import { environment } from "../../environments/environment";
-import { GOOGLE_ANALYTICS_PROD_TAG_ID, LANGUAGES, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_THRESHOLD, SOLANA_STATUS_PAGE } from "../../constants";
-import useLocalStorage from "../../hooks/useLocalStorage";
-import { reportConnectedAccount } from "../../middleware/api";
-import { Connection } from "@solana/web3.js";
-import useOnlineStatus from "../../contexts/online-status";
-import { segmentAnalytics } from "../../App";
-import { AppUsageEvent } from "../../middleware/segment-service";
-import { openNotification } from "../Notifications";
-import { TxConfirmationContext } from "../../contexts/transaction-status";
-import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
-import { isUnauthenticatedRoute, shortenAddress } from "../../middleware/utils";
-import { AccountDetails } from "../../models/accounts";
-import { AccountSelectorModal } from "../AccountSelectorModal";
-import { useAccountsContext } from "contexts/accounts";
 
 const { Header, Content, Footer } = Layout;
 
@@ -38,7 +44,6 @@ export const AppLayout = React.memo((props: any) => {
     theme,
     tpsAvg,
     previousRoute,
-    accountAddress,
     isSelectingAccount,
     previousWalletConnectState,
     setPreviousWalletConnectState,
@@ -415,12 +420,6 @@ export const AppLayout = React.memo((props: any) => {
     if (wallet && connected && isSelectingAccount && !isUnauthenticatedRoute(location.pathname) && !isSelectingWallet) {
       return (
         <>
-          {isLocal() && (
-            <div className="debug-bar">
-              <span>isSelectingAccount:</span><span className="ml-1 font-extrabold">{isSelectingAccount ? 'true' : 'false'}</span>
-              <span className="ml-2">accountAddress:</span><span className="ml-1 font-extrabold">{accountAddress ? shortenAddress(accountAddress) : '-'}</span>
-            </div>
-          )}
           <AccountSelectorModal
             isVisible={isSelectingAccount}
             isFullWorkflowEnabled={true}

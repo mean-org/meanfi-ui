@@ -30,13 +30,12 @@ import {
   toTokenAmount,
   toUiAmount
 } from 'middleware/utils';
-import { TransactionStatus } from 'models/enums';
+import { MeanFiAccountType, TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { VestingContractTopupParams } from 'models/vesting';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -77,6 +76,8 @@ export const VestingContractAddFundsModal = (props: {
   const {
     splTokenList,
     loadingPrices,
+    accountAddress,
+    selectedAccount,
     transactionStatus,
     highLightableStreamId,
     getTokenPriceByAddress,
@@ -86,7 +87,6 @@ export const VestingContractAddFundsModal = (props: {
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const [searchParams] = useSearchParams();
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
   const [, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
@@ -102,18 +102,12 @@ export const VestingContractAddFundsModal = (props: {
   //   Getters   //
   /////////////////
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
+  const isMultisigContext = useMemo(() => {
+    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
+      return true;
     }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
+    return false;
+  }, [publicKey && accountAddress, selectedAccount]);
 
   const getTokenPrice = useCallback((inputAmount: string) => {
     if (!selectedToken) { return 0; }
@@ -295,12 +289,12 @@ export const VestingContractAddFundsModal = (props: {
 
   useEffect(() => {
     if (isVisible) {
-      if (param === "multisig" && selectedMultisig && !highLightableStreamId) {
+      if (isMultisigContext && selectedMultisig && !highLightableStreamId) {
         consoleOut('Getting funds from safe...', '', 'blue');
         setFundFromSafeOption(true);
       }
     }
-  }, [highLightableStreamId, isVisible, param, selectedMultisig]);
+  }, [highLightableStreamId, isVisible, isMultisigContext, selectedMultisig]);
 
   ////////////////
   //   Events   //
@@ -396,7 +390,7 @@ export const VestingContractAddFundsModal = (props: {
 
   const isValidInput = (): boolean => {
     return publicKey &&
-          (!fundFromSafeOption || (param === "multisig" && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
+          (!fundFromSafeOption || (isMultisigContext && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
            selectedToken &&
            ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && (availableBalance as BN).gtn(0)))) &&
            nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
@@ -416,7 +410,7 @@ export const VestingContractAddFundsModal = (props: {
   }
 
   const isProposalTitleRequired = () => {
-    return fundFromSafeOption && param === "multisig" && selectedMultisig && !proposalTitle
+    return fundFromSafeOption && isMultisigContext && selectedMultisig && !proposalTitle
       ? true
       : false;
   }
@@ -510,7 +504,7 @@ export const VestingContractAddFundsModal = (props: {
   ///////////////
 
   const renderFundFromSwitch = () => {
-    if (param === "multisig" && selectedMultisig && vestingContract && !highLightableStreamId) {
+    if (isMultisigContext && selectedMultisig && vestingContract && !highLightableStreamId) {
       return (
         <div className="mb-2 flex-fixed-right">
           <div className="form-label left m-0">Get funds from:</div>
@@ -528,7 +522,7 @@ export const VestingContractAddFundsModal = (props: {
   }
 
   const renderProposalTitle = () => {
-    if (param === "multisig" && selectedMultisig) {
+    if (isMultisigContext && selectedMultisig) {
       return (
         <div className="mb-3 mt-3">
           <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>

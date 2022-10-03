@@ -6,7 +6,8 @@ import { useWallet } from "contexts/wallet";
 import { IconLoading, IconSafe, IconWallet } from "Icons";
 import { consoleOut, kFormatter, toUsCurrency } from "middleware/ui";
 import { shortenAddress } from "middleware/utils";
-import { UserTokenAccount } from "models/accounts";
+import { AccountContext, UserTokenAccount } from "models/accounts";
+import { MeanFiAccountType } from "models/enums";
 import { useContext, useEffect, useState } from "react";
 import "./style.scss";
 
@@ -24,13 +25,34 @@ export const AccountSelector = (props: {
     loadingMultisigAccounts,
     loadingMultisigTxPendingCount,
     setIsSelectingAccount,
-    setShouldLoadTokens,
     getAssetsByAccount,
-    setAccountAddress,
+    setSelectedAccount,
   } = useContext(AppStateContext);
   const { publicKey, provider } = useWallet();
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[] | undefined>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
+
+  // Process userTokensResponse from AppState to get a renderable list of tokens
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (accountTokens === undefined) {
+      consoleOut('Refreshing use account info...', '', 'blue');
+      (async () => {
+        try {
+          const result = await getAssetsByAccount(publicKey.toBase58());
+          if (result) {
+            consoleOut('userTokensResponse:', result, 'blue');
+            setAccountTokens(result.accountTokens);
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      })();
+    }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountTokens, publicKey]);
 
   // Calculates total value of assets
   useEffect(() => {
@@ -43,36 +65,14 @@ export const AccountSelector = (props: {
     }
   }, [accountTokens, tokensLoaded]);
 
-  // Process userTokensResponse from AppState to get a renderable list of tokens
-  useEffect(() => {
-    if (!publicKey) { return; }
-
-    if (accountTokens === undefined) {
-      consoleOut('Refreshing use account info...', '', 'blue');
-      (async () => {
-        try {
-          // Try fetching tokens manually
-          const result = await getAssetsByAccount(publicKey.toBase58());
-          if (result) {
-            consoleOut('userTokensResponse:', result, 'blue');
-            setAccountTokens(result.accountTokens);
-          } else {
-            // try queueing it to be done automatically by the state
-            setShouldLoadTokens(true);
-            setAccountAddress(publicKey.toBase58());
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      })();
-    }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountTokens, publicKey]);
-
   const onNativeAccountSelected = () => {
     if (publicKey) {
-      setAccountAddress(publicKey.toBase58());
+      const account: AccountContext = {
+        name: 'Personal account',
+        address: publicKey.toBase58(),
+        type: MeanFiAccountType.Wallet
+      };
+      setSelectedAccount(account);
     }
     setIsSelectingAccount(false);
     if (onAccountSelected) {
@@ -81,7 +81,12 @@ export const AccountSelector = (props: {
   }
 
   const onMultisigAccountSelected = (item: MultisigInfo) => {
-    setAccountAddress(item.authority.toBase58());
+    const account: AccountContext = {
+      name: item.label,
+      address: item.authority.toBase58(),
+      type: MeanFiAccountType.Multisig
+    };
+    setSelectedAccount(account);
     setIsSelectingAccount(false);
     if (onAccountSelected) {
       onAccountSelected();
