@@ -56,7 +56,7 @@
     "@ledgerhq/hw-transport-webhid": "^6.27",
     "@mean-dao/ddca": "1.2.35",
     "@mean-dao/hybrid-liquidity-ag": "1.2.2",
-    "@mean-dao/mean-multisig-apps": "1.3.8",
+    "@mean-dao/mean-multisig-apps": "1.3.9",
     "@mean-dao/mean-multisig-sdk": "1.16.1",
     "@mean-dao/money-streaming": "1.7.15",
     "@mean-dao/msp": "3.0.0",
