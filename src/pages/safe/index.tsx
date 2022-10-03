@@ -46,7 +46,7 @@ import './style.scss';
 
 // MULTISIG
 import { App, AppConfig, AppsProvider, Arg, NETWORK, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
-import { createProgram, getDepositIx, getGatewayToken, getTrancheDepositIx, getTrancheWithdrawIx, getWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
+import { createProgram, getDepositIx, getTrancheDepositIx, getTrancheWithdrawIx, getWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   getFees,
@@ -446,7 +446,6 @@ export const SafeView = () => {
         }
       });
 
-      // TODO: add parameter to accept isAllowedRejectProposal (Irshad)
       const tx = await multisigClient.createFundedMultisig(
         publicKey,
         MEAN_MULTISIG_ACCOUNT_LAMPORTS,
@@ -1141,9 +1140,6 @@ export const SafeView = () => {
       return argElement.dataValue;
     });
     args.sort((a: any, b: any) => { return (a.index - b.index); });
-    // console.log('args', args);
-    // const me = method(...args);
-    // console.log('me', me);
     const ix = await method(...args)
       .accounts(accounts)
       .instruction();
@@ -1158,13 +1154,6 @@ export const SafeView = () => {
   const getCredixProgram = useCallback(async (connection: Connection, investor: PublicKey) => {
     const program = createProgram(connection, "confirmed");
     console.log("data => ", investor.toBase58());
-  
-    const gatewayToken = await getGatewayToken(
-      investor,
-      CREDIX_GATEWAY_ADDRESS
-    );
-  
-    console.log("gatewayToken => ", gatewayToken.toBase58());
     return program;
   }, []);
 
@@ -1442,7 +1431,7 @@ export const SafeView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create proposal transaction failed', { transcript: transactionLog });
         return false;
       }
       const signedPublicKey = wallet.publicKey;
