@@ -1959,68 +1959,6 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
     margin: 4px 0 0 6px;
   }
 }
-.connection-and-account-bar {
-  flex-direction: row;
-  align-items: center;
-  background-color: var(--color-network-bar);
-  border-radius: var(--custom-border-radius);
-  height: var(--custom-control-height);
-  margin-right: 8px;
-  padding: 0;
-  @media (max-width: 575.98px) {
-    display: none;
-  }
-  @media (min-width: 576px) {
-    display: flex;
-  }
-  .connected-network {
-    @media (max-width: 767.98px) {
-      display: none;
-    }
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    align-items: center;
-    margin-right: 8px;
-    margin-left: 4px;
-    .chain-logo {
-      align-items: center;
-      justify-content: center;
-      display: inline-flex;
-      margin-right: 4px;
-      > img {
-        margin: 0;
-      }
-    }
-    .account-balance {
-      font-size: 1rem;
-      font-weight: 400;
-      letter-spacing: -0.5px;
-    }
-  }
-  .wallet-wrapper {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-    background-color: var(--wallet-wrapper-bg);
-    color: var(--wallet-wrapper-color);
-    border-radius: var(--custom-border-radius);
-    height: 100%;
-    .wallet-key {
-      font-size: 1rem;
-      font-weight: 600;
-      background-color: var(--color-primary);
-      border-radius: var(--custom-border-radius);
-      height: 100%;
-      display: inline-flex;
-      align-items: center;
-      padding: 0 6px;
-      margin-left: -1px;
-      cursor: pointer;
-    }
-  }
-}
 
 .ant-tabs-nav-scroll {
   display: flex;
