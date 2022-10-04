@@ -164,8 +164,3 @@ export type VestingContractCategory = {
     label: string;
     value: SubCategory;
 }
-
-export enum MeanFiAccountType {
-    Wallet = 0,
-    Multisig = 1
-}

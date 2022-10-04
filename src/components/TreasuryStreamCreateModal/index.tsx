@@ -41,7 +41,7 @@ import {
   toTokenAmountBn,
   toUiAmount
 } from 'middleware/utils';
-import { MeanFiAccountType, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
+import { OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import { PaymentRateTypeOption } from "models/PaymentRateTypeOption";
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { CreateStreamParams } from 'models/streams';
@@ -96,7 +96,6 @@ export const TreasuryStreamCreateModal = (props: {
     recipientNote,
     isWhitelisted,
     fromCoinAmount,
-    accountAddress,
     selectedAccount,
     recipientAddress,
     paymentStartDate,
@@ -155,11 +154,8 @@ export const TreasuryStreamCreateModal = (props: {
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
 
   const resetTransactionStatus = useCallback(() => {

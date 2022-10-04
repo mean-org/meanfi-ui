@@ -30,7 +30,7 @@ import {
   toTokenAmount,
   toUiAmount
 } from 'middleware/utils';
-import { MeanFiAccountType, TransactionStatus } from 'models/enums';
+import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { VestingContractTopupParams } from 'models/vesting';
 import { QRCodeSVG } from 'qrcode.react';
@@ -76,7 +76,6 @@ export const VestingContractAddFundsModal = (props: {
   const {
     splTokenList,
     loadingPrices,
-    accountAddress,
     selectedAccount,
     transactionStatus,
     highLightableStreamId,
@@ -103,11 +102,8 @@ export const VestingContractAddFundsModal = (props: {
   /////////////////
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const getTokenPrice = useCallback((inputAmount: string) => {
     if (!selectedToken) { return 0; }

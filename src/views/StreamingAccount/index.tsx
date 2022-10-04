@@ -62,7 +62,7 @@ import {
   toTokenAmountBn
 } from "middleware/utils";
 import { TreasuryTopupParams } from "models/common-types";
-import { MeanFiAccountType, OperationType, TransactionStatus } from "models/enums";
+import { OperationType, TransactionStatus } from "models/enums";
 import { ZERO_FEES } from "models/multisig";
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { AddFundsParams } from "models/vesting";
@@ -90,7 +90,6 @@ export const StreamingAccountView = (props: {
 
   const {
     splTokenList,
-    accountAddress,
     selectedAccount,
     transactionStatus,
     streamProgramAddress,
@@ -190,11 +189,8 @@ export const StreamingAccountView = (props: {
   ]);
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
 
   /////////////////////////
@@ -3160,7 +3156,7 @@ export const StreamingAccountView = (props: {
       {isSolBalanceModalOpen && (
         <SolBalanceModal
           address={streamingAccountSelected ? streamingAccountSelected.id as string : ''}
-          accountAddress={accountAddress}
+          accountAddress={selectedAccount.address}
           multisigAddress={address as string}
           isVisible={isSolBalanceModalOpen}
           handleClose={hideSolBalanceModal}

@@ -74,19 +74,18 @@
       .account-descriptor {
         max-width: 150px;
         min-width: 104px;
-        padding: 0 2px;
+        padding: 0 6px;
         display: flex;
         flex-direction: column;
-        .account-type {
-          font-size: 0.7rem;
-          font-weight: 400;
-          text-align: center;
-          line-height: 1.1;
-        }
         .account-id {
-          font-size: 1rem;
-          font-weight: 600;
-          text-align: center;
+          font-size: 0.8rem;
+          font-weight: 400;
+          line-height: 1.1;
+          color: var(--color-secondary-alpha-85);
+        }
+        .account-name {
+          font-size: 0.85rem;
+          font-weight: 900;
           line-height: 1.1;
           display: inline-block;
           overflow: hidden;

@@ -56,7 +56,6 @@ interface AppStateConfig {
   // Account selection
   isSelectingAccount: boolean;
   selectedAccount: AccountContext;
-  accountAddress: string;
   // General
   theme: string | undefined;
   tpsAvg: TpsAverageValues;
@@ -143,7 +142,6 @@ interface AppStateConfig {
   previousRoute: string;
   // Account selection
   setIsSelectingAccount: (state: boolean) => void;
-  setAccountAddress: (address: string) => void;
   setSelectedAccount: (account: AccountContext) => void;
   getAssetsByAccount: (address: string) => Promise<UserTokensResponse | null> | null;
   // General
@@ -229,8 +227,7 @@ interface AppStateConfig {
 const contextDefaultValues: AppStateConfig = {
   // Account selection
   isSelectingAccount: true,
-  selectedAccount: { address: '', name: '', type: 0 },
-  accountAddress: '',
+  selectedAccount: { address: '', name: '', isMultisig: false },
   // General
   theme: undefined,
   tpsAvg: undefined,  // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
@@ -320,7 +317,6 @@ const contextDefaultValues: AppStateConfig = {
   previousRoute: '',
   // Account selection
   setIsSelectingAccount: () => {},
-  setAccountAddress: () => {},
   setSelectedAccount: () => {},
   getAssetsByAccount: () => null,
   // General
@@ -476,7 +472,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-  const [accountAddress, updateAccountAddress] = useState('');
   const [selectedAccount, updateSelectedAccount] = useState<AccountContext>(contextDefaultValues.selectedAccount);
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
@@ -1094,12 +1089,12 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    if (!accountAddress && !userAddress && !publicKey) {
+    if (!selectedAccount.address && !userAddress && !publicKey) {
       return;
     }
 
-    const fallback = accountAddress
-      ? new PublicKey(accountAddress)
+    const fallback = selectedAccount.address
+      ? new PublicKey(selectedAccount.address)
       : publicKey as PublicKey;
     const userPk = userAddress || fallback;
     consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
@@ -1175,7 +1170,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     msp,
     publicKey,
     streamDetail,
-    accountAddress,
+    selectedAccount.address,
     loadingStreams,
     customStreamDocked,
   ]);
@@ -1192,7 +1187,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     let timer: any;
 
-    if (accountAddress && location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) && !customStreamDocked && !isDowngradedPerformance) {
+    if (selectedAccount.address && location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) && !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
         consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
         refreshStreamList();
@@ -1206,7 +1201,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }, [
     location,
-    accountAddress,
+    selectedAccount.address,
     customStreamDocked,
     isDowngradedPerformance,
     refreshStreamList,
@@ -1310,13 +1305,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateSelectedAsset(asset);
   }
 
-  const setAccountAddress = (address: string) => {
-    updateTransactions([]);
-    updateAccountAddress(address);
-  }
-
   const setSelectedAccount = (account: AccountContext) => {
-    setAccountAddress(account.address);
+    consoleOut('Account selected:', account, 'blue');
+    updateTransactions([]);
     updateSelectedAccount(account);
   }
 
@@ -1449,7 +1440,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     if (!connection ||
         !publicKey ||
-        !accountAddress ||
+        !selectedAccount.address ||
         !shouldLoadTokens ||
         isSelectingAccount ||
         !splTokenList) {
@@ -1463,7 +1454,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     getUserAccountTokens(
       connection,
-      accountAddress,
+      selectedAccount.address,
       priceList,
       splTokenList,
     ).then(response => {
@@ -1481,7 +1472,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     return () => {}
 
-  }, [accountAddress, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
+  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
 
   // Same as above but on demand
   const getAssetsByAccount = useCallback((account: string) => {
@@ -1645,7 +1636,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       value={{
         isSelectingAccount,
         selectedAccount,
-        accountAddress,
         theme,
         tpsAvg,
         refreshInterval,
@@ -1727,7 +1717,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setIsSelectingAccount,
         setSelectedAccount,
         getAssetsByAccount,
-        setAccountAddress,
         setTheme,
         setTpsAvg,
         setShouldLoadTokens,

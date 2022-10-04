@@ -51,7 +51,7 @@ import {
   toUiAmount
 } from "middleware/utils";
 import { TreasuryTopupParams } from "models/common-types";
-import { MeanFiAccountType, OperationType, TransactionStatus } from "models/enums";
+import { OperationType, TransactionStatus } from "models/enums";
 import { ZERO_FEES } from "models/multisig";
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { StreamsSummary } from "models/streams";
@@ -94,7 +94,6 @@ export const MoneyStreamsInfoView = (props: {
     streamListv1,
     streamListv2,
     treasuryOption,
-    accountAddress,
     selectedAccount,
     transactionStatus,
     streamProgramAddress,
@@ -210,11 +209,8 @@ export const MoneyStreamsInfoView = (props: {
   ]);
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   /////////////////
   //  Callbacks  //
@@ -428,8 +424,8 @@ export const MoneyStreamsInfoView = (props: {
       totalAmount: 0
     };
 
-    const treasurer = accountAddress
-      ? new PublicKey(accountAddress)
+    const treasurer = selectedAccount.address
+      ? new PublicKey(selectedAccount.address)
       : publicKey;
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
@@ -493,7 +489,7 @@ export const MoneyStreamsInfoView = (props: {
     publicKey,
     streamListv1,
     streamListv2,
-    accountAddress,
+    selectedAccount.address,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     getTokenPriceByAddress,
@@ -510,8 +506,8 @@ export const MoneyStreamsInfoView = (props: {
       totalAmount: 0
     };
 
-    const treasurer = accountAddress
-      ? new PublicKey(accountAddress)
+    const treasurer = selectedAccount.address
+      ? new PublicKey(selectedAccount.address)
       : publicKey;
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
@@ -574,7 +570,7 @@ export const MoneyStreamsInfoView = (props: {
     publicKey,
     streamListv1,
     streamListv2,
-    accountAddress,
+    selectedAccount.address,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
     getTokenPriceByAddress,
@@ -1179,7 +1175,7 @@ export const MoneyStreamsInfoView = (props: {
       const findStream = streamList.filter((stream: Stream | StreamInfo) => stream.id === e);
       const streamSelected = Object.assign({}, ...findStream);
 
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${selectedAccount.address}/streaming/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
 
       navigate(url);
     }
@@ -1552,7 +1548,7 @@ export const MoneyStreamsInfoView = (props: {
   };
 
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
-    if (item && publicKey && accountAddress) {
+    if (item && publicKey && selectedAccount.address) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
       let beneficiary = '';
@@ -1569,10 +1565,10 @@ export const MoneyStreamsInfoView = (props: {
             : (v2.beneficiary as PublicKey).toBase58()
           : '';
       }
-      return beneficiary === accountAddress ? true : false
+      return beneficiary === selectedAccount.address ? true : false
     }
     return false;
-  }, [accountAddress, publicKey]);
+  }, [selectedAccount.address, publicKey]);
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let associatedToken = '';
@@ -1780,7 +1776,7 @@ export const MoneyStreamsInfoView = (props: {
 
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/${activeKey}`;
     navigate(url);
-  }, [accountAddress, navigate]);
+  }, [selectedAccount.address, navigate]);
 
 
   /////////////////////
@@ -2159,10 +2155,10 @@ export const MoneyStreamsInfoView = (props: {
 
   const renderProtocol = (
     <>
-      {accountAddress && (
+      {selectedAccount.address && (
         !isXsDevice ? (
           <CopyExtLinkGroup
-            content={accountAddress}
+            content={selectedAccount.address}
             number={8}
             externalLink={true}
             isTx={false}
@@ -2170,7 +2166,7 @@ export const MoneyStreamsInfoView = (props: {
           />
         ) : (
           <CopyExtLinkGroup
-            content={accountAddress}
+            content={selectedAccount.address}
             number={4}
             externalLink={true}
             isTx={false}
@@ -2296,7 +2292,7 @@ export const MoneyStreamsInfoView = (props: {
   const [isPaused, setIsPaused] = useState(true);
 
   useEffect(() => {
-    if (!accountAddress) { return; }
+    if (!selectedAccount.address) { return; }
 
     const timeout = setTimeout(() => {
       setIsPaused(false);
@@ -2305,7 +2301,7 @@ export const MoneyStreamsInfoView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  }, [accountAddress]);
+  }, [selectedAccount.address]);
 
   // Clear state on unmount component
   useEffect(() => {

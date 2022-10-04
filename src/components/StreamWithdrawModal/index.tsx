@@ -12,7 +12,7 @@ import { useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { consoleOut, percentageBn } from "middleware/ui";
 import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from "middleware/utils";
-import { MeanFiAccountType, TransactionStatus } from 'models/enums';
+import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { StreamWithdrawData } from 'models/streams';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -40,7 +40,6 @@ export const StreamWithdrawModal = (props: {
   const { wallet, publicKey } = useWallet();
   const {
     splTokenList,
-    accountAddress,
     selectedAccount,
     streamProgramAddress,
     streamV2ProgramAddress,
@@ -55,11 +54,8 @@ export const StreamWithdrawModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const getFeeAmount = useCallback((fees: TransactionFees, amount = new BN(0)): number => {
     if (!selectedToken) { return 0; }

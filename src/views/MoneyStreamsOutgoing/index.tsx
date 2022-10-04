@@ -62,7 +62,7 @@ export const MoneyStreamsOutgoingView = (props: {
     splTokenList,
     tokenBalance,
     deletedStreams,
-    accountAddress,
+    selectedAccount,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
@@ -2766,7 +2766,7 @@ export const MoneyStreamsOutgoingView = (props: {
     <>
       <Spin spinning={loadingStreams}>
         <MoneyStreamDetails
-          accountAddress={accountAddress}
+          accountAddress={selectedAccount.address}
           stream={streamSelected}
           hideDetailsHandler={hideDetailsHandler}
           infoData={infoData}

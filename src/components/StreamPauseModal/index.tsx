@@ -7,7 +7,6 @@ import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { percentage, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
-import { MeanFiAccountType } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -22,7 +21,6 @@ export const StreamPauseModal = (props: {
 }) => {
   const {
     theme,
-    accountAddress,
     selectedAccount,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
@@ -32,11 +30,8 @@ export const StreamPauseModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const amITreasurer = useCallback((): boolean => {
     if (props.streamDetail && publicKey) {

@@ -29,7 +29,7 @@ import { NATIVE_SOL_MINT } from "middleware/ids";
 import { AppUsageEvent, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "middleware/segment-service";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "middleware/ui";
 import { displayAmountWithSymbol, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress } from "middleware/utils";
-import { MeanFiAccountType, OperationType, TransactionStatus } from "models/enums";
+import { OperationType, TransactionStatus } from "models/enums";
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { StreamWithdrawData } from "models/streams";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -52,7 +52,6 @@ export const MoneyStreamsIncomingView = (props: {
 
   const {
     splTokenList,
-    accountAddress,
     selectedAccount,
     transactionStatus,
     streamProgramAddress,
@@ -139,11 +138,8 @@ export const MoneyStreamsIncomingView = (props: {
   ]);
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   /////////////////
   //  Callbacks  //
@@ -1198,8 +1194,8 @@ export const MoneyStreamsIncomingView = (props: {
           : (v2.beneficiary as PublicKey).toBase58()
         : '';
     }
-    return beneficiary === accountAddress ? true : false
-  }, [accountAddress]);
+    return beneficiary === selectedAccount.address ? true : false
+  }, [selectedAccount.address]);
 
   const getTokenOrCustomToken = useCallback(async (address: string) => {
 
@@ -1438,7 +1434,7 @@ export const MoneyStreamsIncomingView = (props: {
     <>
       <Spin spinning={loadingStreams}>
         <MoneyStreamDetails
-          accountAddress={accountAddress}
+          accountAddress={selectedAccount.address}
           stream={streamSelected}
           hideDetailsHandler={hideDetailsHandler}
           infoData={infoData}

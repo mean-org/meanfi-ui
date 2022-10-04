@@ -19,7 +19,7 @@ import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { consoleOut, getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
 import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
-import { MeanFiAccountType, TransactionStatus } from 'models/enums';
+import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { TreasuryCreateOptions, TreasuryTypeOption } from 'models/treasuries';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -51,7 +51,6 @@ export const TreasuryCreateModal = (props: {
   const {
     tokenList,
     splTokenList,
-    accountAddress,
     selectedAccount,
     transactionStatus,
     setTransactionStatus,
@@ -71,11 +70,8 @@ export const TreasuryCreateModal = (props: {
   const [workingTokenBalance, setWorkingTokenBalance] = useState<number>(0);
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const autoFocusInput = useCallback(() => {
     const input = document.getElementById("token-search-streaming-account");

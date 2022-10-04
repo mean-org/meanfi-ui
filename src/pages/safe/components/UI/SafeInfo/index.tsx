@@ -2,21 +2,21 @@ import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Tabs, Tooltip } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
+import { CopyExtLinkGroup } from "components/CopyExtLinkGroup";
+import { MultisigOwnersView } from "components/MultisigOwnersView";
+import { RightInfoDetails } from "components/RightInfoDetails";
+import { SolBalanceModal } from "components/SolBalanceModal";
+import { MIN_SOL_BALANCE_REQUIRED } from "constants/common";
+import { NATIVE_SOL } from "constants/tokens";
+import { useNativeAccount } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { IconEllipsisVertical, IconLoading } from "Icons";
+import { consoleOut, isDev, isLocal, toUsCurrency } from "middleware/ui";
+import { getAmountFromLamports, shortenAddress } from "middleware/utils";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "pages/accounts";
+import { VESTING_ROUTE_BASE_PATH } from "pages/vesting";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
-import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
-import { RightInfoDetails } from "../../../../../components/RightInfoDetails";
-import { SolBalanceModal } from "../../../../../components/SolBalanceModal";
-import { MIN_SOL_BALANCE_REQUIRED } from "../../../../../constants";
-import { NATIVE_SOL } from "../../../../../constants/tokens";
-import { useNativeAccount } from "../../../../../contexts/accounts";
-import { AppStateContext } from "../../../../../contexts/appstate";
-import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
-import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../middleware/ui";
-import { getAmountFromLamports, shortenAddress } from "../../../../../middleware/utils";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
-import { VESTING_ROUTE_BASE_PATH } from "../../../../vesting";
 
 export const SafeInfo = (props: {
   isTxInProgress?: any;
@@ -53,7 +53,7 @@ export const SafeInfo = (props: {
   const {
     isWhitelisted,
     multisigVaults,
-    accountAddress,
+    selectedAccount,
     multisigSolBalance,
     refreshTokenBalance,
     setActiveTab,
@@ -387,7 +387,7 @@ export const SafeInfo = (props: {
       {isSolBalanceModalOpen && (
         <SolBalanceModal
           address={NATIVE_SOL.address || ''}
-          accountAddress={accountAddress}
+          accountAddress={selectedAccount.address}
           multisigAddress={address as string}
           isVisible={isSolBalanceModalOpen}
           handleClose={hideSolBalanceModal}

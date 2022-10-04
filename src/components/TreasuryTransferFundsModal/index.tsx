@@ -24,7 +24,7 @@ import {
   toTokenAmountBn,
   toUiAmount
 } from 'middleware/utils';
-import { MeanFiAccountType, TransactionStatus } from 'models/enums';
+import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -64,7 +64,6 @@ export const TreasuryTransferFundsModal = (props: {
     tokenBalance,
     isWhitelisted,
     loadingPrices,
-    accountAddress,
     selectedAccount,
     transactionStatus,
     getTokenPriceBySymbol,
@@ -84,11 +83,8 @@ export const TreasuryTransferFundsModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
     const treasuryInfo: any = treasury ?? treasuryDetails;

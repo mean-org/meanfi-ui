@@ -56,7 +56,7 @@ import {
 } from 'middleware/ui';
 import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from 'middleware/utils';
 import { MetaInfoCta } from 'models/common-types';
-import { EventType, MeanFiAccountType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
+import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import { ZERO_FEES } from 'models/multisig';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { TreasuryWithdrawParams } from 'models/treasuries';
@@ -103,7 +103,6 @@ export const VestingView = () => {
     priceList,
     splTokenList,
     isWhitelisted,
-    accountAddress,
     selectedAccount,
     selectedMultisig,
     multisigAccounts,
@@ -230,11 +229,8 @@ export const VestingView = () => {
   ]);
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const selectedVestingContractRef = useRef(selectedVestingContract);
   useEffect(() => {
@@ -567,9 +563,9 @@ export const VestingView = () => {
   ]);
 
   const canPerformAnyAction = useCallback(() => {
-    const itsMe = accountAddress && publicKey && publicKey.toBase58() === accountAddress ? true : false;
+    const itsMe = selectedAccount && publicKey && publicKey.toBase58() === selectedAccount.address ? true : false;
     return itsMe || isMultisigContext ? true : false;
-  }, [accountAddress, isMultisigContext, publicKey]);
+  }, [selectedAccount, isMultisigContext, publicKey]);
 
   const navigateToVestingContract = useCallback((contractId: string) => {
     if (contractId) {
@@ -613,11 +609,11 @@ export const VestingView = () => {
   }, [getContractFinishDate, streamTemplate]);
 
   const onSelectVestingContract = useCallback((item: Treasury | undefined) => {
-    if (accountAddress && item) {
+    if (selectedAccount.address && item) {
       navigateToVestingContract(item.id.toString());
       setAutoOpenDetailsPanel(true);
     }
-  }, [accountAddress, navigateToVestingContract]);
+  }, [selectedAccount.address, navigateToVestingContract]);
 
   const getAllUserV2Accounts = useCallback(async (account: string) => {
 
@@ -635,12 +631,12 @@ export const VestingView = () => {
 
   const refreshVestingContracts = useCallback((reset = false) => {
 
-    if (!connection || !publicKey || !msp || !accountAddress) { return; }
+    if (!connection || !publicKey || !msp || !selectedAccount.address) { return; }
 
     // Before fetching the list of vesting contracts, clear the cache of flow rates
     vestingFlowRatesCache.clear();
 
-    getAllUserV2Accounts(accountAddress)
+    getAllUserV2Accounts(selectedAccount.address)
       .then(contracts => {
         consoleOut('Vesting contracts:', contracts, 'blue');
         setTreasuryList(contracts.map(vc => {
@@ -668,7 +664,7 @@ export const VestingView = () => {
         setTreasuriesLoaded(true);
       });
 
-  }, [accountAddress, connection, getAllUserV2Accounts, msp, navigateToVestingContract, publicKey, vestingContract]);
+  }, [selectedAccount.address, connection, getAllUserV2Accounts, msp, navigateToVestingContract, publicKey, vestingContract]);
 
   const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
     if (!publicKey || !msp || loadingTreasuryStreams) { return; }
@@ -728,7 +724,7 @@ export const VestingView = () => {
       return false;
     }
 
-    const contextAddress = new PublicKey(accountAddress);
+    const contextAddress = new PublicKey(selectedAccount.address);
     const treasurer = new PublicKey(treasuryInfo.treasurer as string);
     const isMultisigTreasury = isMultisigContext && treasuryInfo.treasurer ? true : false;
 
@@ -738,14 +734,14 @@ export const VestingView = () => {
 
     return false;
 
-  }, [accountAddress, isMultisigContext, multisigAccounts, publicKey, selectedVestingContract]);
+  }, [selectedAccount.address, isMultisigContext, multisigAccounts, publicKey, selectedVestingContract]);
 
   const getMultisigIdFromContext = useCallback(() => {
 
-    if (!multisigAccounts || !selectedMultisig || !accountAddress) { return ''; }
+    if (!multisigAccounts || !selectedMultisig || !selectedAccount.address) { return ''; }
 
     if (isMultisigContext) {
-      const multisig = multisigAccounts.find(t => t.authority.toBase58() === accountAddress);
+      const multisig = multisigAccounts.find(t => t.authority.toBase58() === selectedAccount.address);
       if (multisig) {
         return multisig.authority.toBase58();
       }
@@ -753,7 +749,7 @@ export const VestingView = () => {
 
     return '';
 
-  }, [accountAddress, isMultisigContext, multisigAccounts, selectedMultisig])
+  }, [selectedAccount.address, isMultisigContext, multisigAccounts, selectedMultisig])
 
   const getContractActivity = useCallback((streamId: string, clearHistory = false) => {
     if (!streamId || !msp || loadingContractActivity) {
@@ -3328,12 +3324,12 @@ export const VestingView = () => {
   // Load vesting accounts once per page access
   useEffect(() => {
 
-    if (!publicKey || !accountAddress || treasuriesLoaded) { return; }
+    if (!publicKey || !selectedAccount.address || treasuriesLoaded) { return; }
 
     consoleOut('Calling refreshVestingContracts...', '', 'blue');
     refreshVestingContracts(false);
 
-  }, [accountAddress, publicKey, refreshVestingContracts, treasuriesLoaded]);
+  }, [selectedAccount.address, publicKey, refreshVestingContracts, treasuriesLoaded]);
 
   // Set a vesting contract if passed-in via url if found in list of vesting contracts
   // If not found or not provided, will pick the first one available via redirect
@@ -3476,12 +3472,12 @@ export const VestingView = () => {
 
   // Set a tab if none already set
   useEffect(() => {
-    if (publicKey && accountAddress && vestingContract && !activeTab) {
+    if (publicKey && selectedAccount.address && vestingContract && !activeTab) {
       // /vesting/:vestingContract/:activeTab
       let url = `${VESTING_ROUTE_BASE_PATH}/${vestingContract}/overview`;
       navigate(url);
     }
-  }, [accountAddress, activeTab, navigate, publicKey, vestingContract]);
+  }, [selectedAccount.address, activeTab, navigate, publicKey, vestingContract]);
 
   // Reload streams whenever the selected vesting contract changes
   useEffect(() => {
@@ -3548,11 +3544,11 @@ export const VestingView = () => {
 
   // Set a multisig based on address in context
   useEffect(() => {
-    if (!isMultisigContext || !multisigAccounts || !accountAddress) {
+    if (!isMultisigContext || !multisigAccounts || !selectedAccount.address) {
       return;
     }
 
-    const item = multisigAccounts.find(m => m.authority.toBase58() === accountAddress);
+    const item = multisigAccounts.find(m => m.authority.toBase58() === selectedAccount.address);
     if (item) {
       setSelectedMultisig(item);
       setPendingMultisigTxCount(item.pendingTxsAmount);
@@ -3563,7 +3559,7 @@ export const VestingView = () => {
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountAddress, isMultisigContext, multisigAccounts]);
+  }, [selectedAccount.address, isMultisigContext, multisigAccounts]);
 
   // Get the Vesting contract activity while in "activity" tab
   useEffect(() => {
@@ -3576,18 +3572,18 @@ export const VestingView = () => {
   // Get fees for multisig actions
   useEffect(() => {
 
-    if (!multisigClient || !accountAddress || !isMultisigContext) { return; }
+    if (!multisigClient || !selectedAccount.address || !isMultisigContext) { return; }
 
     getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
     .then(value => {
       setMultisigTxFees(value);
       consoleOut('Multisig transaction fees:', value, 'orange');
     });
-  }, [accountAddress, isMultisigContext, multisigClient]);
+  }, [selectedAccount.address, isMultisigContext, multisigClient]);
 
   // Get min balance required for multisig actions
   useEffect(() => {
-    if (accountAddress && selectedVestingContract) {
+    if (selectedAccount.address && selectedVestingContract) {
       let minRequired = 0;
       if (isMultisigContext && isMultisigTreasury(selectedVestingContract) && multisigTxFees) {
         minRequired = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal fees
@@ -3603,7 +3599,7 @@ export const VestingView = () => {
         consoleOut('Min balance required:', MIN_SOL_BALANCE_REQUIRED, 'blue');
       }
     }
-  }, [accountAddress, isMultisigContext, isMultisigTreasury, multisigTxFees, selectedVestingContract, transactionFees]);
+  }, [selectedAccount.address, isMultisigContext, isMultisigTreasury, multisigTxFees, selectedVestingContract, transactionFees]);
 
   // Keep the available streaming balance for the current vesting contract updated
   useEffect(() => {
@@ -3704,7 +3700,7 @@ export const VestingView = () => {
     // /vesting/:vestingContract/:activeTab
     let url = `${VESTING_ROUTE_BASE_PATH}/${vestingContract}/${activeKey}`;
     navigate(url);
-  }, [accountAddress, navigate, vestingContract]);
+  }, [navigate, vestingContract]);
 
   const loadMoreActivity = useCallback(() => {
     if (!vestingContract) { return; }
@@ -3818,7 +3814,7 @@ export const VestingView = () => {
       label: selectedVestingContract.totalStreams > 0 ? `Streams (${selectedVestingContract.totalStreams})` : 'Streams',
       children: (
         <VestingContractStreamList
-          accountAddress={accountAddress}
+          accountAddress={selectedAccount.address}
           isMultisigTreasury={isMultisigTreasury()}
           loadingTreasuryStreams={loadingTreasuryStreams}
           minRequiredBalance={minRequiredBalance}
@@ -3873,7 +3869,7 @@ export const VestingView = () => {
     userBalances,
     nativeBalance,
     streamTemplate,
-    accountAddress,
+    selectedAccount.address,
     multisigClient,
     treasuryStreams,
     activeTab,
@@ -3942,7 +3938,7 @@ export const VestingView = () => {
               <>
                 <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
                 <VestingContractCreateForm
-                  accountAddress={accountAddress}
+                  accountAddress={selectedAccount.address}
                   inModal={false}
                   isBusy={isBusy}
                   isMultisigContext={isMultisigContext}
@@ -3972,7 +3968,7 @@ export const VestingView = () => {
     userBalances,
     nativeBalance,
     workingToken,
-    accountAddress,
+    selectedAccount.address,
     selectedMultisig,
     isMultisigContext,
     loadingTreasuries,
@@ -3985,7 +3981,7 @@ export const VestingView = () => {
   ]);
 
   // Unauthorized access or disconnected access
-  if (!publicKey || (publicKey && accountAddress && publicKey.toBase58() !== accountAddress && !isMultisigContext)) {
+  if (!publicKey || (publicKey && publicKey.toBase58() !== selectedAccount.address && !isMultisigContext)) {
     return (
       <>
         <div className="container main-container">
@@ -4010,7 +4006,7 @@ export const VestingView = () => {
                 ) : (
                   <div className="text-center">
                     <h3 className="mb-3">You don't have access permission to view the vesting contracts for the wallet address specified.</h3>
-                    <p>Please reconnect with the authorized wallet ({shortenAddress(accountAddress)})<br/>or <span className="simplelink underline" onClick={() => {
+                    <p>Please reconnect with the authorized wallet ({shortenAddress(selectedAccount.address)})<br/>or <span className="simplelink underline" onClick={() => {
                       window.location.href = VESTING_ROUTE_BASE_PATH;
                     }}>click here</span> to show the vesting contracts for the connected wallet.</p>
                   </div>
@@ -4075,8 +4071,8 @@ export const VestingView = () => {
                     <div className="user-address">
                       <span className="fg-secondary">
                         (<Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
-                          <span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
-                            {shortenAddress(accountAddress, 5)}
+                          <span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(selectedAccount.address)}>
+                            {shortenAddress(selectedAccount.address, 5)}
                           </span>
                         </Tooltip>)
                       </span>
@@ -4099,7 +4095,7 @@ export const VestingView = () => {
                   <div className="inner-container">
                     {isMultisigContext && (
                       <PendingProposalsComponent
-                        accountAddress={accountAddress}
+                        accountAddress={selectedAccount.address}
                         extraClasses="no-pointer shift-up-1"
                         pendingMultisigTxCount={pendingMultisigTxCount}
                       />
@@ -4194,7 +4190,7 @@ export const VestingView = () => {
 
         {isVestingContractCreateModalVisible && (
           <VestingContractCreateModal
-            accountAddress={accountAddress}
+            accountAddress={selectedAccount.address}
             handleClose={closeVestingContractCreateModal}
             handleOk={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
             isBusy={isBusy}

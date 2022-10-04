@@ -38,7 +38,7 @@ import {
   toUiAmount
 } from 'middleware/utils';
 import { TreasuryTopupParams } from 'models/common-types';
-import { MeanFiAccountType, TransactionStatus } from 'models/enums';
+import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { QRCodeSVG } from 'qrcode.react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -84,7 +84,6 @@ export const TreasuryAddFundsModal = (props: {
     theme,
     splTokenList,
     loadingPrices,
-    accountAddress,
     selectedAccount,
     transactionStatus,
     highLightableStreamId,
@@ -123,11 +122,8 @@ export const TreasuryAddFundsModal = (props: {
   ]);
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const hasNoStreamingAccounts = useMemo(() => {
     return  isMultisigContext &&

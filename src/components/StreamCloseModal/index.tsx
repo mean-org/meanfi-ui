@@ -10,7 +10,7 @@ import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { consoleOut, percentage, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
-import { MeanFiAccountType, TransactionStatus } from 'models/enums';
+import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { StreamTreasuryType } from 'models/treasuries';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -41,7 +41,6 @@ export const StreamCloseModal = (props: {
   const {
     theme,
     splTokenList,
-    accountAddress,
     selectedAccount,
     setTransactionStatus,
   } = useContext(AppStateContext);
@@ -58,11 +57,8 @@ export const StreamCloseModal = (props: {
   const [proposalTitle, setProposalTitle] = useState("");
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const getTreasuryTypeByTreasuryId = useCallback(async (treasuryId: string, streamVersion: number): Promise<StreamTreasuryType | undefined> => {
     if (!connection || !publicKey || !mspClient) { return undefined; }

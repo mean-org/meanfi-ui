@@ -7,7 +7,6 @@ import { IconLoading, IconSafe, IconWallet } from "Icons";
 import { consoleOut, kFormatter, toUsCurrency } from "middleware/ui";
 import { shortenAddress } from "middleware/utils";
 import { AccountContext, UserTokenAccount } from "models/accounts";
-import { MeanFiAccountType } from "models/enums";
 import { useContext, useEffect, useState } from "react";
 import "./style.scss";
 
@@ -70,7 +69,7 @@ export const AccountSelector = (props: {
       const account: AccountContext = {
         name: 'Personal account',
         address: publicKey.toBase58(),
-        type: MeanFiAccountType.Wallet
+        isMultisig: false
       };
       setSelectedAccount(account);
     }
@@ -84,7 +83,7 @@ export const AccountSelector = (props: {
     const account: AccountContext = {
       name: item.label,
       address: item.authority.toBase58(),
-      type: MeanFiAccountType.Multisig
+      isMultisig: true
     };
     setSelectedAccount(account);
     setIsSelectingAccount(false);

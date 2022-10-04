@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
 import { AppStateContext } from 'contexts/appstate';
-import { MeanFiAccountType } from 'models/enums';
 import { InputMean } from 'components/InputMean';
 
 export const StreamResumeModal = (props: {
@@ -22,7 +21,6 @@ export const StreamResumeModal = (props: {
 }) => {
   const {
     theme,
-    accountAddress,
     selectedAccount,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
@@ -32,11 +30,8 @@ export const StreamResumeModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const amITreasurer = useCallback((): boolean => {
     if (props.streamDetail && publicKey) {

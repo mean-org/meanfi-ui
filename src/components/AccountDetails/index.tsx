@@ -17,7 +17,6 @@ import {
 import { AppUsageEvent } from 'middleware/segment-service';
 import { copyText } from "middleware/ui";
 import { shortenAddress } from "middleware/utils";
-import { MeanFiAccountType } from "models/enums";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "pages/accounts";
 import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from "react-i18next";
@@ -28,7 +27,6 @@ export const AccountDetails = () => {
 
   const {
     diagnosisInfo,
-    accountAddress,
     selectedAccount,
     multisigAccounts,
   } = useContext(AppStateContext);
@@ -64,7 +62,7 @@ export const AccountDetails = () => {
   }, []);
 
   const onCopyAddress = () => {
-    if (copyText(accountAddress)) {
+    if (copyText(selectedAccount.address)) {
       openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
@@ -135,7 +133,7 @@ export const AccountDetails = () => {
   );
 
   const getPlusAccounts = () => {
-    if (selectedAccount.type === MeanFiAccountType.Wallet || !multisigAccounts || multisigAccounts.length === 0) {
+    if (!selectedAccount.isMultisig || !multisigAccounts || multisigAccounts.length === 0) {
       return '';
     }
     if (multisigAccounts.length === 2) {
@@ -224,8 +222,8 @@ export const AccountDetails = () => {
           <img src={provider.icon} alt={provider.name} width="24" className="wallet-provider-icon" />
         )}
         <div className="account-descriptor">
-          <div className="account-type">Personal Account</div>
-          <div className="account-id">{shortenAddress(publicKey)}</div>
+          <div className="account-name">Personal Account</div>
+          <div className="account-id">{shortenAddress(publicKey, 8)}</div>
         </div>
       </>
     );
@@ -236,8 +234,8 @@ export const AccountDetails = () => {
       <>
         <IconSafe className="mean-svg-icons wallet-provider-icon" style={{ width: 24, height: 24 }} />
         <div className="account-descriptor">
-          <div className="account-type">Super Safe</div>
-          <div className="account-id">{selectedAccount.name}</div>
+          <div className="account-name">{selectedAccount.name}</div>
+          <div className="account-id">{shortenAddress(selectedAccount.address, 8)}</div>
         </div>
       </>
     );
@@ -248,8 +246,7 @@ export const AccountDetails = () => {
       <div className="wallet-wrapper">
         <Dropdown overlay={getMenu()} placement="bottomRight" trigger={["click"]}>
           <span className="wallet-key">
-            {selectedAccount.type === MeanFiAccountType.Multisig && renderSupersafeAccount()}
-            {selectedAccount.type === MeanFiAccountType.Wallet && renderPersonalAccount()}
+            {selectedAccount.isMultisig ? renderSupersafeAccount() : renderPersonalAccount()}
           </span>
         </Dropdown>
       </div>

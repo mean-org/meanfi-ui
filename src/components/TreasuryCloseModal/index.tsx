@@ -12,7 +12,7 @@ import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { getTransactionOperationDescription } from 'middleware/ui';
 import { formatThousands, getAmountWithSymbol, getSdkValue, shortenAddress } from 'middleware/utils';
-import { MeanFiAccountType, TransactionStatus } from 'models/enums';
+import { TransactionStatus } from 'models/enums';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -34,7 +34,6 @@ export const TreasuryCloseModal = (props: {
   const { t } = useTranslation('common');
   const {
     theme,
-    accountAddress,
     selectedAccount,
     transactionStatus,
     getTokenByMintAddress
@@ -44,11 +43,8 @@ export const TreasuryCloseModal = (props: {
   const [proposalTitle, setProposalTitle] = useState("");
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;

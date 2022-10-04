@@ -6,7 +6,6 @@ import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { isValidAddress } from 'middleware/ui';
-import { MeanFiAccountType } from 'models/enums';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -24,7 +23,6 @@ export const StreamTransferOpenModal = (props: {
   } = props;
 
   const {
-    accountAddress,
     selectedAccount,
   } = useContext(AppStateContext);
 
@@ -35,11 +33,8 @@ export const StreamTransferOpenModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
-      return true;
-    }
-    return false;
-  }, [publicKey && accountAddress, selectedAccount]);
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const isAddressTreasurer = useCallback((address: string): boolean => {
     if (streamDetail && address) {
