@@ -1,15 +1,15 @@
-import React, { useContext, useCallback, useEffect, useState } from 'react';
+import React, { useContext, useCallback, useEffect, useState, useMemo } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { useWallet } from '../../contexts/wallet';
-import { percentage, percentageBn } from '../../middleware/ui';
-import { getAmountWithSymbol, toUiAmount } from '../../middleware/utils';
+import { useWallet } from 'contexts/wallet';
+import { percentage, percentageBn } from 'middleware/ui';
+import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
-import { InputMean } from '../InputMean';
-import { useSearchParams } from 'react-router-dom';
-import { AppStateContext } from '../../contexts/appstate';
+import { AppStateContext } from 'contexts/appstate';
+import { MeanFiAccountType } from 'models/enums';
+import { InputMean } from 'components/InputMean';
 
 export const StreamResumeModal = (props: {
   handleClose: any;
@@ -22,26 +22,21 @@ export const StreamResumeModal = (props: {
 }) => {
   const {
     theme,
+    accountAddress,
+    selectedAccount,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const [searchParams] = useSearchParams();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [proposalTitle, setProposalTitle] = useState('');
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
+  const isMultisigContext = useMemo(() => {
+    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
+      return true;
     }
-    return undefined;
-  }, [searchParams]);
-
-  const param = getQueryAccountType();
+    return false;
+  }, [publicKey && accountAddress, selectedAccount]);
 
   const amITreasurer = useCallback((): boolean => {
     if (props.streamDetail && publicKey) {
@@ -194,7 +189,7 @@ export const StreamResumeModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{param === "multisig" ? "Propose resume stream" : t('streams.resume-stream-modal-title')}</div>}
+      title={<div className="modal-title">{isMultisigContext ? "Propose resume stream" : t('streams.resume-stream-modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onCancel={onCloseModal}
@@ -229,7 +224,7 @@ export const StreamResumeModal = (props: {
         )}
 
         {/* Proposal title */}
-        {param === "multisig" && (
+        {isMultisigContext && (
           <div className="mb-3">
             <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
             <InputMean
@@ -244,22 +239,14 @@ export const StreamResumeModal = (props: {
         )}
 
         <div className="mt-3">
-          {/* <Button
-              className="mr-3"
-              type="text"
-              shape="round"
-              size="large"
-              onClick={onCloseModal}>
-              {t('close-stream.secondary-cta')}
-          </Button> */}
           <Button
               block
               type="primary"
               shape="round"
               size="large"
-              disabled={param === "multisig" && !isValidForm()}
+              disabled={isMultisigContext && !isValidForm()}
               onClick={() => onAcceptModal()}>
-              {param === "multisig" ? getTransactionStartButtonLabel() : t('streams.resume-stream-cta')}
+              {isMultisigContext ? getTransactionStartButtonLabel() : t('streams.resume-stream-cta')}
           </Button>
         </div>
       </div>

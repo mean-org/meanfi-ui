@@ -1,54 +1,48 @@
-import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
-import { IconEllipsisVertical } from "../../Icons";
-import { MoneyStreamDetails } from "../../components/MoneyStreamDetails";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { ArrowUpOutlined, CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
+import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
+import { calculateActionFees } from "@mean-dao/money-streaming/lib/utils";
 import {
-  Stream,
+  AllocationType, calculateActionFees as calculateActionFeesV2,
+  MSP, MSP_ACTIONS as MSP_ACTIONS_V2, Stream,
   STREAM_STATUS,
-  TransactionFees,
-  MSP_ACTIONS as MSP_ACTIONS_V2,
-  calculateActionFees as calculateActionFeesV2,
-  MSP,
-  AllocationType,
-  Treasury,
+  TransactionFees, Treasury,
   TreasuryType
 } from "@mean-dao/msp";
-import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
-import { useTranslation } from "react-i18next";
-import { ArrowUpOutlined, CheckOutlined, WarningOutlined, LoadingOutlined, InfoCircleOutlined } from "@ant-design/icons";
-import { AppStateContext } from "../../contexts/appstate";
-import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from "../../middleware/utils";
-import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
-import { segmentAnalytics } from "../../App";
-import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "../../middleware/segment-service";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../middleware/ui";
-import { TokenInfo } from "models/SolanaTokenInfo";
-import { calculateActionFees } from "@mean-dao/money-streaming/lib/utils";
-import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
-import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
-import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
-import { StreamTopupParams, StreamTopupTxCreateParams } from "../../models/common-types";
-import { OperationType, TransactionStatus } from "../../models/enums";
 import { AccountInfo, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT } from "../../middleware/ids";
-import { customLogger } from "../..";
-import { useWallet } from "../../contexts/wallet";
-import { TxConfirmationContext } from "../../contexts/transaction-status";
-import { StreamPauseModal } from "../../components/StreamPauseModal";
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { StreamResumeModal } from "../../components/StreamResumeModal";
-import { CloseStreamTransactionParams, StreamTreasuryType } from "../../models/treasuries";
-import { StreamCloseModal } from "../../components/StreamCloseModal";
-import { title } from "process";
-import { appConfig } from '../..';
-import { fetchAccountTokens, readAccountInfo } from "../../middleware/accounts";
-import { NATIVE_SOL } from "../../constants/tokens";
+import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
+import { segmentAnalytics } from "App";
+import { MoneyStreamDetails } from "components/MoneyStreamDetails";
+import { StreamAddFundsModal } from "components/StreamAddFundsModal";
+import { StreamCloseModal } from "components/StreamCloseModal";
+import { StreamPauseModal } from "components/StreamPauseModal";
+import { StreamResumeModal } from "components/StreamResumeModal";
+import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "constants/common";
+import { NATIVE_SOL } from "constants/tokens";
+import { AppStateContext } from "contexts/appstate";
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "contexts/connection";
+import { TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import { IconEllipsisVertical } from "Icons";
+import { appConfig, customLogger } from "index";
+import { fetchAccountTokens, readAccountInfo } from "middleware/accounts";
+import { NATIVE_SOL_MINT } from "middleware/ids";
+import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "middleware/segment-service";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "middleware/ui";
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from "middleware/utils";
+import { StreamTopupParams, StreamTopupTxCreateParams } from "models/common-types";
+import { OperationType, TransactionStatus } from "models/enums";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { CloseStreamTransactionParams, StreamTreasuryType } from "models/treasuries";
+import { title } from "process";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MoneyStreamsOutgoingView = (props: {
-  accountAddress: string;
   loadingStreams: boolean;
   multisigAccounts: MultisigInfo[] | undefined;
   onSendFromOutgoingStreamDetails?: any;
@@ -57,7 +51,6 @@ export const MoneyStreamsOutgoingView = (props: {
 }) => {
 
   const {
-    accountAddress,
     loadingStreams,
     multisigAccounts,
     onSendFromOutgoingStreamDetails,
@@ -69,6 +62,7 @@ export const MoneyStreamsOutgoingView = (props: {
     splTokenList,
     tokenBalance,
     deletedStreams,
+    accountAddress,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
@@ -2190,7 +2184,7 @@ export const MoneyStreamsOutgoingView = (props: {
           } catch (error) {
             console.error(error);
 
-            // TODO: Apply this check for all modules, try to take Sing and send subroutines to a centrali zed
+            // TODO: Apply this check for all modules, try to take Sing and send subroutines to a centralized
             const encodedTxForDebugging = signedTransaction.serialize({ verifySignatures: false }).toString('base64');
             consoleOut('encodedTx:', encodedTxForDebugging, 'orange');
 
@@ -2770,18 +2764,6 @@ export const MoneyStreamsOutgoingView = (props: {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar">
-          <span>isBusy:</span><span className="ml-1 font-extrabold">{isBusy ? 'true' : 'false'}</span>
-          <span className="ml-2">selectedStream:</span><span className="ml-1 font-extrabold">{streamSelected ? 'true' : 'false'}</span>
-          <span className="ml-2">treasuryDetails:</span><span className="ml-1 font-extrabold">{treasuryDetails ? 'true' : 'false'}</span>
-          <span className="ml-2">isPendingTx:</span><span className="ml-1 font-extrabold">{hasStreamPendingTx(OperationType.StreamAddFunds) ? 'true' : 'false'}</span>
-          <span className="ml-2">isOtp:</span><span className="ml-1 font-extrabold">{isOtp() ? 'true' : 'false'}</span>
-          <span className="ml-2">isDeletedStream:</span><span className="ml-1 font-extrabold">{streamSelected && isDeletedStream(streamSelected) ? 'true' : 'false'}</span>
-          <span className="ml-2">getTreasuryType:</span><span className="ml-1 font-extrabold">{getTreasuryType()}</span>
-        </div>
-      )} */}
-
       <Spin spinning={loadingStreams}>
         <MoneyStreamDetails
           accountAddress={accountAddress}

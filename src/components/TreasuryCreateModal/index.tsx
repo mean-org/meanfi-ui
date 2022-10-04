@@ -1,31 +1,29 @@
-import React, { useCallback, useContext, useEffect } from 'react';
-import { useState } from 'react';
-import { Modal, Button, Spin, Drawer } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
-import { AppStateContext } from '../../contexts/appstate';
-import { TreasuryCreateOptions, TreasuryTypeOption } from '../../models/treasuries';
-import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
-import { isError } from '../../middleware/transactions';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
-import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
-import { Identicon } from '../Identicon';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { TokenDisplay } from '../TokenDisplay';
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { TextInput } from '../TextInput';
-import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { TokenListItem } from '../TokenListItem';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
+import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
 import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { useSearchParams } from 'react-router-dom';
-import { InputMean } from '../InputMean';
-import { environment } from '../../environments/environment';
-import { fetchAccountTokens } from '../../middleware/accounts';
+import { Button, Drawer, Modal, Spin } from 'antd';
+import { Identicon } from 'components/Identicon';
+import { InputMean } from 'components/InputMean';
+import { TextInput } from 'components/TextInput';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { TokenListItem } from 'components/TokenListItem';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
+import { TREASURY_TYPE_OPTIONS } from 'constants/treasury-type-options';
+import { AppStateContext } from 'contexts/appstate';
+import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { environment } from 'environments/environment';
+import { fetchAccountTokens } from 'middleware/accounts';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { isError } from 'middleware/transactions';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
+import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
+import { MeanFiAccountType, TransactionStatus } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { TreasuryCreateOptions, TreasuryTypeOption } from 'models/treasuries';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -49,11 +47,12 @@ export const TreasuryCreateModal = (props: {
     selectedMultisig,
     transactionFees,
   } = props;
-  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const {
     tokenList,
     splTokenList,
+    accountAddress,
+    selectedAccount,
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
@@ -70,6 +69,13 @@ export const TreasuryCreateModal = (props: {
   const [userBalances, setUserBalances] = useState<any>();
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   const [workingTokenBalance, setWorkingTokenBalance] = useState<number>(0);
+
+  const isMultisigContext = useMemo(() => {
+    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
+      return true;
+    }
+    return false;
+  }, [publicKey && accountAddress, selectedAccount]);
 
   const autoFocusInput = useCallback(() => {
     const input = document.getElementById("token-search-streaming-account");
@@ -470,24 +476,11 @@ export const TreasuryCreateModal = (props: {
     </div>
   );
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = getQueryAccountType();
-
   return (
     <>
       <Modal
         className="mean-modal simple-modal"
-        title={<div className="modal-title">{param === "multisig" ? "Propose streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
+        title={<div className="modal-title">{isMultisigContext ? "Propose streaming account" : t('treasuries.create-treasury.modal-title')}</div>}
         maskClosable={false}
         footer={null}
         open={isVisible}
@@ -501,7 +494,7 @@ export const TreasuryCreateModal = (props: {
           {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
             <>
               {/* Proposal title */}
-              {param === "multisig" && (
+              {isMultisigContext && (
                 <div className="mb-3">
                   <div className="form-label">{t('multisig.proposal-modal.title')}</div>
                   <InputMean
@@ -555,28 +548,6 @@ export const TreasuryCreateModal = (props: {
                     </span>
                   </div>
                 </div>
-                {/* <div className="flex-fixed-right">
-                  <div className="left inner-label">
-                    <span>{t('add-funds.label-right')}:</span>
-                    <span>
-                      {`${workingTokenBalance && workingToken
-                          ? getAmountWithSymbol(
-                              workingTokenBalance,
-                              workingToken.address,
-                              true
-                            )
-                          : "0"
-                      }`}
-                    </span>
-                  </div>
-                  <div className="right inner-label">
-                    <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                      ~{workingTokenBalance
-                        ? toUsCurrency(getTokenPrice(workingTokenBalance))
-                        : "$0.00"}
-                    </span>
-                  </div>
-                </div> */}
               </div>
 
               {/* Treasury type selector */}
@@ -708,7 +679,7 @@ export const TreasuryCreateModal = (props: {
                   type="primary"
                   shape="round"
                   size="large"
-                  disabled={param === "multisig" ? !isValidFormMultisig() : !isValidForm()}
+                  disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                       onAcceptModal();
@@ -721,7 +692,7 @@ export const TreasuryCreateModal = (props: {
                   {isBusy
                     ? t('treasuries.create-treasury.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                      ? (param === "multisig" ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel())
+                      ? (isMultisigContext ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel())
                       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                         ? t('general.cta-finish')
                         : t('general.refresh')

@@ -1,20 +1,24 @@
-import React, { useCallback, useEffect, useMemo, useContext, useState } from 'react';
-import "./style.scss";
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col } from 'antd';
+import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { TreasuryInfo } from '@mean-dao/money-streaming';
+import { Beneficiary, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { u64 } from '@solana/spl-token';
+import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Checkbox, Col, DatePicker, Divider, Dropdown, Menu, Modal, Row, Select, Tooltip } from 'antd';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { BN } from 'bn.js';
+import { InfoIcon } from 'components/InfoIcon';
+import { InputMean } from 'components/InputMean';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import {
-  displayAmountWithSymbol,
-  formatThousands,
-  getSdkValue,
-  getAmountWithSymbol,
-  isValidNumber,
-  shortenAddress,
-  toTokenAmount,
-  toTokenAmountBn,
-  toUiAmount,
-} from 'middleware/utils';
-import { useTranslation } from 'react-i18next';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import { useConnectionConfig } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
+import { appConfig, customLogger } from 'index';
+import { readAccountInfo } from 'middleware/accounts';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
 import {
   consoleOut,
   disabledDate,
@@ -27,34 +31,26 @@ import {
   isToday,
   isValidAddress,
   stringNumberFormat,
-  toUsCurrency,
+  toUsCurrency
 } from 'middleware/ui';
+import {
+  displayAmountWithSymbol,
+  formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber,
+  shortenAddress,
+  toTokenAmount,
+  toTokenAmountBn,
+  toUiAmount
+} from 'middleware/utils';
+import { MeanFiAccountType, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import { PaymentRateTypeOption } from "models/PaymentRateTypeOption";
-import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
-import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
-import { OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
-import moment from "moment";
-import { useWallet } from 'contexts/wallet';
-import { StepSelector } from '../StepSelector';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
-import { Identicon } from '../Identicon';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
-import { Beneficiary, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { TreasuryInfo } from '@mean-dao/money-streaming';
-import { useConnectionConfig } from 'contexts/connection';
-import { BN } from 'bn.js';
-import { u64 } from '@solana/spl-token';
-import { MeanMultisig, DEFAULT_EXPIRATION_TIME_SECONDS, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { useSearchParams } from 'react-router-dom';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { CreateStreamParams } from 'models/streams';
-import { readAccountInfo } from 'middleware/accounts';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
-import { appConfig, customLogger } from 'index';
-import { InputMean } from 'components/InputMean';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { InfoIcon } from 'components/InfoIcon';
+import moment from "moment";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Identicon } from '../Identicon';
+import { StepSelector } from '../StepSelector';
+import "./style.scss";
 
 const { Option } = Select;
 type TreasuryValues = Treasury | TreasuryInfo | undefined;
@@ -91,7 +87,6 @@ export const TreasuryStreamCreateModal = (props: {
     withdrawTransactionFees,
   } = props;
   const { t } = useTranslation('common');
-  const [searchParams] = useSearchParams();
   const { wallet, publicKey } = useWallet();
   const { endpoint } = useConnectionConfig();
   const {
@@ -101,6 +96,8 @@ export const TreasuryStreamCreateModal = (props: {
     recipientNote,
     isWhitelisted,
     fromCoinAmount,
+    accountAddress,
+    selectedAccount,
     recipientAddress,
     paymentStartDate,
     lockPeriodAmount,
@@ -156,6 +153,14 @@ export const TreasuryStreamCreateModal = (props: {
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+
+  const isMultisigContext = useMemo(() => {
+    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
+      return true;
+    }
+    return false;
+  }, [publicKey && accountAddress, selectedAccount]);
+
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -228,26 +233,12 @@ export const TreasuryStreamCreateModal = (props: {
     return parseFloat(inputAmount) * price;
   }, [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken]);
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
-
   const hasNoStreamingAccounts = useMemo(() => {
-    return  param === "multisig" &&
-            selectedMultisig &&
+    return  isMultisigContext && selectedMultisig &&
             (!treasuryList || treasuryList.length === 0)
       ? true
       : false;
-  }, [param, selectedMultisig, treasuryList]);
+  }, [isMultisigContext, selectedMultisig, treasuryList]);
 
   /////////////////
   //   Getters   //
@@ -367,7 +358,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabel = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (param === "multisig" && !proposalTitle) {
+    } else if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
     } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
@@ -393,7 +384,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabelInLocked = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (param === "multisig" && !proposalTitle) {
+    } else if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
     } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
@@ -421,7 +412,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepTwoContinueButtonLabel = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (param === "multisig" && !proposalTitle) {
+    } else if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
     } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
@@ -451,7 +442,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getTransactionStartButtonLabel = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (param === "multisig" && !proposalTitle) {
+    } else if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
     } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
@@ -476,7 +467,7 @@ export const TreasuryStreamCreateModal = (props: {
       return t('transactions.validation.verified-recipient-unchecked');
     } else if (nativeBalance < getMinBalanceRequired()) {
       return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) });
-    } else if (param === "multisig") {
+    } else if (isMultisigContext) {
       return 'Submit proposal';
     } else {
       return t('transactions.validation.valid-approve');
@@ -486,7 +477,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getTransactionStartButtonLabelInLocked = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (param === "multisig" && !proposalTitle) {
+    } else if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
     } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
@@ -512,7 +503,7 @@ export const TreasuryStreamCreateModal = (props: {
       return t('transactions.validation.verified-recipient-unchecked');
     } else if (nativeBalance < getMinBalanceRequired()) {
       return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) });
-    } else if (param === "multisig") {
+    } else if (isMultisigContext) {
       return 'Submit proposal';
     } else {
       return t('transactions.validation.valid-approve');
@@ -1457,7 +1448,7 @@ export const TreasuryStreamCreateModal = (props: {
   //////////////////
 
   const isStreamingAccountSelected = (): boolean => {
-    const isMultisig = param === "multisig" && selectedMultisig ? true : false;
+    const isMultisig = isMultisigContext && selectedMultisig ? true : false;
     return !isMultisig || (isMultisig && selectedStreamingAccountId && isValidAddress(selectedStreamingAccountId))
       ? true
       : false;
@@ -1652,7 +1643,7 @@ export const TreasuryStreamCreateModal = (props: {
       className="mean-modal treasury-stream-create-modal"
       title={
         (workingTreasuryType === TreasuryType.Open)
-          ? (<div className="modal-title">{param === "multisig"
+          ? (<div className="modal-title">{isMultisigContext
             ? "Propose outgoing stream"
             : t('treasuries.treasury-streams.add-stream-modal-title')}</div>)
           : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)
@@ -1686,7 +1677,7 @@ export const TreasuryStreamCreateModal = (props: {
               )}
 
               {/* Proposal title */}
-              {param === "multisig" && (
+              {isMultisigContext && (
                 <div className="mb-3">
                   <div className="form-label">{t('multisig.proposal-modal.title')}</div>
                   <InputMean
@@ -1702,7 +1693,7 @@ export const TreasuryStreamCreateModal = (props: {
 
               {!enableMultipleStreamsOption && (
                 <>
-                  {param === "multisig" && selectedMultisig && !treasuryDetails && (
+                  {isMultisigContext && selectedMultisig && !treasuryDetails && (
                     <>
                       <div className="mb-3">
                         <div className="form-label icon-label">
@@ -2475,7 +2466,7 @@ export const TreasuryStreamCreateModal = (props: {
               onClick={onContinueStepOneButtonClick}
               disabled={(workingTreasuryType === TreasuryType.Lock) ? (
                 !publicKey ||
-                (param === "multisig" && !proposalTitle) ||
+                (isMultisigContext && !proposalTitle) ||
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
@@ -2484,7 +2475,7 @@ export const TreasuryStreamCreateModal = (props: {
                 !arePaymentSettingsValid()
               ) : (
                 !publicKey ||
-                (param === "multisig" && !proposalTitle) ||
+                (isMultisigContext && !proposalTitle) ||
                 (!enableMultipleStreamsOption && !isMemoValid()) ||
                 !isStreamingAccountSelected() ||
                 !isDestinationAddressValid() ||
@@ -2506,7 +2497,7 @@ export const TreasuryStreamCreateModal = (props: {
               onClick={workingTreasuryType === TreasuryType.Lock ? onContinueStepTwoButtonClick : onTransactionStart}
               disabled={workingTreasuryType === TreasuryType.Lock ? (
                 !publicKey ||
-                (param === "multisig" && !proposalTitle) ||
+                (isMultisigContext && !proposalTitle) ||
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
@@ -2516,7 +2507,7 @@ export const TreasuryStreamCreateModal = (props: {
                 parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
               ) : (
                 !publicKey ||
-                (param === "multisig" && !proposalTitle) ||
+                (isMultisigContext && !proposalTitle) ||
                 (!enableMultipleStreamsOption && !isMemoValid()) ||
                 !isStreamingAccountSelected() ||
                 !isDestinationAddressValid() ||
@@ -2551,7 +2542,7 @@ export const TreasuryStreamCreateModal = (props: {
               onClick={onTransactionStart}
               disabled={
                 !publicKey ||
-                (param === "multisig" && !proposalTitle) ||
+                (isMultisigContext && !proposalTitle) ||
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||

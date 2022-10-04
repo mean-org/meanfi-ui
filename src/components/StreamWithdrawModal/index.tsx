@@ -1,25 +1,23 @@
-import React, { useCallback, useContext, useMemo } from 'react';
-import { useEffect, useState } from "react";
-import { Modal, Button, Row, Col } from "antd";
-import { useConnectionConfig } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
-import { consoleOut, percentageBn } from "../../middleware/ui";
-import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { useTranslation } from "react-i18next";
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { PublicKey } from '@solana/web3.js';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
+import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
-import { AppStateContext } from '../../contexts/appstate';
-import { openNotification } from '../Notifications';
-import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { StreamWithdrawData } from '../../models/streams';
-import { InputMean } from '../InputMean';
-import { TransactionStatus } from '../../models/enums';
-import { useSearchParams } from 'react-router-dom';
-import { BN } from 'bn.js';
+import { PublicKey } from '@solana/web3.js';
+import { Button, Col, Modal, Row } from "antd";
 import BigNumber from 'bignumber.js';
+import { BN } from 'bn.js';
+import { InputMean } from 'components/InputMean';
+import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnectionConfig } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { consoleOut, percentageBn } from "middleware/ui";
+import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from "middleware/utils";
+import { MeanFiAccountType, TransactionStatus } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { StreamWithdrawData } from 'models/streams';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from "react-i18next";
+import { openNotification } from '../Notifications';
 
 export const StreamWithdrawModal = (props: {
   handleClose: any;
@@ -40,9 +38,10 @@ export const StreamWithdrawModal = (props: {
   const { t } = useTranslation('common');
   const { endpoint } = useConnectionConfig();
   const { wallet, publicKey } = useWallet();
-  const [searchParams] = useSearchParams();
   const {
     splTokenList,
+    accountAddress,
+    selectedAccount,
     streamProgramAddress,
     streamV2ProgramAddress,
     setTransactionStatus,
@@ -55,16 +54,12 @@ export const StreamWithdrawModal = (props: {
   const [feePayedByTreasurer, setFeePayedByTreasurer] = useState(false);
   const [proposalTitle, setProposalTitle] = useState('');
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
+  const isMultisigContext = useMemo(() => {
+    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
+      return true;
     }
-    return undefined;
-  }, [searchParams]);
+    return false;
+  }, [publicKey && accountAddress, selectedAccount]);
 
   const getFeeAmount = useCallback((fees: TransactionFees, amount = new BN(0)): number => {
     if (!selectedToken) { return 0; }
@@ -102,8 +97,6 @@ export const StreamWithdrawModal = (props: {
 
     return '';
   }, [selectedToken]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const isMaxAmount = useMemo(() => {
     if (!selectedToken || !withdrawAmountInput) { return false; }
@@ -375,14 +368,14 @@ export const StreamWithdrawModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">{param === "multisig" ? "Propose withdraw funds" : t('withdraw-funds.modal-title')}</div>}
+      title={<div className="modal-title">{isMultisigContext ? "Propose withdraw funds" : t('withdraw-funds.modal-title')}</div>}
       footer={null}
       open={isVisible}
       onOk={onAcceptWithdrawal}
       onCancel={onCloseModal}
       width={480}>
         {/* Proposal title */}
-        {param === "multisig" && (
+        {isMultisigContext && (
           <div className="mb-3">
             <div className="form-label">{t('multisig.proposal-modal.title')}</div>
             <InputMean
@@ -493,9 +486,9 @@ export const StreamWithdrawModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={param === "multisig" ? !isValidFormMultisig() : !isValidForm()}
+        disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
         onClick={onAcceptWithdrawal}>
-        {param === "multisig" ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel()}
+        {isMultisigContext ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel()}
       </Button>
     </Modal>
   );

@@ -1,21 +1,20 @@
-import React, { useCallback, useContext } from 'react';
-import { useEffect, useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { getTransactionOperationDescription } from '../../middleware/ui';
-import { useTranslation } from 'react-i18next';
-import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
-import { isError } from '../../middleware/transactions';
-import { TransactionStatus } from '../../models/enums';
-import { formatThousands, getSdkValue, getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { Treasury, TreasuryType } from '@mean-dao/msp';
-import { AppStateContext } from '../../contexts/appstate';
-import { useSearchParams } from 'react-router-dom';
-import { InputMean } from '../InputMean';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { Identicon } from '../Identicon';
-import { FALLBACK_COIN_IMAGE } from '../../constants';
+import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import { Treasury, TreasuryType } from '@mean-dao/msp';
+import { Button, Modal, Spin } from 'antd';
+import { Identicon } from 'components/Identicon';
+import { InputMean } from 'components/InputMean';
+import { FALLBACK_COIN_IMAGE } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { isError } from 'middleware/transactions';
+import { getTransactionOperationDescription } from 'middleware/ui';
+import { formatThousands, getAmountWithSymbol, getSdkValue, shortenAddress } from 'middleware/utils';
+import { MeanFiAccountType, TransactionStatus } from 'models/enums';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -33,24 +32,23 @@ export const TreasuryCloseModal = (props: {
   selectedMultisig: MultisigInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
-  const [searchParams] = useSearchParams();
   const {
     theme,
+    accountAddress,
+    selectedAccount,
     transactionStatus,
     getTokenByMintAddress
   } = useContext(AppStateContext);
-  // const { publicKey } = useWallet();
+  const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [proposalTitle, setProposalTitle] = useState("");
 
-  // const isUserTreasurer = (): boolean => {
-  //   if (publicKey && props.treasuryDetails) {
-  //     const me = publicKey.toBase58();
-  //     const treasurer = props.treasuryDetails.treasurerAddress as string;
-  //     return treasurer === me ? true : false;
-  //   }
-  //   return false;
-  // }
+  const isMultisigContext = useMemo(() => {
+    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
+      return true;
+    }
+    return false;
+  }, [publicKey && accountAddress, selectedAccount]);
 
   const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -171,19 +169,6 @@ export const TreasuryCloseModal = (props: {
     props.transactionFees
   ]);
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = getQueryAccountType();
-
   const v1 = props.treasuryDetails as TreasuryInfo;
   const v2 = props.treasuryDetails  as Treasury;
   const isNewTreasury = props.treasuryDetails  && props.treasuryDetails.version >= 2 ? true : false;
@@ -191,7 +176,7 @@ export const TreasuryCloseModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{param === "multisig" ? "Propose close account" : t('treasuries.close-account.modal-title')}</div>}
+      title={<div className="modal-title">{isMultisigContext ? "Propose close account" : t('treasuries.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       open={props.isVisible}
@@ -217,7 +202,7 @@ export const TreasuryCloseModal = (props: {
               )}
 
               {/* Proposal title */}
-              {param === "multisig" && (
+              {isMultisigContext && (
                 <div className="mb-3 mt-3">
                   <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
                   <InputMean
@@ -261,7 +246,7 @@ export const TreasuryCloseModal = (props: {
                     type="primary"
                     shape="round"
                     size="large"
-                    disabled={param === "multisig" && !isValidForm()}
+                    disabled={isMultisigContext && !isValidForm()}
                     onClick={() => onAcceptModal()}>
                     {props.isBusy && (
                       <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
@@ -270,7 +255,7 @@ export const TreasuryCloseModal = (props: {
                       ? t('treasuries.close-account.cta-close-busy')
                       : isError(transactionStatus.currentOperation)
                         ? t('general.retry')
-                        : (param === "multisig" ? getTransactionStartButtonLabel() : t('treasuries.close-account.cta-close'))
+                        : (isMultisigContext ? getTransactionStartButtonLabel() : t('treasuries.close-account.cta-close'))
                     }
                   </Button>
                 </div>

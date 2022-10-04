@@ -1,57 +1,49 @@
-import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { customLogger } from "../..";
-import { MoneyStreamDetails } from "../../components/MoneyStreamDetails";
-import { AppStateContext } from "../../contexts/appstate";
-import { TxConfirmationContext } from "../../contexts/transaction-status";
-import { IconEllipsisVertical } from "../../Icons";
-import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../middleware/ui";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
+import ArrowDownOutlined from "@ant-design/icons/lib/icons/ArrowDownOutlined";
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
+import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
-  TransactionFees,
-  MSP_ACTIONS as MSP_ACTIONS_V2,
-  calculateActionFees as calculateActionFeesV2,
-  Stream,
-  STREAM_STATUS,
-  MSP
+  calculateActionFees as calculateActionFeesV2, MSP, MSP_ACTIONS as MSP_ACTIONS_V2, Stream,
+  STREAM_STATUS, TransactionFees
 } from '@mean-dao/msp';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
-import { useWallet } from "../../contexts/wallet";
-import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
-import { displayAmountWithSymbol, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress } from "../../middleware/utils";
-import { NATIVE_SOL_MINT } from "../../middleware/ids";
-import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
-import { useTranslation } from "react-i18next";
-import ArrowDownOutlined from "@ant-design/icons/lib/icons/ArrowDownOutlined";
-import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
-import { StreamTransferOpenModal } from "../../components/StreamTransferOpenModal";
-import { AppUsageEvent, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "../../middleware/segment-service";
-import { segmentAnalytics } from "../../App";
-import { StreamWithdrawModal } from "../../components/StreamWithdrawModal";
-import { StreamWithdrawData } from "../../models/streams";
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { TokenInfo } from "models/SolanaTokenInfo";
-import { useNativeAccount } from "../../contexts/accounts";
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { useSearchParams } from "react-router-dom";
-import { readAccountInfo } from "../../middleware/accounts";
-import { appConfig } from '../..';
-import BN from "bn.js";
+import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
+import { segmentAnalytics } from "App";
+import BN from "bn.js";
+import { MoneyStreamDetails } from "components/MoneyStreamDetails";
+import { StreamTransferOpenModal } from "components/StreamTransferOpenModal";
+import { StreamWithdrawModal } from "components/StreamWithdrawModal";
+import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "constants/common";
+import { useNativeAccount } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { getSolanaExplorerClusterParam, useConnectionConfig } from "contexts/connection";
+import { TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import { IconEllipsisVertical } from "Icons";
+import { appConfig, customLogger } from "index";
+import { readAccountInfo } from "middleware/accounts";
+import { NATIVE_SOL_MINT } from "middleware/ids";
+import { AppUsageEvent, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "middleware/segment-service";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "middleware/ui";
+import { displayAmountWithSymbol, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress } from "middleware/utils";
+import { MeanFiAccountType, OperationType, TransactionStatus } from "models/enums";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { StreamWithdrawData } from "models/streams";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MoneyStreamsIncomingView = (props: {
-  accountAddress: string;
   loadingStreams: boolean;
   multisigAccounts: MultisigInfo[] | undefined;
   onSendFromIncomingStreamDetails?: any;
   streamSelected: Stream | StreamInfo | undefined;
 }) => {
   const {
-    accountAddress,
     loadingStreams,
     multisigAccounts,
     onSendFromIncomingStreamDetails,
@@ -60,6 +52,8 @@ export const MoneyStreamsIncomingView = (props: {
 
   const {
     splTokenList,
+    accountAddress,
+    selectedAccount,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
@@ -77,7 +71,6 @@ export const MoneyStreamsIncomingView = (props: {
   const connectionConfig = useConnectionConfig();
   const { endpoint } = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
-  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
@@ -145,22 +138,16 @@ export const MoneyStreamsIncomingView = (props: {
     multisigAddressPK
   ]);
 
+  const isMultisigContext = useMemo(() => {
+    if (publicKey && accountAddress && selectedAccount.type === MeanFiAccountType.Multisig) {
+      return true;
+    }
+    return false;
+  }, [publicKey && accountAddress, selectedAccount]);
+
   /////////////////
   //  Callbacks  //
   /////////////////
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const isNewStream = useCallback(() => {
     if (streamSelected) {
@@ -278,7 +265,7 @@ export const MoneyStreamsIncomingView = (props: {
     const transferOwnership = async (dataStream: any) => {
       if (!msp || !publicKey || !streamSelected) { return null; }
 
-      if (param !== "multisig") {
+      if (!isMultisigContext) {
         consoleOut('Creating msp.transferStream() Tx...', '', 'blue');
         return await msp.transferStream(
           publicKey,                                       // beneficiary,
@@ -565,7 +552,6 @@ export const MoneyStreamsIncomingView = (props: {
                 multisigAuthority: multisigAuth
               }
             });
-            // setLoadingStreamDetails(true);
             setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -573,7 +559,6 @@ export const MoneyStreamsIncomingView = (props: {
     }
   }, [
     msp,
-    param,
     wallet,
     publicKey,
     connection,
