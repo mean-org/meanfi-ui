@@ -41,15 +41,14 @@ export function AppRoutes() {
                 <AppStateProvider>
                   <AppLayout>
                     <Routes>
-                      <Route path="/" element={<Navigate replace to='/vesting' />} />
+                      <Route path="/" element={<Navigate replace to='/accounts' />} />
                       {/* Accounts routes */}
                       <Route path="/accounts" element={<AccountsNewView />} />
-                      <Route path="/accounts/:address" element={<AccountsNewView />} />
-                      <Route path="/accounts/:address/assets" element={<AccountsNewView />} />
-                      <Route path="/accounts/:address/assets/:asset" element={<AccountsNewView />} />
-                      <Route path="/accounts/:address/streaming" element={<AccountsNewView />} />
-                      <Route path="/accounts/:address/streaming/:streamingTab" element={<AccountsNewView />} />
-                      <Route path="/accounts/:address/streaming/:streamingTab/:streamingItemId" element={<AccountsNewView />} />
+                      <Route path="/accounts/assets" element={<AccountsNewView />} />
+                      <Route path="/accounts/assets/:asset" element={<AccountsNewView />} />
+                      <Route path="/accounts/streaming" element={<AccountsNewView />} />
+                      <Route path="/accounts/streaming/:streamingTab" element={<AccountsNewView />} />
+                      <Route path="/accounts/streaming/:streamingTab/:streamingItemId" element={<AccountsNewView />} />
                       {/* Vesting routes */}
                       <Route path="/vesting" element={<VestingView />} />
                       <Route path="/vesting/:vestingContract" element={<VestingView />} />
