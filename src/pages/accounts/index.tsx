@@ -4099,7 +4099,7 @@ export const AccountsNewView = () => {
     }
 
     return (
-      <div key={`${asset.displayIndex}`}
+      <div key={`${asset.publicAddress}`}
             onClick={onTokenAccountClick}
             id={asset.publicAddress}
             className={`transaction-list-row ${getRowSelectionClass()}`
@@ -4278,9 +4278,9 @@ export const AccountsNewView = () => {
           const change = getChange(accIdx, meta);
           return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
         });
-        return filtered?.map((trans: MappedTransaction, index: number) => {
+        return filtered?.map((trans: MappedTransaction) => {
           return <TransactionItemView
-                    key={`${index}`}
+                    key={`${trans.signature}`}
                     transaction={trans}
                     selectedAsset={selectedAsset as UserTokenAccount}
                     accountAddress={accountAddress}
@@ -4288,10 +4288,10 @@ export const AccountsNewView = () => {
         });
       } else {
         // Render the transactions collection
-        return transactions.map((trans: MappedTransaction, index: number) => {
+        return transactions.map((trans: MappedTransaction) => {
           if (trans.parsedTransaction && trans.parsedTransaction.meta && trans.parsedTransaction.meta.err === null) {
             return <TransactionItemView
-                      key={`${index}`}
+                      key={`${trans.signature}`}
                       transaction={trans}
                       selectedAsset={selectedAsset as UserTokenAccount}
                       accountAddress={accountAddress}
