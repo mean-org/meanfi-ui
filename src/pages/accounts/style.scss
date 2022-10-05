@@ -127,28 +127,28 @@
         z-index: 1;
         flex: 0 0 auto;
         background-color: var(--bg-color);
+        padding: 14px 6px 10px 10px;
+        border-left: 4px solid transparent;
 
         @media (max-width: 575.98px) {
             margin: -0.6rem 1rem -0.2rem 0;
         }
-
         @media (min-width: 576px) and (max-width: 767.98px) {
             margin: -0.6rem 0px -0.2rem 0;
         }
 
-        @media (min-width: 768px) {
-            margin: -0.6rem 2.6% -0.2rem 0;
-        }
-
-        padding: 14px 6px 10px 10px;
-        border-left: 4px solid transparent;
-
         &.no-pointer {
             pointer-events: none;
+            @media (min-width: 768px) {
+                margin: -0.6rem 2.6% -0.2rem 0;
+            }
         }
 
         &:not(.no-pointer) {
             cursor: pointer;
+            @media (min-width: 768px) {
+                margin: -0.6rem 2.6% 0.3rem 0;
+            }
         }
 
         &.selected {
