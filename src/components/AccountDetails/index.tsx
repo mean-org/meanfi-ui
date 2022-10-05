@@ -9,6 +9,7 @@ import {
   IconCopy,
   IconCreateNew,
   IconExchange,
+  IconLogout,
   IconSafe,
   IconWallet
 } from "Icons";
@@ -90,6 +91,7 @@ export const AccountDetails = () => {
 
   const getMenu = () => {
     const items: ItemType[] = [];
+
     items.push({
       key: '01-connected-account',
       label: (
@@ -134,15 +136,18 @@ export const AccountDetails = () => {
             </>
           )}
         </>
-      )
+      ),
+      type: "group"
     });
     items.push({
       key: '05-disconnect',
       label: (
-        <div onClick={onDisconnectWallet} className="text-right">
+        <>
+          <IconLogout className="mean-svg-icons" />
           <span className="menu-item-text ml-1">{t('account-area.disconnect')}</span>
-        </div>
-      )
+        </>
+      ),
+      onClick: onDisconnectWallet
     });
 
     return <Menu items={items} />;

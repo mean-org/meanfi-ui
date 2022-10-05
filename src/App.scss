@@ -2922,6 +2922,11 @@ main section {
   .ant-dropdown-menu-submenu-title-divider {
     background-color: var(--color-secondary-alpha-15);
   }
+  .ant-dropdown-menu-item-group .ant-dropdown-menu-item-group-title .menu-item-text {
+    color: var(--color-secondary-alpha-50);
+    text-transform: uppercase;
+    font-size: 80%;
+  }
   .ant-dropdown-menu-item,
   .ant-dropdown-menu-submenu-title {
     color: var(--color-secondary-alpha-80);

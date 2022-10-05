@@ -29,7 +29,7 @@ import {
   Transaction,
   TransactionInstruction
 } from '@solana/web3.js';
-import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
+import { Alert, Button, Col, Divider, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import notification from 'antd/lib/notification';
 import { segmentAnalytics } from 'App';
@@ -3893,29 +3893,35 @@ export const AccountsNewView = () => {
 
   const renderNetworthCategory = () => {
     return (
-      <div key="networth-category" className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`}>
-        <div className="font-bold font-size-110 left">Net Worth</div>
-        <div className="font-bold font-size-110 right">
-          {loadingStreams || !canShowStreamingAccountBalance ? (
-              <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-          ) : renderNetworth()}
+      <div className="networth-list-item-wrapper" key="networth-category">
+        <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`}>
+          <div className="font-bold font-size-110 left">Net Worth</div>
+          <div className="font-bold font-size-110 right">
+            {loadingStreams || !canShowStreamingAccountBalance ? (
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+            ) : renderNetworth()}
+          </div>
         </div>
+        <Divider className="networth-separator" />
       </div>
     );
   };
 
   const renderSuperSafeCategory = () => {
     return (
-      <div key="super-safe-category" onClick={() => {
-        navigateToSafe();
-        setAutoOpenDetailsPanel(true);
-      }} className={`networth-list-item flex-fixed-right ${selectedCategory === "super-safe" ? 'selected' : ''}`}>
-        <div className="font-bold font-size-110 left">Treasury Balance</div>
-        <div className="font-bold font-size-110 right">
-          {loadingStreams || !canShowStreamingAccountBalance ? (
-              <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-          ) : renderNetworth()}
+      <div className="networth-list-item-wrapper" key="super-safe-category">
+        <div onClick={() => {
+          navigateToSafe();
+          setAutoOpenDetailsPanel(true);
+        }} className={`networth-list-item flex-fixed-right ${selectedCategory === "super-safe" ? 'selected' : ''}`}>
+          <div className="font-bold font-size-110 left">Treasury Balance</div>
+          <div className="font-bold font-size-110 right">
+            {loadingStreams || !canShowStreamingAccountBalance ? (
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+            ) : renderNetworth()}
+          </div>
         </div>
+        <Divider className="networth-separator" />
       </div>
     );
   };
@@ -4683,14 +4689,14 @@ export const AccountsNewView = () => {
                     {/* Middle area (vertically flexible block of items) */}
                     <div className={`item-block${!isXsDevice ? ' vertical-scroll' : ''}`}>
 
-                      <div className="asset-category-title flex-fixed-right">
+                      {/* <div className="asset-category-title flex-fixed-right">
                         <div className="title">Streaming Assets</div>
                         <div className="amount">{
                           loadingStreams || !canShowStreamingAccountBalance ? (
                             <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                           ) : renderTotalAccountBalance()}
                         </div>
-                      </div>
+                      </div> */}
                       <div className="asset-category">
                         {renderMoneyStreamsSummary()}
                       </div>

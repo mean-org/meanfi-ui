@@ -19,6 +19,11 @@
         }
     }
 
+    .ant-divider.ant-divider-horizontal.networth-separator {
+        margin: 8px 0;
+        border-top: 1px solid var(--color-secondary-alpha-10);
+    }
+
     .utility-box {
         @media (min-width: 576px) {
             margin-right: 10px;
@@ -121,6 +126,10 @@
         }
     }
 
+    .networth-list-item-wrapper {
+        position: relative;
+    }
+
     .networth-list-item {
         position: sticky;
         top: 0;
@@ -130,25 +139,23 @@
         padding: 14px 6px 10px 10px;
         border-left: 4px solid transparent;
 
+        margin-top: -0.6rem;
+
+        /*
         @media (max-width: 575.98px) {
             margin: -0.6rem 1rem -0.2rem 0;
         }
         @media (min-width: 576px) and (max-width: 767.98px) {
             margin: -0.6rem 0px -0.2rem 0;
         }
+        */
 
         &.no-pointer {
             pointer-events: none;
-            @media (min-width: 768px) {
-                margin: -0.6rem 2.6% -0.2rem 0;
-            }
         }
 
         &:not(.no-pointer) {
             cursor: pointer;
-            @media (min-width: 768px) {
-                margin: -0.6rem 2.6% 0.3rem 0;
-            }
         }
 
         &.selected {
