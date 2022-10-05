@@ -1,7 +1,7 @@
 import moment from "moment";
 import { Button } from "antd";
 import { array, bool, str } from "@project-serum/borsh";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   XAxis,
   YAxis,
@@ -16,17 +16,20 @@ import "./style.scss";
 import { MEAN_TOKEN } from "../../constants/tokens";
 import { getCoingeckoMarketChart } from "../../middleware/api";
 import { PriceGraphModel } from "../../models/price-graph";
+import { AppStateContext } from "contexts/appstate";
 
 const dateFormat = "MMM Do, YYYY";
 const buttons = ["24H", "7D", "30D"];
 
-export const PriceGraph = () => {
+export const PriceGraph = (props : {
+  onPriceData: any;
+}) => {
   const [activeBtn, setActiveBtn] = useState(buttons[2]);
   const emptyArr: PriceGraphModel[] = [];
   const [priceChangeData, setPriceData] = useState(emptyArr);
-
   const [dateShownOnTop, setDateShownOnTop] = useState('');
   const [priceShownOnTop, setPriceShownOnTop] = useState('');
+  const { priceList } = useContext(AppStateContext);
 
   const onClickHandler = (event: any) => {
     if (event.target.innerHTML !== activeBtn) {
@@ -50,9 +53,10 @@ export const PriceGraph = () => {
         const lastItem = marketPriceData[marketPriceData.length - 1];
         setDateShownOnTop(moment(lastItem.dateData).format(dateFormat));
         setPriceShownOnTop(lastItem.priceData);
+        props.onPriceData(lastItem.priceData);
       }
     })()
-  }, [activeBtn]);
+  }, [activeBtn, priceList]);
 
   /*********************** CUSTOM TOOLTIP *************************/
   const CustomToolTip = ({ active, payload, label }: any) => {
