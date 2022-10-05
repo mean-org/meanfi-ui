@@ -591,27 +591,6 @@ footer.ant-layout-footer {
           color: var(--color-dark);
         }
       }
-      .wallet-wrapper {
-        display: flex;
-        align-items: center;
-        white-space: nowrap;
-        background-color: var(--wallet-wrapper-bg);
-        color: var(--wallet-wrapper-color);
-        border-radius: var(--custom-border-radius);
-        height: 100%;
-        .wallet-key {
-          font-size: 1rem;
-          font-weight: 600;
-          background-color: var(--color-primary);
-          border-radius: var(--custom-border-radius);
-          height: 100%;
-          display: inline-flex;
-          align-items: center;
-          padding: 0 6px;
-          margin-left: -1px;
-          cursor: pointer;
-        }
-      }
     }
   }
 }
@@ -2938,6 +2917,7 @@ main section {
 .ant-dropdown-menu {
   color: inherit;
   background-color: var(--color-component-background);
+  border: 1px solid var(--color-secondary-alpha-15);
   .ant-dropdown-menu-item-divider,
   .ant-dropdown-menu-submenu-title-divider {
     background-color: var(--color-secondary-alpha-15);
@@ -2973,6 +2953,7 @@ main section {
 .ant-select-dropdown {
   color: inherit;
   background-color: var(--color-component-background);
+  border: 1px solid var(--color-secondary-alpha-15);
   .ant-select-item {
     color: inherit;
     &:not(.ant-select-item-option-selected) {

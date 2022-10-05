@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Modal } from "antd";
+import { Dropdown, Menu } from "antd";
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import { AccountSelectorModal } from "components/AccountSelectorModal";
@@ -8,10 +8,8 @@ import { useWallet } from "contexts/wallet";
 import {
   IconCopy,
   IconCreateNew,
-  IconExit,
-  IconPulse,
+  IconExchange,
   IconSafe,
-  IconUser,
   IconWallet
 } from "Icons";
 import { AppUsageEvent } from 'middleware/segment-service';
@@ -26,7 +24,6 @@ import "./style.scss";
 export const AccountDetails = () => {
 
   const {
-    diagnosisInfo,
     selectedAccount,
     multisigAccounts,
   } = useContext(AppStateContext);
@@ -34,9 +31,6 @@ export const AccountDetails = () => {
   const { t } = useTranslation("common");
   const { publicKey, provider, select, disconnect, resetWalletProvider } = useWallet();
   const [isSelectingAccount, setIsSelectingAccount] = useState<boolean>(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const showAccount = useCallback(() => setIsModalVisible(true), []);
-  const close = useCallback(() => setIsModalVisible(false), []);
 
   const switchWallet = useCallback(() => {
     setTimeout(() => {
@@ -75,28 +69,6 @@ export const AccountDetails = () => {
     }
   }
 
-  const onCopyDiagnosisInfo = () => {
-    if (!diagnosisInfo) {
-      openNotification({
-        description: t('account-area.diagnosis-info-not-copied'),
-        type: "error"
-      });
-      return;
-    }
-    const debugInfo = `${diagnosisInfo.dateTime}\n${diagnosisInfo.clientInfo}\n${diagnosisInfo.networkInfo}\n${diagnosisInfo.accountInfo}\n${diagnosisInfo.appBuildInfo}`;
-    if (copyText(debugInfo)) {
-      openNotification({
-        description: t('account-area.diagnosis-info-copied'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('account-area.diagnosis-info-not-copied'),
-        type: "error"
-      });
-    }
-  }
-
   const onDisconnectWallet = useCallback(() => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
@@ -108,47 +80,46 @@ export const AccountDetails = () => {
     return null;
   }
 
-  const renderDebugInfo = (
-    <div>
-      {diagnosisInfo && (
-        <>
-          {diagnosisInfo.dateTime && (
-            <div className="diagnosis-info-item">{diagnosisInfo.dateTime}</div>
-          )}
-          {diagnosisInfo.clientInfo && (
-            <div className="diagnosis-info-item">{diagnosisInfo.clientInfo}</div>
-          )}
-          {diagnosisInfo.networkInfo && (
-            <div className="diagnosis-info-item">{diagnosisInfo.networkInfo}</div>
-          )}
-          {diagnosisInfo.accountInfo && (
-            <div className="diagnosis-info-item">{diagnosisInfo.accountInfo}</div>
-          )}
-          {diagnosisInfo.appBuildInfo && (
-            <div className="diagnosis-info-item">{diagnosisInfo.appBuildInfo}</div>
-          )}
-        </>
-      )}
-    </div>
-  );
-
   const getPlusAccounts = () => {
     if (!selectedAccount.isMultisig || !multisigAccounts || multisigAccounts.length === 0) {
       return '';
     }
-    if (multisigAccounts.length === 2) {
-      return ' (+1 safe)';
-    } else if (multisigAccounts.length > 2) {
-      return ` (+${multisigAccounts.length - 1} safes)`
-    } else {
-      return '';
-    }
+    let numSafes = multisigAccounts.length + 1;
+    return ` (+${numSafes - 1})`;
   }
 
   const getMenu = () => {
     const items: ItemType[] = [];
     items.push({
-      key: '01-wallet-provider',
+      key: '01-connected-account',
+      label: (
+        <div onClick={onCopyAddress}>
+          <IconCopy className="mean-svg-icons" />
+          <span className="menu-item-text ml-1">Copy account address</span>
+        </div>
+      )
+    });
+    items.push({
+      key: '02-account-change',
+      label: (
+        <div onClick={switchAccount}>
+          <IconExchange className="mean-svg-icons" />
+          <span className="menu-item-text ml-1">Switch account{getPlusAccounts()}</span>
+        </div>
+      )
+    });
+    items.push({
+      key: '03-create-safe',
+      label: (
+        <div onClick={() => { return false; }}>
+          <IconCreateNew className="mean-svg-icons" />
+          <span className="menu-item-text ml-1">New SuperSafe account</span>
+        </div>
+      )
+    });
+    items.push({type: "divider"});
+    items.push({
+      key: '04-wallet-provider',
       label: (
         <>
           {provider ? (
@@ -165,48 +136,10 @@ export const AccountDetails = () => {
         </>
       )
     });
-    items.push({type: "divider"});
     items.push({
-      key: '02-connected-account',
+      key: '05-disconnect',
       label: (
-        <div onClick={onCopyAddress}>
-          <IconCopy className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">Copy account address</span>
-        </div>
-      )
-    });
-    items.push({
-      key: '03-account-change',
-      label: (
-        <div onClick={switchAccount}>
-          <IconUser className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">Change account{getPlusAccounts()}</span>
-        </div>
-      )
-    });
-    items.push({
-      key: '04-create-safe',
-      label: (
-        <div onClick={() => { return false; }}>
-          <IconCreateNew className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">Create SuperSafe</span>
-        </div>
-      )
-    });
-    items.push({
-      key: '05-diagnosis-info',
-      label: (
-        <div onClick={showAccount}>
-          <IconPulse className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">{t('account-area.diagnosis-info')}</span>
-        </div>
-      )
-    });
-    items.push({
-      key: '06-disconnect',
-      label: (
-        <div onClick={onDisconnectWallet}>
-          <IconExit className="mean-svg-icons" />
+        <div onClick={onDisconnectWallet} className="text-right">
           <span className="menu-item-text ml-1">{t('account-area.disconnect')}</span>
         </div>
       )
@@ -250,35 +183,6 @@ export const AccountDetails = () => {
           </span>
         </Dropdown>
       </div>
-
-      <Modal
-        className="mean-modal simple-modal"
-        open={isModalVisible}
-        title={<div className="modal-title">{t('account-area.diagnosis-info')}</div>}
-        onCancel={close}
-        width={450}
-        footer={null}>
-        <div className="px-4 pb-4">
-          {diagnosisInfo && (
-            <>
-              <div className="mb-3">
-                {renderDebugInfo}
-              </div>
-              <div className="flex-center">
-                <Button
-                  type="default"
-                  shape="round"
-                  size="middle"
-                  className="thin-stroke"
-                  onClick={onCopyDiagnosisInfo}>
-                  <IconCopy className="mean-svg-icons" />
-                  <span className="icon-button-text">{t('general.cta-copy')}</span>
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      </Modal>
 
       <AccountSelectorModal
         isVisible={isSelectingAccount}

@@ -1,3 +1,55 @@
+.footer-account-bar,
+.connection-and-account-bar {
+  .wallet-wrapper {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    background-color: var(--wallet-wrapper-bg);
+    color: var(--wallet-wrapper-color);
+    border-radius: var(--custom-border-radius);
+    height: 100%;
+    .wallet-key {
+      background-color: var(--color-primary);
+      border-radius: var(--custom-border-radius);
+      height: 100%;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 6px;
+      cursor: pointer;
+      .wallet-provider-icon {
+        padding: 3px;
+        background-color: var(--wallet-provider-background);
+        border-radius: 5px;
+        &.mean-svg-icons {
+          margin-right: 4px;
+        }
+      }
+      .account-descriptor {
+        max-width: 150px;
+        min-width: 104px;
+        padding: 0 6px;
+        display: flex;
+        flex-direction: column;
+        .account-id {
+          font-size: 0.8rem;
+          font-weight: 400;
+          line-height: 1.1;
+          color: var(--color-secondary-alpha-85);
+        }
+        .account-name {
+          font-size: 0.85rem;
+          font-weight: 900;
+          line-height: 1.1;
+          display: inline-block;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+}
+
 .connection-and-account-bar {
   flex-direction: row;
   align-items: center;
@@ -43,56 +95,6 @@
       font-size: 1rem;
       font-weight: 400;
       letter-spacing: -0.5px;
-    }
-  }
-
-  .wallet-wrapper {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-    background-color: var(--wallet-wrapper-bg);
-    color: var(--wallet-wrapper-color);
-    border-radius: var(--custom-border-radius);
-    height: 100%;
-
-    .wallet-key {
-      background-color: var(--color-primary);
-      border-radius: var(--custom-border-radius);
-      height: 100%;
-      display: inline-flex;
-      align-items: center;
-      padding: 0 6px;
-      cursor: pointer;
-      .wallet-provider-icon {
-        padding: 3px;
-        background-color: var(--wallet-provider-background);
-        border-radius: 5px;
-        &.mean-svg-icons {
-          margin-right: 4px;
-        }
-      }
-      .account-descriptor {
-        max-width: 150px;
-        min-width: 104px;
-        padding: 0 6px;
-        display: flex;
-        flex-direction: column;
-        .account-id {
-          font-size: 0.8rem;
-          font-weight: 400;
-          line-height: 1.1;
-          color: var(--color-secondary-alpha-85);
-        }
-        .account-name {
-          font-size: 0.85rem;
-          font-weight: 900;
-          line-height: 1.1;
-          display: inline-block;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      }
     }
   }
 }
