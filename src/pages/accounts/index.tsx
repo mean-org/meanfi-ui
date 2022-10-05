@@ -73,7 +73,7 @@ import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from 'middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports, getAmountWithSymbol, getSdkValue, getTxIxResume,
@@ -103,7 +103,7 @@ import { StreamingAccountView } from 'views/StreamingAccount';
 import "./style.scss";
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-export type CategoryOption = "networth" | "assets" | "streaming" | "other-assets";
+export type CategoryOption = "networth" | "assets" | "streaming" | "super-safe" | undefined;
 export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
 let isWorkflowLocked = false;
 
@@ -231,12 +231,19 @@ export const AccountsNewView = () => {
 
   // Perform premature redirect here if no category is specified in path
   useEffect(() => {
-    if (!publicKey) { return; }
+    if (!publicKey || !selectedAccount.address) { return; }
 
     consoleOut('pathname:', location.pathname, 'crimson');
     // If no category specified (neither assets nor streaming) just assume assets
-    if (location.pathname.indexOf('/assets') === -1 && location.pathname.indexOf('/streaming') === -1) {
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/assets`;
+    if (location.pathname.indexOf('/assets') === -1 &&
+        location.pathname.indexOf('/streaming') === -1 &&
+        location.pathname.indexOf('/super-safe') === -1) {
+      let url = `${ACCOUNTS_ROUTE_BASE_PATH}`;
+      if (selectedAccount.isMultisig) {
+        url += '/super-safe';
+      } else {
+        url += '/assets';
+      }
       consoleOut('No category specified, redirecting to:', url, 'orange');
       setAutoOpenDetailsPanel(false);
       setTimeout(() => {
@@ -252,7 +259,7 @@ export const AccountsNewView = () => {
         setIsPageLoaded(true);
       });
     }
-  }, [location.pathname, navigate, publicKey, streamingItemId, streamingTab]);
+  }, [location.pathname, navigate, publicKey, selectedAccount.address, streamingItemId, streamingTab]);
 
   const connection = useMemo(() => new Connection(endpoint, {
     commitment: "confirmed",
@@ -708,10 +715,15 @@ export const AccountsNewView = () => {
     navigateToAsset(accountTokens[0]);
   }, [accountTokens, navigateToAsset, setSelectedAsset, setShouldLoadTokens]);
 
+  const navigateToSafe = useCallback(() => {
+    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/super-safe`;
+    navigate(url);
+  }, [navigate]);
+
   const navigateToStreaming = useCallback(() => {
     let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/summary`;
     navigate(url);
-  }, [selectedAccount.address, navigate]);
+  }, [navigate]);
 
   const selectAsset = useCallback((
     asset: UserTokenAccount,
@@ -2972,8 +2984,14 @@ export const AccountsNewView = () => {
       if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
+    } else if (location.pathname.indexOf('/super-safe') !== -1) {
+      consoleOut('Setting category:', 'super-safe', 'crimson');
+      setSelectedCategory("super-safe");
+      if (autoOpenDetailsPanel) {
+        setDetailsPanelOpen(true);
+      }
     } else {
-      setSelectedCategory("other-assets");
+      setSelectedCategory(undefined);
     }
 
   }, [
@@ -3866,22 +3884,37 @@ export const AccountsNewView = () => {
   };
 
   const renderNetworth = () => {
-
-    const renderValues = () => {
-      if (netWorth) {
-        return toUsCurrency(netWorth);
-      } else {
-        return '$0.00';
-      }
+    if (netWorth) {
+      return toUsCurrency(netWorth);
+    } else {
+      return '$0.00';
     }
+  }
 
+  const renderNetworthCategory = () => {
     return (
-      <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`}>
-        <div className="font-bold font-size-110 left">{!isInspectedAccountTheConnectedWallet() ? "Treasury Balance" : "Net Worth"}</div>
+      <div key="networth-category" className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`}>
+        <div className="font-bold font-size-110 left">Net Worth</div>
         <div className="font-bold font-size-110 right">
           {loadingStreams || !canShowStreamingAccountBalance ? (
               <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-          ) : renderValues()}
+          ) : renderNetworth()}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSuperSafeCategory = () => {
+    return (
+      <div key="super-safe-category" onClick={() => {
+        navigateToSafe();
+        setAutoOpenDetailsPanel(true);
+      }} className={`networth-list-item flex-fixed-right ${selectedCategory === "super-safe" ? 'selected' : ''}`}>
+        <div className="font-bold font-size-110 left">Treasury Balance</div>
+        <div className="font-bold font-size-110 right">
+          {loadingStreams || !canShowStreamingAccountBalance ? (
+              <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+          ) : renderNetworth()}
         </div>
       </div>
     );
@@ -3900,7 +3933,7 @@ export const AccountsNewView = () => {
     return  (
       <>
         {
-          <div key="streams" onClick={() => {
+          <div key="streams-category" onClick={() => {
             navigateToStreaming();
             setAutoOpenDetailsPanel(true);
           }} className={`transaction-list-row ${selectedCategory === "streaming" ? 'selected' : ''}`}>
@@ -4440,19 +4473,6 @@ export const AccountsNewView = () => {
     );
   };
 
-  const renderCategoryMeta = () => {
-    switch (selectedCategory) {
-      case "networth":
-        break;
-      case "assets":
-        return renderUserAccountAssetMeta();
-      case "other-assets":
-        break;
-      default:
-        break;
-    }
-  };
-
   const getRandomEmoji = useCallback(() => {
     const totalEmojis = EMOJIS.length;
     if (totalEmojis) {
@@ -4552,6 +4572,10 @@ export const AccountsNewView = () => {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar"><span>selectedCategory:</span><span className="ml-1">{selectedCategory}</span></div>
+      )} */}
+
       {detailsPanelOpen && (
         <Button
           id="back-button"
@@ -4654,7 +4678,7 @@ export const AccountsNewView = () => {
                     {isMultisigContext && renderMultisigPendinTxNotification()}
 
                     {/* Net Worth header (sticky) */}
-                    {renderNetworth()}
+                    {isMultisigContext ? renderSuperSafeCategory() : renderNetworthCategory()}
 
                     {/* Middle area (vertically flexible block of items) */}
                     <div className={`item-block${!isXsDevice ? ' vertical-scroll' : ''}`}>
@@ -4738,6 +4762,7 @@ export const AccountsNewView = () => {
 
                   <div className="inner-container">
 
+                    {/* Refresh cta */}
                     <div className="float-top-right mr-1 mt-1">
                       <span className="icon-button-container secondary-button">
                         <Tooltip placement="bottom" title="Refresh payment streams">
@@ -4756,12 +4781,12 @@ export const AccountsNewView = () => {
                       </span>
                     </div>
 
-                    {selectedCategory === "assets" ? (
+                    {selectedCategory === "assets" && (
                       <>
                         {canShowBuyOptions() ? renderTokenBuyOptions() : (
                           <div className="flexible-column-bottom">
                             <div className="top">                              
-                              {renderCategoryMeta()}
+                              {renderUserAccountAssetMeta()}
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
                             {!isInspectedAccountTheConnectedWallet() && isMultisigContext && selectedMultisig && (
@@ -4794,7 +4819,9 @@ export const AccountsNewView = () => {
                           </div>
                         )}
                       </>
-                    ) : selectedCategory === "streaming" ? (
+                    )}
+
+                    {selectedCategory === "streaming" && (
                       <div className="scroll-wrapper vertical-scroll">
                         {!pathParamStreamId && !pathParamTreasuryId ? (
                           <MoneyStreamsInfoView
@@ -4835,7 +4862,11 @@ export const AccountsNewView = () => {
                           />
                         ) : null}
                       </div>
-                    ) : null}
+                    )}
+
+                    {selectedCategory === "super-safe" && (
+                      <span>Safe details here</span>
+                    )}
                   </div>
                 </div>
               </div>

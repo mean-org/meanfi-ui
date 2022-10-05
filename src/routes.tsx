@@ -49,6 +49,7 @@ export function AppRoutes() {
                       <Route path="/accounts/streaming" element={<AccountsNewView />} />
                       <Route path="/accounts/streaming/:streamingTab" element={<AccountsNewView />} />
                       <Route path="/accounts/streaming/:streamingTab/:streamingItemId" element={<AccountsNewView />} />
+                      <Route path="/accounts/super-safe" element={<AccountsNewView />} />
                       {/* Vesting routes */}
                       <Route path="/vesting" element={<VestingView />} />
                       <Route path="/vesting/:vestingContract" element={<VestingView />} />
