@@ -142,15 +142,6 @@
 
         margin-top: -0.6rem;
 
-        /*
-        @media (max-width: 575.98px) {
-            margin: -0.6rem 1rem -0.2rem 0;
-        }
-        @media (min-width: 576px) and (max-width: 767.98px) {
-            margin: -0.6rem 0px -0.2rem 0;
-        }
-        */
-
         &.no-pointer {
             pointer-events: none;
         }

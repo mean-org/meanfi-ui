@@ -46,7 +46,7 @@ export const AccountSelectorModal = (props: {
       onCancel={onHandleClose}
       width={450}>
       <div className="account-selector-modal-content vertical-scroll">
-        <AccountSelector onAccountSelected={onAccountSelected} />
+        <AccountSelector onAccountSelected={onAccountSelected} isFullWorkflowEnabled={isFullWorkflowEnabled} />
       </div>
     </Modal>
   );

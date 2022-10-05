@@ -1,53 +1,75 @@
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { Spin, Tooltip } from "antd";
+import { Button, Dropdown, Menu, Spin, Tooltip } from "antd";
 import { Identicon } from "components/Identicon";
+import { openNotification } from "components/Notifications";
 import { AppStateContext } from "contexts/appstate";
 import { useWallet } from "contexts/wallet";
-import { IconLoading, IconSafe, IconWallet } from "Icons";
-import { consoleOut, kFormatter, toUsCurrency } from "middleware/ui";
+import { IconCheck, IconCopy, IconLoading, IconVerticalEllipsis } from "Icons";
+import { consoleOut, copyText, kFormatter, toUsCurrency } from "middleware/ui";
 import { shortenAddress } from "middleware/utils";
 import { AccountContext, UserTokenAccount } from "models/accounts";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import "./style.scss";
 
 export const AccountSelector = (props: {
+  isFullWorkflowEnabled?: boolean;
   onAccountSelected?: any;
+  onDisconnectWallet?: any;
 }) => {
   const {
+    isFullWorkflowEnabled,
     onAccountSelected,
+    onDisconnectWallet,
   } = props;
   const {
     tokensLoaded,
     loadingPrices,
+    selectedAccount,
     multisigAccounts,
     loadingTokenAccounts,
     loadingMultisigAccounts,
     loadingMultisigTxPendingCount,
+    setNeedReloadMultisigAccounts,
     setIsSelectingAccount,
     getAssetsByAccount,
     setSelectedAccount,
   } = useContext(AppStateContext);
+  const { t } = useTranslation("common");
   const { publicKey, provider } = useWallet();
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[] | undefined>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
+
+  const refreshAssetValues = useCallback((account?: string) => {
+    if (!publicKey) { return; }
+
+    consoleOut('Refreshing use account info...', '', 'blue');
+    (async () => {
+      try {
+        const scannedAccount = account || publicKey.toBase58();
+        const result = await getAssetsByAccount(scannedAccount);
+        if (result) {
+          consoleOut('userTokensResponse:', result, 'blue');
+          setAccountTokens(result.accountTokens);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  },[publicKey, getAssetsByAccount]);
+
+  const refreshPendingTxs = useCallback(() => {
+    if (!publicKey) { return; }
+
+    setNeedReloadMultisigAccounts(true);
+  }, [publicKey]);
 
   // Process userTokensResponse from AppState to get a renderable list of tokens
   useEffect(() => {
     if (!publicKey) { return; }
 
     if (accountTokens === undefined) {
-      consoleOut('Refreshing use account info...', '', 'blue');
-      (async () => {
-        try {
-          const result = await getAssetsByAccount(publicKey.toBase58());
-          if (result) {
-            consoleOut('userTokensResponse:', result, 'blue');
-            setAccountTokens(result.accountTokens);
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      })();
+      refreshAssetValues();
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,6 +85,20 @@ export const AccountSelector = (props: {
       setTotalTokenAccountsValue(sumMeanTokens);
     }
   }, [accountTokens, tokensLoaded]);
+
+  const onCopyAddress = (address: string) => {
+    if (copyText(address)) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+  }
 
   const onNativeAccountSelected = () => {
     if (publicKey) {
@@ -124,48 +160,140 @@ export const AccountSelector = (props: {
     }
   }
 
+  const renderNativeAccountOptions = () => {
+    const menu = (
+      <Menu items={[
+        {
+          key: '01-refresh-balance-native',
+          label: (
+            <div onClick={(e) => {
+              e.preventDefault();
+              refreshAssetValues();
+            }}>
+              <span className="menu-item-text">Refresh balances</span>
+            </div>
+          ),
+        }
+      ]}
+      />
+    );
+
+    return <Dropdown
+      overlay={menu}
+      placement="bottomRight"
+      trigger={["click"]}>
+      <span className="icon-button-container">
+        <Button
+          type="default"
+          shape="circle"
+          size="middle"
+          icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+          onClick={() => {}}
+        />
+      </span>
+    </Dropdown>;
+  }
+
+  const renderMultisigAccountOptions = (item: MultisigInfo) => {
+    const menu = (
+      <Menu items={[
+        {
+          key: `01-refresh-balance-${item.createdOnUtc.getTime()}`,
+          label: (
+            <div onClick={(e) => {
+              e.preventDefault();
+              refreshPendingTxs();
+            }}>
+              <span className="menu-item-text">Refresh pending Txs</span>
+            </div>
+          ),
+        }
+      ]}
+      />
+    );
+
+    return <Dropdown
+      overlay={menu}
+      placement="bottomRight"
+      trigger={["click"]}>
+      <span className="icon-button-container">
+        <Button
+          type="default"
+          shape="circle"
+          size="middle"
+          icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+          onClick={() => {}}
+        />
+      </span>
+    </Dropdown>;
+  }
+
   return (
     <div className="account-selector">
       <div className="account-group-heading">
-        <div className="flex-row justify-content-start align-items-center">
-          <IconWallet className="mean-svg-icons" style={{ width: 28, height: 28 }} />
-          <span className="ml-2">Wallet Account</span>
+        <div className="flex-fixed-right">
+          <div className="left flex-row align-items-center">
+            <span className="text-uppercase">Wallet Account</span>
+          </div>
+          {!isFullWorkflowEnabled && (
+            <div className="right">
+              <span className="secondary-link underlined" onClick={onDisconnectWallet}>Disconnect</span>
+            </div>
+          )}
         </div>
       </div>
       <div className="accounts-list">
-        <div className="transaction-list-row" onClick={onNativeAccountSelected}>
-          <div className="icon-cell">
+        <div
+          className={`transaction-list-row${publicKey && selectedAccount.address === publicKey.toBase58() ? ' selected' : ''}`}>
+          <div className="check-cell" onClick={onNativeAccountSelected}>
+            {publicKey && selectedAccount.address === publicKey.toBase58() ? (
+              <IconCheck className="mean-svg-icons" />
+            ) : (
+              <span>&nbsp;</span>
+            )}
+          </div>
+          <div className="icon-cell" onClick={onNativeAccountSelected}>
             <span>
               {provider && (
                 <img src={provider.icon} alt={provider.name} width="30" className="wallet-provider-icon" />
               )}
             </span>
           </div>
-          <div className="description-cell">
-            <div className="title text-truncate">
-              {publicKey ? shortenAddress(publicKey, 6) : '--'}
+          <div className="description-cell" onClick={onNativeAccountSelected}>
+            <div className="title">
+              <span className="chunk1">Personal account</span>
+              <span className="chunk2">({publicKey ? shortenAddress(publicKey, 6) : '--'})</span>
             </div>
-            <div className="subtitle text-truncate">
-              Personal account
-            </div>
-          </div>
-          <div className="rate-cell">
-            <div className="rate-amount">
+            <div className="subtitle">
               {loadingPrices || loadingTokenAccounts ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : renderAssetsValue()}
             </div>
-            <div className="interval">
-              balance
-            </div>
+          </div>
+          <div className="rate-cell">
+            <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+              <span className="icon-button-container simplelink" onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onCopyAddress(selectedAccount.address);
+              }}>
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="small"
+                  icon={<IconCopy className="mean-svg-icons" />}
+                  onClick={() => {}}
+                />
+              </span>
+            </Tooltip>
+            {renderNativeAccountOptions()}
           </div>
         </div>
       </div>
       <div className="account-group-heading">
         <div className="flex-fixed-right">
           <div className="left flex-row align-items-center">
-            <IconSafe className="mean-svg-icons" style={{ width: 24, height: 24 }} />
-            <span className="ml-2">Super Safe</span>
+            <span className="text-uppercase">Super Safes</span>
           </div>
           <div className="right">
             <span className="secondary-link underlined">Create new safe</span>
@@ -177,32 +305,52 @@ export const AccountSelector = (props: {
           {(multisigAccounts && multisigAccounts.length > 0) ? (
             multisigAccounts.map((item, index) => {
               return (
-                <div key={`account-${index}`} className={`transaction-list-row${index === 0 ? ' selected' : ''}`} onClick={() => onMultisigAccountSelected(item)}>
-                  <div className="icon-cell">
+                <div
+                  key={`account-${index}`}
+                  className={`transaction-list-row${selectedAccount.address === item.authority.toBase58() ? ' selected' : ''}`}>
+                  <div className="check-cell" onClick={() => onMultisigAccountSelected(item)}>
+                    {selectedAccount.address === item.authority.toBase58() ? (
+                      <IconCheck className="mean-svg-icons" />
+                    ) : (
+                      <span>&nbsp;</span>
+                    )}
+                  </div>
+                  <div className="icon-cell" onClick={() => onMultisigAccountSelected(item)}>
                     {renderMultisigIcon(item)}
                     {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
                       <span className="status warning bottom-right"></span>
                     ) : null}
                   </div>
-                  <div className="description-cell">
-                    <div className="title text-truncate">
-                      {item.label}
+                  <div className="description-cell" onClick={() => onMultisigAccountSelected(item)}>
+                    <div className="title">
+                      <span className="chunk1">{item.label}</span>
+                      <span className="chunk2">({shortenAddress(item.authority, 4)})</span>
                     </div>
-                    <div className="subtitle text-truncate">
-                      {shortenAddress(item.authority, 8)}
-                    </div>
-                  </div>
-                  <div className="rate-cell">
-                    <div className="rate-amount">
+                    <div className="subtitle">
                       {
                         loadingMultisigTxPendingCount ? (
                           <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
                         ) : renderPendingTxCount(item)
                       }
                     </div>
-                    {/* <div className="interval">
-                      2 nd line
-                    </div> */}
+                  </div>
+                  <div className="rate-cell">
+                    <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+                      <span className="icon-button-container simplelink" onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onCopyAddress(item.authority.toBase58());
+                      }}>
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="small"
+                          icon={<IconCopy className="mean-svg-icons" />}
+                          onClick={() => {}}
+                        />
+                      </span>
+                    </Tooltip>
+                    {renderMultisigAccountOptions(item)}
                   </div>
                 </div>
               );

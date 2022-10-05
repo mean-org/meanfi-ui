@@ -194,7 +194,7 @@ export const AppContextMenu = () => {
       label: (
         <div onClick={showDiagnosisInfoModal}>
           <IconPulse className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">{t('account-area.diagnosis-info')}</span>
+          <span className="menu-item-text">{t('account-area.diagnosis-info')}</span>
         </div>
       )
     });

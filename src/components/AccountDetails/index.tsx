@@ -1,24 +1,16 @@
-import { Dropdown, Menu } from "antd";
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { Popover } from "antd";
 import { segmentAnalytics } from 'App';
-import { AccountSelectorModal } from "components/AccountSelectorModal";
-import { openNotification } from "components/Notifications";
+import { AccountSelector } from "components/AccountSelector";
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from "contexts/wallet";
+import useWindowSize from "hooks/useWindowResize";
 import {
-  IconCopy,
-  IconCreateNew,
-  IconExchange,
-  IconLogout,
-  IconSafe,
-  IconWallet
+  IconSafe
 } from "Icons";
 import { AppUsageEvent } from 'middleware/segment-service';
-import { copyText } from "middleware/ui";
 import { shortenAddress } from "middleware/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "pages/accounts";
 import { useCallback, useContext, useState } from 'react';
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import "./style.scss";
 
@@ -26,49 +18,16 @@ export const AccountDetails = () => {
 
   const {
     selectedAccount,
-    multisigAccounts,
   } = useContext(AppStateContext);
   const navigate = useNavigate();
-  const { t } = useTranslation("common");
-  const { publicKey, provider, select, disconnect, resetWalletProvider } = useWallet();
-  const [isSelectingAccount, setIsSelectingAccount] = useState<boolean>(false);
-
-  const switchWallet = useCallback(() => {
-    setTimeout(() => {
-      disconnect();
-      navigate('/');
-      select();
-    }, 500);
-    // Record user event in Segment Analytics
-    segmentAnalytics.recordEvent(AppUsageEvent.WalletChange);
-  }, [disconnect, navigate, select]);
-
-  const switchAccount = useCallback(() => {
-    setIsSelectingAccount(true);
-  }, []);
-
-  const onCloseAccountSelector = useCallback(() => {
-    setIsSelectingAccount(false);
-  }, []);
+  const { width } = useWindowSize();
+  const { publicKey, provider, disconnect, resetWalletProvider } = useWallet();
+  const [popoverVisible, setPopoverVisible] = useState(false);
 
   const onCompleteAccountSelection = useCallback(() => {
-    setIsSelectingAccount(false);
+    setPopoverVisible(false);
     navigate(ACCOUNTS_ROUTE_BASE_PATH);
   }, []);
-
-  const onCopyAddress = () => {
-    if (copyText(selectedAccount.address)) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: "error"
-      });
-    }
-  }
 
   const onDisconnectWallet = useCallback(() => {
     // Record user event in Segment Analytics
@@ -76,82 +35,6 @@ export const AccountDetails = () => {
     disconnect();
     resetWalletProvider();
   }, [disconnect, resetWalletProvider]);
-
-  if (!publicKey) {
-    return null;
-  }
-
-  const getPlusAccounts = () => {
-    if (!selectedAccount.isMultisig || !multisigAccounts || multisigAccounts.length === 0) {
-      return '';
-    }
-    let numSafes = multisigAccounts.length + 1;
-    return ` (+${numSafes - 1})`;
-  }
-
-  const getMenu = () => {
-    const items: ItemType[] = [];
-
-    items.push({
-      key: '01-connected-account',
-      label: (
-        <div onClick={onCopyAddress}>
-          <IconCopy className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">Copy account address</span>
-        </div>
-      )
-    });
-    items.push({
-      key: '02-account-change',
-      label: (
-        <div onClick={switchAccount}>
-          <IconExchange className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">Switch account{getPlusAccounts()}</span>
-        </div>
-      )
-    });
-    items.push({
-      key: '03-create-safe',
-      label: (
-        <div onClick={() => { return false; }}>
-          <IconCreateNew className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">New SuperSafe account</span>
-        </div>
-      )
-    });
-    items.push({type: "divider"});
-    items.push({
-      key: '04-wallet-provider',
-      label: (
-        <>
-          {provider ? (
-            <>
-              <img src={provider.icon} alt={provider.name} width="26" />
-              <span className="menu-item-text ml-1">Connected with {provider.name}</span>
-            </>
-          ) : (
-            <>
-              <IconWallet className="mean-svg-icons" />
-              <span className="menu-item-text ml-1">Unknown wallet</span>
-            </>
-          )}
-        </>
-      ),
-      type: "group"
-    });
-    items.push({
-      key: '05-disconnect',
-      label: (
-        <>
-          <IconLogout className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">{t('account-area.disconnect')}</span>
-        </>
-      ),
-      onClick: onDisconnectWallet
-    });
-
-    return <Menu items={items} />;
-  }
 
   const renderPersonalAccount = () => {
     return (
@@ -161,7 +44,7 @@ export const AccountDetails = () => {
         )}
         <div className="account-descriptor">
           <div className="account-name">Personal Account</div>
-          <div className="account-id">{shortenAddress(publicKey, 8)}</div>
+          <div className="account-id">{shortenAddress(selectedAccount.address, 8)}</div>
         </div>
       </>
     );
@@ -179,23 +62,41 @@ export const AccountDetails = () => {
     );
   }
 
+  const isSmScreen = ():boolean => {
+    return width < 768 ? true : false;
+  }
+
+  const handlePopoverVisibleChange = (visibleChange: boolean) => {
+    setPopoverVisible(visibleChange);
+  };
+
+  const bodyContent = (
+    <>
+    <div className="account-selector-popover-content vertical-scroll">
+      <AccountSelector onAccountSelected={onCompleteAccountSelection} onDisconnectWallet={onDisconnectWallet} />
+    </div>
+    </>
+  );
+
+  if (!publicKey) {
+    return null;
+  }
+
   return (
     <>
-      <div className="wallet-wrapper">
-        <Dropdown overlay={getMenu()} placement="bottomRight" trigger={["click"]}>
+      <Popover
+        placement={isSmScreen() ? "topLeft" : "bottomRight"}
+        content={bodyContent}
+        open={popoverVisible}
+        onOpenChange={handlePopoverVisibleChange}
+        className="account-selector-max-width"
+        trigger="click">
+        <div className="wallet-wrapper">
           <span className="wallet-key">
             {selectedAccount.isMultisig ? renderSupersafeAccount() : renderPersonalAccount()}
           </span>
-        </Dropdown>
-      </div>
-
-      <AccountSelectorModal
-        isVisible={isSelectingAccount}
-        isFullWorkflowEnabled={false}
-        onHandleClose={onCloseAccountSelector}
-        onAccountSelected={onCompleteAccountSelection}
-      />
-
+        </div>
+      </Popover>
     </>
   );
 

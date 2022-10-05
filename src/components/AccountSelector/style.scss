@@ -5,19 +5,25 @@
     margin-bottom: 0.8rem;
   }
   .accounts-list {
-    margin-bottom: 1.8rem;
+    &:not(:last-of-type) {
+      margin-bottom: 1.8rem;
+    }
     .transaction-list-row {
       margin: 0;
-      border: 2px solid var(--color-secondary-alpha-40);
+      border: none;
       border-radius: 6px !important;
-      padding: 5px 10px;
-      border-radius: 0;
+      background-color: var(--color-secondary-alpha-01);
       &:not(:last-of-type) {
         margin-bottom: 0.8rem;
       }
       &.selected {
-        border: 2px solid var(--color-secondary-alpha-70) !important;
         background-color: var(--darken) !important;
+      }
+      .check-cell {
+        display: inline-flex;
+        flex: 0 0 28px;
+        width: 28px;
+        padding-right: 4px;
       }
       .icon-cell {
         display: flex;
@@ -42,8 +48,30 @@
         display: grid;
         padding: 0 10px 0 5px;
         .title {
-          font-size: 13px;
-          line-height: 1.3;
+          font-size: 0.85rem;
+          line-height: 1.25;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          .chunk1 {
+            font-weight: 900;
+            display: inline-block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 176px;
+          }
+          .chunk2 {
+            margin-left: 4px;
+            font-weight: 400;
+            display: inline-block;
+          }
+        }
+        .subtitle {
+          display: block;
+          color: var(--color-secondary-alpha-50);
+          font-size: inherit;
+          line-height: inherit;
         }
       }
       .rate-cell {

@@ -7,6 +7,7 @@ export { IconBookOpen } from "./IconBookOpen";
 export { IconBox } from "./IconBox";
 export { IconCaretDown } from "./IconCaretDown";
 export { IconChat } from "./IconChat";
+export { IconCheck } from "./IconCheck";
 export { IconCheckCircle } from "./IconCheckCircle";
 export { IconCheckedBox } from "./IconCheckedBox";
 export { IconClock } from "./IconClock";
