@@ -1,11 +1,11 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
 import "./style.scss";
 import { data } from "./data";
-import { copyText } from '../../middleware/ui';
+import { consoleOut, copyText } from '../../middleware/ui';
 import { PriceGraph } from './PriceGraph';
 import CardStats from './components/CardStats';
 import { formatThousands, openLinkInNewTab } from "../../middleware/utils";
@@ -33,6 +33,8 @@ export const TokenStats = ({meanStats, smeanSupply, totalVolume24h}: any) => {
 /*********************** FIRST TYPE OF CARDS *************************/
 export const FirstCardsLayout = () => {
   const { t } = useTranslation('common');
+  const [meanPrice, setMeanPrice] = useState(0);
+
   const summaries = [
     {
       label: t('stats.summary.token-name'),
@@ -113,17 +115,26 @@ export const FirstCardsLayout = () => {
     </>
   )
 
+  const onCoingeckoMarketPrices = (priceData: any) => {
+    if (priceData) {
+      consoleOut('priceData:', priceData, 'blue');
+      setMeanPrice(parseFloat(priceData));
+    }
+  }
+
   const renderHeadPrice = (
     <div className="ant-card-head-title">
       <span>{t("stats.price.price-title")}</span>
-      {
+      {meanPrice ? (
+        <span>$ {formatThousands(meanPrice, 8)}</span>
+      ) : (
         <span>$ {getTokenPriceBySymbol(MEAN_TOKEN.symbol)}</span>
-      }
+      )}
     </div>
   );
 
   const renderBodyPrice = (
-    <PriceGraph />
+    <PriceGraph onPriceData={(priceData: any) => onCoingeckoMarketPrices(priceData)} />
   );
 
   const cards = [
