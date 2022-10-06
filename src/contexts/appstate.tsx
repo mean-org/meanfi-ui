@@ -56,6 +56,7 @@ interface AppStateConfig {
   // Account selection
   isSelectingAccount: boolean;
   selectedAccount: AccountContext;
+  rememberAccount: boolean;
   // General
   theme: string | undefined;
   tpsAvg: TpsAverageValues;
@@ -143,6 +144,7 @@ interface AppStateConfig {
   // Account selection
   setIsSelectingAccount: (state: boolean) => void;
   setSelectedAccount: (account: AccountContext) => void;
+  setRememberAccount: (state: boolean) => void;
   getAssetsByAccount: (address: string) => Promise<UserTokensResponse | null> | null;
   // General
   setTheme: (name: string) => void;
@@ -228,6 +230,7 @@ const contextDefaultValues: AppStateConfig = {
   // Account selection
   isSelectingAccount: true,
   selectedAccount: { address: '', name: '', isMultisig: false },
+  rememberAccount: false,
   // General
   theme: undefined,
   tpsAvg: undefined,  // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
@@ -318,6 +321,7 @@ const contextDefaultValues: AppStateConfig = {
   // Account selection
   setIsSelectingAccount: () => {},
   setSelectedAccount: () => {},
+  setRememberAccount: () => {},
   getAssetsByAccount: () => null,
   // General
   setTheme: () => {},
@@ -411,6 +415,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const accounts = useAccountsContext();
   // Account selection
   const [isSelectingAccount, updateIsSelectingAccount] = useState<boolean>(contextDefaultValues.isSelectingAccount);
+  const [rememberAccount, updateRememberAccount] = useLocalStorageState("rememberAccount", `${contextDefaultValues.rememberAccount}`);
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const today = new Date().toLocaleDateString("en-US");
   const tomorrow = moment().add(1, 'days').format('L');
@@ -537,12 +542,20 @@ const AppStateProvider: React.FC = ({ children }) => {
     connectionConfig.endpoint,
   ]);
 
+  useEffect(() => {
+    consoleOut('rememberAccount:', rememberAccount, 'blue');
+  }, [rememberAccount]);
+
   const setTheme = (name: string) => {
     updateTheme(name);
   }
 
   const setIsSelectingAccount = (state: boolean) => {
     updateIsSelectingAccount(state);
+  }
+
+  const setRememberAccount = (state: boolean) => {
+    updateRememberAccount(state);
   }
 
   /**
@@ -572,6 +585,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateShouldLoadTokens(state);
   }
 
+  // Set theme option to html tag
   useEffect(() => {
     const applyTheme = (name?: string) => {
       const theme = name || 'dark';
@@ -1635,6 +1649,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     <AppStateContext.Provider
       value={{
         isSelectingAccount,
+        rememberAccount,
         selectedAccount,
         theme,
         tpsAvg,
@@ -1716,6 +1731,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         previousRoute,
         setIsSelectingAccount,
         setSelectedAccount,
+        setRememberAccount,
         getAssetsByAccount,
         setTheme,
         setTpsAvg,
