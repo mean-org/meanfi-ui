@@ -5,6 +5,7 @@ import { openNotification } from "components/Notifications";
 import { AppStateContext } from "contexts/appstate";
 import { useWallet } from "contexts/wallet";
 import { IconCheck, IconCopy, IconLoading, IconVerticalEllipsis } from "Icons";
+import { SYSTEM_PROGRAM_ID } from "middleware/ids";
 import { consoleOut, copyText, kFormatter, toUsCurrency } from "middleware/ui";
 import { shortenAddress } from "middleware/utils";
 import { AccountContext, UserTokenAccount } from "models/accounts";
@@ -62,7 +63,7 @@ export const AccountSelector = (props: {
     if (!publicKey) { return; }
 
     setNeedReloadMultisigAccounts(true);
-  }, [publicKey]);
+  }, [publicKey, setNeedReloadMultisigAccounts]);
 
   // Process userTokensResponse from AppState to get a renderable list of tokens
   useEffect(() => {
@@ -105,9 +106,11 @@ export const AccountSelector = (props: {
       const account: AccountContext = {
         name: 'Personal account',
         address: publicKey.toBase58(),
-        isMultisig: false
+        isMultisig: false,
+        owner: SYSTEM_PROGRAM_ID.toBase58()
       };
-      setSelectedAccount(account);
+      consoleOut('Setting selectedAccount onNativeAccountSelected:', account, 'crimson');
+      setSelectedAccount(account, true);
     }
     setIsSelectingAccount(false);
     if (onAccountSelected) {
@@ -116,12 +119,16 @@ export const AccountSelector = (props: {
   }
 
   const onMultisigAccountSelected = (item: MultisigInfo) => {
-    const account: AccountContext = {
-      name: item.label,
-      address: item.authority.toBase58(),
-      isMultisig: true
-    };
-    setSelectedAccount(account);
+    if (publicKey) {
+      const account: AccountContext = {
+        name: item.label,
+        address: item.authority.toBase58(),
+        isMultisig: true,
+        owner: publicKey.toBase58()
+      };
+      consoleOut('Setting selectedAccount onMultisigAccountSelected:', account, 'crimson');
+      setSelectedAccount(account, true);
+    }
     setIsSelectingAccount(false);
     if (onAccountSelected) {
       onAccountSelected();
@@ -187,7 +194,7 @@ export const AccountSelector = (props: {
           type="default"
           shape="circle"
           size="middle"
-          icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+          icon={<IconVerticalEllipsis className="mean-svg-icons fg-secondary-50" />}
           onClick={() => {}}
         />
       </span>
@@ -221,7 +228,7 @@ export const AccountSelector = (props: {
           type="default"
           shape="circle"
           size="middle"
-          icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+          icon={<IconVerticalEllipsis className="mean-svg-icons fg-secondary-50" />}
           onClick={() => {}}
         />
       </span>
@@ -233,7 +240,7 @@ export const AccountSelector = (props: {
       <div className="account-group-heading">
         <div className="flex-fixed-right">
           <div className="left flex-row align-items-center">
-            <span className="text-uppercase">Wallet Account</span>
+            <span className="text-uppercase">Wallets</span>
           </div>
           {!isFullWorkflowEnabled && (
             <div className="right">
@@ -281,7 +288,7 @@ export const AccountSelector = (props: {
                   type="default"
                   shape="circle"
                   size="small"
-                  icon={<IconCopy className="mean-svg-icons" />}
+                  icon={<IconCopy className="mean-svg-icons fg-secondary-50" />}
                   onClick={() => {}}
                 />
               </span>
@@ -345,7 +352,7 @@ export const AccountSelector = (props: {
                           type="default"
                           shape="circle"
                           size="small"
-                          icon={<IconCopy className="mean-svg-icons" />}
+                          icon={<IconCopy className="mean-svg-icons fg-secondary-50" />}
                           onClick={() => {}}
                         />
                       </span>

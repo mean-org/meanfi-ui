@@ -1,7 +1,7 @@
 import { Popover } from "antd";
 import { segmentAnalytics } from 'App';
 import { AccountSelector } from "components/AccountSelector";
-import { AppStateContext } from 'contexts/appstate';
+import { AppStateContext, emptyAccount } from 'contexts/appstate';
 import { useWallet } from "contexts/wallet";
 import useWindowSize from "hooks/useWindowResize";
 import {
@@ -18,6 +18,7 @@ export const AccountDetails = () => {
 
   const {
     selectedAccount,
+    setSelectedAccount
   } = useContext(AppStateContext);
   const navigate = useNavigate();
   const { width } = useWindowSize();
@@ -27,14 +28,15 @@ export const AccountDetails = () => {
   const onCompleteAccountSelection = useCallback(() => {
     setPopoverVisible(false);
     navigate(ACCOUNTS_ROUTE_BASE_PATH);
-  }, []);
+  }, [navigate]);
 
   const onDisconnectWallet = useCallback(() => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
     disconnect();
     resetWalletProvider();
-  }, [disconnect, resetWalletProvider]);
+    setSelectedAccount(emptyAccount);
+  }, [disconnect, resetWalletProvider, setSelectedAccount]);
 
   const renderPersonalAccount = () => {
     return (

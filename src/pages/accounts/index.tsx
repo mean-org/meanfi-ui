@@ -73,7 +73,7 @@ import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from 'middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports, getAmountWithSymbol, getSdkValue, getTxIxResume,
@@ -259,7 +259,7 @@ export const AccountsNewView = () => {
         setIsPageLoaded(true);
       });
     }
-  }, [location.pathname, navigate, publicKey, selectedAccount.address, streamingItemId, streamingTab]);
+  }, [location.pathname, navigate, publicKey, selectedAccount.address, selectedAccount.isMultisig, streamingTab]);
 
   const connection = useMemo(() => new Connection(endpoint, {
     commitment: "confirmed",
@@ -697,7 +697,7 @@ export const AccountsNewView = () => {
     }
     consoleOut('Asset selected, redirecting to:', url, 'orange');
     navigate(url);
-  }, [selectedAccount.address, isInspectedAccountTheConnectedWallet, isSelectedAssetNativeAccount, navigate])
+  }, [isInspectedAccountTheConnectedWallet, isSelectedAssetNativeAccount, navigate])
 
   const reloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
@@ -716,12 +716,12 @@ export const AccountsNewView = () => {
   }, [accountTokens, navigateToAsset, setSelectedAsset, setShouldLoadTokens]);
 
   const navigateToSafe = useCallback(() => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/super-safe`;
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/super-safe`;
     navigate(url);
   }, [navigate]);
 
   const navigateToStreaming = useCallback(() => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/summary`;
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/summary`;
     navigate(url);
   }, [navigate]);
 
@@ -4534,29 +4534,29 @@ export const AccountsNewView = () => {
   };
 
   const goToStreamIncomingDetailsHandler = (stream: any) => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming/${stream.id as string}`;
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming/${stream.id as string}`;
     navigate(url);
   }
 
   const goToStreamOutgoingDetailsHandler = (stream: any) => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing/${stream.id as string}`;
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing/${stream.id as string}`;
     navigate(url);
   }
 
   const goToStreamingAccountDetailsHandler = (streamingTreasury: Treasury | TreasuryInfo | undefined) => {
     if (streamingTreasury) {
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/streaming-accounts/${streamingTreasury.id as string}`;
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/streaming-accounts/${streamingTreasury.id as string}`;
       navigate(url);
     }
   }
 
   const goToStreamingAccountStreamDetailsHandler = (stream: any) => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing/${stream.id as string}`;
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing/${stream.id as string}`;
     navigate(url);
   }
 
   const returnFromIncomingStreamDetailsHandler = () => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming`;
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming`;
 
     setTimeout(() => {
       setStreamDetail(undefined);
@@ -4568,13 +4568,13 @@ export const AccountsNewView = () => {
   }
 
   const returnFromStreamingAccountDetailsHandler = () => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/streaming-accounts`;
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/streaming-accounts`;
     navigate(url);
   }
 
-  const renderTotalAccountBalance = () => {
-    return totalAccountBalance > 0 ? toUsCurrency(totalAccountBalance) : "$0.00";
-  }
+  // const renderTotalAccountBalance = () => {
+  //   return totalAccountBalance > 0 ? toUsCurrency(totalAccountBalance) : "$0.00";
+  // }
 
   return (
     <>

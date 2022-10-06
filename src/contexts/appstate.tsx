@@ -45,6 +45,7 @@ const listStreamsV2PerformanceCounter = new PerformanceCounter();
 
 export type TpsAverageValues = number | null | undefined;
 export type StreamValues = Stream | StreamInfo | undefined;
+export const emptyAccount:AccountContext = { address: '', name: '', isMultisig: false, owner: '' };
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -56,6 +57,7 @@ interface AppStateConfig {
   // Account selection
   isSelectingAccount: boolean;
   selectedAccount: AccountContext;
+  lastUsedAccount: AccountContext | null;
   rememberAccount: boolean;
   // General
   theme: string | undefined;
@@ -143,7 +145,7 @@ interface AppStateConfig {
   previousRoute: string;
   // Account selection
   setIsSelectingAccount: (state: boolean) => void;
-  setSelectedAccount: (account: AccountContext) => void;
+  setSelectedAccount: (account: AccountContext, override?: boolean) => void;
   setRememberAccount: (state: boolean) => void;
   getAssetsByAccount: (address: string) => Promise<UserTokensResponse | null> | null;
   // General
@@ -229,8 +231,9 @@ interface AppStateConfig {
 const contextDefaultValues: AppStateConfig = {
   // Account selection
   isSelectingAccount: true,
-  selectedAccount: { address: '', name: '', isMultisig: false },
-  rememberAccount: false,
+  selectedAccount: emptyAccount,
+  lastUsedAccount: null,
+  rememberAccount: true,
   // General
   theme: undefined,
   tpsAvg: undefined,  // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
@@ -477,7 +480,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-  const [selectedAccount, updateSelectedAccount] = useState<AccountContext>(contextDefaultValues.selectedAccount);
+  const [selectedAccount, updateSelectedAccount] = useState<AccountContext>(emptyAccount);
+  const [lastUsedAccount, updateLastUsedAccount] = useLocalStorageState("lastUsedAccount");
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
@@ -541,10 +545,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     multisigAddressPK,
     connectionConfig.endpoint,
   ]);
-
-  useEffect(() => {
-    consoleOut('rememberAccount:', rememberAccount, 'blue');
-  }, [rememberAccount]);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -1215,8 +1215,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }, [
     location,
-    selectedAccount.address,
+    publicKey,
     customStreamDocked,
+    selectedAccount.address,
     isDowngradedPerformance,
     refreshStreamList,
   ]);
@@ -1319,10 +1320,13 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateSelectedAsset(asset);
   }
 
-  const setSelectedAccount = (account: AccountContext) => {
-    consoleOut('Account selected:', account, 'blue');
+  const setSelectedAccount = (account: AccountContext, override = false) => {
     updateTransactions([]);
     updateSelectedAccount(account);
+    if (override) {
+      consoleOut('Overriding lastUsedAccount with:', account, 'crimson');
+      updateLastUsedAccount(account);
+    }
   }
 
   // Fetch token list
@@ -1384,7 +1388,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       tokenListPerformanceCounter.reset();
     }
 
-  },[getCoinPrices, mapPrices]);
+  },[connectionConfig.cluster, getCoinPrices, mapPrices]);
 
   // Only get the token list once per page reload
   useEffect(() => {
@@ -1486,7 +1490,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     return () => {}
 
-  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
+  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList, isSelectingAccount]);
 
   // Same as above but on demand
   const getAssetsByAccount = useCallback((account: string) => {
@@ -1651,6 +1655,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         isSelectingAccount,
         rememberAccount,
         selectedAccount,
+        lastUsedAccount,
         theme,
         tpsAvg,
         refreshInterval,

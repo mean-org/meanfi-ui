@@ -44,6 +44,8 @@ export const AppLayout = React.memo((props: any) => {
     theme,
     tpsAvg,
     previousRoute,
+    selectedAccount,
+    lastUsedAccount,
     isSelectingAccount,
     previousWalletConnectState,
     setPreviousWalletConnectState,
@@ -51,6 +53,7 @@ export const AppLayout = React.memo((props: any) => {
     setIsSelectingAccount,
     setShouldLoadTokens,
     refreshTokenBalance,
+    setSelectedAccount,
     setDiagnosisInfo,
     setPreviousRoute,
     setSelectedAsset,
@@ -71,21 +74,14 @@ export const AppLayout = React.memo((props: any) => {
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
   const [language, setLanguage] = useState("");
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [shouldSelectAccount, setShouldSelectAccount] = useState(false);
   const [needRefresh, setNeedRefresh] = useState(true);
 
-  // Clear cachedRpc on App destroy (window is being reloaded)
-  useEffect(() => {
-    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
-    return () => {
-        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
-    }
-  })
+  ///////////////
+  // Callbacks //
+  ///////////////
 
-  const handleTabClosingOrPageRefresh = () => {
-    window.localStorage.removeItem('cachedRpc');
-  }
-
-  // Callback to fetch performance data (TPS)
+  // Fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
 
     const serumRpc = "https://solana-api.projectserum.com";
@@ -121,6 +117,45 @@ export const AppLayout = React.memo((props: any) => {
       return null;
     }
   }, []);
+
+  const getPlatform = useCallback((): string => {
+    if (isDesktop) {
+      return 'Desktop';
+    } else if (isTablet) {
+      return 'Tablet';
+    } else if (isMobile) {
+      return 'Mobile';
+    } else {
+      return 'Other';
+    }
+  }, []);
+
+  const needAccountSelection = useCallback(() => {
+    if (
+      wallet &&
+      publicKey &&
+      connected &&
+      isSelectingAccount &&
+      !isUnauthenticatedRoute(location.pathname) &&
+      !isSelectingWallet &&
+      (!selectedAccount.address || (!lastUsedAccount || lastUsedAccount.owner !== publicKey.toBase58() || lastUsedAccount.address !== publicKey.toBase58()) )
+    ) {
+      return true;
+    }
+    return false;
+  }, [connected, isSelectingAccount, isSelectingWallet, lastUsedAccount, location.pathname, publicKey, selectedAccount.address, wallet]);
+
+  ////////////////
+  // UseEffects //
+  ////////////////
+
+  // Clear cachedRpc on App destroy (window is being reloaded)
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    return () => {
+        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    }
+  })
 
   // Get Performance Samples on a timeout
   useEffect(() => {
@@ -161,18 +196,6 @@ export const AppLayout = React.memo((props: any) => {
     getPerformanceSamples,
     setTpsAvg,
   ]);
-
-  const getPlatform = useCallback((): string => {
-    if (isDesktop) {
-      return 'Desktop';
-    } else if (isTablet) {
-      return 'Tablet';
-    } else if (isMobile) {
-      return 'Mobile';
-    } else {
-      return 'Other';
-    }
-  }, []);
 
   // Init Google Analytics
   useEffect(() => {
@@ -374,14 +397,6 @@ export const AppLayout = React.memo((props: any) => {
     }
   }, [location.pathname, previousRoute, setPreviousRoute]);
 
-  const showDrawer = () => {
-    setIsDrawerVisible(true);
-  };
-
-  const hideDrawer = () => {
-    setIsDrawerVisible(false);
-  };
-
   // Update diagnosis info
   useEffect(() => {
     if (connectionConfig && connectionConfig.endpoint && needRefresh) {
@@ -415,13 +430,51 @@ export const AppLayout = React.memo((props: any) => {
     t
   ]);
 
+  useEffect(() => {
+    if (publicKey) {
+      const needAccount = needAccountSelection();
+      if (needAccount) {
+        setShouldSelectAccount(true);
+      } else if (lastUsedAccount && (lastUsedAccount.owner === publicKey.toBase58() || lastUsedAccount.address === publicKey.toBase58())) {
+        consoleOut('Auto select account:', lastUsedAccount, 'crimson');
+        setSelectedAccount(lastUsedAccount);
+        setShouldSelectAccount(false);
+        setIsSelectingAccount(false);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastUsedAccount, needAccountSelection, publicKey]);
+
+  ////////////////////
+  // Event handlers //
+  ////////////////////
+
+  const handleTabClosingOrPageRefresh = () => {
+    window.localStorage.removeItem('cachedRpc');
+  }
+
+  const showDrawer = () => {
+    setIsDrawerVisible(true);
+  };
+
+  const hideDrawer = () => {
+    setIsDrawerVisible(false);
+  };
+
+  ///////////////
+  // Rendering //
+  ///////////////
+
+  // lastUsedAccount
+
   if ((wallet && connected) || isUnauthenticatedRoute(location.pathname)) {
 
-    if (wallet && connected && isSelectingAccount && !isUnauthenticatedRoute(location.pathname) && !isSelectingWallet) {
+    // Launch the Account selector modal
+    if (shouldSelectAccount) {
       return (
         <>
           <AccountSelectorModal
-            isVisible={isSelectingAccount}
+            isVisible={shouldSelectAccount}
             isFullWorkflowEnabled={true}
             onGotoSelectWallet={() => {
               disconnect();
@@ -483,13 +536,16 @@ export const AppLayout = React.memo((props: any) => {
         </Drawer>
       </>
     );
+
   } else {
 
+    // Launch wallet selector modal
     if (!wallet && !connected && !connecting) {
       setIsSelectingAccount(true);
       select();
     }
 
+    // Render dark MEAN background
     return (
       <>
         <div className="background-logo-container">
