@@ -1,11 +1,11 @@
-import React, { useContext } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { useTranslation } from 'react-i18next';
-import { AppStateContext } from '../../contexts/appstate';
-import { TokenDisplay } from '../TokenDisplay';
-import { useWallet } from '../../contexts/wallet';
-import { toUsCurrency } from '../../middleware/ui';
-import { formatThousands } from '../../middleware/utils';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
+import { toUsCurrency } from 'middleware/ui';
+import { formatThousands } from 'middleware/utils';
+import { TokenDisplay } from 'components/TokenDisplay';
 
 export const JupiterExchangeInput = (props: {
   token: TokenInfo | undefined;
@@ -14,24 +14,45 @@ export const JupiterExchangeInput = (props: {
   onSelectToken: any;
   onInputChange?: any;
   onMaxAmount: any | undefined;
-  onPriceClick: any;
   onBalanceClick?: any;
   readonly?: boolean;
   disabled?: boolean;
   className?: string;
   hint?: string;
 }) => {
+    const {
+        token,
+        tokenBalance,
+        tokenAmount,
+        onSelectToken,
+        onInputChange,
+        onMaxAmount,
+        onBalanceClick,
+        readonly,
+        disabled,
+        className,
+        hint,
+    } = props;
     const { t } = useTranslation("common");
     const {
         loadingPrices,
+        getTokenPriceByAddress,
         getTokenPriceBySymbol,
         refreshPrices,
     } = useContext(AppStateContext);
     const { publicKey } = useWallet();
 
+    const getTokenAmountValue = useCallback((amount?: number) => {
+        if (!token || !amount) {
+            return 0;
+        }
+        const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        return amount * price;
+    }, [token]);
+
     return (
         <>
-        <div className={`well ${props.className} ${props.disabled ? 'disabled' : ''}`}>
+        <div className={`well ${className} ${disabled ? 'disabled' : ''}`}>
 
             {/* Balance row */}
             <div className="flex-fixed-right">
@@ -39,22 +60,20 @@ export const JupiterExchangeInput = (props: {
                     <span>{t('transactions.send-amount.label-right')}:</span>
                     {publicKey ? (
                         <>
-                            <span className="simplelink" onClick={props.onBalanceClick}>
-                            {props.token && props.tokenBalance !== undefined &&
+                            <span className="simplelink" onClick={onBalanceClick}>
+                            {token && tokenBalance !== undefined &&
                                 formatThousands(
-                                    props.tokenBalance,
-                                    props.token.decimals,
-                                    props.token.decimals
+                                    tokenBalance,
+                                    token.decimals,
+                                    token.decimals
                                 )
                             }
                             </span>
-                            {props.tokenBalance && (
+                            {tokenBalance && (
                                 <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>
                                     {`(~${
-                                    props.token && props.tokenBalance
-                                        ? toUsCurrency(
-                                            props.tokenBalance * getTokenPriceBySymbol(props.token.symbol)
-                                        )
+                                    token && tokenBalance
+                                        ? toUsCurrency(getTokenAmountValue(tokenBalance))
                                         : "$0.00"
                                     })`}
                                 </span>
@@ -68,8 +87,8 @@ export const JupiterExchangeInput = (props: {
                     {publicKey ? (
                         <>
                             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                            ~{props.token && props.tokenBalance
-                                ? toUsCurrency(props.tokenBalance * getTokenPriceBySymbol(props.token.symbol))
+                            ~{token && tokenAmount
+                                ? toUsCurrency(getTokenAmountValue(parseFloat(tokenAmount)))
                                 : "$0.00"
                             }
                             </span>
@@ -82,23 +101,23 @@ export const JupiterExchangeInput = (props: {
 
             <div className="flex-fixed-left">
                 <div className="left">
-                    <span className={`add-on ${!props.readonly ? 'simplelink' : ''}`}>
+                    <span className={`add-on ${!readonly ? 'simplelink' : ''}`}>
                         <TokenDisplay onClick={
                             () => {
-                                if (!props.readonly) {
-                                    props.onSelectToken();
+                                if (!readonly) {
+                                    onSelectToken();
                                 }
                             }}
-                            fullTokenInfo={props.token}
-                            mintAddress={props.token ? props.token.address : ''}
-                            name={props.token ? props.token.name : ''}
-                            className={!props.readonly ? 'simplelink' : ''}
+                            fullTokenInfo={token}
+                            mintAddress={token ? token.address : ''}
+                            name={token ? token.name : ''}
+                            className={!readonly ? 'simplelink' : ''}
                             noTokenLabel={t('swap.token-select-destination')}
                             showName={false}
-                            showCaretDown={!props.readonly}
+                            showCaretDown={!readonly}
                         />
-                        {publicKey && props.token && props.tokenBalance && props.onMaxAmount ? (
-                            <div className="token-max simplelink" onClick={props.onMaxAmount}>MAX</div>
+                        {publicKey && token && tokenBalance && onMaxAmount ? (
+                            <div className="token-max simplelink" onClick={onMaxAmount}>MAX</div>
                         ) : null}
                     </span>
                 </div>
@@ -109,20 +128,20 @@ export const JupiterExchangeInput = (props: {
                         autoComplete="off"
                         autoCorrect="off"
                         type="text"
-                        onChange={props.onInputChange}
+                        onChange={onInputChange}
                         pattern="^[0-9]*[.,]?[0-9]*$"
                         placeholder="0.0"
                         minLength={1}
                         maxLength={79}
                         spellCheck="false"
-                        readOnly={props.readonly ? true : false}
-                        value={props.tokenAmount}
+                        readOnly={readonly ? true : false}
+                        value={tokenAmount}
                     />
                 </div>
             </div>
 
-            {props.hint && (
-                <div className="form-field-hint">{props.hint}</div>
+            {hint && (
+                <div className="form-field-hint">{hint}</div>
             )}
         </div>
         </>

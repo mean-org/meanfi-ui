@@ -1,37 +1,38 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
+import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
+import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Divider, Drawer, Modal, Tooltip } from "antd";
+import { Identicon } from "components/Identicon";
+import { InfoIcon } from "components/InfoIcon";
+import { JupiterExchangeInput } from "components/JupiterExchangeInput";
+import { JupiterExchangeOutput } from "components/JupiterExchangeOutput";
+import { openNotification } from "components/Notifications";
+import { SwapSettings } from "components/SwapSettings";
+import { TextInput } from "components/TextInput";
+import { TokenDisplay } from "components/TokenDisplay";
+import {
+    DEFAULT_SLIPPAGE_PERCENT, MAX_TOKEN_LIST_ITEMS, ONE_MINUTE_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS
+} from "constants/common";
+import { MEAN_TOKEN_LIST, NATIVE_SOL, PINNED_TOKENS } from "constants/tokens";
+import { useNativeAccount, useUserAccounts } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import useLocalStorage from "hooks/useLocalStorage";
+import { IconSwapFlip } from "Icons";
+import { closeTokenAccount } from "middleware/accounts";
+import { getJupiterTokenList } from "middleware/api";
+import { TOKEN_PROGRAM_ID } from "middleware/ids";
+import { ACCOUNT_LAYOUT } from "middleware/layouts";
+import { consoleOut, getTransactionStatusForLogs, isProd } from "middleware/ui";
+import { cutNumber, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber, toTokenAmountBn, toUiAmount } from "middleware/utils";
+import { OperationType, TransactionStatus } from "models/enums";
 import { TokenInfo } from "models/SolanaTokenInfo";
-import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
-import useLocalStorage from "../../hooks/useLocalStorage";
-import { TOKEN_PROGRAM_ID } from "../../middleware/ids";
-import { useWallet } from "../../contexts/wallet";
-import { consoleOut, getTransactionStatusForLogs, isProd } from "../../middleware/ui";
-import { getJupiterTokenList } from "../../middleware/api";
-import { DEFAULT_SLIPPAGE_PERCENT, ONE_MINUTE_REFRESH_TIMEOUT, MAX_TOKEN_LIST_ITEMS, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
-import { useNativeAccount, useUserAccounts } from "../../contexts/accounts";
-import { ACCOUNT_LAYOUT } from "../../middleware/layouts";
-import { cutNumber, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
-import { AppStateContext } from "../../contexts/appstate";
-import { IconSwapFlip } from "../../Icons";
-import { SwapSettings } from "../../components/SwapSettings";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TextInput } from "../../components/TextInput";
-import { Identicon } from "../../components/Identicon";
-import { JupiterExchangeOutput } from "../../components/JupiterExchangeOutput";
-import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
 import { appConfig, customLogger } from "../..";
 import "./style.scss";
-import { NATIVE_SOL } from "../../constants/tokens";
-import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/tokens";
-import { InfoIcon } from "../../components/InfoIcon";
-import { OperationType, TransactionStatus } from "../../models/enums";
-import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
-import { TokenDisplay } from "../../components/TokenDisplay";
-import { TxConfirmationContext } from "../../contexts/transaction-status";
-import { openNotification } from "../../components/Notifications";
-import { closeTokenAccount } from "../../middleware/accounts";
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
@@ -206,7 +207,7 @@ export const JupiterExchange = (props: {
                 }
             }
             if (props.queryToMint) {
-                setToMint(props.queryToMint as string);
+                setToMint(props.queryToMint);
             } else {
                 const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
                 if (to && to.length) {
@@ -396,7 +397,7 @@ export const JupiterExchange = (props: {
     useEffect(() => {
 
         const initJupiter = async () => {
-            return await Jupiter.load({
+            return Jupiter.load({
                 connection,
                 cluster: "mainnet-beta",
                 user: publicKey || undefined,
@@ -639,7 +640,7 @@ export const JupiterExchange = (props: {
         }
 
         const getRoutes = async () => {
-            return await getJupiterRoutes({
+            return getJupiterRoutes({
                 jupiter,
                 inputToken,
                 outputToken,
@@ -810,12 +811,9 @@ export const JupiterExchange = (props: {
             }
 
             if (subjectTokenSelection === 'destination') {
-
-                const showToList = !searchString
-                    ? possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter(t => t) : {}
-                    : possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo)
-                        .filter((t: any) => filter(t)) : {};
-
+                const allPairs = possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter(t => t) : {};
+                const matchedPairs = possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter((t: any) => filter(t)) : {};
+                const showToList = !searchString ? allPairs : matchedPairs;
                 setShowToMintList(showToList);
             }
 
@@ -1087,10 +1085,10 @@ export const JupiterExchange = (props: {
                     return false;
                 }
 
-                return await closeTokenAccount(
+                return closeTokenAccount(
                     connection,                         // connection
                     wSolPubKey,                         // tokenPubkey
-                    publicKey as PublicKey              // owner
+                    publicKey                           // owner
                 )
                     .then((value: Transaction | null) => {
                         if (value !== null) {
@@ -1145,7 +1143,7 @@ export const JupiterExchange = (props: {
         const signTx = async (): Promise<boolean> => {
             if (wallet && publicKey) {
                 consoleOut("Signing transaction...");
-                return await wallet
+                return wallet
                     .signTransaction(transaction)
                     .then((signed: Transaction) => {
                         consoleOut("signTransaction returned a signed transaction:", signed);
@@ -1207,7 +1205,7 @@ export const JupiterExchange = (props: {
 
         const sendTx = async (): Promise<boolean> => {
             if (wallet) {
-                return await connection
+                return connection
                     .sendEncodedTransaction(encodedTx)
                     .then((sig) => {
                         consoleOut("sendEncodedTransaction returned a signature:", sig);
@@ -1325,7 +1323,7 @@ export const JupiterExchange = (props: {
     // Validation
 
     const isExchangeValid = useCallback((): boolean => {
-        let result = true;
+        let result: boolean;
 
         if (!publicKey) {
             result = false;
@@ -1373,25 +1371,25 @@ export const JupiterExchange = (props: {
         return fromMint && toMint && selectedRoute ? (
             <>
                 {
-                    !refreshingRoutes && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction === feeInfo.signatureFee && infoRow(
+                    !refreshingRoutes && inputAmount > 0 && feeInfo && feeInfo.minimumSOLForTransaction === feeInfo.signatureFee && infoRow(
                         t('transactions.transaction-info.network-transaction-fee'),
                         `${toUiAmount(feeInfo.signatureFee, sol.decimals)} SOL`
                     )
                 }
                 {
-                    !refreshingRoutes && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction > feeInfo.signatureFee && infoRow(
+                    !refreshingRoutes && inputAmount > 0 && feeInfo && feeInfo.minimumSOLForTransaction > feeInfo.signatureFee && infoRow(
                         t('transactions.transaction-info.minimum-sol-for-transaction'),
                         `${toUiAmount(feeInfo.minimumSOLForTransaction, sol.decimals)} SOL`
                     )
                 }
                 {
-                    !refreshingRoutes && inputAmount && slippage && infoRow(
+                    !refreshingRoutes && inputAmount > 0 && slippage > 0 && infoRow(
                         t('transactions.transaction-info.slippage'),
                         `${slippage.toFixed(2)}%`
                     )
                 }
                 {
-                    !refreshingRoutes && inputAmount && selectedRoute && infoRow(
+                    !refreshingRoutes && inputAmount > 0 && selectedRoute && infoRow(
                         t('transactions.transaction-info.price-impact'),
                         selectedRoute.priceImpactPct * 100 < 0.1
                             ? '0.1%'
@@ -1400,7 +1398,7 @@ export const JupiterExchange = (props: {
                     )
                 }
                 {
-                    !refreshingRoutes && inputAmount && outputToken && infoRow(
+                    !refreshingRoutes && inputAmount > 0 && outputToken && infoRow(
                         t('transactions.transaction-info.minimum-received'),
                         `${formatThousands(
                             selectedRoute?.outAmountWithSlippage /
@@ -1460,10 +1458,29 @@ export const JupiterExchange = (props: {
         })
     }
 
+    const getSourceTokenListItemClass = (item: TokenInfo) => {
+        if (fromMint && fromMint === item.address) {
+            return 'selected';
+        }
+        const destinationToken = toMint ? showFromMintList[toMint] : undefined;
+        return areSameTokens(item, destinationToken) ? 'disabled' : 'simplelink';
+    }
+
+    const renderTokenBalance = (token: TokenInfo) => {
+        if (publicKey && userBalances && mintList[token.address] && userBalances[token.address]) {
+            if (token.address === WRAPPED_SOL_MINT_ADDRESS) {
+                return formatThousands(nativeBalance, mintList[token.address].decimals);
+            }
+            return formatThousands(userBalances[token.address], mintList[token.address].decimals);
+        }
+        return (<span>&nbsp;</span>);
+    }
+
     const renderSourceTokenList = (
         <>
             {showFromMintList && Object.values(showFromMintList).length ? (
-                Object.values(showFromMintList).map((token: any, index) => {
+                Object.values(showFromMintList).map((t: any, index) => {
+                    const token = t as TokenInfo;
                     const onClick = () => {
                         if (!fromMint || fromMint !== token.address) {
                             setFromMint(token.address);
@@ -1482,15 +1499,7 @@ export const JupiterExchange = (props: {
                             <div
                                 key={index + 100}
                                 onClick={onClick}
-                                className={`token-item ${fromMint && fromMint === token.address
-                                    ? "selected"
-                                    : areSameTokens(
-                                        token,
-                                        toMint ? showFromMintList[toMint] : undefined
-                                    )
-                                        ? "disabled"
-                                        : "simplelink"
-                                    }`}>
+                                className={`token-item ${getSourceTokenListItemClass(token)}`}>
                                 <div className="token-icon">
                                     {token.logoURI ? (
                                         <img
@@ -1511,16 +1520,7 @@ export const JupiterExchange = (props: {
                                     <div className="token-name m-0">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'Solana' : token.name}</div>
                                 </div>
                                 <div className="token-balance">
-                                    {
-                                        publicKey &&
-                                        userBalances &&
-                                        mintList[token.address] &&
-                                        userBalances[token.address] ?
-                                        (token.address === WRAPPED_SOL_MINT_ADDRESS
-                                            ? formatThousands(nativeBalance, mintList[token.address].decimals)
-                                            : formatThousands(userBalances[token.address], mintList[token.address].decimals))
-                                        : (<span>&nbsp;</span>)
-                                    }
+                                    {renderTokenBalance(token)}
                                 </div>
                             </div>
                         );
@@ -1534,10 +1534,19 @@ export const JupiterExchange = (props: {
         </>
     );
 
+    const getDestinationTokenListItemClass = (item: TokenInfo) => {
+        if (toMint && toMint === item.address) {
+            return 'selected';
+        }
+        const destinationToken = fromMint ? showToMintList[fromMint] : undefined;
+        return areSameTokens(item, destinationToken) ? 'disabled' : 'simplelink';
+    }
+
     const renderDestinationTokenList = (
         <>
             {showToMintList && Object.values(showToMintList).length ? (
-                Object.values(showToMintList).map((token: any, index) => {
+                Object.values(showToMintList).map((t: any, index) => {
+                    const token = t as TokenInfo;
                     const onClick = () => {
                         if (!toMint || toMint !== token.address) {
                             setToMint(token.address);
@@ -1556,12 +1565,7 @@ export const JupiterExchange = (props: {
                             <div
                                 key={index + 100}
                                 onClick={onClick}
-                                className={`token-item ${toMint && toMint === token.address
-                                    ? "selected"
-                                    : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined))
-                                        ? 'disabled'
-                                        : "simplelink"
-                                    }`}>
+                                className={`token-item ${getDestinationTokenListItemClass(token)}`}>
                                 <div className="token-icon">
                                     {token.logoURI ? (
                                         <img
@@ -1582,16 +1586,7 @@ export const JupiterExchange = (props: {
                                     <div className="token-name m-0">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'Solana' : token.name}</div>
                                 </div>
                                 <div className="token-balance">
-                                    {
-                                        publicKey &&
-                                        userBalances &&
-                                        mintList[token.address] &&
-                                        userBalances[token.address] ?
-                                        (token.address === WRAPPED_SOL_MINT_ADDRESS
-                                            ? formatThousands(nativeBalance, mintList[token.address].decimals)
-                                            : formatThousands(userBalances[token.address], mintList[token.address].decimals))
-                                        : (<span>&nbsp;</span>)
-                                    }
+                                    {renderTokenBalance(token)}
                                 </div>
                             </div>
                         );
@@ -1628,6 +1623,35 @@ export const JupiterExchange = (props: {
         </div>
     );
 
+    const getDisplayInputTokenBalance = () => {
+        if (fromMint && userBalances && mintList[fromMint]) {
+            return (mintList[fromMint] as TokenInfo).address === WRAPPED_SOL_MINT_ADDRESS
+                ? nativeBalance
+                : userBalances[fromMint]
+        }
+
+        return '';
+    }
+
+    const getDisplayOutputTokenBalance = () => {
+        if (toMint && userBalances && mintList[toMint]) {
+            return (mintList[toMint] as TokenInfo).address === WRAPPED_SOL_MINT_ADDRESS
+                ? nativeBalance
+                : userBalances[toMint]
+        }
+
+        return '';
+    }
+
+    const getDisplayOutputTokenAmount = () => {
+        if (isFromSol()) {
+            return fromAmount;
+        }
+        return selectedRoute && outputToken
+            ? toUiAmount(selectedRoute.outAmount, outputToken.decimals)
+            : '';
+    }
+
     return (
         <>
             {wSolBalance > 0 && (
@@ -1655,14 +1679,7 @@ export const JupiterExchange = (props: {
                 {fromMint && (
                     <JupiterExchangeInput
                         token={inputToken}
-                        tokenBalance={
-                            userBalances &&
-                                mintList[fromMint]
-                                ? (mintList[fromMint] as TokenInfo).address === WRAPPED_SOL_MINT_ADDRESS
-                                    ? nativeBalance
-                                    : userBalances[fromMint]
-                                : ''
-                        }
+                        tokenBalance={getDisplayInputTokenBalance()}
                         tokenAmount={fromAmount}
                         onInputChange={handleSwapFromAmountChange}
                         onMaxAmount={
@@ -1686,7 +1703,6 @@ export const JupiterExchange = (props: {
                         }
                         className="mb-0"
                         disabled={!jupiterReady}
-                        onPriceClick={() => refreshPrices()}
                         onBalanceClick={() => refreshUserBalances()}
                     />
                 )}
@@ -1766,24 +1782,9 @@ export const JupiterExchange = (props: {
                 {fromMint && (
                     <JupiterExchangeOutput
                         fromToken={inputToken || undefined}
-                        fromTokenAmount={fromAmount}
                         toToken={outputToken || undefined}
-                        toTokenBalance={
-                            publicKey &&
-                                toMint &&
-                                userBalances &&
-                                mintList[toMint]
-                                ? (mintList[toMint] as TokenInfo).address === WRAPPED_SOL_MINT_ADDRESS
-                                    ? nativeBalance
-                                    : userBalances[toMint]
-                                : ''
-                        }
-                        toTokenAmount={isFromSol()
-                            ? fromAmount
-                            : selectedRoute && outputToken
-                                ? toUiAmount(selectedRoute.outAmount, outputToken.decimals)
-                                : ''
-                        }
+                        toTokenBalance={getDisplayOutputTokenBalance()}
+                        toTokenAmount={getDisplayOutputTokenAmount()}
                         mintList={mintList}
                         onBalanceClick={() => refreshUserBalances()}
                         onSelectToken={() => {
