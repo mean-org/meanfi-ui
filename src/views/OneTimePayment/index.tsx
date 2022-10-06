@@ -541,7 +541,7 @@ export const OneTimePayment = (props: {
         return t('transactions.status.cta-start-transfer-busy');
       }
     } else {
-      getTransactionStartButtonLabel();
+      return getTransactionStartButtonLabel();
     }
   }
 

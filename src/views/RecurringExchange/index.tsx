@@ -1,56 +1,42 @@
-import { Row, Col, Spin, Modal, Button } from "antd";
-import { SwapSettings } from "../../components/SwapSettings";
-import { ExchangeInput } from "../../components/ExchangeInput";
-import { TextInput } from "../../components/TextInput";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { formatAmount, formatThousands, getAmountFromLamports, isValidNumber } from "../../middleware/utils";
-import { Identicon } from "../../components/Identicon";
 import { InfoCircleOutlined, WarningFilled } from "@ant-design/icons";
-import { consoleOut, getTxPercentFeeAmount } from "../../middleware/ui";
-import { useWallet } from "../../contexts/wallet";
-import { AppStateContext } from "../../contexts/appstate";
+import { calculateActionFees as calculateDdcaActionFees, DDCA_ACTIONS, TransactionFees as DdcaTxFees } from '@mean-dao/ddca';
+import {
+  ACCOUNT_LAYOUT, Client, ExchangeInfo, FeesInfo, getClients, HlaInfo, LPClient, NATIVE_SOL_MINT, ORCA,
+  RAYDIUM, SERUM,
+  TokenInfo, TOKENS, USDC_MINT,
+  USDT_MINT,
+  WRAPPED_SOL_MINT
+} from "@mean-dao/hybrid-liquidity-ag";
+import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
+import { SABER } from "@mean-dao/hybrid-liquidity-ag/lib/types";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
-import { useTranslation } from "react-i18next";
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { InfoIcon } from "../../components/InfoIcon";
-import { DdcaFrequencySelectorModal } from "../../components/DdcaFrequencySelectorModal";
-import { IconCaretDown, IconSwapFlip } from "../../Icons";
-import { environment } from "../../environments/environment";
-import { appConfig } from "../..";
-import { DcaInterval } from "../../models/ddca-models";
-import { DdcaSetupModal } from "../../components/DdcaSetupModal";
-import { calculateActionFees as calculateDdcaActionFees, TransactionFees as DdcaTxFees, DDCA_ACTIONS } from '@mean-dao/ddca';
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Button, Col, Modal, Row, Spin } from "antd";
+import { DdcaFrequencySelectorModal } from "components/DdcaFrequencySelectorModal";
+import { DdcaSetupModal } from "components/DdcaSetupModal";
+import { ExchangeInput } from "components/ExchangeInput";
+import { ExchangeOutput } from "components/ExchangeOutput";
+import { Identicon } from "components/Identicon";
+import { InfoIcon } from "components/InfoIcon";
+import { SwapSettings } from "components/SwapSettings";
+import { TextInput } from "components/TextInput";
+import { DEFAULT_SLIPPAGE_PERCENT } from "constants/common";
+import { MEAN_TOKEN_LIST } from "constants/tokens";
+import { AppStateContext } from "contexts/appstate";
+import { useWallet } from "contexts/wallet";
+import { environment } from "environments/environment";
+import useLocalStorage from "hooks/useLocalStorage";
+import { IconCaretDown, IconSwapFlip } from "Icons";
+import { appConfig } from "index";
+import { consoleOut, getTxPercentFeeAmount, toUsCurrency } from "middleware/ui";
+import { formatThousands, getAmountFromLamports, isValidNumber } from "middleware/utils";
+import { DcaInterval } from "models/ddca-models";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
-import useLocalStorage from "../../hooks/useLocalStorage";
 import "./style.scss";
-
-import {
-  getClients,
-  LPClient,
-  ExchangeInfo,
-  SERUM,
-  TokenInfo,
-  FeesInfo,
-  TOKENS,
-  NATIVE_SOL_MINT, 
-  USDC_MINT, 
-  USDT_MINT, 
-  WRAPPED_SOL_MINT,
-  ACCOUNT_LAYOUT,
-  HlaInfo,
-  Client,
-  ORCA,
-  RAYDIUM
-
-} from "@mean-dao/hybrid-liquidity-ag";
-
-import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
-import { ExchangeOutput } from "../../components/ExchangeOutput";
-import { SABER } from "@mean-dao/hybrid-liquidity-ag/lib/types";
-import { MEAN_TOKEN_LIST } from "../../constants/tokens";
 
 let inputDebounceTimeout: any;
 
@@ -68,6 +54,7 @@ export const RecurringExchange = (props: {
     ddcaOption,
     previousWalletConnectState,
     setPreviousWalletConnectState,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
     setDdcaOption,
     refreshPrices,
@@ -122,7 +109,7 @@ export const RecurringExchange = (props: {
         setFromMint(props.queryFromMint);
       }
       if (props.queryToMint) {
-        setToMint(props.queryToMint as string);
+        setToMint(props.queryToMint);
       }
     } else if (!props.queryFromMint && !props.queryToMint) {
       const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
@@ -154,7 +141,7 @@ export const RecurringExchange = (props: {
 
     const hlaInfo: HlaInfo = {
       exchangeRate: exchangeInfo.outPrice as number || 0,
-      protocolFees: exchangeInfo.protocolFees as number || 0,
+      protocolFees: exchangeInfo.protocolFees || 0,
       aggregatorPercentFees: 0.05,
       remainingAccounts: selectedClient.accounts
     };
@@ -650,7 +637,6 @@ export const RecurringExchange = (props: {
   
           //TODO: Remove clients filtering when HLA program implementation covers every client
           clients = clients.filter(c => c.protocol.equals(ORCA) || c.protocol.equals(RAYDIUM) || c.protocol.equals(SABER));
-          // clients = clients.filter(c => c.protocol.equals(SERUM));
           setClients(clients);
           consoleOut('clients', clients, 'blue');
           const client = clients[0].protocol.equals(SERUM)
@@ -912,7 +898,7 @@ export const RecurringExchange = (props: {
 
     const timeout = setTimeout(() => {
 
-      let label = t('transactions.validation.not-connected');
+      let label: string;
 
       if (!connected) {
         label = t('transactions.validation.not-connected');
@@ -1249,7 +1235,7 @@ export const RecurringExchange = (props: {
         )
       }
       {
-        !refreshing && fromAmount && slippage &&
+        !refreshing && fromAmount && slippage > 0 &&
         infoRow(
           t('transactions.transaction-info.slippage'),
           `${slippage.toFixed(2)}%`
@@ -1285,14 +1271,21 @@ export const RecurringExchange = (props: {
     setSlippage(value);
   };
 
-  // const onShowLpListToggled = (value: boolean) => {
-  //   setShowLpList(value);
-  // };
+  const getSourceTokenListItemClass = (item: TokenInfo) => {
+    if (fromMint && fromMint === item.address) {
+      return 'selected';
+    }
+    const destinationToken = toMint ? showFromMintList[toMint] : undefined;
+    return areSameTokens(item, destinationToken) || isStableSwap(item.address, toMint)
+      ? 'disabled'
+      : 'simplelink';
+  }
 
   const renderSourceTokenList = (
     <>
       {Object.values(showFromMintList).length ? (
-        Object.values(showFromMintList).map((token: any, index) => {
+        Object.values(showFromMintList).map((t: unknown, index) => {
+          const token = t as TokenInfo;
           const onClick = () => {
             if (!fromMint || fromMint !== token.address) {
               setFromMint(token.address);
@@ -1307,14 +1300,7 @@ export const RecurringExchange = (props: {
             <div
               key={index + 100}
               onClick={onClick}
-              className={`token-item ${
-                fromMint && fromMint === token.address
-                  ? "selected"
-                  : areSameTokens(token, (toMint ? showFromMintList[toMint] : undefined)) || isStableSwap(token.address, toMint)
-                  ? 'disabled'
-                  : "simplelink"
-              }`}
-            >
+              className={`token-item ${getSourceTokenListItemClass(token)}`}>
               <div className="token-icon">
                 {token.logoURI ? (
                   <img
@@ -1354,10 +1340,21 @@ export const RecurringExchange = (props: {
     </>
   );
 
+  const getDestinationTokenListItemClass = (item: TokenInfo) => {
+    if (toMint && toMint === item.address) {
+      return 'selected';
+    }
+    const destinationToken = fromMint ? showToMintList[fromMint] : undefined;
+    return areSameTokens(item, destinationToken) || isStableSwap(fromMint, item.address)
+      ? 'disabled'
+      : 'simplelink';
+  }
+
   const renderDestinationTokenList = (
     <>
       {Object.values(showToMintList).length ? (
-        Object.values(showToMintList).map((token: any, index) => {
+        Object.values(showToMintList).map((t: unknown, index) => {
+          const token = t as TokenInfo;
           const onClick = () => {
             if (!toMint || toMint !== token.address) {
               setToMint(token.address);
@@ -1372,13 +1369,7 @@ export const RecurringExchange = (props: {
             <div
               key={index + 100}
               onClick={onClick}
-              className={`token-item ${
-                toMint && toMint === token.address
-                  ? "selected"
-                  : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined)) || isStableSwap(fromMint, token.address)
-                  ? 'disabled'
-                  : "simplelink"
-              }`}
+              className={`token-item ${getDestinationTokenListItemClass(token)}`}
             >
               <div className="token-icon">
                 {token.logoURI ? (
@@ -1418,6 +1409,18 @@ export const RecurringExchange = (props: {
       )}
     </>
   );
+
+  const getOutputAmountPrice = () => {
+    if (toMint && mintList[toMint]) {
+      if (exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut) {
+        const price = getTokenPriceByAddress(mintList[toMint].address) || getTokenPriceBySymbol(mintList[toMint].symbol);
+        const outAmount = parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals));
+        return toUsCurrency(outAmount * price);
+      }
+      return '$0.00';
+    }
+    return '';
+  }
 
   return (
     <>
@@ -1501,14 +1504,7 @@ export const RecurringExchange = (props: {
                 setSubjectTokenSelection("destination");
                 showTokenSelector();
               }}
-              inputLabel={
-                toMint && mintList[toMint]
-                  ? `~$${
-                    exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
-                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getTokenPriceBySymbol(mintList[toMint].symbol), 2)
-                    : '0.00'}`
-                  : ''
-              }
+              inputLabel={getOutputAmountPrice()}
               clients={clients}
               onSelectedClient={(client: Client) => {
                 consoleOut('onSelectedClient:', client, 'blue');
