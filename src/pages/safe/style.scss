@@ -1,130 +1,147 @@
-.treasuries {
-  .item-list-body.compact {
-    .item-list-row {
-      height: 24px;
-    }
-  }
-  .ant-spin-nested-loading {
-    width: 100%;
-    height: 100%;
-    > div {
-      position: initial;
-    }
-    > div > .ant-spin {
-      max-height: initial;
-    }
-    .ant-spin-container{
-      display: initial;
-      &.ant-spin-blur {
-        height: 100%;
-        opacity: 0.6;
-        &::after {
-          background: var(--bg-color) !important;
-          opacity: 0.6;
-        }
+.safe-details-component {
+  .safe-info-container {
+    .info-safe-group {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+      margin-bottom: 0.5em;
+      padding-left: 0.25em;
+
+      .info-data {
+        font-size: 18px;
       }
     }
   }
-}
-.ant-spin-container {
-  &::after {
-    background: var(--bg-color) !important;
+
+  .safe-btns-container {
+    margin-top: 0.5em;
+
+    .ant-col.ant-col-xs-20.ant-col-sm-18.ant-col-md-20.ant-col-lg-18 {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap !important;
+    }
+
+    .ellipsis-icon {
+      float: right;
+      min-width: 48px;
+      min-height: 48px;
+    }
   }
-}
-@media (max-width: 575px) {
-  .multisig {
-    .ant-select-dropdown {
-      .transaction-list-row {
+
+  .cool-off-period-label {
+    .info-value {
+      color: #e1e2fd;
+      font-weight: 600;
+    }
+  }
+
+  .background-gray {
+    background-color: var(--color-secondary-alpha-02);
+  }
+
+  .ant-spin-container {
+    &::after {
+      background: var(--bg-color) !important;
+    }
+  }
+
+  .ant-select-dropdown {
+    .transaction-list-row {
+      @media (max-width: 575px) {
         flex-wrap: wrap;
         height: fit-content;
         align-items: flex-start;
+
         .icon-cell {
           padding-top: 0.5em;
         }
+
         .description-cell {
           padding-top: 0.25em;
         }
-      }   
-    }
-  }
-}
-.ant-select-dropdown {
-  .transaction-list-row {
-    .description-cell {
-      min-width: fit-content !important;
-    }
-  }
-}
-.switch-handle {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-top: 0.55em;
-}
+      }
 
-.inner-container {
-  .scroll-wrapper {
-    margin-right: -1.55em;
-    max-height: 100%;
-    height: 100%;
-    overflow-y: auto;
-  }
-  @media (max-width: 575px) {
-    padding-right: 2.55em;
-  }
-  @media (min-width: 576px) {
-    padding-right: 2em;
-  }
-}
-
-.safe-details-resume {
-  margin-bottom: 1.2rem;
-}
-
-.back-button {
-  span {
-    font-size: 18px;
-    font-weight: 400;
-  }
-}
-
-.btn-group {
-  button {
-    margin: 0.5em 0.75em 0.5em 0.25em;
-    .btn-content {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      svg {
-        padding-right: 0.3em;
-        width: 1.25em;
+      .description-cell {
+        min-width: fit-content !important;
       }
     }
   }
-}
 
-.create-safe {
-  flex: 0 1 60%;
-  width: 60%;
-  svg {
-    margin-right: 0.5rem;
-    width: 1.25em;
+  .switch-handle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 0.55em;
   }
-}
 
-.selected-left-border,
-.transparent-left-border {
-  border-top-left-radius: 0 !important;
-  border-bottom-left-radius: 0 !important;
-  padding-left: 3px !important;
-}
-.transparent-left-border {
-  border-left: 3px solid transparent;
-}
-.selected-left-border {
-  border-left: 3px solid var(--color-primary) !important;
-}
+  .inner-container {
+    .scroll-wrapper {
+      margin-right: -1.55em;
+      max-height: 100%;
+      height: 100%;
+      overflow-y: auto;
+    }
 
-.ant-col.btn-group.ant-col-xs-20.ant-col-sm-18.ant-col-md-20.ant-col-lg-18 {
-  flex-wrap: wrap;
+    @media (max-width: 575px) {
+      padding-right: 2.55em;
+    }
+
+    @media (min-width: 576px) {
+      padding-right: 2em;
+    }
+  }
+
+  .safe-details-resume {
+    margin-bottom: 1.2rem;
+  }
+
+  .back-button {
+    span {
+      font-size: 18px;
+      font-weight: 400;
+    }
+  }
+
+  .btn-group {
+    button {
+      margin: 0.5em 0.75em 0.5em 0.25em;
+
+      .btn-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        svg {
+          padding-right: 0.3em;
+          width: 1.25em;
+        }
+      }
+    }
+  }
+
+  .create-safe {
+    flex: 0 1 60%;
+    width: 60%;
+
+    svg {
+      margin-right: 0.5rem;
+      width: 1.25em;
+    }
+  }
+
+  .selected-left-border,
+  .transparent-left-border {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    padding-left: 3px !important;
+  }
+
+  .transparent-left-border {
+    border-left: 3px solid transparent;
+  }
+
+  .selected-left-border {
+    border-left: 3px solid var(--color-primary) !important;
+  }
 }

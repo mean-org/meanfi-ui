@@ -7,8 +7,7 @@ import { ResumeItem } from '../../../../components/ResumeItem';
 import { IconArrowForward } from "../../../../Icons";
 import { consoleOut } from '../../../../middleware/ui';
 import { ProgramAccounts } from "../../../../models/accounts";
-import { SafeInfo } from "../UI/SafeInfo";
-import './style.scss';
+import { SafeInfo } from "../SafeInfo";
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;

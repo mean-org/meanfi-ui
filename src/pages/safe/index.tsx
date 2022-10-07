@@ -3914,7 +3914,7 @@ export const SafeView = () => {
                 </span>
               </div>
 
-              <div className="inner-container">
+              <div className="inner-container safe-details-component">
                 <span id="refresh-selected-proposal-cta" onClick={() => {
                   onRefresProposals();
                   refreshSelectedProposal();

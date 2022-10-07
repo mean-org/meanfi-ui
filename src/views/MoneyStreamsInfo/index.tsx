@@ -1762,21 +1762,21 @@ export const MoneyStreamsInfoView = (props: {
   }, [getTimeRemaining, t]);
 
   const goToIncomingTabHandler = () => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming`;
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming`;
     navigate(url);
   }
 
   const goToOutgoingTabHandler = () => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing`;
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing`;
     navigate(url);
   }
 
   const onTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
 
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/${activeKey}`;
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/${activeKey}`;
     navigate(url);
-  }, [selectedAccount.address, navigate]);
+  }, [navigate]);
 
 
   /////////////////////
@@ -2780,7 +2780,7 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     return <Menu items={items} />;
-  }, [showCreateStreamModal, showOpenStreamModal]);
+  }, [isMultisigContext, showCreateStreamModal, showOpenStreamModal]);
 
   return (
     <>

@@ -1,6 +1,5 @@
-import './style.scss';
 import { formatThousands, getAmountFromLamports, shortenAddress } from "../../../../middleware/utils";
-import { SafeInfo } from "../UI/SafeInfo";
+import { SafeInfo } from "../SafeInfo";
 import { MeanMultisig, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';

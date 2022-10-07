@@ -13,25 +13,25 @@
     border-top: 1px solid var(--color-secondary-alpha-05);
     padding-top: 0.5em;
   }
-}
-.programs-btns {
-  .btn-group {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    button {
-      min-width: 12em;
-      width: fit-content;
-      max-width: max-content;
-      flex: 1;
+  .programs-btns {
+    .btn-group {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      button {
+        min-width: 12em;
+        width: fit-content;
+        max-width: max-content;
+        flex: 1;
+      }
     }
   }
-}
-div.react-json-view {
-  margin: 10px 20px 10px 0px;
-  padding: 10px;
-}
-div.no-idl-info {
-  color: gray;
-  margin: 20px 20px 20px 0px;
-  width: fit-content;
+  div.react-json-view {
+    margin: 10px 20px 10px 0px;
+    padding: 10px;
+  }
+  div.no-idl-info {
+    color: gray;
+    margin: 20px 20px 20px 0px;
+    width: fit-content;
+  }
 }
