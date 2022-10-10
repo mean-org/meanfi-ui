@@ -11,7 +11,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconLoading, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
-import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { ConfirmOptions, PublicKey } from "@solana/web3.js";
 import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
 import { UnstakeTabView } from "../../views/UnstakeTabView";
@@ -25,7 +25,6 @@ import { findATokenAddress, formatThousands, getAmountFromLamports } from "../..
 import { getTokenAccountBalanceByAddress } from "../../middleware/accounts";
 
 export type StakeOption = "stake" | "unstake" | undefined;
-export const STAKING_ROUTE_BASE_PATH = '/staking';
 
 type StakingPair = {
   unstakedToken: TokenInfo | undefined;

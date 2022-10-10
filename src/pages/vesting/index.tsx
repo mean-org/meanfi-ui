@@ -20,7 +20,9 @@ import {
   CUSTOM_TOKEN_NAME,
   MIN_SOL_BALANCE_REQUIRED,
   MSP_FEE_TREASURY,
+  MULTISIG_ROUTE_BASE_PATH,
   NO_FEES,
+  VESTING_ROUTE_BASE_PATH,
   WRAPPED_SOL_MINT_ADDRESS
 } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
@@ -74,7 +76,6 @@ import {
   VestingFlowRateInfo,
   vestingFlowRatesCache
 } from 'models/vesting';
-import { MULTISIG_ROUTE_BASE_PATH } from 'pages/safe';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from "react-i18next";
@@ -95,7 +96,6 @@ import { VestingContractStreamList } from './components/VestingContractStreamLis
 import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
 import "./style.scss";
 
-export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingAccountDetailTab = "overview" | "streams" | "activity" | undefined;
 let isWorkflowLocked = false;
 const notificationKey = 'updatable';

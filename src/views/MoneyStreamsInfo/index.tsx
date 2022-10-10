@@ -21,6 +21,7 @@ import { TreasuryAddFundsModal } from "components/TreasuryAddFundsModal";
 import { TreasuryCreateModal } from "components/TreasuryCreateModal";
 import { TreasuryStreamCreateModal } from "components/TreasuryStreamCreateModal";
 import {
+  ACCOUNTS_ROUTE_BASE_PATH,
   CUSTOM_TOKEN_NAME,
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
@@ -57,7 +58,6 @@ import { TokenInfo } from "models/SolanaTokenInfo";
 import { StreamsSummary } from "models/streams";
 import { TreasuryCreateOptions, UserTreasuriesSummary } from "models/treasuries";
 import { AddFundsParams } from "models/vesting";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "pages/accounts";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { isMobile } from "react-device-detect";
 import { useTranslation } from "react-i18next";
@@ -1175,7 +1175,7 @@ export const MoneyStreamsInfoView = (props: {
       const findStream = streamList.filter((stream: Stream | StreamInfo) => stream.id === e);
       const streamSelected = Object.assign({}, ...findStream);
 
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${selectedAccount.address}/streaming/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
 
       navigate(url);
     }

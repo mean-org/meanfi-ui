@@ -55,9 +55,9 @@ import { TransactionItemView } from 'components/TransactionItemView';
 import { UnwrapSolModal } from 'components/UnwrapSolModal';
 import { WrapSolModal } from 'components/WrapSolModal';
 import {
-  ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-  MIN_SOL_BALANCE_REQUIRED, NO_FEES,
-  ONE_MINUTE_REFRESH_TIMEOUT, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, TRANSACTIONS_PER_PAGE, WRAPPED_SOL_MINT_ADDRESS
+  ACCOUNTS_LOW_BALANCE_LIMIT, ACCOUNTS_ROUTE_BASE_PATH, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  MIN_SOL_BALANCE_REQUIRED, MULTISIG_ROUTE_BASE_PATH, NO_FEES, ONE_MINUTE_REFRESH_TIMEOUT,
+  SOLANA_EXPLORER_URI_INSPECT_ADDRESS, STAKING_ROUTE_BASE_PATH, TRANSACTIONS_PER_PAGE, WRAPPED_SOL_MINT_ADDRESS
 } from 'constants/common';
 import { EMOJIS } from 'constants/emojis';
 import { NATIVE_SOL } from 'constants/tokens';
@@ -90,7 +90,6 @@ import { TokenInfo } from "models/SolanaTokenInfo";
 import { initialSummary, StreamsSummary } from 'models/streams';
 import { FetchStatus } from 'models/transactions';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from 'models/treasuries';
-import { STAKING_ROUTE_BASE_PATH } from 'pages/staking';
 import { QRCodeSVG } from 'qrcode.react';
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
@@ -101,14 +100,12 @@ import { MoneyStreamsIncomingView } from 'views/MoneyStreamsIncoming';
 import { MoneyStreamsInfoView } from 'views/MoneyStreamsInfo';
 import { MoneyStreamsOutgoingView } from 'views/MoneyStreamsOutgoing';
 import { StreamingAccountView } from 'views/StreamingAccount';
-import { MULTISIG_ROUTE_BASE_PATH } from '../safe/index';
 import "./style.scss";
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type CategoryOption = "networth" | "assets" | "streaming" | "super-safe" | undefined;
-export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
 let isWorkflowLocked = false;
 
 export const AccountsView = () => {
@@ -1346,7 +1343,7 @@ export const AccountsView = () => {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressRef.current}/streaming/outgoing`;
+            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing`;
             navigate(url);
           }
           setTimeout(() => {
@@ -1360,7 +1357,7 @@ export const AccountsView = () => {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressRef.current}/streaming/incoming`;
+            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming`;
             navigate(url);
           }
           setTimeout(() => {

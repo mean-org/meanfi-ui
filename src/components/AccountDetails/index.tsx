@@ -1,6 +1,7 @@
 import { Popover } from "antd";
 import { segmentAnalytics } from 'App';
 import { AccountSelector } from "components/AccountSelector";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "constants/common";
 import { AppStateContext, emptyAccount } from 'contexts/appstate';
 import { useWallet } from "contexts/wallet";
 import useWindowSize from "hooks/useWindowResize";
@@ -9,7 +10,6 @@ import {
 } from "Icons";
 import { AppUsageEvent } from 'middleware/segment-service';
 import { shortenAddress } from "middleware/utils";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "pages/accounts";
 import { useCallback, useContext, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import "./style.scss";

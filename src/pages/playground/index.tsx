@@ -21,7 +21,7 @@ import { PreFooter } from "components/PreFooter";
 import { TextInput } from "components/TextInput";
 import { TokenDisplay } from "components/TokenDisplay";
 import { TokenListItem } from "components/TokenListItem";
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "constants/common";
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS, MULTISIG_ROUTE_BASE_PATH } from "constants/common";
 import { NATIVE_SOL } from "constants/tokens";
 import { useNativeAccount } from "contexts/accounts";
 import { AppStateContext } from "contexts/appstate";
@@ -50,7 +50,6 @@ import {
 } from "middleware/utils";
 import { MultisigAsset } from "models/multisig";
 import { TokenInfo } from "models/SolanaTokenInfo";
-import { MULTISIG_ROUTE_BASE_PATH } from "pages/safe";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ReactJson from "react-json-view";
@@ -497,7 +496,8 @@ export const PlaygroundView = () => {
             shape="round"
             className="extra-small"
             onClick={() => {
-              navigate(MULTISIG_ROUTE_BASE_PATH);
+              const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
+              navigate(url);
             }}>
             See proposals
           </Button>

@@ -6,14 +6,13 @@ import { CopyExtLinkGroup } from "components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "components/MultisigOwnersView";
 import { RightInfoDetails } from "components/RightInfoDetails";
 import { SolBalanceModal } from "components/SolBalanceModal";
-import { MIN_SOL_BALANCE_REQUIRED } from "constants/common";
+import { MIN_SOL_BALANCE_REQUIRED, VESTING_ROUTE_BASE_PATH } from "constants/common";
 import { NATIVE_SOL } from "constants/tokens";
 import { useNativeAccount } from "contexts/accounts";
 import { AppStateContext } from "contexts/appstate";
 import { IconEllipsisVertical, IconLoading } from "Icons";
 import { consoleOut, isDev, isLocal, toUsCurrency } from "middleware/ui";
 import { getAmountFromLamports, shortenAddress } from "middleware/utils";
-import { VESTING_ROUTE_BASE_PATH } from "pages/vesting";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 

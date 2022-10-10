@@ -27,6 +27,7 @@ import { ErrorReportModal } from 'components/ErrorReportModal';
 import { MultisigEditModal } from 'components/MultisigEditModal';
 import { MultisigProposalModal } from 'components/MultisigProposalModal';
 import { openNotification } from 'components/Notifications';
+import { MULTISIG_ROUTE_BASE_PATH } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
@@ -58,7 +59,6 @@ import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import './style.scss';
 
-export const MULTISIG_ROUTE_BASE_PATH = '/accounts/super-safe';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -2974,7 +2974,8 @@ const SafeView = (props: {
   const returnFromProposalDetailsHandler = () => {
     setIsProposalDetails(false);
     setNeedRefreshTxs(true);
-    navigate(MULTISIG_ROUTE_BASE_PATH);
+    const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
+    navigate(url);
   }
 
   const returnFromProgramDetailsHandler = () => {

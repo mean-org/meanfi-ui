@@ -21,7 +21,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { useNavigate } from 'react-router-dom';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { openNotification } from '../../components/Notifications';
-import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
+import { ACCOUNTS_ROUTE_BASE_PATH } from 'constants/common';
 
 export const AirdropRedeem = (props: {
   connection: Connection;

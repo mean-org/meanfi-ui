@@ -1,21 +1,20 @@
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
+import { AccountDetails } from "components/AccountDetails";
+import { AppContextMenu } from "components/AppContextMenu";
+import { ConnectButton } from "components/ConnectButton";
+import { NotificationBell } from 'components/CurrentBalance';
+import { DepositOptions } from 'components/DepositOptions';
+import { ACCOUNTS_ROUTE_BASE_PATH, STAKING_ROUTE_BASE_PATH } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnectionConfig } from 'contexts/connection';
+import { useWallet } from "contexts/wallet";
+import { CustomCSSProps } from 'middleware/css-custom-props';
+import { isProd } from 'middleware/ui';
+import { RoutingInfo } from 'models/common-types';
 import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
-import { AppStateContext } from '../../contexts/appstate';
-import { useConnectionConfig } from '../../contexts/connection';
-import { useWallet } from "../../contexts/wallet";
-import { CustomCSSProps } from '../../middleware/css-custom-props';
-import { isProd } from '../../middleware/ui';
-import { RoutingInfo } from '../../models/common-types';
-import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
-import { STAKING_ROUTE_BASE_PATH } from '../../pages/staking';
-import { AccountDetails } from "../AccountDetails";
-import { AppContextMenu } from "../AppContextMenu";
-import { ConnectButton } from "../ConnectButton";
-import { NotificationBell } from '../CurrentBalance';
-import { DepositOptions } from '../DepositOptions';
 
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {

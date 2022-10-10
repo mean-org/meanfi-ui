@@ -7,6 +7,7 @@ import { FooterBar } from "components/FooterBar";
 import { openNotification } from "components/Notifications";
 import { TransactionConfirmationHistory } from "components/TransactionConfirmationHistory";
 import {
+  ACCOUNTS_ROUTE_BASE_PATH,
   GOOGLE_ANALYTICS_PROD_TAG_ID,
   LANGUAGES,
   PERFORMANCE_SAMPLE_INTERVAL,
@@ -27,7 +28,6 @@ import { AppUsageEvent } from "middleware/segment-service";
 import { consoleOut, isProd, isValidAddress } from "middleware/ui";
 import { isUnauthenticatedRoute } from "middleware/utils";
 import { AccountDetails } from "models/accounts";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "pages/accounts";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { browserName, deviceType, fullBrowserVersion, isDesktop, isMobile, isTablet, osName, osVersion } from "react-device-detect";
 import ReactGA from 'react-ga';

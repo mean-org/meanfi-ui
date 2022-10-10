@@ -3,7 +3,7 @@ import { ArrowRightOutlined } from "@ant-design/icons";
 import { Button, Tooltip } from "antd";
 import { useNavigate } from "react-router-dom";
 import { AppStateContext } from "contexts/appstate";
-import { MULTISIG_ROUTE_BASE_PATH } from "pages/safe";
+import { MULTISIG_ROUTE_BASE_PATH } from "constants/common";
 
 export const PendingProposalsComponent = (props: {
     extraClasses?: string;
@@ -26,7 +26,7 @@ export const PendingProposalsComponent = (props: {
         <>
             <div key="pending-proposals" className={`transaction-list-row${extraClasses ? ' ' + extraClasses : '' }`}>
                 <div className="flex-row align-items-center fg-warning simplelink underline-on-hover" onClick={() => {
-                    const url = MULTISIG_ROUTE_BASE_PATH;
+                    const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
                     navigate(url);
                 }}>
                     <div className="font-bold">There are pending proposals on this account</div>
