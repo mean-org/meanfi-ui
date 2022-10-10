@@ -39,11 +39,6 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
     parent: 'root'
   },
   {
-    key: 'multisig',
-    path: '/multisig',
-    parent: 'root'
-  },
-  {
     key: 'stats',
     path: '/stats',
     parent: 'root'
@@ -149,10 +144,6 @@ export const AppBar = (props: {
           label: (<Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>),
         },
         {
-          key: 'multisig',
-          label: (<Link to="/multisig">{t('ui-menus.main-menu.multisig')}</Link>),
-        },
-        {
           key: 'stats',
           label: (<Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>),
         },
@@ -211,9 +202,6 @@ export const AppBar = (props: {
                 </li>
                 <li key="vesting" className={selectedItems.includes("vesting") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                   <Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>
-                </li>
-                <li key="multisig" className={selectedItems.includes("multisig") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
-                  <Link to="/multisig">{t('ui-menus.main-menu.multisig')}</Link>
                 </li>
                 <li key="stats" className={selectedItems.includes("stats") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
                   <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>

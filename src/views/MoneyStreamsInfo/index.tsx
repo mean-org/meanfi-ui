@@ -6,7 +6,7 @@ import {
   calculateActionFees as calculateActionFeesV2, MSP, MSP_ACTIONS as MSP_ACTIONS_V2, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType
 } from '@mean-dao/msp';
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
+import { Button, Col, Dropdown, Menu, Row, Space, Spin, Tabs } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
@@ -2788,8 +2788,8 @@ export const MoneyStreamsInfoView = (props: {
 
         <RightInfoDetails infoData={infoData} />
 
-        <Row gutter={[8, 8]} className="safe-btns-container d-flex align-items-center mb-1 ml-0 mr-0">
-          <Col xs={isXsDevice ? 20 : 24} sm={isXsDevice ? 18 : 24} md={isXsDevice ? 20 : 24} lg={isXsDevice ? 18 : 24} className="btn-group">
+        <div className="flex-fixed-right cta-row mb-2">
+          <Space className="left" size="middle" wrap>
             <Button
               type="default"
               shape="round"
@@ -2840,27 +2840,24 @@ export const MoneyStreamsInfoView = (props: {
                   Find stream
               </Button>
             )}
-          </Col>
-
+          </Space>
           {isXsDevice && (
-            <Col xs={4} sm={6} md={4} lg={6}>
-              <Dropdown className="options-dropdown"
-                overlay={renderDropdownMenu()}
-                placement="bottomRight"
-                trigger={["click"]}>
-                <span className="icon-button-container ml-1">
-                  <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-                    onClick={(e) => e.preventDefault()}
-                  />
-                </span>
-              </Dropdown>
-            </Col>
+            <Dropdown className="options-dropdown"
+              overlay={renderDropdownMenu()}
+              placement="bottomRight"
+              trigger={["click"]}>
+              <span className="icon-button-container ml-1">
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="middle"
+                  icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                  onClick={(e) => e.preventDefault()}
+                />
+              </span>
+            </Dropdown>
           )}
-        </Row>
+        </div>
 
         {renderTabset()}
       </Spin>

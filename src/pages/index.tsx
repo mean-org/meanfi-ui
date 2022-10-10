@@ -1,4 +1,4 @@
-export { AccountsNewView } from './accounts';
+export { AccountsView } from './accounts';
 export { CustodyView } from './custody';
 export { ExchangeDcasView } from './exchange-dcas';
 export { FaucetView } from "./faucet";
@@ -8,7 +8,6 @@ export { IdoLiveView } from './ido-live';
 export { IdoView } from './ido';
 export { NotFoundView } from './404';
 export { PlaygroundView } from './playground';
-export { SafeView } from './safe';
 export { StakingRewardsView } from './staking-rewards';
 export { StakingView } from './staking';
 export { StatsView } from './stats';

@@ -478,7 +478,7 @@
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Asset details",
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"back-to-multisig-accounts-cta": "Back to SuperSafe",
 			"cta-change-multisig-authority": "Change Asset Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close asset",
@@ -506,7 +506,7 @@
 		},
 		"multisig-detail-heading": "多重签名账户详细信息",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"back-to-multisig-accounts-cta": "Back to SuperSafe",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer ownership",

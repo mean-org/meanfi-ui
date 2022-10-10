@@ -886,7 +886,6 @@ export const VestingContractCreateForm = (props: {
         if (inModal) { return null; }
         return(
             <PendingProposalsComponent
-                accountAddress={accountAddress}
                 extraClasses="no-pointer justify-content-center shift-up-3 mb-2"
                 pendingMultisigTxCount={pendingMultisigTxCount}
             />

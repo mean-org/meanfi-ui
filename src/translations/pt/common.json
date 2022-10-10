@@ -389,7 +389,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Adicionar participante",
-		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+		"back-to-multisig-accounts-cta": "Back to SuperSafe",
 		"create-asset": {
 			"delete-multisig": "",
 			"edit-multisig": "",
@@ -478,7 +478,7 @@
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Detalhes do cofre",
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"back-to-multisig-accounts-cta": "Back to SuperSafe",
 			"cta-change-multisig-authority": "Transferir propriedade",
 			"cta-change-multisig-authority-busy": "Mudando o Multisig",
 			"cta-close": "Fechar cofre",
@@ -506,7 +506,7 @@
 		},
 		"multisig-detail-heading": "Detalhes da conta multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"back-to-multisig-accounts-cta": "Back to SuperSafe",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer ownership",

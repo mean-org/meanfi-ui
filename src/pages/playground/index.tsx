@@ -50,6 +50,7 @@ import {
 } from "middleware/utils";
 import { MultisigAsset } from "models/multisig";
 import { TokenInfo } from "models/SolanaTokenInfo";
+import { MULTISIG_ROUTE_BASE_PATH } from "pages/safe";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ReactJson from "react-json-view";
@@ -84,7 +85,6 @@ export const PlaygroundView = () => {
     coinPrices,
     splTokenList,
     isWhitelisted,
-    setHighLightableMultisigId,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
@@ -497,9 +497,7 @@ export const PlaygroundView = () => {
             shape="round"
             className="extra-small"
             onClick={() => {
-              const url = `/multisig/${sampleMultisig}?v=proposals`;
-              setHighLightableMultisigId(sampleMultisig);
-              navigate(url);
+              navigate(MULTISIG_ROUTE_BASE_PATH);
             }}>
             See proposals
           </Button>

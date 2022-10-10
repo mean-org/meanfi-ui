@@ -1,50 +1,4 @@
-import {
-  ArrowLeftOutlined,
-  LoadingOutlined,
-  ReloadOutlined
-} from '@ant-design/icons';
-import {
-  ConfirmOptions,
-  Connection,
-  LAMPORTS_PER_SOL,
-  MemcmpFilter,
-  PublicKey,
-  Transaction,
-  TransactionInstruction
-} from '@solana/web3.js';
-import { Identicon } from 'components/Identicon';
-import { PreFooter } from 'components/PreFooter';
-import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import {
-  formatThousands,
-  getAmountFromLamports,
-  getAmountWithSymbol,
-  getTxIxResume,
-  shortenAddress,
-  toUiAmount
-} from 'middleware/utils';
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-
-import { Button, Empty, Spin, Tooltip } from 'antd';
-import {
-  consoleOut, delay, getTransactionStatusForLogs,
-  toUsCurrency
-} from 'middleware/ui';
-
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { MEAN_MULTISIG_ACCOUNT_LAMPORTS } from 'constants/common';
-import { useNativeAccount } from 'contexts/accounts';
-import useWindowSize from 'hooks/useWindowResize';
-import { IconLoading, IconSafe, IconUserGroup, IconUsers } from 'Icons';
-import { MEAN_MULTISIG, NATIVE_SOL_MINT } from 'middleware/ids';
-import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { isDesktop } from "react-device-detect";
-import './style.scss';
-
-// MULTISIG
+import { ReloadOutlined } from '@ant-design/icons';
 import { App, AppConfig, AppsProvider, Arg, NETWORK, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import { createProgram, getDepositIx, getTrancheDepositIx, getTrancheWithdrawIx, getWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import {
@@ -57,63 +11,75 @@ import {
   MultisigTransactionFees,
   MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk';
-import { Category, MSP, Treasury } from '@mean-dao/msp';
+import { Treasury } from '@mean-dao/msp';
 import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
+import {
+  ConfirmOptions,
+  Connection,
+  MemcmpFilter,
+  PublicKey,
+  Transaction,
+  TransactionInstruction
+} from '@solana/web3.js';
+import { Button, Empty, Spin, Tooltip } from 'antd';
 import { segmentAnalytics } from "App";
-import BigNumber from 'bignumber.js';
 import { ErrorReportModal } from 'components/ErrorReportModal';
-import { MultisigCreateModal } from 'components/MultisigCreateModal';
 import { MultisigEditModal } from 'components/MultisigEditModal';
 import { MultisigProposalModal } from 'components/MultisigProposalModal';
 import { openNotification } from 'components/Notifications';
-import { NATIVE_SOL } from 'constants/tokens';
+import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
+import { useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "contexts/transaction-status";
+import { useWallet } from 'contexts/wallet';
+import useWindowSize from 'hooks/useWindowResize';
 import { appConfig, customLogger } from 'index';
-import { ACCOUNT_LAYOUT } from 'middleware/layouts';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { ProgramAccounts, UserTokenAccount } from "models/accounts";
-import { CreateNewProposalParams, CreateNewSafeParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from 'models/multisig';
+import {
+  consoleOut, delay, getTransactionStatusForLogs
+} from 'middleware/ui';
+import {
+  getAmountFromLamports,
+  getAmountWithSymbol,
+  getTxIxResume
+} from 'middleware/utils';
+import { ProgramAccounts } from "models/accounts";
+import { EventType, OperationType, TransactionStatus } from 'models/enums';
+import { CreateNewProposalParams, MultisigProposalsWithAuthority, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from 'models/multisig';
 import SerumIDL from 'models/serum-multisig-idl';
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { isDesktop } from "react-device-detect";
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramDetailsView } from './components/ProgramDetails';
 import { ProposalDetailsView } from './components/ProposalDetails';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
+import './style.scss';
 
-export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
+export const MULTISIG_ROUTE_BASE_PATH = '/accounts/super-safe';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
-const CREDIX_GATEWAY_ADDRESS = new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz");
-const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
-export const SafeView = () => {
-  const connectionConfig = useConnectionConfig();
-  const { publicKey, connected, wallet } = useWallet();
-  const [searchParams] = useSearchParams();
-  const { address, id } = useParams();
+const SafeView = (props: {
+  safeBalance?: number;
+  vestingContracts?: Treasury[];
+}) => {
+  const {
+    safeBalance,
+    vestingContracts,
+  } = props;
   const {
     programs,
-    coinPrices,
     multisigTxs,
-    isWhitelisted,
     multisigAccounts,
+    selectedAccount,
     selectedMultisig,
     transactionStatus,
-    streamV2ProgramAddress,
     loadingMultisigAccounts,
-    highLightableMultisigId,
-    previousWalletConnectState,
-    loadingMultisigTxPendingCount,
-    setNeedReloadMultisigAccounts,
-    setHighLightableMultisigId,
-    getTokenPriceByAddress,
-    getTokenByMintAddress,
-    setMultisigSolBalance,
-    getTokenPriceBySymbol,
     setTransactionStatus,
-    setTotalSafeBalance,
     refreshTokenBalance,
-    setMultisigAccounts,
     setSelectedMultisig,
     refreshMultisigs,
     setMultisigTxs,
@@ -123,10 +89,12 @@ export const SafeView = () => {
     confirmationHistory,
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
-
+  const connectionConfig = useConnectionConfig();
+  const { publicKey, connected, wallet } = useWallet();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { id } = useParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
-  const location = useLocation();
   const navigate = useNavigate();
   // Misc hooks
   const { width } = useWindowSize();
@@ -152,14 +120,10 @@ export const SafeView = () => {
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
   const [loadingProposalDetails, setLoadingProposalDetails] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction | null>(null);
-  const [multisigUsdValues, setMultisigUsdValues] = useState<Map<string, number> | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
   // Vesting contracts
-  const [treasuryList, setTreasuryList] = useState<Treasury[]>([]);
-  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [queryParamV, setQueryParamV] = useState<string | null>(null);
   const [lastError, setLastError] = useState<TransactionStatusInfo | undefined>(undefined);
-  const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
 
   /////////////////
   //  Init code  //
@@ -252,22 +216,6 @@ export const SafeView = () => {
     wallet
   ]);
 
-  // Create and cache Money Streaming Program V2 instance
-  const msp = useMemo(() => {
-    if (publicKey) {
-      return new MSP(
-        connectionConfig.endpoint,
-        streamV2ProgramAddress,
-        "confirmed"
-      );
-    }
-    return undefined;
-  }, [
-    connectionConfig.endpoint,
-    publicKey,
-    streamV2ProgramAddress
-  ]);
-
   // Live reference to the selected multisig
   const selectedMultisigRef = useRef(selectedMultisig);
   useEffect(() => {
@@ -299,35 +247,6 @@ export const SafeView = () => {
   }, [
     setTransactionStatus
   ]);
-
-  const getAllUserV2Accounts = useCallback(async (account: string) => {
-
-    if (!msp) { return []; }
-
-    const pk = new PublicKey(account);
-
-    return msp.listTreasuries(pk, true, Category.vesting);
-
-  }, [msp]);
-
-  const refreshVestingContracts = useCallback((address: string) => {
-
-    if (!publicKey || !msp || !address) { return; }
-
-    getAllUserV2Accounts(address)
-      .then(treasuries => {
-        consoleOut('Vesting contracts:', treasuries, 'blue');
-        setTreasuryList(treasuries.map(vc => {
-          return Object.assign({}, vc, {
-            name: vc.name.trim()
-          })
-        }));
-      })
-      .catch(error => {
-        console.error(error);
-      });
-
-  }, [getAllUserV2Accounts, msp, publicKey]);
 
   const setProposalsLoading = useCallback((loading: boolean) => {
     if (!selectedMultisig) {
@@ -371,44 +290,6 @@ export const SafeView = () => {
     return false;
   }, [confirmationHistory]);
 
-  const onCreateMultisigClick = useCallback(() => {
-
-    if (!multisigClient) { return; }
-
-    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createMultisig)
-      .then(value => {
-        setTransactionFees(value);
-        consoleOut('transactionFees:', value, 'orange');
-      });
-
-    resetTransactionStatus();
-    setIsCreateMultisigModalVisible(true);
-
-  },[multisigClient, resetTransactionStatus]);
-
-  const onAcceptCreateMultisig = (data: CreateNewSafeParams) => {
-    consoleOut('multisig:', data, 'blue');
-    onExecuteCreateMultisigTx(data);
-  };
-
-  const onMultisigCreated = useCallback(() => {
-
-    setIsCreateMultisigModalVisible(false);
-    resetTransactionStatus();
-    setIsBusy(false);
-    setTransactionFees(ZERO_FEES);
-
-  },[resetTransactionStatus])
-
-  const getCurrentMultisigValue = useCallback(() => {
-    if (!selectedMultisig || !multisigUsdValues || multisigUsdValues.size === 0) {
-      return 0;
-    }
-
-    const valueInUsd = multisigUsdValues.get(selectedMultisig.authority.toBase58());
-    return valueInUsd || 0;
-  }, [multisigUsdValues, selectedMultisig]);
-
   const onMultisigModified = useCallback(() => {
     setIsBusy(false);
     setIsEditMultisigModalVisible(false);
@@ -423,302 +304,6 @@ export const SafeView = () => {
     resetTransactionStatus
   ]);
 
-  const onExecuteCreateMultisigTx = useCallback(async (data: CreateNewSafeParams) => {
-
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
-    let encodedTx: string;
-    const transactionLog: any[] = [];
-
-    resetTransactionStatus();
-    setTransactionCancelled(false);
-    setIsBusy(true);
-
-    const createMultisig = async (createParams: any) => {
-
-      if (!multisigClient || !publicKey) { return; }
-
-      const owners = createParams.owners.map((p: MultisigParticipant) => {
-        return {
-          address: new PublicKey(p.address),
-          name: p.name
-        }
-      });
-
-      const tx = await multisigClient.createFundedMultisig(
-        publicKey,
-        MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-        createParams.label, 
-        createParams.threshold, 
-        owners
-      );
-
-      return tx;
-    };
-
-    const createTx = async (): Promise<boolean> => {
-
-      if (publicKey && data) {
-        consoleOut("Start transaction for create multisig", '', 'blue');
-        consoleOut('Wallet address:', publicKey.toBase58());
-
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
-
-        // Create a transaction
-        const payload = {
-          wallet: publicKey.toBase58(),                               // wallet
-          label: data.label,                                          // multisig label
-          threshold: data.threshold,
-          owners: data.owners,
-          // isAllowRejectProposal: data.isAllowToRejectProposal,
-          // isCoolOffPeriodEnable: data.isCoolOffPeriodEnable,
-          // coolOfPeriodAmount: data.coolOfPeriodAmount,
-          // coolOffPeriodFrequency: data.coolOffPeriodFrequency
-        };
-
-        consoleOut('data:', payload);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: payload
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        consoleOut('networkFee:', transactionFees.networkFee, 'blue');
-        consoleOut('rentExempt:', transactionFees.rentExempt, 'blue');
-        const totalMultisigFee = transactionFees.multisigFee + (MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL);
-        consoleOut('multisigFee:', totalMultisigFee, 'blue');
-        const minRequired = totalMultisigFee + transactionFees.rentExempt + transactionFees.networkFee;
-        consoleOut('Min required balance:', minRequired, 'blue');
-
-        if (nativeBalance < minRequired) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(
-                minRequired, 
-                NATIVE_SOL_MINT.toBase58()
-              )
-            })`
-          });
-          customLogger.logWarning('Create multisig transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        return createMultisig(payload)
-          .then(value => {
-            if (!value) { return false; }
-            consoleOut('createMultisig returned transaction:', value);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-              result: getTxIxResume(value)
-            });
-            transaction = value;
-            return true;
-          })
-          .catch(error => {
-            console.error('createMultisig error:', error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-              result: `${error}`
-            });
-            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-            return false;
-          });
-
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch((error: any) => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
-    const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
-            });
-            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    if (wallet && data) {
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.CreateMultisig,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Creating safe ${data.label}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Safe ${data.label} successfully created`
-            });
-            onMultisigCreated();
-          } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
-    }
-
-  }, [
-    wallet,
-    publicKey,
-    connection,
-    nativeBalance,
-    multisigClient,
-    transactionFees,
-    transactionCancelled,
-    transactionStatus.currentOperation,
-    enqueueTransactionConfirmation,
-    resetTransactionStatus,
-    setTransactionStatus,
-    onMultisigCreated,
-  ]);
-
-  // Determine if the CreateMultisig operation is in progress by searching
-  // into the confirmation history
-  const isCreatingMultisig = useCallback(() => {
-    if (confirmationHistory && confirmationHistory.length > 0) {
-      return confirmationHistory.some(h => h.operationType === OperationType.CreateMultisig && h.txInfoFetchStatus === "fetching");
-    }
-    return false;
-  }, [confirmationHistory]);
 
   // Modal visibility flags
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
@@ -2971,9 +2556,6 @@ export const SafeView = () => {
       case OperationType.CancelTransaction:
         goToProposals();
         break;
-      case OperationType.CreateMultisig:
-        hardReloadMultisigs();
-        break;
       case OperationType.EditMultisig:
         reloadMultisigs();
         break;
@@ -3001,13 +2583,6 @@ export const SafeView = () => {
     }
   };
 
-  const hardReloadMultisigs = () => {
-    const streamsRefreshCta = document.getElementById("multisig-hard-refresh-cta");
-    if (streamsRefreshCta) {
-      streamsRefreshCta.click();
-    }
-  };
-
   const reloadSelectedProposal = () => {
     const proposalRefreshCta = document.getElementById("refresh-selected-proposal-cta");
     if (proposalRefreshCta) {
@@ -3022,74 +2597,23 @@ export const SafeView = () => {
     }
   }
 
-  const refreshSafeDetails = useCallback((reset = false) => {
+  const refreshSafeDetails = useCallback(() => {
     reloadMultisigs();
     if (isProposalDetails) {
       reloadSelectedProposal();
     }
   }, [isProposalDetails]);
 
-  const getMultisigList = useCallback((reset = false) => {
+  const getMultisigList = useCallback(() => {
 
     if (!publicKey) {
       return;
     }
 
-    refreshMultisigs(reset)
-    .then(item => {
-      if (item) {
-        if (reset) {
-          navigate(`${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`);
-        } else {
-          proposalLoadStatusRegister.clear();
-          setNeedRefreshTxs(true);
-          setSelectedMultisig(item);
-        }
-      } else {
-        setSelectedMultisig(undefined);
-      }
-    })
+    refreshMultisigs()
+    .then(() => proposalLoadStatusRegister.clear());
 
-  }, [navigate, publicKey, refreshMultisigs, setSelectedMultisig]);
-
-  const getMultisigVaults = useCallback(async (
-    connection: Connection,
-    multisig: PublicKey
-
-  ) => {
-
-    const [multisigSigner] = await PublicKey.findProgramAddress(
-      [multisig.toBuffer()],
-      MEAN_MULTISIG
-    );
-
-    const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-      filters: [
-        { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, 
-        { dataSize: ACCOUNT_LAYOUT.span }
-      ],
-    });
-
-    if (!accountInfos || !accountInfos.length) { return []; }
-
-    const results = accountInfos.map((t: any) => {
-      const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
-      tokenAccount.address = t.pubkey;
-      return tokenAccount;
-    });
-
-    return results;
-
-  },[]);
-
-  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-
-  }, [coinPrices]);
+  }, [publicKey, refreshMultisigs]);
 
   const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
 
@@ -3213,105 +2737,6 @@ export const SafeView = () => {
   // Data management //
   /////////////////////
 
-  // Automatically get a list of multisigs for the connected wallet
-  useEffect(() => {
-
-    if (!publicKey || !selectedMultisig) {
-      return;
-    }
-
-    setNeedRefreshTxs(true);
-
-  }, [publicKey, selectedMultisig]);
-
-  // Calculates the USD value of the Multisig accounts assets
-  useEffect(() => {
-
-    if (!connection || !publicKey || !multisigAccounts.length) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      const allUsdValueMap = new Map();
-  
-      multisigAccounts.forEach(async(account) => {
-        
-        let usdValue = 0;
-        const solPrice = getPricePerToken(NATIVE_SOL);
-        const solBalance = getAmountFromLamports(account.balance);
-        const nativeSolUsdValue = solBalance * solPrice;  
-        const assets = await getMultisigVaults(connection, account.id);
-
-        for (const asset of assets) {
-          const token = getTokenByMintAddress(asset.mint.toBase58());
-          
-          if (token) {
-            const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-            if (!tokenPrice) {
-              continue;
-            }
-            BigNumber.config({
-              CRYPTO: true,
-              DECIMAL_PLACES: 16
-            });
-            const tokenBalance = toUiAmount(asset.amount, token.decimals);
-            const assetValue = new BigNumber(tokenBalance).multipliedBy(tokenPrice);
-            usdValue += assetValue.toNumber();
-          }
-        }
-
-        usdValue += nativeSolUsdValue;  
-        allUsdValueMap.set(account.authority.toBase58(), usdValue);  
-      });
-      
-      setMultisigUsdValues(allUsdValueMap);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    connection,
-    multisigAccounts,
-    getMultisigVaults, 
-    getPricePerToken, 
-    getTokenByMintAddress, 
-    getTokenPriceByAddress, 
-    getTokenPriceBySymbol
-  ])
-
-  // Load/Unload multisig on wallet connect/disconnect
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        setNeedReloadMultisigAccounts(true);
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'green');
-        setMultisigAccounts([]);
-        setHighLightableMultisigId(undefined);
-        setSelectedMultisig(undefined);
-        setNeedReloadMultisigAccounts(false);
-        consoleOut('User is disconnecting...', '', 'green');
-        setCanSubscribe(true);
-      }
-    }
-  }, [
-    connected,
-    publicKey,
-    previousWalletConnectState,
-    setNeedReloadMultisigAccounts,
-    setHighLightableMultisigId,
-    setMultisigAccounts,
-    setSelectedMultisig,
-    setCanSubscribe,
-    onTxConfirmed,
-    onTxTimedout,
-  ]);
-
   // Detect when entering small screen mode
   useEffect(() => {
     if (isSmallUpScreen && width < 576) {
@@ -3401,6 +2826,7 @@ export const SafeView = () => {
       })
       .finally(() => setProposalsLoading(false));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     multisigClient,
@@ -3408,92 +2834,40 @@ export const SafeView = () => {
     selectedMultisig,
     getActiveMultisigAuthorityByReference,
     getMultisigProposals,
-    setProposalsLoading,
-    setMultisigTxs,
   ]);
 
-  // Actually selects a multisig base on url
+  // Actually selects a multisig base on currently selected account
   useEffect(() => {
 
-    if (multisigAccounts) {
+    if (multisigAccounts && selectedAccount && selectedAccount.address && selectedAccount.isMultisig) {
       let item: MultisigInfo | undefined = undefined;
-
-      if (address) {
-        // Re-select the one active
-        if (multisigAccounts && multisigAccounts.length > 0) {
-          item = multisigAccounts.find(m => m.authority.toBase58() === address);
-          if (item) {
-            if (selectedMultisigRef.current && selectedMultisigRef.current.authority.equals(item.authority)) {
-              consoleOut('Multisig is already selected!', 'skipping...', 'blue');
-              setNeedRefreshTxs(true);
-              setNeedReloadPrograms(true);
-              return;
-            }
-            consoleOut('selected via address in route:', item, 'purple');
-            consoleOut('Making multisig active:', item, 'blue');
-            setSelectedMultisig(item);
+      if (multisigAccounts.length > 0) {
+        item = multisigAccounts.find(m => m.authority.toBase58() === selectedAccount.address);
+        if (item) {
+          if (selectedMultisigRef.current && selectedMultisigRef.current.authority.equals(item.authority)) {
+            consoleOut('Multisig is already selected!', 'skipping...', 'blue');
             setNeedRefreshTxs(true);
             setNeedReloadPrograms(true);
+            return;
           }
-        } else {
-          setSelectedMultisig(undefined);
+          consoleOut('Making multisig active:', item, 'blue');
+          setSelectedMultisig(item);
+          setNeedRefreshTxs(true);
+          setNeedReloadPrograms(true);
         }
       } else {
-        if (multisigAccounts.length > 0) {
-          consoleOut('No multisig to select!', '', 'red');
-          item = multisigAccounts[0];
-          const url = `${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`;
-          consoleOut('Redirecting to:', url, 'blue');
-          navigate(url);
-        } else {
-          setSelectedMultisig(undefined);
-        }
+        setSelectedMultisig(undefined);
       }
-
-      if (address && location.pathname.indexOf('/proposals') !== -1 && location.pathname.indexOf('/programs') !== -1 && !id) {
-        const isProposalsFork = queryParamV === "proposals" || queryParamV === "instruction" || queryParamV === "activity" ? true : false;
-        const isProgramsFork = queryParamV === "programs" || queryParamV === "transactions" || queryParamV === "anchor-idl" ? true : false;
-        const isValidParam = isProposalsFork || isProgramsFork ? true : false;
-        if (!isValidParam) {
-          const url = MULTISIG_ROUTE_BASE_PATH;
-          navigate(url);
-        }
-      }
+    } else {
+      setSelectedMultisig(undefined);
     }
 
-  }, [address, id, location.pathname, multisigAccounts, navigate, queryParamV, setSelectedMultisig]);
-
-  // Scroll to a given multisig is specified as highLightableMultisigId
-  useEffect(() => {
-
-    if (loadingMultisigAccounts || multisigAccounts.length === 0 || !highLightableMultisigId || !selectedMultisig) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      const highlightTarget = document.getElementById(selectedMultisig.authority.toBase58());
-      if (highlightTarget) {
-        highlightTarget.scrollIntoView({ behavior: 'smooth' });
-      }
-      setHighLightableMultisigId(undefined);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    selectedMultisig,
-    multisigAccounts,
-    loadingMultisigAccounts,
-    highLightableMultisigId,
-    setHighLightableMultisigId,
-  ]);
+  }, [multisigAccounts, selectedAccount, setSelectedMultisig]);
 
   // Process route params and set item (proposal) specified in the url by id
   useEffect(() => {
 
-    if (!publicKey || !selectedMultisig || multisigTxs === undefined || !address || !id) {
+    if (!publicKey || !selectedMultisig || multisigTxs === undefined || !id) {
       return;
     }
 
@@ -3511,12 +2885,12 @@ export const SafeView = () => {
       }
     }
 
-  }, [address, id, selectedMultisig, publicKey, queryParamV, multisigTxs]);
+  }, [id, selectedMultisig, publicKey, queryParamV, multisigTxs]);
 
   // Process route params and set item (program) specified in the url by id
   useEffect(() => {
 
-    if (!publicKey || !selectedMultisig || programs === undefined || !address || !id) {
+    if (!publicKey || !selectedMultisig || programs === undefined || !id) {
       return;
     }
 
@@ -3534,19 +2908,7 @@ export const SafeView = () => {
       }
     }
 
-  }, [address, id, programs, publicKey, queryParamV, selectedMultisig]);
-
-  // Load vesting contracs based on selected multisig
-  useEffect(() => {
-
-    if (!publicKey || !selectedMultisig || !msp || !address) { return; }
-
-    if (selectedMultisig.authority.toBase58() === address) {
-      consoleOut('Calling refreshTreasuries...', '', 'blue');
-      refreshVestingContracts(address);
-    }
-
-  }, [address, msp, publicKey, refreshVestingContracts, selectedMultisig]);
+  }, [id, programs, publicKey, queryParamV, selectedMultisig]);
 
   // Setup event listeners
   useEffect(() => {
@@ -3590,133 +2952,6 @@ export const SafeView = () => {
   //  Events  //
   //////////////
 
-  const onBackButtonClicked = () => {
-    setDetailsPanelOpen(false);
-  }
-
-  const onNavigateAway = () => {
-    setDetailsPanelOpen(false);
-  }
-
-  ///////////////
-  // Rendering //
-  ///////////////
-
-  const renderMultisigIcon = (item: MultisigInfo) => {
-    if (item.version === 0) {
-      return (
-        <Tooltip placement="rightTop" title="Serum Multisig">
-          <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />
-        </Tooltip>
-      );
-    } else if (item.version === 2) {
-      return (
-        <Tooltip placement="rightTop" title="Meanfi Multisig">
-          <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" alt="Meanfi Multisig" width={30} height={30} />
-        </Tooltip>
-      );
-    } else {
-      return (<Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />);
-    }
-  }
-
-  const renderMultisigList = useCallback(() => {
-    return (
-      <>
-        {multisigAccounts.length > 0 ? (
-          multisigAccounts.map((item, index) => {
-            const onMultisigClick = (ev: any) => {
-              consoleOut('=======================================', '', 'green');
-              consoleOut('selected multisig:', item, 'blue');
-              setDetailsPanelOpen(true);
-              setIsProposalDetails(false);
-              setIsProgramDetails(false);
-              setMultisigSolBalance(undefined);
-              setTotalSafeBalance(undefined);
-  
-              const url = `${MULTISIG_ROUTE_BASE_PATH}/${item.authority.toBase58()}?v=proposals`;
-              navigate(url);
-            };
-  
-            return (
-              <div 
-                key={`${index + 50}`}
-                id={item.authority.toBase58()}
-                onClick={onMultisigClick}
-                className={
-                  `transaction-list-row transparent-left-border simplelink ${
-                    selectedMultisig && selectedMultisig.authority && selectedMultisig.authority.equals(item.authority)
-                      ? 'selected selected-left-border'
-                      : ''
-                    }`
-                  }>
-  
-                <div className="icon-cell pl-1">
-                  {renderMultisigIcon(item)}
-                  {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
-                    <span className="status warning bottom-right"></span>
-                  ) : null}
-                </div>
-                <div className="description-cell">
-                  <div>
-                    {item.label ? (
-                      <div className="title text-truncate">
-                        <span>{item.label}</span>
-                      </div>
-                    ) : (
-                      <div className="title text-truncate">{`${shortenAddress(item.id, 4)} ${item.version === 0 && "(Serum)"}`}</div>
-                    )}
-                    {
-                      <div className="subtitle text-truncate">{shortenAddress(item.id, 8)}</div>
-                    }
-                  </div>
-                </div>
-                <div className="rate-cell">
-                  {(multisigUsdValues && multisigUsdValues !== undefined) && (
-                    multisigUsdValues.get(item.authority.toBase58()) === 0 ? (
-                      <>
-                        <div className="rate-amount">$0.00</div>
-                        <div className="interval">safe balance</div>
-                      </>
-                    ) : (multisigUsdValues.get(item.authority.toBase58()) as number > 0) ? (
-                      <>
-                        <div className="rate-amount">
-                          {toUsCurrency(multisigUsdValues.get(item.authority.toBase58()))}
-                        </div>
-                        <div className="interval">safe balance</div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="rate-amount">
-                          <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
-                        </div>
-                        <div className="interval">safe balance</div>
-                      </>
-                    )
-                  )}
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <>
-          {isCreatingMultisig() ? (
-            <div className="h-100 flex-center">
-              <Spin indicator={bigLoadingIcon} />
-            </div>
-          ) : (
-            <div className="h-100 flex-center">
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
-              ? t('multisig.multisig-accounts.no-accounts')
-              : t('multisig.multisig-accounts.not-connected')}</p>} />
-            </div>
-          )}
-          </>
-        )}
-      </>
-    );
-  }, [connected, isCreatingMultisig, loadingMultisigTxPendingCount, multisigAccounts, multisigUsdValues, navigate, selectedMultisig, setMultisigSolBalance, setTotalSafeBalance, t]);
-
   const onRefresProposals = () => {
     setNeedRefreshTxs(true);
   }
@@ -3727,30 +2962,31 @@ export const SafeView = () => {
   }
 
   const goToProposalDetailsHandler = (selectedProposal: any) => {
-    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}/proposals/${selectedProposal.id.toBase58()}?v=instruction`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}/proposals/${selectedProposal.id.toBase58()}?v=instruction`;
     navigate(url);
   }
 
   const goToProgramDetailsHandler = (selectedProgram: any) => {
-    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}/programs/${selectedProgram.pubkey.toBase58()}?v=transactions`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}/programs/${selectedProgram.pubkey.toBase58()}?v=transactions`;
     navigate(url);
   }
 
   const returnFromProposalDetailsHandler = () => {
     setIsProposalDetails(false);
     setNeedRefreshTxs(true);
-    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}?v=proposals`;
-    navigate(url);
+    navigate(MULTISIG_ROUTE_BASE_PATH);
   }
 
   const returnFromProgramDetailsHandler = () => {
     setIsProgramDetails(false);
-    if (selectedMultisig) {
-      setHighLightableMultisigId(selectedMultisig.authority.toBase58());
-    }
-    const url = `${MULTISIG_ROUTE_BASE_PATH}/${address}?v=programs`;
+    const url = `${MULTISIG_ROUTE_BASE_PATH}?v=programs`;
     navigate(url);
   }
+
+
+  ///////////////
+  // Rendering //
+  ///////////////
 
   const renderRightPanelInner = () => {
     if (!selectedMultisig) { return null; }
@@ -3767,10 +3003,9 @@ export const SafeView = () => {
             onDataToProgramView={goToProgramDetailsHandler}
             onDataToSafeView={goToProposalDetailsHandler}
             onEditMultisigClick={onEditMultisigClick}
-            onNavigateAway={onNavigateAway}
             onNewProposalMultisigClick={onNewProposalMultisigClick}
             selectedMultisig={selectedMultisig}
-            vestingAccountsCount={treasuryList ? treasuryList.length : 0}
+            vestingAccountsCount={vestingContracts ? vestingContracts.length : 0}
           />
         );
       } else {
@@ -3782,18 +3017,17 @@ export const SafeView = () => {
             loadingPrograms={loadingPrograms}
             loadingProposals={loadingProposals}
             multisigClient={multisigClient}
-            safeBalanceInUsd={getCurrentMultisigValue()}
+            safeBalanceInUsd={safeBalance}
             onDataToProgramView={goToProgramDetailsHandler}
             onDataToSafeView={goToProposalDetailsHandler}
             onEditMultisigClick={onEditMultisigClick}
-            onNavigateAway={onNavigateAway}
             onNewProposalMultisigClick={onNewProposalMultisigClick}
             onRefreshRequested={onRefresMultisigDetailTabs}
             proposalSelected={selectedProposal}
             publicKey={publicKey}
             selectedMultisig={selectedMultisig}
             selectedTab={queryParamV}
-            vestingAccountsCount={treasuryList ? treasuryList.length : 0}
+            vestingAccountsCount={vestingContracts ? vestingContracts.length : 0}
           />
         );
       }
@@ -3832,151 +3066,48 @@ export const SafeView = () => {
 
   return (
     <>
-      {detailsPanelOpen && (
-        <Button
-          id="back-button"
-          type="default"
-          shape="circle"
-          icon={<ArrowLeftOutlined />}
-          onClick={onBackButtonClicked}/>
-      )}
-      <div className="container main-container">
-
-        <div className="interaction-area">
-
-          <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
-
-            <div className="meanfi-two-panel-left">
-
-              <div className="meanfi-panel-heading">
-                {isWhitelisted ? (
-                  <IconUserGroup className="mean-svg-icons mr-1" />
-                  ) : (
-                  <IconUsers className="mean-svg-icons mr-1" />
-                )}
-                <span className="title">Multisig Safes</span>
-                <div className="transaction-stats user-address">
-                  <Spin size="small" />
-                  {!loadingMultisigAccounts && (
-                    <span className="incoming-transactions-amout">({formatThousands(multisigAccounts.length)})</span>
-                  )}
-                  <span className={`transaction-legend hidden-sm ${loadingMultisigAccounts ? 'click-disabled' : 'simplelink'}`}>
-                    <Tooltip placement="bottom" title={t('multisig.refresh-tooltip')}>
-                      <span className="icon-button-container">
-                        <Button
-                          id="multisig-refresh-cta"
-                          type="default"
-                          shape="circle"
-                          size="small"
-                          icon={<ReloadOutlined />}
-                          onClick={() => getMultisigList(false)}
-                        />
-                      </span>
-                    </Tooltip>
-                    <span id="multisig-hard-refresh-cta" onClick={() => getMultisigList(true)}></span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="inner-container">
-                <div className="item-block vertical-scroll">
-                  <Spin spinning={loadingMultisigAccounts}>
-                    {renderMultisigList()}
-                  </Spin>
-                </div>
-
-                {/* Bottom CTAs */}
-                <div className="bottom-ctas">
-                  <div className="primary-action create-safe">
-                    <Button
-                      block
-                      type="primary"
-                      shape="round"
-                      disabled={!connected}
-                      className="flex-center mr-1"
-                      onClick={onCreateMultisigClick}>
-                      {/* onClick={onOpenMultisigModalClick}> */}
-                      <IconSafe className="mean-svg-icons" />
-                      {connected
-                        ? t('multisig.create-new-multisig-account-cta')
-                        : t('transactions.validation.not-connected')
-                      }
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="meanfi-two-panel-right">
-              <div className="meanfi-panel-heading">
-                <span className="title">
-                  {t('multisig.multisig-detail-heading')}
-                </span>
-              </div>
-
-              <div className="inner-container safe-details-component">
-                <span id="refresh-selected-proposal-cta" onClick={() => {
-                  onRefresProposals();
-                  refreshSelectedProposal();
-                }}></span>
-                <div className="float-top-right mr-1 mt-1">
-                  <span className="icon-button-container secondary-button">
-                    <Tooltip placement="bottom" title="Refresh safes">
-                      <Button
-                        type="default"
-                        shape="circle"
-                        size="middle"
-                        icon={<ReloadOutlined className="mean-svg-icons" />}
-                        onClick={() => refreshSafeDetails(true)}
-                      />
-                    </Tooltip>
-                  </span>
-                </div>
-
-                <div className="scroll-wrapper vertical-scroll">
-                  {connected && multisigClient && selectedMultisig ? (
-                    <>
-                      <Spin spinning={loadingMultisigAccounts}>
-                        {renderRightPanelInner()}
-                      </Spin>
-                    </>
-                  ) : (
-                    <div className="h-100 flex-center">
-                      <Spin spinning={loadingMultisigAccounts}>
-                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>
-                          {!connected
-                            ? t('multisig.multisig-accounts.not-connected')
-                            : loadingMultisigAccounts
-                              ? t('multisig.multisig-accounts.loading-multisig-accounts')
-                              : t('multisig.multisig-account-detail.no-multisig-loaded')
-                          }
-                          </p>}
-                        />
-                      </Spin>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
+      <span id="multisig-refresh-cta" onClick={() => getMultisigList()}></span>
+      <span id="refresh-selected-proposal-cta" onClick={() => {
+        onRefresProposals();
+        refreshSelectedProposal();
+      }}></span>
+      <div className="float-top-right mr-1 mt-1">
+        <span className="icon-button-container secondary-button">
+          <Tooltip placement="bottom" title="Refresh safe">
+            <Button
+              type="default"
+              shape="circle"
+              size="middle"
+              icon={<ReloadOutlined className="mean-svg-icons" />}
+              onClick={() => refreshSafeDetails()}
+            />
+          </Tooltip>
+        </span>
       </div>
 
-      {isCreateMultisigModalVisible && (
-        <MultisigCreateModal
-          isVisible={isCreateMultisigModalVisible}
-          nativeBalance={nativeBalance}
-          transactionFees={transactionFees}
-          multisigAccounts={multisigAccounts}
-          handleOk={(params: CreateNewSafeParams) => onAcceptCreateMultisig(params)}
-          handleClose={() => setIsCreateMultisigModalVisible(false)}
-          isBusy={isBusy}
-        />
-      )}
+      <div className="safe-details-component scroll-wrapper vertical-scroll">
+        {connected && multisigClient && selectedMultisig ? (
+          <>
+            <Spin spinning={loadingMultisigAccounts}>
+              {renderRightPanelInner()}
+            </Spin>
+          </>
+        ) : (
+          <div className="h-100 flex-center">
+            <Spin spinning={loadingMultisigAccounts}>
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>
+                {!connected
+                  ? t('multisig.multisig-accounts.not-connected')
+                  : loadingMultisigAccounts
+                    ? t('multisig.multisig-accounts.loading-multisig-accounts')
+                    : t('multisig.multisig-account-detail.no-multisig-loaded')
+                }
+                </p>}
+              />
+            </Spin>
+          </div>
+        )}
+      </div>
 
       {(isEditMultisigModalVisible && selectedMultisig) && (
         <MultisigEditModal
@@ -4014,9 +3145,9 @@ export const SafeView = () => {
           selectedMultisig={selectedMultisig}
         />
       )}
-
-      <PreFooter />
     </>
   );
 
 };
+
+export default SafeView;

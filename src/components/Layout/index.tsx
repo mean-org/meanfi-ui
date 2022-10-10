@@ -51,7 +51,6 @@ export const AppLayout = React.memo((props: any) => {
     setPreviousWalletConnectState,
     setNeedReloadMultisigAccounts,
     setIsSelectingAccount,
-    setShouldLoadTokens,
     refreshTokenBalance,
     setSelectedAccount,
     setDiagnosisInfo,
@@ -131,18 +130,26 @@ export const AppLayout = React.memo((props: any) => {
   }, []);
 
   const needAccountSelection = useCallback(() => {
+    if (!isUnauthenticatedRoute(location.pathname) && !isSelectingWallet) {
+      return false;
+    }
+
+    if (isSelectingAccount) { return true; }
+
     if (
       wallet &&
       publicKey &&
       connected &&
-      isSelectingAccount &&
-      !isUnauthenticatedRoute(location.pathname) &&
-      !isSelectingWallet &&
-      (!selectedAccount.address || (!lastUsedAccount || lastUsedAccount.owner !== publicKey.toBase58() || lastUsedAccount.address !== publicKey.toBase58()) )
+      selectedAccount.address &&
+      lastUsedAccount &&
+      (lastUsedAccount.owner === publicKey.toBase58() || lastUsedAccount.address === publicKey.toBase58()) &&
+      selectedAccount.address === lastUsedAccount.address
+      // (!selectedAccount.address || (!lastUsedAccount || lastUsedAccount.owner !== publicKey.toBase58() || lastUsedAccount.address !== publicKey.toBase58()) )
     ) {
-      return true;
+      return false;
     }
-    return false;
+
+    return true;
   }, [connected, isSelectingAccount, isSelectingWallet, lastUsedAccount, location.pathname, publicKey, selectedAccount.address, wallet]);
 
   ////////////////
@@ -330,31 +337,32 @@ export const AppLayout = React.memo((props: any) => {
   // Get referral address from query string params and save it to localStorage
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.has('ref')) {
-      const address = params.get('ref');
-      if (address && isValidAddress(address)) {
-        consoleOut('Referral address:', address, 'green');
-        setReferralAddress(address);
-        setTimeout(() => {
-          if (!publicKey) {
-            openNotification({
-              title: t('notifications.friend-referral-completed'),
-              description: t('referrals.address-processed'),
-              type: "info"
-            });
-          }
-        }, 1000);
-        navigate('/');
-      } else {
-        consoleOut('Invalid address', '', 'red');
-        openNotification({
-          title: t('notifications.error-title'),
-          description: t('referrals.address-invalid'),
-          type: "error"
-        });
-        navigate('/');
-      }
+    if (!params.has('ref')) { return; }
+
+    const address = params.get('ref');
+    if (address && isValidAddress(address)) {
+      consoleOut('Referral address:', address, 'green');
+      setReferralAddress(address);
+      setTimeout(() => {
+        if (!publicKey) {
+          openNotification({
+            title: t('notifications.friend-referral-completed'),
+            description: t('referrals.address-processed'),
+            type: "info"
+          });
+        }
+      }, 1000);
+      navigate('/');
+    } else {
+      consoleOut('Invalid address', '', 'red');
+      openNotification({
+        title: t('notifications.error-title'),
+        description: t('referrals.address-invalid'),
+        type: "error"
+      });
+      navigate('/');
     }
+
   }, [
     location,
     publicKey,
@@ -374,16 +382,11 @@ export const AppLayout = React.memo((props: any) => {
 
     addRouteNameClass();
 
-    if (location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
-      setShouldLoadTokens(true);
-    }
-
     return () => {
       if (bodyClass) {
         document.body.classList.remove(bodyClass);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   // Clear accounts state when leaving
@@ -434,8 +437,13 @@ export const AppLayout = React.memo((props: any) => {
     if (publicKey) {
       const needAccount = needAccountSelection();
       if (needAccount) {
+        consoleOut('Need account selection:', needAccount, 'crimson');
         setShouldSelectAccount(true);
-      } else if (lastUsedAccount && (lastUsedAccount.owner === publicKey.toBase58() || lastUsedAccount.address === publicKey.toBase58())) {
+      } else if (
+        lastUsedAccount &&
+        (lastUsedAccount.owner === publicKey.toBase58() || lastUsedAccount.address === publicKey.toBase58()) &&
+        (!selectedAccount.address || selectedAccount.address !== lastUsedAccount.address)
+      ) {
         consoleOut('Auto select account:', lastUsedAccount, 'crimson');
         setSelectedAccount(lastUsedAccount);
         setShouldSelectAccount(false);
@@ -443,7 +451,7 @@ export const AppLayout = React.memo((props: any) => {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastUsedAccount, needAccountSelection, publicKey]);
+  }, [lastUsedAccount, selectedAccount, needAccountSelection, publicKey]);
 
   ////////////////////
   // Event handlers //
@@ -481,6 +489,7 @@ export const AppLayout = React.memo((props: any) => {
               navigate('/');
               select();
             }}
+            onAccountSelected={() => setShouldSelectAccount(false)}
           />
         </>
       );

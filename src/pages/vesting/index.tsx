@@ -52,6 +52,7 @@ import {
   getTransactionStatusForLogs,
   isDev,
   isLocal,
+  isValidAddress,
   toTimestamp
 } from 'middleware/ui';
 import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from 'middleware/utils';
@@ -73,6 +74,7 @@ import {
   VestingFlowRateInfo,
   vestingFlowRatesCache
 } from 'models/vesting';
+import { MULTISIG_ROUTE_BASE_PATH } from 'pages/safe';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from "react-i18next";
@@ -111,7 +113,6 @@ export const VestingView = () => {
     pendingMultisigTxCount,
     loadingMultisigAccounts,
     previousWalletConnectState,
-    setHighLightableMultisigId,
     setPendingMultisigTxCount,
     setHighLightableStreamId,
     setIsVerifiedRecipient,
@@ -359,8 +360,7 @@ export const VestingView = () => {
           onClick={() => {
             notification.close(notificationKey);
             isWorkflowLocked = false;
-            const url = `/multisig/${item.extras.multisigId}?v=proposals`;
-            setHighLightableMultisigId(item.extras.multisigId);
+            const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
             navigate(url);
           }}>
           See proposals
@@ -402,7 +402,7 @@ export const VestingView = () => {
       }
     });
 
-  }, [navigate, setHighLightableMultisigId]);
+  }, [navigate]);
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
@@ -3173,11 +3173,13 @@ export const VestingView = () => {
       clearTimeout(timeout);
     }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    priceList,
     publicKey,
     connection,
-    priceList,
     splTokenList,
+    workingToken,
     balancesSource,
   ]);
 
@@ -3474,7 +3476,7 @@ export const VestingView = () => {
   useEffect(() => {
     if (publicKey && selectedAccount.address && vestingContract && !activeTab) {
       // /vesting/:vestingContract/:activeTab
-      let url = `${VESTING_ROUTE_BASE_PATH}/${vestingContract}/overview`;
+      const url = `${VESTING_ROUTE_BASE_PATH}/${vestingContract}/overview`;
       navigate(url);
     }
   }, [selectedAccount.address, activeTab, navigate, publicKey, vestingContract]);
@@ -3531,9 +3533,9 @@ export const VestingView = () => {
 
   // Get the Vesting contract settings template
   useEffect(() => {
-    if (publicKey && msp && vestingContract) {
+    if (publicKey && msp && vestingContract && isValidAddress(vestingContract)) {
+      consoleOut('Get template for:', vestingContract, 'blue');
       const pk = new PublicKey(vestingContract);
-      consoleOut('VC address:', pk.toString(), 'blue');
       msp.getStreamTemplate(pk)
       .then(value => {
         consoleOut('StreamTemplate:', value, 'blue');
@@ -3698,7 +3700,7 @@ export const VestingView = () => {
   const onTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
     // /vesting/:vestingContract/:activeTab
-    let url = `${VESTING_ROUTE_BASE_PATH}/${vestingContract}/${activeKey}`;
+    const url = `${VESTING_ROUTE_BASE_PATH}/${vestingContract}/${activeKey}`;
     navigate(url);
   }, [navigate, vestingContract]);
 
@@ -4055,9 +4057,7 @@ export const VestingView = () => {
                               icon={<ArrowLeftOutlined />}
                               onClick={() => {
                                 if (selectedMultisig) {
-                                  const multisig = selectedMultisig.authority.toBase58();
-                                  const url = `/multisig/${multisig}?v=proposals`;
-                                  setHighLightableMultisigId(multisig);
+                                  const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
                                   navigate(url);
                                 }
                               }}
@@ -4095,7 +4095,6 @@ export const VestingView = () => {
                   <div className="inner-container">
                     {isMultisigContext && (
                       <PendingProposalsComponent
-                        accountAddress={selectedAccount.address}
                         extraClasses="no-pointer shift-up-1"
                         pendingMultisigTxCount={pendingMultisigTxCount}
                       />

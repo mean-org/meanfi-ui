@@ -5383,6 +5383,12 @@ main section {
           min-width: 90px;
         }
       }
+      .scroll-wrapper {
+        margin-right: -1.55em;
+        max-height: 100%;
+        height: 100%;
+        overflow-y: auto;
+      }
     }
     @media (min-width: 768px) {
       .ant-divider.ant-divider-horizontal.transactions-divider,

@@ -1,4 +1,6 @@
 .safe-details-component {
+  position: relative;
+
   .safe-info-container {
     .info-safe-group {
       display: flex;
@@ -75,22 +77,14 @@
     padding-top: 0.55em;
   }
 
-  .inner-container {
-    .scroll-wrapper {
-      margin-right: -1.55em;
-      max-height: 100%;
-      height: 100%;
-      overflow-y: auto;
-    }
-
-    @media (max-width: 575px) {
-      padding-right: 2.55em;
-    }
-
-    @media (min-width: 576px) {
-      padding-right: 2em;
-    }
-  }
+  // .inner-container {
+  //   @media (max-width: 575px) {
+  //     padding-right: 2.55em;
+  //   }
+  //   @media (min-width: 576px) {
+  //     padding-right: 2em;
+  //   }
+  // }
 
   .safe-details-resume {
     margin-bottom: 1.2rem;

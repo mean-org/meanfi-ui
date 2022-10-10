@@ -13,7 +13,6 @@ import { AppStateContext } from "contexts/appstate";
 import { IconEllipsisVertical, IconLoading } from "Icons";
 import { consoleOut, isDev, isLocal, toUsCurrency } from "middleware/ui";
 import { getAmountFromLamports, shortenAddress } from "middleware/utils";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "pages/accounts";
 import { VESTING_ROUTE_BASE_PATH } from "pages/vesting";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -21,7 +20,6 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 export const SafeInfo = (props: {
   isTxInProgress?: any;
   onEditMultisigClick?: any;
-  onNavigateAway: any;
   onNewProposalMultisigClick?: any;
   onRefreshTabsInfo?: any;
   programsTabContent?: any;
@@ -37,7 +35,6 @@ export const SafeInfo = (props: {
   const {
     isTxInProgress,
     onEditMultisigClick,
-    onNavigateAway,
     onNewProposalMultisigClick,
     onRefreshTabsInfo,
     programsTabContent,
@@ -188,19 +185,10 @@ export const SafeInfo = (props: {
     }
   ];
 
-  // View account
-  const onGoToAccounts = () => {
-    if (selectedMultisig) {
-      onNavigateAway();
-      navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/streaming/summary?account-type=multisig`);
-    }
-  }
-
   // Go to vesting
   const goToVesting = () => {
     if (selectedMultisig) {
-      onNavigateAway();
-      navigate(`${VESTING_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/contracts?account-type=multisig`);
+      navigate(`${VESTING_ROUTE_BASE_PATH}/contracts`);
     }
   }
 
@@ -312,17 +300,6 @@ export const SafeInfo = (props: {
             disabled={isTxInProgress()}
             onClick={onNewProposalMultisigClick}>
               New proposal
-          </Button>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isTxInProgress()}
-            onClick={onGoToAccounts}>
-              <div className="btn-content">
-                View account
-              </div>
           </Button>
 
           {vestingAccountsCount > 0 && (

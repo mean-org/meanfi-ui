@@ -119,7 +119,6 @@ interface AppStateConfig {
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
   lastTxSignature: string;
-  addAccountPanelOpen: boolean;
   streamsSummary: StreamsSummary;
   lastStreamsSummary: StreamsSummary;
   // DDCAs
@@ -203,7 +202,6 @@ interface AppStateConfig {
   setShouldLoadTokens: (state: boolean) => void;
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
-  setAddAccountPanelOpen: (state: boolean) => void;
   setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
   // DDCAs
@@ -212,7 +210,7 @@ interface AppStateConfig {
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
   setNeedReloadMultisigAccounts: (reload: boolean) => void;
-  refreshMultisigs: (reset: boolean) => Promise<MultisigInfo | undefined>;
+  refreshMultisigs: () => Promise<boolean>;
   setMultisigAccounts: (accounts: MultisigInfo[]) => void;
   setSelectedMultisig: (multisig: MultisigInfo | undefined) => void;
   setMultisigSolBalance: (balance: number | undefined) => void;
@@ -297,7 +295,6 @@ const contextDefaultValues: AppStateConfig = {
   selectedAsset: undefined,
   transactions: undefined,
   lastTxSignature: '',
-  addAccountPanelOpen: true,
   streamsSummary: initialSummary,
   lastStreamsSummary: initialSummary,
   // DDCAs
@@ -381,7 +378,6 @@ const contextDefaultValues: AppStateConfig = {
   setShouldLoadTokens: () => {},
   setTransactions: () => {},
   setSelectedAsset: () => {},
-  setAddAccountPanelOpen: () => {},
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
   // DDCAs
@@ -390,7 +386,7 @@ const contextDefaultValues: AppStateConfig = {
   setLoadingRecurringBuys: () => {},
   // Multisig
   setNeedReloadMultisigAccounts: () => {},
-  refreshMultisigs: async () => undefined,
+  refreshMultisigs: async () => false,
   setMultisigAccounts: () => {},
   setSelectedMultisig: () => {},
   setMultisigSolBalance: () => {},
@@ -486,7 +482,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
   const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
-  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
@@ -1282,10 +1277,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     refreshTokenBalance
   ]);
 
-  const setAddAccountPanelOpen = (state: boolean) => {
-    updateAddAccountPanelOpen(state);
-  }
-
   const setTransactions = (map: MappedTransaction[] | undefined, addItems?: boolean) => {
     if (!addItems) {
       if (map && map.length === TRANSACTIONS_PER_PAGE) {
@@ -1326,6 +1317,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (override) {
       consoleOut('Overriding lastUsedAccount with:', account, 'crimson');
       updateLastUsedAccount(account);
+      setShouldLoadTokens(true);
     }
   }
 
@@ -1490,7 +1482,8 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     return () => {}
 
-  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList, isSelectingAccount]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
 
   // Same as above but on demand
   const getAssetsByAccount = useCallback((account: string) => {
@@ -1538,10 +1531,10 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [loadingMultisigTxPendingCount, setLoadingMultisigTxPendingCount] = useState(contextDefaultValues.loadingMultisigTxPendingCount);
 
   // Refresh the list of multisigs and return a selection
-  const refreshMultisigs = useCallback(async (reset?: boolean) => {
+  const refreshMultisigs = useCallback(async () => {
 
     if (!publicKey || !multisigClient) {
-      return undefined;
+      return false;
     }
 
     setLoadingMultisigAccounts(true);
@@ -1551,28 +1544,15 @@ const AppStateProvider: React.FC = ({ children }) => {
       allInfo.sort((a: any, b: any) => new Date(b.createdOnUtc).getTime() - new Date(a.createdOnUtc).getTime());
       setMultisigAccounts(allInfo);
       consoleOut('multisigAccounts:', allInfo, 'darkorange');
-      if (allInfo.length > 0) {
-        if (reset) {
-          return allInfo[0];
-        } else {
-          const auth = selectedMultisig ? selectedMultisig.authority : undefined;
-          const item = auth ? allInfo.find(m => m.authority.equals(auth)) : undefined;
-          if (item) {
-            return item;
-          } else {
-            return allInfo[0];
-          }
-        }
-      }
-      return undefined;
+      return true;
     } catch (error) {
       console.error('refreshMultisigs ->', error);
-      return undefined;
+      return false;
     } finally {
       setLoadingMultisigAccounts(false);
     }
 
-  }, [multisigClient, publicKey, selectedMultisig]);
+  }, [multisigClient, publicKey]);
 
   // Automatically get a list of multisigs for the connected wallet
   useEffect(() => {
@@ -1715,7 +1695,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         userTokensResponse,
         transactions,
         lastTxSignature,
-        addAccountPanelOpen,
         streamsSummary,
         lastStreamsSummary,
         recurringBuys,
@@ -1792,7 +1771,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setDiagnosisInfo,
         setTransactions,
         setSelectedAsset,
-        setAddAccountPanelOpen,
         setStreamsSummary,
         setLastStreamsSummary,
         setRecurringBuys,

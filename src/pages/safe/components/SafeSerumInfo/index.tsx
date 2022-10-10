@@ -2,11 +2,11 @@ import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { Idl, Program } from '@project-serum/anchor';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { Button, Col, Row } from "antd";
+import { ResumeItem } from 'components/ResumeItem';
+import { IconArrowForward } from "Icons";
+import { consoleOut } from 'middleware/ui';
+import { ProgramAccounts } from "models/accounts";
 import { useCallback, useEffect, useState } from 'react';
-import { ResumeItem } from '../../../../components/ResumeItem';
-import { IconArrowForward } from "../../../../Icons";
-import { consoleOut } from '../../../../middleware/ui';
-import { ProgramAccounts } from "../../../../models/accounts";
 import { SafeInfo } from "../SafeInfo";
 
 export const SafeSerumInfoView = (props: {
@@ -15,7 +15,6 @@ export const SafeSerumInfoView = (props: {
   isProgramDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
-  onNavigateAway: any;
   selectedMultisig?: any;
   onEditMultisigClick: any;
   onNewProposalMultisigClick: any;
@@ -29,8 +28,6 @@ export const SafeSerumInfoView = (props: {
     selectedMultisig, 
     onEditMultisigClick, 
     onNewProposalMultisigClick,
-    onNavigateAway,
-    // multisigClient,
     multisigTxs,
     vestingAccountsCount,
   } = props;
@@ -38,7 +35,6 @@ export const SafeSerumInfoView = (props: {
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const safeSerumNameImg = "https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png";
   const safeSerumNameImgAlt = "Serum";
-  // const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
 
   // Proposals list
   const renderListOfProposals = (
@@ -284,7 +280,6 @@ export const SafeSerumInfoView = (props: {
     <>
       <SafeInfo
         onEditMultisigClick={onEditMultisigClick}
-        onNavigateAway={onNavigateAway}
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}

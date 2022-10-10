@@ -16,8 +16,7 @@ import {
   SwapView,
   StatsView,
   StakingRewardsView,
-  AccountsNewView,
-  SafeView,
+  AccountsView,
   VestingView,
 } from "./pages";
 
@@ -43,22 +42,19 @@ export function AppRoutes() {
                     <Routes>
                       <Route path="/" element={<Navigate replace to='/accounts' />} />
                       {/* Accounts routes */}
-                      <Route path="/accounts" element={<AccountsNewView />} />
-                      <Route path="/accounts/assets" element={<AccountsNewView />} />
-                      <Route path="/accounts/assets/:asset" element={<AccountsNewView />} />
-                      <Route path="/accounts/streaming" element={<AccountsNewView />} />
-                      <Route path="/accounts/streaming/:streamingTab" element={<AccountsNewView />} />
-                      <Route path="/accounts/streaming/:streamingTab/:streamingItemId" element={<AccountsNewView />} />
-                      <Route path="/accounts/super-safe" element={<AccountsNewView />} />
+                      <Route path="/accounts" element={<AccountsView />} />
+                      <Route path="/accounts/assets" element={<AccountsView />} />
+                      <Route path="/accounts/assets/:asset" element={<AccountsView />} />
+                      <Route path="/accounts/streaming" element={<AccountsView />} />
+                      <Route path="/accounts/streaming/:streamingTab" element={<AccountsView />} />
+                      <Route path="/accounts/streaming/:streamingTab/:streamingItemId" element={<AccountsView />} />
+                      <Route path="/accounts/super-safe" element={<AccountsView />} />
+                      <Route path="/accounts/super-safe/proposals/:id" element={<AccountsView />} />
+                      <Route path="/accounts/super-safe/programs/:id" element={<AccountsView />} />
                       {/* Vesting routes */}
                       <Route path="/vesting" element={<VestingView />} />
                       <Route path="/vesting/:vestingContract" element={<VestingView />} />
                       <Route path="/vesting/:vestingContract/:activeTab" element={<VestingView />} />
-                      {/* Multisig routes */}
-                      <Route path="/multisig" element={<SafeView />} />
-                      <Route path="/multisig/:address" element={<SafeView />} />
-                      <Route path="/multisig/:address/proposals/:id" element={<SafeView />} />
-                      <Route path="/multisig/:address/programs/:id" element={<SafeView />} />
                       {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
