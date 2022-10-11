@@ -1,31 +1,29 @@
+import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { ConnectionProvider } from "./contexts/connection";
-import { AccountsProvider } from "./contexts/accounts";
-import { WalletProvider } from "./contexts/wallet";
-import AppStateProvider from "./contexts/appstate";
+import { PageLoadingView } from "views/PageLoading";
 import { AppLayout } from "./components/Layout";
+import { AccountsProvider } from "./contexts/accounts";
+import AppStateProvider from "./contexts/appstate";
+import { ConnectionProvider } from "./contexts/connection";
+import { OnlineStatusProvider } from "./contexts/online-status";
+import TxConfirmationProvider from "./contexts/transaction-status";
+import { WalletProvider } from "./contexts/wallet";
+import { isLocal, isProd } from "./middleware/ui";
 import {
-  CustodyView,
+  AccountsView, CustodyView,
   ExchangeDcasView,
   FaucetView,
   IdoBlockedView,
   IdoLiveView,
   IdoView,
   NotFoundView,
-  PlaygroundView,
-  SwapView,
-  StatsView,
-  StakingRewardsView,
-  AccountsView,
-  VestingView,
+  PlaygroundView, StakingRewardsView, StatsView, SwapView, VestingView
 } from "./pages";
-
-import { ServiceUnavailableView } from "./pages/service-unavailable";
-import TxConfirmationProvider from "./contexts/transaction-status";
-import { isLocal, isProd } from "./middleware/ui";
-import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
+import { ServiceUnavailableView } from "./pages/service-unavailable";
 import { StakingView } from "./pages/staking";
+
+const CreateSafeView = React.lazy(() => import('views/CreateSafe'));
 
 export function AppRoutes() {
 
@@ -41,6 +39,15 @@ export function AppRoutes() {
                   <AppLayout>
                     <Routes>
                       <Route path="/" element={<Navigate replace to='/accounts' />} />
+                      {/* CreateSafeView */}
+                      <Route
+                        path="/create-safe"
+                        element={
+                          <React.Suspense fallback={<PageLoadingView />}>
+                            <CreateSafeView />
+                          </React.Suspense>
+                        }
+                      />
                       {/* Accounts routes */}
                       <Route path="/accounts" element={<AccountsView />} />
                       <Route path="/accounts/assets" element={<AccountsView />} />

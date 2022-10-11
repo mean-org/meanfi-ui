@@ -8,6 +8,7 @@ import { openNotification } from "components/Notifications";
 import { TransactionConfirmationHistory } from "components/TransactionConfirmationHistory";
 import {
   ACCOUNTS_ROUTE_BASE_PATH,
+  CREATE_SAFE_ROUTE_PATH,
   GOOGLE_ANALYTICS_PROD_TAG_ID,
   LANGUAGES,
   PERFORMANCE_SAMPLE_INTERVAL,
@@ -457,6 +458,12 @@ export const AppLayout = React.memo((props: any) => {
   // Event handlers //
   ////////////////////
 
+  const onCreateSafe = () => {
+    setShouldSelectAccount(false);
+    setIsSelectingAccount(false);
+    navigate(CREATE_SAFE_ROUTE_PATH);
+  }
+
   const handleTabClosingOrPageRefresh = () => {
     window.localStorage.removeItem('cachedRpc');
   }
@@ -484,12 +491,14 @@ export const AppLayout = React.memo((props: any) => {
           <AccountSelectorModal
             isVisible={shouldSelectAccount}
             isFullWorkflowEnabled={true}
+            onAccountSelected={() => setShouldSelectAccount(false)}
+            onCreateSafe={onCreateSafe}
             onGotoSelectWallet={() => {
+              setShouldSelectAccount(false);
               disconnect();
               navigate('/');
               select();
             }}
-            onAccountSelected={() => setShouldSelectAccount(false)}
           />
         </>
       );

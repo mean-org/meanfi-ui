@@ -7,6 +7,7 @@ export const AccountSelectorModal = (props: {
   isFullWorkflowEnabled?: boolean;
   isVisible: boolean;
   onAccountSelected?: any;
+  onCreateSafe: any;
   onGotoSelectWallet?: any;
   onHandleClose?: any;
 }) => {
@@ -14,6 +15,7 @@ export const AccountSelectorModal = (props: {
     isFullWorkflowEnabled,
     isVisible,
     onAccountSelected,
+    onCreateSafe,
     onGotoSelectWallet,
     onHandleClose
   } = props;
@@ -46,7 +48,11 @@ export const AccountSelectorModal = (props: {
       onCancel={onHandleClose}
       width={450}>
       <div className="account-selector-modal-content vertical-scroll">
-        <AccountSelector onAccountSelected={onAccountSelected} isFullWorkflowEnabled={isFullWorkflowEnabled} />
+        <AccountSelector
+          onAccountSelected={onAccountSelected}
+          onCreateSafeClick={onCreateSafe}
+          isFullWorkflowEnabled={isFullWorkflowEnabled}
+        />
       </div>
     </Modal>
   );

@@ -16,11 +16,13 @@ import "./style.scss";
 export const AccountSelector = (props: {
   isFullWorkflowEnabled?: boolean;
   onAccountSelected?: any;
+  onCreateSafeClick: any;
   onDisconnectWallet?: any;
 }) => {
   const {
     isFullWorkflowEnabled,
     onAccountSelected,
+    onCreateSafeClick,
     onDisconnectWallet,
   } = props;
   const {
@@ -133,6 +135,20 @@ export const AccountSelector = (props: {
     if (onAccountSelected) {
       onAccountSelected();
     }
+  }
+
+  const onCreateSafe = () => {
+    if (publicKey) {
+      const account: AccountContext = {
+        name: 'Personal account',
+        address: publicKey.toBase58(),
+        isMultisig: false,
+        owner: SYSTEM_PROGRAM_ID.toBase58()
+      };
+      consoleOut('Setting native account onCreateSafe:', account, 'crimson');
+      setSelectedAccount(account, true);
+    }
+    onCreateSafeClick();
   }
 
   const renderAssetsValue = () => {
@@ -303,7 +319,7 @@ export const AccountSelector = (props: {
             <span className="text-uppercase">Super Safes</span>
           </div>
           <div className="right">
-            <span className="secondary-link underlined">Create new safe</span>
+            <span className="secondary-link underlined" onClick={onCreateSafe}>Create new safe</span>
           </div>
         </div>
       </div>

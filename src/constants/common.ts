@@ -64,6 +64,7 @@ export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
 export const MULTISIG_ROUTE_BASE_PATH = '/accounts/super-safe';
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export const STAKING_ROUTE_BASE_PATH = '/staking';
+export const CREATE_SAFE_ROUTE_PATH = '/create-safe';
 
 export const UNAUTHENTICATED_ROUTES = [
     '/stats',

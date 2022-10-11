@@ -1,7 +1,7 @@
 import { Popover } from "antd";
 import { segmentAnalytics } from 'App';
 import { AccountSelector } from "components/AccountSelector";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "constants/common";
+import { ACCOUNTS_ROUTE_BASE_PATH, CREATE_SAFE_ROUTE_PATH } from "constants/common";
 import { AppStateContext, emptyAccount } from 'contexts/appstate';
 import { useWallet } from "contexts/wallet";
 import useWindowSize from "hooks/useWindowResize";
@@ -28,6 +28,11 @@ export const AccountDetails = () => {
   const onCompleteAccountSelection = useCallback(() => {
     setPopoverVisible(false);
     navigate(ACCOUNTS_ROUTE_BASE_PATH);
+  }, [navigate]);
+
+  const onCreateSafe = useCallback(() => {
+    setPopoverVisible(false);
+    navigate(CREATE_SAFE_ROUTE_PATH);
   }, [navigate]);
 
   const onDisconnectWallet = useCallback(() => {
@@ -75,7 +80,11 @@ export const AccountDetails = () => {
   const bodyContent = (
     <>
     <div className="account-selector-popover-content vertical-scroll">
-      <AccountSelector onAccountSelected={onCompleteAccountSelection} onDisconnectWallet={onDisconnectWallet} />
+      <AccountSelector
+        onAccountSelected={onCompleteAccountSelection}
+        onCreateSafeClick={onCreateSafe}
+        onDisconnectWallet={onDisconnectWallet}
+      />
     </div>
     </>
   );
