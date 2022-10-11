@@ -72,7 +72,7 @@ import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from 'middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports, getAmountWithSymbol, getSdkValue, getTxIxResume,
@@ -3151,7 +3151,7 @@ export const AccountsView = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('Connectiong while in accounts...', publicKey.toBase58(), 'green');
+        consoleOut('Connecting while in accounts...', publicKey.toBase58(), 'green');
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
@@ -4587,9 +4587,9 @@ export const AccountsView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar"><span>selectedCategory:</span><span className="ml-1">{selectedCategory}</span></div>
-      )} */}
+      {isLocal() && (
+        <div className="debug-bar"><span>previousRoute:</span><span className="ml-1">{previousRoute}</span></div>
+      )}
 
       {detailsPanelOpen && (
         <Button

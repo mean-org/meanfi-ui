@@ -3741,7 +3741,7 @@ export const VestingView = () => {
     const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'button');
 
     return (
-      <div className="flex-fixed-right cta-row mb-2">
+      <div className="flex-fixed-right cta-row mb-2 pl-1">
         <Space className="left" size="middle" wrap>
           {items && items.length > 0 &&
             items.map((item: MetaInfoCta, index: number) => {

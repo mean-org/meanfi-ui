@@ -342,7 +342,7 @@ export const SafeMeanInfo = (props: {
                 <div 
                   key={index}
                   onClick={onSelectProposal}
-                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                     <ResumeItem
                       id={proposal.id.toBase58()}
                       title={title}
@@ -389,7 +389,7 @@ export const SafeMeanInfo = (props: {
                 <div 
                   key={`${index + 1}`}
                   onClick={onSelectProgram}
-                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                     <ResumeItem
                       id={program.pubkey.toBase58()}
                       title={programTitle}

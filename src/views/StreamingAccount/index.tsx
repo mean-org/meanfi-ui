@@ -14,7 +14,7 @@ import {
 } from "@mean-dao/msp";
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { Alert, Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
+import { Alert, Button, Col, Dropdown, Menu, Row, Space, Spin, Tabs } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
 import BN from "bn.js";
 import { CopyExtLinkGroup } from "components/CopyExtLinkGroup";
@@ -2801,7 +2801,7 @@ export const StreamingAccountView = (props: {
                 <div
                   key={index}
                   onClick={onSelectStream}
-                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                   <ResumeItem
                     id={index}
                     img={img}
@@ -2844,7 +2844,7 @@ export const StreamingAccountView = (props: {
               <div
                 key={index}
                 onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`)}
-                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                 <ResumeItem
                   id={`${index}`}
                   title={title}
@@ -2970,8 +2970,8 @@ export const StreamingAccountView = (props: {
         )}
 
         {/* CTAs row */}
-        <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
-          <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+        <div className="flex-fixed-right cta-row mt-2 mb-2">
+          <Space className="left" size="middle" wrap>
             <Button
               type="default"
               shape="round"
@@ -3015,25 +3015,22 @@ export const StreamingAccountView = (props: {
                   </div>
               </Button>
             )}
-          </Col>
-
-          <Col xs={4} sm={6} md={4} lg={6}>
-            <Dropdown
-              overlay={renderDropdownMenu()}
-              placement="bottomRight"
-              trigger={["click"]}>
-              <span className="ellipsis-icon icon-button-container mr-1">
-                <Button
-                  type="default"
-                  shape="circle"
-                  size="middle"
-                  icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-                  onClick={(e) => e.preventDefault()}
-                />
-              </span>
-            </Dropdown>
-          </Col>
-        </Row>
+          </Space>
+          <Dropdown
+            overlay={renderDropdownMenu()}
+            placement="bottomRight"
+            trigger={["click"]}>
+            <span className="ellipsis-icon icon-button-container mr-1">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                onClick={(e) => e.preventDefault()}
+              />
+            </span>
+          </Dropdown>
+        </div>
 
         {/* Alert to offer refresh treasury */}
         {(streamingAccountSelected && hasBalanceChanged()) && (

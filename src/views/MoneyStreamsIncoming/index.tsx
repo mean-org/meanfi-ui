@@ -9,7 +9,7 @@ import {
   STREAM_STATUS, TransactionFees
 } from '@mean-dao/msp';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
+import { Button, Dropdown, Menu, Modal, Space, Spin } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
 import { segmentAnalytics } from "App";
 import BN from "bn.js";
@@ -563,6 +563,7 @@ export const MoneyStreamsIncomingView = (props: {
     multisigClient,
     mspV2AddressPK,
     multisigAccounts,
+    isMultisigContext,
     transactionCancelled,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
@@ -1380,8 +1381,8 @@ export const MoneyStreamsIncomingView = (props: {
     if (!streamSelected) { return null; }
 
     return (
-      <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
-        <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+      <div className="flex-fixed-right cta-row mb-2 pl-1">
+        <Space className="left" size="middle" wrap>
           <Button
             type="default"
             shape="round"
@@ -1399,25 +1400,22 @@ export const MoneyStreamsIncomingView = (props: {
                 Withdraw funds
               </div>
           </Button>
-        </Col>
-
-        <Col xs={4} sm={6} md={4} lg={6}>
-          <Dropdown
-            overlay={renderDropdownMenu()}
-            placement="bottomRight"
-            trigger={["click"]}>
-            <span className="ellipsis-icon icon-button-container mr-1">
-              <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-                onClick={(e) => e.preventDefault()}
-              />
-            </span>
-          </Dropdown>
-        </Col>
-      </Row>
+        </Space>
+        <Dropdown
+          overlay={renderDropdownMenu()}
+          placement="bottomRight"
+          trigger={["click"]}>
+          <span className="ellipsis-icon icon-button-container mr-1">
+            <Button
+              type="default"
+              shape="circle"
+              size="middle"
+              icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+              onClick={(e) => e.preventDefault()}
+            />
+          </span>
+        </Dropdown>
+      </div>
     );
   }, [
     isBusy,

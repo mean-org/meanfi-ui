@@ -38,10 +38,6 @@
     }
   }
 
-  .background-gray {
-    background-color: var(--color-secondary-alpha-02);
-  }
-
   .ant-spin-container {
     &::after {
       background: var(--bg-color) !important;

@@ -2319,7 +2319,7 @@ export const MoneyStreamsInfoView = (props: {
   const renderSummary = (
     <>
       <Row gutter={[8, 8]} className="ml-0 mr-0">
-        <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
+        <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink bg-secondary-02 hover-list" onClick={goToIncomingTabHandler}>
           {/* Background animation */}
           {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
             (!loadingTreasuries && !loadingStreams) && (
@@ -2405,7 +2405,7 @@ export const MoneyStreamsInfoView = (props: {
             </div>
           )}
         </Col>
-        <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
+        <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink bg-secondary-02 hover-list" onClick={goToOutgoingTabHandler}>
           {/* Background animation */}
           {(hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0) ? (
             (!loadingTreasuries && !loadingStreams) && (
@@ -2553,7 +2553,7 @@ export const MoneyStreamsInfoView = (props: {
               <div 
                 key={`incoming-stream-${index}`}
                 onClick={onSelectStream}
-                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                 <ResumeItem
                   id={index}
                   img={img}
@@ -2625,7 +2625,7 @@ export const MoneyStreamsInfoView = (props: {
                 <div
                   key={`outgoing-stream-${index}}`}
                   onClick={onSelectStream}
-                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
                 >
                   <ResumeItem
                     id={index}
@@ -2685,7 +2685,7 @@ export const MoneyStreamsInfoView = (props: {
                   <div
                     key={`streaming-account-${index}`}
                     onClick={onSelectedStreamingAccount}
-                    className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                    className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
                   >
                     <ResumeItem
                       title={title}
@@ -2788,7 +2788,7 @@ export const MoneyStreamsInfoView = (props: {
 
         <RightInfoDetails infoData={infoData} />
 
-        <div className="flex-fixed-right cta-row mb-2">
+        <div className="flex-fixed-right cta-row mb-2 pl-1">
           <Space className="left" size="middle" wrap>
             <Button
               type="default"
