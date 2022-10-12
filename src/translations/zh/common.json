@@ -388,7 +388,7 @@
 		"secondary-action": "关闭"
 	},
 	"multisig": {
-		"add-participant-cta": "添加参与者",
+		"add-participant-cta": "添加签名者",
 		"back-to-multisig-accounts-cta": "回到多重签名账户",
 		"create-asset": {
 			"delete-multisig": "",
@@ -421,7 +421,7 @@
 			"multisig-threshold-input-max": "最大签名数为10",
 			"multisig-threshold-input-max-warn": "达到的最大签名数（10）",
 			"multisig-threshold-placeholder": "为您的多重签名帐户键入所需的最小签名",
-			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 signers are required to execute a transaction.",
 			"success-message": "您的新多重签名帐户已成功创建。"
 		},
 		"create-new-multisig-account-cta": "创建多重签名",

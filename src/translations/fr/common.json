@@ -388,7 +388,7 @@
 		"secondary-action": "Fermer"
 	},
 	"multisig": {
-		"add-participant-cta": "Ajouter un participant",
+		"add-participant-cta": "Ajouter un signataire",
 		"back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
 		"create-asset": {
 			"delete-multisig": "",

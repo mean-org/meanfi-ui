@@ -388,7 +388,7 @@
 		"secondary-action": "Kapat"
 	},
 	"multisig": {
-		"add-participant-cta": "Katılımcı ekle",
+		"add-participant-cta": "imzalayan ekle",
 		"back-to-multisig-accounts-cta": "Çoklu-imzalı hesaplara geri dön.",
 		"create-asset": {
 			"delete-multisig": "",

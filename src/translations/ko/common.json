@@ -479,7 +479,7 @@
 		"secondary-action": "종료"
 	},
 	"multisig": {
-		"add-participant-cta": "참가자 추가",
+		"add-participant-cta": "서명자 추가",
 		"back-to-multisig-accounts-cta": "Back to SuperSafe",
 		"create-asset": {
 			"main-cta": "Create",
@@ -508,7 +508,7 @@
 			"multisig-threshold-input-max": "최대 서명은 10개 입니다",
 			"multisig-threshold-input-max-warn": "최대 서명 개수에 달했습니다",
 			"multisig-threshold-placeholder": "다중서명 계정에 필요한 최소 서명 입력",
-			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 signers are required to execute a transaction.",
 			"success-message": "당신의 다중서명 계좌가 성공적으로 생성되었습니다."
 		},
 		"create-new-multisig-account-cta": "Create safe",

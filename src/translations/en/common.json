@@ -388,7 +388,7 @@
 		"secondary-action": "Close"
 	},
 	"multisig": {
-		"add-participant-cta": "Add participant",
+		"add-participant-cta": "Add signer",
 		"back-to-multisig-accounts-cta": "Back to SuperSafe",
 		"create-asset": {
 			"delete-multisig": "",
@@ -421,7 +421,7 @@
 			"multisig-threshold-input-max": "Max number of signatures is 10",
 			"multisig-threshold-input-max-warn": "Max number of signatures reached (10)",
 			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
-			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 signers are required to execute a transaction.",
 			"success-message": "Your new multisig account was created successfully."
 		},
 		"create-new-multisig-account-cta": "Create safe",

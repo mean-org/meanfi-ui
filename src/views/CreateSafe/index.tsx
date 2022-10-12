@@ -19,7 +19,7 @@ import { appConfig, customLogger } from 'index';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { consoleOut, getTransactionStatusForLogs, isValidAddress } from 'middleware/ui';
-import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, isValidNumber } from 'middleware/utils';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { CreateNewSafeParams, ZERO_FEES } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -171,7 +171,7 @@ const CreateSafeView = () => {
             setMultisigThreshold(1);
             const items: MultisigParticipant[] = [];
             items.push({
-                name: `Owner 1`,
+                name: `Signer 1`,
                 address: publicKey.toBase58()
             });
             setMultisigOwners(items);
@@ -582,7 +582,7 @@ const CreateSafeView = () => {
     ///////////////
 
     function sliderTooltipFormatter(value?: number) {
-        return (<span className="font-bold">{`${value} ${value === 1 ? 'signer' : 'signers'}`}</span>);
+        return (<span className="font-size-75">{`${value} ${value === 1 ? 'Signer' : 'Signers'}`}</span>);
     }
 
     const getMainCtaLabel = () => {
@@ -597,22 +597,6 @@ const CreateSafeView = () => {
             return t('general.cta-finish');
         } else {
             return t('general.retry');
-        }
-    }
-
-    const onThresholdInputValueChange = (e: any) => {
-        let newValue = e.target.value;
-        const splitted = newValue.toString().split('.');
-        const left = splitted[0];
-        if (left.length > 1) {
-            const number = splitted[0] - 0;
-            splitted[0] = `${number}`;
-            newValue = splitted.join('.');
-        }
-        if (newValue === null || newValue === undefined || newValue === "") {
-            setMultisigThreshold(0);
-        } else if (isValidNumber(newValue)) {
-            setMultisigThreshold(+newValue);
         }
     }
 
@@ -657,25 +641,31 @@ const CreateSafeView = () => {
     const renderMultisigThresholdSlider = () => {
         return (
             <>
-                <div className="form-label icon-label">
-                    {t('multisig.create-multisig.multisig-threshold-input-label')}
-                    <Tooltip placement="bottom" title={t("multisig.create-multisig.multisig-threshold-question-mark-tooltip")}>
-                        <span>
-                            <IconHelpCircle className="mean-svg-icons" />
-                        </span>
-                    </Tooltip>
-                </div>
-                <div className="slider-container">
-                    <Slider
-                        marks={marks}
-                        min={rangeMin}
-                        max={rangeMax}
-                        included={false}
-                        disabled={isSliderDisabled()}
-                        tooltip={{formatter: sliderTooltipFormatter}}
-                        value={multisigThreshold}
-                        onChange={onSliderChange}
-                        dots={true} />
+                <div className={`two-column-layout address-fixed ${isXsDevice ? 'mt-2' : 'mt-4'}`}>
+                    <div className={isXsDevice ? 'left' : 'left pt-1'}>
+                        <div className={`form-label icon-label ${isXsDevice ? 'mb-3' : 'mt-2'}`}>
+                            {t('multisig.create-multisig.multisig-threshold-input-label')}
+                            <Tooltip placement="bottom" title={t("multisig.create-multisig.multisig-threshold-question-mark-tooltip")}>
+                                <span>
+                                    <IconHelpCircle className="mean-svg-icons" />
+                                </span>
+                            </Tooltip>
+                        </div>
+                    </div>
+                    <div className="right">
+                        <div className="slider-container">
+                            <Slider
+                                marks={marks}
+                                min={rangeMin}
+                                max={rangeMax}
+                                included={false}
+                                disabled={isSliderDisabled()}
+                                tooltip={{formatter: sliderTooltipFormatter, open: true}}
+                                value={multisigThreshold}
+                                onChange={onSliderChange}
+                                dots={true} />
+                        </div>
+                    </div>
                 </div>
             </>
         );

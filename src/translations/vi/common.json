@@ -479,7 +479,7 @@
 		"secondary-action": "Đóng"
 	},
 	"multisig": {
-		"add-participant-cta": "Thêm người tham gia",
+		"add-participant-cta": "Thêm người ký",
 		"back-to-multisig-accounts-cta": "Back to SuperSafe",
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
@@ -499,7 +499,7 @@
 			"multisig-threshold-input-max": "Số lượng chữ ký tối đa là 10",
 			"multisig-threshold-input-max-warn": "Số lượng chữ ký tối đa đã đạt (10)",
 			"multisig-threshold-placeholder": "Nhập vào số lượng chữ ký yêu cầu tối thiểu cho tài khoản multisig của bạn",
-			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 signers are required to execute a transaction.",
 			"success-message": "Tài khoản multisig mới của bạn đã được tạo thành công"
 		},
 		"create-new-multisig-account-cta": "Create safe",

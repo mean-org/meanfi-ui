@@ -387,7 +387,7 @@
 		"secondary-action": "بستن"
 	},
 	"multisig": {
-		"add-participant-cta": "افزودن مشارکت کننده",
+		"add-participant-cta": "امضا کننده را اضافه کنید",
 		"back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
 		"create-asset": {
 			"main-cta": "ساختن",

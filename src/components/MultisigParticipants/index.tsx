@@ -1,9 +1,9 @@
-import React, { useCallback } from "react";
-import { useTranslation } from "react-i18next";
 import { PlusOutlined } from "@ant-design/icons";
 import { MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
-import { isValidAddress, scrollToBottom } from "../../middleware/ui";
-import { TextInput } from "../TextInput";
+import { TextInput } from "components/TextInput";
+import { isValidAddress, scrollToBottom } from "middleware/ui";
+import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export const MultisigParticipants = (props: {
     participants: MultisigParticipant[];
@@ -20,6 +20,7 @@ export const MultisigParticipants = (props: {
         multisigAddresses,
     } = props;
     const { t } = useTranslation('common');
+    const [accumulator, setAccumulator] = useState(1);
 
     const setSingleItemName = useCallback((name: string, index: number) => {
         const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
@@ -41,8 +42,10 @@ export const MultisigParticipants = (props: {
 
     const addParticipant = useCallback(() => {
         const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
+        const newAccumulator = accumulator + 1;
+        setAccumulator(newAccumulator);
         items.push({
-            name: `Owner ${items.length + 1}`,
+            name: `Signer ${newAccumulator}`,
             address: ''
         });
         if (!checkIfDuplicateExists(items)) {
@@ -51,7 +54,7 @@ export const MultisigParticipants = (props: {
                 scrollToBottom('multisig-participants-max-height');
             }, 100);
         }
-    }, [onParticipantsChanged, participants]);
+    }, [accumulator, onParticipantsChanged, participants]);
 
     const checkIfDuplicateExists = (arr: MultisigParticipant[]): boolean => {
         const items = arr.map(i => i.address);
@@ -84,7 +87,7 @@ export const MultisigParticipants = (props: {
                         <div key={`participant-${index}`} className="two-column-layout address-fixed">
                             <div className="left">
                                 <TextInput
-                                    placeholder="Enter participant name or description"
+                                    placeholder="Enter signer name or description"
                                     extraClass="small"
                                     id={`participant-name-${index + 1}`}
                                     value={participant.name}
@@ -98,12 +101,12 @@ export const MultisigParticipants = (props: {
                             </div>
                             <div className="right">
                                 <TextInput
-                                    placeholder="Type or paste the address of multisig participant"
+                                    placeholder="Type or paste the address of multisig signer"
                                     extraClass="small"
                                     id={`participant-address-${index + 1}`}
                                     value={participant.address}
-                                    allowClear={true}
-                                    alwaysShowClear={true}
+                                    allowClear={participants.length > 1}
+                                    alwaysShowClear={participants.length > 1}
                                     error={
                                         isValidAddress(participant.address)
                                             ? isInputMultisigAddress(participant.address)
