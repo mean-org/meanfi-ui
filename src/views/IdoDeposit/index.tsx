@@ -13,6 +13,7 @@ import { OperationType, TransactionStatus } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
+import { SignerWalletAdapter } from '@solana/wallet-adapter-base';
 
 export const IdoDeposit = (props: {
   connection: Connection;
@@ -178,7 +179,7 @@ export const IdoDeposit = (props: {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return (wallet as SignerWalletAdapter).signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -209,7 +210,7 @@ export const IdoDeposit = (props: {
           });
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,

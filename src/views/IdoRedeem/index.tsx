@@ -1,22 +1,23 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Button } from 'antd';
-import { getAmountWithSymbol, getTxIxResume } from '../../middleware/utils';
-import { AppStateContext } from '../../contexts/appstate';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { useTranslation } from 'react-i18next';
-import { consoleOut, getTransactionStatusForLogs } from '../../middleware/ui';
-import { useWallet } from '../../contexts/wallet';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
-import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
-import { customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Allocation } from '../../models/common-types';
-import { getWhitelistAllocation } from '../../middleware/api';
-import CountUp from 'react-countup';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
-import { isError } from '../../middleware/transactions';
+import { SignerWalletAdapter } from '@solana/wallet-adapter-base';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Button } from 'antd';
+import { AppStateContext } from 'contexts/appstate';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { customLogger } from 'index';
+import { IdoClient, IdoDetails, IdoStatus } from 'integrations/ido/ido-client';
+import { getWhitelistAllocation } from 'middleware/api';
+import { isError } from 'middleware/transactions';
+import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
+import { getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
+import { Allocation } from 'models/common-types';
+import { OperationType, TransactionStatus, WhitelistClaimType } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import CountUp from 'react-countup';
+import { useTranslation } from 'react-i18next';
 
 export const IdoRedeem = (props: {
   connection: Connection;
@@ -210,7 +211,7 @@ export const IdoRedeem = (props: {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return (wallet as SignerWalletAdapter).signTransaction(transaction)
         .then(async (signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -240,7 +241,7 @@ export const IdoRedeem = (props: {
             return false;
           }
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,

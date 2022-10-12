@@ -1,18 +1,19 @@
-import React, { useContext, useState } from 'react';
-import { Button } from 'antd';
-import { formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from '../../middleware/utils';
-import { AppStateContext } from '../../contexts/appstate';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { useTranslation } from 'react-i18next';
-import { consoleOut, getTransactionStatusForLogs } from '../../middleware/ui';
-import { useWallet } from '../../contexts/wallet';
-import { TokenDisplay } from '../../components/TokenDisplay';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, TransactionStatus } from '../../models/enums';
-import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
-import { customLogger } from '../..';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Button } from 'antd';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnection } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { customLogger } from 'index';
+import { IdoClient, IdoDetails, IdoStatus } from 'integrations/ido/ido-client';
+import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
+import { formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from 'middleware/utils';
+import { OperationType, TransactionStatus } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const IdoWithdraw = (props: {
   connection: Connection;
@@ -25,6 +26,7 @@ export const IdoWithdraw = (props: {
   selectedToken: TokenInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
+  const connection = useConnection();
   const { connected, wallet, publicKey } = useWallet();
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const {
@@ -96,7 +98,6 @@ export const IdoWithdraw = (props: {
 
   const onExecuteWithdrawTx = async () => {
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -173,72 +174,17 @@ export const IdoWithdraw = (props: {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: publicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error('Signing transaction failed!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await props.connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -284,21 +230,17 @@ export const IdoWithdraw = (props: {
       const create = await createTx();
       consoleOut('create:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('sign:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoWithdraw);
-            setWithdrawAmount("");
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-          } else { setIsBusy(false); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoWithdraw);
+          setWithdrawAmount("");
+          setIsBusy(false);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionFinished
+          });
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }

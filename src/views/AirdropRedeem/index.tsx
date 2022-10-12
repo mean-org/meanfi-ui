@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { openNotification } from '../../components/Notifications';
 import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
+import { SignerWalletAdapter } from '@solana/wallet-adapter-base';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -282,7 +283,7 @@ export const AirdropRedeem = (props: {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+        return (wallet as SignerWalletAdapter).signTransaction(transaction)
           .then(async (signed: Transaction) => {
             consoleOut('signTransaction returned a signed transaction:', signed);
             transactionLog.push({
@@ -326,7 +327,7 @@ export const AirdropRedeem = (props: {
               return false;
             }
           })
-          .catch(error => {
+          .catch((error: any) => {
             console.error('Signing transaction failed!');
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransaction,
