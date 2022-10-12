@@ -25,6 +25,15 @@ export const AccountsMergeModal = (props: {
   tokenGroup: AccountTokenParsedInfo[] | undefined;
   accountTokens: UserTokenAccount[];
 }) => {
+  const {
+    connection,
+    handleClose,
+    handleOk,
+    isVisible,
+    tokenMint,
+    tokenGroup,
+    accountTokens,
+  } = props;
   const { t } = useTranslation('common');
   const { publicKey, wallet } = useWallet();
   const {
@@ -36,12 +45,11 @@ export const AccountsMergeModal = (props: {
 
   const onFinishedMergeAccountsTx = () => {
     setIsBusy(false);
-    props.handleOk();
+    handleOk();
   }
 
   const onExecuteMergeAccountsTx = async () => {
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -50,7 +58,7 @@ export const AccountsMergeModal = (props: {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && props.tokenGroup) {
+      if (publicKey && tokenGroup) {
         consoleOut('Wallet address:', publicKey?.toBase58());
 
         setTransactionStatus({
@@ -58,14 +66,14 @@ export const AccountsMergeModal = (props: {
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        const mintPubkey = new PublicKey(props.tokenMint);
+        const mintPubkey = new PublicKey(tokenMint);
 
         // Tx input data
         const data = {
-          connection: props.connection.commitment,
-          mint: props.tokenMint,
+          connection: connection.commitment,
+          mint: tokenMint,
           owner: publicKey.toBase58(),
-          mergeGroup: props.tokenGroup
+          mergeGroup: tokenGroup
         };
         consoleOut('data:', data, 'blue');
 
@@ -81,10 +89,10 @@ export const AccountsMergeModal = (props: {
         });
 
         return await createTokenMergeTx(
-          props.connection,
+          connection,
           mintPubkey,
           publicKey,
-          props.tokenGroup
+          tokenGroup
         )
           .then(value => {
             consoleOut('createTokenMergeTx returned transaction:', value);
@@ -122,72 +130,17 @@ export const AccountsMergeModal = (props: {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
-          .then((signed: Transaction) => {
-            consoleOut('signTransaction returned a signed transaction:', signed);
-            signedTransaction = signed;
-            // Try signature verification by serializing the transaction
-            try {
-              encodedTx = signedTransaction.serialize().toString('base64');
-              consoleOut('encodedTx:', encodedTx, 'orange');
-            } catch (error) {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SignTransaction,
-                currentOperation: TransactionStatus.SignTransactionFailure
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
-              });
-              customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
-              return false;
-            }
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-              result: { signer: publicKey.toBase58() }
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
-            });
-            customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error("Cannot sign transaction! Wallet not found!");
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await props.connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -230,7 +183,7 @@ export const AccountsMergeModal = (props: {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await props.connection
+      return connection
         .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
@@ -275,17 +228,13 @@ export const AccountsMergeModal = (props: {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut('confirmed:', confirmed);
-            if (confirmed) {
-              setIsBusy(false);
-            } else { setIsBusy(false); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          const confirmed = await confirmTx();
+          consoleOut('confirmed:', confirmed);
+          if (confirmed) {
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -298,8 +247,8 @@ export const AccountsMergeModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('assets.merge-accounts-link')}</div>}
       footer={null}
-      open={props.isVisible}
-      onCancel={props.handleClose}
+      open={isVisible}
+      onCancel={handleClose}
       width={400}>
 
       <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
@@ -310,11 +259,11 @@ export const AccountsMergeModal = (props: {
               <h4 className="font-bold">Token accounts that will be merged</h4>
             </div>
             {/* List of token accounts that will be merged */}
-            {props.tokenGroup && props.tokenGroup.length > 0 && (
+            {tokenGroup && tokenGroup.length > 0 && (
               <div className="well merged-token-list">
-                {props.tokenGroup.map((item: AccountTokenParsedInfo, index: number) => {
+                {tokenGroup.map((item: AccountTokenParsedInfo, index: number) => {
                   if (index > 3) { return null; }
-                  const token = props.accountTokens.find(t => t.publicAddress === item.pubkey.toBase58());
+                  const token = accountTokens.find(t => t.publicAddress === item.pubkey.toBase58());
                   return (
                     <div key={`${index}`} className="flex-fixed-right align-items-center merged-token-item">
                       <div className="left flex-column">
@@ -345,10 +294,10 @@ export const AccountsMergeModal = (props: {
             )}
             <div className="text-center">
               <p><strong>WARNING</strong>: This action may break apps that depend on your existing token accounts.</p>
-              {props.tokenGroup && props.tokenGroup.length > 4 && (
+              {tokenGroup && tokenGroup.length > 4 && (
                 <p>Up to 4 token accounts can be merged at once. Please review your remaining tokens after the merge and run merge again as needed.</p>
               )}
-              <p>Merging your {props.tokenGroup && props.tokenGroup[0].description} token accounts will send funds to the <strong>Associated Token Account</strong>.</p>
+              <p>Merging your {tokenGroup && tokenGroup[0].description} token accounts will send funds to the <strong>Associated Token Account</strong>.</p>
             </div>
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (

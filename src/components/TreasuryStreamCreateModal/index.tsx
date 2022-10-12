@@ -1,21 +1,26 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
-import "./style.scss";
-import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col } from 'antd';
-import { AppStateContext } from '../../contexts/appstate';
-import {
-  displayAmountWithSymbol,
-  formatThousands,
-  getSdkValue,
-  getAmountWithSymbol,
-  isValidNumber,
-  shortenAddress,
-  toTokenAmount,
-  toTokenAmountBn,
-  toUiAmount,
-} from '../../middleware/utils';
-import { useTranslation } from 'react-i18next';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { TreasuryInfo } from '@mean-dao/money-streaming';
+import { Beneficiary, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { u64 } from '@solana/spl-token';
+import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Checkbox, Col, DatePicker, Divider, Dropdown, Menu, Modal, Row, Select, Tooltip } from 'antd';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { BN } from 'bn.js';
+import { Identicon } from 'components/Identicon';
+import { InfoIcon } from 'components/InfoIcon';
+import { InputMean } from 'components/InputMean';
+import { StepSelector } from 'components/StepSelector';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnectionConfig } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
+import { appConfig, customLogger } from 'index';
+import { readAccountInfo } from 'middleware/accounts';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
 import {
   consoleOut,
   disabledDate,
@@ -28,34 +33,25 @@ import {
   isToday,
   isValidAddress,
   stringNumberFormat,
-  toUsCurrency,
-} from '../../middleware/ui';
-import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
-import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
-import { TokenDisplay } from '../TokenDisplay';
-import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
-import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
+  toUsCurrency
+} from 'middleware/ui';
+import {
+  displayAmountWithSymbol,
+  formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber,
+  shortenAddress,
+  toTokenAmount,
+  toTokenAmountBn,
+  toUiAmount
+} from 'middleware/utils';
+import { OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
+import { PaymentRateTypeOption } from "models/PaymentRateTypeOption";
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { CreateStreamParams } from 'models/streams';
 import moment from "moment";
-import { useWallet } from '../../contexts/wallet';
-import { StepSelector } from '../StepSelector';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from '../../constants';
-import { Identicon } from '../Identicon';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
-import { appConfig, customLogger } from '../..';
-import { Beneficiary, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { TreasuryInfo } from '@mean-dao/money-streaming';
-import { useConnectionConfig } from '../../contexts/connection';
-import { BN } from 'bn.js';
-import { u64 } from '@solana/spl-token';
-import { MeanMultisig, DEFAULT_EXPIRATION_TIME_SECONDS, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { InfoIcon } from '../InfoIcon';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { InputMean } from '../InputMean';
-import { CreateStreamParams } from '../../models/streams';
-import { readAccountInfo } from '../../middleware/accounts';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import "./style.scss";
 
 const { Option } = Select;
 
@@ -1046,9 +1042,7 @@ export const TreasuryStreamCreateModal = (props: {
   const onTransactionStart = async () => {
 
     let transactions: Transaction[] = [];
-    let signedTransactions: Transaction[] = [];
     let signatures: string[] = [];
-    let encodedTxs: string[] = [];
     let multisigAuth = '';
 
     const transactionLog: any[] = [];
@@ -1309,75 +1303,10 @@ export const TreasuryStreamCreateModal = (props: {
       return result;
     }
 
-    const signTxs = async (): Promise<boolean> => {
-
-      if (!wallet || !publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
-
-      consoleOut('Signing transactions...');
-      const result = await wallet.signAllTransactions(transactions)
-        .then((signed: Transaction[]) => {
-          // consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransactions = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTxs = signedTransactions.map(t => t.serialize().toString('base64'));
-            consoleOut('encodedTxs:', encodedTxs, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: publicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
-          return false;
-        });
-
-      return result;
-    }
-
     const sendTxs = async (): Promise<boolean> => {
 
-      if (!wallet) {
-        console.error('Cannot send transactions! Wallet not found!');
+      if (!connection || !wallet || !wallet.publicKey) {
+        console.error('Cannot send transactions! Wallet not found or no connection!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.WalletNotFound
@@ -1390,15 +1319,25 @@ export const TreasuryStreamCreateModal = (props: {
         return false;
       }
 
+      const {
+        context: { slot: minContextSlot },
+        value: { blockhash, lastValidBlockHeight },
+      } = await connection.getLatestBlockhashAndContext();
+
       const promises: Promise<string>[] = [];
 
-      for (const tx of encodedTxs) {
-        promises.push(connection.sendEncodedTransaction(tx));
+      // transactions
+      for await (const tx of transactions) {
+        tx.feePayer = wallet.publicKey;
+        tx.recentBlockhash = blockhash;
+        promises.push(
+          wallet.sendTransaction(tx, connection, { minContextSlot })
+        );
       }
 
-      const result = await Promise.all(promises)
+      const result = Promise.all(promises)
         .then(sigs => {
-          consoleOut('sendEncodedTransaction returned a signature:', sigs);
+          consoleOut('sendTransaction returned a signatures:', sigs);
           setTransactionStatus({
             lastOperation: TransactionStatus.SendTransactionSuccess,
             currentOperation: TransactionStatus.ConfirmTransaction
@@ -1431,42 +1370,38 @@ export const TreasuryStreamCreateModal = (props: {
       const create = await createTxs();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTxs();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTxs();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Txs to confirmation queue:', signatures);
-            const isLockedTreasury = workingTreasuryType === TreasuryType.Lock ? true : false;
-            const rateDisplay = isLockedTreasury ? getReleaseRate() : getPaymentRateAmount();
-            const messageLoading = multisigAuth
-              ? `Proposal to create stream to send ${rateDisplay}.`
-              : `Create stream to send ${rateDisplay}.`
-            const messageCompleted = multisigAuth
-              ? `Proposal to create stream to send ${rateDisplay} sent for approval.`
-              : `Stream to send ${rateDisplay} created successfully.`
+        const sent = await sendTxs();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Txs to confirmation queue:', signatures);
+          const isLockedTreasury = workingTreasuryType === TreasuryType.Lock ? true : false;
+          const rateDisplay = isLockedTreasury ? getReleaseRate() : getPaymentRateAmount();
+          const messageLoading = multisigAuth
+            ? `Proposal to create stream to send ${rateDisplay}.`
+            : `Create stream to send ${rateDisplay}.`
+          const messageCompleted = multisigAuth
+            ? `Proposal to create stream to send ${rateDisplay} sent for approval.`
+            : `Stream to send ${rateDisplay} created successfully.`
 
-            consoleOut('pending confirm msg:', messageLoading, 'blue');
-            consoleOut('confirmed msg:', messageCompleted, 'blue');
+          consoleOut('pending confirm msg:', messageLoading, 'blue');
+          consoleOut('confirmed msg:', messageCompleted, 'blue');
 
-            enqueueTransactionConfirmation({
-              signature: signatures[0],
-              operationType: OperationType.TreasuryStreamCreate,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: messageLoading,
-              completedTitle: "Transaction confirmed",
-              completedMessage: messageCompleted,
-              extras: {
-                multisigAuthority: multisigAuth
-              }
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
-            handleOk();
-          } else { setIsBusy(false); }
+          enqueueTransactionConfirmation({
+            signature: signatures[0],
+            operationType: OperationType.TreasuryStreamCreate,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: messageLoading,
+            completedTitle: "Transaction confirmed",
+            completedMessage: messageCompleted,
+            extras: {
+              multisigAuthority: multisigAuth
+            }
+          });
+          setIsBusy(false);
+          resetTransactionStatus();
+          handleOk();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }

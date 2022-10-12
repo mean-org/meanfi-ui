@@ -1,15 +1,30 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import {
     calculateActionFees,
     MSP,
     MSP_ACTIONS,
-    Stream,
-    STREAM_STATUS,
+    Stream, StreamTemplate, STREAM_STATUS,
     TransactionFees,
     Treasury,
-    TreasuryType,
-    StreamTemplate
+    TreasuryType
 } from '@mean-dao/msp';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { segmentAnalytics } from 'App';
+import BN from 'bn.js';
+import { openNotification } from 'components/Notifications';
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { IconVerticalEllipsis } from 'Icons';
+import { appConfig, customLogger } from 'index';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { AppUsageEvent, SegmentStreamCloseData, SegmentStreamStatusChangeActionData } from 'middleware/segment-service';
+import { isError, isSuccess } from 'middleware/transactions';
 import {
     consoleOut,
     copyText,
@@ -20,36 +35,19 @@ import {
     getTransactionOperationDescription,
     getTransactionStatusForLogs,
     toTimestamp
-} from '../../../../middleware/ui';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
-import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
-import { useTranslation } from 'react-i18next';
-import { displayAmountWithSymbol, getAmountWithSymbol, getTxIxResume, shortenAddress } from '../../../../middleware/utils';
+} from 'middleware/ui';
+import { displayAmountWithSymbol, getAmountWithSymbol, getTxIxResume, shortenAddress } from 'middleware/utils';
+import { TreasuryTopupParams } from 'models/common-types';
+import { OperationType, TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import BN from 'bn.js';
-import { openNotification } from '../../../../components/Notifications';
-import { IconVerticalEllipsis } from '../../../../Icons';
-import { getSolanaExplorerClusterParam, useConnection } from '../../../../contexts/connection';
-import { OperationType, TransactionStatus } from '../../../../models/enums';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { TreasuryTopupParams } from '../../../../models/common-types';
-import { VestingContractAddFundsModal } from '../VestingContractAddFundsModal';
-import { VestingContractStreamDetailModal } from '../VestingContractStreamDetailModal';
+import { VestingContractCloseStreamOptions } from 'models/vesting';
 import { StreamCloseModal } from '../StreamCloseModal';
 import { StreamPauseModal } from '../StreamPauseModal';
 import { StreamResumeModal } from '../StreamResumeModal';
-import { isError, isSuccess } from '../../../../middleware/transactions';
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { PublicKey, Transaction } from '@solana/web3.js';
-import { useWallet } from '../../../../contexts/wallet';
-import { appConfig, customLogger } from '../../../..';
-import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
-import { TxConfirmationContext } from '../../../../contexts/transaction-status';
-import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
-import { AppUsageEvent, SegmentStreamCloseData, SegmentStreamStatusChangeActionData } from '../../../../middleware/segment-service';
-import { segmentAnalytics } from '../../../../App';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { VestingContractAddFundsModal } from '../VestingContractAddFundsModal';
+import { VestingContractStreamDetailModal } from '../VestingContractStreamDetailModal';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -448,7 +446,6 @@ export const VestingContractStreamList = (props: {
 
     const onExecuteCloseStreamTransaction = async (closeStreamOptions: VestingContractCloseStreamOptions) => {
         let transaction: Transaction;
-        let signedTransaction: Transaction;
         let signature: any;
         let encodedTx: string;
         let multisigId = '';
@@ -616,72 +613,17 @@ export const VestingContractStreamList = (props: {
             return result;
         }
 
-        const signTx = async (): Promise<boolean> => {
-            if (wallet && publicKey) {
-                consoleOut('Signing transaction...');
-                return await wallet.signTransaction(transaction)
-                    .then((signed: Transaction) => {
-                        consoleOut('signTransaction returned a signed transaction:', signed);
-                        signedTransaction = signed;
-                        // Try signature verification by serializing the transaction
-                        try {
-                            encodedTx = signedTransaction.serialize().toString('base64');
-                            consoleOut('encodedTx:', encodedTx, 'orange');
-                        } catch (error) {
-                            console.error(error);
-                            setTransactionStatus({
-                                lastOperation: TransactionStatus.SignTransaction,
-                                currentOperation: TransactionStatus.SignTransactionFailure
-                            });
-                            transactionLog.push({
-                                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                                result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
-                            });
-                            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-                            return false;
-                        }
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.SignTransactionSuccess,
-                            currentOperation: TransactionStatus.SendTransaction
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-                            result: { signer: publicKey.toBase58() }
-                        });
-                        return true;
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.SignTransaction,
-                            currentOperation: TransactionStatus.SignTransactionFailure
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                            result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
-                        });
-                        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-                        return false;
-                    });
-            } else {
-                console.error('Cannot sign transaction! Wallet not found!');
-                setTransactionStatus({
-                    lastOperation: TransactionStatus.SignTransaction,
-                    currentOperation: TransactionStatus.WalletNotFound
-                });
-                transactionLog.push({
-                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-                    result: 'Cannot sign transaction! Wallet not found!'
-                });
-                customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-                return false;
-            }
-        }
-
         const sendTx = async (): Promise<boolean> => {
-            if (wallet) {
-                return await connection
-                    .sendEncodedTransaction(encodedTx)
+            if (connection && wallet && wallet.publicKey && transaction) {
+                const {
+                  context: { slot: minContextSlot },
+                  value: { blockhash, lastValidBlockHeight },
+                } = await connection.getLatestBlockhashAndContext();
+        
+                transaction.feePayer = wallet.publicKey;
+                transaction.recentBlockhash = blockhash;
+        
+                return wallet.sendTransaction(transaction, connection, { minContextSlot })
                     .then(sig => {
                         consoleOut('sendEncodedTransaction returned a signature:', sig);
                         setTransactionStatus({
@@ -728,55 +670,51 @@ export const VestingContractStreamList = (props: {
             const created = await createTx();
             consoleOut('created:', created, 'blue');
             if (created && !transactionCancelled) {
-                const sign = await signTx();
-                consoleOut('sign:', sign);
-                if (sign && !transactionCancelled) {
-                    const sent = await sendTx();
-                    consoleOut('sent:', sent);
-                    if (sent && !transactionCancelled) {
-                        consoleOut('Send Tx to confirmation queue:', signature);
-                        const vestedReturns = getAmountWithSymbol(
-                            closeStreamOptions.vestedReturns,
-                            selectedToken.address,
-                            false,
-                            splTokenList,
-                            selectedToken.decimals,
-                        );
-                        const unvestedReturns = getAmountWithSymbol(
-                            closeStreamOptions.unvestedReturns,
-                            selectedToken.address,
-                            false,
-                            splTokenList,
-                            selectedToken.decimals,
-                        );
-                        const beneficiary = shortenAddress(highlightedStream.beneficiary);
-                        const loadingMessage = multisigId
-                            ? 'The Multisig proposal to close the vesting stream Dinero para mi sobrina is being confirmed.'
-                            : `Vesting stream ${highlightedStream.name} closure is pending confirmation`;
-                        const confirmedMultisigMessage = isDateInTheFuture(paymentStartDate)
-                            ? `The proposal to close the vesting stream has been confirmed. Once approved, the unvested amount of ${unvestedReturns} will be returned to the vesting contract.`
-                            : `The proposal to close the vesting stream has been confirmed. Once approved, the vested amount of ${vestedReturns} will be sent to ${beneficiary} and the stream will be closed.`;
-                        const confirmedMessage = multisigId
-                            ? confirmedMultisigMessage
-                            : `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of ${vestedReturns} has been sent to ${beneficiary}. Unvested amount of ${unvestedReturns} was returned to the vesting contract.`;
-                        enqueueTransactionConfirmation({
-                            signature: signature,
-                            operationType: OperationType.StreamClose,
-                            finality: "confirmed",
-                            txInfoFetchStatus: "fetching",
-                            loadingTitle: "Confirming transaction",
-                            loadingMessage: loadingMessage,
-                            completedTitle: "Transaction confirmed",
-                            completedMessage: confirmedMessage,
-                            completedMessageTimeout: multisigId ? 8 : 5,
-                            extras: {
-                                vestingContractId: vestingContract.id as string,
-                                multisigId: multisigId
-                            }
-                        });
-                        setIsBusy(false);
-                        onCloseStreamTransactionFinished();
-                    } else { setIsBusy(false); }
+                const sent = await sendTx();
+                consoleOut('sent:', sent);
+                if (sent && !transactionCancelled) {
+                    consoleOut('Send Tx to confirmation queue:', signature);
+                    const vestedReturns = getAmountWithSymbol(
+                        closeStreamOptions.vestedReturns,
+                        selectedToken.address,
+                        false,
+                        splTokenList,
+                        selectedToken.decimals,
+                    );
+                    const unvestedReturns = getAmountWithSymbol(
+                        closeStreamOptions.unvestedReturns,
+                        selectedToken.address,
+                        false,
+                        splTokenList,
+                        selectedToken.decimals,
+                    );
+                    const beneficiary = shortenAddress(highlightedStream.beneficiary);
+                    const loadingMessage = multisigId
+                        ? 'The Multisig proposal to close the vesting stream Dinero para mi sobrina is being confirmed.'
+                        : `Vesting stream ${highlightedStream.name} closure is pending confirmation`;
+                    const confirmedMultisigMessage = isDateInTheFuture(paymentStartDate)
+                        ? `The proposal to close the vesting stream has been confirmed. Once approved, the unvested amount of ${unvestedReturns} will be returned to the vesting contract.`
+                        : `The proposal to close the vesting stream has been confirmed. Once approved, the vested amount of ${vestedReturns} will be sent to ${beneficiary} and the stream will be closed.`;
+                    const confirmedMessage = multisigId
+                        ? confirmedMultisigMessage
+                        : `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of ${vestedReturns} has been sent to ${beneficiary}. Unvested amount of ${unvestedReturns} was returned to the vesting contract.`;
+                    enqueueTransactionConfirmation({
+                        signature: signature,
+                        operationType: OperationType.StreamClose,
+                        finality: "confirmed",
+                        txInfoFetchStatus: "fetching",
+                        loadingTitle: "Confirming transaction",
+                        loadingMessage: loadingMessage,
+                        completedTitle: "Transaction confirmed",
+                        completedMessage: confirmedMessage,
+                        completedMessageTimeout: multisigId ? 8 : 5,
+                        extras: {
+                            vestingContractId: vestingContract.id as string,
+                            multisigId: multisigId
+                        }
+                    });
+                    setIsBusy(false);
+                    onCloseStreamTransactionFinished();
                 } else { setIsBusy(false); }
             } else { setIsBusy(false); }
         }
@@ -819,7 +757,6 @@ export const VestingContractStreamList = (props: {
 
     const onExecutePauseStreamTransaction = async () => {
         let transaction: Transaction;
-        let signedTransaction: Transaction;
         let signature: any;
         let encodedTx: string;
         const transactionLog: any[] = [];
@@ -968,74 +905,17 @@ export const VestingContractStreamList = (props: {
             return result;
         }
 
-        const signTx = async (): Promise<boolean> => {
-            if (wallet && publicKey) {
-                consoleOut('Signing transaction...');
-                return await wallet.signTransaction(transaction)
-                    .then((signed: Transaction) => {
-                        consoleOut('signTransaction returned a signed transaction:', signed);
-                        signedTransaction = signed;
-                        // Try signature verification by serializing the transaction
-                        try {
-                            encodedTx = signedTransaction.serialize().toString('base64');
-                            consoleOut('encodedTx:', encodedTx, 'orange');
-                        } catch (error) {
-                            console.error(error);
-                            setTransactionStatus({
-                                lastOperation: TransactionStatus.SignTransaction,
-                                currentOperation: TransactionStatus.SignTransactionFailure
-                            });
-                            transactionLog.push({
-                                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                                result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
-                            });
-                            customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
-                            return false;
-                        }
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.SignTransactionSuccess,
-                            currentOperation: TransactionStatus.SendTransaction
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-                            result: { signer: publicKey.toBase58() }
-                        });
-                        return true;
-                    })
-                    .catch(error => {
-                        console.error('Signing transaction failed!');
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.SignTransaction,
-                            currentOperation: TransactionStatus.SignTransactionFailure
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                            result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
-                        });
-                        customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
-                        return false;
-                    });
-            } else {
-                console.error('Cannot sign transaction! Wallet not found!');
-                setTransactionStatus({
-                    lastOperation: TransactionStatus.SignTransaction,
-                    currentOperation: TransactionStatus.WalletNotFound
-                });
-                transactionLog.push({
-                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-                    result: 'Cannot sign transaction! Wallet not found!'
-                });
-                customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
-                return false;
-            }
-        }
-
         const sendTx = async (): Promise<boolean> => {
-            const encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-            if (wallet) {
-                return await connection
-                    .sendEncodedTransaction(encodedTx)
+            if (connection && wallet && wallet.publicKey && transaction) {
+                const {
+                    context: { slot: minContextSlot },
+                    value: { blockhash, lastValidBlockHeight },
+                } = await connection.getLatestBlockhashAndContext();
+
+                transaction.feePayer = wallet.publicKey;
+                transaction.recentBlockhash = blockhash;
+
+                return wallet.sendTransaction(transaction, connection, { minContextSlot })
                     .then(sig => {
                         consoleOut('sendEncodedTransaction returned a signature:', sig);
                         setTransactionStatus({
@@ -1082,27 +962,23 @@ export const VestingContractStreamList = (props: {
             const created = await createTx();
             consoleOut('created:', created, 'blue');
             if (created && !transactionCancelled) {
-                const sign = await signTx();
-                consoleOut('sign:', sign);
-                if (sign && !transactionCancelled) {
-                    const sent = await sendTx();
-                    consoleOut('sent:', sent);
-                    if (sent && !transactionCancelled) {
-                        consoleOut('Send Tx to confirmation queue:', signature);
-                        enqueueTransactionConfirmation({
-                            signature: signature,
-                            operationType: OperationType.StreamPause,
-                            finality: "confirmed",
-                            txInfoFetchStatus: "fetching",
-                            loadingTitle: "Confirming transaction",
-                            loadingMessage: `Pause stream: ${highlightedStream.name}`,
-                            completedTitle: "Transaction confirmed",
-                            completedMessage: `Successfully paused stream: ${highlightedStream.name}`,
-                            extras: highlightedStream.id.toBase58()
-                        });
-                        setIsBusy(false);
-                        onPauseStreamTransactionFinished();
-                    } else { setIsBusy(false); }
+                const sent = await sendTx();
+                consoleOut('sent:', sent);
+                if (sent && !transactionCancelled) {
+                    consoleOut('Send Tx to confirmation queue:', signature);
+                    enqueueTransactionConfirmation({
+                        signature: signature,
+                        operationType: OperationType.StreamPause,
+                        finality: "confirmed",
+                        txInfoFetchStatus: "fetching",
+                        loadingTitle: "Confirming transaction",
+                        loadingMessage: `Pause stream: ${highlightedStream.name}`,
+                        completedTitle: "Transaction confirmed",
+                        completedMessage: `Successfully paused stream: ${highlightedStream.name}`,
+                        extras: highlightedStream.id.toBase58()
+                    });
+                    setIsBusy(false);
+                    onPauseStreamTransactionFinished();
                 } else { setIsBusy(false); }
             } else { setIsBusy(false); }
         }
@@ -1145,7 +1021,6 @@ export const VestingContractStreamList = (props: {
 
     const onExecuteResumeStreamTransaction = async () => {
         let transaction: Transaction;
-        let signedTransaction: Transaction;
         let signature: any;
         let encodedTx: string;
         const transactionLog: any[] = [];
@@ -1294,72 +1169,17 @@ export const VestingContractStreamList = (props: {
             return result;
         }
 
-        const signTx = async (): Promise<boolean> => {
-            if (wallet && publicKey) {
-                consoleOut('Signing transaction...');
-                return await wallet.signTransaction(transaction)
-                    .then((signed: Transaction) => {
-                        consoleOut('signTransaction returned a signed transaction:', signed);
-                        signedTransaction = signed;
-                        // Try signature verification by serializing the transaction
-                        try {
-                            encodedTx = signedTransaction.serialize().toString('base64');
-                            consoleOut('encodedTx:', encodedTx, 'orange');
-                        } catch (error) {
-                            console.error(error);
-                            setTransactionStatus({
-                                lastOperation: TransactionStatus.SignTransaction,
-                                currentOperation: TransactionStatus.SignTransactionFailure
-                            });
-                            transactionLog.push({
-                                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                                result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
-                            });
-                            customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
-                            return false;
-                        }
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.SignTransactionSuccess,
-                            currentOperation: TransactionStatus.SendTransaction
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-                            result: { signer: publicKey.toBase58() }
-                        });
-                        return true;
-                    })
-                    .catch(error => {
-                        console.error('Signing transaction failed!');
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.SignTransaction,
-                            currentOperation: TransactionStatus.SignTransactionFailure
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                            result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
-                        });
-                        customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
-                        return false;
-                    });
-            } else {
-                console.error('Cannot sign transaction! Wallet not found!');
-                setTransactionStatus({
-                    lastOperation: TransactionStatus.SignTransaction,
-                    currentOperation: TransactionStatus.WalletNotFound
-                });
-                transactionLog.push({
-                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-                    result: 'Cannot sign transaction! Wallet not found!'
-                });
-                customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
-                return false;
-            }
-        }
-
         const sendTx = async (): Promise<boolean> => {
-            if (wallet) {
-                return await connection
-                    .sendEncodedTransaction(encodedTx)
+            if (connection && wallet && wallet.publicKey && transaction) {
+                const {
+                    context: { slot: minContextSlot },
+                    value: { blockhash, lastValidBlockHeight },
+                } = await connection.getLatestBlockhashAndContext();
+
+                transaction.feePayer = wallet.publicKey;
+                transaction.recentBlockhash = blockhash;
+
+                return wallet.sendTransaction(transaction, connection, { minContextSlot })
                     .then(sig => {
                         consoleOut('sendEncodedTransaction returned a signature:', sig);
                         setTransactionStatus({
@@ -1406,27 +1226,23 @@ export const VestingContractStreamList = (props: {
             const created = await createTx();
             consoleOut('created:', created, 'blue');
             if (created && !transactionCancelled) {
-                const sign = await signTx();
-                consoleOut('sign:', sign);
-                if (sign && !transactionCancelled) {
-                    const sent = await sendTx();
-                    consoleOut('sent:', sent);
-                    if (sent && !transactionCancelled) {
-                        consoleOut('Send Tx to confirmation queue:', signature);
-                        enqueueTransactionConfirmation({
-                            signature: signature,
-                            operationType: OperationType.StreamResume,
-                            finality: "confirmed",
-                            txInfoFetchStatus: "fetching",
-                            loadingTitle: "Confirming transaction",
-                            loadingMessage: `Resume stream: ${highlightedStream.name}`,
-                            completedTitle: "Transaction confirmed",
-                            completedMessage: `Successfully resumed stream: ${highlightedStream.name}`,
-                            extras: highlightedStream.id.toBase58()
-                        });
-                        setIsBusy(false);
-                        onResumeStreamTransactionFinished();
-                    } else { setIsBusy(false); }
+                const sent = await sendTx();
+                consoleOut('sent:', sent);
+                if (sent && !transactionCancelled) {
+                    consoleOut('Send Tx to confirmation queue:', signature);
+                    enqueueTransactionConfirmation({
+                        signature: signature,
+                        operationType: OperationType.StreamResume,
+                        finality: "confirmed",
+                        txInfoFetchStatus: "fetching",
+                        loadingTitle: "Confirming transaction",
+                        loadingMessage: `Resume stream: ${highlightedStream.name}`,
+                        completedTitle: "Transaction confirmed",
+                        completedMessage: `Successfully resumed stream: ${highlightedStream.name}`,
+                        extras: highlightedStream.id.toBase58()
+                    });
+                    setIsBusy(false);
+                    onResumeStreamTransactionFinished();
                 } else { setIsBusy(false); }
             } else { setIsBusy(false); }
         }

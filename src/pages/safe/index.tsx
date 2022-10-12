@@ -82,7 +82,6 @@ import { SafeSerumInfoView } from './components/SafeSerumInfo';
 
 export const MULTISIG_ROUTE_BASE_PATH = '/multisig';
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
-const CREDIX_GATEWAY_ADDRESS = new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz");
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -426,7 +425,6 @@ export const SafeView = () => {
   const onExecuteCreateMultisigTx = useCallback(async (data: CreateNewSafeParams) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -562,72 +560,17 @@ export const SafeView = () => {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch((error: any) => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -673,25 +616,21 @@ export const SafeView = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.CreateMultisig,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Creating safe ${data.label}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Safe ${data.label} successfully created`
-            });
-            onMultisigCreated();
-          } else { setIsBusy(false); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.CreateMultisig,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: 'Confirming transaction',
+            loadingMessage: `Creating safe ${data.label}`,
+            completedTitle: 'Transaction confirmed',
+            completedMessage: `Safe ${data.label} successfully created`
+          });
+          onMultisigCreated();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
@@ -764,7 +703,6 @@ export const SafeView = () => {
   const onExecuteEditMultisigTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -931,72 +869,17 @@ export const SafeView = () => {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch((error: any) => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -1042,29 +925,25 @@ export const SafeView = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.EditMultisig,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Editing the safe ${selectedMultisig.label}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `The changes to the ${selectedMultisig.label} Multisig Safe have been submitted for approval.`,
-              extras: {
-                multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
-              }
-            });
-            await delay(500);
-            onMultisigModified();
-          } else { setIsBusy(false); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.EditMultisig,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: 'Confirming transaction',
+            loadingMessage: `Editing the safe ${selectedMultisig.label}`,
+            completedTitle: 'Transaction confirmed',
+            completedMessage: `The changes to the ${selectedMultisig.label} Multisig Safe have been submitted for approval.`,
+            extras: {
+              multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+            }
+          });
+          await delay(500);
+          onMultisigModified();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
@@ -1216,7 +1095,6 @@ export const SafeView = () => {
   const onExecuteCreateTransactionProposal = useCallback(async (data: CreateNewProposalParams) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -1420,71 +1298,10 @@ export const SafeView = () => {
       return result;
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create proposal transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch((error: any) => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (!wallet) {
-        console.error('Cannot send transaction! Wallet not found!');
+
+      if (!connection || !wallet || !wallet.publicKey || !transaction) {
+        console.error('Cannot send transaction! Wallet not found or no connection!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.WalletNotFound
@@ -1497,8 +1314,15 @@ export const SafeView = () => {
         return false;
       }
 
-      const result = await connection
-        .sendEncodedTransaction(encodedTx)
+      const {
+        context: { slot: minContextSlot },
+        value: { blockhash, lastValidBlockHeight },
+      } = await connection.getLatestBlockhashAndContext();
+
+      transaction.feePayer = wallet.publicKey;
+      transaction.recentBlockhash = blockhash;
+
+      const result = wallet.sendTransaction(transaction, connection, { minContextSlot })
         .then(sig => {
           consoleOut('sendEncodedTransaction returned a signature:', sig);
           setTransactionStatus({
@@ -1533,32 +1357,26 @@ export const SafeView = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.CreateTransaction,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: `Create proposal: ${data.title}`,
-              completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully created proposal: ${data.title}`,
-              extras: {
-                multisigAuthority: data.multisigId
-              }
-            });
-            setIsBusy(false);
-            setMultisigProposalModalVisible(false);
-            resetTransactionStatus();
-          } else {
-            setIsBusy(false); 
-          }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.CreateTransaction,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: `Create proposal: ${data.title}`,
+            completedTitle: "Transaction confirmed",
+            completedMessage: `Successfully created proposal: ${data.title}`,
+            extras: {
+              multisigAuthority: data.multisigId
+            }
+          });
+          setIsBusy(false);
+          setMultisigProposalModalVisible(false);
+          resetTransactionStatus();
         } else {
           setIsBusy(false); 
         }
@@ -1603,7 +1421,6 @@ export const SafeView = () => {
   const onExecuteApproveTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -1722,72 +1539,17 @@ export const SafeView = () => {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch((error: any) => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -1833,34 +1595,27 @@ export const SafeView = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.ApproveTransaction,
-              finality: "finalized",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: `Approve proposal: ${data.transaction.details.title}`,
-              completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully approved proposal: ${data.transaction.details.title}`,
-              extras: {
-                multisigAuthority: data.transaction.multisig.toBase58(),
-                transactionId: data.transaction.id
-              }
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
-          } else { setIsBusy(false); }
-        } else { 
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.ApproveTransaction,
+            finality: "finalized",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: `Approve proposal: ${data.transaction.details.title}`,
+            completedTitle: "Transaction confirmed",
+            completedMessage: `Successfully approved proposal: ${data.transaction.details.title}`,
+            extras: {
+              multisigAuthority: data.transaction.multisig.toBase58(),
+              transactionId: data.transaction.id
+            }
+          });
           setIsBusy(false);
-          onExecuteApproveTxCancelled();
-        }
+          resetTransactionStatus();
+        } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
@@ -1877,7 +1632,6 @@ export const SafeView = () => {
     connection, 
     transactionCancelled, 
     enqueueTransactionConfirmation, 
-    onExecuteApproveTxCancelled
   ]);
 
   const onExecuteRejectTxCancelled = useCallback(() => {
@@ -1895,7 +1649,6 @@ export const SafeView = () => {
   const onExecuteRejectTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -2014,72 +1767,17 @@ export const SafeView = () => {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Multisig Reject transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch((error: any) => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Multisig Reject transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -2125,34 +1823,27 @@ export const SafeView = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.RejectTransaction,
-              finality: "finalized",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: `Reject proposal: ${data.transaction.details.title}`,
-              completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully rejected proposal: ${data.transaction.details.title}`,
-              extras: {
-                multisigAuthority: data.transaction.multisig.toBase58(),
-                transactionId: data.transaction.id
-              }
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
-          } else { setIsBusy(false); }
-        } else { 
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.RejectTransaction,
+            finality: "finalized",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: `Reject proposal: ${data.transaction.details.title}`,
+            completedTitle: "Transaction confirmed",
+            completedMessage: `Successfully rejected proposal: ${data.transaction.details.title}`,
+            extras: {
+              multisigAuthority: data.transaction.multisig.toBase58(),
+              transactionId: data.transaction.id
+            }
+          });
           setIsBusy(false);
-          onExecuteRejectTxCancelled();
-        }
+          resetTransactionStatus();
+        } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
@@ -2166,7 +1857,6 @@ export const SafeView = () => {
     transactionCancelled,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
-    onExecuteRejectTxCancelled,
     resetTransactionStatus,
     setTransactionStatus,
     t,
@@ -2196,7 +1886,6 @@ export const SafeView = () => {
   const onExecuteFinishTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -2331,72 +2020,10 @@ export const SafeView = () => {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch((error: any) => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
 
-      if (!wallet) {
-        console.error('Cannot send transaction! Wallet not found!');
+      if (!connection || !wallet || !wallet.publicKey || !transaction) {
+        console.error('Cannot send transaction! Wallet not found or no connection!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.WalletNotFound
@@ -2409,8 +2036,15 @@ export const SafeView = () => {
         return false;
       }
 
-      const result = await connection
-        .sendEncodedTransaction(encodedTx)
+      const {
+        context: { slot: minContextSlot },
+        value: { blockhash, lastValidBlockHeight },
+      } = await connection.getLatestBlockhashAndContext();
+
+      transaction.feePayer = wallet.publicKey;
+      transaction.recentBlockhash = blockhash;
+
+      const result = wallet.sendTransaction(transaction, connection, { minContextSlot })
         .then(sig => {
           consoleOut('sendEncodedTransaction returned a signature:', sig);
           setTransactionStatus({
@@ -2515,38 +2149,31 @@ export const SafeView = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature, 'blue');
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.ExecuteTransaction,
-              finality: "finalized",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: `Execute proposal: ${data.transaction.details.title}`,
-              completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully executed proposal: ${data.transaction.details.title}`,
-              extras: {
-                multisigAuthority: data.transaction.multisig.toBase58(),
-                transactionId: data.transaction.id
-              }
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
-          } else {
-            setTimeout(() => {
-              onExecuteFinishTxCancelled();
-            }, 30);
-            setIsBusy(false);
-          }
-        } else { 
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature, 'blue');
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.ExecuteTransaction,
+            finality: "finalized",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: `Execute proposal: ${data.transaction.details.title}`,
+            completedTitle: "Transaction confirmed",
+            completedMessage: `Successfully executed proposal: ${data.transaction.details.title}`,
+            extras: {
+              multisigAuthority: data.transaction.multisig.toBase58(),
+              transactionId: data.transaction.id
+            }
+          });
           setIsBusy(false);
-          onExecuteFinishTxCancelled();
+          resetTransactionStatus();
+        } else {
+          setTimeout(() => {
+            onExecuteFinishTxCancelled();
+          }, 30);
+          setIsBusy(false);
         }
       } else {
         onExecuteFinishTxCancelled();
@@ -2573,7 +2200,6 @@ export const SafeView = () => {
   const onExecuteCancelTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -2692,71 +2318,9 @@ export const SafeView = () => {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch((error: any) => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
 
-      if (!wallet) {
+      if (!connection || !wallet || !wallet.publicKey || !transaction) {
         console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
@@ -2770,8 +2334,15 @@ export const SafeView = () => {
         return false;
       }
 
-      const result = await connection
-        .sendEncodedTransaction(encodedTx)
+      const {
+        context: { slot: minContextSlot },
+        value: { blockhash, lastValidBlockHeight },
+      } = await connection.getLatestBlockhashAndContext();
+
+      transaction.feePayer = wallet.publicKey;
+      transaction.recentBlockhash = blockhash;
+
+      const result = wallet.sendTransaction(transaction, connection, { minContextSlot })
         .then(sig => {
           consoleOut('sendEncodedTransaction returned a signature:', sig);
           setTransactionStatus({
@@ -2820,30 +2391,26 @@ export const SafeView = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.CancelTransaction,
-              finality: "finalized",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: `Cancel proposal: ${data.transaction.details.title}`,
-              completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully cancelled proposal: ${data.transaction.details.title}`,
-              extras: {
-                multisigAuthority: data.transaction.multisig.toBase58(),
-                transactionId: data.transaction.id
-              }
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
-          } else { setIsBusy(false); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.CancelTransaction,
+            finality: "finalized",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: `Cancel proposal: ${data.transaction.details.title}`,
+            completedTitle: "Transaction confirmed",
+            completedMessage: `Successfully cancelled proposal: ${data.transaction.details.title}`,
+            extras: {
+              multisigAuthority: data.transaction.multisig.toBase58(),
+              transactionId: data.transaction.id
+            }
+          });
+          setIsBusy(false);
+          resetTransactionStatus();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }

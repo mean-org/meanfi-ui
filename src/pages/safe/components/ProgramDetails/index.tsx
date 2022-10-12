@@ -1,29 +1,38 @@
-import './style.scss';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig } from "@mean-dao/mean-multisig-sdk";
 import { TransactionFees } from "@mean-dao/msp";
-import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, ParsedTransactionWithMeta, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
-import { Button, Col, Row } from "antd";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { MultisigSetProgramAuthModal } from "../../../../components/MultisigSetProgramAuthModal";
-import { MultisigUpgradeProgramModal } from "../../../../components/MultisigUpgradeProgramModal";
-import { NO_FEES } from "../../../../constants";
-import { useNativeAccount } from "../../../../contexts/accounts";
-import { AppStateContext } from "../../../../contexts/appstate";
-import { useConnectionConfig } from "../../../../contexts/connection";
-import { TxConfirmationContext } from "../../../../contexts/transaction-status";
-import { useWallet } from "../../../../contexts/wallet";
-import { IconArrowBack } from "../../../../Icons";
-import { OperationType, TransactionStatus } from "../../../../models/enums";
-import { NATIVE_SOL_MINT } from "../../../../middleware/ids";
-import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "../../../../middleware/ui";
-import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from "../../../../middleware/utils";
-import { appConfig, customLogger } from "../../../..";
-import { TabsMean } from '../../../../components/TabsMean';
 import { AnchorProvider, Program } from '@project-serum/anchor';
-import { NATIVE_SOL } from '../../../../constants/tokens';
-import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
+import {
+  ConfirmOptions,
+  Connection,
+  LAMPORTS_PER_SOL,
+  ParsedTransactionWithMeta,
+  PublicKey,
+  SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_RENT_PUBKEY,
+  Transaction
+} from "@solana/web3.js";
+import { Button, Col, Row } from "antd";
+import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
+import { MultisigSetProgramAuthModal } from "components/MultisigSetProgramAuthModal";
+import { MultisigUpgradeProgramModal } from "components/MultisigUpgradeProgramModal";
+import { TabsMean } from 'components/TabsMean';
+import { NO_FEES } from "constants/common";
+import { NATIVE_SOL } from 'constants/tokens';
+import { useNativeAccount } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { useConnectionConfig } from "contexts/connection";
+import { TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import { IconArrowBack } from "Icons";
+import { appConfig, customLogger } from 'index';
+import { NATIVE_SOL_MINT } from "middleware/ids";
+import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "middleware/ui";
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from "middleware/utils";
+import { OperationType, TransactionStatus } from "models/enums";
 import moment from 'moment';
-import ReactJson from 'react-json-view'
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import ReactJson from 'react-json-view';
+import './style.scss';
 
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
@@ -144,7 +153,6 @@ export const ProgramDetailsView = (props: {
   const onExecuteUpgradeProgramsTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -287,72 +295,17 @@ export const ProgramDetailsView = (props: {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -398,21 +351,17 @@ export const ProgramDetailsView = (props: {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.UpgradeProgram);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            onProgramUpgraded();
-          } else { setIsBusy(false); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          startFetchTxSignatureInfo(signature, "confirmed", OperationType.UpgradeProgram);
+          setIsBusy(false);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionFinished
+          });
+          onProgramUpgraded();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
@@ -459,7 +408,6 @@ export const ProgramDetailsView = (props: {
   const onExecuteSetProgramAuthTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -602,72 +550,17 @@ export const ProgramDetailsView = (props: {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -713,21 +606,17 @@ export const ProgramDetailsView = (props: {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetMultisigAuthority);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            onProgramAuthSet();
-          } else { setIsBusy(false); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetMultisigAuthority);
+          setIsBusy(false);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionFinished
+          });
+          onProgramAuthSet();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }

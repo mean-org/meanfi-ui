@@ -1,24 +1,24 @@
 import { CloseOutlined, LoadingOutlined } from '@ant-design/icons';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
 import { HlaInfo } from '@mean-dao/hybrid-liquidity-ag/lib/types';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Modal, Popconfirm, Slider } from "antd";
 import { SliderMarks } from 'antd/lib/slider';
+import { InfoIcon } from 'components/InfoIcon';
+import { openNotification } from 'components/Notifications';
+import { AppStateContext } from "contexts/appstate";
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { IconShieldSolid } from 'Icons/IconShieldSolid';
+import { customLogger } from 'index';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from 'middleware/ui';
+import { getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
+import { DcaInterval } from 'models/ddca-models';
+import { OperationType, TransactionStatus } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from "react-i18next";
-import { customLogger } from '../..';
-import { AppStateContext } from "../../contexts/appstate";
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { useWallet } from '../../contexts/wallet';
-import { IconShieldSolid } from '../../Icons/IconShieldSolid';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from '../../middleware/ui';
-import { getAmountWithSymbol, getTxIxResume } from '../../middleware/utils';
-import { DcaInterval } from '../../models/ddca-models';
-import { OperationType, TransactionStatus } from '../../models/enums';
-import { InfoIcon } from '../InfoIcon';
-import { openNotification } from '../Notifications';
 import "./style.scss";
 
 export const DdcaSetupModal = (props: {
@@ -322,7 +322,6 @@ export const DdcaSetupModal = (props: {
   const onCreateVaultTxStart = async () => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -412,72 +411,17 @@ export const DdcaSetupModal = (props: {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: publicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error('Signing transaction failed!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -566,17 +510,13 @@ export const DdcaSetupModal = (props: {
       const create = await createTx();
       consoleOut('create:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('sign:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            if (confirmed && !transactionCancelled) {
-              setVaultCreated(true);
-              setIsBusy(false);
-            } else { onTxErrorCreatingVaultWithNotify(); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          const confirmed = await confirmTx();
+          if (confirmed && !transactionCancelled) {
+            setVaultCreated(true);
+            setIsBusy(false);
           } else { onTxErrorCreatingVaultWithNotify(); }
         } else { onTxErrorCreatingVaultWithNotify(); }
       } else { onTxErrorCreatingVaultWithNotify(); }
@@ -588,7 +528,6 @@ export const DdcaSetupModal = (props: {
   const onSpawnSwapTxStart = async () => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -663,72 +602,17 @@ export const DdcaSetupModal = (props: {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('WakeAndSwap transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: publicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error('Signing transaction failed!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logWarning('WakeAndSwap transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('WakeAndSwap transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -776,16 +660,12 @@ export const DdcaSetupModal = (props: {
       const create = await createTx();
       consoleOut('create:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('sign:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaCreate);
-            onFinishedSwapTx();
-          } else { onFinishedSwapTx(); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaCreate);
+          onFinishedSwapTx();
         } else { onFinishedSwapTx(); }
       } else { onFinishedSwapTx(); }
     }
