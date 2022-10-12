@@ -1,7 +1,8 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { getFees, MeanMultisig, MultisigParticipant, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Col, Row, Tooltip } from 'antd';
+import { Button, Col, Row, Slider, Tooltip } from 'antd';
+import { SliderMarks } from 'antd/lib/slider';
 import { segmentAnalytics } from 'App';
 import { MultisigParticipants } from 'components/MultisigParticipants';
 import { openNotification } from 'components/Notifications';
@@ -13,7 +14,7 @@ import { useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconHelpCircle, IconSafe, IconWarning } from 'Icons';
+import { IconHelpCircle, IconSafe } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
@@ -24,6 +25,7 @@ import { CreateNewSafeParams, ZERO_FEES } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import "./style.scss";
 
 const CreateSafeView = () => {
     const { t } = useTranslation('common');
@@ -51,7 +53,10 @@ const CreateSafeView = () => {
     const [canSubscribe, setCanSubscribe] = useState(true);
     const [minRequiredBalance, setMinRequiredBalance] = useState(0);
     const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
-
+    // Slider
+    const [marks, setMarks] = useState<SliderMarks>();
+    const [rangeMin, setRangeMin] = useState(0);
+    const [rangeMax, setRangeMax] = useState(0);
 
     /////////////////
     //  Init code  //
@@ -198,6 +203,24 @@ const CreateSafeView = () => {
             });
 
     }, [multisigClient, multisigTransactionFees.multisigFee, nativeBalance, publicKey]);
+
+    // Set min and max for the slider
+    useEffect(() => {
+        const minRangeSelectable = 1;
+        let maxRangeSelectable = 1;
+
+        if (multisigOwners && multisigOwners.length > 0) {
+            maxRangeSelectable = multisigOwners.length;
+        }
+
+        const marks: SliderMarks = {
+            [minRangeSelectable]: `${minRangeSelectable} ${minRangeSelectable === 1 ? 'signer' : 'signers'}`,
+            [maxRangeSelectable]: `${maxRangeSelectable} ${maxRangeSelectable === 1 ? 'signer' : 'signers'}`
+        };
+        setMarks(marks);
+        setRangeMin(minRangeSelectable);
+        setRangeMax(maxRangeSelectable);
+    }, [multisigOwners]);
 
     // Setup event listeners
     useEffect(() => {
@@ -549,10 +572,18 @@ const CreateSafeView = () => {
         return multisigOwners.every(o => o.address.length > 0 && isValidAddress(o.address));
     }
 
+    const onSliderChange = (value?: number) => {
+        setMultisigThreshold(value || rangeMin || 1);
+    }
+
 
     ///////////////
     // Rendering //
     ///////////////
+
+    function sliderTooltipFormatter(value?: number) {
+        return (<span className="font-bold">{`${value} ${value === 1 ? 'signer' : 'signers'}`}</span>);
+    }
 
     const getMainCtaLabel = () => {
         if (nativeBalance < minRequiredBalance) {
@@ -616,9 +647,16 @@ const CreateSafeView = () => {
         );
     }
 
-    const renderMultisigThresholdField = () => {
+    const isSliderDisabled = () => {
+        if (!multisigOwners || multisigOwners.length === 0) {
+            return true;
+        }
+        return false;
+    }
+
+    const renderMultisigThresholdSlider = () => {
         return (
-            <div className="mb-3">
+            <>
                 <div className="form-label icon-label">
                     {t('multisig.create-multisig.multisig-threshold-input-label')}
                     <Tooltip placement="bottom" title={t("multisig.create-multisig.multisig-threshold-question-mark-tooltip")}>
@@ -627,33 +665,19 @@ const CreateSafeView = () => {
                         </span>
                     </Tooltip>
                 </div>
-                <div className={`well ${isBusy ? 'disabled' : ''}`}>
-                    <div className="flex-fixed-right">
-                        <div className="left">
-                            <input
-                                id="multisig-threshold-field"
-                                className="w-100 general-text-input"
-                                autoComplete="off"
-                                autoCorrect="off"
-                                type="text"
-                                pattern="^[0-9]*$"
-                                onChange={onThresholdInputValueChange}
-                                placeholder={t('multisig.create-multisig.multisig-threshold-placeholder')}
-                                value={multisigThreshold}
-                            />
-                        </div>
-                    </div>
-                    {!multisigThreshold || +multisigThreshold < 1 ? (
-                        <span className="form-field-error">
-                            {t('multisig.create-multisig.multisig-threshold-input-empty')}
-                        </span>
-                    ) : multisigThreshold > MAX_MULTISIG_PARTICIPANTS ? (
-                        <span className="form-field-error">
-                            {t('multisig.create-multisig.multisig-threshold-input-max')}
-                        </span>
-                    ) : null}
+                <div className="slider-container">
+                    <Slider
+                        marks={marks}
+                        min={rangeMin}
+                        max={rangeMax}
+                        included={false}
+                        disabled={isSliderDisabled()}
+                        tooltip={{formatter: sliderTooltipFormatter}}
+                        value={multisigThreshold}
+                        onChange={onSliderChange}
+                        dots={true} />
                 </div>
-            </div>
+            </>
         );
     }
 
@@ -666,19 +690,12 @@ const CreateSafeView = () => {
                             <IconSafe className="mean-svg-icons" />
                             <div>{t('multisig.create-multisig.modal-title')}</div>
                         </div>
-                        <div className="subtitle mt-1">
-                            Title subheading (optional).
-                        </div>
                     </div>
-                    <div className="place-transaction-box flat mb-0">
-                        <h2 className="text-left">Form headline (optional)</h2>
+                    <div className="place-transaction-box container-max-width-720 flat mb-0">
                         <div className="elastic-form-container">
 
                             {/* Multisig name */}
                             {renderMultisigNameField()}
-
-                            {/* Multisig threshold */}
-                            {renderMultisigThresholdField()}
 
                             {/* Multisig Owners selector */}
                             <MultisigParticipants
@@ -693,16 +710,13 @@ const CreateSafeView = () => {
                                 multisigAddresses={multisigAddresses}
                                 onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
                             />
-                            {(multisigOwners.length >= 1 && multisigOwners.length === +multisigThreshold && multisigOwners[+multisigThreshold - 1].address !== '') && (
-                                <span className="warning-message icon-label">
-                                    <IconWarning className="mean-svg-icons" />
-                                    {t('multisig.create-multisig.multisig-participants-warning-message')}
-                                </span>
-                            )}
+
+                            {/* Multisig threshold */}
+                            {renderMultisigThresholdSlider()}
 
                             {/* Fee info */}
                             {multisigTransactionFees.multisigFee && (
-                                <div className="p-2 mt-2">
+                                <div className="p-2 mt-2 mb-2">
                                     {infoRow(
                                         t('multisig.create-multisig.fee-info-label') + ' ≈',
                                         `${formatThousands(multisigTransactionFees.multisigFee + multisigTransactionFees.rentExempt, 9)} SOL`

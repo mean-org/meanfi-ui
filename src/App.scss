@@ -1973,6 +1973,58 @@ em {
   }
 }
 
+.slider-container {
+  display: block;
+  position: relative;
+  margin: 4rem 0 3.2rem 0;
+  padding: 0 2rem;
+}
+.ant-slider.ant-slider-with-marks {
+  .ant-slider-rail {
+      height: 2px;
+      margin-top: 1px;
+  }
+  .ant-slider-handle.ant-tooltip-open {
+      width: 18px;
+      height: 18px;
+      margin-top: -7px;
+      border-color: var(--color-white);
+      background-color: var(--color-primary);
+  }
+  .ant-slider-mark {
+      .ant-slider-mark-text {
+          position: absolute;
+          display: inline-block;
+          color: var(--color-secondary-alpha-70);
+          text-align: center;
+          word-break: keep-all;
+          white-space: nowrap;
+          cursor: pointer;
+          -webkit-user-select: none;
+          user-select: none;
+          font-size: 80%;
+      }
+  }
+}
+.ant-slider-tooltip .ant-tooltip-inner {
+  min-width: unset;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  height: auto;
+  line-height: 1;
+  min-height: auto;
+  svg.tooltip-svg {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 3px;
+      width: 18px;
+      height: 18px;
+      color: var(--color-primary-highlight);
+  }
+}
+
 .ant-timeline {
   color: inherit;
   .ant-timeline-item {
@@ -2685,19 +2737,19 @@ main section {
 
 .container-max-width-450 {
   width: 100%;
-  max-width: var(--container-max-width-450);
+  max-width: var(--container-max-width-450) !important;
 }
 .container-max-width-640 {
   width: 100%;
-  max-width: var(--container-max-width-640);
+  max-width: var(--container-max-width-640) !important;
 }
 .container-max-width-720 {
   width: 100%;
-  max-width: var(--container-max-width-720);
+  max-width: var(--container-max-width-720) !important;
 }
 .container-max-width-960 {
   width: 100%;
-  max-width: var(--container-max-width-960);
+  max-width: var(--container-max-width-960) !important;
 }
 
 .card {
@@ -3190,7 +3242,8 @@ main section {
     min-height: 30px;
     margin-bottom: 6px;
     .general-text-input {
-      font-size: 14px;
+      font-size: 14px !important;
+      vertical-align: unset;
     }
   }
   &.fixed-height {
@@ -4143,10 +4196,6 @@ main section {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-}
-
-#multisig-participants-max-height {
-  max-height: 210px;
 }
 
 .icon-button-container {

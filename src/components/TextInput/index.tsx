@@ -1,5 +1,4 @@
 import { CloseCircleOutlined } from '@ant-design/icons';
-import React from 'react';
 
 export const TextInput = (props: {
     id?: string;
@@ -12,42 +11,59 @@ export const TextInput = (props: {
     allowClear?: boolean;
     alwaysShowClear?: boolean;
     error?: string;
+    maxLength?: number;
     onInputClear?: any;
 }) => {
 
+    const {
+        id,
+        label,
+        hint,
+        value,
+        extraClass,
+        placeholder,
+        onInputChange,
+        allowClear,
+        alwaysShowClear,
+        error,
+        maxLength,
+        onInputClear,
+    } = props;
+
     return (
         <>
-        {props.label && (
-            <div className="form-label">{props.label}</div>
+        {label && (
+            <div className="form-label">{label}</div>
         )}
-        <div className={`well ${props.extraClass || ''}`}>
+        <div className={`well ${extraClass || ''}`}>
             <div className="flex-fixed-right">
                 <div className="left">
                     <input
-                        id={props.id || 'token-search-input'}
+                        id={id}
                         className="w-100 general-text-input"
                         autoComplete="on"
                         autoCorrect="off"
                         type="text"
-                        onChange={props.onInputChange}
-                        placeholder={props.placeholder}
+                        maxLength={maxLength}
+                        onChange={onInputChange}
+                        placeholder={placeholder}
                         spellCheck="false"
-                        value={props.value}
+                        value={value}
                     />
                 </div>
-                {(props.alwaysShowClear || (props.allowClear && props.value)) && (
+                {(alwaysShowClear || (allowClear && value)) && (
                     <div className="rigth">
-                        <div className="add-on h-100 simplelink" onClick={props.onInputClear}>
+                        <div className="add-on h-100 simplelink" onClick={onInputClear}>
                             <CloseCircleOutlined />
                         </div>
                     </div>
                 )}
             </div>
-            {props.hint && (
-                <div className="form-field-hint">{props.hint}</div>
+            {hint && (
+                <div className="form-field-hint">{hint}</div>
             )}
-            {props.error && (
-                <span className="form-field-error">{props.error}</span>
+            {error && (
+                <span className="form-field-error">{error}</span>
             )}
         </div>
         </>
