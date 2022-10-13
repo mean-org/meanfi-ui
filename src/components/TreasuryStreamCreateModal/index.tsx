@@ -7,8 +7,10 @@ import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } fr
 import { Button, Checkbox, Col, DatePicker, Divider, Dropdown, Menu, Modal, Row, Select, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { BN } from 'bn.js';
+import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
 import { InputMean } from 'components/InputMean';
+import { StepSelector } from 'components/StepSelector';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
@@ -46,11 +48,8 @@ import { PaymentRateTypeOption } from "models/PaymentRateTypeOption";
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { CreateStreamParams } from 'models/streams';
 import moment from "moment";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Identicon } from '../Identicon';
-import { StepSelector } from '../StepSelector';
-import "./style.scss";
 
 const { Option } = Select;
 type TreasuryValues = Treasury | TreasuryInfo | undefined;
@@ -1014,9 +1013,7 @@ export const TreasuryStreamCreateModal = (props: {
   const onTransactionStart = async () => {
 
     let transactions: Transaction[] = [];
-    let signedTransactions: Transaction[] = [];
     let signatures: string[] = [];
-    let encodedTxs: string[] = [];
     let multisigAuth = '';
 
     const transactionLog: any[] = [];
@@ -1277,74 +1274,10 @@ export const TreasuryStreamCreateModal = (props: {
       return result;
     }
 
-    const signTxs = async (): Promise<boolean> => {
-
-      if (!wallet || !publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
-
-      consoleOut('Signing transactions...');
-      const result = await wallet.signAllTransactions(transactions)
-        .then((signed: Transaction[]) => {
-          signedTransactions = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTxs = signedTransactions.map(t => t.serialize().toString('base64'));
-            consoleOut('encodedTxs:', encodedTxs, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: publicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
-          return false;
-        });
-
-      return result;
-    }
-
     const sendTxs = async (): Promise<boolean> => {
 
-      if (!wallet) {
-        console.error('Cannot send transactions! Wallet not found!');
+      if (!connection || !wallet || !wallet.publicKey) {
+        console.error('Cannot send transactions! Wallet not found or no connection!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.WalletNotFound
@@ -1357,15 +1290,25 @@ export const TreasuryStreamCreateModal = (props: {
         return false;
       }
 
+      const {
+        context: { slot: minContextSlot },
+        value: { blockhash, lastValidBlockHeight },
+      } = await connection.getLatestBlockhashAndContext();
+
       const promises: Promise<string>[] = [];
 
-      for (const tx of encodedTxs) {
-        promises.push(connection.sendEncodedTransaction(tx));
+      // transactions
+      for await (const tx of transactions) {
+        tx.feePayer = wallet.publicKey;
+        tx.recentBlockhash = blockhash;
+        promises.push(
+          wallet.sendTransaction(tx, connection, { minContextSlot })
+        );
       }
 
-      const result = await Promise.all(promises)
+      const result = Promise.all(promises)
         .then(sigs => {
-          consoleOut('sendEncodedTransaction returned a signature:', sigs);
+          consoleOut('sendTransaction returned a signatures:', sigs);
           setTransactionStatus({
             lastOperation: TransactionStatus.SendTransactionSuccess,
             currentOperation: TransactionStatus.ConfirmTransaction
@@ -1398,42 +1341,38 @@ export const TreasuryStreamCreateModal = (props: {
       const create = await createTxs();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTxs();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTxs();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Txs to confirmation queue:', signatures);
-            const isLockedTreasury = workingTreasuryType === TreasuryType.Lock ? true : false;
-            const rateDisplay = isLockedTreasury ? getReleaseRate() : getPaymentRateAmount();
-            const messageLoading = multisigAuth
-              ? `Proposal to create stream to send ${rateDisplay}.`
-              : `Create stream to send ${rateDisplay}.`
-            const messageCompleted = multisigAuth
-              ? `Proposal to create stream to send ${rateDisplay} sent for approval.`
-              : `Stream to send ${rateDisplay} created successfully.`
+        const sent = await sendTxs();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Txs to confirmation queue:', signatures);
+          const isLockedTreasury = workingTreasuryType === TreasuryType.Lock ? true : false;
+          const rateDisplay = isLockedTreasury ? getReleaseRate() : getPaymentRateAmount();
+          const messageLoading = multisigAuth
+            ? `Proposal to create stream to send ${rateDisplay}.`
+            : `Create stream to send ${rateDisplay}.`
+          const messageCompleted = multisigAuth
+            ? `Proposal to create stream to send ${rateDisplay} sent for approval.`
+            : `Stream to send ${rateDisplay} created successfully.`
 
-            consoleOut('pending confirm msg:', messageLoading, 'blue');
-            consoleOut('confirmed msg:', messageCompleted, 'blue');
+          consoleOut('pending confirm msg:', messageLoading, 'blue');
+          consoleOut('confirmed msg:', messageCompleted, 'blue');
 
-            enqueueTransactionConfirmation({
-              signature: signatures[0],
-              operationType: OperationType.TreasuryStreamCreate,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: messageLoading,
-              completedTitle: "Transaction confirmed",
-              completedMessage: messageCompleted,
-              extras: {
-                multisigAuthority: multisigAuth
-              }
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
-            handleOk();
-          } else { setIsBusy(false); }
+          enqueueTransactionConfirmation({
+            signature: signatures[0],
+            operationType: OperationType.TreasuryStreamCreate,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: messageLoading,
+            completedTitle: "Transaction confirmed",
+            completedMessage: messageCompleted,
+            extras: {
+              multisigAuthority: multisigAuth
+            }
+          });
+          setIsBusy(false);
+          resetTransactionStatus();
+          handleOk();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }

@@ -91,9 +91,7 @@ export const AccountsCloseAssetModal = (props: {
 
   const onStartTransaction = async () => {
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
-    let encodedTx: string;
     const transactionLog: any[] = [];
 
     const createTx = async (): Promise<boolean> => {
@@ -176,96 +174,19 @@ export const AccountsCloseAssetModal = (props: {
       }
     };
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut("Signing transaction...");
-        return wallet
-          .signTransaction(transaction)
-          .then((signed: Transaction) => {
-            consoleOut(
-              "signTransaction returned a signed transaction:",
-              signed
-            );
-            signedTransaction = signed;
-            // Try signature verification by serializing the transaction
-            try {
-              encodedTx = signedTransaction.serialize().toString("base64");
-              consoleOut("encodedTx:", encodedTx, "orange");
-            } catch (error) {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SignTransaction,
-                currentOperation: TransactionStatus.SignTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SignTransactionFailure
-                ),
-                result: {
-                  signer: `${publicKey.toBase58()}`,
-                  error: `${error}`,
-                },
-              });
-              customLogger.logError("Close Account transaction failed", {
-                transcript: transactionLog,
-              });
-              return false;
-            }
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SignTransactionSuccess
-              ),
-              result: { signer: publicKey.toBase58() },
-            });
-            return true;
-          })
-          .catch((error) => {
-            console.error("Signing transaction failed!");
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SignTransactionFailure
-              ),
-              result: {
-                signer: `${publicKey.toBase58()}`,
-                error: `${error}`,
-              },
-            });
-            customLogger.logError("Close Account transaction failed", {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error("Cannot sign transaction! Wallet not found!");
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: "Cannot sign transaction! Wallet not found!",
-        });
-        customLogger.logError("Close Account transaction failed", {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then((sig) => {
-            consoleOut("sendEncodedTransaction returned a signature:", sig);
+            consoleOut("sendTransaction returned a signature:", sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction,
@@ -289,7 +210,7 @@ export const AccountsCloseAssetModal = (props: {
               action: getTransactionStatusForLogs(
                 TransactionStatus.SendTransactionFailure
               ),
-              result: { error, encodedTx },
+              result: error,
             });
             customLogger.logError("Close Account transaction failed", {
               transcript: transactionLog,
@@ -317,32 +238,26 @@ export const AccountsCloseAssetModal = (props: {
       const create = await createTx();
       consoleOut("created:", create);
       if (create) {
-        const sign = await signTx();
-        consoleOut("signed:", sign);
-        if (sign) {
-          const sent = await sendTx();
-          consoleOut("sent:", sent);
-          if (sent) {
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.CloseTokenAccount,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: `Close Token Account for ${asset.symbol}`,
-              completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully closed account for ${asset.symbol}`,
-            });
-            onTransactionFinished();
-          } else {
-            openNotification({
-              title: t("notifications.error-title"),
-              description: t("notifications.error-sending-transaction"),
-              type: "error",
-            });
-            setIsBusy(false);
-          }
+        const sent = await sendTx();
+        consoleOut("sent:", sent);
+        if (sent) {
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.CloseTokenAccount,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: `Close Token Account for ${asset.symbol}`,
+            completedTitle: "Transaction confirmed",
+            completedMessage: `Successfully closed account for ${asset.symbol}`,
+          });
+          onTransactionFinished();
         } else {
+          openNotification({
+            title: t("notifications.error-title"),
+            description: t("notifications.error-sending-transaction"),
+            type: "error",
+          });
           setIsBusy(false);
         }
       } else {

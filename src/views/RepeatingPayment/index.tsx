@@ -3,6 +3,7 @@ import {
   LoadingOutlined
 } from "@ant-design/icons";
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from "@mean-dao/msp";
+import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Checkbox, DatePicker, Dropdown, Menu } from "antd";
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -827,46 +828,26 @@ export const RepeatingPayment = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
+      if (wallet && publicKey && wallet.signTransaction && transaction) {
         consoleOut('Signing transaction...');
-        return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
+        return (wallet as SignerWalletAdapter).signTransaction(transaction)
+        .then(async (signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
-            segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: publicKey.toBase58()}
           });
-          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringSigned, {
-            signature,
-            encodedTx
+          encodedTx = signedTransaction.serialize().toString('base64');
+          consoleOut('encodedTx:', encodedTx, 'orange');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
           });
           return true;
         })
-        .catch(error => {
-          console.error(error);
+        .catch((error: any) => {
+          console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
@@ -875,8 +856,7 @@ export const RepeatingPayment = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
+          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -889,21 +869,44 @@ export const RepeatingPayment = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
+        customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
         return false;
       }
     }
 
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+
+      /* TODO: This approach fails only in this Tx (Repeating Payment)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            // Perform logging
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            // Perform logging
+            return false;
+          });
+      }
+      */
+
+      if (connection && wallet && wallet.publicKey && transaction && encodedTx) {
+        return connection.sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionSuccess
             });
             signature = sig;
             transactionLog.push({
@@ -947,7 +950,7 @@ export const RepeatingPayment = (props: {
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
         const sign = await signTx();
-        consoleOut('signed:', sign);
+        consoleOut('sign:', sign);
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           consoleOut('sent:', sent);

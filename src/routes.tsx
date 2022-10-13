@@ -10,16 +10,17 @@ import TxConfirmationProvider from "./contexts/transaction-status";
 import { WalletProvider } from "./contexts/wallet";
 import { isLocal, isProd } from "./middleware/ui";
 import {
-  AccountsView, CustodyView,
+  AccountsView,
+  CustodyView,
   ExchangeDcasView,
   FaucetView,
-  IdoBlockedView,
-  IdoLiveView,
-  IdoView,
   NotFoundView,
-  PlaygroundView, StakingRewardsView, StatsView, SwapView, VestingView
+  PlaygroundView,
+  StakingRewardsView,
+  StatsView,
+  SwapView,
+  VestingView
 } from "./pages";
-import { IdoLpView } from "./pages/ido-lp";
 import { ServiceUnavailableView } from "./pages/service-unavailable";
 import { StakingView } from "./pages/staking";
 
@@ -67,11 +68,6 @@ export function AppRoutes() {
                       {(isProd() || isLocal()) && (
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
                       )}
-                      {/* IDO */}
-                      <Route path="/ido" element={<IdoView />} />
-                      <Route path="/ido-live" element={<IdoLiveView />} />
-                      <Route path="/ido-blocked" element={<IdoBlockedView />} />
-                      <Route path="/ido-lp" element={<IdoLpView />} />
                       {/* All others */}
                       <Route path="/staking" element={<StakingView />} />
                       <Route path="/staking-rewards" element={<StakingRewardsView />} />

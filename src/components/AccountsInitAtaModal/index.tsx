@@ -2,27 +2,27 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { TransactionFees } from '@mean-dao/msp';
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Drawer, Modal } from "antd";
+import { openNotification } from 'components/Notifications';
+import { TextInput } from 'components/TextInput';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { TokenListItem } from 'components/TokenListItem';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
+import { NATIVE_SOL } from 'constants/tokens';
+import { useNativeAccount, useUserAccounts } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { environment } from 'environments/environment';
+import { customLogger } from 'index';
+import { createAtaAccount } from 'middleware/accounts';
+import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from 'middleware/ui';
+import { getAmountFromLamports, getTxIxResume, shortenAddress } from 'middleware/utils';
+import { AccountTokenParsedInfo } from "models/accounts";
+import { OperationType, TransactionStatus } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from "react-i18next";
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { customLogger } from '../..';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
-import { NATIVE_SOL } from '../../constants/tokens';
-import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
-import { AppStateContext } from '../../contexts/appstate';
-import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { useWallet } from '../../contexts/wallet';
-import { environment } from '../../environments/environment';
-import { createAtaAccount } from '../../middleware/accounts';
-import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from '../../middleware/ui';
-import { getAmountFromLamports, getTxIxResume, shortenAddress } from '../../middleware/utils';
-import { AccountTokenParsedInfo } from "../../models/accounts";
-import { OperationType, TransactionStatus } from '../../models/enums';
-import { openNotification } from '../Notifications';
-import { TextInput } from '../TextInput';
-import { TokenDisplay } from '../TokenDisplay';
-import { TokenListItem } from '../TokenListItem';
 
 export const AccountsInitAtaModal = (props: {
   connection: Connection;
@@ -43,7 +43,6 @@ export const AccountsInitAtaModal = (props: {
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isBusy, setIsBusy] = useState(false);
-
   const { account } = useNativeAccount();
   const { tokenAccounts } = useUserAccounts();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -221,7 +220,6 @@ export const AccountsInitAtaModal = (props: {
 
   const onStartTransaction = async () => {
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -305,96 +303,19 @@ export const AccountsInitAtaModal = (props: {
       }
     };
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut("Signing transaction...");
-        return await wallet
-          .signTransaction(transaction)
-          .then((signed: Transaction) => {
-            consoleOut(
-              "signTransaction returned a signed transaction:",
-              signed
-            );
-            signedTransaction = signed;
-            // Try signature verification by serializing the transaction
-            try {
-              encodedTx = signedTransaction.serialize().toString("base64");
-              consoleOut("encodedTx:", encodedTx, "orange");
-            } catch (error) {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SignTransaction,
-                currentOperation: TransactionStatus.SignTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SignTransactionFailure
-                ),
-                result: {
-                  signer: `${publicKey.toBase58()}`,
-                  error: `${error}`,
-                },
-              });
-              customLogger.logError("Create Asset transaction failed", {
-                transcript: transactionLog,
-              });
-              return false;
-            }
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SignTransactionSuccess
-              ),
-              result: { signer: publicKey.toBase58() },
-            });
-            return true;
-          })
-          .catch((error) => {
-            console.error("Signing transaction failed!");
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SignTransactionFailure
-              ),
-              result: {
-                signer: `${publicKey.toBase58()}`,
-                error: `${error}`,
-              },
-            });
-            customLogger.logError("Create Asset transaction failed", {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error("Cannot sign transaction! Wallet not found!");
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: "Cannot sign transaction! Wallet not found!",
-        });
-        customLogger.logError("Create Asset transaction failed", {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then((sig) => {
-            consoleOut("sendEncodedTransaction returned a signature:", sig);
+            consoleOut("sendTransaction returned a signature:", sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction,
@@ -446,32 +367,26 @@ export const AccountsInitAtaModal = (props: {
       const create = await createTx();
       consoleOut("created:", create);
       if (create) {
-        const sign = await signTx();
-        consoleOut("signed:", sign);
-        if (sign) {
-          const sent = await sendTx();
-          consoleOut("sent:", sent);
-          if (sent) {
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.CreateAsset,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: `Create Associated Token Account for ${selectedToken.symbol}`,
-              completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully created ATA account for ${selectedToken.symbol}`,
-            });
-            onTransactionFinished();
-          } else {
-            openNotification({
-              title: t("notifications.error-title"),
-              description: t("notifications.error-sending-transaction"),
-              type: "error",
-            });
-            setIsBusy(false);
-          }
+        const sent = await sendTx();
+        consoleOut("sent:", sent);
+        if (sent) {
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.CreateAsset,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: `Create Associated Token Account for ${selectedToken.symbol}`,
+            completedTitle: "Transaction confirmed",
+            completedMessage: `Successfully created ATA account for ${selectedToken.symbol}`,
+          });
+          onTransactionFinished();
         } else {
+          openNotification({
+            title: t("notifications.error-title"),
+            description: t("notifications.error-sending-transaction"),
+            type: "error",
+          });
           setIsBusy(false);
         }
       } else {

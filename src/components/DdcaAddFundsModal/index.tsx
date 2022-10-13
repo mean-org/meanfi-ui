@@ -3,18 +3,18 @@ import { DdcaClient, DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Modal, Progress, Row } from 'antd';
 import Slider, { SliderMarks } from 'antd/lib/slider';
+import { MEAN_TOKEN_LIST } from 'constants/tokens';
+import { AppStateContext } from 'contexts/appstate';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { customLogger } from 'index';
+import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
+import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from 'middleware/ids';
+import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from 'middleware/ui';
+import { findATokenAddress, getAmountWithSymbol, getTxIxResume, shortenAddress } from 'middleware/utils';
+import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { customLogger } from '../..';
-import { MEAN_TOKEN_LIST } from '../../constants/tokens';
-import { AppStateContext } from '../../contexts/appstate';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { useWallet } from '../../contexts/wallet';
-import { getTokenAccountBalanceByAddress } from '../../middleware/accounts';
-import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '../../middleware/ids';
-import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from '../../middleware/ui';
-import { findATokenAddress, getAmountWithSymbol, getTxIxResume, shortenAddress } from '../../middleware/utils';
-import { OperationType, TransactionStatus } from '../../models/enums';
 
 export const DdcaAddFundsModal = (props: {
   connection: Connection;
@@ -295,7 +295,6 @@ export const DdcaAddFundsModal = (props: {
   const onExecuteAddFundsTx = async () => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -370,72 +369,17 @@ export const DdcaAddFundsModal = (props: {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut('Signing transaction...');
-        return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: publicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error('Signing transaction failed!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logWarning('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -481,16 +425,12 @@ export const DdcaAddFundsModal = (props: {
       const create = await createTx();
       consoleOut('create:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('sign:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaAddFunds);
-            onFinishedAddFundsTx();
-          } else { onFinishedAddFundsTx(); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaAddFunds);
+          onFinishedAddFundsTx();
         } else { onFinishedAddFundsTx(); }
       } else { onFinishedAddFundsTx(); }
     }

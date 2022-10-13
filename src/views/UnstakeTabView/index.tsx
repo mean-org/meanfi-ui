@@ -40,7 +40,7 @@ export const UnstakeTabView = (props: {
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const connection = useConnection();
-  const { connected, wallet, publicKey } = useWallet();
+  const { connected, wallet } = useWallet();
   const { refreshAccount } = useAccountsContext();
   const percentages = ["25", "50", "75", "100"];
   const [fromCoinAmount, setFromCoinAmount] = useState<string>('');
@@ -149,7 +149,6 @@ export const UnstakeTabView = (props: {
 
   const onTransactionStart = useCallback(async () => {
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature = "";
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -236,99 +235,17 @@ export const UnstakeTabView = (props: {
       }
     };
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut("Signing transaction...");
-        const miamia = transaction.serialize({ verifySignatures: false, requireAllSignatures: false }).toString("base64");
-        consoleOut("encodedTx before sending:", miamia, "orange");
-        return await wallet
-          .signTransaction(transaction)
-          .then((signed: Transaction) => {
-            consoleOut(
-              "signTransaction returned a signed transaction:",
-              signed
-            );
-            signedTransaction = signed;
-            // Try signature verification by serializing the transaction
-            try {
-              encodedTx = signedTransaction.serialize().toString("base64");
-              consoleOut("encodedTx:", encodedTx, "orange");
-            } catch (error) {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SignTransaction,
-                currentOperation: TransactionStatus.SignTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SignTransactionFailure
-                ),
-                result: {
-                  signer: `${publicKey.toBase58()}`,
-                  error: `${error}`,
-                },
-              });
-              customLogger.logError("Unstake transaction failed", {
-                transcript: transactionLog,
-              });
-              segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, { transcript: transactionLog });
-              return false;
-            }
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SignTransactionSuccess,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SignTransactionSuccess
-              ),
-              result: { signer: publicKey.toBase58() },
-            });
-            segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanSigned, {
-              signature,
-              encodedTx
-            });
-            return true;
-          })
-          .catch((error) => {
-            console.error("Signing transaction failed!");
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SignTransactionFailure
-              ),
-              result: {
-                signer: `${publicKey.toBase58()}`,
-                error: `${error}`,
-              },
-            });
-            customLogger.logError("Unstake transaction failed", {transcript: transactionLog});
-            segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error("Cannot sign transaction! Wallet not found!");
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: "Cannot sign transaction! Wallet not found!",
-        });
-        customLogger.logError("Unstake transaction failed", {transcript: transactionLog});
-        segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, { transcript: transactionLog });
-        return false;
-      }
-    };
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then((sig: any) => {
             consoleOut("sendEncodedTransaction returned a signature:", sig);
             setTransactionStatus({
@@ -384,43 +301,37 @@ export const UnstakeTabView = (props: {
       const create = await createTx();
       consoleOut("created:", create);
       if (create) {
-        const sign = await signTx();
-        consoleOut("signed:", sign);
-        if (sign) {
-          const sent = await sendTx();
-          consoleOut("sent:", sent);
-          if (sent) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished,
-            });
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.Unstake,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: "Confirming transaction",
-              loadingMessage: `Unstaking ${formatThousands(
-                parseFloat(fromCoinAmount),
-                props.selectedToken.decimals
-              )} ${props.selectedToken.symbol}`,
-              completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully unstaked ${formatThousands(
-                parseFloat(fromCoinAmount),
-                props.selectedToken.decimals
-              )} ${props.selectedToken.symbol}`,
-            });
-            resetTransactionStatus();
-            setFromCoinAmount("");
-          } else {
-            openNotification({
-              title: t("notifications.error-title"),
-              description: t("notifications.error-sending-transaction"),
-              type: "error",
-            });
-            setIsBusy(false);
-          }
+        const sent = await sendTx();
+        consoleOut("sent:", sent);
+        if (sent) {
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransactionSuccess,
+            currentOperation: TransactionStatus.TransactionFinished,
+          });
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.Unstake,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: `Unstaking ${formatThousands(
+              parseFloat(fromCoinAmount),
+              props.selectedToken.decimals
+            )} ${props.selectedToken.symbol}`,
+            completedTitle: "Transaction confirmed",
+            completedMessage: `Successfully unstaked ${formatThousands(
+              parseFloat(fromCoinAmount),
+              props.selectedToken.decimals
+            )} ${props.selectedToken.symbol}`,
+          });
+          resetTransactionStatus();
+          setFromCoinAmount("");
         } else {
+          openNotification({
+            title: t("notifications.error-title"),
+            description: t("notifications.error-sending-transaction"),
+            type: "error",
+          });
           setIsBusy(false);
         }
       } else {
@@ -429,7 +340,6 @@ export const UnstakeTabView = (props: {
     }
   }, [
     wallet,
-    publicKey,
     meanPrice,
     connection,
     fromCoinAmount,
