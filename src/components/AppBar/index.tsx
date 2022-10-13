@@ -3,7 +3,7 @@ import { Menu } from 'antd';
 import { AccountDetails } from "components/AccountDetails";
 import { AppContextMenu } from "components/AppContextMenu";
 import { ConnectButton } from "components/ConnectButton";
-import { NotificationBell } from 'components/CurrentBalance';
+import { NotificationBell } from 'components/NotificationBell';
 import { DepositOptions } from 'components/DepositOptions';
 import { ACCOUNTS_ROUTE_BASE_PATH, STAKING_ROUTE_BASE_PATH } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
