@@ -255,6 +255,10 @@ const CreateSafeView = () => {
     //  Events  //
     //////////////
 
+    const onSliderChange = (value?: number) => {
+        setMultisigThreshold(value || rangeMin || 1);
+    }
+
     const onBackClick = () => {
         navigate(-1);
     }
@@ -549,14 +553,30 @@ const CreateSafeView = () => {
         setMultisigLabel(e.target.value);
     }
 
+    const onMultisigOwnersChanged = (signers: MultisigParticipant[]) => {
+        const numSigners = signers.length;
+        if (multisigThreshold > numSigners) {
+            setMultisigThreshold(numSigners);
+        }
+        setMultisigOwners(signers);
+    }
+
+
+    ////////////////
+    // Validation //
+    ////////////////
+
     const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
         const items = arr.map(i => i.address);
         return new Set(items).size === items.length ? true : false;
     }
 
+    const isOwnersListValid = () => {
+        return multisigOwners.every(o => o.address.length > 0 && isValidAddress(o.address));
+    }
+
     const isFormValid = () => {
-        return multisigThreshold &&
-            multisigThreshold >= 1 &&
+        return multisigThreshold >= 1 &&
             multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
@@ -566,14 +586,6 @@ const CreateSafeView = () => {
             nativeBalance >= minRequiredBalance
             ? true
             : false;
-    }
-
-    const isOwnersListValid = () => {
-        return multisigOwners.every(o => o.address.length > 0 && isValidAddress(o.address));
-    }
-
-    const onSliderChange = (value?: number) => {
-        setMultisigThreshold(value || rangeMin || 1);
     }
 
 
@@ -586,9 +598,15 @@ const CreateSafeView = () => {
     }
 
     const getMainCtaLabel = () => {
+        // Validation related labels
         if (nativeBalance < minRequiredBalance) {
             return t('transactions.validation.amount-sol-low');
+        } else if (!isOwnersListValid()) {
+            return 'Validate addresses';
+        } else if (!noDuplicateExists(multisigOwners)) {
+            return 'No duplicate signers';
         }
+        // Tx status related labels
         if (isBusy) {
             return t('multisig.create-multisig.main-cta-busy');
         } else if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
@@ -701,7 +719,7 @@ const CreateSafeView = () => {
                                     })
                                 }
                                 multisigAddresses={multisigAddresses}
-                                onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
+                                onParticipantsChanged={(e: MultisigParticipant[]) => onMultisigOwnersChanged(e)}
                             />
 
                             {/* Multisig threshold */}

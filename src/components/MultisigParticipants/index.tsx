@@ -90,7 +90,7 @@ export const MultisigParticipants = (props: {
                     </span>
                 </div>
             </div>
-            {participants && participants.length > 0 ? (
+            {participants && participants.length > 0 && (
                 <div id="multisig-participants-max-height">
                     {participants.map((participant: MultisigParticipant, index: number) => {
                         return (
@@ -134,12 +134,7 @@ export const MultisigParticipants = (props: {
                             </div>
                         );
                     })}
-                    {checkIfDuplicateExists(participants) && (
-                        <span className="form-field-error pl-2">{t('multisig.create-multisig.multisig-duplicate-participants')}</span>
-                    )}
                 </div>
-            ) : (
-                <div className="fg-orange-red mb-2 pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>
             )}
 
             <ModalTemplate
