@@ -5,7 +5,7 @@ import {
   PublicKey,
   Transaction,
 } from "@solana/web3.js";
-import { BIGNUMBER_FORMAT, CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
+import { BIGNUMBER_FORMAT, CUSTOM_TOKEN_NAME, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { friendlyDisplayDecimalPlaces, isProd } from "./ui";
 import { TOKEN_PROGRAM_ID } from "./ids";
 import { MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
@@ -166,9 +166,15 @@ export const formatThousands = (val: number, maxDecimals?: number, minDecimals =
   return convertedVlue.format(val);
 }
 
-export function isValidNumber(str: string): boolean {
-  if (str === null || str === undefined ) { return false; }
-  return INPUT_AMOUNT_PATTERN.test(str);
+export function isValidNumber(str: string | null | undefined): boolean {
+  if (!str) { return false; }
+
+  const value = +str;
+
+  // isNaN(+str) returns true if NaN, otherwise false
+  if (isNaN(value)) { return false; }
+
+  return true;
 }
 
 export function isValidInteger(str: string): boolean {
@@ -357,7 +363,7 @@ export const displayAmountWithSymbol = (
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
     let inputAmount = '';
-    let decimals = token ? token.decimals : 9;
+    const decimals = token ? token.decimals : 9;
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,
