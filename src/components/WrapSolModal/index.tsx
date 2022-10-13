@@ -1,21 +1,21 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Button, Col, Modal, Row } from "antd";
-import { useTranslation } from "react-i18next";
-import { useConnection } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { AppStateContext } from '../../contexts/appstate';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { calculateActionFees, wrapSol } from '@mean-dao/money-streaming/lib/utils';
-import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { useNativeAccount } from '../../contexts/accounts';
-import { MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { PublicKey, Transaction } from '@solana/web3.js';
-import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from '../../middleware/ui';
-import { OperationType, TransactionStatus } from '../../models/enums';
-import { customLogger } from '../..';
-import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, isValidNumber } from '../../middleware/utils';
-import { TokenDisplay } from '../TokenDisplay';
 import { LoadingOutlined } from '@ant-design/icons';
+import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { calculateActionFees, wrapSol } from '@mean-dao/money-streaming/lib/utils';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Col, Modal, Row } from "antd";
+import { TokenDisplay } from 'components/TokenDisplay';
+import { MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
+import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnection } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { customLogger } from 'index';
+import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from 'middleware/ui';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, isValidNumber } from 'middleware/utils';
+import { OperationType, TransactionStatus } from 'models/enums';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from "react-i18next";
 
 export const WrapSolModal = (props: {
   handleOk: any;
@@ -123,7 +123,6 @@ export const WrapSolModal = (props: {
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature = '';
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -211,73 +210,17 @@ export const WrapSolModal = (props: {
       }
     };
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut("Signing transaction...");
-        return await wallet
-          .signTransaction(transaction)
-          .then((signed: Transaction) => {
-            consoleOut("signTransaction returned a signed transaction:", signed);
-            signedTransaction = signed;
-            // Try signature verification by serializing the transaction
-            try {
-              encodedTx = signedTransaction.serialize().toString('base64');
-              consoleOut('encodedTx:', encodedTx, 'orange');
-            } catch (error) {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SignTransaction,
-                currentOperation: TransactionStatus.SignTransactionFailure
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-              });
-              customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-              return false;
-            }
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-              result: {signer: publicKey.toBase58()}
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error("Signing transaction failed!");
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error("Cannot sign transaction! Wallet not found!");
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    };
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then((sig) => {
             consoleOut("sendEncodedTransaction returned a signature:", sig);
             setTransactionStatus({
@@ -322,31 +265,27 @@ export const WrapSolModal = (props: {
       const create = await createTx();
       consoleOut("created:", create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut("signed:", sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut("sent:", sent);
-          setWrapAmount("");
-          if (sent && !transactionCancelled) {
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.Wrap,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Wrap ${formatThousands(parseFloat(wrapAmount as string), wSol.decimals)} ${wSol.symbol}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Wrapped ${formatThousands(parseFloat(wrapAmount as string), wSol.decimals)} ${wSol.symbol}`
-            });
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished,
-            });
-            setIsBusy(false);
-            await delay(1500);
-            onTransactionFinished();
-          } else { setIsBusy(false); }
+        const sent = await sendTx();
+        consoleOut("sent:", sent);
+        setWrapAmount("");
+        if (sent && !transactionCancelled) {
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.Wrap,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: 'Confirming transaction',
+            loadingMessage: `Wrap ${formatThousands(parseFloat(wrapAmount as string), wSol.decimals)} ${wSol.symbol}`,
+            completedTitle: 'Transaction confirmed',
+            completedMessage: `Wrapped ${formatThousands(parseFloat(wrapAmount as string), wSol.decimals)} ${wSol.symbol}`
+          });
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransactionSuccess,
+            currentOperation: TransactionStatus.TransactionFinished,
+          });
+          setIsBusy(false);
+          await delay(1500);
+          onTransactionFinished();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }

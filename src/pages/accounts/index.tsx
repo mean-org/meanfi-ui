@@ -53,12 +53,18 @@ import { SolBalanceModal } from 'components/SolBalanceModal';
 import { TransactionItemView } from 'components/TransactionItemView';
 import { UnwrapSolModal } from 'components/UnwrapSolModal';
 import { WrapSolModal } from 'components/WrapSolModal';
-import { EMOJIS } from 'constants/emojis';
 import {
-  ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-  MIN_SOL_BALANCE_REQUIRED, NO_FEES,
-  ONE_MINUTE_REFRESH_TIMEOUT, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, TRANSACTIONS_PER_PAGE, WRAPPED_SOL_MINT_ADDRESS
+  ACCOUNTS_LOW_BALANCE_LIMIT,
+  FALLBACK_COIN_IMAGE,
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  MIN_SOL_BALANCE_REQUIRED,
+  NO_FEES,
+  ONE_MINUTE_REFRESH_TIMEOUT,
+  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
+  TRANSACTIONS_PER_PAGE,
+  WRAPPED_SOL_MINT_ADDRESS
 } from 'constants/common';
+import { EMOJIS } from 'constants/emojis';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
@@ -68,6 +74,7 @@ import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from 'Icons';
+import { appConfig, customLogger } from 'index';
 import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
@@ -88,6 +95,7 @@ import { TokenInfo } from "models/SolanaTokenInfo";
 import { initialSummary, StreamsSummary } from 'models/streams';
 import { FetchStatus } from 'models/transactions';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from 'models/treasuries';
+import { STAKING_ROUTE_BASE_PATH } from 'pages/staking';
 import { QRCodeSVG } from 'qrcode.react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
@@ -99,8 +107,6 @@ import { MoneyStreamsInfoView } from 'views/MoneyStreamsInfo';
 import { MoneyStreamsOutgoingView } from 'views/MoneyStreamsOutgoing';
 import { StreamingAccountView } from 'views/StreamingAccount';
 import "./style.scss";
-import { appConfig, customLogger } from 'index';
-import { STAKING_ROUTE_BASE_PATH } from 'pages/staking';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "wallet" | "multisig" | undefined;
@@ -1169,7 +1175,6 @@ export const AccountsNewView = () => {
 
   const onExecuteCreateAssetTx = useCallback(async (data: any) => {
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -1338,72 +1343,17 @@ export const AccountsNewView = () => {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Multisig Create Vault transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Multisig Create Vault transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch((error: any) => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Multisig Create Vault transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -1449,35 +1399,31 @@ export const AccountsNewView = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.CreateAsset,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Create asset ${data.token.symbol}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Asset ${data.token.symbol} successfully created`,
-            });
-            setIsBusy(false);
-            onAssetCreated();
-            closeCreateAssetModal(true);
-          } else {
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-sending-transaction'),
-              type: "error"
-            });
-            setIsBusy(false);
-          }
-        } else { setIsBusy(false); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.CreateAsset,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: 'Confirming transaction',
+            loadingMessage: `Create asset ${data.token.symbol}`,
+            completedTitle: 'Transaction confirmed',
+            completedMessage: `Asset ${data.token.symbol} successfully created`,
+          });
+          setIsBusy(false);
+          onAssetCreated();
+          closeCreateAssetModal(true);
+        } else {
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: "error"
+          });
+          setIsBusy(false);
+        }
       } else { setIsBusy(false); }
     }
 
@@ -1528,7 +1474,6 @@ export const AccountsNewView = () => {
   const onExecuteTransferTokensTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -1727,72 +1672,17 @@ export const AccountsNewView = () => {
       }
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -1838,42 +1728,38 @@ export const AccountsNewView = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.TransferTokens,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Transferring ${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol} to ${shortenAddress(data.to)}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol}) successfully transferred to ${shortenAddress(data.to)}`,
-              extras: {
-                multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
-              }
-            });
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            setIsTransferTokenModalVisible(false);
-            resetTransactionStatus();
-            setIsBusy(false);
-          } else {
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-sending-transaction'),
-              type: "error"
-            });
-            setIsBusy(false);
-          }
-        } else { setIsBusy(false); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.TransferTokens,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: 'Confirming transaction',
+            loadingMessage: `Transferring ${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol} to ${shortenAddress(data.to)}`,
+            completedTitle: 'Transaction confirmed',
+            completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol}) successfully transferred to ${shortenAddress(data.to)}`,
+            extras: {
+              multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
+            }
+          });
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionFinished
+          });
+          setIsTransferTokenModalVisible(false);
+          resetTransactionStatus();
+          setIsBusy(false);
+        } else {
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: "error"
+          });
+          setIsBusy(false);
+        }
       } else { setIsBusy(false); }
     }
 
@@ -1914,7 +1800,6 @@ export const AccountsNewView = () => {
   const onExecuteTransferOwnershipTx  = useCallback(async (data: any) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -2047,72 +1932,17 @@ export const AccountsNewView = () => {
       return result;
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Transfer Vault Authority transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Transfer Vault Authority transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Transfer Vault Authority transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -2158,13 +1988,11 @@ export const AccountsNewView = () => {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          if (sent) {
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.SetAssetAuthority,
@@ -2178,17 +2006,20 @@ export const AccountsNewView = () => {
                 multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
               }
             });
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
             setIsTransferVaultAuthorityModalVisible(false);
-            resetTransactionStatus();
-            setIsBusy(false);
           } else {
             openNotification({
               title: t('notifications.error-title'),
               description: t('notifications.error-sending-transaction'),
               type: "error"
             });
-            setIsBusy(false);
           }
+          resetTransactionStatus();
+          setIsBusy(false);
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
@@ -2255,7 +2086,6 @@ export const AccountsNewView = () => {
   const onExecuteCloseAssetTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     let multisigAuth = '';
@@ -2394,72 +2224,17 @@ export const AccountsNewView = () => {
       return result;
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (!wallet || !wallet.publicKey) {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
-        return false;
-      }
-      const signedPublicKey = wallet.publicKey;
-      consoleOut('Signing transaction...');
-      return wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: signedPublicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -2505,13 +2280,15 @@ export const AccountsNewView = () => {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          if (sent) {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.DeleteAsset,
@@ -2526,16 +2303,15 @@ export const AccountsNewView = () => {
               }
             });
             setIsDeleteVaultModalVisible(false);
-            resetTransactionStatus();
-            setIsBusy(false);
           } else {
             openNotification({
               title: t('notifications.error-title'),
               description: t('notifications.error-sending-transaction'),
               type: "error"
             });
-            setIsBusy(false);
           }
+          resetTransactionStatus();
+          setIsBusy(false);
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
@@ -3642,7 +3418,6 @@ export const AccountsNewView = () => {
 
   const onStartUnwrapTx = async () => {
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -3744,73 +3519,17 @@ export const AccountsNewView = () => {
       }
     };
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut('Signing transaction...');
-        return wallet
-          .signTransaction(transaction)
-          .then((signed: Transaction) => {
-            consoleOut('signTransaction returned a signed transaction:', signed);
-            signedTransaction = signed;
-            // Try signature verification by serializing the transaction
-            try {
-              encodedTx = signedTransaction.serialize().toString('base64');
-              consoleOut('encodedTx:', encodedTx, 'orange');
-            } catch (error) {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SignTransaction,
-                currentOperation: TransactionStatus.SignTransactionFailure
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
-              });
-              customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
-              return false;
-            }
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-              result: { signer: publicKey.toBase58() }
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error("Signing transaction failed!");
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
-            });
-            customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error("Cannot sign transaction! Wallet not found!");
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    };
-
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
+      if (connection && wallet && wallet.publicKey && transaction) {
+        const {
+          context: { slot: minContextSlot },
+          value: { blockhash, lastValidBlockHeight },
+        } = await connection.getLatestBlockhashAndContext();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = blockhash;
+
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then((sig) => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -3855,31 +3574,27 @@ export const AccountsNewView = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent) {
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.Unwrap,
-              finality: "confirmed",
-              txInfoFetchStatus: "fetching",
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Unwrap ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Successfully unwrapped ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`
-            });
-          } else {
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-sending-transaction'),
-              type: "error"
-            });
-            setIsUnwrapping(false);
-          }
-        } else { setIsUnwrapping(false); }
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent) {
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.Unwrap,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: 'Confirming transaction',
+            loadingMessage: `Unwrap ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`,
+            completedTitle: 'Transaction confirmed',
+            completedMessage: `Successfully unwrapped ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`
+          });
+        } else {
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: "error"
+          });
+          setIsUnwrapping(false);
+        }
       } else { setIsUnwrapping(false); }
     }
   }

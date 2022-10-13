@@ -8,9 +8,6 @@ import {
   CustodyView,
   ExchangeDcasView,
   FaucetView,
-  IdoBlockedView,
-  IdoLiveView,
-  IdoView,
   NotFoundView,
   PlaygroundView,
   SwapView,
@@ -25,7 +22,6 @@ import { ServiceUnavailableView } from "./pages/service-unavailable";
 import TxConfirmationProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./middleware/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
-import { IdoLpView } from "./pages/ido-lp";
 import { StakingView } from "./pages/staking";
 
 export function AppRoutes() {
@@ -64,11 +60,6 @@ export function AppRoutes() {
                       )}
                       {/* Deprecated routes (still active) */}
                       <Route path="/faucet" element={<FaucetView />} />
-                      {/* IDO */}
-                      <Route path="/ido" element={<IdoView />} />
-                      <Route path="/ido-live" element={<IdoLiveView />} />
-                      <Route path="/ido-blocked" element={<IdoBlockedView />} />
-                      <Route path="/ido-lp" element={<IdoLpView />} />
                       {/* All others */}
                       <Route path="/staking" element={<StakingView />} />
                       <Route path="/staking-rewards" element={<StakingRewardsView />} />

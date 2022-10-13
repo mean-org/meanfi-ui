@@ -9,6 +9,7 @@ import {
   WarningOutlined
 } from '@ant-design/icons';
 import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
+import { SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -323,9 +324,9 @@ export const ExchangeDcasView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey && ddcaDetails && ddcaClient) {
+      if (wallet && publicKey && ddcaDetails && ddcaClient && wallet.signTransaction) {
         consoleOut('Signing transaction...');
-        return wallet.signTransaction(transaction)
+        return (wallet as SignerWalletAdapter).signTransaction(transaction)
         .then(async (signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -361,7 +362,7 @@ export const ExchangeDcasView = () => {
             return false;
           }
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -610,7 +611,7 @@ export const ExchangeDcasView = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
-        return wallet.signTransaction(transaction)
+        return (wallet as SignerWalletAdapter).signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -641,7 +642,7 @@ export const ExchangeDcasView = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
