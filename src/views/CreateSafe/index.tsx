@@ -544,7 +544,7 @@ const CreateSafeView = () => {
         } else if (!isOwnersListValid()) {
             return 'Validate addresses';
         } else if (!noDuplicateExists(multisigOwners)) {
-            return 'No duplicate signers';
+            return 'Duplicate signers found';
         }
         // Tx status related labels
         if (isBusy) {
