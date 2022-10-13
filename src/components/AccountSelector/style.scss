@@ -59,11 +59,23 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            @media (max-width: 575.98px) {
-              font-size: 14px !important;
-              max-width: 130px;
+            font-size: 14px !important;
+            @media (max-width: 359.98px) {
+              max-width: 88px;
             }
-            @media (min-width: 576px) and (max-width: 767.98px) {
+            @media (min-width: 360px) and (max-width: 399.98px) {
+              max-width: 100px;
+            }
+            @media (min-width: 400px) and (max-width: 419.98px) {
+              max-width: 144px;
+            }
+            @media (min-width: 420px) and (max-width: 449.98px) {
+              max-width: 158px;
+            }
+            @media (min-width: 450px) and (max-width: 575.98px) {
+              max-width: 164px;
+            }
+            @media (min-width: 576px) {
               max-width: 176px;
             }
           }
