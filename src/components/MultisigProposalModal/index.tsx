@@ -66,7 +66,6 @@ export const MultisigProposalModal = (props: {
   const [selectedApp, setSelectedApp] = useState<App>();
   const [selectedAppConfig, setSelectedAppConfig] = useState<AppConfig>();
   const [selectedUiIx, setSelectedUiIx] = useState<UiInstruction | undefined>();
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(isVisible);
   const [credixValue, setCredixValue] = useState<number | undefined>();
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -99,11 +98,11 @@ export const MultisigProposalModal = (props: {
 
   const onContinueStepOneButtonClick = () => {
     if (selectedApp?.name === "Payment Streaming") {
-      setIsModalVisible(false);
+      handleClose();
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/summary`;
       navigate(url);
     } else if (selectedApp?.name === "Token Vesting") {
-      setIsModalVisible(false);
+      handleClose();
       navigate(VESTING_ROUTE_BASE_PATH);
     } else {
       setCurrentStep(1);  // Go to step 2
@@ -377,8 +376,7 @@ export const MultisigProposalModal = (props: {
       title={<div className="modal-title">New proposal</div>}
       maskClosable={false}
       footer={null}
-      open={isModalVisible}
-      // onOk={onAcceptModal}
+      open={isVisible}
       onCancel={onCloseModal}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 

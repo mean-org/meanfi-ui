@@ -30,7 +30,6 @@ export const SafeMeanInfo = (props: {
   onDataToProgramView: any;
   onDataToSafeView: any;
   onEditMultisigClick: any;
-  onNewProposalMultisigClick: any;
   onRefreshRequested: any;
   proposalSelected?: any;
   publicKey: PublicKey | null | undefined;
@@ -49,7 +48,6 @@ export const SafeMeanInfo = (props: {
     onDataToProgramView,
     onDataToSafeView,
     onEditMultisigClick,
-    onNewProposalMultisigClick,
     onRefreshRequested,
     proposalSelected,
     publicKey,
@@ -433,7 +431,6 @@ export const SafeMeanInfo = (props: {
       <SafeInfo
         isTxInProgress={isTxInProgress}
         onEditMultisigClick={onEditMultisigClick}
-        onNewProposalMultisigClick={onNewProposalMultisigClick}
         onRefreshTabsInfo={onRefreshRequested}
         selectedMultisig={selectedMultisig}
         selectedTab={selectedTab}

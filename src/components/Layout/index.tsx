@@ -392,12 +392,8 @@ export const AppLayout = React.memo((props: any) => {
 
   // Clear accounts state when leaving
   useEffect(() => {
-    const isAccountPage = location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH);
-
     if (location.pathname !== previousRoute) {
-      if (!isAccountPage) {
-        setPreviousRoute(location.pathname);
-      }
+      setPreviousRoute(location.pathname);
     }
   }, [location.pathname, previousRoute, setPreviousRoute]);
 

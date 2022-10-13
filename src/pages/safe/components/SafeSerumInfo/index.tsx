@@ -17,7 +17,6 @@ export const SafeSerumInfoView = (props: {
   onDataToProgramView: any;
   selectedMultisig?: any;
   onEditMultisigClick: any;
-  onNewProposalMultisigClick: any;
   multisigClient: Program<Idl>;
   multisigTxs: MultisigTransaction[];
   vestingAccountsCount: number;
@@ -27,7 +26,6 @@ export const SafeSerumInfoView = (props: {
     isProposalDetails,
     selectedMultisig, 
     onEditMultisigClick, 
-    onNewProposalMultisigClick,
     multisigTxs,
     vestingAccountsCount,
   } = props;
@@ -280,7 +278,6 @@ export const SafeSerumInfoView = (props: {
     <>
       <SafeInfo
         onEditMultisigClick={onEditMultisigClick}
-        onNewProposalMultisigClick={onNewProposalMultisigClick}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}
         selectedMultisig={selectedMultisig}

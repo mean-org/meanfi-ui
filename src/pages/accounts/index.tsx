@@ -5,6 +5,9 @@ import {
   SyncOutlined,
   WarningFilled
 } from '@ant-design/icons';
+import { App, AppConfig, AppsProvider, Arg, NETWORK, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
+import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
+import { createProgram, getDepositIx, getTrancheDepositIx, getTrancheWithdrawIx, getWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   getFees,
@@ -33,7 +36,6 @@ import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import notification from 'antd/lib/notification';
 import { segmentAnalytics } from 'App';
 import BigNumber from 'bignumber.js';
-import { BN } from 'bn.js';
 import { AccountsCloseAssetModal } from 'components/AccountsCloseAssetModal';
 import { AccountsInitAtaModal } from 'components/AccountsInitAtaModal';
 import { AccountsMergeModal } from 'components/AccountsMergeModal';
@@ -41,6 +43,7 @@ import { AccountsSuggestAssetModal } from 'components/AccountsSuggestAssetModal'
 import { AddressDisplay } from 'components/AddressDisplay';
 import { Identicon } from 'components/Identicon';
 import { MultisigAddAssetModal } from 'components/MultisigAddAssetModal';
+import { MultisigProposalModal } from 'components/MultisigProposalModal';
 import { MultisigTransferTokensModal } from 'components/MultisigTransferTokensModal';
 import { MultisigVaultDeleteModal } from 'components/MultisigVaultDeleteModal';
 import { MultisigVaultTransferAuthorityModal } from 'components/MultisigVaultTransferAuthorityModal';
@@ -69,13 +72,13 @@ import {
 import { EMOJIS } from 'constants/emojis';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
+import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from 'Icons';
+import { IconAdd, IconCoin, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
@@ -92,7 +95,7 @@ import {
 import { AccountTokenParsedInfo, AssetCta, UserTokenAccount } from "models/accounts";
 import { MetaInfoCta } from 'models/common-types';
 import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from 'models/enums';
-import { ZERO_FEES } from 'models/multisig';
+import { CreateNewProposalParams, CREDIX_PROGRAM, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from 'models/multisig';
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { initialSummary, StreamsSummary } from 'models/streams';
 import { FetchStatus } from 'models/transactions';
@@ -228,6 +231,9 @@ export const AccountsView = () => {
   const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
   const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+  // Multisig Apps
+  const [appsProvider, setAppsProvider] = useState<AppsProvider>();
+  const [solanaApps, setSolanaApps] = useState<App[]>([]);
 
   // SOL Balance Modal
   const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
@@ -456,6 +462,29 @@ export const AccountsView = () => {
   const [isCloseAssetModalOpen, setIsCloseAssetModalOpen] = useState(false);
   const hideCloseAssetModal = useCallback(() => setIsCloseAssetModalOpen(false), []);
   const showCloseAssetModal = useCallback(() => setIsCloseAssetModalOpen(true), []);
+
+  // New Proposal modal
+  const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
+  const onNewProposalMultisigClick = useCallback(() => {
+
+    if (!multisigClient) { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
+      .then(value => {
+        setMultisigTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
+
+    resetTransactionStatus();
+    setMultisigProposalModalVisible(true);
+
+  }, [multisigClient, resetTransactionStatus]);
+
+  const onAcceptCreateProposalModal = (data: CreateNewProposalParams) => {
+    consoleOut('proposal data: ', data, 'blue');
+    onExecuteCreateTransactionProposal(data);
+  };
+
 
   const onAfterWrap = () => {
     hideWrapSolModal();
@@ -840,8 +869,11 @@ export const AccountsView = () => {
         case OperationType.TreasuryRefreshBalance:
             event = success ? AppUsageEvent.RefreshAccountBalanceCompleted : AppUsageEvent.RefreshAccountBalanceFailed;
             break;
+        case OperationType.CreateTransaction:
+          event = success ? AppUsageEvent.CreateProposalCompleted : AppUsageEvent.CreateProposalFailed;
+          break;
         default:
-            break;
+          break;
       }
       if (event) {
         segmentAnalytics.recordEvent(event, { signature: item.signature });
@@ -939,31 +971,28 @@ export const AccountsView = () => {
         isWorkflowLocked = true;
       }
 
+      consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+      recordTxConfirmation(item, true);
       switch (item.operationType) {
         case OperationType.CreateMultisig:
-          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-          recordTxConfirmation(item, true);
+          refreshMultisigs();
+          break;
+        case OperationType.CreateTransaction:
           refreshMultisigs();
           break;
         case OperationType.Wrap:
         case OperationType.Unwrap:
         case OperationType.Transfer:
-          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-          recordTxConfirmation(item, true);
           setIsUnwrapping(false);
           softReloadAssets();
           break;
         case OperationType.CreateAsset:
         case OperationType.CloseTokenAccount:
-          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-          recordTxConfirmation(item, true);
           reloadAssets();
           break;
         case OperationType.DeleteAsset:
         case OperationType.SetAssetAuthority:
         case OperationType.TransferTokens:
-          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-          recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
@@ -982,8 +1011,6 @@ export const AccountsView = () => {
         case OperationType.TreasuryRefreshBalance:
         case OperationType.TreasuryAddFunds:
         case OperationType.TreasuryWithdraw:
-          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-          recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
@@ -992,8 +1019,6 @@ export const AccountsView = () => {
           break;
         case OperationType.TreasuryCreate:
         case OperationType.StreamWithdraw:
-          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-          recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
@@ -1003,8 +1028,6 @@ export const AccountsView = () => {
           break;
         case OperationType.StreamClose:
         case OperationType.TreasuryClose:
-          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-          recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
@@ -1017,8 +1040,6 @@ export const AccountsView = () => {
           }, 20);
           break;
         case OperationType.StreamTransferBeneficiary:
-          consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-          recordTxConfirmation(item, true);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
@@ -2668,6 +2689,438 @@ export const AccountsView = () => {
     setCanShowStreamingAccountBalance(false);
   }, [clearStreams, setStreamsSummary]);
 
+  // New proposal
+
+  const createProposalIx = useCallback(async (
+    programId: PublicKey,
+    uiConfig: AppConfig,
+    uiInstruction: UiInstruction,
+  ): Promise<TransactionInstruction | null> => {
+
+    if (!connection || !connectionConfig || !publicKey) {
+      return null;
+    }
+
+    const createAnchorProgram = (): Program<Idl> => {
+
+      const opts = AnchorProvider.defaultOptions();
+      const anchorWallet = {
+        publicKey: publicKey,
+        signAllTransactions: async (txs: any) => txs,
+        signTransaction: async (tx: any) => tx,
+      };
+
+      const provider = new AnchorProvider(connection, anchorWallet, opts);
+
+      return new Program(uiConfig.definition as Idl, programId, provider);
+    }
+
+    const program = createAnchorProgram();
+    const method = program.methods[uiInstruction.name];
+    // ACCS
+    const accElements = uiInstruction.uiElements
+      .filter((elem: UiElement) => elem.dataElement && "isSigner" in elem.dataElement);
+    const accounts: any = {};
+    accElements.sort((a: any, b: any) => { return (a.index - b.index) });
+    for (const accItem of accElements) {
+      const accElement = accItem.dataElement as any;
+      accounts[accItem.name] = accElement.dataValue;
+    }
+    // ARGS
+    const argElements = uiInstruction.uiElements
+      .filter((elem: UiElement) => elem.dataElement && !("isSigner" in elem.dataElement));
+    const args = argElements.map((elem: UiElement) => {
+      const argElement = elem.dataElement as Arg;
+      return argElement.dataValue;
+    });
+    args.sort((a: any, b: any) => { return (a.index - b.index); });
+    const ix = await method(...args)
+      .accounts(accounts)
+      .instruction();
+
+    return ix;    
+  },[
+    connection, 
+    connectionConfig, 
+    publicKey
+  ]);
+
+  const getCredixProgram = useCallback(async (connection: Connection, investor: PublicKey) => {
+    const program = createProgram(connection, "confirmed");
+    console.log("data => ", investor.toBase58());
+    return program;
+  }, []);
+
+  const createCredixDepositIx = useCallback(async (investor: PublicKey, amount: number, marketplace: string) => {
+
+    if (!connection || !connectionConfig) { return null; }
+
+    const program = await getCredixProgram(connection, investor);
+
+    return getDepositIx(program, investor, amount, marketplace);
+
+  }, [
+    connection, 
+    connectionConfig,
+    getCredixProgram
+  ]);
+
+  const createCredixDepositTrancheIx = useCallback(async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
+
+    if (!connection || !connectionConfig) { return null; }
+
+    const program = await getCredixProgram(connection, investor);
+
+    return getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
+
+  }, [
+    connection, 
+    connectionConfig,
+    getCredixProgram
+  ]);
+
+  const createCredixWithdrawIx = useCallback(async (investor: PublicKey, amount: number, marketplace: string) => {
+
+    if (!connection || !connectionConfig) { return null; }
+
+    const program = await getCredixProgram(connection, investor);
+
+    return getWithdrawIx(program, investor, amount, marketplace);
+
+  }, [
+    connection, 
+    connectionConfig,
+    getCredixProgram
+  ]);
+
+  const createCredixWithdrawTrancheIx = useCallback(async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
+
+    if (!connection || !connectionConfig) { return null; }
+
+    const program = await getCredixProgram(connection, investor);
+
+    return getTrancheWithdrawIx(program, investor, deal, amount, trancheIndex, marketplace);
+
+  }, [
+    connection, 
+    connectionConfig,
+    getCredixProgram
+  ]);
+
+  const onExecuteCreateTransactionProposal = useCallback(async (data: CreateNewProposalParams) => {
+
+    let transaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    resetTransactionStatus();
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const createTransactionProposal = async (data: any) => {
+
+      if (!publicKey || !selectedMultisig || !multisigClient) {
+        throw new Error("No selected multisig");
+      }
+
+      let operation = 0;
+      let proposalIx: TransactionInstruction | null = null;
+
+      if (data.appId === NATIVE_LOADER.toBase58()) {
+        const tx = await parseSerializedTx(connection, data.instruction.uiElements[0].value);
+        if (!tx) { return null; }
+        operation = OperationType.Custom;
+        // TODO: Implement GetOperationFromProposal
+        // operation = getProposalOperation(data);
+        proposalIx = tx.instructions[0];
+      } else if (data.appId === CREDIX_PROGRAM.toBase58()) { //        
+        const investorPK = new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'investor').value);
+        const marketPlaceVal = String(data.instruction.uiElements.find((x: any) => x.name === 'marketName').value);
+        let amountVal = 0;
+        switch (data.instruction.name) {
+          case 'depositFunds':
+            operation = OperationType.CredixDepositFunds;
+            amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+            consoleOut('**** common inputs: ',{investorPK:investorPK.toString(), marketPlaceVal, amountVal});
+            proposalIx = await createCredixDepositIx(
+              investorPK,
+              amountVal,
+              marketPlaceVal
+            );
+          break;
+
+          case 'withdrawFunds':
+            operation = OperationType.CredixWithdrawFunds;
+            amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'baseWithdrawalAmount').value);
+            consoleOut('**** common inputs: ',{investorPK:investorPK.toString(), marketPlaceVal, amountVal});
+            proposalIx = await createCredixWithdrawIx(
+              investorPK,
+              amountVal,
+              marketPlaceVal
+            );
+          break;
+
+          case 'depositTranche':
+            operation = OperationType.CredixDepositTranche;
+            amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+            consoleOut('**** common inputs: ',{investorPK:investorPK.toString(), marketPlaceVal, amountVal});
+            proposalIx = await createCredixDepositTrancheIx(
+              investorPK,
+              new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
+              amountVal,
+              parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
+              marketPlaceVal
+            );
+          break;
+
+          case 'withdrawTranche':
+            operation = OperationType.CredixWithdrawTranche;
+            amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+            consoleOut('**** common inputs: ',{investorPK:investorPK.toString(), marketPlaceVal, amountVal});
+            proposalIx = await createCredixWithdrawTrancheIx(
+              investorPK,
+              new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
+              amountVal,
+              parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
+              marketPlaceVal
+            );
+          break;  
+        }
+      } else { // TODO: Implement GetOperationFromProposal
+        // operation = getProposalOperation(data);
+        proposalIx = await createProposalIx(
+          new PublicKey(data.appId),
+          data.config,
+          data.instruction
+        );
+      }
+
+      if (!proposalIx) {
+        throw new Error("Invalid proposal instruction.");
+      }
+
+      const expirationTimeInSeconds = Date.now() / 1_000 + data.expires;
+      const expirationDate = data.expires === 0 ? undefined : new Date(expirationTimeInSeconds * 1_000);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        data.title,
+        data.description,
+        expirationDate,
+        operation,
+        selectedMultisig.id,
+        proposalIx.programId,
+        proposalIx.keys,
+        proposalIx.data // Buffer.from(dataBuffer.toString())
+      );
+
+      return tx;
+    };
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (!publicKey || !data || !multisigClient) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('createTransactionProposal failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut("Start transaction for create multisig", '', 'blue');
+      consoleOut('Wallet address:', publicKey.toBase58());
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      // Data
+      consoleOut('data:', data);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+      consoleOut('networkFee:', multisigTransactionFees.networkFee, 'blue');
+      consoleOut('rentExempt:', multisigTransactionFees.rentExempt, 'blue');
+      consoleOut('multisigFee:', multisigTransactionFees.multisigFee, 'blue');
+      const minRequired = multisigTransactionFees.multisigFee + multisigTransactionFees.rentExempt + multisigTransactionFees.networkFee;
+      consoleOut('Min required balance:', minRequired, 'blue');
+
+      if (nativeBalance < minRequired) {
+        const txStatusMsg = `Not enough balance ${
+          getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+        } to pay for network fees ${
+          getAmountWithSymbol(
+            minRequired, 
+            NATIVE_SOL_MINT.toBase58()
+          )
+        }`;
+        const txStatus = {
+          customError: txStatusMsg,
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        } as TransactionStatusInfo;
+        setTransactionStatus(txStatus);
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: txStatusMsg
+        });
+        customLogger.logWarning('Create Transaction Proposal failed', { transcript: transactionLog });
+        return false;
+      }
+
+      const result = await createTransactionProposal(data)
+        .then((value: any) => {
+          consoleOut('createTransactionProposal returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch((error: any) => {
+          console.error('createTransactionProposal error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('createTransactionProposal failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+
+      if (!connection || !wallet || !wallet.publicKey || !transaction) {
+        console.error('Cannot send transaction! Wallet not found or no connection!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      const {
+        context: { slot: minContextSlot },
+        value: { blockhash, lastValidBlockHeight },
+      } = await connection.getLatestBlockhashAndContext();
+
+      transaction.feePayer = wallet.publicKey;
+      transaction.recentBlockhash = blockhash;
+
+      const result = wallet.sendTransaction(transaction, connection, { minContextSlot })
+        .then(sig => {
+          consoleOut('sendEncodedTransaction returned a signature:', sig);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransactionSuccess,
+            currentOperation: TransactionStatus.ConfirmTransaction
+          });
+          signature = sig;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+            result: `signature: ${signature}`
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransaction,
+            currentOperation: TransactionStatus.SendTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+            result: { error, encodedTx }
+          });
+          customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sent = await sendTx();
+        consoleOut('sent:', sent);
+        if (sent && !transactionCancelled) {
+          consoleOut('Send Tx to confirmation queue:', signature);
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.CreateTransaction,
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
+            loadingMessage: `Create proposal: ${data.title}`,
+            completedTitle: "Transaction confirmed",
+            completedMessage: `Successfully created proposal: ${data.title}`,
+            extras: {
+              multisigAuthority: data.multisigId
+            }
+          });
+          setIsBusy(false);
+          setMultisigProposalModalVisible(false);
+          resetTransactionStatus();
+        } else {
+          setIsBusy(false); 
+        }
+      } else {
+        setIsBusy(false); 
+      }
+    }
+  }, [
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigClient,
+    selectedMultisig,
+    transactionCancelled,
+    multisigTransactionFees.multisigFee,
+    multisigTransactionFees.networkFee,
+    multisigTransactionFees.rentExempt,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    createCredixWithdrawTrancheIx,
+    createCredixDepositTrancheIx,
+    resetTransactionStatus,
+    createCredixWithdrawIx,
+    createCredixDepositIx,
+    setTransactionStatus,
+    createProposalIx,
+  ]);
+
 
   /////////////////////
   // Data management //
@@ -2953,6 +3406,37 @@ export const AccountsView = () => {
     setStreamDetail,
     onTxConfirmed,
     onTxTimedout,
+  ]);
+
+  // Get Multisig Apps
+  useEffect(() => {
+
+    if (!connectionConfig.cluster) { return; }
+
+    let network: NETWORK;
+    switch (connectionConfig.cluster) {
+      case "mainnet-beta":
+        network = NETWORK.MainnetBeta
+        break;
+      case "testnet":
+        network = NETWORK.Testnet;
+        break;
+      case "devnet":
+      default:
+        network = NETWORK.Devnet;
+        break;
+    }
+
+    const provider = new AppsProvider(network);
+    setAppsProvider(provider);
+    provider
+      .getApps()
+      .then((apps: App[]) => {
+        setSolanaApps(apps);
+      });
+
+  }, [
+    connectionConfig.cluster
   ]);
 
   // Preset token based on url param asset
@@ -3975,10 +4459,22 @@ export const AccountsView = () => {
     } else return null;
   };
 
-  const getAssetListOptions = () => {
+  const getLeftPanelOptions = () => {
     const items: ItemType[] = [];
+    if (isMultisigContext) {
+      items.push({
+        key: '01-create-asset',
+        label: (
+          <div onClick={onShowCreateAssetModal}>
+            <IconAdd className="mean-svg-icons" />
+            <span className="menu-item-text">Create an asset</span>
+          </div>
+        )
+      });
+    }
+    // Divider
     items.push({
-      key: '01-suggest-asset',
+      key: '02-suggest-asset',
       label: (
         <div onClick={showSuggestAssetModal}>
           <IconLightBulb className="mean-svg-icons" />
@@ -3989,7 +4485,7 @@ export const AccountsView = () => {
     if (accountTokens && accountTokens.length > 0) {
       if (hideLowBalances) {
         items.push({
-          key: '02-show-low-balances',
+          key: '03-show-low-balances',
           label: (
             <div onClick={() => toggleHideLowBalances(false)}>
               <IconEyeOn className="mean-svg-icons" />
@@ -3999,7 +4495,7 @@ export const AccountsView = () => {
         });
       } else {
         items.push({
-          key: '03-hide-low-balances',
+          key: '04-hide-low-balances',
           label: (
             <div onClick={() => toggleHideLowBalances(true)}>
               <IconEyeOff className="mean-svg-icons" />
@@ -4420,37 +4916,34 @@ export const AccountsView = () => {
                     {/* Bottom CTAs */}
                     <div className="bottom-ctas">
                       <div className="primary-action">
-                        {isInspectedAccountTheConnectedWallet() ? (
-                          <Button
-                            block
-                            className="flex-center"
-                            type="primary"
-                            shape="round"
-                            onClick={showInitAtaModal}>
-                            <IconAdd className="mean-svg-icons" />
-                            <span className="ml-1">Add asset</span>
-                          </Button>
-                        ) : (
-                          <Tooltip placement="bottom" title={
-                            !selectedAccount.address || isMultisigContext
-                              ? "You can only add assets to your connected account"
-                              : "Add asset to your multisig safe account"
-                            }>
+                        {isMultisigContext ? (
+                          <>
                             <Button
                               block
                               className="flex-center"
                               type="primary"
                               shape="round"
-                              disabled={!selectedAccount.address || isMultisigContext}
-                              onClick={onShowCreateAssetModal}>
-                              <IconAdd className="mean-svg-icons" />
-                              <span className="ml-1">Create an asset</span>
+                              onClick={onNewProposalMultisigClick}>
+                              <IconSafe className="mean-svg-icons" style={{width: 24, height: 24}} />
+                              <span className="ml-1">New proposal</span>
                             </Button>
-                          </Tooltip>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              block
+                              className="flex-center"
+                              type="primary"
+                              shape="round"
+                              onClick={showInitAtaModal}>
+                              <IconAdd className="mean-svg-icons" />
+                              <span className="ml-1">Add asset</span>
+                            </Button>
+                          </>
                         )}
                       </div>
                       <Dropdown className="options-dropdown"
-                        overlay={getAssetListOptions()}
+                        overlay={getLeftPanelOptions()}
                         placement="bottomRight"
                         trigger={["click"]}>
                         <span className="icon-button-container">
@@ -4601,7 +5094,12 @@ export const AccountsView = () => {
                             <Spin spinning={true} />
                           </div>
                         }>
-                          <SafeDetails safeBalance={netWorth} vestingContracts={vestingContracts} />
+                          <SafeDetails
+                            appsProvider={appsProvider}
+                            safeBalance={netWorth}
+                            solanaApps={solanaApps}
+                            vestingContracts={vestingContracts}
+                          />
                         </Suspense>
                       </>
                     )}
@@ -4773,6 +5271,19 @@ export const AccountsView = () => {
           nativeBalance={selectedMultisig.balance}
           selectedMultisig={selectedMultisig}
           isStreamingAccount={false}
+        />
+      )}
+
+      {isMultisigProposalModalVisible && (
+        <MultisigProposalModal
+          isVisible={isMultisigProposalModalVisible}
+          handleClose={() => setMultisigProposalModalVisible(false)}
+          isBusy={isBusy}
+          proposer={publicKey ? publicKey.toBase58() : ""}
+          appsProvider={appsProvider}
+          solanaApps={solanaApps.filter(app => app.active)}
+          handleOk={(params: CreateNewProposalParams) => onAcceptCreateProposalModal(params)}
+          selectedMultisig={selectedMultisig}
         />
       )}
 

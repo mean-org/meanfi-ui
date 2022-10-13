@@ -19,7 +19,6 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 export const SafeInfo = (props: {
   isTxInProgress?: any;
   onEditMultisigClick?: any;
-  onNewProposalMultisigClick?: any;
   onRefreshTabsInfo?: any;
   programsTabContent?: any;
   proposalsTabContent?: any;
@@ -34,7 +33,6 @@ export const SafeInfo = (props: {
   const {
     isTxInProgress,
     onEditMultisigClick,
-    onNewProposalMultisigClick,
     onRefreshTabsInfo,
     programsTabContent,
     proposalsTabContent,
@@ -296,8 +294,7 @@ export const SafeInfo = (props: {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress()}
-            onClick={onNewProposalMultisigClick}>
+            onClick={() => {}}>
               New proposal
           </Button>
 
@@ -313,20 +310,6 @@ export const SafeInfo = (props: {
                 </div>
             </Button>
           )}
-
-          {/* <div className="cool-off-period-label">
-            <div className="icon-label">
-              <div className="pl-1">
-                <span className="info-label">Cool-off period: </span>
-                <span className="info-value"> 24h</span>
-              </div>
-              <Tooltip placement="bottom" title="This is the period of time that applies to every proposal in this safe. To change it edit the safe.">
-                <span className="icon-info-circle simplelink">
-                  <IconInfoCircle className="mean-svg-icons" />
-                </span>
-              </Tooltip>
-            </div>
-          </div> */}
         </Col>
         
         <Col xs={4} sm={6} md={4} lg={6}>
