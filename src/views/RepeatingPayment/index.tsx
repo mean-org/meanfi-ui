@@ -3,6 +3,7 @@ import {
   LoadingOutlined
 } from "@ant-design/icons";
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from "@mean-dao/msp";
+import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Checkbox, DatePicker, Dropdown, Menu } from "antd";
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -664,6 +665,7 @@ export const RepeatingPayment = (props: {
 
   const onTransactionStart = useCallback(async () => {
     let transaction: Transaction;
+    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -801,7 +803,56 @@ export const RepeatingPayment = (props: {
       }
     }
 
+    const signTx = async (): Promise<boolean> => {
+      if (wallet && publicKey && wallet.signTransaction && transaction) {
+        consoleOut('Signing transaction...');
+        return (wallet as SignerWalletAdapter).signTransaction(transaction)
+        .then(async (signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: publicKey.toBase58()}
+          });
+          encodedTx = signedTransaction.serialize().toString('base64');
+          consoleOut('encodedTx:', encodedTx, 'orange');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          return true;
+        })
+        .catch((error: any) => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
     const sendTx = async (): Promise<boolean> => {
+
+      /* TODO: This approach fails only in this Tx (Repeating Payment)
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
@@ -814,9 +865,24 @@ export const RepeatingPayment = (props: {
         return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
+            // Perform logging
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            // Perform logging
+            return false;
+          });
+      }
+      */
+
+      if (connection && wallet && wallet.publicKey && transaction && encodedTx) {
+        return connection.sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionSuccess
             });
             signature = sig;
             transactionLog.push({
@@ -859,29 +925,33 @@ export const RepeatingPayment = (props: {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.StreamCreate,
-            finality: "confirmed",
-            txInfoFetchStatus: "fetching",
-            loadingTitle: "Confirming transaction",
-            loadingMessage: `Send ${getPaymentRateAmount()}`,
-            completedTitle: "Transaction confirmed",
-            completedMessage: `Stream to send ${getPaymentRateAmount()} has been created.`
-          });
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished
-          });
-          setIsBusy(false);
-          resetTransactionStatus();
-          resetContractValues();
-          setIsVerifiedRecipient(false);
-          transferCompleted();
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamCreate,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Send ${getPaymentRateAmount()}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Stream to send ${getPaymentRateAmount()} has been created.`
+            });
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            setIsBusy(false);
+            resetTransactionStatus();
+            resetContractValues();
+            setIsVerifiedRecipient(false);
+            transferCompleted();
+          } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
