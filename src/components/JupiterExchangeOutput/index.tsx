@@ -1,36 +1,52 @@
-import { TokenInfo } from "models/SolanaTokenInfo";
-import { useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount, formatThousands } from "../../middleware/utils";
-import { TokenDisplay } from "../TokenDisplay";
 import { MarketInfo, RouteInfo } from "@jup-ag/core";
 import BN from "bn.js";
-import { useWallet } from "../../contexts/wallet";
-import { consoleOut, toUsCurrency } from "../../middleware/ui";
+import { TokenDisplay } from "components/TokenDisplay";
+import { AppStateContext } from "contexts/appstate";
+import { useWallet } from "contexts/wallet";
+import { toUsCurrency } from "middleware/ui";
+import { formatAmount, formatThousands } from "middleware/utils";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export const JupiterExchangeOutput = (props: {
-  fromToken: TokenInfo | undefined;
-  fromTokenAmount: string;
-  toToken: TokenInfo | undefined;
-  toTokenBalance?: number;
-  toTokenAmount?: string;
-  mintList?: any;
-  onSelectToken: any;
-  onSelectedRoute: any;
-  onBalanceClick?: any;
-  routes: RouteInfo[];
-  showAllRoutes: boolean;
-  onToggleShowFullRouteList: any;
   className?: string;
   disabled?: boolean;
-  readonly?: boolean;
+  fromToken: TokenInfo | undefined;
   isBusy?: boolean;
+  mintList?: any;
+  onBalanceClick?: any;
+  onSelectToken: any;
+  onSelectedRoute: any;
+  onToggleShowFullRouteList: any;
+  readonly?: boolean;
+  routes: RouteInfo[];
+  showAllRoutes: boolean;
+  toToken: TokenInfo | undefined;
+  toTokenAmount?: string;
+  toTokenBalance?: number;
 }) => {
-
+  const {
+    className,
+    disabled,
+    fromToken,
+    isBusy,
+    mintList,
+    onBalanceClick,
+    onSelectToken,
+    onSelectedRoute,
+    onToggleShowFullRouteList,
+    readonly,
+    routes,
+    showAllRoutes,
+    toToken,
+    toTokenAmount,
+    toTokenBalance,
+  } = props;
   const { t } = useTranslation("common");
   const {
     loadingPrices,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -44,9 +60,17 @@ export const JupiterExchangeOutput = (props: {
     return amount.toNumber() / 10 ** decimals;
   }
 
+  const getTokenAmountValue = useCallback((amount?: number) => {
+    if (!toToken || !amount) {
+      return 0;
+    }
+    const price = getTokenPriceByAddress(toToken.address) || getTokenPriceBySymbol(toToken.symbol);
+    return amount * price;
+  }, [toToken]);
+
   useEffect(() => {
 
-    if (!props.routes || !props.routes.length || selectedRouteIndex !== undefined) { return; }
+    if (!routes || !routes.length || selectedRouteIndex !== undefined) { return; }
 
     const timeout = setTimeout(() => {
       setSelectedRouteIndex(0);
@@ -57,35 +81,47 @@ export const JupiterExchangeOutput = (props: {
     }
 
   }, [
-    props.routes,
+    routes,
     selectedRouteIndex
   ]);
 
+  const getOutputAmountDisplay = () => {
+    if (routes && routes.length > 1) {
+      return (<span>&nbsp;</span>);
+    } else if (toTokenAmount) {
+      return (
+        <div className="static-data-field text-right">
+          {toTokenAmount}
+        </div>
+      );
+    } else {
+      return (<span>&nbsp;</span>);
+    }
+  }
+
   return (
     <>
-      <div className={`well ${props.className} ${props.disabled ? 'disabled' : ''}`}>
+      <div className={`well ${className} ${disabled ? 'disabled' : ''}`}>
         {/* Balance row */}
         <div className="flex-fixed-right">
           <div className="left inner-label">
             <span>{t('transactions.send-amount.label-right')}:</span>
             {publicKey ? (
               <>
-                <span className="simplelink" onClick={props.onBalanceClick}>
-                  {props.toToken && props.toTokenBalance !== undefined &&
+                <span className="simplelink" onClick={onBalanceClick}>
+                  {toToken && toTokenBalance !== undefined &&
                     formatThousands(
-                      props.toTokenBalance,
-                      props.toToken.decimals,
-                      props.toToken.decimals
+                      toTokenBalance,
+                      toToken.decimals,
+                      toToken.decimals
                     )
                   }
                 </span>
-                {props.toTokenBalance && (
+                {toTokenBalance && (
                   <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>
                     {`(~${
-                      props.toToken && props.toTokenBalance
-                        ? toUsCurrency(
-                            props.toTokenBalance * getTokenPriceBySymbol(props.toToken.symbol)
-                          )
+                      toToken && toTokenBalance
+                        ? toUsCurrency(getTokenAmountValue(toTokenBalance))
                         : "$0.00"
                     })`}
                   </span>
@@ -99,8 +135,8 @@ export const JupiterExchangeOutput = (props: {
           {publicKey ? (
             <>
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                ~{props.toToken && props.toTokenBalance
-                  ? toUsCurrency(props.toTokenBalance * getTokenPriceBySymbol(props.toToken.symbol))
+                ~{toToken && toTokenAmount
+                  ? toUsCurrency(getTokenAmountValue(parseFloat(toTokenAmount)))
                   : "$0.00"
                 }
               </span>
@@ -114,62 +150,59 @@ export const JupiterExchangeOutput = (props: {
         {/* Main row */}
         <div className="flex-fixed-left">
           <div className="left">
-            <span className={`add-on ${!props.readonly || !props.isBusy ? 'simplelink' : ''}`}>
+            <span className={`add-on ${!readonly || !isBusy ? 'simplelink' : ''}`}>
               <TokenDisplay onClick={
                 () => {
-                  if (!props.readonly || !props.isBusy) {
-                    props.onSelectToken();
+                  if (!readonly || !isBusy) {
+                    onSelectToken();
                   }
                 }}
-                fullTokenInfo={props.toToken}
-                mintAddress={props.toToken ? props.toToken.address : ''}
-                name={props.toToken ? props.toToken.name : ''}
-                className={!props.readonly || !props.isBusy ? 'simplelink' : ''}
+                fullTokenInfo={toToken}
+                mintAddress={toToken ? toToken.address : ''}
+                name={toToken ? toToken.name : ''}
+                className={!readonly || !isBusy ? 'simplelink' : ''}
                 noTokenLabel={t('swap.token-select-destination')}
                 showName={false}
-                showCaretDown={!props.readonly || !props.isBusy}
+                showCaretDown={!readonly || !isBusy}
               />
             </span>
           </div>
           <div className="right">
-            {props.routes &&
-             props.routes.length > 1 ? (
-              <span>&nbsp;</span>
-            ) : props.toTokenAmount ? (
-              <div className="static-data-field text-right">
-                {props.toTokenAmount}
-              </div>
-            ) : <span>&nbsp;</span>}
+            {getOutputAmountDisplay()}
           </div>
         </div>
 
-        {(props.routes &&
-         props.routes.length > 0) && (
+        {(routes &&
+         routes.length > 0) && (
           <>
-            <div className={`routes-container-max-size mb-1 ${props.showAllRoutes && props.routes.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
-              {props.routes.map((c: RouteInfo, index: number) => {
-                const firstInfo =  props.routes[0];
-                const lastInfo = props.routes[props.routes.length - 1];
-                const decimals = props.toToken ? props.toToken.decimals : 6;
+            <div className={`routes-container-max-size mb-1 ${showAllRoutes && routes.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
+              {routes.map((c: RouteInfo, index: number) => {
+                const firstInfo =  routes[0];
+                const lastInfo = routes[routes.length - 1];
+                const decimals = toToken ? toToken.decimals : 6;
                 const amountOut = toUiAmount(new BN(c.outAmount), decimals);
-                const showBadge = props.routes.length > 1 && (firstInfo.outAmount || 0) > (lastInfo.outAmount || 0);
+                const showBadge = routes.length > 1 && (firstInfo.outAmount || 0) > (lastInfo.outAmount || 0);
                 const marketInfo = c.marketInfos;
                 const labels = marketInfo.map(item => item.amm.label).join(' x ');
-                const maxNumItems = props.showAllRoutes ? 10 : 2;
+                const maxNumItems = showAllRoutes ? 10 : 2;
+
+                const getRouteClass = () => {
+                  if (index === selectedRouteIndex) {
+                    return `swap-client-card ${isBusy ? 'no-pointer' : 'selected'}`;
+                  } else {
+                    return `swap-client-card ${isBusy ? 'no-pointer' : ''}`;
+                  }
+                }
 
                 if (index < maxNumItems) {
                   return (
                     <div
                       key={`${index}`}
-                      className={
-                        index === selectedRouteIndex
-                          ? `swap-client-card ${props.isBusy ? 'no-pointer' : 'selected'}`
-                          : `swap-client-card ${props.isBusy ? 'no-pointer' : ''}`
-                      }
+                      className={getRouteClass()}
                       onClick={() => {
-                        if (!props.isBusy) {
+                        if (!isBusy) {
                           setSelectedRouteIndex(index);
-                          props.onSelectedRoute(c);
+                          onSelectedRoute(c);
                         }
                       }}>
                       <div className="card-content">
@@ -187,8 +220,8 @@ export const JupiterExchangeOutput = (props: {
                           </span>
                           <div className="font-size-75">
                             {marketInfo.map((value: MarketInfo, idx: number) => {
-                              const tokenIn = props.fromToken;
-                              const tokenOut = props.mintList[value.outputMint.toBase58()] as TokenInfo;
+                              const tokenIn = fromToken;
+                              const tokenOut = mintList[value.outputMint.toBase58()] as TokenInfo;
                               return (
                                 <span key={`route-${idx}`}>
                                   {(idx === 0 && tokenIn) && (
@@ -218,15 +251,15 @@ export const JupiterExchangeOutput = (props: {
               })}
             </div>
             <div className="flex-fixed-left align-items-center pl-1">
-              {props.routes.length > 2 ? (
+              {routes.length > 2 ? (
                 <span
-                  className={`left fg-secondary-60 ${props.isBusy ? 'no-pointer' : 'simplelink underline-on-hover'}`}
+                  className={`left fg-secondary-60 ${isBusy ? 'no-pointer' : 'simplelink underline-on-hover'}`}
                   onClick={() => {
-                    if (!props.isBusy) {
-                      props.onToggleShowFullRouteList();
+                    if (!isBusy) {
+                      onToggleShowFullRouteList();
                     }
                   }}>
-                  {props.showAllRoutes ? 'Show less' : 'Show more'}
+                  {showAllRoutes ? 'Show less' : 'Show more'}
                 </span>
               ) : (
                 <div className="left">&nbsp;</div>

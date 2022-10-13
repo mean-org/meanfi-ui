@@ -1,18 +1,22 @@
 import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Modal, Spin } from "antd";
+import { TokenDisplay } from 'components/TokenDisplay';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
+import { customLogger } from 'index';
+import { createTokenMergeTx } from 'middleware/accounts';
+import {
+  consoleOut,
+  friendlyDisplayDecimalPlaces,
+  getTransactionOperationDescription,
+  getTransactionStatusForLogs
+} from 'middleware/ui';
+import { formatThousands, getTxIxResume, shortenAddress } from 'middleware/utils';
+import { AccountTokenParsedInfo, UserTokenAccount } from "models/accounts";
+import { TransactionStatus } from 'models/enums';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { customLogger } from '../..';
-import { AppStateContext } from '../../contexts/appstate';
-import { useWallet } from '../../contexts/wallet';
-import { createTokenMergeTx } from '../../middleware/accounts';
-import { consoleOut, friendlyDisplayDecimalPlaces, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../middleware/ui';
-import { formatThousands, getTxIxResume, shortenAddress } from '../../middleware/utils';
-import { AccountTokenParsedInfo } from "../../models/accounts";
-import { TransactionStatus } from '../../models/enums';
-import { UserTokenAccount } from "../../models/accounts";
-import { TokenDisplay } from '../TokenDisplay';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -242,6 +246,18 @@ export const AccountsMergeModal = (props: {
 
   };
 
+  const getMainCtaLabel = () => {
+    if (isBusy) {
+      return 'Merging accounts';
+    } else if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+      return 'Start merge';
+    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+      return 'Completed';
+    } else {
+      return 'Try again';
+    }
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -252,7 +268,7 @@ export const AccountsMergeModal = (props: {
       width={400}>
 
       <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Iddle && (
           <>
             <div className="transaction-progress">
               <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0" />
@@ -300,12 +316,15 @@ export const AccountsMergeModal = (props: {
               <p>Merging your {tokenGroup && tokenGroup[0].description} token accounts will send funds to the <strong>Associated Token Account</strong>.</p>
             </div>
           </>
-        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
+        )}
+        {transactionStatus.currentOperation === TransactionStatus.TransactionFinished && (
           <div className="transaction-progress">
             <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
             <h4 className="font-bold">Your tokens have been merged into the <strong>Associated Token Account</strong>!</h4>
           </div>
-        ) : (
+        )}
+        {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
+         transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
           <div className="transaction-progress">
             <CloseCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
             <h4 className="font-bold">Merge token accounts failed</h4>
@@ -337,14 +356,7 @@ export const AccountsMergeModal = (props: {
             onExecuteMergeAccountsTx()
           }
         }}>
-        {isBusy
-          ? 'Merging accounts'
-          : transactionStatus.currentOperation === TransactionStatus.Iddle
-            ? 'Start merge'
-            : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-              ? 'Completed'
-              : 'Try again'
-        }
+        {getMainCtaLabel()}
       </Button>
     </Modal>
   );

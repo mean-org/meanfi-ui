@@ -1,23 +1,41 @@
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { StreamTemplate, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { Button, Checkbox, Col, Modal, Row } from "antd";
 import BN from 'bn.js';
+import { InfoIcon } from 'components/InfoIcon';
+import { InputMean } from 'components/InputMean';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { WizardStepSelector } from 'components/WizardStepSelector';
+import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
+import { IconEdit, IconWarning } from 'Icons';
+import { isError } from 'middleware/transactions';
+import {
+    consoleOut,
+    getLockPeriodOptionLabel,
+    getPaymentIntervalFromSeconds,
+    getPaymentRateOptionLabel,
+    getReadableDate,
+    isValidAddress,
+    stringNumberFormat,
+    toUsCurrency
+} from 'middleware/ui';
+import {
+    displayAmountWithSymbol,
+    formatPercent,
+    formatThousands,
+    isValidNumber,
+    makeDecimal,
+    toTokenAmount,
+    toUiAmount
+} from 'middleware/utils';
+import { PaymentRateType } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { VestingContractStreamCreateOptions } from 'models/vesting';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { InfoIcon } from '../../../../components/InfoIcon';
-import { InputMean } from '../../../../components/InputMean';
-import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { WizardStepSelector } from '../../../../components/WizardStepSelector';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { useWallet } from '../../../../contexts/wallet';
-import { IconEdit, IconWarning } from '../../../../Icons';
-import { isError } from '../../../../middleware/transactions';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getPaymentRateOptionLabel, getReadableDate, isValidAddress, stringNumberFormat, toUsCurrency } from '../../../../middleware/ui';
-import { displayAmountWithSymbol, formatPercent, formatThousands, isValidNumber, makeDecimal, toTokenAmount, toUiAmount } from '../../../../middleware/utils';
-import { PaymentRateType } from '../../../../models/enums';
-import { VestingContractStreamCreateOptions } from '../../../../models/vesting';
 
 export const VestingContractCreateStreamModal = (props: {
     handleClose: any;
@@ -68,7 +86,7 @@ export const VestingContractCreateStreamModal = (props: {
         refreshPrices,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
-    const { publicKey, wallet } = useWallet();
+    const { publicKey } = useWallet();
     const [currentStep, setCurrentStep] = useState(0);
     const [vestingStreamName, setVestingStreamName] = useState<string>('');
     const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
@@ -164,8 +182,9 @@ export const VestingContractCreateStreamModal = (props: {
 
         const bf = transactionFees.blockchainFee;       // Blockchain fee
         const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-        const minRequired = isMultisigTreasury ? minRequiredBalance : bf + ff;
-        return minRequired;
+        const fee = bf + ff;
+        const minRequired = isMultisigTreasury ? minRequiredBalance : fee;
+        return minRequired > MIN_SOL_BALANCE_REQUIRED ? minRequired : MIN_SOL_BALANCE_REQUIRED;
 
     }, [isMultisigTreasury, minRequiredBalance, transactionFees]);
 
@@ -179,6 +198,7 @@ export const VestingContractCreateStreamModal = (props: {
             selectedToken.address,
             selectedToken.decimals,
             splTokenList,
+            false
         )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
     }, [lockPeriodAmount, lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
 
@@ -192,6 +212,7 @@ export const VestingContractCreateStreamModal = (props: {
             selectedToken.address,
             selectedToken.decimals,
             splTokenList,
+            false
         );
     }, [cliffRelease, cliffReleaseBn, selectedToken, splTokenList]);
 
@@ -322,11 +343,11 @@ export const VestingContractCreateStreamModal = (props: {
         const resizeListener = () => {
             const NUM_CHARS = 4;
             const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-            for (let i = 0; i < ellipsisElements.length; ++i) {
-                const e = ellipsisElements[i] as HTMLElement;
-                if (e.offsetWidth < e.scrollWidth) {
-                    const text = e.textContent;
-                    e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+            for (const element of ellipsisElements) {
+                const e = element as HTMLElement;
+                if (e.offsetWidth < e.scrollWidth){
+                  const text = e.textContent;
+                  e.dataset.tail = text?.slice(text.length - NUM_CHARS);
                 }
             }
         };
@@ -469,13 +490,7 @@ export const VestingContractCreateStreamModal = (props: {
         setRecipientAddress(trimmedValue);
     }
 
-    const handleRecipientAddressFocusIn = () => {
-        setTimeout(() => {
-            triggerWindowResize();
-        }, 10);
-    }
-
-    const handleRecipientAddressFocusOut = () => {
+    const handleRecipientAddressFocusInOut = () => {
         setTimeout(() => {
             triggerWindowResize();
         }, 10);
@@ -483,11 +498,6 @@ export const VestingContractCreateStreamModal = (props: {
 
     const onIsVerifiedRecipientChange = (e: any) => {
         setIsVerifiedRecipient(e.target.checked);
-    }
-
-    const isAddressOwnAccount = (): boolean => {
-        return recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58()
-            ? true : false;
     }
 
     const isStepOneValid = (): boolean => {
@@ -500,8 +510,7 @@ export const VestingContractCreateStreamModal = (props: {
                 vestingStreamName && vestingStreamName.length <= 32 &&
                 recipientAddress &&
                 isValidAddress(recipientAddress) &&
-                !isAddressOwnAccount() &&
-                nativeBalance > getMinBalanceRequired() &&
+                nativeBalance >= getMinBalanceRequired() &&
                 tokenAmount && tokenAmount.gtn(0) &&
                 ((isFeePaidByTreasurer && tokenAmount.lte(mAa)) ||
                  (!isFeePaidByTreasurer && tokenAmount.lte(ub)))
@@ -519,34 +528,47 @@ export const VestingContractCreateStreamModal = (props: {
     const getStepOneButtonLabel = (): string => {
         const mAa = new BN(maxAllocatableAmount || 0);
         const ub = new BN(unallocatedBalance || 0);
-        return  !publicKey
-            ? t('transactions.validation.not-connected')
-                : (isMultisigTreasury && selectedMultisig && !proposalTitle)
-                ? 'Add a proposal title'
-                    : !vestingStreamName || vestingStreamName.length > 32
-                        ? t('vesting.create-stream.stream-name-empty')
-                        : !recipientAddress || !isValidAddress(recipientAddress)
-                            ? t('vesting.create-stream.beneficiary-address-missing')
-                            : isAddressOwnAccount()
-                                ? t('vesting.create-stream.cannot-send-to-yourself')
-                                : !selectedToken || unallocatedBalance.isZero()
-                                    ? t('transactions.validation.no-balance')
-                                    : !tokenAmount || tokenAmount.isZero()
-                                        ? t('transactions.validation.no-amount')
-                                        : (isFeePaidByTreasurer && tokenAmount.gt(mAa)) ||
-                                        (!isFeePaidByTreasurer && tokenAmount.gt(ub))
-                                            ? t('transactions.validation.amount-high')
-                                            : nativeBalance < getMinBalanceRequired()
-                                                ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
-                                                : t('vesting.create-stream.step-one-validation-pass');
+
+        if (!publicKey) {
+            return t('transactions.validation.not-connected');
+        } else if (isMultisigTreasury && selectedMultisig && !proposalTitle) {
+            return 'Add a proposal title';
+        } else if (!vestingStreamName) {
+            return t('vesting.create-stream.stream-name-empty');
+        } else if (!recipientAddress || !isValidAddress(recipientAddress)) {
+            return t('vesting.create-stream.beneficiary-address-missing');
+        } else if (!selectedToken || unallocatedBalance.isZero()) {
+            return t('transactions.validation.no-balance');
+        } else if (!tokenAmount || tokenAmount.isZero()) {
+            return t('transactions.validation.no-amount');
+        } else if ((isFeePaidByTreasurer && tokenAmount.gt(mAa)) ||
+                   (!isFeePaidByTreasurer && tokenAmount.gt(ub))) {
+            return t('transactions.validation.amount-high');
+        } else if (nativeBalance < getMinBalanceRequired()) {
+            return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) });
+        } else {
+            return t('vesting.create-stream.step-one-validation-pass');
+        }
     }
 
     const getStepTwoButtonLabel = (): string => {
-        return  !isStepOneValid()
-            ? getStepOneButtonLabel()
-            : !isVerifiedRecipient
-                ? t('transactions.validation.verified-recipient-unchecked')
-                : t('vesting.create-stream.create-cta');
+        if (!isStepOneValid()) {
+            return getStepOneButtonLabel();
+        } else if (!isVerifiedRecipient) {
+            return t('transactions.validation.verified-recipient-unchecked');
+        } else {
+            return t('vesting.create-stream.create-cta');
+        }
+    }
+
+    const getMainCtaLabel = () => {
+        if (isBusy) {
+            return t('vesting.create-stream.create-cta-busy');
+        } else if (isError(transactionStatus.currentOperation)) {
+            return t('general.retry');
+        } else {
+            return getStepTwoButtonLabel();
+        }
     }
 
     const onTitleInputValueChange = (e: any) => {
@@ -644,9 +666,9 @@ export const VestingContractCreateStreamModal = (props: {
                                         autoComplete="on"
                                         autoCorrect="off"
                                         type="text"
-                                        onFocus={handleRecipientAddressFocusIn}
+                                        onFocus={handleRecipientAddressFocusInOut}
                                         onChange={handleRecipientAddressChange}
-                                        onBlur={handleRecipientAddressFocusOut}
+                                        onBlur={handleRecipientAddressFocusInOut}
                                         placeholder={t('vesting.create-stream.beneficiary-address-placeholder')}
                                         required={true}
                                         spellCheck="false"
@@ -662,15 +684,11 @@ export const VestingContractCreateStreamModal = (props: {
                             </div>
                         </div>
                         {
-                            recipientAddress && !isValidAddress(recipientAddress) ? (
+                            recipientAddress && !isValidAddress(recipientAddress) && (
                                 <span className="form-field-error">
                                     {t('transactions.validation.address-validation')}
                                 </span>
-                            ) : isAddressOwnAccount() ? (
-                                <span className="form-field-error">
-                                    {t('transactions.recipient.recipient-is-own-account')}
-                                </span>
-                            ) : (null)
+                            )
                         }
                     </div>
 
@@ -793,6 +811,7 @@ export const VestingContractCreateStreamModal = (props: {
                                                 selectedToken.address,
                                                 selectedToken.decimals,
                                                 splTokenList,
+                                                false
                                             )}`
                                         : "--"
                                 }
@@ -828,6 +847,7 @@ export const VestingContractCreateStreamModal = (props: {
                                                 selectedToken.address,
                                                 selectedToken.decimals,
                                                 splTokenList,
+                                                false
                                             )} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`
                                         : "--"
                                 }
@@ -880,12 +900,7 @@ export const VestingContractCreateStreamModal = (props: {
                                 {isBusy && (
                                     <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                                 )}
-                                {isBusy
-                                    ? t('vesting.create-stream.create-cta-busy')
-                                    : isError(transactionStatus.currentOperation)
-                                        ? t('general.retry')
-                                        : getStepTwoButtonLabel()
-                                }
+                                {getMainCtaLabel()}
                             </Button>
                         </div>
                     </div>

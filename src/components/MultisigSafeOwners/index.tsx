@@ -6,7 +6,7 @@ import { isValidAddress, scrollToBottom } from "../../middleware/ui";
 import { InputMean } from "../InputMean";
 import { isMobile } from "react-device-detect";
 import useWindowSize from "../../hooks/useWindowResize";
-import { IconHelpCircle, IconInfoCircle, IconTrash } from "../../Icons";
+import { IconInfoCircle, IconTrash } from "../../Icons";
 import "./style.scss";
 import { Tooltip } from "antd";
 
@@ -97,6 +97,20 @@ export const MultisigSafeOwners = (props: {
     setOwnersInputsObject(newOwnersInputArray);
   }
 
+  const renderMultisigThresholdMessage = () => {
+    if (!ownersInputsObject || ownersInputsObject.length === 0) {
+      return null;
+    }
+
+    if (checkIfDuplicateExists(ownersInputsObject)) {
+      return (<span className="fg-warning form-field-error pl-2">{t('multisig.create-multisig.multisig-duplicate-participants')}</span>);
+    } else if (ownersInputsObject.length === 10) {
+      return (<span className="fg-warning form-field-hint pl-1">{t('multisig.create-multisig.multisig-threshold-input-max-warn')}</span>);
+    } else {
+      return null;
+    }
+  }
+
   return (
     <div className={`multisig-safe-owners ${ownersInputsObject.length > 2 ? 'mb-1' : 'mb-3'}`}>
       <div className={`flex-fixed-right add-owners-row ${disabled ? 'click-disabled' : ''}`}>
@@ -132,9 +146,8 @@ export const MultisigSafeOwners = (props: {
       )}
       {ownersInputsObject && ownersInputsObject.length > 0 ? (
         <div className={`multisig-participants-max-height ${ownersInputsObject.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
-          {ownersInputsObject.map((participant: any, index: number) => {
+          {ownersInputsObject.map((participant, index: number) => {
             const isAddressValid = isValidAddress(participant.address); 
-            const isInputTouched = participant.isTouched; 
             
             return (
               <div className="container-owner-item" key={index}>
@@ -166,10 +179,9 @@ export const MultisigSafeOwners = (props: {
                       placeholder="Enter address of the owner"
                       validationIcons={true}
                       isValid={isAddressValid}
-                      isTouched={isInputTouched}
                       onBlur={blurHandler}
                     />
-                    {isInputTouched && (
+                    {
                       isAddressValid ? (
                         isInputMultisigAddress(participant.address) && (
                           <small className="fg-warning form-field-error ml-1">{t('multisig.create-multisig.multisig-address-used-as-participant')}</small>
@@ -177,7 +189,7 @@ export const MultisigSafeOwners = (props: {
                       ) : (
                         <small className="fg-warning form-field-error ml-1">Please enter a valid Solana address</small>
                       )
-                    )}
+                    }
                   </div>
                 </div>
                 <div className="trash-icon" onClick={() => onRemoveSingleItem(index)}>
@@ -186,11 +198,7 @@ export const MultisigSafeOwners = (props: {
               </div>
             );
           })}
-          {checkIfDuplicateExists(ownersInputsObject) ? (
-            <span className="fg-warning form-field-error pl-2">{t('multisig.create-multisig.multisig-duplicate-participants')}</span>
-          ) : ownersInputsObject.length === 10 ? (
-            <span className="fg-warning form-field-hint pl-1">{t('multisig.create-multisig.multisig-threshold-input-max-warn')}</span>
-          ) : null}
+          {renderMultisigThresholdMessage()}
         </div>
       ) : (
         <div className="inner-label pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>

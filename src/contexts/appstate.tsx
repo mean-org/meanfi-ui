@@ -43,15 +43,18 @@ const tokenListPerformanceCounter = new PerformanceCounter();
 const listStreamsV1PerformanceCounter = new PerformanceCounter();
 const listStreamsV2PerformanceCounter = new PerformanceCounter();
 
+export type TpsAverageValues = number | null | undefined;
+export type StreamValues = Stream | StreamInfo | undefined;
+
 export interface TransactionStatusInfo {
   customError?: any;
-  lastOperation?: TransactionStatus | undefined;
-  currentOperation?: TransactionStatus | undefined;
+  lastOperation?: TransactionStatus;
+  currentOperation?: TransactionStatus;
 }
 
 interface AppStateConfig {
   theme: string | undefined;
-  tpsAvg: number | null | undefined;
+  tpsAvg: TpsAverageValues;
   refreshInterval: number;
   isWhitelisted: boolean;
   isDepositOptionsModalVisible: boolean;
@@ -88,8 +91,8 @@ interface AppStateConfig {
   streamList: Array<Stream | StreamInfo> | undefined;
   programs: ProgramAccounts[] | undefined;
   multisigTxs: MultisigTransaction[] | undefined;
-  selectedStream: Stream | StreamInfo | undefined;
-  streamDetail: Stream | StreamInfo | undefined;
+  selectedStream: StreamValues;
+  streamDetail: StreamValues;
   activeStream: StreamInfo | Stream | undefined;
   deletedStreams: string[];
   highLightableStreamId: string | undefined;
@@ -135,7 +138,7 @@ interface AppStateConfig {
   // Routes
   previousRoute: string;
   setTheme: (name: string) => void;
-  setTpsAvg: (value: number | null | undefined) => void;
+  setTpsAvg: (value: TpsAverageValues) => void;
   showDepositOptionsModal: () => void;
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
@@ -175,9 +178,9 @@ interface AppStateConfig {
   setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
   setPrograms: (list: Array<ProgramAccounts> | undefined) => void;
   setMultisigTxs: (list: Array<MultisigTransaction> | undefined) => void;
-  setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
-  setActiveStream: (stream: Stream | StreamInfo | undefined) => void;
-  setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
+  setSelectedStream: (stream: StreamValues) => void;
+  setActiveStream: (stream: StreamValues) => void;
+  setStreamDetail: (stream: StreamValues) => void;
   setDeletedStream: (id: string) => void,
   setHighLightableStreamId: (id: string | undefined) => void,
   openStreamById: (streamId: string, dock: boolean) => void;
@@ -393,13 +396,11 @@ const AppStateProvider: React.FC = ({ children }) => {
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
-  const [streamProgramAddress, setStreamProgramAddress] = useState('');
-  const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
   const today = new Date().toLocaleDateString("en-US");
   const tomorrow = moment().add(1, 'days').format('L');
   const timeDate = moment().format('hh:mm A');  
   const [theme, updateTheme] = useLocalStorageState("theme");
-  const [tpsAvg, setTpsAvg] = useState<number | null | undefined>(contextDefaultValues.tpsAvg);
+  const [tpsAvg, setTpsAvg] = useState<TpsAverageValues>(contextDefaultValues.tpsAvg);
   const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
   const [treasuryOption, updateTreasuryOption] = useState<TreasuryTypeOption | undefined>(contextDefaultValues.treasuryOption);
   const [ddcaOptionName, setDdcaOptionName] = useState<string>('');
@@ -433,9 +434,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
   const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>();
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[] | undefined>();
-  const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
-  const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
-  const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();
+  const [selectedStream, updateSelectedStream] = useState<StreamValues>();
+  const [streamDetail, updateStreamDetail] = useState<StreamValues>();
+  const [activeStream, setActiveStream] = useState<StreamValues>();
   const [deletedStreams, setDeletedStreams] = useState<string[]>([]);
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
   const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
@@ -478,36 +479,28 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [tpsAvg]);
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-  const streamProgramAddressFromConfig = useMemo(() => appConfig.getConfig().streamProgramAddress, []);
-  const streamV2ProgramAddressFromConfig = useMemo(() => appConfig.getConfig().streamV2ProgramAddress, []);
-
-  if (!streamProgramAddress) {
-    setStreamProgramAddress(streamProgramAddressFromConfig);
-  }
-
-  if (!streamV2ProgramAddress) {
-    setStreamV2ProgramAddress(streamV2ProgramAddressFromConfig);
-  }
+  const streamProgramAddress = useMemo(() => appConfig.getConfig().streamProgramAddress, []);
+  const streamV2ProgramAddress = useMemo(() => appConfig.getConfig().streamV2ProgramAddress, []);
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
     connectionConfig.endpoint,
-    streamProgramAddressFromConfig,
+    streamProgramAddress,
     "confirmed"
   ), [
     connectionConfig.endpoint,
-    streamProgramAddressFromConfig
+    streamProgramAddress
   ]);
 
   const msp = useMemo(() => {
     return new MSP(
       connectionConfig.endpoint,
-      streamV2ProgramAddressFromConfig,
+      streamV2ProgramAddress,
       "confirmed"
     );
   }, [
     connectionConfig.endpoint,
-    streamV2ProgramAddressFromConfig
+    streamV2ProgramAddress
   ]);
 
   const multisigClient = useMemo(() => {
@@ -527,22 +520,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     multisigAddressPK,
     connectionConfig.endpoint,
   ]);
-
-  /*
-  const utlClient = useMemo(() => {
-    if (!connection) { return undefined; }
-    const targetChain = getNetworkIdByCluster(connectionConfig.cluster);
-    const config = new UtlConfig({
-      chainId: +targetChain,
-      timeout: 2000,
-      connection: connection,
-      apiUrl: "https://token-list-api.solana.cloud",
-      cdnUrl: "https://cdn.jsdelivr.net/gh/solflare-wallet/token-list/solana-tokenlist.json"
-    });
-    consoleOut('Solflare Unified Token List client initialized as fallback', '', 'blue');
-    return new Client(config);
-  }, [connection, connectionConfig.cluster]);
-  */
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -835,21 +812,18 @@ const AppStateProvider: React.FC = ({ children }) => {
           });
 
       } else {
-        const before = clearHistory
-          ? ''
-          : streamActivity && streamActivity.length > 0
-            ? streamActivity[streamActivity.length - 1].signature
-            : '';
+        const signature = streamActivity && streamActivity.length > 0
+          ? streamActivity[streamActivity.length - 1].signature
+          : '';
+        const before = clearHistory ? '' : signature;
         consoleOut('before:', before, 'crimson');
         msp.listStreamActivity(streamPublicKey, before, 5)
           .then((value: StreamActivity[]) => {
             consoleOut('activity:', value);
-            const activities = clearHistory
-              ? []
-              : streamActivity && streamActivity.length > 0
-                ? JSON.parse(JSON.stringify(streamActivity)) // Object.assign({}, streamActivity)
-                : [];
-
+            const currentActivity = streamActivity && streamActivity.length > 0
+              ? JSON.parse(JSON.stringify(streamActivity))
+              : [];
+            const activities = clearHistory ? [] : currentActivity;
             if (value && value.length > 0) {
               activities.push(...value);
               setHasMoreStreamActivity(true);
@@ -875,7 +849,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     loadingStreamActivity
   ]);
 
-  const setSelectedStream = (stream: Stream | StreamInfo | undefined) => {
+  const setSelectedStream = (stream: StreamValues) => {
     updateSelectedStream(stream);
     if (stream) {
       const mspInstance: any = stream.version < 2 ? ms : msp;
@@ -893,7 +867,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
-  const setStreamDetail = (stream: Stream | StreamInfo | undefined) => {
+  const setStreamDetail = (stream: StreamValues) => {
     updateStreamDetail(stream);
   }
 
@@ -1099,11 +1073,10 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    const userPk = userAddress
-      ? userAddress
-      : accountAddress
-        ? new PublicKey(accountAddress)
-        : publicKey as PublicKey;
+    const fallback = accountAddress
+      ? new PublicKey(accountAddress)
+      : publicKey as PublicKey;
+    const userPk = userAddress || fallback;
     consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
 
     if (msp) {
@@ -1214,7 +1187,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    if (!selectedToken || !(selectedToken as TokenInfo).address ) {
+    if (!selectedToken || !selectedToken.address ) {
       return;
     }
 
@@ -1235,7 +1208,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     let balance = 0;
-    const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, new PublicKey(selectedToken.address));
+    const selectedTokenAddress = await findATokenAddress(publicKey, new PublicKey(selectedToken.address));
     balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
     updateTokenBalance(balance);
 
@@ -1316,7 +1289,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     try {
       tokenListPerformanceCounter.start();
-      // const targetChain = 101;
       const targetChain = getNetworkIdByCluster(connectionConfig.cluster);
       const cacheEntryKey = getSolanaTokenListKeyNameByCluster(targetChain);
       const honorCache = isCacheItemExpired(cacheEntryKey) ? false : true;
@@ -1417,7 +1389,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       // Filter out the banned tokens
       const filteredTokens = userTokenList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
       // Sort the big list
-      const sortedMainnetList = filteredTokens.sort((a, b) => {
+      const sortedMainnetList = [...filteredTokens].sort((a, b) => {
         const nameA = a.symbol.toUpperCase();
         const nameB = b.symbol.toUpperCase();
         if (nameA < nameB) {
@@ -1426,7 +1398,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         if (nameA > nameB) {
           return 1;
         }
-        // names must be equal
         return 0;
       });
       updateSplTokenList(sortedMainnetList);

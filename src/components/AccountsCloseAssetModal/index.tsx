@@ -2,23 +2,23 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { TransactionFees } from '@mean-dao/msp';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, Modal } from "antd";
+import { InputMean } from 'components/InputMean';
+import { openNotification } from 'components/Notifications';
+import { TokenListItem } from 'components/TokenListItem';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
+import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnection } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { customLogger } from 'index';
+import { closeTokenAccount } from 'middleware/accounts';
+import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
+import { getAmountFromLamports, getTxIxResume } from 'middleware/utils';
+import { UserTokenAccount } from "models/accounts";
+import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from "react-i18next";
-import { customLogger } from '../..';
-import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { useNativeAccount } from '../../contexts/accounts';
-import { AppStateContext } from '../../contexts/appstate';
-import { useConnection } from '../../contexts/connection';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { useWallet } from '../../contexts/wallet';
-import { closeTokenAccount } from '../../middleware/accounts';
-import { consoleOut, getTransactionStatusForLogs } from '../../middleware/ui';
-import { getAmountFromLamports, getTxIxResume } from '../../middleware/utils';
-import { OperationType, TransactionStatus } from '../../models/enums';
-import { UserTokenAccount } from "../../models/accounts";
-import { InputMean } from '../InputMean';
-import { openNotification } from '../Notifications';
-import { TokenListItem } from '../TokenListItem';
 
 export const AccountsCloseAssetModal = (props: {
   connection: Connection;
@@ -123,7 +123,7 @@ export const AccountsCloseAssetModal = (props: {
           result: "",
         });
 
-        return await closeTokenAccount(
+        return closeTokenAccount(
           connection,                             // connection
           new PublicKey(asset.publicAddress),     // tokenPubkey
           publicKey                               // owner
@@ -296,33 +296,58 @@ export const AccountsCloseAssetModal = (props: {
   };
 
   const getCtaLabelIfWrapSol = () => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : nativeBalance === 0
-        ? t('transactions.validation.amount-sol-low')
-        : nativeBalance < feeAmount
-          ? t('transactions.validation.amount-sol-low')
-          : !asset
-            ? 'No token selected'
-            : !isEnterYesWordValid()
-              ? "Confirm account closure"
-              : !isDisclaimerAccepted
-                ? 'Accept disclaimer'
-                : 'Close account';
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (nativeBalance < feeAmount) {
+      return t('transactions.validation.amount-sol-low');
+    } else if (!asset) {
+      return 'No token selected';
+    } else if (!isEnterYesWordValid()) {
+      return 'Confirm account closure';
+    } else if (!isDisclaimerAccepted) {
+      return 'Accept disclaimer';
+    } else {
+      return 'Close account';
+    }
   }
 
   const getCtaLabel = () => {
-    return !publicKey
-      ? t('transactions.validation.not-connected')
-      : nativeBalance === 0
-        ? t('transactions.validation.amount-sol-low')
-        : nativeBalance < feeAmount
-          ? t('transactions.validation.amount-sol-low')
-          : !asset
-            ? 'No token selected'
-            : !isDisclaimerAccepted
-              ? 'Accept disclaimer'
-              : 'Close account';
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (nativeBalance < feeAmount) {
+      return t('transactions.validation.amount-sol-low');
+    } else if (!asset) {
+      return 'No token selected';
+    } else if (!isDisclaimerAccepted) {
+      return 'Accept disclaimer';
+    } else {
+      return 'Close account';
+    }
+  }
+
+  const renderMessages = () => {
+    if (asset.address === WRAPPED_SOL_MINT_ADDRESS && asset.balance) {
+      return (<p>Your Wrapped SOL token account has funds, therefore the balance will be unwrapped to Native SOL and the token account will be closed.</p>);
+    } else if (asset.address !== WRAPPED_SOL_MINT_ADDRESS && asset.balance) {
+      return (<p>Your token account has funds, therefore it will be sent to the trash and the funds will be lost unless you transfer the funds to another account.</p>);
+    } else {
+      return (<p>Your token account is empty so it can be closed. Click Close account to remove the asset from your wallet.</p>);
+    }
+  }
+
+  const renderMainCtaLabel = () => {
+
+    const isWrappedSol = () => {
+      return asset.balance && asset.balance > 0 && asset.address === WRAPPED_SOL_MINT_ADDRESS ? true : false;
+    }
+
+    if (isBusy) {
+      return 'Closing account';
+    } else if (isWrappedSol()) {
+      return getCtaLabelIfWrapSol();
+    } else {
+      return getCtaLabel();
+    }
   }
 
   // Rendering
@@ -339,13 +364,7 @@ export const AccountsCloseAssetModal = (props: {
       <div className="shift-up-1">
 
         <div className="mb-2 text-center">
-          {asset.address === WRAPPED_SOL_MINT_ADDRESS && asset.balance ? (
-            <p>Your Wrapped SOL token account has funds, therefore the balance will be unwrapped to Native SOL and the token account will be closed.</p>
-          ) : asset.address !== WRAPPED_SOL_MINT_ADDRESS && asset.balance ? (
-            <p>Your token account has funds, therefore it will be sent to the trash and the funds will be lost unless you transfer the funds to another account.</p>
-          ) : (
-            <p>Your token account is empty so it can be closed. Click Close account to remove the asset from your wallet.</p>
-          )}
+          {renderMessages()}
         </div>
 
         <div className="form-label">Token account to close</div>
@@ -394,10 +413,7 @@ export const AccountsCloseAssetModal = (props: {
           {isBusy && (
               <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
-          {isBusy
-            ? 'Closing account'
-            : ((asset.balance && asset.balance > 0 && asset.name !== "Wrapped SOL") ? getCtaLabelIfWrapSol() : getCtaLabel())
-          }
+          {renderMainCtaLabel()}
         </Button>
 
       </div>

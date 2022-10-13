@@ -216,7 +216,6 @@ export const AccountsNewView = () => {
   const [transactionAssetFees, setTransactionAssetFees] = useState<TransactionFees>(NO_FEES);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
@@ -626,11 +625,12 @@ export const AccountsNewView = () => {
   }, [transactions]);
 
   const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
-    return asset?.publicAddress
-            ? asset.publicAddress !== NATIVE_SOL_MINT.toBase58()
-              ? new PublicKey(asset.publicAddress)
-              : new PublicKey(accountAddress)
-            : null;
+    if (asset && asset.publicAddress) {
+      return asset.publicAddress !== NATIVE_SOL_MINT.toBase58()
+        ? new PublicKey(asset.publicAddress)
+        : new PublicKey(accountAddress);
+    }
+    return null;
   },[accountAddress]);
 
   const canActivateMergeTokenAccounts = (): boolean => {
@@ -1081,19 +1081,18 @@ export const AccountsNewView = () => {
     resetTransactionStatus();
   }, [recordTxConfirmation, resetTransactionStatus]);
 
+  const getChange = useCallback((accountIndex: number, meta: ParsedTransactionMeta | null): number => {
+    if (meta !== null && accountIndex !== -1) {
+      const prevBalance = meta.preBalances[accountIndex] || 0;
+      const postbalance = meta.postBalances[accountIndex] || 0;
+      const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
+      return change;
+    }
+    return 0;
+  }, []);
+
   // Filter only useful Txs for the SOL account and return count
   const getSolAccountItems = useCallback((txs: MappedTransaction[]): number => {
-
-    const getChange = (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
-      if (meta !== null && accountIndex !== -1) {
-        const prevBalance = meta.preBalances[accountIndex] || 0;
-        const postbalance = meta.postBalances[accountIndex] || 0;
-        const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
-        return change;
-      }
-      return 0;
-    }
-
     if (txs && txs.length) {
 
       // Show only txs that have SOL changes
@@ -1116,7 +1115,8 @@ export const AccountsNewView = () => {
     }
   }, [
     accountAddress,
-    isSelectedAssetNativeAccount
+    isSelectedAssetNativeAccount,
+    getChange,
   ]);
 
   // Lets consider there are items to render if there are transactions for selected asset (NOT SOL)
@@ -1304,7 +1304,7 @@ export const AccountsNewView = () => {
           return false;
         }
 
-        return await createAsset(data)
+        return createAsset(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('createVault returned transaction:', value);
@@ -1509,12 +1509,11 @@ export const AccountsNewView = () => {
         toPubkey: toAddress,
         lamports: new BN(data.amount * LAMPORTS_PER_SOL).toNumber()
       });
-      
+
       const ixs: TransactionInstruction[] = [];
 
       if (!fromMintAddress.equals(NATIVE_SOL_MINT)) {
 
-        // programId = TOKEN_PROGRAM_ID;
         const mintInfo = await connection.getAccountInfo(fromMintAddress);
 
         if (!mintInfo) { 
@@ -1634,7 +1633,7 @@ export const AccountsNewView = () => {
           return false;
         }
 
-        return await transferTokens(data)
+        return transferTokens(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('transferTokens returned transaction:', value);
@@ -2111,9 +2110,9 @@ export const AccountsNewView = () => {
 
       const closeIx = Token.createCloseAccountInstruction(
         TOKEN_PROGRAM_ID,
-        new PublicKey(inputAsset.publicAddress as string),
+        new PublicKey(inputAsset.publicAddress),
         publicKey,
-        new PublicKey(inputAsset.owner as string),
+        new PublicKey(inputAsset.owner),
         []
       );
 
@@ -2474,7 +2473,7 @@ export const AccountsNewView = () => {
 
         let amountChange = 0;
 
-        const token = getTokenByMintAddress(associatedToken as string);
+        const token = getTokenByMintAddress(associatedToken);
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
@@ -2525,7 +2524,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream);
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -2609,7 +2608,7 @@ export const AccountsNewView = () => {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream, undefined, false) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream, undefined, false);
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -2892,7 +2891,7 @@ export const AccountsNewView = () => {
       setLoadingTransactions(true);
 
       // Get the address to scan and ensure there is one
-      const pk = getScanAddress(selectedAsset as UserTokenAccount);
+      const pk = getScanAddress(selectedAsset);
       consoleOut('Load transactions for pk:', pk ? pk.toBase58() : 'NONE', 'blue');
       if (!pk) {
         consoleOut('Asset has no public address, aborting...', '', 'goldenrod');
@@ -3021,16 +3020,6 @@ export const AccountsNewView = () => {
       if (inferredAsset) {
         selectAsset(inferredAsset);
       }
-
-      // if (!selectedAsset) {
-      //   consoleOut('Presetting first token in the list...', accountTokens[0].publicAddress, 'crimson');
-      //   selectAsset(accountTokens[0]);
-      // } else {
-      //   const inferredAsset = accountTokens.find(t => t.publicAddress === accountAddress);
-      //   if (inferredAsset) {
-      //     selectAsset(inferredAsset);
-      //   }
-      // }
     } else {
       reloadTokensAndActivity();
     }
@@ -3304,7 +3293,7 @@ export const AccountsNewView = () => {
   useEffect(() => {
     if (!incomingAmount && !outgoingAmount) { return; }
 
-    setTotalStreamsAmount((incomingAmount + outgoingAmount) as number);
+    setTotalStreamsAmount(incomingAmount + outgoingAmount);
   }, [incomingAmount, outgoingAmount])
 
   // Live data calculation
@@ -3475,10 +3464,10 @@ export const AccountsNewView = () => {
 
         const wSolPubKey = new PublicKey(wSol.publicAddress);
 
-        return await closeTokenAccount(
+        return closeTokenAccount(
           connection,                       // connection
           wSolPubKey,                       // tokenPubkey
-          publicKey as PublicKey            // owner
+          publicKey                         // owner
         )
           .then((value: Transaction | null) => {
             if (value !== null) {
@@ -3687,88 +3676,97 @@ export const AccountsNewView = () => {
   };
 
   const renderNetworth = () => {
+
+    const renderValues = () => {
+      if (netWorth) {
+        return toUsCurrency(netWorth);
+      } else {
+        return '$0.00';
+      }
+    }
+
     return (
-      <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`} onClick={() => {
-        // setSelectedCategory("networth");
-        // setSelectedAsset(undefined);
-      }}>
+      <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`}>
         <div className="font-bold font-size-110 left">{!isInspectedAccountTheConnectedWallet() ? "Treasury Balance" : "Net Worth"}</div>
         <div className="font-bold font-size-110 right">
-          {
-            loadingStreams || !canShowStreamingAccountBalance ? (
+          {loadingStreams || !canShowStreamingAccountBalance ? (
               <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-            ) : netWorth
-              ? toUsCurrency(netWorth)
-              : '$0.00'
-          }
+          ) : renderValues()}
         </div>
       </div>
     );
   };
 
-  const renderMoneyStreamsSummary = (
-    <>
-      {
-        <div key="streams" onClick={() => {
-          navigateToStreaming();
-          setAutoOpenDetailsPanel(true);
-        }} className={`transaction-list-row ${selectedCategory === "streaming" ? 'selected' : ''}`}>
-          <div className="icon-cell">
-            {loadingStreams ? (
-              <div className="token-icon animate-border-loading">
-                <div className="streams-count simplelink" onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}>
-                  <span className="font-bold text-shadow"><SyncOutlined spin /></span>
-                </div>
-              </div>
-            ) : (
-              <div className={totalStreamsAmount !== 0 ? 'token-icon animate-border' : 'token-icon'}>
-                <div className="streams-count simplelink" onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    refreshStreamList(false);
-                  }}>
-                  <span className="font-size-75 font-bold text-shadow">{kFormatter(totalStreamsAmount as number) || 0}</span>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="description-cell">
-            <div className="title">{t('account-area.money-streams')}</div>
-            {loadingStreams ? (
-              <div className="subtitle"><IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }}/></div>
-            ) : (totalStreamsAmount === 0) ? (
-              <div className="subtitle">{t('account-area.no-money-streams')}</div>
-            ) : (
-              <div className="subtitle">{incomingAmount} {t('streams.stream-stats-incoming')}, {outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
-            )}
-          </div>
-          <div className="rate-cell">
-            {loadingStreams || !canShowStreamingAccountBalance ? (
-              <div className="rate-amount">
-                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-              </div>
-            ) : (
-              <>
-                {totalAccountBalance > 0 ? (
-                  <>
-                    <div className="rate-amount">
-                      {toUsCurrency(totalAccountBalance)}
-                    </div>
-                    <div className="interval">{t('streams.streaming-balance')}</div>
-                  </>
-                ) : (
-                  <span className="rate-amount">$0.00</span>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+  const renderMoneyStreamsSummary = () => {
+
+    const renderValues = () => {
+      if (totalStreamsAmount === 0) {
+        return (<div className="subtitle">{t('account-area.no-money-streams')}</div>);
+      } else {
+        return (<div className="subtitle">{incomingAmount} {t('streams.stream-stats-incoming')}, {outgoingAmount} {t('streams.stream-stats-outgoing')}</div>);
       }
-    </>
-  );
+    }
+
+    return  (
+      <>
+        {
+          <div key="streams" onClick={() => {
+            navigateToStreaming();
+            setAutoOpenDetailsPanel(true);
+          }} className={`transaction-list-row ${selectedCategory === "streaming" ? 'selected' : ''}`}>
+            <div className="icon-cell">
+              {loadingStreams ? (
+                <div className="token-icon animate-border-loading">
+                  <div className="streams-count simplelink" onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}>
+                    <span className="font-bold text-shadow"><SyncOutlined spin /></span>
+                  </div>
+                </div>
+              ) : (
+                <div className={totalStreamsAmount !== 0 ? 'token-icon animate-border' : 'token-icon'}>
+                  <div className="streams-count simplelink" onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      refreshStreamList(false);
+                    }}>
+                    <span className="font-size-75 font-bold text-shadow">{kFormatter(totalStreamsAmount || 0, 1) || 0}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="description-cell">
+              <div className="title">{t('account-area.money-streams')}</div>
+              {loadingStreams ? (
+                <div className="subtitle"><IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }}/></div>
+              ) : renderValues()}
+            </div>
+            <div className="rate-cell">
+              {loadingStreams || !canShowStreamingAccountBalance ? (
+                <div className="rate-amount">
+                  <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+                </div>
+              ) : (
+                <>
+                  {totalAccountBalance > 0 ? (
+                    <>
+                      <div className="rate-amount">
+                        {toUsCurrency(totalAccountBalance)}
+                      </div>
+                      <div className="interval">{t('streams.streaming-balance')}</div>
+                    </>
+                  ) : (
+                    <span className="rate-amount">$0.00</span>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        }
+      </>
+    );
+  }
 
   const renderAsset = useCallback((asset: UserTokenAccount) => {
     const onTokenAccountClick = () => {
@@ -3981,25 +3979,16 @@ export const AccountsNewView = () => {
   const renderTransactions = () => {
     if (transactions) {
       if (isSelectedAssetNativeAccount()) {
-        // Get amount change for each tx
-        const getChange = (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
-          if (meta !== null && accountIndex !== -1) {
-            const prevBalance = meta.preBalances[accountIndex] || 0;
-            const postbalance = meta.postBalances[accountIndex] || 0;
-            const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
-            return change;
-          }
-          return 0;
-        }
         // Render only txs that have SOL changes
         const filtered = transactions.filter(tx => {
           const meta = tx.parsedTransaction && tx.parsedTransaction.meta
-            ? tx.parsedTransaction.meta
-            : null;
+          ? tx.parsedTransaction.meta
+          : null;
           if (!meta || meta.err !== null) { return false; }
           const accounts = tx.parsedTransaction.transaction.message.accountKeys;
           const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
           if (isSelectedAssetNativeAccount() && accIdx === -1) { return false; }
+          // Get amount change for each tx
           const change = getChange(accIdx, meta);
           return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
         });
@@ -4208,8 +4197,16 @@ export const AccountsNewView = () => {
   const renderUserAccountAssetMeta = () => {
     if (!selectedAsset) { return null; }
 
+    const renderBalance = () => {
+      if (tokenPrice > 0) {
+        return selectedAsset.balance ? toUsCurrency((selectedAsset.balance || 0) * tokenPrice) : '$0.00';
+      } else {
+        return '$0.00';
+      }
+    }
     const priceByAddress = getTokenPriceByAddress(selectedAsset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(selectedAsset.symbol);
+
     return (
       <>
         <div className="accounts-category-meta">
@@ -4239,19 +4236,9 @@ export const AccountsNewView = () => {
                 </div>
               </Col>
               <Col span={10}>
-                <div className="info-label">
-                  Value
-                </div>
+                <div className="info-label">Value</div>
                 <div className="transaction-detail-row">
-                  <span className="info-data">
-                    {
-                      tokenPrice > 0
-                        ? selectedAsset.balance
-                          ? toUsCurrency((selectedAsset.balance || 0) * tokenPrice)
-                          : '$0.00'
-                        : '$0.00'
-                    }
-                  </span>
+                  <span className="info-data">{renderBalance()}</span>
                 </div>
               </Col>
             </Row>
@@ -4405,18 +4392,12 @@ export const AccountsNewView = () => {
     navigate(url);
   }
 
+  const renderTotalAccountBalance = () => {
+    return totalAccountBalance > 0 ? toUsCurrency(totalAccountBalance) : "$0.00";
+  }
+
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar">
-          <span>loadingTokenAccounts:</span><span className="ml-1 font-extrabold">{loadingTokenAccounts ? 'true' : 'false'}</span>
-          <span className="ml-2">shouldLoadTokens:</span><span className="ml-1 font-extrabold">{shouldLoadTokens ? 'true' : 'false'}</span>
-          <span className="ml-2">tokensLoaded:</span><span className="ml-1 font-extrabold">{tokensLoaded ? 'true' : 'false'}</span>
-          <span className="ml-2">userTokensResponse:</span><span className="ml-1 font-extrabold">{userTokensResponse !== null ? 'true' : 'false'}</span>
-          <span className="ml-2">accountAddress:</span><span className="ml-1 font-extrabold">{accountAddress ? shortenAddress(accountAddress) : '-'}</span>
-        </div>
-      )} */}
-
       {detailsPanelOpen && (
         <Button
           id="back-button"
@@ -4529,14 +4510,11 @@ export const AccountsNewView = () => {
                         <div className="amount">{
                           loadingStreams || !canShowStreamingAccountBalance ? (
                             <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-                          ) : totalAccountBalance > 0
-                            ? toUsCurrency(totalAccountBalance)
-                            : "$0.00"
-                          }
+                          ) : renderTotalAccountBalance()}
                         </div>
                       </div>
                       <div className="asset-category">
-                        {renderMoneyStreamsSummary}
+                        {renderMoneyStreamsSummary()}
                       </div>
 
                       <div className="asset-category-title flex-fixed-right">
@@ -4772,14 +4750,6 @@ export const AccountsNewView = () => {
           handleClose={hideUnwrapSolModal}
         />
       )}
-
-      {/* {isExchangeAssetModalOpen && publicKey && selectedAsset && (
-        <ExchangeAssetModal
-          isVisible={isExchangeAssetModalOpen}
-          handleClose={hideExchangeAssetModal}
-          tokenSymbol={selectedAsset.symbol}
-        />
-      )} */}
 
       {isSuggestAssetModalOpen && (
         <AccountsSuggestAssetModal

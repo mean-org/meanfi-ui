@@ -26,7 +26,7 @@ import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconMoneyTransfer, IconVerticalEllipsis } from "Icons";
 import { appConfig, customLogger } from 'index';
-import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from 'middleware/accounts';
+import { getTokenAccountBalanceByAddress, getTokensWithBalances, readAccountInfo } from 'middleware/accounts';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from 'middleware/ids';
 import { AppUsageEvent, SegmentRefreshAccountBalanceData, SegmentStreamAddFundsData, SegmentStreamCreateData, SegmentVestingContractCloseData, SegmentVestingContractCreateData, SegmentVestingContractWithdrawData } from 'middleware/segment-service';
 import { consoleOut, copyText, delay, getDurationUnitFromSeconds, getReadableDate, getTransactionStatusForLogs, isDev, isLocal, toTimestamp } from 'middleware/ui';
@@ -65,6 +65,7 @@ const notificationKey = 'updatable';
 
 export const VestingView = () => {
   const {
+    priceList,
     splTokenList,
     isWhitelisted,
     selectedMultisig,
@@ -2236,7 +2237,7 @@ export const VestingView = () => {
 
       if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      const treasury = selectedVestingContract as Treasury;
+      const treasury = selectedVestingContract;
       const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
@@ -2816,66 +2817,42 @@ export const VestingView = () => {
       return;
     }
 
-    const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
-    const balancesMap: any = {};
-    balancesMap[splTokensCopy[0].address] = nativeBalance;
+    const pk = balancesSource || publicKey.toBase58();
 
-    const pk = balancesSource
-      ? new PublicKey(balancesSource)
-      : publicKey;
-    fetchAccountTokens(connection, pk)
-      .then(accTks => {
-        if (accTks) {
-          // Add owned token accounts to balances map
-          // Code to have all tokens sorted by balance
-          accTks.forEach(item => {
-            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
-          });
-          splTokensCopy.sort((a, b) => {
-            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
-              return 1;
-            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
-              return -1;
-            }
-            return 0;
-          });
-          setSelectedList(splTokensCopy);
+    const timeout = setTimeout(() => {
+
+      getTokensWithBalances(
+        connection,
+        pk,
+        priceList,
+        splTokenList,
+        false
+      )
+      .then(response => {
+        if (response) {
+          setSelectedList(response.tokenList);
+          setUserBalances(response.balancesMap);
           if (!workingToken) {
-            setWorkingToken(splTokensCopy[0]);
-            setSelectedToken(splTokensCopy[0]);
-          }
+            setWorkingToken(response.tokenList[0]);
+            setSelectedToken(response.tokenList[0]);
+          }  
+        }
+      });
 
-        } else {
-          for (const t of splTokensCopy) {
-            balancesMap[t.address] = 0;
-          }
-          // set the list to the userTokens list
-          setSelectedList(splTokensCopy);
-          if (!workingToken) {
-            setWorkingToken(splTokensCopy[0]);
-            setSelectedToken(splTokensCopy[0]);
-          }
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (const t of splTokensCopy) {
-          balancesMap[t.address] = 0;
-        }
-        setSelectedList(splTokensCopy);
-        if (!workingToken) {
-          setWorkingToken(splTokensCopy[0]);
-          setSelectedToken(splTokensCopy[0]);
-        }
-      })
-      .finally(() => setUserBalances(balancesMap));
+    });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      clearTimeout(timeout);
+    }
+
   }, [
     publicKey,
+    priceList,
     connection,
-    nativeBalance,
+    splTokenList,
+    workingToken,
     balancesSource,
+    setSelectedToken,
   ]);
 
   // Build CTAs

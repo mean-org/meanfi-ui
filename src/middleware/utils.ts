@@ -5,11 +5,10 @@ import {
   PublicKey,
   Transaction,
 } from "@solana/web3.js";
-import { BIGNUMBER_FORMAT, CUSTOM_TOKEN_NAME, INPUT_AMOUNT_PATTERN, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
-import { MEAN_TOKEN_LIST } from "../constants/tokens";
+import { BIGNUMBER_FORMAT, CUSTOM_TOKEN_NAME, INTEGER_INPUT_AMOUNT_PATTERN, UNAUTHENTICATED_ROUTES, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { friendlyDisplayDecimalPlaces, isProd } from "./ui";
 import { TOKEN_PROGRAM_ID } from "./ids";
-import { NATIVE_SOL } from '../constants/tokens';
+import { MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
 import { isMobile } from "react-device-detect";
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { getNetworkIdByEnvironment } from "../contexts/connection";
@@ -61,7 +60,7 @@ export function shortenAddress(address: string | PublicKey, chars = 4): string {
   if (typeof address === "string") {
     output = address;
   } else if (address instanceof PublicKey) {
-    output = (address as PublicKey).toBase58();
+    output = address.toBase58();
   } else {
     output = `${address}`;
   }
@@ -167,9 +166,15 @@ export const formatThousands = (val: number, maxDecimals?: number, minDecimals =
   return convertedVlue.format(val);
 }
 
-export function isValidNumber(str: string): boolean {
-  if (str === null || str === undefined ) { return false; }
-  return INPUT_AMOUNT_PATTERN.test(str);
+export function isValidNumber(str: string | null | undefined): boolean {
+  if (!str) { return false; }
+
+  const value = +str;
+
+  // isNaN(+str) returns true if NaN, otherwise false
+  if (isNaN(value)) { return false; }
+
+  return true;
 }
 
 export function isValidInteger(str: string): boolean {
@@ -225,7 +230,7 @@ export const getAmountWithSymbol = (
   let token: TokenInfo | undefined = undefined;
   if (address) {
     if (address === NATIVE_SOL.address) {
-      token = NATIVE_SOL as TokenInfo;
+      token = NATIVE_SOL;
     } else {
       token = tokenList && isProd()
         ? tokenList.find(t => t.address === address)
@@ -313,7 +318,7 @@ export const displayAmountWithSymbol = (
   let token: TokenInfo | undefined = undefined;
   if (address) {
     if (address === NATIVE_SOL.address) {
-      token = NATIVE_SOL as TokenInfo;
+      token = NATIVE_SOL;
     } else {
       token = tokenList && isProd()
         ? tokenList.find(t => t.address === address)
@@ -358,7 +363,7 @@ export const displayAmountWithSymbol = (
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
     let inputAmount = '';
-    let decimals = token ? token.decimals : 9;
+    const decimals = token ? token.decimals : 9;
     BigNumber.config({
       CRYPTO: true,
       FORMAT: BIGNUMBER_FORMAT,
@@ -366,7 +371,7 @@ export const displayAmountWithSymbol = (
     });
     const baseConvert = new BigNumber(10 ** decimals);
     const bigNumberAmount = typeof amount === "string"
-      ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
+      ? new BigNumber(amount) : new BigNumber(amount.toString());
     const value = bigNumberAmount.div(baseConvert);
     const decimalPlaces = friendlyDecimals
       ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
@@ -423,19 +428,19 @@ export const toUiAmount = (amount: number | string | BN, decimals: number) => {
   if (!amount || !decimals) { return '0'; }
 
   const baseConvert = new BigNumber(10 ** decimals);
-  let value = new BigNumber(0);
+  let result: BigNumber;
 
   if (typeof amount === "number") {
     const value = amount / (10 ** decimals);
     return value.toFixed(decimals);
   } else if (typeof amount === "string") {
     const bigNumberAmount = new BigNumber(amount);
-    value = bigNumberAmount.dividedBy(baseConvert);
+    result = bigNumberAmount.dividedBy(baseConvert);
   } else {
-    const bigNumberAmount = new BigNumber((amount as BN).toString());
-    value = bigNumberAmount.dividedBy(baseConvert);
+    const bigNumberAmount = new BigNumber(amount.toString());
+    result = bigNumberAmount.dividedBy(baseConvert);
   }
-  return value.toFixed(decimals);
+  return result.toFixed(decimals);
 }
 
 export const toUiAmountBn = (amount: number | BN, decimals: number, asBn = false) => {
@@ -445,7 +450,7 @@ export const toUiAmountBn = (amount: number | BN, decimals: number, asBn = false
     return asBn ? new BN(value) : value.toFixed(decimals);
   } else {
     const baseConvert = new BigNumber(10 ** decimals);
-    const bigNumberAmount = new BigNumber((amount as BN).toString());
+    const bigNumberAmount = new BigNumber(amount.toString());
     const value = bigNumberAmount.dividedBy(baseConvert);
     return asBn ? new BN(value.toString()) : value.toFixed(decimals);
   }

@@ -4,23 +4,26 @@ import {
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Checkbox, DatePicker, Select } from "antd";
+import { segmentAnalytics } from 'App';
 import BN from 'bn.js';
+import { TokenDisplay } from 'components/TokenDisplay';
+import {
+  CUSTOM_TOKEN_NAME,
+  DATEPICKER_FORMAT,
+  MIN_SOL_BALANCE_REQUIRED,
+  NO_FEES,
+  SIMPLE_DATE_TIME_FORMAT,
+  WRAPPED_SOL_MINT_ADDRESS
+} from "constants/common";
+import { NATIVE_SOL } from 'constants/tokens';
+import { useNativeAccount } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { useConnection, useConnectionConfig } from "contexts/connection";
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { useWallet } from "contexts/wallet";
 import dateFormat from 'dateformat';
-import { TokenInfo } from "models/SolanaTokenInfo";
-import moment from "moment";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { customLogger } from '../..';
-import { segmentAnalytics } from '../../App';
-import { TokenDisplay } from '../../components/TokenDisplay';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { NATIVE_SOL } from '../../constants/tokens';
-import { useNativeAccount } from "../../contexts/accounts";
-import { AppStateContext } from "../../contexts/appstate";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { useWallet } from "../../contexts/wallet";
-import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../middleware/segment-service';
+import { customLogger } from "index";
+import { AppUsageEvent, SegmentStreamOTPTransferData } from 'middleware/segment-service';
 import {
   addMinutes,
   consoleOut,
@@ -28,12 +31,16 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress
-} from "../../middleware/ui";
-import { cutNumber, formatAmount, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, isValidNumber, toTokenAmount, toTokenAmountBn, toUiAmount } from "../../middleware/utils";
-import { RecipientAddressInfo } from '../../models/common-types';
-import { EventType, OperationType, TransactionStatus } from "../../models/enums";
-import { OtpTxParams } from '../../models/transfers';
-import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
+} from "middleware/ui";
+import { cutNumber, formatAmount, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, isValidNumber, toTokenAmount, toTokenAmountBn, toUiAmount } from "middleware/utils";
+import { RecipientAddressInfo } from 'models/common-types';
+import { EventType, OperationType, TransactionStatus } from "models/enums";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { OtpTxParams } from 'models/transfers';
+import moment from "moment";
+import { ACCOUNTS_ROUTE_BASE_PATH } from 'pages/accounts';
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const { Option } = Select;
 
@@ -73,7 +80,6 @@ export const OneTimePayment = (props: {
     setPaymentStartDate,
     setFromCoinAmount,
     setSelectedStream,
-    setEffectiveRate,
     setRecipientNote,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -90,6 +96,12 @@ export const OneTimePayment = (props: {
   const [tokenBalanceBn, setSelectedTokenBalanceBn] = useState(new BN(0));
   const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
   const [otpFees, setOtpFees] = useState<TransactionFees>(NO_FEES);
+
+  const isNative = useMemo(() => {
+    return selectedToken && selectedToken.address === NATIVE_SOL.address
+      ? true
+      : false;
+  }, [selectedToken]);
 
   const isScheduledPayment = useCallback((): boolean => {
     const now = new Date();
@@ -205,7 +217,7 @@ export const OneTimePayment = (props: {
 
   useEffect(() => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
-      return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
+      return calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
     }
     if (!otpFees.mspFlatFee) {
       getTransactionFees().then(values => {
@@ -330,8 +342,8 @@ export const OneTimePayment = (props: {
     const resizeListener = () => {
       const NUM_CHARS = 4;
       const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (let i = 0; i < ellipsisElements.length; ++i){
-        const e = ellipsisElements[i] as HTMLElement;
+      for (const element of ellipsisElements) {
+        const e = element as HTMLElement;
         if (e.offsetWidth < e.scrollWidth){
           const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
@@ -431,13 +443,7 @@ export const OneTimePayment = (props: {
     setRecipientAddress(trimmedValue);
   }
 
-  const handleRecipientAddressFocusIn = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 10);
-  }
-
-  const handleRecipientAddressFocusOut = () => {
+  const handleRecipientAddressFocusInOut = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
@@ -453,6 +459,19 @@ export const OneTimePayment = (props: {
       return 'Recipient cannot be the selected token mint';
     }
     return '';
+  }
+
+  const isRecipientAddressValid = () => {
+    if (recipientAddressInfo.type === "mint") {
+      return false;
+    }
+    if (recipientAddressInfo.type === "account" &&
+               recipientAddressInfo.mint &&
+               recipientAddressInfo.mint === selectedToken?.address &&
+               recipientAddressInfo.owner === publicKey?.toBase58()) {
+      return false;
+    }
+    return true;
   }
 
   const isMemoValid = (): boolean => {
@@ -488,28 +507,42 @@ export const OneTimePayment = (props: {
   // Ui helpers
   const getTransactionStartButtonLabel = (): string => {
     const inputAmount = getInputAmountBn();
-    return !connected
-      ? t('transactions.validation.not-connected')
-      : !recipientAddress || isAddressOwnAccount()
-        ? t('transactions.validation.select-recipient')
-        : getRecipientAddressValidation() || !isValidAddress(recipientAddress)
-          ? 'Invalid recipient address'
-          : !selectedToken || tokenBalanceBn.isZero()
-            ? t('transactions.validation.no-balance')
-            : !fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()
-              ? t('transactions.validation.no-amount')
-              : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
-                (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.lt(inputAmount)))
-                ? t('transactions.validation.amount-high')
-                : !paymentStartDate
-                  ? t('transactions.validation.no-valid-date')
-                  : !recipientNote
-                    ? t('transactions.validation.memo-empty')
-                    : !isVerifiedRecipient
-                      ? t('transactions.validation.verified-recipient-unchecked')
-                      : nativeBalance < getMinSolBlanceRequired()
-                        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
-                        : t('transactions.validation.valid-approve');
+    if (!publicKey) {
+      return t('transactions.validation.not-connected');
+    } else if (!recipientAddress || isAddressOwnAccount()) {
+      return t('transactions.validation.select-recipient');
+    } else if (!isRecipientAddressValid() || !isValidAddress(recipientAddress)) {
+      return 'Invalid recipient address';
+    } else if (!selectedToken || tokenBalanceBn.isZero()) {
+      return t('transactions.validation.no-balance');
+    } else if (!fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()) {
+      return t('transactions.validation.no-amount');
+    } else if (((isNative && parseFloat(fromCoinAmount) > getMaxAmount()) ||
+                (!isNative && tokenBalanceBn.lt(inputAmount)))) {
+      return t('transactions.validation.amount-high');
+    } else if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    } else if (!recipientNote) {
+      return t('transactions.validation.memo-empty');
+    } else if (!isVerifiedRecipient) {
+      return t('transactions.validation.verified-recipient-unchecked');
+    } else if (nativeBalance < getMinSolBlanceRequired()) {
+      return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) });
+    } else {
+      return t('transactions.validation.valid-approve');
+    }
+  }
+
+  const getMainCtaLabel = () => {
+    if (isBusy) {
+      if (isScheduledPayment()) {
+        return t('streams.create-new-stream-cta-busy');
+      } else {
+        return t('transactions.status.cta-start-transfer-busy');
+      }
+    } else {
+      return getTransactionStartButtonLabel();
+    }
   }
 
   // Main action
@@ -531,7 +564,7 @@ export const OneTimePayment = (props: {
       const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
       if (!isScheduledPayment()) {
-        return await msp.transfer(
+        return msp.transfer(
           new PublicKey(data.wallet),                                      // sender
           new PublicKey(data.beneficiary),                                 // beneficiary
           new PublicKey(data.associatedToken),                             // beneficiaryMint
@@ -539,7 +572,7 @@ export const OneTimePayment = (props: {
         )
       }
 
-      return await msp.scheduledTransfer(
+      return msp.scheduledTransfer(
         new PublicKey(data.wallet),                                      // treasurer
         new PublicKey(data.beneficiary),                                 // beneficiary
         new PublicKey(data.associatedToken),                             // beneficiaryMint
@@ -569,9 +602,9 @@ export const OneTimePayment = (props: {
       });
 
       consoleOut('Beneficiary address:', recipientAddress);
-      const beneficiary = new PublicKey(recipientAddress as string);
+      const beneficiary = new PublicKey(recipientAddress);
       consoleOut('associatedToken:', selectedToken.address);
-      const associatedToken = new PublicKey(selectedToken.address as string);
+      const associatedToken = new PublicKey(selectedToken.address);
       const amount = toTokenAmount(fromCoinAmount, selectedToken.decimals, true);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
@@ -611,10 +644,10 @@ export const OneTimePayment = (props: {
       const segmentData: SegmentStreamOTPTransferData = {
         asset: selectedToken?.symbol,
         assetPrice: price,
-        amount: parseFloat(fromCoinAmount as string),
+        amount: parseFloat(fromCoinAmount),
         beneficiary: data.beneficiary,
         startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT),
-        valueInUsd: price * parseFloat(fromCoinAmount as string)
+        valueInUsd: price * parseFloat(fromCoinAmount)
       };
       consoleOut('segment data:', segmentData, 'brown');
       segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFormButton, segmentData);
@@ -836,9 +869,9 @@ export const OneTimePayment = (props: {
                   autoComplete="on"
                   autoCorrect="off"
                   type="text"
-                  onFocus={handleRecipientAddressFocusIn}
+                  onFocus={handleRecipientAddressFocusInOut}
                   onChange={handleRecipientAddressChange}
-                  onBlur={handleRecipientAddressFocusOut}
+                  onBlur={handleRecipientAddressFocusInOut}
                   placeholder={t('transactions.recipient.placeholder')}
                   required={true}
                   spellCheck="false"
@@ -853,21 +886,21 @@ export const OneTimePayment = (props: {
               <span>&nbsp;</span>
             </div>
           </div>
-          {
-            recipientAddress && !isValidAddress(recipientAddress) ? (
+            {recipientAddress && !isValidAddress(recipientAddress) && (
               <span className="form-field-error">
                 {t('transactions.validation.address-validation')}
               </span>
-            ) : isAddressOwnAccount() ? (
+            )}
+            {isAddressOwnAccount() && (
               <span className="form-field-error">
                 {t('transactions.recipient.recipient-is-own-account')}
               </span>
-            ) : recipientAddress && getRecipientAddressValidation() ? (
+            )}
+            {recipientAddress && !isRecipientAddressValid() && (
               <span className="form-field-error">
                 {getRecipientAddressValidation()}
               </span>
-            ) : (null)
-          }
+            )}
         </div>
 
         {/* Send amount */}
@@ -1032,12 +1065,7 @@ export const OneTimePayment = (props: {
           {isBusy && (
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
-          {isBusy
-            ? isScheduledPayment()
-              ? t('streams.create-new-stream-cta-busy')
-              : t('transactions.status.cta-start-transfer-busy')
-            : getTransactionStartButtonLabel()
-          }
+          {getMainCtaLabel()}
         </Button>
       </div>
     </>

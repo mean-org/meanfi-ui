@@ -1,10 +1,7 @@
-import {
-  ArrowRightOutlined, WarningFilled
-} from "@ant-design/icons";
+import { ArrowRightOutlined, WarningFilled } from "@ant-design/icons";
 import { MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { MSP, Stream } from "@mean-dao/msp";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { TokenInfo } from "models/SolanaTokenInfo";
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@solana/web3.js";
 import {
   Button,
@@ -16,35 +13,33 @@ import {
 import { IconType } from "antd/lib/notification";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import ReactJson from "react-json-view";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { appConfig } from "../..";
-import { AddressDisplay } from "../../components/AddressDisplay";
-import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
-import { MultisigOwnersView } from "../../components/MultisigOwnersView";
-import { openNotification } from "../../components/Notifications";
-import { PreFooter } from "../../components/PreFooter";
-import { TextInput } from "../../components/TextInput";
-import { TokenDisplay } from "../../components/TokenDisplay";
-import { TokenListItem } from "../../components/TokenListItem";
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "../../constants";
-import { NATIVE_SOL } from "../../constants/tokens";
-import { useNativeAccount } from "../../contexts/accounts";
-import { AppStateContext } from "../../contexts/appstate";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { useWallet } from "../../contexts/wallet";
-import { IconCodeBlock, IconCoin, IconCopy, IconExternalLink, IconLoading, IconTrash, IconWallet } from "../../Icons";
-import { fetchAccountTokens, readAccountInfo as getAccountInfo } from "../../middleware/accounts";
-import { NATIVE_SOL_MINT, SYSTEM_PROGRAM_ID } from "../../middleware/ids";
-import { ACCOUNT_LAYOUT } from "../../middleware/layouts";
-import { getStreamForDebug } from "../../middleware/stream-debug-middleware";
-import { getReadableStream } from "../../middleware/streams";
+import { AddressDisplay } from "components/AddressDisplay";
+import { CopyExtLinkGroup } from "components/CopyExtLinkGroup";
+import { MultisigOwnersView } from "components/MultisigOwnersView";
+import { openNotification } from "components/Notifications";
+import { PreFooter } from "components/PreFooter";
+import { TextInput } from "components/TextInput";
+import { TokenDisplay } from "components/TokenDisplay";
+import { TokenListItem } from "components/TokenListItem";
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "constants/common";
+import { NATIVE_SOL } from "constants/tokens";
+import { useNativeAccount } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "contexts/connection";
+import { useWallet } from "contexts/wallet";
+import { environment } from "environments/environment";
+import { IconCodeBlock, IconCoin, IconCopy, IconExternalLink, IconLoading, IconTrash, IconWallet } from "Icons";
+import { appConfig } from "index";
+import { getTokensWithBalances, readAccountInfo as getAccountInfo } from "middleware/accounts";
+import { NATIVE_SOL_MINT, SYSTEM_PROGRAM_ID } from "middleware/ids";
+import { ACCOUNT_LAYOUT } from "middleware/layouts";
+import { getStreamForDebug } from "middleware/stream-debug-middleware";
+import { getReadableStream } from "middleware/streams";
 import {
-  consoleOut, delay, friendlyDisplayDecimalPlaces, intToString,
-  isValidAddress, kFormatter, toUsCurrency
-} from "../../middleware/ui";
+  consoleOut,
+  delay,
+  friendlyDisplayDecimalPlaces, isValidAddress, kFormatter, toUsCurrency
+} from "middleware/ui";
 import {
   formatAmount,
   formatThousands,
@@ -52,8 +47,13 @@ import {
   getAmountWithSymbol,
   shortenAddress,
   toUiAmount
-} from "../../middleware/utils";
-import { MultisigAsset } from "../../models/multisig";
+} from "middleware/utils";
+import { MultisigAsset } from "models/multisig";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import ReactJson from "react-json-view";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { VestingContractStreamDetailModal } from "../vesting/components/VestingContractStreamDetailModal";
 import "./style.scss";
 
@@ -80,7 +80,7 @@ export const PlaygroundView = () => {
   const connectionConfig = useConnectionConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
-    tokenList,
+    priceList,
     coinPrices,
     splTokenList,
     isWhitelisted,
@@ -88,7 +88,6 @@ export const PlaygroundView = () => {
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
-    setEffectiveRate,
   } = useContext(AppStateContext);
   const { account } = useNativeAccount();
   const [userBalances, setUserBalances] = useState<any>();
@@ -102,14 +101,12 @@ export const PlaygroundView = () => {
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
-  const [canFetchTokenAccounts, setCanFetchTokenAccounts] = useState<boolean>(splTokenList ? true : false);
   const [streamId, setStreamId] = useState<string>("");
   const [streamRawData, setStreamRawData] = useState();
   const [streamParsedData, setStreamParsedData] = useState<Stream | undefined>(undefined);
   const [displayStreamData, setDisplayStreamData] = useState<boolean>(false);
   const [targetAddress, setTargetAddress] = useState<string>('');
   // Multisig
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [assetsAmout, setAssetsAmount] = useState<string>();
   const [loadingAssets, setLoadingAssets] = useState(true);
@@ -245,8 +242,6 @@ export const PlaygroundView = () => {
       return;
     }
 
-    setLoadingMultisigAccounts(true);
-
     try {
       const allInfo = await multisigClient.getMultisigs(publicKey);
       consoleOut('All multisigs:', allInfo, 'green');
@@ -259,8 +254,6 @@ export const PlaygroundView = () => {
       }
     } catch (error) {
       console.error('getMultisigInfo ->', error);
-    } finally {
-      setLoadingMultisigAccounts(false);
     }
 
   }, [multisigClient, publicKey]);
@@ -283,13 +276,7 @@ export const PlaygroundView = () => {
     setStreamId(trimmedValue);
   }
 
-  const handleRecipientAddressFocusIn = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 10);
-  }
-
-  const handleRecipientAddressFocusOut = () => {
+  const handleRecipientAddressFocusInOut = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
@@ -680,6 +667,63 @@ export const PlaygroundView = () => {
     }
   }, [location.search, searchParams, setSearchParams]);
 
+  //#region Token selector - data management
+
+  // Automatically update all token balances and rebuild token list
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !splTokenList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      getTokensWithBalances(
+        connection,
+        publicKey.toBase58(),
+        priceList,
+        splTokenList,
+        false
+      )
+      .then(response => {
+        if (response) {
+          setSelectedList(response.tokenList);
+          setUserBalances(response.balancesMap);
+        }
+      });
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    publicKey,
+    connection,
+    priceList,
+    splTokenList,
+  ]);
+
+  // Reset results when the filter is cleared
+  useEffect(() => {
+    if (splTokenList && splTokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+      updateTokenListByFilter(tokenFilter);
+    }
+  }, [
+    splTokenList,
+    tokenFilter,
+    filteredTokenList,
+    updateTokenListByFilter
+  ]);
+
+  //#endregion
+
   // Keep account balance updated
   useEffect(() => {
     if (account?.lamports !== previousBalance || !nativeBalance) {
@@ -691,112 +735,6 @@ export const PlaygroundView = () => {
     account,
     nativeBalance,
     previousBalance,
-  ]);
-
-  // Automatically update all token balances and rebuild token list
-  useEffect(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!publicKey || !tokenList || !canFetchTokenAccounts) {
-      return;
-    }
-
-    setTimeout(() => {
-      setCanFetchTokenAccounts(false);
-    });
-
-    const balancesMap: any = {};
-
-    fetchAccountTokens(connection, publicKey)
-      .then(accTks => {
-        if (accTks) {
-
-          const intersectedList = new Array<TokenInfo>();
-          const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
-
-          intersectedList.push(splTokensCopy[0]);
-          balancesMap[NATIVE_SOL.address] = nativeBalance;
-          // Create a list containing tokens for the user owned token accounts
-          accTks.forEach(item => {
-            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
-            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-            const tokenFromSplTokensCopy = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
-            if (tokenFromSplTokensCopy && !isTokenAccountInTheList) {
-              intersectedList.push(tokenFromSplTokensCopy);
-            }
-          });
-
-          // Finally add all owned token accounts as custom tokens
-          accTks.forEach(item => {
-            if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
-              const customToken: TokenInfo = {
-                address: item.parsedInfo.mint,
-                chainId: 0,
-                decimals: item.parsedInfo.tokenAmount.decimals,
-                name: 'Custom account',
-                symbol: shortenAddress(item.parsedInfo.mint),
-                tags: undefined,
-                logoURI: undefined,
-              };
-              intersectedList.push(customToken);
-            }
-          });
-
-          intersectedList.sort((a, b) => {
-            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
-              return 1;
-            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
-              return -1;
-            }
-            return 0;
-          });
-
-          setSelectedList(intersectedList);
-          if (!selectedToken) { setSelectedToken(intersectedList[0]); }
-
-        } else {
-          for (const t of tokenList) {
-            balancesMap[t.address] = 0;
-          }
-          // set the list to the userTokens list
-          setSelectedList(tokenList);
-          if (!selectedToken) { setSelectedToken(tokenList[0]); }
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (const t of tokenList) {
-          balancesMap[t.address] = 0;
-        }
-        setSelectedList(tokenList);
-        if (!selectedToken) { setSelectedToken(tokenList[0]); }
-      })
-      .finally(() => setUserBalances(balancesMap));
-
-  }, [
-    publicKey,
-    tokenList,
-    connection,
-    splTokenList,
-    nativeBalance,
-    selectedToken,
-    canFetchTokenAccounts,
-  ]);
-
-  // Reset results when the filter is cleared
-  useEffect(() => {
-    if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
-      updateTokenListByFilter(tokenFilter);
-    }
-  }, [
-    tokenList,
-    tokenFilter,
-    filteredTokenList,
-    updateTokenListByFilter
   ]);
 
   // Get multisig SOL balance
@@ -853,17 +791,15 @@ export const PlaygroundView = () => {
 
   // Show amount of assets
   useEffect(() => {
-    (selectedMultisig) && (
-      multisigAssets && multisigAssets.length > 0 ? (
-        multisigAssets.length > 1 ? (
-          setAssetsAmount(`(${multisigAssets.length} assets)`)
-        ) : (
-          setAssetsAmount(`(${multisigAssets.length} asset)`)
-        )
-      ) : (
-        setAssetsAmount("(0 assets)")
-      )
-    )
+    if (selectedMultisig && multisigAssets && multisigAssets.length > 0) {
+      if (multisigAssets.length > 0) {
+        setAssetsAmount(`(${multisigAssets.length} assets)`);
+      } else {
+        setAssetsAmount(`(${multisigAssets.length} asset)`);
+      }
+    } else {
+      setAssetsAmount('(0 assets)');
+    }
   }, [
     multisigAssets, 
     selectedMultisig
@@ -981,18 +917,7 @@ export const PlaygroundView = () => {
               <div className="icon-cell">
                 <div className="token-icon">
                     <div className="streams-count">
-                      <span className="font-size-75 font-bold text-shadow">{kFormatter(value) || 0}</span>
-                    </div>
-                  </div>
-              </div>
-            </div>
-          </div>
-          <div className="std-table-cell responsive-cell text-monospace">
-            <div className="table-cell-flex-content">
-              <div className="icon-cell">
-                <div className="token-icon">
-                    <div className="streams-count">
-                      <span className="font-size-75 font-bold text-shadow">{intToString(value, 1) || 0}</span>
+                      <span className="font-size-75 font-bold text-shadow">{kFormatter(value, 1) || 0}</span>
                     </div>
                   </div>
               </div>
@@ -1041,9 +966,6 @@ export const PlaygroundView = () => {
           </div>
           <div className="std-table-cell responsive-cell">
             kFormatter
-          </div>
-          <div className="std-table-cell responsive-cell">
-            intToString
           </div>
         </div>
       </div>
@@ -1107,17 +1029,16 @@ export const PlaygroundView = () => {
                   <span>&nbsp;</span>
                 </div>
               </div>
-              {
-                streamId && !isValidAddress(streamId) ? (
-                  <span className="form-field-error">
-                    Not a valid stream id
-                  </span>
-                ) : streamId && accountNotFound ? (
-                  <span className="form-field-error">
-                    Account info is not available for this stream id
-                  </span>
-                ) : null
-              }
+              {streamId && !isValidAddress(streamId) && (
+                <span className="form-field-error">
+                  Not a valid stream id
+                </span>
+              )}
+              {streamId && accountNotFound && (
+                <span className="form-field-error">
+                  Account info is not available for this stream id
+                </span>
+              )}
             </div>
           </div>
           <div className="right">
@@ -1177,32 +1098,135 @@ export const PlaygroundView = () => {
     );
   }
 
+  const isProgram = useMemo(() => {
+    return parsedAccountInfo &&
+           parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
+           parsedAccountInfo.data.parsed.type === 'program'
+      ? true
+      : false;
+  }, [parsedAccountInfo]);
+
+  const isTokenAccount = useMemo(() => {
+    return parsedAccountInfo &&
+           parsedAccountInfo.data.program === 'spl-token' &&
+           parsedAccountInfo.data.parsed.type === 'account'
+      ? true
+      : false;
+  }, [parsedAccountInfo]);
+
+  const isTokenMint = useMemo(() => {
+    return parsedAccountInfo &&
+           parsedAccountInfo.data.program === 'spl-token' &&
+           parsedAccountInfo.data.parsed.type === 'mint'
+      ? true
+      : false;
+  }, [parsedAccountInfo]);
+
+  const selectedTokenDecimals = useMemo(() => {
+    if (parsedAccountInfo) {
+      if (isTokenMint) {
+        return parsedAccountInfo.data.parsed.info.decimals || 0;
+      } else if (isTokenAccount) {
+        return parsedAccountInfo.data.parsed.info.tokenAmount.decimals || 0;
+      } else {
+        return 0;
+      }
+    }
+    return 0;
+  }, [parsedAccountInfo, isTokenMint, isTokenAccount]);
+
+  const renderCurrentSupply = () => {
+    if (parsedAccountInfo && isTokenMint) {
+      return infoRow(
+        'Current Supply:',
+        getAmountWithSymbol(
+          toUiAmount(parsedAccountInfo.data.parsed.info.supply, selectedTokenDecimals),
+          parsedAccountInfo.data.parsed.info.mint,
+          true,
+          splTokenList,
+          selectedTokenDecimals
+        )
+      );
+    }
+
+    return '';
+  }
+
+  const renderCurrentBalance = () => {
+    if (parsedAccountInfo && isTokenAccount) {
+      return infoRow(
+        'Token Balance',
+        formatThousands(
+          parsedAccountInfo.data.parsed.info.tokenAmount.uiAmount,
+          selectedTokenDecimals,
+          selectedTokenDecimals
+        )
+      )
+    }
+
+    return '';
+  }
+
+  const renderAccountInfo = () => {
+    if (!accountInfo) { return null; }
+
+    return (
+      <>
+        {infoRow('Entity:', 'Account')}
+        {infoRow('Balance (SOL):', `◎${formatThousands(accountInfo.lamports / LAMPORTS_PER_SOL, 9, 9)}`)}
+        {infoRow('Executable:', accountInfo.executable ? 'Yes' : 'No')}
+        {infoRow('Allocated Data Size:', `${accountInfo.data.byteLength} byte(s)`)}
+        {infoRow('Owner:', accountInfo.owner.toBase58())}
+      </>
+    );
+  }
+
+  const renderparsedAccountInfo = () => {
+    if (!parsedAccountInfo) { return null; }
+
+    return (
+      <>
+        {infoRow('Entity:', getParsedAccountType(parsedAccountInfo))}
+        {isProgram && infoRow('Balance (SOL):', `◎${formatThousands(parsedAccountInfo.lamports / LAMPORTS_PER_SOL, 9, 9)}`)}
+        {infoRow('Executable:', parsedAccountInfo.executable ? 'Yes' : 'No')}
+        {renderCurrentSupply()}
+        {renderCurrentBalance()}
+        {isTokenMint && infoRow('Mint Authority:', parsedAccountInfo.data.parsed.info.mintAuthority)}
+        {isTokenAccount && infoRow('Mint:', parsedAccountInfo.data.parsed.info.mint)}
+        {(isTokenMint || isTokenAccount) && infoRow('Decimals:', selectedTokenDecimals)}
+        {infoRow('Allocated Data Size:', `${parsedAccountInfo.data.space} byte(s)`)}
+        {isProgram && infoRow('Owner:', parsedAccountInfo.owner.toBase58())}
+        {isTokenMint && infoRow('Owner:', parsedAccountInfo.owner.toBase58())}
+        {isTokenAccount && infoRow('Owner:', parsedAccountInfo.data.parsed.info.owner)}
+        {targetAddress && (isTokenAccount || isTokenMint) && (
+          <>
+            <Divider orientation="left" className="mt-1 mb-1">Preview</Divider>
+            <TokenDisplay
+              className="px-2 pb-2"
+              mintAddress={isTokenMint ? targetAddress : parsedAccountInfo.data.parsed.info.mint}
+              onClick={undefined}
+              showName={true} />
+          </>
+        )}
+        {isProgram && infoRow('Program Data:', parsedAccountInfo.data.parsed.info.programData)}
+      </>
+    );
+  }
+
+  const renderAccountInfoResults = () => {
+    if (targetAddress) {
+      return (
+        <div className="well-group text-monospace">
+          {accountInfo && renderAccountInfo()}
+          {parsedAccountInfo && renderparsedAccountInfo()}
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
   const renderDemo2Tab = () => {
-    const isProgram = parsedAccountInfo &&
-                      parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
-                      parsedAccountInfo.data.parsed.type === 'program'
-      ? true
-      : false
-
-    const isTokenMint = parsedAccountInfo &&
-                        parsedAccountInfo.data.program === 'spl-token' &&
-                        parsedAccountInfo.data.parsed.type === 'mint'
-      ? true
-      : false;
-
-    const isTokenAccount = parsedAccountInfo &&
-                           parsedAccountInfo.data.program === 'spl-token' &&
-                           parsedAccountInfo.data.parsed.type === 'account'
-      ? true
-      : false;
-
-    const decimals = parsedAccountInfo
-      ? isTokenMint
-        ? parsedAccountInfo.data.parsed.info.decimals
-        : isTokenAccount
-          ? parsedAccountInfo.data.parsed.info.tokenAmount.decimals
-          : 0
-      : 0
     return (
       <>
         <div className="tabset-heading">Get account info</div>
@@ -1241,9 +1265,9 @@ export const PlaygroundView = () => {
                       autoComplete="on"
                       autoCorrect="off"
                       type="text"
-                      onFocus={handleRecipientAddressFocusIn}
+                      onFocus={handleRecipientAddressFocusInOut}
                       onChange={handleRecipientAddressChange}
-                      onBlur={handleRecipientAddressFocusOut}
+                      onBlur={handleRecipientAddressFocusInOut}
                       placeholder={t('transactions.recipient.placeholder')}
                       required={true}
                       spellCheck="false"
@@ -1258,17 +1282,16 @@ export const PlaygroundView = () => {
                   <span>&nbsp;</span>
                 </div>
               </div>
-              {
-                targetAddress && !isValidAddress(targetAddress) ? (
-                  <span className="form-field-error">
-                    {t('transactions.validation.address-validation')}
-                  </span>
-                ) : targetAddress && accountNotFound ? (
-                  <span className="form-field-error">
-                    {accountNotFound}
-                  </span>
-                ) : null
-              }
+              {targetAddress && !isValidAddress(targetAddress) && (
+                <span className="form-field-error">
+                  {t('transactions.validation.address-validation')}
+                </span>
+              )}
+              {targetAddress && accountNotFound && (
+                <span className="form-field-error">
+                  {accountNotFound}
+                </span>
+              )}
             </div>
           </div>
           <div className="right">
@@ -1297,58 +1320,7 @@ export const PlaygroundView = () => {
         </div>
 
         <div className="mb-3">
-          {targetAddress && (accountInfo || parsedAccountInfo) && (
-            <div className="well-group text-monospace">
-              {accountInfo && (
-                <>
-                  {infoRow('Entity:', 'Account')}
-                  {infoRow('Balance (SOL):', `◎${formatThousands(accountInfo.lamports / LAMPORTS_PER_SOL, 9, 9)}`)}
-                  {infoRow('Executable:', accountInfo.executable ? 'Yes' : 'No')}
-                  {infoRow('Allocated Data Size:', `${accountInfo.data.byteLength} byte(s)`)}
-                  {infoRow('Owner:', accountInfo.owner.toBase58())}
-                </>
-              )}
-              {parsedAccountInfo && (
-                <>
-                  {infoRow('Entity:', getParsedAccountType(parsedAccountInfo))}
-                  {isProgram && infoRow('Balance (SOL):', `◎${formatThousands(parsedAccountInfo.lamports / LAMPORTS_PER_SOL, 9, 9)}`)}
-                  {infoRow('Executable:', parsedAccountInfo.executable ? 'Yes' : 'No')}
-                  {
-                    isTokenAccount
-                      ? infoRow('Token Balance', formatThousands(parsedAccountInfo.data.parsed.info.tokenAmount.uiAmount, decimals, decimals))
-                      : isTokenMint
-                        ? infoRow('Current Supply:', getAmountWithSymbol(
-                            toUiAmount(parsedAccountInfo.data.parsed.info.supply, decimals),
-                            parsedAccountInfo.data.parsed.info.mint,
-                            true,
-                            splTokenList,
-                            decimals
-                          ))
-                        : ''
-                  }
-                  {isTokenMint && infoRow('Mint Authority:', parsedAccountInfo.data.parsed.info.mintAuthority)}
-                  {isTokenAccount && infoRow('Mint:', parsedAccountInfo.data.parsed.info.mint)}
-                  {(isTokenMint || isTokenAccount) && infoRow('Decimals:', decimals)}
-                  {infoRow('Allocated Data Size:', `${parsedAccountInfo.data.space} byte(s)`)}
-                  {isProgram && infoRow('Owner:', parsedAccountInfo.owner.toBase58())}
-                  {isTokenMint && infoRow('Owner:', parsedAccountInfo.owner.toBase58())}
-                  {isTokenAccount && infoRow('Owner:', parsedAccountInfo.data.parsed.info.owner)}
-                  {targetAddress && (isTokenAccount || isTokenMint) && (
-                    <>
-                      <Divider orientation="left" className="mt-1 mb-1">Preview</Divider>
-                      <TokenDisplay
-                        className="px-2 pb-2"
-                        mintAddress={isTokenMint ? targetAddress : parsedAccountInfo.data.parsed.info.mint}
-                        onClick={undefined}
-                        showName={true}
-                      />
-                    </>
-                  )}
-                  {isProgram && infoRow('Program Data:', parsedAccountInfo.data.parsed.info.programData)}
-                </>
-              )}
-            </div>
-          )}
+          {renderAccountInfoResults()}
         </div>
       </>
     );
@@ -1375,15 +1347,7 @@ export const PlaygroundView = () => {
         <>
           <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
         </>
-      ) : totalSafeBalance === 0 ? (
-        <>
-          $0.00
-        </>
-      ) : (
-        <>
-          {toUsCurrency(totalSafeBalance)}
-        </>
-      )
+      ) : toUsCurrency(totalSafeBalance)
     );
   }, [totalSafeBalance]);
 
@@ -1442,9 +1406,9 @@ export const PlaygroundView = () => {
                       autoComplete="on"
                       autoCorrect="off"
                       type="text"
-                      onFocus={handleRecipientAddressFocusIn}
+                      onFocus={handleRecipientAddressFocusInOut}
                       onChange={handleRecipientAddressChange}
-                      onBlur={handleRecipientAddressFocusOut}
+                      onBlur={handleRecipientAddressFocusInOut}
                       placeholder={t('transactions.recipient.placeholder')}
                       required={true}
                       spellCheck="false"
@@ -1459,17 +1423,16 @@ export const PlaygroundView = () => {
                   <span>&nbsp;</span>
                 </div>
               </div>
-              {
-                targetAddress && !isValidAddress(targetAddress) ? (
-                  <span className="form-field-error">
-                    {t('transactions.validation.address-validation')}
-                  </span>
-                ) : targetAddress && selectedMultisig === undefined ? (
-                  <span className="form-field-error">
-                    {accountNotFound}
-                  </span>
-                ) : null
-              }
+              {targetAddress && !isValidAddress(targetAddress) && (
+                <span className="form-field-error">
+                  {t('transactions.validation.address-validation')}
+                </span>
+              )}
+              {targetAddress && selectedMultisig === undefined && (
+                <span className="form-field-error">
+                  {accountNotFound}
+                </span>
+              )}
             </div>
           </div>
           <div className="right">
@@ -1854,86 +1817,127 @@ export const PlaygroundView = () => {
     </>
   );
 
-  const renderTokenList = (
-    <>
-      {(filteredTokenList && filteredTokenList.length > 0) && (
-        filteredTokenList.map((t, index) => {
-          const onClick = function () {
-            setSelectedToken(t);
+  //#region Token selector - render methods
 
-            setTimeout(() => {
-              onScanAssetAddress(t);
-            }, 100);
+  const getTokenListItemClass = (item: TokenInfo) => {
+    return selectedToken?.address === item.address ? "selected" : "simplelink";
+  }
 
-            consoleOut('token selected:', t.symbol, 'blue');
-            setEffectiveRate(getTokenPriceBySymbol(t.symbol));
-            onCloseTokenSelector();
-          };
+  const renderTokenList = () => {
+    return filteredTokenList.map((t, index) => {
+      const onClick = function () {
+        setSelectedToken(t);
 
-          if (index < MAX_TOKEN_LIST_ITEMS) {
-            if (t.address === NATIVE_SOL.address) {
-              return null;
-            }
-            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
-            return (
-              <TokenListItem
-                key={t.address}
-                name={t.name || CUSTOM_TOKEN_NAME}
-                mintAddress={t.address}
-                token={t}
-                className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
-                onClick={onClick}
-                balance={balance}
-                showZeroBalances={true}
-              />
-            );
-          } else {
-            return null;
-          }
-        })
-      )}
-    </>
-  );
+        setTimeout(() => {
+          onScanAssetAddress(t);
+        }, 100);
 
-  const renderTokenSelectorInner = (
-    <div className="token-selector-wrapper">
-      <div className="token-search-wrapper">
-        <TextInput
-          id="token-search-otp"
-          value={tokenFilter}
-          allowClear={true}
-          extraClass="mb-2"
-          onInputClear={onInputCleared}
-          placeholder={t('token-selector.search-input-placeholder')}
-          onInputChange={onTokenSearchInputChange} />
-      </div>
-      <div className="token-list">
-        {filteredTokenList.length > 0 && renderTokenList}
-        {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+        consoleOut("token selected:", t, 'blue');
+        onCloseTokenSelector();
+      };
+
+      if (index < MAX_TOKEN_LIST_ITEMS) {
+        const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
+        return (
           <TokenListItem
-            key={tokenFilter}
-            name={CUSTOM_TOKEN_NAME}
-            mintAddress={tokenFilter}
-            className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-            onClick={() => {
-              const uknwnToken: TokenInfo = {
-                address: tokenFilter,
-                name: CUSTOM_TOKEN_NAME,
-                chainId: 101,
-                decimals: 6,
-                symbol: '',
-              };
-              setSelectedToken(uknwnToken);
-              consoleOut('token selected:', uknwnToken, 'blue');
-              setEffectiveRate(0);
-              onCloseTokenSelector();
-            }}
-            balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+            key={t.address}
+            name={t.name || CUSTOM_TOKEN_NAME}
+            mintAddress={t.address}
+            token={t}
+            className={balance ? getTokenListItemClass(t) : "hidden"}
+            onClick={onClick}
+            balance={balance}
+            showUsdValues={true}
           />
-        )}
+        );
+      } else {
+        return null;
+      }
+    });
+  }
+
+  const getSelectedTokenError = () => {
+    if (tokenFilter && selectedToken) {
+      if (selectedToken.decimals === -1) {
+        return 'Account not found';
+      } else if (selectedToken.decimals === -2) {
+        return 'Account is not a token mint';
+      }
+    }
+    return undefined;
+  }
+
+  const getBalanceForTokenFilter = () => {
+    return connected && userBalances && userBalances[tokenFilter] > 0
+      ? userBalances[tokenFilter]
+      : 0;
+  }
+
+  const renderTokenSelectorInner = () => {
+    return (
+      <div className="token-selector-wrapper">
+        <div className="token-search-wrapper">
+          <TextInput
+            id="token-search-rp"
+            value={tokenFilter}
+            allowClear={true}
+            extraClass="mb-2"
+            onInputClear={onInputCleared}
+            placeholder={t('token-selector.search-input-placeholder')}
+            error={getSelectedTokenError()}
+            onInputChange={onTokenSearchInputChange} />
+        </div>
+        <div className="token-list">
+          {filteredTokenList.length > 0 && renderTokenList()}
+          {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+            <TokenListItem
+              key={tokenFilter}
+              name={CUSTOM_TOKEN_NAME}
+              mintAddress={tokenFilter}
+              className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+              onClick={async () => {
+                const address = tokenFilter;
+                let decimals = -1;
+                let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+                try {
+                  accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                  consoleOut('accountInfo:', accountInfo, 'blue');
+                } catch (error) {
+                  console.error(error);
+                }
+                if (accountInfo) {
+                  if ((accountInfo as any).data["program"] &&
+                      (accountInfo as any).data["program"] === "spl-token" &&
+                      (accountInfo as any).data["parsed"] &&
+                      (accountInfo as any).data["parsed"]["type"] &&
+                      (accountInfo as any).data["parsed"]["type"] === "mint") {
+                    decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+                  } else {
+                    decimals = -2;
+                  }
+                }
+                const unknownToken: TokenInfo = {
+                  address,
+                  name: CUSTOM_TOKEN_NAME,
+                  chainId: getNetworkIdByEnvironment(environment),
+                  decimals,
+                  symbol: `[${shortenAddress(address)}]`,
+                };
+                setSelectedToken(unknownToken);
+                consoleOut("token selected:", unknownToken, 'blue');
+                // Do not close on errors (-1 or -2)
+                if (decimals >= 0) {
+                  onCloseTokenSelector();
+                }
+              }}
+              balance={getBalanceForTokenFilter()}
+            />
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+  //#endregion
 
   if (!publicKey || !isWhitelisted) {
     return (
@@ -1998,7 +2002,7 @@ export const PlaygroundView = () => {
           onCancel={onCloseTokenSelector}
           width={450}
           footer={null}>
-          {renderTokenSelectorInner}
+          {renderTokenSelectorInner()}
         </Modal>
       )}
     </>
