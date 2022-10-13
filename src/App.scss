@@ -2985,7 +2985,8 @@ main section {
   }
   .ant-dropdown-menu-item {
     .ant-dropdown-menu-title-content {
-      > span {
+      > span,
+      > div {
         padding: 0 12px;
         display: block;
       }
