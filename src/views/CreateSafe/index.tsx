@@ -612,7 +612,12 @@ const CreateSafeView = () => {
     const renderMultisigNameField = () => {
         return (
             <div className="mb-3">
-                <div className="form-label">{t('multisig.create-multisig.multisig-label-input-label')}</div>
+                <div className="form-label icon-label">
+                    {t('multisig.create-multisig.multisig-label-input-label')}
+                    <Tooltip placement="bottom" title={`I.e. "My company payroll", "Seed round vesting", etc.`}>
+                        <span><IconHelpCircle className="mean-svg-icons" /></span>
+                    </Tooltip>
+                </div>
                 <div className={`well ${isBusy ? 'disabled' : ''}`}>
                     <input
                         id="multisig-label-field"
@@ -625,7 +630,6 @@ const CreateSafeView = () => {
                         placeholder={t('multisig.create-multisig.multisig-label-placeholder')}
                         value={multisigLabel}
                     />
-                    <div className="form-field-hint">I.e. "My company payroll", "Seed round vesting", etc.</div>
                 </div>
             </div>
         );
