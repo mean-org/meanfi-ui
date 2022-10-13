@@ -413,7 +413,7 @@
 			"multisig-label-input-label": "Safe name",
 			"multisig-label-placeholder": "Type a name for your safe",
 			"multisig-no-participants": "No participants added yet",
-			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
+			"multisig-participants": "Signers ({{numParticipants}})",
 			"multisig-participants-warning message": "",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",

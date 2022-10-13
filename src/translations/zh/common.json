@@ -413,7 +413,7 @@
 			"multisig-label-input-label": "多重签名名字",
 			"multisig-label-placeholder": "为您的多重签名帐户键入一个名称",
 			"multisig-no-participants": "还没有参与者加入",
-			"multisig-participants": "有效签名者（{maxampartments}}的{numParticipants}}}）",
+			"multisig-participants": "签名者 ({{numParticipants}})",
 			"multisig-participants-warning message": "",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "输入所需的最小签名值",

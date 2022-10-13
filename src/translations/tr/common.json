@@ -413,7 +413,7 @@
 			"multisig-label-input-label": "Çoklu-İmza ismi",
 			"multisig-label-placeholder": "Çoklu-İmza hesabınız için bir ad yazın",
 			"multisig-no-participants": "Şuana kadar katılımcı eklenmedi",
-			"multisig-participants": "({{maxParticipants}} katılımcıdan, {{numParticipants}} tanesi imzaladı)",
+			"multisig-participants": "İmzalayanlar ({{numParticipants}})",
 			"multisig-participants-warning message": "",
 			"multisig-participants-warning-message": "Aynı sayıda üyenin imzasını gerektiren bir başka çoklu-imza oluşturmak tavsiye edilmez",
 			"multisig-threshold-input-empty": "Minimum yeterli imza sayısını girin",

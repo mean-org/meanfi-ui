@@ -501,7 +501,7 @@
 			"multisig-label-input-label": "다중서명 이름",
 			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "아직 추가된 참가자가 없습니다.",
-			"multisig-participants": "유효한 서명자({{maxParticipants}}명 중 {{numParticipants}}명)",
+			"multisig-participants": "서명자 ({{maxParticipants}})",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "최소 필수 서명 값 입력",
 			"multisig-threshold-input-label": "최소 필수 서명",

@@ -413,7 +413,7 @@
 			"multisig-label-input-label": "Nome multisig",
 			"multisig-label-placeholder": "Digite um nome para sua multisig",
 			"multisig-no-participants": "Nenhum participante adicionado ainda",
-			"multisig-participants": "Signatários válidos ({{numParticipants}} de {{maxParticipants}})",
+			"multisig-participants": "Signatários ({{numParticipants}})",
 			"multisig-participants-warning message": "Não é recomendado criar um Multisig com o mesmo número de participantes que as assinaturas necessárias",
 			"multisig-participants-warning-message": "",
 			"multisig-threshold-input-empty": "Insira um valor mínimo de assinaturas obrigatório",

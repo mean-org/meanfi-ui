@@ -492,7 +492,7 @@
 			"multisig-label-input-label": "Tên multisig",
 			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "Chưa có người tham gia nào",
-			"multisig-participants": "Người ký hợp lệ ({{numParticipants}} trên {{maxParticipants}})",
+			"multisig-participants": "Người ký tên ({{numParticipants}})",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Nhập số lượng chữ ký bắt buộc tối thiểu",
 			"multisig-threshold-input-label": "Số lượng chữ ký bắt buộc tối thiểu",

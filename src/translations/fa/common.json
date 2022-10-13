@@ -409,7 +409,7 @@
 			"multisig-label-input-label": "اسم حساب Multisig",
 			"multisig-label-placeholder": "یک نام برای حساب Multisig خود تایپ کنید",
 			"multisig-no-participants": "هنوز هیچ مشارکت کننده ای اضافه نشده است",
-			"multisig-participants": "امضاکنندگان معتبر ({{numParticipants}} از {{maxParticipants}})",
+			"multisig-participants": "({{numParticipants}}) امضا کنندگان",
 			"multisig-participants-warning-message": "توصیه نمی شود که یک حساب Multisig با تعداد شرکت کنندگان به اندازه امضاهای مورد نیاز ایجاد کنید",
 			"multisig-threshold-input-empty": "حداقل مقدار امضای مورد نیاز را وارد کنید",
 			"multisig-threshold-input-label": "حداقل امضاهای مورد نیاز",

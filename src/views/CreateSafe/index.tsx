@@ -694,7 +694,6 @@ const CreateSafeView = () => {
                                 label={
                                     t('multisig.create-multisig.multisig-participants', {
                                         numParticipants: multisigOwners.length,
-                                        maxParticipants: MAX_MULTISIG_PARTICIPANTS
                                     })
                                 }
                                 multisigAddresses={multisigAddresses}
