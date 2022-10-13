@@ -2983,8 +2983,17 @@ main section {
     text-transform: uppercase;
     font-size: 80%;
   }
+  .ant-dropdown-menu-item {
+    .ant-dropdown-menu-title-content {
+      > span {
+        padding: 0 12px;
+        display: block;
+      }
+    }
+  }
   .ant-dropdown-menu-item,
   .ant-dropdown-menu-submenu-title {
+    padding: 5px 0;
     color: var(--color-secondary-alpha-80);
     .mean-svg-icons {
       display: inline-block;

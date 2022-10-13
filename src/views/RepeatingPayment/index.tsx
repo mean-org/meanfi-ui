@@ -653,7 +653,7 @@ export const RepeatingPayment = (props: {
     } else if (!isVerifiedRecipient) {
       return t('transactions.validation.verified-recipient-unchecked');
     } else if (nativeBalance < getMinSolBlanceRequired()) {
-      return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) });
+      return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinSolBlanceRequired(), 4) });
     } else {
       return t('transactions.validation.valid-approve');
     }
